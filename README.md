@@ -1,2 +1,2 @@
 # sokol-samples
-Sample code for floooh/sokol
+Sample code for https://github.com/floooh/sokol
