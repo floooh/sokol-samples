@@ -1,0 +1,9 @@
+#
+# sokol-samples
+#
+---
+imports:
+  sokol:
+    git: https://github.com/floooh/sokol
+  fips-glfw:
+    git: https://github.com/floooh/fips-glfw
