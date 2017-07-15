@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
 //  clear-glfw.cc
 //------------------------------------------------------------------------------
-#define SOKOL_IMPL
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
+#define SOKOL_IMPL
 #define SOKOL_USE_GL
 #include "sokol_gfx.h"
 #include <stdio.h>
@@ -39,6 +39,7 @@ int main() {
     pass_action.color[0][0] = 1.0f;
     pass_action.color[0][1] = 0.0f;
     pass_action.color[0][2] = 0.0f;
+    pass_action.actions = SG_PASSACTION_CLEAR_ALL;
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {

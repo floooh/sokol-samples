@@ -8,7 +8,11 @@ get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
 fips_setup(PROJECT sokol-samples)
-add_subdirectory(glfw)
+if (FIPS_EMSCRIPTEN)
+    add_subdirectory(html5)
+else()
+    add_subdirectory(glfw)
+endif()
 fips_finish()
 
 
