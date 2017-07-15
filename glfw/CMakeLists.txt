@@ -1,4 +1,5 @@
 fips_begin_app(clear-glfw cmdline)
     fips_vs_warning_level(3)
-    fips_files(clear-glfw.c)
+    fips_src(.)
+    fips_deps(glfw3)
 fips_end_app()
