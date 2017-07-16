@@ -50,10 +50,40 @@ int main() {
     buf_desc.data_ptr = vertices;
     buf_desc.data_size = sizeof(vertices);
     sg_id buf_id = sg_make_buffer(&buf_desc);
+    assert(buf_id != SG_INVALID_ID);
 
     /* create a shader */
+    sg_shader_desc shd_desc;
+    sg_init_shader_desc(&shd_desc);
+    sg_shader_desc_attr(&shd_desc, "position", SG_VERTEXFORMAT_FLOAT4);
+    sg_shader_desc_attr(&shd_desc, "color0", SG_VERTEXFORMAT_FLOAT4);
+    shd_desc.vs.source = 
+        "#version 330\n"
+        "in vec4 position;\n"
+        "in vec4 color0;\n"
+        "out vec4 color;\n"
+        "void main() {\n"
+        "  gl_Position = position;\n"
+        "  color = color0;\n"
+        "}\n";
+    shd_desc.fs.source = 
+        "#version 330\n"
+        "in vec4 color;\n"
+        "out vec4 frag_color;\n"
+        "void main() {\n"
+        "  frag_color = color;\n"
+        "}\n";
+    sg_id shd_id = sg_make_shader(&shd_desc);
+    assert(shd_id != SG_INVALID_ID);
 
-    /* create a pipeline object */
+    /* create a pipeline object (default render states are fine for triangle) */
+    sg_pipeline_desc pip_desc;
+    sg_init_pipeline_desc(&pip_desc);
+    sg_pipeline_desc_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
+    sg_pipeline_desc_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
+    pip_desc.shader = shd_id;
+    sg_id pip_id = sg_make_pipeline(&pip_desc);
+    assert(pip_id != SG_INVALID_ID);
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
@@ -65,6 +95,8 @@ int main() {
     }
 
     /* cleanup */
+    sg_destroy_pipeline(pip_id);
+    sg_destroy_shader(shd_id);
     sg_destroy_buffer(buf_id);
     sg_discard();
     glfwTerminate();
