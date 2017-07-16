@@ -20,13 +20,13 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Clear GLFW", 0, 0);
+    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Triangle GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc;
+    sg_desc desc; 
     sg_init_desc(&desc);
     desc.width = WIDTH;
     desc.height = HEIGHT;
@@ -50,7 +50,7 @@ int main() {
     buf_desc.data_ptr = vertices;
     buf_desc.data_size = sizeof(vertices);
     sg_id buf_id = sg_make_buffer(&buf_desc);
-    assert(buf_id != SG_INVALID_ID);
+    assert(buf_id);
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -74,7 +74,7 @@ int main() {
         "  frag_color = color;\n"
         "}\n";
     sg_id shd_id = sg_make_shader(&shd_desc);
-    assert(shd_id != SG_INVALID_ID);
+    assert(shd_id);
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;
@@ -83,7 +83,7 @@ int main() {
     sg_pipeline_desc_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     sg_id pip_id = sg_make_pipeline(&pip_desc);
-    assert(pip_id != SG_INVALID_ID);
+    assert(pip_id);
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
