@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  clear-emsc.cc
+//  clear-emsc.c
 //------------------------------------------------------------------------------
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -16,7 +16,7 @@ sg_pass_action pass_action;
 
 void draw();
 
-void main() {
+int main() {
     // setup WebGL context
     emscripten_set_canvas_size(WIDTH, HEIGHT);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
@@ -26,11 +26,11 @@ void main() {
     emscripten_webgl_make_context_current(ctx);
     
     // setup sokol_gfx
-    sg_setup_desc setup_desc;
-    sg_init_setup_desc(&setup_desc);
-    setup_desc.width = WIDTH;
-    setup_desc.height = HEIGHT;
-    sg_setup(&setup_desc);
+    sg_desc desc;
+    sg_init_desc(&desc);
+    desc.width = WIDTH;
+    desc.height = HEIGHT;
+    sg_setup(&desc);
     assert(sg_valid());
 
     // setup pass action to clear to red
@@ -41,6 +41,7 @@ void main() {
     pass_action.actions = SG_PASSACTION_CLEAR_ALL;
 
     emscripten_set_main_loop(draw, 0, 1);
+    return 0;
 }
 
 void draw() {

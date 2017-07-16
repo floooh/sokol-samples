@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  clear-glfw.c
+//  triangle-glfw.c
 //------------------------------------------------------------------------------
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
@@ -7,6 +7,7 @@
 #define SOKOL_IMPL
 #define SOKOL_USE_GL
 #include "sokol_gfx.h"
+#include <stdio.h>
 
 int main() {
 
@@ -32,19 +33,30 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* default pass action, clear to red */
+    /* use default pass action (clear to grey) */
     sg_pass_action pass_action;
     sg_init_pass_action(&pass_action);
-    pass_action.color[0][0] = 1.0f;
-    pass_action.color[0][1] = 0.0f;
-    pass_action.color[0][2] = 0.0f;
-    pass_action.actions = SG_PASSACTION_CLEAR_ALL;
+
+    /* create a vertex buffer with 3 vertices */
+    float vertices[] = {
+        // positions            // colors
+         0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
+         0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
+    };
+    sg_buffer_desc buf_desc;
+    sg_init_buffer_desc(&buf_desc);
+    buf_desc.size = sizeof(vertices);
+    buf_desc.data_ptr = vertices;
+    buf_desc.data_size = sizeof(vertices);
+    sg_id buf_id = sg_make_buffer(&buf_desc);
+
+    /* create a shader */
+
+    /* create a pipeline object */
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        float g = pass_action.color[0][1] + 0.01;
-        if (g > 1.0f) g = 0.0f;
-        pass_action.color[0][1] = g;
         sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
         sg_end_pass();
         sg_commit();
@@ -52,7 +64,8 @@ int main() {
         glfwPollEvents();
     }
 
-    /* shutdown sokol_gfx and GLFW */
+    /* cleanup */
+    sg_destroy_buffer(buf_id);
     sg_discard();
     glfwTerminate();
 }
