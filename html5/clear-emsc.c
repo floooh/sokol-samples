@@ -31,7 +31,7 @@ int main() {
     desc.width = WIDTH;
     desc.height = HEIGHT;
     sg_setup(&desc);
-    assert(sg_valid());
+    assert(sg_isvalid());
 
     // setup pass action to clear to red
     sg_init_pass_action(&pass_action);
