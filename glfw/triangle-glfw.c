@@ -7,7 +7,6 @@
 #define SOKOL_IMPL
 #define SOKOL_USE_GL
 #include "sokol_gfx.h"
-#include <stdio.h>
 
 int main() {
 
@@ -33,10 +32,6 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* use default pass action (clear to grey) */
-    sg_pass_action pass_action;
-    sg_init_pass_action(&pass_action);
-
     /* create a vertex buffer with 3 vertices */
     float vertices[] = {
         // positions            // colors
@@ -55,8 +50,6 @@ int main() {
     /* create a shader */
     sg_shader_desc shd_desc;
     sg_init_shader_desc(&shd_desc);
-    sg_shader_desc_attr(&shd_desc, "position", SG_VERTEXFORMAT_FLOAT4);
-    sg_shader_desc_attr(&shd_desc, "color0", SG_VERTEXFORMAT_FLOAT4);
     shd_desc.vs.source = 
         "#version 330\n"
         "in vec4 position;\n"
@@ -79,15 +72,27 @@ int main() {
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_pipeline_desc_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
+    sg_pipeline_desc_named_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
+    sg_pipeline_desc_named_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     sg_id pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);
 
+    /* draw state struct defines the resource bindings */
+    sg_draw_state draw_state;
+    sg_init_draw_state(&draw_state);
+    draw_state.pipeline = pip_id;
+    draw_state.vertex_buffers[0] = buf_id;
+
+    /* default pass action (clear to grey) */
+    sg_pass_action pass_action;
+    sg_init_pass_action(&pass_action);
+
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
         sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+        sg_apply_draw_state(&draw_state);
+        sg_draw(0, 3, 1);
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
