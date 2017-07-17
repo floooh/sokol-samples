@@ -105,4 +105,5 @@ int main() {
     sg_destroy_buffer(buf_id);
     sg_discard();
     glfwTerminate();
+    return 0;
 }

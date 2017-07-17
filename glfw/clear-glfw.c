@@ -55,4 +55,5 @@ int main() {
     /* shutdown sokol_gfx and GLFW */
     sg_discard();
     glfwTerminate();
+    return 0;
 }
