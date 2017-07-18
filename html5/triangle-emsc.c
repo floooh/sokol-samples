@@ -80,7 +80,6 @@ int main() {
     draw_state.pipeline = sg_make_pipeline(&pip_desc);
 
     /* default pass action (clear to grey) */
-    sg_pass_action pass_action;
     sg_init_pass_action(&pass_action);
 
     /* hand off control to browser loop */
