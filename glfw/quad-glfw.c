@@ -60,13 +60,13 @@ int main() {
     ibuf_desc.data_size = sizeof(indices);
     sg_id ibuf_id = sg_make_buffer(&ibuf_desc);
 
-    /* create a shader */
+    /* create a shader (use vertex attribute locations) */
     sg_shader_desc shd_desc;
     sg_init_shader_desc(&shd_desc);
     shd_desc.vs.source = 
         "#version 330\n"
-        "in vec4 position;\n"
-        "in vec4 color0;\n"
+        "layout(location=0) in vec4 position;\n"
+        "layout(location=1) in vec4 color0;\n"
         "out vec4 color;\n"
         "void main() {\n"
         "  gl_Position = position;\n"
@@ -85,10 +85,11 @@ int main() {
     /* create a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
+    /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
+    sg_pipeline_desc_indexed_attr(&pip_desc, 0, 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_pipeline_desc_indexed_attr(&pip_desc, 0, 1, SG_VERTEXFORMAT_FLOAT4);
     sg_id pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);
 
