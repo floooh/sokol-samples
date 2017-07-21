@@ -95,13 +95,11 @@ int main() {
     /* create shader */
     sg_shader_desc shd_desc;
     sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc.vs.ub[0], "params", sizeof(params_t));
+    sg_init_uniform_block(&shd_desc.vs.ub[0], sizeof(params_t));
     sg_init_uniform(&shd_desc.vs.ub[0].u[0], "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
     shd_desc.vs.source = 
         "#version 330\n"
-        "uniform params {\n"
-        "  mat4 mvp;\n"
-        "};\n"
+        "uniform mat4 mvp;\n"
         "in vec4 position;\n"
         "in vec4 color0;\n"
         "out vec4 color;\n"
