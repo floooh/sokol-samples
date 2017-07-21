@@ -27,8 +27,6 @@ int main() {
     /* setup sokol_gfx */
     sg_desc desc; 
     sg_init_desc(&desc);
-    desc.width = WIDTH;
-    desc.height = HEIGHT;
     sg_setup(&desc);
     assert(sg_isvalid());
 
@@ -103,7 +101,7 @@ int main() {
     sg_destroy_pipeline(pip_id);
     sg_destroy_shader(shd_id);
     sg_destroy_buffer(buf_id);
-    sg_discard();
+    sg_shutdown();
     glfwTerminate();
     return 0;
 }

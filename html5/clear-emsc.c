@@ -28,8 +28,6 @@ int main() {
     // setup sokol_gfx
     sg_desc desc;
     sg_init_desc(&desc);
-    desc.width = WIDTH;
-    desc.height = HEIGHT;
     sg_setup(&desc);
     assert(sg_isvalid());
 
