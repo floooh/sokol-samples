@@ -39,7 +39,7 @@ To build for emscripten:
 ```
 > cd ~/scratch/sokol-samples
 > ./fips setup emscripten
-[...this will take a while, go make a sandwich]
+[...this will take a while]
 > ./fips set config emsc-make-release
 > ./fips build
 ...
