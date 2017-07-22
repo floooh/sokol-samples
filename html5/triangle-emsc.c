@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 //  triangle-emsc.c
+//  Vertex buffer, simple shader, pipeline state object.
 //------------------------------------------------------------------------------
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

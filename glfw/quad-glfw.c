@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 //  quad-glfw.c
+//  Indexed drawing, explicit vertex attr locations.
 //------------------------------------------------------------------------------
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"

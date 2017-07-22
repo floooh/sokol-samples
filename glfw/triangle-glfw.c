@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 //  triangle-glfw.c
+//  Vertex buffer, simple shader, pipeline state object.
 //------------------------------------------------------------------------------
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
