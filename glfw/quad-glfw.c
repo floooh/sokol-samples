@@ -6,7 +6,7 @@
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GL
+#define SOKOL_USE_GLCORE33
 #include "sokol_gfx.h"
 
 int main() {

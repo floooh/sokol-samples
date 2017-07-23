@@ -2,6 +2,7 @@
 //  quad-emsc.c
 //  Render from vertex- and index-buffer.
 //------------------------------------------------------------------------------
+#define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <emscripten/emscripten.h>

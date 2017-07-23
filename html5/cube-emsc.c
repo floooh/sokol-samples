@@ -3,6 +3,7 @@
 //  Shader uniforms updates.
 //------------------------------------------------------------------------------
 #include <stddef.h>     /* offsetof */
+#define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #include <emscripten/emscripten.h>
