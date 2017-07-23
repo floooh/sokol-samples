@@ -87,8 +87,8 @@ int main() {
     /* create a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     draw_state.pipeline = sg_make_pipeline(&pip_desc);

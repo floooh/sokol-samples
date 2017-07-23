@@ -87,8 +87,8 @@ int main() {
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-    sg_pipeline_desc_indexed_attr(&pip_desc, 0, 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_indexed_attr(&pip_desc, 0, 1, SG_VERTEXFORMAT_FLOAT4);
+    sg_init_indexed_vertex_attr(&pip_desc, 0, 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_indexed_vertex_attr(&pip_desc, 0, 1, SG_VERTEXFORMAT_FLOAT4);
     sg_id pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);
 

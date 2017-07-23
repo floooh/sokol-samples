@@ -53,7 +53,7 @@ int main() {
     sg_init_draw_state(&draw_state);
     sg_init_pass_action(&pass_action);
     
-    /* vertex buffer for static geometry (goes into bind slot 0) */
+    /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;
     const float vertices[] = {
         // positions            colors
@@ -83,7 +83,7 @@ int main() {
     buf_desc.data_size = sizeof(indices);
     draw_state.index_buffer = sg_make_buffer(&buf_desc);
     
-    /* empty, dynamic instance-data vertex buffer (goes into bind slot 1) */
+    /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
     sg_init_buffer_desc(&buf_desc);
     buf_desc.size = MAX_PARTICLES * sizeof(hmm_vec4);
     buf_desc.usage = SG_USAGE_STREAM;
@@ -116,10 +116,10 @@ int main() {
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_named_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
-    sg_pipeline_desc_named_attr(&pip_desc, 1, "instance_pos", SG_VERTEXFORMAT_FLOAT3);
-    sg_pipeline_desc_enable_instancing(&pip_desc, 1);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 1, "instance_pos", SG_VERTEXFORMAT_FLOAT3);
+    sg_init_vertex_step(&pip_desc, 1, SG_STEPFUNC_PER_INSTANCE, 1);
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
@@ -166,6 +166,7 @@ void draw() {
         pos[i].X += vel[i].X * frame_time;
         pos[i].Y += vel[i].Y * frame_time;
         pos[i].Z += vel[i].Z * frame_time;
+        /* bounce back from 'ground' */
         if (pos[i].Y < -2.0f) {
             pos[i].Y = -1.8f;
             vel[i].Y = -vel[i].Y;
@@ -181,6 +182,7 @@ void draw() {
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
+    /* and the actual draw pass... */
     sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
