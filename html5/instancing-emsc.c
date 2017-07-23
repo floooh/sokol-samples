@@ -1,16 +1,17 @@
 //------------------------------------------------------------------------------
-//  instancing-glfw.c
-//  Instanced rendering, static geometry vertex- and index-buffers,
-//  dynamically updated instance-data buffer.
+//  instancing-emsc.c
 //------------------------------------------------------------------------------
+#include <stddef.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_USE_GLES2
 #include "sokol_gfx.h"
 
 const int WIDTH = 800;
@@ -18,7 +19,11 @@ const int HEIGHT = 600;
 const int MAX_PARTICLES = 512 * 1024;
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
-/* vertex shader uniform block */
+sg_draw_state draw_state;
+sg_pass_action pass_action;
+float roty = 0.0f;
+hmm_mat4 view_proj;
+
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
@@ -28,32 +33,26 @@ int cur_num_particles = 0;
 hmm_vec3 pos[MAX_PARTICLES];
 hmm_vec3 vel[MAX_PARTICLES];
 
-int main() {
+void draw();
 
-    /* create window and GL context via GLFW */
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Instancing GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-    flextInit(w);
+int main() {
+    /* setup WebGL context */
+    emscripten_set_canvas_size(WIDTH, HEIGHT);
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
+    EmscriptenWebGLContextAttributes attrs;
+    emscripten_webgl_init_context_attributes(&attrs);
+    ctx = emscripten_webgl_create_context(0, &attrs);
+    emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc; 
+    sg_desc desc;
     sg_init_desc(&desc);
     sg_setup(&desc);
     assert(sg_isvalid());
-    assert(sg_query_feature(SG_FEATURE_INSTANCED_ARRAYS));
-
-    /* prepeare a draw state, static geometry vertex buffer will go into slot 0,
-       instance vertex buffer goes into slot 1 */
-    sg_draw_state draw_state;
+    
     sg_init_draw_state(&draw_state);
-
+    sg_init_pass_action(&pass_action);
+    
     /* vertex buffer for static geometry (goes into bind slot 0) */
     const float r = 0.05f;
     const float vertices[] = {
@@ -96,23 +95,21 @@ int main() {
     sg_init_uniform_block(&shd_desc.vs.ub[0], sizeof(vs_params_t));
     sg_init_named_uniform(&shd_desc.vs.ub[0].u[0], "mvp", offsetof(vs_params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
     shd_desc.vs.source =
-        "#version 330\n"
         "uniform mat4 mvp;\n"
-        "in vec3 position;\n"
-        "in vec4 color0;\n"
-        "in vec3 instance_pos;\n"
-        "out vec4 color;\n"
+        "attribute vec3 position;\n"
+        "attribute vec4 color0;\n"
+        "attribute vec3 instance_pos;\n"
+        "varying vec4 color;\n"
         "void main() {\n"
         "  vec4 pos = vec4(position + instance_pos, 1.0);"
         "  gl_Position = mvp * pos;\n"
         "  color = color0;\n"
         "}\n";
     shd_desc.fs.source =
-        "#version 330\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
+        "precision mediump float;\n"
+        "varying vec4 color;\n"
         "void main() {\n"
-        "  frag_color = color;\n"
+        "  gl_FragColor = color;\n"
         "}\n";
     sg_id shd = sg_make_shader(&shd_desc);
 
@@ -137,64 +134,57 @@ int main() {
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* draw loop */
-    vs_params_t vs_params;
-    float roty = 0.0f;
+    /* hand off control to browser loop */
+    emscripten_set_main_loop(draw, 0, 1);
+    return 0;
+}
+
+/* draw one frame */ 
+void draw() {
     const float frame_time = 1.0f / 60.0f;
-    while (!glfwWindowShouldClose(w)) {
-        /* emit new particles */
-        for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
-            if (cur_num_particles < MAX_PARTICLES) {
-                pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
-                vel[cur_num_particles] = HMM_Vec3(
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
-                cur_num_particles++;
-            }
-            else {
-                break;
-            }
+
+    /* emit new particles */
+    for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
+        if (cur_num_particles < MAX_PARTICLES) {
+            pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
+            vel[cur_num_particles] = HMM_Vec3(
+                ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
+                ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
+                ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
+            cur_num_particles++;
         }
-
-        /* update particle positions */
-        for (int i = 0; i < cur_num_particles; i++) {
-            vel[i].Y -= 1.0f * frame_time;
-            pos[i].X += vel[i].X * frame_time;
-            pos[i].Y += vel[i].Y * frame_time;
-            pos[i].Z += vel[i].Z * frame_time;
-            if (pos[i].Y < -2.0f) {
-                pos[i].Y = -1.8f;
-                vel[i].Y = -vel[i].Y;
-                vel[i].X *= 0.8f; vel[i].Y *= 0.8f; vel[i].Z *= 0.8f;
-            }
+        else {
+            break;
         }
-
-        /* update instance data */
-        sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
-
-        /* model-view-projection matrix */
-        roty += 1.0f;
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
-
-        sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-        sg_draw(0, 24, cur_num_particles);
-        sg_end_pass();
-        sg_commit();
-        glfwSwapBuffers(w);
-        glfwPollEvents();
     }
 
-    /* cleanup */
-    sg_destroy_pipeline(draw_state.pipeline);
-    sg_destroy_shader(shd);
-    sg_destroy_buffer(draw_state.index_buffer);
-    sg_destroy_buffer(draw_state.vertex_buffers[0]);
-    sg_destroy_buffer(draw_state.vertex_buffers[1]);
-    sg_shutdown();
-    glfwTerminate();
+    /* update particle positions */
+    for (int i = 0; i < cur_num_particles; i++) {
+        vel[i].Y -= 1.0f * frame_time;
+        pos[i].X += vel[i].X * frame_time;
+        pos[i].Y += vel[i].Y * frame_time;
+        pos[i].Z += vel[i].Z * frame_time;
+        if (pos[i].Y < -2.0f) {
+            pos[i].Y = -1.8f;
+            vel[i].Y = -vel[i].Y;
+            vel[i].X *= 0.8f; vel[i].Y *= 0.8f; vel[i].Z *= 0.8f;
+        }
+    }
+
+    /* update instance data */
+    sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
+
+    /* model-view-projection matrix */
+    roty += 1.0f;
+    vs_params_t vs_params;
+    vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
+
+    sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+    sg_apply_draw_state(&draw_state);
+    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_draw(0, 24, cur_num_particles);
+    sg_end_pass();
+    sg_commit();
 }
