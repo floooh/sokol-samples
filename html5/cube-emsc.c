@@ -90,11 +90,11 @@ int main() {
     /* create an index buffer for the cube */
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
-        4, 5, 6,  4, 6, 7,
+        6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
-        12, 13, 14,  12, 14, 15,
+        14, 13, 12,  15, 14, 12,
         16, 17, 18,  16, 18, 19,
-        20, 21, 22,  20, 22, 23
+        22, 21, 20,  23, 22, 20
     };
     sg_buffer_desc ibuf_desc;
     sg_init_buffer_desc(&ibuf_desc);

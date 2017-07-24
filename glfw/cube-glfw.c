@@ -81,11 +81,11 @@ int main() {
     /* create an index buffer for the cube */
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
-        4, 5, 6,  4, 6, 7,
+        6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
-        12, 13, 14,  12, 14, 15,
+        14, 13, 12,  15, 14, 12,
         16, 17, 18,  16, 18, 19,
-        20, 21, 22,  20, 22, 23
+        22, 21, 20,  23, 22, 20
     };
     sg_buffer_desc ibuf_desc;
     sg_init_buffer_desc(&ibuf_desc);
@@ -128,7 +128,7 @@ int main() {
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_face_enabled = false;
+    pip_desc.rast.cull_face_enabled = true;
     sg_id pip = sg_make_pipeline(&pip_desc);
 
     /* draw state struct with resource bindings */

@@ -49,7 +49,7 @@ int main() {
     assert(sg_isvalid());
     assert(sg_query_feature(SG_FEATURE_INSTANCED_ARRAYS));
 
-    /* prepeare a draw state, static geometry vertex buffer will go into slot 0,
+    /* prepare a draw state, static geometry vertex buffer will go into slot 0,
        instance vertex buffer goes into slot 1 */
     sg_draw_state draw_state;
     sg_init_draw_state(&draw_state);
