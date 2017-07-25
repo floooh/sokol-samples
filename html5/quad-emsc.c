@@ -3,8 +3,8 @@
 //  Render from vertex- and index-buffer.
 //------------------------------------------------------------------------------
 #define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #define SOKOL_IMPL
