@@ -27,6 +27,12 @@ fips_begin_app(cube-glfw cmdline)
     fips_deps(glfw3 flextgl)
 fips_end_app()
 
+fips_begin_app(texcube-glfw cmdline)
+    fips_vs_warning_level(3)
+    fips_files(texcube-glfw.c)
+    fips_deps(glfw3 flextgl)
+fips_end_app()
+
 fips_begin_app(instancing-glfw cmdline)
     fips_vs_warning_level(3)
     fips_files(instancing-glfw.c)
