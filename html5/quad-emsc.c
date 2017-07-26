@@ -103,7 +103,7 @@ int main() {
 
 /* draw one frame */
 void draw() {
-    sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
     sg_apply_draw_state(&draw_state);
     sg_draw(0, 6, 1);
     sg_end_pass();

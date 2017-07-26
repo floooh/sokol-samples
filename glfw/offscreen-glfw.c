@@ -110,6 +110,11 @@ int main() {
     sg_id ibuf = sg_make_buffer(&ibuf_desc);
 
     /* pass actions for offscreen- and default-pass */
+    sg_pass_action offscreen_pass_action;
+    sg_init_pass_action(&offscreen_pass_action);
+    offscreen_pass_action.color[0][0] = 1.0f;
+    offscreen_pass_action.color[0][1] = 0.5f;
+    offscreen_pass_action.color[0][2] = 0.0f;
     sg_pass_action default_pass_action;
     sg_init_pass_action(&default_pass_action);
     default_pass_action.color[0][0] = 0.0f;
@@ -118,7 +123,12 @@ int main() {
 
     /* the draw loop */
     while (!glfwWindowShouldClose(w)) {
-        sg_begin_pass(SG_DEFAULT_PASS, &default_pass_action, WIDTH, HEIGHT);
+        /* offscreen pass */
+        sg_begin_pass(pass, &offscreen_pass_action);
+        sg_end_pass();
+
+        /* default pass */
+        sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);

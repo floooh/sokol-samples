@@ -51,7 +51,7 @@ void draw() {
     pass_action.color[0][1] = g;
 
     // draw one frame
-    sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
     sg_end_pass();
     sg_commit();
 }

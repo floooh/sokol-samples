@@ -44,7 +44,7 @@ int main() {
         float g = pass_action.color[0][1] + 0.01;
         if (g > 1.0f) g = 0.0f;
         pass_action.color[0][1] = g;
-        sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+        sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);

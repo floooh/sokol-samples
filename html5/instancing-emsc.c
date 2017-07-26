@@ -92,8 +92,8 @@ int main() {
     /* create a shader */
     sg_shader_desc shd_desc;
     sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc.vs.ub[0], sizeof(vs_params_t));
-    sg_init_named_uniform(&shd_desc.vs.ub[0].u[0], "mvp", offsetof(vs_params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
+    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(vs_params_t));
+    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(vs_params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
     shd_desc.vs.source =
         "uniform mat4 mvp;\n"
         "attribute vec3 position;\n"
@@ -183,7 +183,7 @@ void draw() {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
     /* and the actual draw pass... */
-    sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 24, cur_num_particles);

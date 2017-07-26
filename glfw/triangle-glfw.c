@@ -89,7 +89,7 @@ int main() {
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        sg_begin_pass(SG_DEFAULT_PASS, &pass_action, WIDTH, HEIGHT);
+        sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
         sg_apply_draw_state(&draw_state);
         sg_draw(0, 3, 1);
         sg_end_pass();
