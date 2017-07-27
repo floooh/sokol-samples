@@ -50,19 +50,21 @@ int main() {
     img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
     sg_id img = sg_make_image(&img_desc);
 
-    /* create an offscreen render pass */
+    /* an offscreen pass rendering to that image */
     sg_pass_desc pass_desc;
     sg_init_pass_desc(&pass_desc);
     pass_desc.color_attachments[0].image = img;
     pass_desc.depth_stencil_attachment.image = img;
     sg_id pass = sg_make_pass(&pass_desc);
 
-    /* pass actions for offscreen- and default-pass */
+    /* pass action for offscreen pass, clearing to black */ 
     sg_pass_action offscreen_pass_action;
     sg_init_pass_action(&offscreen_pass_action);
     offscreen_pass_action.color[0][0] = 0.0f;
     offscreen_pass_action.color[0][1] = 0.0f;
     offscreen_pass_action.color[0][2] = 0.0f;
+
+    /* pass action for default pass, clearing to blue-ish */
     sg_pass_action default_pass_action;
     sg_init_pass_action(&default_pass_action);
     default_pass_action.color[0][0] = 0.0f;
@@ -109,7 +111,7 @@ int main() {
     vbuf_desc.data_size = sizeof(vertices);
     sg_id vbuf = sg_make_buffer(&vbuf_desc);
 
-    /* create an index buffer for the cube */
+    /* an index buffer for the cube */
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -126,7 +128,7 @@ int main() {
     ibuf_desc.data_size = sizeof(indices);
     sg_id ibuf = sg_make_buffer(&ibuf_desc);
 
-    /* shader for offscreen rendering a non-textured cube */
+    /* shader for the non-textured cube, rendered in the offscreen pass */
     sg_shader_desc shd_desc;
     sg_init_shader_desc(&shd_desc);
     sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
@@ -205,7 +207,7 @@ int main() {
     pip_desc.rast.cull_face_enabled = true;
     sg_id default_pip = sg_make_pipeline(&pip_desc);
 
-    /* the draw state for offscreen rendering */
+    /* the draw state for offscreen rendering with all the required resources */
     sg_draw_state offscreen_ds;
     sg_init_draw_state(&offscreen_ds);
     offscreen_ds.pipeline = offscreen_pip;
@@ -213,7 +215,7 @@ int main() {
     offscreen_ds.index_buffer = ibuf;
 
     /* and the draw state for the default pass where a textured cube will
-       rendered, note how the image used as render target is used as texture here */
+       rendered, note how the render-target image is used as texture here */
     sg_draw_state default_ds;
     sg_init_draw_state(&default_ds);
     default_ds.pipeline = default_pip;
