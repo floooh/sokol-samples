@@ -108,10 +108,8 @@ int main() {
     sg_init_image_desc(&img_desc);
     img_desc.width = img_desc.height = 4;
     img_desc.color_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.min_filter = SG_FILTER_LINEAR;
-    img_desc.mag_filter = SG_FILTER_LINEAR;
-    img_desc.wrap_u = SG_WRAP_REPEAT;
-    img_desc.wrap_v = SG_WRAP_REPEAT;
+    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
+    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
     img_desc.num_data_items = 1;
     img_desc.data_ptrs = img_data_ptrs;
     img_desc.data_sizes = img_data_sizes; 
@@ -150,9 +148,9 @@ int main() {
     /* create pipeline object */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
-    sg_init_named_vertex_attr(&pip_desc, 0, "texcoord0", SG_VERTEXFORMAT_FLOAT2);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 0, "texcoord0", 28, SG_VERTEXFORMAT_FLOAT2);
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;

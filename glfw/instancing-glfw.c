@@ -119,9 +119,9 @@ int main() {
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
-    sg_init_named_vertex_attr(&pip_desc, 1, "instance_pos", SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 1, "instance_pos", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_vertex_step(&pip_desc, 1, SG_STEPFUNC_PER_INSTANCE, 1);
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;

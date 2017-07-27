@@ -71,8 +71,8 @@ int main() {
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     sg_id pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);

@@ -15,6 +15,10 @@
 const int WIDTH = 640;
 const int HEIGHT = 480;
 
+typedef struct {
+    hmm_mat4 mvp;
+} params_t;
+
 int main() {
 
     /* create window and GL context via GLFW */
@@ -42,8 +46,8 @@ int main() {
     img_desc.width = img_desc.height = 512;
     img_desc.color_format = SG_PIXELFORMAT_RGBA8;
     img_desc.depth_format = SG_PIXELFORMAT_DEPTH;
-    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_NEAREST;
-    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
+    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
     sg_id img = sg_make_image(&img_desc);
 
     /* create an offscreen render pass */
@@ -53,37 +57,50 @@ int main() {
     pass_desc.depth_stencil_attachment.image = img;
     sg_id pass = sg_make_pass(&pass_desc);
 
-    /* cube vertex buffer with positions and tex coords */
+    /* pass actions for offscreen- and default-pass */
+    sg_pass_action offscreen_pass_action;
+    sg_init_pass_action(&offscreen_pass_action);
+    offscreen_pass_action.color[0][0] = 1.0f;
+    offscreen_pass_action.color[0][1] = 0.5f;
+    offscreen_pass_action.color[0][2] = 0.0f;
+    sg_pass_action default_pass_action;
+    sg_init_pass_action(&default_pass_action);
+    default_pass_action.color[0][0] = 0.0f;
+    default_pass_action.color[0][1] = 0.5f;
+    default_pass_action.color[0][2] = 1.0f;
+
+    /* cube vertex buffer with positions, colors and tex coords */
     float vertices[] = {
-        -1.0, -1.0, -1.0,   0.0, 0.0, 
-         1.0, -1.0, -1.0,   1.0, 0.0,
-         1.0,  1.0, -1.0,   1.0, 1.0,
-        -1.0,  1.0, -1.0,   0.0, 1.0,
+        /* pos                  color                       uvs */
+        -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
 
-        -1.0, -1.0,  1.0,   0.0, 0.0,
-         1.0, -1.0,  1.0,   1.0, 0.0,
-         1.0,  1.0,  1.0,   1.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 1.0,
+        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
+         1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
 
-        -1.0, -1.0, -1.0,   0.0, 0.0,
-        -1.0,  1.0, -1.0,   1.0, 0.0,
-        -1.0,  1.0,  1.0,   1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 1.0,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
 
-        1.0, -1.0, -1.0,   0.0, 0.0,
-        1.0,  1.0, -1.0,   1.0, 0.0,
-        1.0,  1.0,  1.0,   1.0, 1.0,
-        1.0, -1.0,  1.0,   0.0, 1.0,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
 
-        -1.0, -1.0, -1.0,  0.0, 0.0,
-        -1.0, -1.0,  1.0,  1.0, 0.0,
-         1.0, -1.0,  1.0,  1.0, 1.0,
-         1.0, -1.0, -1.0,  0.0, 1.0,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
 
-        -1.0,  1.0, -1.0,  0.0, 0.0,
-        -1.0,  1.0,  1.0,  1.0, 0.0,
-         1.0,  1.0,  1.0,  1.0, 1.0,
-         1.0,  1.0, -1.0,  0.0, 1.0,
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f
     };
     sg_buffer_desc vbuf_desc;
     sg_init_buffer_desc(&vbuf_desc);
@@ -109,19 +126,69 @@ int main() {
     ibuf_desc.data_size = sizeof(indices);
     sg_id ibuf = sg_make_buffer(&ibuf_desc);
 
-    /* pass actions for offscreen- and default-pass */
-    sg_pass_action offscreen_pass_action;
-    sg_init_pass_action(&offscreen_pass_action);
-    offscreen_pass_action.color[0][0] = 1.0f;
-    offscreen_pass_action.color[0][1] = 0.5f;
-    offscreen_pass_action.color[0][2] = 0.0f;
-    sg_pass_action default_pass_action;
-    sg_init_pass_action(&default_pass_action);
-    default_pass_action.color[0][0] = 0.0f;
-    default_pass_action.color[0][1] = 0.5f;
-    default_pass_action.color[0][2] = 1.0f;
+    /* shader for offscreen rendering a non-textured cube */
+    sg_shader_desc shd_desc;
+    sg_init_shader_desc(&shd_desc);
+    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
+    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
+    shd_desc.vs.source = 
+        "#version 330\n"
+        "uniform mat4 mvp;\n"
+        "in vec4 position;\n"
+        "in vec4 color0;\n"
+        "out vec4 color;\n"
+        "void main() {\n"
+        "  gl_Position = mvp * position;\n"
+        "  color = color0;\n"
+        "}\n";
+    shd_desc.fs.source =
+        "#version 330\n"
+        "in vec4 color;\n"
+        "out vec4 frag_color;\n"
+        "void main() {\n"
+        "  frag_color = color;\n"
+        "}\n";
+    sg_id offscreen_shd = sg_make_shader(&shd_desc);
+
+    /* ...and a second shader for rendering a textured cube in the default pass */
+    sg_init_shader_desc(&shd_desc);
+    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
+    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
+    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_VS, "tex", SG_IMAGETYPE_2D);
+    shd_desc.vs.source = 
+        "#version 330\n"
+        "uniform mat4 mvp;\n"
+        "in vec4 position;\n"
+        "in vec4 color0;\n"
+        "in vec2 texcoord0;\n"
+        "out vec4 color;\n"
+        "out vec2 uv;\n"
+        "void main() {\n"
+        "  gl_Position = mvp * position;\n"
+        "  color = color0;\n"
+        "  uv = texcoord0;\n"
+        "}\n";
+    shd_desc.fs.source =
+        "#version 330\n"
+        "uniform sampler2D tex;\n"
+        "in vec4 color;\n"
+        "in vec2 uv;\n"
+        "out vec4 frag_color;\n"
+        "void main() {\n"
+        "  frag_color = texture(tex, uv) * color;\n"
+        "}\n";
+    sg_id default_shd = sg_make_shader(&shd_desc);
+
+    /* pipeline object for offscreen rendering */
+
+    /* view-projection matrix */
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     /* the draw loop */
+    params_t vs_params = { };
+    float rx = 0.0f, ry = 0.0f;
     while (!glfwWindowShouldClose(w)) {
         /* offscreen pass */
         sg_begin_pass(pass, &offscreen_pass_action);
