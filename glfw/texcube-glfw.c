@@ -148,6 +148,7 @@ int main() {
     /* create pipeline object */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
+    sg_init_vertex_stride(&pip_desc, 0, 36);
     sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     sg_init_named_vertex_attr(&pip_desc, 0, "texcoord0", 28, SG_VERTEXFORMAT_FLOAT2);

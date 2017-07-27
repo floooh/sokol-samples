@@ -60,47 +60,47 @@ int main() {
     /* pass actions for offscreen- and default-pass */
     sg_pass_action offscreen_pass_action;
     sg_init_pass_action(&offscreen_pass_action);
-    offscreen_pass_action.color[0][0] = 1.0f;
-    offscreen_pass_action.color[0][1] = 0.5f;
+    offscreen_pass_action.color[0][0] = 0.0f;
+    offscreen_pass_action.color[0][1] = 0.0f;
     offscreen_pass_action.color[0][2] = 0.0f;
     sg_pass_action default_pass_action;
     sg_init_pass_action(&default_pass_action);
     default_pass_action.color[0][0] = 0.0f;
-    default_pass_action.color[0][1] = 0.5f;
+    default_pass_action.color[0][1] = 0.25f;
     default_pass_action.color[0][2] = 1.0f;
 
     /* cube vertex buffer with positions, colors and tex coords */
     float vertices[] = {
         /* pos                  color                       uvs */
-        -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
-         1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f, 
+         1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
-        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f, -1.0f, -1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
 
          1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
         -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
         -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
     sg_buffer_desc vbuf_desc;
     sg_init_buffer_desc(&vbuf_desc);
@@ -154,7 +154,7 @@ int main() {
     sg_init_shader_desc(&shd_desc);
     sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
     sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
-    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_VS, "tex", SG_IMAGETYPE_2D);
+    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_FS, "tex", SG_IMAGETYPE_2D);
     shd_desc.vs.source = 
         "#version 330\n"
         "uniform mat4 mvp;\n"
@@ -175,33 +175,94 @@ int main() {
         "in vec2 uv;\n"
         "out vec4 frag_color;\n"
         "void main() {\n"
-        "  frag_color = texture(tex, uv) * color;\n"
+        "  frag_color = texture(tex, uv) + color * 0.5;\n"
         "}\n";
     sg_id default_shd = sg_make_shader(&shd_desc);
 
-    /* pipeline object for offscreen rendering */
+    /* pipeline object for offscreen rendering, don't need texcoords here */
+    sg_pipeline_desc pip_desc;
+    sg_init_pipeline_desc(&pip_desc);
+    sg_init_vertex_stride(&pip_desc, 0, 36);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
+    pip_desc.shader = offscreen_shd;
+    pip_desc.index_type = SG_INDEXTYPE_UINT16;
+    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
+    pip_desc.depth_stencil.depth_write_enabled = true;
+    pip_desc.rast.cull_face_enabled = true;
+    sg_id offscreen_pip = sg_make_pipeline(&pip_desc);
+
+    /* and another pipeline object for the default pass */
+    sg_init_pipeline_desc(&pip_desc);
+    sg_init_vertex_stride(&pip_desc, 0, 36);
+    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
+    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
+    sg_init_named_vertex_attr(&pip_desc, 0, "texcoord0", 28, SG_VERTEXFORMAT_FLOAT2);
+    pip_desc.shader = default_shd;
+    pip_desc.index_type = SG_INDEXTYPE_UINT16;
+    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
+    pip_desc.depth_stencil.depth_write_enabled = true;
+    pip_desc.rast.cull_face_enabled = true;
+    sg_id default_pip = sg_make_pipeline(&pip_desc);
+
+    /* the draw state for offscreen rendering */
+    sg_draw_state offscreen_ds;
+    sg_init_draw_state(&offscreen_ds);
+    offscreen_ds.pipeline = offscreen_pip;
+    offscreen_ds.vertex_buffers[0] = vbuf;
+    offscreen_ds.index_buffer = ibuf;
+
+    /* and the draw state for the default pass where a textured cube will
+       rendered, note how the image used as render target is used as texture here */
+    sg_draw_state default_ds;
+    sg_init_draw_state(&default_ds);
+    default_ds.pipeline = default_pip;
+    default_ds.vertex_buffers[0] = vbuf;
+    default_ds.index_buffer = ibuf;
+    default_ds.fs_images[0] = img;
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* the draw loop */
+    /* everything ready, on to the draw loop! */
     params_t vs_params = { };
     float rx = 0.0f, ry = 0.0f;
     while (!glfwWindowShouldClose(w)) {
-        /* offscreen pass */
+
+        /* prepare the uniform block with the model-view-projection matrix,
+           we just use the same matrix for the offscreen- and default-pass */
+        rx += 1.0f; ry += 2.0f;
+        hmm_mat4 model = HMM_MultiplyMat4(
+            HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f)),
+            HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
+        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+
+        /* offscreen pass, this renders a rotating, untextured cube to the
+           offscreen render target */
         sg_begin_pass(pass, &offscreen_pass_action);
+        sg_apply_draw_state(&offscreen_ds);
+        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_draw(0, 36, 1);
         sg_end_pass();
 
-        /* default pass */
+        /* and the default pass, this renders a textured cube, using the 
+           offscreen render target as texture image */
         sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
+        sg_apply_draw_state(&default_ds);
+        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
         glfwPollEvents();
     }
 
+    sg_destroy_pipeline(default_pip);
+    sg_destroy_pipeline(offscreen_pip);
+    sg_destroy_shader(default_shd);
+    sg_destroy_shader(offscreen_shd);
     sg_destroy_buffer(ibuf);
     sg_destroy_buffer(vbuf);
     sg_destroy_pass(pass);
