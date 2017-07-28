@@ -36,6 +36,7 @@ int main() {
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
+    attrs.antialias = true;
     ctx = emscripten_webgl_create_context(0, &attrs);
     emscripten_webgl_make_context_current(ctx);
 
@@ -119,7 +120,7 @@ int main() {
         "  color = color0;\n"
         "}\n";
     shd_desc.fs.source =
-        "precision mediump float;"
+        "precision mediump float;\n"
         "varying vec4 color;\n"
         "void main() {\n"
         "  gl_FragColor = color;\n"
@@ -152,7 +153,7 @@ int main() {
 /* draw one frame */ 
 void draw() {
     /* compute model-view-projection matrix for vertex shader */
-    params_t vs_params = { };
+    params_t vs_params;
     rx += 1.0f; ry += 2.0f;
     hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));

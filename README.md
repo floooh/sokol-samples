@@ -1,5 +1,8 @@
 # sokol-samples
+
 Sample code for https://github.com/floooh/sokol
+
+asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
 *Work In Progress*
 

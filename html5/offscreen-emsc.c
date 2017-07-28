@@ -1,43 +1,57 @@
 //------------------------------------------------------------------------------
-//  offscreen-glfw.c
-//  Simple offscreen rendering.
+//  offscreen-emsc.c
 //------------------------------------------------------------------------------
+#include <stddef.h>     /* offsetof */
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_USE_GLES2
 #include "sokol_gfx.h"
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
+sg_id offscreen_pass;
+sg_draw_state offscreen_draw_state;
+sg_draw_state default_draw_state;
+sg_pass_action offscreen_pass_action;
+sg_pass_action default_pass_action;
+float rx = 0.0f;
+float ry = 0.0f;
+hmm_mat4 view_proj;
 
 typedef struct {
     hmm_mat4 mvp;
 } params_t;
 
-int main() {
+void draw();
 
-    /* create window and GL context via GLFW */
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Offscreen GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-    flextInit(w);
+int main() {
+    /* setup WebGL context */
+    emscripten_set_canvas_size(WIDTH, HEIGHT);
+    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
+    EmscriptenWebGLContextAttributes attrs;
+    emscripten_webgl_init_context_attributes(&attrs);
+    attrs.antialias = true;
+    ctx = emscripten_webgl_create_context(0, &attrs);
+    emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc; 
+    sg_desc desc;
     sg_init_desc(&desc);
     sg_setup(&desc);
     assert(sg_isvalid());
+
+    /* pass action for default pass, clearing to blue-ish */
+    sg_init_pass_action(&default_pass_action);
+    default_pass_action.color[0][0] = 0.0f;
+    default_pass_action.color[0][1] = 0.25f;
+    default_pass_action.color[0][2] = 1.0f;
 
     /* a render target image */
     sg_image_desc img_desc;
@@ -59,21 +73,13 @@ int main() {
     sg_init_pass_desc(&pass_desc);
     pass_desc.color_attachments[0].image = img;
     pass_desc.depth_stencil_attachment.image = img;
-    sg_id offscreen_pass = sg_make_pass(&pass_desc);
+    offscreen_pass = sg_make_pass(&pass_desc);
 
     /* pass action for offscreen pass, clearing to black */ 
-    sg_pass_action offscreen_pass_action;
     sg_init_pass_action(&offscreen_pass_action);
     offscreen_pass_action.color[0][0] = 0.0f;
     offscreen_pass_action.color[0][1] = 0.0f;
     offscreen_pass_action.color[0][2] = 0.0f;
-
-    /* pass action for default pass, clearing to blue-ish */
-    sg_pass_action default_pass_action;
-    sg_init_pass_action(&default_pass_action);
-    default_pass_action.color[0][0] = 0.0f;
-    default_pass_action.color[0][1] = 0.25f;
-    default_pass_action.color[0][2] = 1.0f;
 
     /* cube vertex buffer with positions, colors and tex coords */
     float vertices[] = {
@@ -138,21 +144,19 @@ int main() {
     sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
     sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
     shd_desc.vs.source = 
-        "#version 330\n"
         "uniform mat4 mvp;\n"
-        "in vec4 position;\n"
-        "in vec4 color0;\n"
-        "out vec4 color;\n"
+        "attribute vec4 position;\n"
+        "attribute vec4 color0;\n"
+        "varying vec4 color;\n"
         "void main() {\n"
         "  gl_Position = mvp * position;\n"
         "  color = color0;\n"
         "}\n";
     shd_desc.fs.source =
-        "#version 330\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
+        "precision mediump float;\n"
+        "varying vec4 color;\n"
         "void main() {\n"
-        "  frag_color = color;\n"
+        "  gl_FragColor = color;\n"
         "}\n";
     sg_id offscreen_shd = sg_make_shader(&shd_desc);
 
@@ -162,26 +166,24 @@ int main() {
     sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
     sg_init_named_image(&shd_desc, SG_SHADERSTAGE_FS, "tex", SG_IMAGETYPE_2D);
     shd_desc.vs.source = 
-        "#version 330\n"
         "uniform mat4 mvp;\n"
-        "in vec4 position;\n"
-        "in vec4 color0;\n"
-        "in vec2 texcoord0;\n"
-        "out vec4 color;\n"
-        "out vec2 uv;\n"
+        "attribute vec4 position;\n"
+        "attribute vec4 color0;\n"
+        "attribute vec2 texcoord0;\n"
+        "varying vec4 color;\n"
+        "varying vec2 uv;\n"
         "void main() {\n"
         "  gl_Position = mvp * position;\n"
         "  color = color0;\n"
         "  uv = texcoord0;\n"
         "}\n";
     shd_desc.fs.source =
-        "#version 330\n"
+        "precision mediump float;"
         "uniform sampler2D tex;\n"
-        "in vec4 color;\n"
-        "in vec2 uv;\n"
-        "out vec4 frag_color;\n"
+        "varying vec4 color;\n"
+        "varying vec2 uv;\n"
         "void main() {\n"
-        "  frag_color = texture(tex, uv) + color * 0.5;\n"
+        "  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
         "}\n";
     sg_id default_shd = sg_make_shader(&shd_desc);
 
@@ -212,67 +214,53 @@ int main() {
     sg_id default_pip = sg_make_pipeline(&pip_desc);
 
     /* the draw state for offscreen rendering with all the required resources */
-    sg_draw_state offscreen_ds;
-    sg_init_draw_state(&offscreen_ds);
-    offscreen_ds.pipeline = offscreen_pip;
-    offscreen_ds.vertex_buffers[0] = vbuf;
-    offscreen_ds.index_buffer = ibuf;
+    sg_init_draw_state(&offscreen_draw_state);
+    offscreen_draw_state.pipeline = offscreen_pip;
+    offscreen_draw_state.vertex_buffers[0] = vbuf;
+    offscreen_draw_state.index_buffer = ibuf;
 
     /* and the draw state for the default pass where a textured cube will
        rendered, note how the render-target image is used as texture here */
-    sg_draw_state default_ds;
-    sg_init_draw_state(&default_ds);
-    default_ds.pipeline = default_pip;
-    default_ds.vertex_buffers[0] = vbuf;
-    default_ds.index_buffer = ibuf;
-    default_ds.fs_images[0] = img;
+    sg_init_draw_state(&default_draw_state);
+    default_draw_state.pipeline = default_pip;
+    default_draw_state.vertex_buffers[0] = vbuf;
+    default_draw_state.index_buffer = ibuf;
+    default_draw_state.fs_images[0] = img;
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* everything ready, on to the draw loop! */
-    params_t vs_params = {0};
-    float rx = 0.0f, ry = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
+    /* hand off control to browser loop */
+    emscripten_set_main_loop(draw, 0, 1);
+    return 0;
+}
 
-        /* prepare the uniform block with the model-view-projection matrix,
-           we just use the same matrix for the offscreen- and default-pass */
-        rx += 1.0f; ry += 2.0f;
-        hmm_mat4 model = HMM_MultiplyMat4(
-            HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f)),
-            HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+void draw() {
+    /* prepare the uniform block with the model-view-projection matrix,
+        we just use the same matrix for the offscreen- and default-pass */
+    params_t vs_params;
+    rx += 1.0f; ry += 2.0f;
+    hmm_mat4 model = HMM_MultiplyMat4(
+        HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f)),
+        HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
+    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        /* offscreen pass, this renders a rotating, untextured cube to the
-           offscreen render target */
-        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-        sg_apply_draw_state(&offscreen_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-        sg_draw(0, 36, 1);
-        sg_end_pass();
+    /* offscreen pass, this renders a rotating, untextured cube to the
+        offscreen render target */
+    sg_begin_pass(offscreen_pass, &offscreen_pass_action);
+    sg_apply_draw_state(&offscreen_draw_state);
+    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_draw(0, 36, 1);
+    sg_end_pass();
 
-        /* and the default pass, this renders a textured cube, using the 
-           offscreen render target as texture image */
-        sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
-        sg_apply_draw_state(&default_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-        sg_draw(0, 36, 1);
-        sg_end_pass();
-        sg_commit();
-        glfwSwapBuffers(w);
-        glfwPollEvents();
-    }
-
-    sg_destroy_pipeline(default_pip);
-    sg_destroy_pipeline(offscreen_pip);
-    sg_destroy_shader(default_shd);
-    sg_destroy_shader(offscreen_shd);
-    sg_destroy_buffer(ibuf);
-    sg_destroy_buffer(vbuf);
-    sg_destroy_pass(offscreen_pass);
-    sg_destroy_image(img);
-    sg_shutdown();
-    glfwTerminate();
+    /* and the default pass, this renders a textured cube, using the 
+        offscreen render target as texture image */
+    sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
+    sg_apply_draw_state(&default_draw_state);
+    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_draw(0, 36, 1);
+    sg_end_pass();
+    sg_commit();
 }

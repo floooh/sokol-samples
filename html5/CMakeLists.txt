@@ -14,6 +14,14 @@ fips_begin_app(cube-emsc windowed)
     fips_files(cube-emsc.c)
 fips_end_app()
 
+fips_begin_app(texcube-emsc windowed)
+    fips_files(texcube-emsc.c)
+fips_end_app()
+
 fips_begin_app(instancing-emsc windowed)
     fips_files(instancing-emsc.c)
+fips_end_app()
+
+fips_begin_app(offscreen-emsc windowed)
+    fips_files(offscreen-emsc.c)
 fips_end_app()

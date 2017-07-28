@@ -1,6 +1,3 @@
-#
-#   oryol flextGL profile for desktop platforms
-#
 version 3.3 core
 extension ARB_debug_output optional
 
