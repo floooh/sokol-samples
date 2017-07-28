@@ -14,8 +14,8 @@
 #define SOKOL_USE_GLES2
 #include "sokol_gfx.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WIDTH = 640;
+const int HEIGHT = 480;
 const int MAX_PARTICLES = 512 * 1024;
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
@@ -52,6 +52,9 @@ int main() {
     
     sg_init_draw_state(&draw_state);
     sg_init_pass_action(&pass_action);
+    pass_action.color[0][0] = 0.0f;
+    pass_action.color[0][1] = 0.0f;
+    pass_action.color[0][2] = 0.0f;
     
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;

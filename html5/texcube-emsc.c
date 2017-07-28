@@ -107,10 +107,10 @@ int main() {
 
     /* create a checkerboard texture */
     uint32_t pixels[4*4] = {
-        0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-        0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
     const void* img_data_ptrs[] = { pixels };
     const int img_data_sizes[] = { sizeof(pixels) };
