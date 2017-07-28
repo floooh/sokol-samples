@@ -48,6 +48,10 @@ int main() {
     img_desc.depth_format = SG_PIXELFORMAT_DEPTH;
     img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
+    /* if supported, use MSAA for offscreen rendering */
+    if (sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS)) {
+        img_desc.sample_count = 4;
+    }
     sg_id img = sg_make_image(&img_desc);
 
     /* an offscreen pass rendering to that image */
