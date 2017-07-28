@@ -21,3 +21,7 @@ fips_end_app()
 fips_begin_app(instancing-emsc windowed)
     fips_files(instancing-emsc.c)
 fips_end_app()
+
+fips_begin_app(offscreen-emsc windowed)
+    fips_files(offscreen-emsc.c)
+fips_end_app()

@@ -14,8 +14,8 @@
 #define SOKOL_USE_GLES2
 #include "sokol_gfx.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WIDTH = 640;
+const int HEIGHT = 480;
 
 sg_draw_state draw_state;
 sg_pass_action pass_action;
