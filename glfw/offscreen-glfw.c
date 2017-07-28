@@ -55,7 +55,7 @@ int main() {
     sg_init_pass_desc(&pass_desc);
     pass_desc.color_attachments[0].image = img;
     pass_desc.depth_stencil_attachment.image = img;
-    sg_id pass = sg_make_pass(&pass_desc);
+    sg_id offscreen_pass = sg_make_pass(&pass_desc);
 
     /* pass action for offscreen pass, clearing to black */ 
     sg_pass_action offscreen_pass_action;
@@ -243,7 +243,7 @@ int main() {
 
         /* offscreen pass, this renders a rotating, untextured cube to the
            offscreen render target */
-        sg_begin_pass(pass, &offscreen_pass_action);
+        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_draw_state(&offscreen_ds);
         sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
@@ -267,7 +267,7 @@ int main() {
     sg_destroy_shader(offscreen_shd);
     sg_destroy_buffer(ibuf);
     sg_destroy_buffer(vbuf);
-    sg_destroy_pass(pass);
+    sg_destroy_pass(offscreen_pass);
     sg_destroy_image(img);
     sg_shutdown();
     glfwTerminate();
