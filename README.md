@@ -6,6 +6,12 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
 *Work In Progress*
 
+### Build Status:
+
+|Platform|Build Status|
+|--------|------|
+|Windows|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)
+
 ## How to build
 
 Currently only OSX and emscripten are tested. Linux and Windows may work too
