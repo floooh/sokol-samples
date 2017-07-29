@@ -7,4 +7,4 @@ compiler: clang
 os: 
   - osx
 script:
-  - python fips build osx-make-debug; fi
+  - python fips build osx-make-debug
