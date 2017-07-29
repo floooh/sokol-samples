@@ -7,4 +7,4 @@ clone_depth: 3
 
 build_script:
     - cmd: c:/Python36/python.exe fips build win64-vstudio-debug
-    - cmd: c:/Pythin36/python.exe fips build win64-vstudio-release
+    - cmd: c:/Python36/python.exe fips build win64-vstudio-release
