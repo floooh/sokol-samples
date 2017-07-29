@@ -148,7 +148,7 @@ int main() {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    params_t vs_params = {0};
+    params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
     while (!glfwWindowShouldClose(w)) {
         /* rotated model matrix */
