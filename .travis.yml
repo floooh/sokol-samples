@@ -1,0 +1,34 @@
+# force old non-container infrastructure, to see whether this
+# is the reason why the IO test hangs
+git:
+  depth: 3
+language: cpp
+compiler: gcc
+os: 
+  - osx
+  - linux
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports # cmake 3.x
+    packages:
+      - cmake
+      - cmake-data
+      - libglu1-mesa-dev
+      - xorg-dev
+
+install:
+  - echo $TRAVIS_OS_NAME
+
+script:
+  - echo $TRAVIS_OS_NAME
+  - cmake --version
+
+  # LINUX
+  - gcc --version
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips build linux-make-debug; fi
+
+  # OSX
+  - clang --version
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips build osx-make-debug; fi
