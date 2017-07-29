@@ -15,7 +15,7 @@
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
-#define MAX_PARTICLES = 524288; /* 512*1024, this is necessary for VS */
+#define MAX_PARTICLES 524288 /* 512*1024, this is necessary for VS */
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
 /* vertex shader uniform block */
