@@ -6,7 +6,7 @@ language: cpp
 compiler: gcc
 os: 
   - osx
-  - linux
+#  - linux
 addons:
   apt:
     sources:
