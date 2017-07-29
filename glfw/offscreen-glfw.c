@@ -233,7 +233,7 @@ int main() {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     /* everything ready, on to the draw loop! */
-    params_t vs_params = { };
+    params_t vs_params = {0};
     float rx = 0.0f, ry = 0.0f;
     while (!glfwWindowShouldClose(w)) {
 

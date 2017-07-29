@@ -41,7 +41,7 @@ int main() {
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        float g = pass_action.color[0][1] + 0.01;
+        float g = (float)(pass_action.color[0][1] + 0.01);
         if (g > 1.0f) g = 0.0f;
         pass_action.color[0][1] = g;
         sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
