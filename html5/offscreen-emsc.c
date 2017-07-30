@@ -11,12 +11,12 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLES2
+#define SOKOL_GLES2
 #include "sokol_gfx.h"
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-sg_id offscreen_pass;
+sg_pass offscreen_pass;
 sg_draw_state offscreen_draw_state;
 sg_draw_state default_draw_state;
 sg_pass_action offscreen_pass_action;
@@ -66,7 +66,7 @@ int main() {
     if (sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS)) {
         img_desc.sample_count = 4;
     }
-    sg_id img = sg_make_image(&img_desc);
+    sg_image img = sg_make_image(&img_desc);
 
     /* an offscreen pass rendering to that image */
     sg_pass_desc pass_desc;
@@ -119,7 +119,7 @@ int main() {
     vbuf_desc.size = sizeof(vertices);
     vbuf_desc.data_ptr = vertices;
     vbuf_desc.data_size = sizeof(vertices);
-    sg_id vbuf = sg_make_buffer(&vbuf_desc);
+    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
     /* an index buffer for the cube */
     uint16_t indices[] = {
@@ -136,7 +136,7 @@ int main() {
     ibuf_desc.size = sizeof(indices);
     ibuf_desc.data_ptr = indices;
     ibuf_desc.data_size = sizeof(indices);
-    sg_id ibuf = sg_make_buffer(&ibuf_desc);
+    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
     /* shader for the non-textured cube, rendered in the offscreen pass */
     sg_shader_desc shd_desc;
@@ -158,7 +158,7 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = color;\n"
         "}\n";
-    sg_id offscreen_shd = sg_make_shader(&shd_desc);
+    sg_shader offscreen_shd = sg_make_shader(&shd_desc);
 
     /* ...and a second shader for rendering a textured cube in the default pass */
     sg_init_shader_desc(&shd_desc);
@@ -185,7 +185,7 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
         "}\n";
-    sg_id default_shd = sg_make_shader(&shd_desc);
+    sg_shader default_shd = sg_make_shader(&shd_desc);
 
     /* pipeline object for offscreen rendering, don't need texcoords here */
     sg_pipeline_desc pip_desc;
@@ -198,7 +198,7 @@ int main() {
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_face_enabled = true;
-    sg_id offscreen_pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline offscreen_pip = sg_make_pipeline(&pip_desc);
 
     /* and another pipeline object for the default pass */
     sg_init_pipeline_desc(&pip_desc);
@@ -211,7 +211,7 @@ int main() {
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_face_enabled = true;
-    sg_id default_pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline default_pip = sg_make_pipeline(&pip_desc);
 
     /* the draw state for offscreen rendering with all the required resources */
     sg_init_draw_state(&offscreen_draw_state);

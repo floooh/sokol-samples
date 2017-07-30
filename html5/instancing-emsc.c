@@ -11,7 +11,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLES2
+#define SOKOL_GLES2
 #include "sokol_gfx.h"
 
 const int WIDTH = 640;
@@ -114,7 +114,7 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = color;\n"
         "}\n";
-    sg_id shd = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&shd_desc);
 
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;

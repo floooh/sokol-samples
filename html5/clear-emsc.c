@@ -8,7 +8,7 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #define SOKOL_IMPL
-#define SOKOL_USE_GLES2
+#define SOKOL_GLES2
 #include "sokol_gfx.h"
 
 const int WIDTH = 640;

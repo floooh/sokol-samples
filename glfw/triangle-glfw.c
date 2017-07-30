@@ -6,7 +6,7 @@
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
 int main() {
@@ -43,7 +43,7 @@ int main() {
     buf_desc.size = sizeof(vertices);
     buf_desc.data_ptr = vertices;
     buf_desc.data_size = sizeof(vertices);
-    sg_id buf_id = sg_make_buffer(&buf_desc);
+    sg_buffer buf_id = sg_make_buffer(&buf_desc);
     assert(buf_id);
 
     /* create a shader */
@@ -65,7 +65,7 @@ int main() {
         "void main() {\n"
         "  frag_color = color;\n"
         "}\n";
-    sg_id shd_id = sg_make_shader(&shd_desc);
+    sg_shader shd_id = sg_make_shader(&shd_desc);
     assert(shd_id);
 
     /* create a pipeline object (default render states are fine for triangle) */
@@ -75,7 +75,7 @@ int main() {
     sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
-    sg_id pip_id = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);
 
     /* draw state struct defines the resource bindings */

@@ -6,7 +6,7 @@
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
 int main() {
@@ -44,7 +44,7 @@ int main() {
     vbuf_desc.size = sizeof(vertices);
     vbuf_desc.data_ptr = vertices;
     vbuf_desc.data_size = sizeof(vertices);
-    sg_id vbuf_id = sg_make_buffer(&vbuf_desc);
+    sg_buffer vbuf_id = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer */
     uint16_t indices[] = {
@@ -57,7 +57,7 @@ int main() {
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.data_ptr = indices;
     ibuf_desc.data_size = sizeof(indices);
-    sg_id ibuf_id = sg_make_buffer(&ibuf_desc);
+    sg_buffer ibuf_id = sg_make_buffer(&ibuf_desc);
 
     /* create a shader (use vertex attribute locations) */
     sg_shader_desc shd_desc;
@@ -78,7 +78,7 @@ int main() {
         "void main() {\n"
         "  frag_color = color;\n"
         "}\n";
-    sg_id shd_id = sg_make_shader(&shd_desc);
+    sg_shader shd_id = sg_make_shader(&shd_desc);
     assert(shd_id);
     
     /* create a pipeline object (default render state is fine) */
@@ -90,7 +90,7 @@ int main() {
     sg_init_indexed_vertex_attr(&pip_desc, 0, 1, 12, SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    sg_id pip_id = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
     assert(pip_id);
 
     /* draw state struct with resource bindings */

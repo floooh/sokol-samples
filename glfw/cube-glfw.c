@@ -9,7 +9,7 @@
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
 /* a uniform block with a model-view-projection matrix */
@@ -76,7 +76,7 @@ int main() {
     vbuf_desc.size = sizeof(vertices);
     vbuf_desc.data_ptr = vertices;
     vbuf_desc.data_size = sizeof(vertices);
-    sg_id vbuf = sg_make_buffer(&vbuf_desc);
+    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer for the cube */
     uint16_t indices[] = {
@@ -93,7 +93,7 @@ int main() {
     ibuf_desc.size = sizeof(indices);
     ibuf_desc.data_ptr = indices;
     ibuf_desc.data_size = sizeof(indices);
-    sg_id ibuf = sg_make_buffer(&ibuf_desc);
+    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
     /* create shader */
     sg_shader_desc shd_desc;
@@ -117,7 +117,7 @@ int main() {
         "void main() {\n"
         "  frag_color = color;\n"
         "}\n";
-    sg_id shd = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&shd_desc);
 
     /* create pipeline object */
     sg_pipeline_desc pip_desc;
@@ -130,7 +130,7 @@ int main() {
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_face_enabled = true;
-    sg_id pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip = sg_make_pipeline(&pip_desc);
 
     /* draw state struct with resource bindings */
     sg_draw_state draw_state;

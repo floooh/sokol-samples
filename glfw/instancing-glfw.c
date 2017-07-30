@@ -10,7 +10,7 @@
 #include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_USE_GLCORE33
+#define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
 const int WIDTH = 800;
@@ -114,7 +114,7 @@ int main() {
         "void main() {\n"
         "  frag_color = color;\n"
         "}\n";
-    sg_id shd = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&shd_desc);
 
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;
