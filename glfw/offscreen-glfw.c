@@ -39,26 +39,27 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* a render target image */
+    /* create one color- and one depth-buffer render target image */
     sg_image_desc img_desc;
     sg_init_image_desc(&img_desc);
     img_desc.render_target = true;
     img_desc.width = img_desc.height = 512;
-    img_desc.color_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.depth_format = SG_PIXELFORMAT_DEPTH;
+    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
     /* if supported, use MSAA for offscreen rendering */
     if (sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS)) {
         img_desc.sample_count = 4;
     }
-    sg_image img = sg_make_image(&img_desc);
+    sg_image color_img = sg_make_image(&img_desc);
+    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    sg_image depth_img = sg_make_image(&img_desc);
 
-    /* an offscreen pass rendering to that image */
+    /* an offscreen render pass into those images */
     sg_pass_desc pass_desc;
     sg_init_pass_desc(&pass_desc);
-    pass_desc.color_attachments[0].image = img;
-    pass_desc.depth_stencil_attachment.image = img;
+    pass_desc.color_attachments[0].image = color_img;
+    pass_desc.depth_stencil_attachment.image = depth_img;
     sg_pass offscreen_pass = sg_make_pass(&pass_desc);
 
     /* pass action for offscreen pass, clearing to black */ 
@@ -225,7 +226,7 @@ int main() {
     default_ds.pipeline = default_pip;
     default_ds.vertex_buffers[0] = vbuf;
     default_ds.index_buffer = ibuf;
-    default_ds.fs_images[0] = img;
+    default_ds.fs_images[0] = color_img;
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
@@ -272,7 +273,8 @@ int main() {
     sg_destroy_buffer(ibuf);
     sg_destroy_buffer(vbuf);
     sg_destroy_pass(offscreen_pass);
-    sg_destroy_image(img);
+    sg_destroy_image(depth_img);
+    sg_destroy_image(color_img);
     sg_shutdown();
     glfwTerminate();
 }

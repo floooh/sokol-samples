@@ -107,7 +107,7 @@ int main() {
     sg_image_desc img_desc;
     sg_init_image_desc(&img_desc);
     img_desc.width = img_desc.height = 4;
-    img_desc.color_format = SG_PIXELFORMAT_RGBA8;
+    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
     img_desc.num_data_items = 1;
