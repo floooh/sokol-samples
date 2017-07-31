@@ -31,7 +31,6 @@ int main() {
 
     /* create GLFW window and initialize GL */
     glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -53,7 +52,8 @@ int main() {
     sg_image_desc img_desc;
     sg_init_image_desc(&img_desc);
     img_desc.render_target = true;
-    img_desc.width = img_desc.height = 256;
+    img_desc.width = WIDTH;
+    img_desc.height = HEIGHT;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
