@@ -69,7 +69,6 @@ int main() {
         "  gl_FragColor = color;\n"
         "}\n";
     sg_shader shd_id = sg_make_shader(&shd_desc);
-    assert(shd_id);
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;

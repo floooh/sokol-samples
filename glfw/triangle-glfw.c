@@ -44,7 +44,6 @@ int main() {
     buf_desc.data_ptr = vertices;
     buf_desc.data_size = sizeof(vertices);
     sg_buffer buf_id = sg_make_buffer(&buf_desc);
-    assert(buf_id);
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -66,7 +65,6 @@ int main() {
         "  frag_color = color;\n"
         "}\n";
     sg_shader shd_id = sg_make_shader(&shd_desc);
-    assert(shd_id);
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;
@@ -76,7 +74,6 @@ int main() {
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
-    assert(pip_id);
 
     /* draw state struct defines the resource bindings */
     sg_draw_state draw_state;

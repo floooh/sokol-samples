@@ -79,7 +79,6 @@ int main() {
         "  frag_color = color;\n"
         "}\n";
     sg_shader shd_id = sg_make_shader(&shd_desc);
-    assert(shd_id);
     
     /* create a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;
@@ -91,7 +90,6 @@ int main() {
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
-    assert(pip_id);
 
     /* draw state struct with resource bindings */
     sg_draw_state draw_state;
