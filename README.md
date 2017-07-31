@@ -27,6 +27,7 @@ Python 2.7.10
 cmake version 3.8.2
 > make --version
 GNU Make 3.81
+# on OSX (on Windows you just need a recent VS)
 > xcodebuild -version
 Xcode 9.0
 ```
