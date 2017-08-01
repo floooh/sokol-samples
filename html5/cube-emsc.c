@@ -137,7 +137,7 @@ int main() {
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_face_enabled = false;
+    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
     draw_state.pipeline = sg_make_pipeline(&pip_desc);
 
     /* view-projection matrix */

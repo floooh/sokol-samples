@@ -172,7 +172,7 @@ int main() {
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_face_enabled = true;
+    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
     offscreen_ds.pipeline = sg_make_pipeline(&pip_desc);
 
     /* draw state to render a fullscreen quad */
@@ -240,7 +240,7 @@ int main() {
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action;
     sg_init_pass_action(&default_pass_action);
-    default_pass_action.actions = SG_PASSACTION_NONE;
+    default_pass_action.actions = SG_PASSACTION_DONTCARE_ALL;
 
     /* view-projection matrix for the offscreen-rendered cube */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
