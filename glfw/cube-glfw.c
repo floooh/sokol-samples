@@ -70,12 +70,11 @@ int main() {
          1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
-    sg_buffer_desc vbuf_desc = {
+    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)   
-    };
-    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
+        .data_size = sizeof(vertices)
+    });
 
     /* create an index buffer for the cube */
     uint16_t indices[] = {
@@ -86,13 +85,12 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc = {
+    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
         .data_size = sizeof(indices)
-    };
-    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
+    });
 
     /* create shader */
     sg_shader_desc shd_desc;
