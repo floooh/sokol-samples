@@ -41,8 +41,7 @@ int main() {
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc;
-    sg_init_desc(&desc);
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
 
@@ -111,11 +110,11 @@ int main() {
         {  1.0f,  1.0f,  1.0f,   0.7f },
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
-    sg_buffer_desc vbuf_desc;
-    sg_init_buffer_desc(&vbuf_desc);
-    vbuf_desc.size = sizeof(vertices);
-    vbuf_desc.data_ptr = vertices;
-    vbuf_desc.data_size = sizeof(vertices);
+    sg_buffer_desc vbuf_desc = {
+        .size = sizeof(vertices),
+        .data_ptr = vertices,
+        .data_size = sizeof(vertices)   
+    };
     offscreen_ds.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer for the cube */
@@ -127,12 +126,12 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc;
-    sg_init_buffer_desc(&ibuf_desc);
-    ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    ibuf_desc.size = sizeof(indices);
-    ibuf_desc.data_ptr = indices;
-    ibuf_desc.data_size = sizeof(indices);
+    sg_buffer_desc ibuf_desc = {
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .data_ptr = indices,
+        .data_size = sizeof(indices)
+    };
     offscreen_ds.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* a shader to render the cube into offscreen MRT render targets */
@@ -182,9 +181,11 @@ int main() {
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
     float fsq_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
-    sg_init_buffer_desc(&vbuf_desc);
-    vbuf_desc.size = vbuf_desc.data_size = sizeof(fsq_vertices);
-    vbuf_desc.data_ptr = fsq_vertices;
+    vbuf_desc = (sg_buffer_desc) {
+        .size = sizeof(fsq_vertices),
+        .data_ptr = fsq_vertices,
+        .data_size = sizeof(fsq_vertices)
+    };
     fsq_ds.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     /* a shader to render a fullscreen rectangle, which 'composes'

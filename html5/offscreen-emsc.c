@@ -42,8 +42,7 @@ int main() {
     emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc;
-    sg_init_desc(&desc);
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
 
@@ -115,11 +114,11 @@ int main() {
          1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
-    sg_buffer_desc vbuf_desc;
-    sg_init_buffer_desc(&vbuf_desc);
-    vbuf_desc.size = sizeof(vertices);
-    vbuf_desc.data_ptr = vertices;
-    vbuf_desc.data_size = sizeof(vertices);
+    sg_buffer_desc vbuf_desc = {
+        .size = sizeof(vertices),
+        .data_ptr = vertices,
+        .data_size = sizeof(vertices)
+    };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
     /* an index buffer for the cube */
@@ -131,12 +130,12 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc;
-    sg_init_buffer_desc(&ibuf_desc);
-    ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    ibuf_desc.size = sizeof(indices);
-    ibuf_desc.data_ptr = indices;
-    ibuf_desc.data_size = sizeof(indices);
+    sg_buffer_desc ibuf_desc = {
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .data_ptr = indices,
+        .data_size = sizeof(indices)
+    };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
     /* shader for the non-textured cube, rendered in the offscreen pass */

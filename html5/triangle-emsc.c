@@ -29,8 +29,7 @@ int main() {
     emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc;
-    sg_init_desc(&desc);
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
     
@@ -44,11 +43,11 @@ int main() {
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
-    sg_buffer_desc buf_desc;
-    sg_init_buffer_desc(&buf_desc);
-    buf_desc.size = sizeof(vertices);
-    buf_desc.data_ptr = vertices;
-    buf_desc.data_size = sizeof(vertices);
+    sg_buffer_desc buf_desc = {
+        .size = sizeof(vertices),
+        .data_ptr = vertices,
+        .data_size = sizeof(vertices)
+    };
     draw_state.vertex_buffers[0] = sg_make_buffer(&buf_desc);
 
     /* create a shader */

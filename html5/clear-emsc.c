@@ -28,8 +28,7 @@ int main() {
     emscripten_webgl_make_context_current(ctx);
     
     // setup sokol_gfx
-    sg_desc desc;
-    sg_init_desc(&desc);
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
 

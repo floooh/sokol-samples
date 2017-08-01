@@ -26,8 +26,7 @@ int main() {
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc; 
-    sg_init_desc(&desc);
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
 
@@ -39,11 +38,11 @@ int main() {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
-    sg_buffer_desc vbuf_desc;
-    sg_init_buffer_desc(&vbuf_desc);
-    vbuf_desc.size = sizeof(vertices);
-    vbuf_desc.data_ptr = vertices;
-    vbuf_desc.data_size = sizeof(vertices);
+    sg_buffer_desc vbuf_desc = {
+        .size = sizeof(vertices),
+        .data_ptr = vertices,
+        .data_size = sizeof(vertices)
+    };
     sg_buffer vbuf_id = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer */
@@ -51,12 +50,12 @@ int main() {
         0, 1, 2,    // first triangle
         0, 2, 3,    // second triangle        
     };
-    sg_buffer_desc ibuf_desc;
-    sg_init_buffer_desc(&ibuf_desc);
-    ibuf_desc.size = sizeof(indices);
-    ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    ibuf_desc.data_ptr = indices;
-    ibuf_desc.data_size = sizeof(indices);
+    sg_buffer_desc ibuf_desc = {
+        .size = sizeof(indices),
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .data_ptr = indices,
+        .data_size = sizeof(indices)
+    };
     sg_buffer ibuf_id = sg_make_buffer(&ibuf_desc);
 
     /* create a shader (use vertex attribute locations) */

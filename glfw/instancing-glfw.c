@@ -43,8 +43,7 @@ int main() {
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc; 
-    sg_init_desc(&desc);
+    sg_desc desc = { }; 
     sg_setup(&desc);
     assert(sg_isvalid());
     assert(sg_query_feature(SG_FEATURE_INSTANCED_ARRAYS));
@@ -65,11 +64,11 @@ int main() {
           -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
-    sg_buffer_desc buf_desc;
-    sg_init_buffer_desc(&buf_desc);
-    buf_desc.size = sizeof(vertices);
-    buf_desc.data_ptr = vertices;
-    buf_desc.data_size = sizeof(vertices);
+    sg_buffer_desc buf_desc = {
+        .size = sizeof(vertices),
+        .data_ptr = vertices,
+        .data_size = sizeof(vertices)
+    };
     draw_state.vertex_buffers[0] = sg_make_buffer(&buf_desc);
 
     /* index buffer for static geometry */
@@ -77,17 +76,19 @@ int main() {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
-    sg_init_buffer_desc(&buf_desc);
-    buf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    buf_desc.size = sizeof(indices);
-    buf_desc.data_ptr = indices;
-    buf_desc.data_size = sizeof(indices);
+    buf_desc = (sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .data_ptr = indices,
+        .data_size = sizeof(indices)
+    };
     draw_state.index_buffer = sg_make_buffer(&buf_desc);
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
-    sg_init_buffer_desc(&buf_desc);
-    buf_desc.size = MAX_PARTICLES * sizeof(hmm_vec4);
-    buf_desc.usage = SG_USAGE_STREAM;
+    buf_desc = (sg_buffer_desc){
+        .size = MAX_PARTICLES * sizeof(hmm_vec4),
+        .usage = SG_USAGE_STREAM
+    };
     draw_state.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
     /* create a shader */
