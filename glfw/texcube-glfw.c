@@ -33,7 +33,7 @@ int main() {
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc = { };
+    sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
 
