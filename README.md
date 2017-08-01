@@ -25,6 +25,7 @@ matter:
 Python 2.7.10
 > cmake --version
 cmake version 3.8.2
+# make is only needed for building through emscripten
 > make --version
 GNU Make 3.81
 # on OSX (on Windows you just need a recent VS)
