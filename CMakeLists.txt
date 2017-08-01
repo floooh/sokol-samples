@@ -8,11 +8,16 @@ get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
 fips_setup(PROJECT sokol-samples)
+# just suppress this pesky "missing field initializer warning" for now
+if (FIPS_CLANG OR FIPS_GCC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
+endif()
 if (FIPS_EMSCRIPTEN)
     add_subdirectory(html5)
 else()
     add_subdirectory(glfw)
 endif()
+
 fips_finish()
 
 
