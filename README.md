@@ -47,6 +47,13 @@ Clone, build and run the native samples:
 ...
 ```
 
+To open the project in Xcode or Visual Studio:
+
+```
+> cd ~/scratch
+> ./fips open
+```
+
 To build for emscripten:
 ```
 > cd ~/scratch/sokol-samples
@@ -60,6 +67,8 @@ To build for emscripten:
 > ./fips run triangle-emsc
 ...
 ```
+
+Type ```./fips help``` for more build system options.
 
 ## Thanks to:
 
