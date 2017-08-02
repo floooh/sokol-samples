@@ -43,7 +43,7 @@ int main() {
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
     };
-    sg_buffer vbuf_id = sg_make_buffer(&vbuf_desc);
+    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer */
     uint16_t indices[] = {
@@ -56,7 +56,7 @@ int main() {
         .data_ptr = indices,
         .data_size = sizeof(indices)
     };
-    sg_buffer ibuf_id = sg_make_buffer(&ibuf_desc);
+    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
     /* create a shader (use vertex attribute locations) */
     sg_shader_desc shd_desc;
@@ -77,7 +77,7 @@ int main() {
         "void main() {\n"
         "  frag_color = color;\n"
         "}\n";
-    sg_shader shd_id = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&shd_desc);
     
     /* create a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;
@@ -86,16 +86,16 @@ int main() {
     sg_init_vertex_stride(&pip_desc, 0, 28);
     sg_init_indexed_vertex_attr(&pip_desc, 0, 0, 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_indexed_vertex_attr(&pip_desc, 0, 1, 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd_id;
+    pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip = sg_make_pipeline(&pip_desc);
 
     /* draw state struct with resource bindings */
-    sg_draw_state draw_state;
-    sg_init_draw_state(&draw_state);
-    draw_state.pipeline = pip_id;
-    draw_state.vertex_buffers[0] = vbuf_id;
-    draw_state.index_buffer = ibuf_id;
+    sg_draw_state draw_state = {
+        .pipeline = pip,
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
 
     /* default pass action */
     sg_pass_action pass_action;
@@ -113,10 +113,10 @@ int main() {
     }
 
     /* cleanup */
-    sg_destroy_pipeline(pip_id);
-    sg_destroy_shader(shd_id);
-    sg_destroy_buffer(ibuf_id);
-    sg_destroy_buffer(vbuf_id);
+    sg_destroy_pipeline(pip);
+    sg_destroy_shader(shd);
+    sg_destroy_buffer(ibuf);
+    sg_destroy_buffer(vbuf);
     sg_shutdown();
     glfwTerminate();
 

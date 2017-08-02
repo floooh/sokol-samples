@@ -33,10 +33,7 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
     
-    /* clear the global draw state struct */
-    sg_init_draw_state(&draw_state);
-    
-    /* create a vertex buffer */
+    /* a vertex buffer */
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -49,9 +46,8 @@ int main() {
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
-    /* create an index buffer */
+    /* an index buffer */
     uint16_t indices[] = {
         0, 1, 2,    // first triangle
         0, 2, 3,    // second triangle        
@@ -62,7 +58,6 @@ int main() {
         .data_ptr = indices,
         .data_size = sizeof(indices)
     };
-    draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -83,7 +78,7 @@ int main() {
         "}\n";
     sg_shader shd_id = sg_make_shader(&shd_desc);
     
-    /* create a pipeline object (default render state is fine) */
+    /* a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;
     sg_init_pipeline_desc(&pip_desc);
     sg_init_vertex_stride(&pip_desc, 0, 28);
@@ -91,7 +86,13 @@ int main() {
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     pip_desc.shader = shd_id;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+
+    /* setup draw state with resource bindings */
+    draw_state = (sg_draw_state){
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
+        .index_buffer = sg_make_buffer(&ibuf_desc)
+    };
 
     /* default pass action (clear to grey) */
     sg_init_pass_action(&pass_action);

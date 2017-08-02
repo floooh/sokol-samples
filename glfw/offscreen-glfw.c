@@ -209,20 +209,20 @@ int main() {
     sg_pipeline default_pip = sg_make_pipeline(&pip_desc);
 
     /* the draw state for offscreen rendering with all the required resources */
-    sg_draw_state offscreen_ds;
-    sg_init_draw_state(&offscreen_ds);
-    offscreen_ds.pipeline = offscreen_pip;
-    offscreen_ds.vertex_buffers[0] = vbuf;
-    offscreen_ds.index_buffer = ibuf;
+    sg_draw_state offscreen_ds = {
+        .pipeline = offscreen_pip,
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
 
     /* and the draw state for the default pass where a textured cube will
        rendered, note how the render-target image is used as texture here */
-    sg_draw_state default_ds;
-    sg_init_draw_state(&default_ds);
-    default_ds.pipeline = default_pip;
-    default_ds.vertex_buffers[0] = vbuf;
-    default_ds.index_buffer = ibuf;
-    default_ds.fs_images[0] = color_img;
+    sg_draw_state default_ds = {
+        .pipeline = default_pip,
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = color_img
+    };
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);

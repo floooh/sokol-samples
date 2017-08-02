@@ -49,7 +49,6 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
     
-    sg_init_draw_state(&draw_state);
     sg_init_pass_action(&pass_action);
     pass_action.color[0][0] = 0.0f;
     pass_action.color[0][1] = 0.0f;
@@ -66,32 +65,29 @@ int main() {
           -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
-    sg_buffer_desc buf_desc = {
+    sg_buffer_desc geom_vbuf_desc = {
         .size = sizeof(vertices),
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&buf_desc);
 
     /* index buffer for static geometry */
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
-    buf_desc = (sg_buffer_desc) {
+    sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
         .data_size = sizeof(indices)
     };
-    draw_state.index_buffer = sg_make_buffer(&buf_desc);
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
-    buf_desc = (sg_buffer_desc) {
+    sg_buffer_desc inst_vbuf_desc = {
         .size = MAX_PARTICLES * sizeof(hmm_vec4),
         .usage = SG_USAGE_STREAM
     };
-    draw_state.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -115,7 +111,6 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = color;\n"
         "}\n";
-    sg_shader shd = sg_make_shader(&shd_desc);
 
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;
@@ -126,12 +121,21 @@ int main() {
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
     sg_init_named_vertex_attr(&pip_desc, 1, "instance_pos", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_vertex_step(&pip_desc, 1, SG_VERTEXSTEP_PER_INSTANCE, 1);
-    pip_desc.shader = shd;
+    pip_desc.shader = sg_make_shader(&shd_desc);
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+
+    /* setup draw state with resource bindings */
+    draw_state = (sg_draw_state){
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers = {
+            [0] = sg_make_buffer(&geom_vbuf_desc),
+            [1] = sg_make_buffer(&inst_vbuf_desc)
+        },
+        .index_buffer = sg_make_buffer(&ibuf_desc)
+    };
 
     /* default pass action (clear to grey) */
     sg_pass_action pass_action;

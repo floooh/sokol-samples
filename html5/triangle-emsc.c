@@ -33,10 +33,7 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
     
-    /* clear the global draw state struct */
-    sg_init_draw_state(&draw_state);
-    
-    /* create a vertex buffer with 3 vertices */
+    /* a vertex buffer with 3 vertices */
     float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -48,7 +45,6 @@ int main() {
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&buf_desc);
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -67,7 +63,6 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = color;\n"
         "}\n";
-    sg_shader shd_id = sg_make_shader(&shd_desc);
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;
@@ -75,8 +70,13 @@ int main() {
     sg_init_vertex_stride(&pip_desc, 0, 28);
     sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd_id;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+    pip_desc.shader = sg_make_shader(&shd_desc);
+
+    /* setup the draw state with resource bindings */
+    draw_state = (sg_draw_state){
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers[0] = sg_make_buffer(&buf_desc)
+    };
 
     /* default pass action (clear to grey) */
     sg_init_pass_action(&pass_action);

@@ -75,10 +75,10 @@ int main() {
     sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
 
     /* draw state struct defines the resource bindings */
-    sg_draw_state draw_state;
-    sg_init_draw_state(&draw_state);
-    draw_state.pipeline = pip_id;
-    draw_state.vertex_buffers[0] = buf_id;
+    sg_draw_state draw_state = {
+        .pipeline = pip_id,
+        .vertex_buffers[0] = buf_id
+    };
 
     /* default pass action (clear to grey) */
     sg_pass_action pass_action;

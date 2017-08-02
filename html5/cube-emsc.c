@@ -45,7 +45,6 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
     
-    sg_init_draw_state(&draw_state);
     sg_init_pass_action(&pass_action);
     
     /* cube vertex buffer */
@@ -85,7 +84,6 @@ int main() {
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     /* create an index buffer for the cube */
     uint16_t indices[] = {
@@ -102,7 +100,6 @@ int main() {
         .data_ptr = indices,
         .data_size = sizeof(indices)
     };
-    draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* create shader */
     sg_shader_desc shd_desc;
@@ -124,7 +121,6 @@ int main() {
         "void main() {\n"
         "  gl_FragColor = color;\n"
         "}\n";
-    sg_shader shd = sg_make_shader(&shd_desc);
 
     /* create pipeline object */
     sg_pipeline_desc pip_desc;
@@ -132,12 +128,18 @@ int main() {
     sg_init_vertex_stride(&pip_desc, 0, 28);
     sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
     sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd;
+    pip_desc.shader = sg_make_shader(&shd_desc);
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+
+    /* setup draw state with resource bindings */
+    draw_state = (sg_draw_state){
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
+        .index_buffer = sg_make_buffer(&ibuf_desc)
+    };
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);

@@ -130,11 +130,11 @@ int main() {
     sg_pipeline pip = sg_make_pipeline(&pip_desc);
 
     /* draw state struct with resource bindings */
-    sg_draw_state draw_state;
-    sg_init_draw_state(&draw_state);
-    draw_state.pipeline = pip;
-    draw_state.vertex_buffers[0] = vbuf;
-    draw_state.index_buffer = ibuf;
+    sg_draw_state draw_state = {
+        .pipeline = pip,
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
 
     /* default pass action */
     sg_pass_action pass_action;

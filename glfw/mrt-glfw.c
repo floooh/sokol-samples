@@ -72,10 +72,6 @@ int main() {
     sg_init_clear_color(&offscreen_pass_action, 1, 0.0f, 0.25f, 0.0f, 1.0f);
     sg_init_clear_color(&offscreen_pass_action, 2, 0.0f, 0.0f, 0.25f, 1.0f);
 
-    /* draw state for offscreen rendering */
-    sg_draw_state offscreen_ds;
-    sg_init_draw_state(&offscreen_ds);
-
     /* cube vertex buffer */
     vertex_t vertices[] = {
         /* pos + brightness */
@@ -114,9 +110,8 @@ int main() {
         .data_ptr = vertices,
         .data_size = sizeof(vertices)   
     };
-    offscreen_ds.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
-    /* create an index buffer for the cube */
+    /* index buffer for the cube */
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -131,7 +126,6 @@ int main() {
         .data_ptr = indices,
         .data_size = sizeof(indices)
     };
-    offscreen_ds.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* a shader to render the cube into offscreen MRT render targets */
     sg_shader_desc shd_desc;
@@ -171,11 +165,13 @@ int main() {
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    offscreen_ds.pipeline = sg_make_pipeline(&pip_desc);
 
-    /* draw state to render a fullscreen quad */
-    sg_draw_state fsq_ds;
-    sg_init_draw_state(&fsq_ds);
+    /* draw state for offscreen rendering */
+    sg_draw_state offscreen_ds = {
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
+        .index_buffer = sg_make_buffer(&ibuf_desc)
+    };
 
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
@@ -185,7 +181,6 @@ int main() {
         .data_ptr = fsq_vertices,
         .data_size = sizeof(fsq_vertices)
     };
-    fsq_ds.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
@@ -230,12 +225,17 @@ int main() {
     sg_init_named_vertex_attr(&pip_desc, 0, "pos", 0, SG_VERTEXFORMAT_FLOAT2);
     pip_desc.shader = sg_make_shader(&shd_desc);
     pip_desc.primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP;
-    fsq_ds.pipeline = sg_make_pipeline(&pip_desc);
 
-    /* ...and the render target images as textures */
-    for (int i = 0; i < 3; i++) {
-        fsq_ds.fs_images[i] = offscreen_pass_desc.color_attachments[i].image; 
-    }
+    /* draw state to render the fullscreen quad */
+    sg_draw_state fsq_ds = {
+        .pipeline = sg_make_pipeline(&pip_desc),
+        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
+        .fs_images = {
+            [0] = offscreen_pass_desc.color_attachments[0].image,
+            [1] = offscreen_pass_desc.color_attachments[1].image,
+            [2] = offscreen_pass_desc.color_attachments[2].image,
+        }
+    };
     
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action;

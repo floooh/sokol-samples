@@ -48,11 +48,6 @@ int main() {
     assert(sg_isvalid());
     assert(sg_query_feature(SG_FEATURE_INSTANCED_ARRAYS));
 
-    /* prepare a draw state, static geometry vertex buffer will go into slot 0,
-       instance vertex buffer goes into slot 1 */
-    sg_draw_state draw_state;
-    sg_init_draw_state(&draw_state);
-
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;
     const float vertices[] = {
@@ -64,32 +59,29 @@ int main() {
           -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
-    sg_buffer_desc buf_desc = {
+    sg_buffer vbuf_geom = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
-    };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&buf_desc);
+    });
 
     /* index buffer for static geometry */
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
-    buf_desc = (sg_buffer_desc){
+    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
         .data_size = sizeof(indices)
-    };
-    draw_state.index_buffer = sg_make_buffer(&buf_desc);
+    });
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
-    buf_desc = (sg_buffer_desc){
+    sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec4),
         .usage = SG_USAGE_STREAM
-    };
-    draw_state.vertex_buffers[1] = sg_make_buffer(&buf_desc);
+    });
 
     /* create a shader */
     sg_shader_desc shd_desc;
@@ -131,7 +123,18 @@ int main() {
     pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
     pip_desc.depth_stencil.depth_write_enabled = true;
     pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip = sg_make_pipeline(&pip_desc);
+
+    /* setup resource bindings, note how the instance-data buffer
+       goes into vertex buffer slot 1 */
+    sg_draw_state draw_state = {
+        .pipeline = pip,
+        .vertex_buffers = {
+            [0] = vbuf_geom,
+            [1] = vbuf_inst
+        },
+        .index_buffer = ibuf
+    };
 
     /* default pass action (clear to grey) */
     sg_pass_action pass_action;
