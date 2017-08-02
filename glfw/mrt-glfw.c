@@ -46,9 +46,7 @@ int main() {
     assert(sg_isvalid());
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
-    sg_pass_desc offscreen_pass_desc;
-    sg_init_pass_desc(&offscreen_pass_desc);
-    sg_image_desc img_desc = {
+    sg_image_desc color_img_desc = {
         .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
@@ -58,11 +56,16 @@ int main() {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1
     };
-    for (int i = 0; i < 3; i++) {
-        offscreen_pass_desc.color_attachments[i].image = sg_make_image(&img_desc);
-    }
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    offscreen_pass_desc.depth_stencil_attachment.image = sg_make_image(&img_desc);
+    sg_image_desc depth_img_desc = color_img_desc;
+    depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    sg_pass_desc offscreen_pass_desc = {
+        .color_attachments = {
+            [0].image = sg_make_image(&color_img_desc),
+            [1].image = sg_make_image(&color_img_desc),
+            [2].image = sg_make_image(&color_img_desc)
+        },
+        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+    };
     sg_pass offscreen_pass = sg_make_pass(&offscreen_pass_desc);
 
     /* a matching pass action with clear colors */

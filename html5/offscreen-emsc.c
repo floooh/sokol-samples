@@ -67,11 +67,10 @@ int main() {
     sg_image depth_img = sg_make_image(&img_desc);
 
     /* an offscreen render pass into those images */
-    sg_pass_desc pass_desc;
-    sg_init_pass_desc(&pass_desc);
-    pass_desc.color_attachments[0].image = color_img;
-    pass_desc.depth_stencil_attachment.image = depth_img;
-    offscreen_pass = sg_make_pass(&pass_desc);
+    offscreen_pass = sg_make_pass(&(sg_pass_desc){
+        .color_attachments[0].image = color_img,
+        .depth_stencil_attachment.image = depth_img
+    });
 
     /* pass action for offscreen pass, clearing to black */ 
     sg_init_pass_action(&offscreen_pass_action);
