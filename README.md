@@ -50,7 +50,7 @@ Clone, build and run the native samples:
 To open the project in Xcode or Visual Studio:
 
 ```
-> cd ~/scratch
+> cd ~/scratch/sokol-samples
 > ./fips open
 ```
 
