@@ -48,17 +48,16 @@ int main() {
     /* a render pass with 3 color attachment images, and a depth attachment image */
     sg_pass_desc offscreen_pass_desc;
     sg_init_pass_desc(&offscreen_pass_desc);
-    sg_image_desc img_desc;
-    sg_init_image_desc(&img_desc);
-    img_desc.render_target = true;
-    img_desc.width = WIDTH;
-    img_desc.height = HEIGHT;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
-    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    if (sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS)) {
-        img_desc.sample_count = 4;
-    }
+    sg_image_desc img_desc = {
+        .render_target = true,
+        .width = WIDTH,
+        .height = HEIGHT,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1
+    };
     for (int i = 0; i < 3; i++) {
         offscreen_pass_desc.color_attachments[i].image = sg_make_image(&img_desc);
     }

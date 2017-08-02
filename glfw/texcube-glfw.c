@@ -70,12 +70,11 @@ int main() {
          1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
-    sg_buffer_desc vbuf_desc = {
+    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .data_ptr = vertices,
         .data_size = sizeof(vertices)
-    };
-    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
+    });
 
     /* create an index buffer for the cube */
     uint16_t indices[] = {
@@ -86,13 +85,12 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc = {
+    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
         .data_size = sizeof(indices)
-    };
-    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
+    });
 
     /* create a checkerboard texture */
     uint32_t pixels[4*4] = {
@@ -103,16 +101,16 @@ int main() {
     };
     const void* img_data_ptrs[] = { pixels };
     const int img_data_sizes[] = { sizeof(pixels) };
-    sg_image_desc img_desc;
-    sg_init_image_desc(&img_desc);
-    img_desc.width = img_desc.height = 4;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
-    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
-    img_desc.num_data_items = 1;
-    img_desc.data_ptrs = img_data_ptrs;
-    img_desc.data_sizes = img_data_sizes; 
-    sg_image img = sg_make_image(&img_desc);
+    sg_image img = sg_make_image(&(sg_image_desc){
+        .width = 4,
+        .height = 4,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .num_data_items = 1,
+        .data_ptrs = img_data_ptrs,
+        .data_sizes = img_data_sizes
+    });
 
     /* create shader */
     sg_shader_desc shd_desc;

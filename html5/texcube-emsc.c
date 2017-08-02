@@ -113,16 +113,13 @@ int main() {
     };
     const void* img_data_ptrs[] = { pixels };
     const int img_data_sizes[] = { sizeof(pixels) };
-    sg_image_desc img_desc;
-    sg_init_image_desc(&img_desc);
-    img_desc.width = img_desc.height = 4;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
-    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
-    img_desc.num_data_items = 1;
-    img_desc.data_ptrs = img_data_ptrs;
-    img_desc.data_sizes = img_data_sizes; 
-    draw_state.fs_images[0] = sg_make_image(&img_desc);
+    draw_state.fs_images[0] = sg_make_image(&(sg_image_desc){
+        .width = 4,
+        .height = 4,
+        .num_data_items = 1,
+        .data_ptrs = img_data_ptrs,
+        .data_sizes = img_data_sizes
+    });
 
     /* create shader */
     sg_shader_desc shd_desc;

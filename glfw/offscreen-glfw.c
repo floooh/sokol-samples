@@ -39,17 +39,14 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-buffer render target image */
-    sg_image_desc img_desc;
-    sg_init_image_desc(&img_desc);
-    img_desc.render_target = true;
-    img_desc.width = img_desc.height = 512;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.min_filter = img_desc.mag_filter = SG_FILTER_LINEAR;
-    img_desc.wrap_u = img_desc.wrap_v = SG_WRAP_REPEAT;
-    /* if supported, use MSAA for offscreen rendering */
-    if (sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS)) {
-        img_desc.sample_count = 4;
-    }
+    sg_image_desc img_desc = {
+        .render_target = true,
+        .width = 512,
+        .height = 512,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1
+    };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     sg_image depth_img = sg_make_image(&img_desc);
