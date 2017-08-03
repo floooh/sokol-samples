@@ -137,8 +137,7 @@ int main() {
     };
 
     /* default pass action */
-    sg_pass_action pass_action;
-    sg_init_pass_action(&pass_action);
+    sg_pass_action pass_action = { 0 };
     
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);

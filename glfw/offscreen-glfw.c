@@ -58,18 +58,14 @@ int main() {
     });
 
     /* pass action for offscreen pass, clearing to black */ 
-    sg_pass_action offscreen_pass_action;
-    sg_init_pass_action(&offscreen_pass_action);
-    offscreen_pass_action.color[0][0] = 0.0f;
-    offscreen_pass_action.color[0][1] = 0.0f;
-    offscreen_pass_action.color[0][2] = 0.0f;
+    sg_pass_action offscreen_pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }   
+    };
 
     /* pass action for default pass, clearing to blue-ish */
-    sg_pass_action default_pass_action;
-    sg_init_pass_action(&default_pass_action);
-    default_pass_action.color[0][0] = 0.0f;
-    default_pass_action.color[0][1] = 0.25f;
-    default_pass_action.color[0][2] = 1.0f;
+    sg_pass_action default_pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+    };
 
     /* cube vertex buffer with positions, colors and tex coords */
     float vertices[] = {

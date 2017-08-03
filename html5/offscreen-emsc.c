@@ -19,10 +19,20 @@ const int HEIGHT = 480;
 sg_pass offscreen_pass;
 sg_draw_state offscreen_draw_state;
 sg_draw_state default_draw_state;
-sg_pass_action offscreen_pass_action;
-sg_pass_action default_pass_action;
+
+/* offscreen: clear to black */
+sg_pass_action offscreen_pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+};
+/* display: clear to blue-ish */ 
+sg_pass_action default_pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+};
+/* rotation angles */
 float rx = 0.0f;
 float ry = 0.0f;
+
+/* constant view-projection matrix */
 hmm_mat4 view_proj;
 
 typedef struct {
@@ -46,12 +56,6 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* pass action for default pass, clearing to blue-ish */
-    sg_init_pass_action(&default_pass_action);
-    default_pass_action.color[0][0] = 0.0f;
-    default_pass_action.color[0][1] = 0.25f;
-    default_pass_action.color[0][2] = 1.0f;
-
     /* create one color- and one depth-rendertarget image */
     sg_image_desc img_desc = {
         .render_target = true,
@@ -71,12 +75,6 @@ int main() {
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img
     });
-
-    /* pass action for offscreen pass, clearing to black */ 
-    sg_init_pass_action(&offscreen_pass_action);
-    offscreen_pass_action.color[0][0] = 0.0f;
-    offscreen_pass_action.color[0][1] = 0.0f;
-    offscreen_pass_action.color[0][2] = 0.0f;
 
     /* cube vertex buffer with positions, colors and tex coords */
     float vertices[] = {

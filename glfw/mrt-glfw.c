@@ -69,11 +69,13 @@ int main() {
     sg_pass offscreen_pass = sg_make_pass(&offscreen_pass_desc);
 
     /* a matching pass action with clear colors */
-    sg_pass_action offscreen_pass_action;
-    sg_init_pass_action(&offscreen_pass_action);
-    sg_init_clear_color(&offscreen_pass_action, 0, 0.25f, 0.0f, 0.0f, 1.0f);
-    sg_init_clear_color(&offscreen_pass_action, 1, 0.0f, 0.25f, 0.0f, 1.0f);
-    sg_init_clear_color(&offscreen_pass_action, 2, 0.0f, 0.0f, 0.25f, 1.0f);
+    sg_pass_action offscreen_pass_action = {
+        .colors = {
+            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+        }
+    };
 
     /* cube vertex buffer */
     vertex_t vertices[] = {
@@ -241,9 +243,15 @@ int main() {
     };
     
     /* default pass action, no clear needed, since whole screen is overwritten */
-    sg_pass_action default_pass_action;
-    sg_init_pass_action(&default_pass_action);
-    default_pass_action.actions = SG_PASSACTION_DONTCARE_ALL;
+    sg_pass_action default_pass_action = {
+        .colors = { 
+            [0].action = SG_ACTION_DONTCARE,
+            [1].action = SG_ACTION_DONTCARE,
+            [2].action = SG_ACTION_DONTCARE
+        },
+        .depth.action = SG_ACTION_DONTCARE,
+        .stencil.action = SG_ACTION_DONTCARE
+    };
 
     /* view-projection matrix for the offscreen-rendered cube */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);

@@ -33,11 +33,9 @@ int main() {
     assert(sg_isvalid());
 
     // setup pass action to clear to red
-    sg_init_pass_action(&pass_action);
-    pass_action.color[0][0] = 1.0f;
-    pass_action.color[0][1] = 0.0f;
-    pass_action.color[0][2] = 0.0f;
-    pass_action.actions = SG_PASSACTION_CLEAR_ALL;
+    pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+    };
 
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
@@ -45,9 +43,9 @@ int main() {
 
 void draw() {
     // animate clear colors
-    float g = pass_action.color[0][1] + 0.01;
+    float g = pass_action.colors[0].val[1] + 0.01;
     if (g > 1.0f) g = 0.0f;
-    pass_action.color[0][1] = g;
+    pass_action.colors[0].val[1] = g;
 
     // draw one frame
     sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);

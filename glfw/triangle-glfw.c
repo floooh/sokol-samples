@@ -81,8 +81,7 @@ int main() {
     };
 
     /* default pass action (clear to grey) */
-    sg_pass_action pass_action;
-    sg_init_pass_action(&pass_action);
+    sg_pass_action pass_action = { 0 };
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {

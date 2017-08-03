@@ -31,18 +31,15 @@ int main() {
     assert(sg_isvalid());
 
     /* default pass action, clear to red */
-    sg_pass_action pass_action;
-    sg_init_pass_action(&pass_action);
-    pass_action.color[0][0] = 1.0f;
-    pass_action.color[0][1] = 0.0f;
-    pass_action.color[0][2] = 0.0f;
-    pass_action.actions = SG_PASSACTION_CLEAR_ALL;
+    sg_pass_action pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+    };
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        float g = (float)(pass_action.color[0][1] + 0.01);
+        float g = (float)(pass_action.colors[0].val[1] + 0.01);
         if (g > 1.0f) g = 0.0f;
-        pass_action.color[0][1] = g;
+        pass_action.colors[0].val[1] = g;
         sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
         sg_end_pass();
         sg_commit();

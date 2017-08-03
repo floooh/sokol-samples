@@ -19,8 +19,12 @@ const int HEIGHT = 480;
 const int MAX_PARTICLES = 512 * 1024;
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
+/* clear to black */
+sg_pass_action pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+};
+
 sg_draw_state draw_state;
-sg_pass_action pass_action;
 float roty = 0.0f;
 hmm_mat4 view_proj;
 
@@ -48,11 +52,6 @@ int main() {
     sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
-    
-    sg_init_pass_action(&pass_action);
-    pass_action.color[0][0] = 0.0f;
-    pass_action.color[0][1] = 0.0f;
-    pass_action.color[0][2] = 0.0f;
     
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;
@@ -136,10 +135,6 @@ int main() {
         },
         .index_buffer = sg_make_buffer(&ibuf_desc)
     };
-
-    /* default pass action (clear to grey) */
-    sg_pass_action pass_action;
-    sg_init_pass_action(&pass_action);
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);

@@ -15,7 +15,9 @@ const int WIDTH = 640;
 const int HEIGHT = 480;
 
 sg_draw_state draw_state;
-sg_pass_action pass_action;
+
+/* default pass action (clear to grey) */
+sg_pass_action pass_action = { 0 };
 
 void draw();
 
@@ -93,9 +95,6 @@ int main() {
         .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
         .index_buffer = sg_make_buffer(&ibuf_desc)
     };
-
-    /* default pass action (clear to grey) */
-    sg_init_pass_action(&pass_action);
 
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);

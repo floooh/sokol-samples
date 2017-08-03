@@ -19,7 +19,7 @@ const int WIDTH = 640;
 const int HEIGHT = 480;
 
 sg_draw_state draw_state;
-sg_pass_action pass_action;
+sg_pass_action pass_action = { 0 };
 float rx = 0.0f;
 float ry = 0.0f;
 hmm_mat4 view_proj;
@@ -44,8 +44,6 @@ int main() {
     sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
-    
-    sg_init_pass_action(&pass_action);
     
     /* cube vertex buffer */
     float vertices[] = {
