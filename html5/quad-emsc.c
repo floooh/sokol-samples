@@ -62,23 +62,22 @@ int main() {
     };
 
     /* create a shader */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    shd_desc.vs.source = 
-        "attribute vec4 position;\n"
-        "attribute vec4 color0;\n"
-        "varying vec4 color;\n"
-        "void main() {\n"
-        "  gl_Position = position;\n"
-        "  color = color0;\n"
-        "}\n";
-    shd_desc.fs.source = 
-        "precision mediump float;\n"
-        "varying vec4 color;\n"
-        "void main() {\n"
-        "  gl_FragColor = color;\n"
-        "}\n";
-    sg_shader shd_id = sg_make_shader(&shd_desc);
+    sg_shader shd_id = sg_make_shader(&(sg_shader_desc) {
+        .vs.source =
+            "attribute vec4 position;\n"
+            "attribute vec4 color0;\n"
+            "varying vec4 color;\n"
+            "void main() {\n"
+            "  gl_Position = position;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fs.source =
+            "precision mediump float;\n"
+            "varying vec4 color;\n"
+            "void main() {\n"
+            "  gl_FragColor = color;\n"
+            "}\n"
+    });
     
     /* a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;

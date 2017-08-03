@@ -45,25 +45,24 @@ int main() {
     sg_buffer buf_id = sg_make_buffer(&buf_desc);
 
     /* create a shader */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    shd_desc.vs.source = 
-        "#version 330\n"
-        "in vec4 position;\n"
-        "in vec4 color0;\n"
-        "out vec4 color;\n"
-        "void main() {\n"
-        "  gl_Position = position;\n"
-        "  color = color0;\n"
-        "}\n";
-    shd_desc.fs.source = 
-        "#version 330\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
-        "void main() {\n"
-        "  frag_color = color;\n"
-        "}\n";
-    sg_shader shd_id = sg_make_shader(&shd_desc);
+    sg_shader shd_id = sg_make_shader(&(sg_shader_desc){
+        .vs.source = 
+            "#version 330\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "out vec4 color;\n"
+            "void main() {\n"
+            "  gl_Position = position;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fs.source =
+            "#version 330\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = color;\n"
+            "}\n"
+    });
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc;

@@ -59,25 +59,24 @@ int main() {
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
     /* create a shader (use vertex attribute locations) */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    shd_desc.vs.source = 
-        "#version 330\n"
-        "layout(location=0) in vec4 position;\n"
-        "layout(location=1) in vec4 color0;\n"
-        "out vec4 color;\n"
-        "void main() {\n"
-        "  gl_Position = position;\n"
-        "  color = color0;\n"
-        "}\n";
-    shd_desc.fs.source = 
-        "#version 330\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
-        "void main() {\n"
-        "  frag_color = color;\n"
-        "}\n";
-    sg_shader shd = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs.source =
+            "#version 330\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "out vec4 color;\n"
+            "void main() {\n"
+            "  gl_Position = position;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fs.source =
+            "#version 330\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = color;\n"
+            "}\n"
+    });
     
     /* create a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc;

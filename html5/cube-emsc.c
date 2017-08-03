@@ -100,25 +100,29 @@ int main() {
     };
 
     /* create shader */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
-    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
-    shd_desc.vs.source = 
-        "uniform mat4 mvp;\n"
-        "attribute vec4 position;\n"
-        "attribute vec4 color0;\n"
-        "varying vec4 color;\n"
-        "void main() {\n"
-        "  gl_Position = mvp * position;\n"
-        "  color = color0;\n"
-        "}\n";
-    shd_desc.fs.source =
-        "precision mediump float;\n"
-        "varying vec4 color;\n"
-        "void main() {\n"
-        "  gl_FragColor = color;\n"
-        "}\n";
+    sg_shader_desc shd_desc = {
+        .vs.uniform_blocks[0] = {
+            .size = sizeof(params_t),
+            .uniforms = {
+                [0] = { .name="mvp", .offset=offsetof(params_t,mvp), .type=SG_UNIFORMTYPE_MAT4 }
+            }
+        },
+        .vs.source =
+            "uniform mat4 mvp;\n"
+            "attribute vec4 position;\n"
+            "attribute vec4 color0;\n"
+            "varying vec4 color;\n"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fs.source =
+            "precision mediump float;\n"
+            "varying vec4 color;\n"
+            "void main() {\n"
+            "  gl_FragColor = color;\n"
+            "}\n"
+    };
 
     /* create pipeline object */
     sg_pipeline_desc pip_desc;

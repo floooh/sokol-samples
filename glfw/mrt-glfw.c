@@ -133,31 +133,35 @@ int main() {
     };
 
     /* a shader to render the cube into offscreen MRT render targets */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(offscreen_params_t));
-    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(offscreen_params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
-    shd_desc.vs.source =
-        "#version 330\n"
-        "uniform mat4 mvp;\n"
-        "in vec4 position;\n"
-        "in float bright0;\n"
-        "out float bright;\n"
-        "void main() {\n"
-        "  gl_Position = mvp * position;\n"
-        "  bright = bright0;\n"
-        "}\n";
-    shd_desc.fs.source =
-        "#version 330\n"
-        "in float bright;\n"
-        "layout(location=0) out vec4 frag_color_0;\n"
-        "layout(location=1) out vec4 frag_color_1;\n"
-        "layout(location=2) out vec4 frag_color_2;\n"
-        "void main() {\n"
-        "  frag_color_0 = vec4(bright, 0.0, 0.0, 1.0);\n"
-        "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
-        "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
-        "}\n";
+    sg_shader_desc shd_desc = {
+        .vs.uniform_blocks[0] = {
+            .size = sizeof(offscreen_params_t),
+            .uniforms = {
+                [0] = { .name="mvp", .offset=offsetof(offscreen_params_t,mvp), .type=SG_UNIFORMTYPE_MAT4 }
+            }
+        },
+        .vs.source =
+            "#version 330\n"
+            "uniform mat4 mvp;\n"
+            "in vec4 position;\n"
+            "in float bright0;\n"
+            "out float bright;\n"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  bright = bright0;\n"
+            "}\n",
+        .fs.source =
+            "#version 330\n"
+            "in float bright;\n"
+            "layout(location=0) out vec4 frag_color_0;\n"
+            "layout(location=1) out vec4 frag_color_1;\n"
+            "layout(location=2) out vec4 frag_color_2;\n"
+            "void main() {\n"
+            "  frag_color_0 = vec4(bright, 0.0, 0.0, 1.0);\n"
+            "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
+            "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
+            "}\n"
+    };
 
     /* pipeline object for the offscreen-rendered cube */
     sg_pipeline_desc pip_desc;
@@ -189,46 +193,53 @@ int main() {
 
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
-    sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(params_t));
-    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "offset", offsetof(params_t, offset), SG_UNIFORMTYPE_FLOAT2, 1);
-    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_FS, "tex0", SG_IMAGETYPE_2D);
-    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_FS, "tex1", SG_IMAGETYPE_2D);
-    sg_init_named_image(&shd_desc, SG_SHADERSTAGE_FS, "tex2", SG_IMAGETYPE_2D);
-    shd_desc.vs.source =
-        "#version 330\n"
-        "uniform vec2 offset;"
-        "in vec2 pos;\n"
-        "out vec2 uv0;\n"
-        "out vec2 uv1;\n"
-        "out vec2 uv2;\n"
-        "void main() {\n"
-        "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-        "  uv0 = pos + vec2(offset.x, 0.0);\n"
-        "  uv1 = pos + vec2(0.0, offset.y);\n"
-        "  uv2 = pos;\n"
-        "}\n";
-    shd_desc.fs.source =
-        "#version 330\n"
-        "uniform sampler2D tex0;\n"
-        "uniform sampler2D tex1;\n"
-        "uniform sampler2D tex2;\n"
-        "in vec2 uv0;\n"
-        "in vec2 uv1;\n"
-        "in vec2 uv2;\n"
-        "out vec4 frag_color;\n"
-        "void main() {\n"
-        "  vec3 c0 = texture(tex0, uv0).xyz;\n"
-        "  vec3 c1 = texture(tex1, uv1).xyz;\n"
-        "  vec3 c2 = texture(tex2, uv2).xyz;\n"
-        "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
-        "}\n";
+    sg_shader_desc fsq_shd_desc = {
+        .vs.uniform_blocks[0] = {
+            .size = sizeof(params_t),
+            .uniforms = {
+                [0] = { .name="offset", .offset=offsetof(params_t,offset), .type=SG_UNIFORMTYPE_FLOAT2}
+            }
+        },
+        .fs.images = {
+            [0] = { .name="tex0", .type=SG_IMAGETYPE_2D },
+            [1] = { .name="tex1", .type=SG_IMAGETYPE_2D },
+            [2] = { .name="tex2", .type=SG_IMAGETYPE_2D }
+        },
+        .vs.source =
+            "#version 330\n"
+            "uniform vec2 offset;"
+            "in vec2 pos;\n"
+            "out vec2 uv0;\n"
+            "out vec2 uv1;\n"
+            "out vec2 uv2;\n"
+            "void main() {\n"
+            "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+            "  uv0 = pos + vec2(offset.x, 0.0);\n"
+            "  uv1 = pos + vec2(0.0, offset.y);\n"
+            "  uv2 = pos;\n"
+            "}\n",
+        .fs.source =
+            "#version 330\n"
+            "uniform sampler2D tex0;\n"
+            "uniform sampler2D tex1;\n"
+            "uniform sampler2D tex2;\n"
+            "in vec2 uv0;\n"
+            "in vec2 uv1;\n"
+            "in vec2 uv2;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  vec3 c0 = texture(tex0, uv0).xyz;\n"
+            "  vec3 c1 = texture(tex1, uv1).xyz;\n"
+            "  vec3 c2 = texture(tex2, uv2).xyz;\n"
+            "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
+            "}\n"
+    };
     
     /* the pipeline object for the fullscreen rectangle */
     sg_init_pipeline_desc(&pip_desc);
     sg_init_vertex_stride(&pip_desc, 0, 8);
     sg_init_named_vertex_attr(&pip_desc, 0, "pos", 0, SG_VERTEXFORMAT_FLOAT2);
-    pip_desc.shader = sg_make_shader(&shd_desc);
+    pip_desc.shader = sg_make_shader(&fsq_shd_desc);
     pip_desc.primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP;
 
     /* draw state to render the fullscreen quad */

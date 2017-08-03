@@ -84,30 +84,33 @@ int main() {
     });
 
     /* create a shader */
-    sg_shader_desc shd_desc;
-    sg_init_shader_desc(&shd_desc);
-    sg_init_uniform_block(&shd_desc, SG_SHADERSTAGE_VS, sizeof(vs_params_t));
-    sg_init_named_uniform(&shd_desc, SG_SHADERSTAGE_VS, "mvp", offsetof(vs_params_t, mvp), SG_UNIFORMTYPE_MAT4, 1);
-    shd_desc.vs.source =
-        "#version 330\n"
-        "uniform mat4 mvp;\n"
-        "in vec3 position;\n"
-        "in vec4 color0;\n"
-        "in vec3 instance_pos;\n"
-        "out vec4 color;\n"
-        "void main() {\n"
-        "  vec4 pos = vec4(position + instance_pos, 1.0);"
-        "  gl_Position = mvp * pos;\n"
-        "  color = color0;\n"
-        "}\n";
-    shd_desc.fs.source =
-        "#version 330\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
-        "void main() {\n"
-        "  frag_color = color;\n"
-        "}\n";
-    sg_shader shd = sg_make_shader(&shd_desc);
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs.uniform_blocks[0] = {
+            .size = sizeof(vs_params_t),
+            .uniforms = {
+                [0] = { .name="mvp", .offset=offsetof(vs_params_t,mvp), .type=SG_UNIFORMTYPE_MAT4 }
+            }
+        },
+        .vs.source = 
+            "#version 330\n"
+            "uniform mat4 mvp;\n"
+            "in vec3 position;\n"
+            "in vec4 color0;\n"
+            "in vec3 instance_pos;\n"
+            "out vec4 color;\n"
+            "void main() {\n"
+            "  vec4 pos = vec4(position + instance_pos, 1.0);"
+            "  gl_Position = mvp * pos;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fs.source =
+            "#version 330\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = color;\n"
+            "}\n",
+    });
 
     /* pipeline state object, note the vertex attribute definition */
     sg_pipeline_desc pip_desc;
