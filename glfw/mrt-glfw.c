@@ -164,16 +164,22 @@ int main() {
     };
 
     /* pipeline object for the offscreen-rendered cube */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, sizeof(vertex_t));
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", offsetof(vertex_t, x), SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "bright0", offsetof(vertex_t, b), SG_VERTEXFORMAT_FLOAT);
-    pip_desc.shader = sg_make_shader(&shd_desc);
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
-    pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
+    sg_pipeline_desc pip_desc = {
+        .vertex_layouts[0] = {
+            .stride = sizeof(vertex_t),
+            .attrs = {
+                [0] = { .name="position", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+            }
+        },
+        .shader = sg_make_shader(&shd_desc),
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer.cull_mode = SG_CULLMODE_BACK
+    };
 
     /* draw state for offscreen rendering */
     sg_draw_state offscreen_ds = {
@@ -236,15 +242,18 @@ int main() {
     };
     
     /* the pipeline object for the fullscreen rectangle */
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 8);
-    sg_init_named_vertex_attr(&pip_desc, 0, "pos", 0, SG_VERTEXFORMAT_FLOAT2);
-    pip_desc.shader = sg_make_shader(&fsq_shd_desc);
-    pip_desc.primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP;
+    sg_pipeline_desc fsq_pip_desc = {
+        .vertex_layouts[0] = {
+            .stride = 8,
+            .attrs[0] = { .name="pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+        },
+        .shader = sg_make_shader(&fsq_shd_desc),
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
+    };
 
     /* draw state to render the fullscreen quad */
     sg_draw_state fsq_ds = {
-        .pipeline = sg_make_pipeline(&pip_desc),
+        .pipeline = sg_make_pipeline(&fsq_pip_desc),
         .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
         .fs_images = {
             [0] = offscreen_pass_desc.color_attachments[0].image,

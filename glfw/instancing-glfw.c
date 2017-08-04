@@ -112,21 +112,32 @@ int main() {
             "}\n",
     });
 
-    /* pipeline state object, note the vertex attribute definition */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 28);
-    sg_init_vertex_stride(&pip_desc, 1, 12);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    sg_init_named_vertex_attr(&pip_desc, 1, "instance_pos", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_vertex_step(&pip_desc, 1, SG_VERTEXSTEP_PER_INSTANCE, 1);
-    pip_desc.shader = shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
-    pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    sg_pipeline pip = sg_make_pipeline(&pip_desc);
+    /* pipeline state object, note the vertex layout definition */
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .vertex_layouts = {
+            [0] = {
+                .stride = 28,
+                .attrs = {
+                    [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                    [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                }
+            },
+            [1] = {
+                .stride = 12,
+                .step_func = SG_VERTEXSTEP_PER_INSTANCE,
+                .attrs = {
+                    [0] = { .name="instance_pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 } 
+                }
+            }
+        },
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer.cull_mode = SG_CULLMODE_BACK
+    });
 
     /* setup resource bindings, note how the instance-data buffer
        goes into vertex buffer slot 1 */

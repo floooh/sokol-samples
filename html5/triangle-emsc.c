@@ -67,12 +67,16 @@ int main() {
     };
 
     /* create a pipeline object (default render states are fine for triangle) */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 28);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = sg_make_shader(&shd_desc);
+    sg_pipeline_desc pip_desc = {
+        .vertex_layouts[0] = {
+            .stride = 28,
+            .attrs = {
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+            }
+        },
+        .shader = sg_make_shader(&shd_desc),
+    };
 
     /* setup the draw state with resource bindings */
     draw_state = (sg_draw_state){

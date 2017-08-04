@@ -79,15 +79,18 @@ int main() {
     });
     
     /* create a pipeline object (default render state is fine) */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-    sg_init_vertex_stride(&pip_desc, 0, 28);
-    sg_init_indexed_vertex_attr(&pip_desc, 0, 0, 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_indexed_vertex_attr(&pip_desc, 0, 1, 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    sg_pipeline pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .vertex_layouts[0] = {
+            .stride = 28,
+            .attrs = {
+                /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
+                [0] = { .index=0, .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .index=1, .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+            }
+        }
+    });
 
     /* draw state struct with resource bindings */
     sg_draw_state draw_state = {

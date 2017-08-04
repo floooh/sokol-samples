@@ -80,13 +80,17 @@ int main() {
     });
     
     /* a pipeline object (default render state is fine) */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 28);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd_id;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
+    sg_pipeline_desc pip_desc = {
+        .vertex_layouts[0] = {
+            .stride = 28,
+            .attrs = {
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+            }
+        },
+        .shader = shd_id,
+        .index_type = SG_INDEXTYPE_UINT16
+    };
 
     /* setup draw state with resource bindings */
     draw_state = (sg_draw_state){

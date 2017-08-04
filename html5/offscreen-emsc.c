@@ -190,30 +190,41 @@ int main() {
     });
 
     /* pipeline object for offscreen rendering, don't need texcoords here */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 36);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = offscreen_shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
-    pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    sg_pipeline offscreen_pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .vertex_layouts[0] = {
+            .stride = 36,
+            .attrs = {
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+            }
+        },
+        .shader = offscreen_shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer.cull_mode = SG_CULLMODE_BACK
+    });
 
     /* and another pipeline object for the default pass */
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 36);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    sg_init_named_vertex_attr(&pip_desc, 0, "texcoord0", 28, SG_VERTEXFORMAT_FLOAT2);
-    pip_desc.shader = default_shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL;
-    pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.rast.cull_mode = SG_CULLMODE_BACK;
-    sg_pipeline default_pip = sg_make_pipeline(&pip_desc);
+    sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .vertex_layouts[0] = {
+            .stride = 36,
+            .attrs = {
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .name="texcoord0", .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+            }
+        },
+        .shader = default_shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer.cull_mode = SG_CULLMODE_BACK
+    });
 
     /* the draw state for offscreen rendering with all the required resources */
     offscreen_draw_state = (sg_draw_state){

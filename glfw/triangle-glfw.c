@@ -30,57 +30,58 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* create a vertex buffer with 3 vertices */
-    float vertices[] = {
+    /* default pass action (clears to grey) */
+    sg_pass_action pass_action = {0};
+
+    /* vertex data for the triangle */
+    const float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
-    sg_buffer_desc buf_desc = {
-        .size = sizeof(vertices),
-        .data_ptr = vertices,   
-        .data_size = sizeof(vertices)
-    };
-    sg_buffer buf_id = sg_make_buffer(&buf_desc);
 
-    /* create a shader */
-    sg_shader shd_id = sg_make_shader(&(sg_shader_desc){
-        .vs.source = 
-            "#version 330\n"
-            "in vec4 position;\n"
-            "in vec4 color0;\n"
-            "out vec4 color;\n"
-            "void main() {\n"
-            "  gl_Position = position;\n"
-            "  color = color0;\n"
-            "}\n",
-        .fs.source =
-            "#version 330\n"
-            "in vec4 color;\n"
-            "out vec4 frag_color;\n"
-            "void main() {\n"
-            "  frag_color = color;\n"
-            "}\n"
-    });
+    /*
+        Ok, this is maybe a bit ridiculous.
 
-    /* create a pipeline object (default render states are fine for triangle) */
-    sg_pipeline_desc pip_desc;
-    sg_init_pipeline_desc(&pip_desc);
-    sg_init_vertex_stride(&pip_desc, 0, 28);
-    sg_init_named_vertex_attr(&pip_desc, 0, "position", 0, SG_VERTEXFORMAT_FLOAT3);
-    sg_init_named_vertex_attr(&pip_desc, 0, "color0", 12, SG_VERTEXFORMAT_FLOAT4);
-    pip_desc.shader = shd_id;
-    sg_pipeline pip_id = sg_make_pipeline(&pip_desc);
-
-    /* draw state struct defines the resource bindings */
+        The following initializes a sg_draw_state struct containing
+        a pipeline and buffer resource, and creates these resources
+        'in-place'.
+    */
     sg_draw_state draw_state = {
-        .pipeline = pip_id,
-        .vertex_buffers[0] = buf_id
+        .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+            .vertex_layouts[0] = {
+                .stride = 28,
+                .attrs = {
+                    [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                    [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                }
+            },
+            .shader = sg_make_shader(&(sg_shader_desc){
+                .vs.source = 
+                    "#version 330\n"
+                    "in vec4 position;\n"
+                    "in vec4 color0;\n"
+                    "out vec4 color;\n"
+                    "void main() {\n"
+                    "  gl_Position = position;\n"
+                    "  color = color0;\n"
+                    "}\n",
+                .fs.source =
+                    "#version 330\n"
+                    "in vec4 color;\n"
+                    "out vec4 frag_color;\n"
+                    "void main() {\n"
+                    "  frag_color = color;\n"
+                    "}\n"
+            })
+        }),
+        .vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+            .size = sizeof(vertices),
+            .data_ptr = vertices, 
+            .data_size = sizeof(vertices)
+        })
     };
-
-    /* default pass action (clear to grey) */
-    sg_pass_action pass_action = { 0 };
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
@@ -94,9 +95,6 @@ int main() {
     }
 
     /* cleanup */
-    sg_destroy_pipeline(pip_id);
-    sg_destroy_shader(shd_id);
-    sg_destroy_buffer(buf_id);
     sg_shutdown();
     glfwTerminate();
     return 0;
