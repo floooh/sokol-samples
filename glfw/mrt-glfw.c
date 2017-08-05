@@ -78,7 +78,7 @@ int main() {
     };
 
     /* cube vertex buffer */
-    vertex_t vertices[] = {
+    vertex_t cube_vertices[] = {
         /* pos + brightness */
         { -1.0f, -1.0f, -1.0f,   1.0f },
         {  1.0f, -1.0f, -1.0f,   1.0f },
@@ -110,14 +110,14 @@ int main() {
         {  1.0f,  1.0f,  1.0f,   0.7f },
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
-    sg_buffer_desc vbuf_desc = {
-        .size = sizeof(vertices),
-        .data_ptr = vertices,
-        .data_size = sizeof(vertices)   
-    };
+    sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .size = sizeof(cube_vertices),
+        .data_ptr = cube_vertices,
+        .data_size = sizeof(cube_vertices)
+    });
 
     /* index buffer for the cube */
-    uint16_t indices[] = {
+    uint16_t cube_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -125,15 +125,15 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc = {
+    sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .data_ptr = indices,
-        .data_size = sizeof(indices)
-    };
+        .size = sizeof(cube_indices),
+        .data_ptr = cube_indices,
+        .data_size = sizeof(cube_indices)
+    });
 
     /* a shader to render the cube into offscreen MRT render targets */
-    sg_shader_desc shd_desc = {
+    sg_shader cube_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
@@ -161,10 +161,10 @@ int main() {
             "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
             "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
             "}\n"
-    };
+    });
 
     /* pipeline object for the offscreen-rendered cube */
-    sg_pipeline_desc pip_desc = {
+    sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .vertex_layouts[0] = {
             .stride = sizeof(vertex_t),
             .attrs = {
@@ -172,34 +172,34 @@ int main() {
                 [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
-        .shader = sg_make_shader(&shd_desc),
+        .shader = cube_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK
-    };
+    });
 
     /* draw state for offscreen rendering */
     sg_draw_state offscreen_ds = {
-        .pipeline = sg_make_pipeline(&pip_desc),
-        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
-        .index_buffer = sg_make_buffer(&ibuf_desc)
+        .pipeline = cube_pip, 
+        .vertex_buffers[0] = cube_vbuf,
+        .index_buffer = cube_ibuf
     };
 
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
-    float fsq_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
-    vbuf_desc = (sg_buffer_desc) {
-        .size = sizeof(fsq_vertices),
-        .data_ptr = fsq_vertices,
-        .data_size = sizeof(fsq_vertices)
-    };
+    float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
+    sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
+        .size = sizeof(quad_vertices),
+        .data_ptr = quad_vertices,
+        .data_size = sizeof(quad_vertices)
+    });
 
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
-    sg_shader_desc fsq_shd_desc = {
+    sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -239,29 +239,63 @@ int main() {
             "  vec3 c2 = texture(tex2, uv2).xyz;\n"
             "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
             "}\n"
-    };
+    });
     
     /* the pipeline object for the fullscreen rectangle */
-    sg_pipeline_desc fsq_pip_desc = {
+    sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .vertex_layouts[0] = {
             .stride = 8,
             .attrs[0] = { .name="pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
         },
-        .shader = sg_make_shader(&fsq_shd_desc),
+        .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
-    };
+    });
 
     /* draw state to render the fullscreen quad */
     sg_draw_state fsq_ds = {
-        .pipeline = sg_make_pipeline(&fsq_pip_desc),
-        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
+        .pipeline = fsq_pip,
+        .vertex_buffers[0] = quad_buf,
         .fs_images = {
             [0] = offscreen_pass_desc.color_attachments[0].image,
             [1] = offscreen_pass_desc.color_attachments[1].image,
             [2] = offscreen_pass_desc.color_attachments[2].image,
         }
     };
-    
+
+    /* and prepare a quick'n'dirty draw state to render a debug visualizations
+       of the offscreen render target contents */
+    sg_draw_state dbg_ds = {
+        .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+            .vertex_layouts[0] = {
+                .stride = 8,
+                .attrs[0] = { .name="pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+            },
+            .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+            .shader = sg_make_shader(&(sg_shader_desc){
+                .vs.source =
+                    "#version 330\n"
+                    "uniform vec2 offset;"
+                    "in vec2 pos;\n"
+                    "out vec2 uv;\n"
+                    "void main() {\n"
+                    "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+                    "  uv = pos;\n"
+                    "}\n",
+                .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+                .fs.source =
+                    "#version 330\n"
+                    "uniform sampler2D tex;\n"
+                    "in vec2 uv;\n"
+                    "out vec4 frag_color;\n"
+                    "void main() {\n"
+                    "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
+                    "}\n"
+            })
+        }),
+        .vertex_buffers[0] = quad_buf,
+        /* images will be filled right before rendering */
+    };
+
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
         .colors = { 
@@ -296,13 +330,18 @@ int main() {
         sg_draw(0, 36, 1);
         sg_end_pass();
 
-        /* render fullscreen quad with the 'composed image'
-            FIXME: also want smaller 'debug view' with separate render target content,
-            to test sg_apply_viewport */
+        /* render fullscreen quad with the 'composed image', plus 3 small
+           debug-views with the content of the offscreen render targets */
         sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
         sg_apply_draw_state(&fsq_ds);
         sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
         sg_draw(0, 4, 1);
+        for (int i = 0; i < 3; i++) {
+            sg_apply_viewport(i*100, 0, 100, 100, false);
+            dbg_ds.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+            sg_apply_draw_state(&dbg_ds);
+            sg_draw(0, 4, 1);
+        }
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
