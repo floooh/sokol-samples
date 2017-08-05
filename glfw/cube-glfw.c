@@ -174,10 +174,6 @@ int main() {
         glfwPollEvents();
     }
 
-    sg_destroy_pipeline(pip);
-    sg_destroy_shader(shd);
-    sg_destroy_buffer(ibuf);
-    sg_destroy_buffer(vbuf);
     sg_shutdown();
     glfwTerminate();
 }

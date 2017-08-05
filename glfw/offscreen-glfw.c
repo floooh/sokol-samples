@@ -275,15 +275,6 @@ int main() {
         glfwPollEvents();
     }
 
-    sg_destroy_pipeline(default_pip);
-    sg_destroy_pipeline(offscreen_pip);
-    sg_destroy_shader(default_shd);
-    sg_destroy_shader(offscreen_shd);
-    sg_destroy_buffer(ibuf);
-    sg_destroy_buffer(vbuf);
-    sg_destroy_pass(offscreen_pass);
-    sg_destroy_image(depth_img);
-    sg_destroy_image(color_img);
     sg_shutdown();
     glfwTerminate();
 }

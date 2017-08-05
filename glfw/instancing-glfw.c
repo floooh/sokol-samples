@@ -209,11 +209,6 @@ int main() {
     }
 
     /* cleanup */
-    sg_destroy_pipeline(draw_state.pipeline);
-    sg_destroy_shader(shd);
-    sg_destroy_buffer(draw_state.index_buffer);
-    sg_destroy_buffer(draw_state.vertex_buffers[0]);
-    sg_destroy_buffer(draw_state.vertex_buffers[1]);
     sg_shutdown();
     glfwTerminate();
 }
