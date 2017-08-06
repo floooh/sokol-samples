@@ -56,7 +56,7 @@ int main() {
         ImGui::GetIO().MousePos.y = float(pos_y);
     });
     glfwSetScrollCallback(w, [](GLFWwindow* w, double pos_x, double pos_y){
-        ImGui::GetIO().MouseWheel = pos_y;
+        ImGui::GetIO().MouseWheel = float(pos_y);
     });
     glfwSetKeyCallback(w, [](GLFWwindow* w, int key, int scancode, int action, int mods){
         ImGuiIO& io = ImGui::GetIO();
@@ -163,8 +163,8 @@ int main() {
 
     // pipeline object for imgui rendering
     sg_pipeline_desc pip_desc = { };
-    pip_desc.vertex_layouts[0].stride = sizeof(ImDrawVert);
     auto& layouts = pip_desc.vertex_layouts;
+    layouts[0].stride = sizeof(ImDrawVert);
     layouts[0].attrs[0] = sg_named_attr("position", offsetof(ImDrawVert, pos), SG_VERTEXFORMAT_FLOAT2);
     layouts[0].attrs[1] = sg_named_attr("texcoord0", offsetof(ImDrawVert, uv), SG_VERTEXFORMAT_FLOAT2);
     layouts[0].attrs[2] = sg_named_attr("color0", offsetof(ImDrawVert, col), SG_VERTEXFORMAT_UBYTE4N);
@@ -292,8 +292,8 @@ void imgui_draw_cb(ImDrawData* draw_data) {
             else {
                 const int sx = (int) pcmd.ClipRect.x;
                 const int sy = (int) pcmd.ClipRect.y;
-                const int sw = (int) pcmd.ClipRect.z - pcmd.ClipRect.x;
-                const int sh = (int) pcmd.ClipRect.w - pcmd.ClipRect.y;
+                const int sw = (int) (pcmd.ClipRect.z - pcmd.ClipRect.x);
+                const int sh = (int) (pcmd.ClipRect.w - pcmd.ClipRect.y);
                 sg_apply_scissor_rect(sx, sy, sw, sh, true);
                 sg_draw(base_element, pcmd.ElemCount, 1);
             }
