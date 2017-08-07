@@ -17,7 +17,8 @@ samples = [
     'cube',
     'texcube',
     'offscreen',
-    'instancing'
+    'instancing',
+    'imgui'
 ]
 
 # webpage template arguments

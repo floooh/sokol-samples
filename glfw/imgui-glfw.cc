@@ -79,7 +79,7 @@ int main() {
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
-    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;; 
+    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB; 
     io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
     io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
     io.KeyMap[ImGuiKey_UpArrow] = GLFW_KEY_UP;
@@ -231,7 +231,7 @@ int main() {
     return 0;
 }
 
-/* imgui draw callback */
+// imgui draw callback
 void imgui_draw_cb(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
