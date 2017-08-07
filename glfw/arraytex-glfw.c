@@ -40,10 +40,10 @@ int main() {
     assert(sg_isvalid());
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
-    const int num_layers = 3;
-    const int width = 16;
-    const int height = 16;
-    uint32_t pixels[num_layers][height][width];
+    static const int num_layers = 3;
+    static const int width = 16;
+    static const int height = 16;
+    static uint32_t pixels[num_layers][height][width];
     for (int layer=0, even_odd=0; layer<num_layers; layer++) {
         for (int y = 0; y < height; y++, even_odd++) {
             for (int x = 0; x < width; x++, even_odd++) {
