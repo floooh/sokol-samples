@@ -59,7 +59,7 @@ To build for emscripten:
 > cd ~/scratch/sokol-samples
 > ./fips setup emscripten
 [...this will take a while]
-> ./fips set config emsc-make-release
+> ./fips set config webgl2-emsc-make-release
 > ./fips build
 ...
 > ./fips list targets
@@ -75,5 +75,6 @@ Type ```./fips help``` for more build system options.
 - GLFW: https://github.com/glfw/glfw
 - flextGL: https://github.com/ginkgo/flextGL
 - Handmade-Math: https://github.com/StrangeZak/Handmade-Math
+- Dear Imgui: https://github.com/ocornut/imgui
 
 Enjoy!

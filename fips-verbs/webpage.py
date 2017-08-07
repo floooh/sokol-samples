@@ -18,6 +18,7 @@ samples = [
     'texcube',
     'offscreen',
     'instancing',
+    'mrt',
     'imgui'
 ]
 
@@ -34,8 +35,8 @@ BackgroundColor = '#00E676'
 # build configuration
 # EmscConfig  = 'webgl2-emsc-ninja-release'
 # WasmConfig  = 'webgl2-wasm-ninja-release'
-EmscConfig  = 'emsc-ninja-release'
-WasmConfig  = 'wasm-ninja-release'
+EmscConfig  = 'webgl2-emsc-ninja-release'
+WasmConfig  = 'webgl2-wasm-ninja-release'
 
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
