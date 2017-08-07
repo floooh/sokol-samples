@@ -18,6 +18,10 @@ typedef struct {
     hmm_vec2 offset2;
 } params_t;
 
+#define IMG_LAYERS (3)
+#define IMG_WIDTH (16)
+#define IMG_HEIGHT (16)
+
 int main() {
     const int WIDTH = 800;
     const int HEIGHT = 600;
@@ -40,13 +44,10 @@ int main() {
     assert(sg_isvalid());
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
-    static const int num_layers = 3;
-    static const int width = 16;
-    static const int height = 16;
-    static uint32_t pixels[num_layers][height][width];
-    for (int layer=0, even_odd=0; layer<num_layers; layer++) {
-        for (int y = 0; y < height; y++, even_odd++) {
-            for (int x = 0; x < width; x++, even_odd++) {
+    static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
+    for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
+        for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
+            for (int x = 0; x < IMG_WIDTH; x++, even_odd++) {
                 if (even_odd & 1) {
                     switch (layer) {
                         case 0: pixels[layer][y][x] = 0x000000FF; break;
@@ -64,9 +65,9 @@ int main() {
     const int img_data_sizes[] = { sizeof(pixels) };
     sg_image img = sg_make_image(&(sg_image_desc) {
         .type = SG_IMAGETYPE_ARRAY,
-        .width = width,
-        .height = height,
-        .layers = num_layers,
+        .width = IMG_WIDTH,
+        .height = IMG_HEIGHT,
+        .layers = IMG_LAYERS,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
@@ -201,7 +202,9 @@ int main() {
     };
 
     /* default pass action */
-    sg_pass_action pass_action = { 0 };
+    sg_pass_action pass_action = { 
+        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+    };
     
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
