@@ -51,6 +51,12 @@ fips_begin_app(mrt-glfw cmdline)
     fips_deps(glfw3 flextgl)
 fips_end_app()
 
+fips_begin_app(arraytex-glfw cmdline)
+    fips_vs_warning_level(3)
+    fips_files(arraytex-glfw.c)
+    fips_deps(glfw3 flextgl)
+fips_end_app()
+
 fips_begin_app(imgui-glfw cmdline)
     fips_vs_warning_level(3)
     fips_files(imgui-glfw.cc)
