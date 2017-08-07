@@ -16,9 +16,8 @@ const int Height = 768;
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
 
-bool show_test_window = false;
+bool show_test_window = true;
 bool show_another_window = false;
-ImVec4 clear_color = ImColor(114, 144, 154);
 
 sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
@@ -35,7 +34,6 @@ int main() {
 
     // window and GL context via GLFW and flextGL
     glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -104,6 +102,7 @@ int main() {
     vbuf_desc.usage = SG_USAGE_STREAM;
     vbuf_desc.size = sizeof(vertices);
     draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+
     sg_buffer_desc ibuf_desc = { };
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.usage = SG_USAGE_STREAM;
@@ -118,14 +117,11 @@ int main() {
     const void* img_data_ptrs[] = { font_pixels };
     const int img_data_sizes[] = { font_img_size };
     sg_image_desc img_desc = { };
-    img_desc.type = SG_IMAGETYPE_2D;
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.min_filter = SG_FILTER_NEAREST;
-    img_desc.mag_filter = SG_FILTER_NEAREST;
     img_desc.num_data_items = 1;
     img_desc.data_ptrs = img_data_ptrs;
     img_desc.data_sizes = img_data_sizes;
@@ -133,9 +129,9 @@ int main() {
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
-    shd_desc.vs.uniform_blocks[0].size = sizeof(vs_params_t);
-    auto& u = shd_desc.vs.uniform_blocks[0].uniforms;
-    u[0] = sg_named_uniform("disp_size", offsetof(vs_params_t, disp_size), SG_UNIFORMTYPE_FLOAT2, 1);
+    auto& ub = shd_desc.vs.uniform_blocks[0];
+    ub.size = sizeof(vs_params_t);
+    ub.uniforms[0] = sg_named_uniform("disp_size", offsetof(vs_params_t, disp_size), SG_UNIFORMTYPE_FLOAT2, 1);
     shd_desc.vs.source =
         "#version 330\n"
         "uniform vec2 disp_size;\n"
@@ -170,15 +166,19 @@ int main() {
     layouts[0].attrs[2] = sg_named_attr("color0", offsetof(ImDrawVert, col), SG_VERTEXFORMAT_UBYTE4N);
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.depth_stencil.depth_write_enabled = true;
-    pip_desc.depth_stencil.depth_compare_func = SG_COMPAREFUNC_ALWAYS;
     pip_desc.blend.enabled = true;
     pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
     pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     pip_desc.blend.color_write_mask = SG_COLORMASK_RGB;
     pip_desc.rasterizer.scissor_test_enabled = true;
-    pip_desc.rasterizer.cull_mode = SG_CULLMODE_NONE;
     draw_state.pipeline = sg_make_pipeline(&pip_desc);
+
+    // initial clear color
+    pass_action.colors[0].action = SG_ACTION_CLEAR;
+    pass_action.colors[0].val[0] = 0.0f;
+    pass_action.colors[0].val[1] = 0.5f;
+    pass_action.colors[0].val[2] = 0.7f;
+    pass_action.colors[0].val[3] = 1.0f;
 
     // draw loop
     while (!glfwWindowShouldClose(w)) {
@@ -196,7 +196,7 @@ int main() {
         static float f = 0.0f;
         ImGui::Text("Hello, world!");
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", (float*)&clear_color);
+        ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
         if (ImGui::Button("Test Window")) show_test_window ^= 1;
         if (ImGui::Button("Another Window")) show_another_window ^= 1;
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -216,10 +216,6 @@ int main() {
         }
 
         // the sokol_gfx draw pass
-        pass_action.colors[0].action = SG_ACTION_CLEAR;
-        pass_action.colors[0].val[0] = clear_color.x;
-        pass_action.colors[0].val[1] = clear_color.y;
-        pass_action.colors[0].val[2] = clear_color.z;
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         ImGui::Render();
         sg_end_pass();
