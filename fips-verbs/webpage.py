@@ -11,16 +11,16 @@ from mod import log, util, project, emscripten, android
 
 # sample attributes
 samples = [
-    'clear',
-    'triangle',
-    'quad',
-    'cube',
-    'texcube',
-    'offscreen',
-    'instancing',
-    'mrt',
-    'arraytex',
-    'imgui'
+    [ 'clear', 'clear-emsc.c' ],
+    [ 'triangle', 'triangle-emsc.c' ],
+    [ 'quad', 'quad-emsc.c' ],
+    [ 'cube', 'cube-emsc.c' ],
+    [ 'texcube', 'texcube-emsc.c' ],
+    [ 'offscreen', 'offscreen-emsc.c' ],
+    [ 'instancing', 'instancing-emsc.c' ],
+    [ 'mrt', 'mrt-emsc.c' ],
+    [ 'arraytex', 'arraytex-emsc.c' ],
+    [ 'imgui', 'imgui-emsc.cc' ]
 ]
 
 # webpage template arguments
@@ -53,9 +53,9 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     # build the thumbnail gallery
     content = ''
     for sample in samples :
-        log.info('> adding thumbnail for {}'.format(sample))
-        name    = sample
-        img_name = sample + '.jpg'
+        name = sample[0]
+        log.info('> adding thumbnail for {}'.format(name))
+        img_name = name + '.jpg'
         img_path = proj_dir + '/webpage/' + img_name
         if not os.path.exists(img_path):
             img_name = 'dummy.jpg'
@@ -94,7 +94,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     if emscripten.check_exists(fips_dir) :
         emsc_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, EmscConfig)
         for sample in samples :
-            name = sample
+            name = sample[0]
+            source = sample[1]
             log.info('> generate emscripten HTML page: {}'.format(name))
             for ext in ['js', 'html.mem'] :
                 src_path = '{}/{}-emsc.{}'.format(emsc_deploy_dir, name, ext)
@@ -102,7 +103,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
                     shutil.copy(src_path, '{}/asmjs/'.format(webpage_dir))
             with open(proj_dir + '/webpage/emsc.html', 'r') as f :
                 templ = Template(f.read())
-            src_url = GitHubSamplesURL + name + '-emsc.c'
+            src_url = GitHubSamplesURL + source
             html = templ.safe_substitute(name=name+'-emsc', source=src_url, separator=GameSeparator)
             with open('{}/asmjs/{}-emsc.html'.format(webpage_dir, name, name), 'w') as f :
                 f.write(html)
@@ -111,7 +112,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     if emscripten.check_exists(fips_dir) :
         wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, WasmConfig)
         for sample in samples :
-            name = sample
+            name = sample[0]
+            source = sample[1]
             log.info('> generate wasm HTML page: {}'.format(name))
             for ext in ['js', 'wasm.mappedGlobals'] :
                 src_path = '{}/{}-emsc.{}'.format(wasm_deploy_dir, name, ext)
@@ -123,14 +125,14 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
                     shutil.copy(src_path, '{}/wasm/{}-emsc.{}.txt'.format(webpage_dir, name, ext))
             with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                 templ = Template(f.read())
-            src_url = GitHubSamplesURL + name + '-emsc.c'
+            src_url = GitHubSamplesURL + source
             html = templ.safe_substitute(name=name+'-emsc', source=src_url, separator=GameSeparator)
             with open('{}/wasm/{}-emsc.html'.format(webpage_dir, name), 'w') as f :
                 f.write(html)
 
     # copy the screenshots
     for sample in samples :
-        img_name = sample + '.jpg'
+        img_name = sample[0] + '.jpg'
         img_path = proj_dir + '/webpage/' + img_name
         if os.path.exists(img_path):
             log.info('> copy screenshot: {}'.format(img_name))
