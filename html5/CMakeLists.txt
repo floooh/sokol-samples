@@ -30,6 +30,10 @@ fips_begin_app(mrt-emsc windowed)
     fips_files(mrt-emsc.c)
 fips_end_app()
 
+fips_begin_app(arraytex-emsc windowed)
+    fips_files(arraytex-emsc.c)
+fips_end_app()
+
 fips_begin_app(imgui-emsc windowed)
     fips_files(imgui-emsc.cc)
     fips_deps(imgui)

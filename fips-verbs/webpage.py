@@ -19,6 +19,7 @@ samples = [
     'offscreen',
     'instancing',
     'mrt',
+    'arraytex',
     'imgui'
 ]
 
