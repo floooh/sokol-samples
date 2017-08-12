@@ -17,6 +17,8 @@
 
 static int width;
 static int height;
+static int sample_count;
+static const char* window_title;
 static osx_init_func init_func;
 static osx_frame_func frame_func;
 static osx_shutdown_func shutdown_func;
@@ -58,7 +60,9 @@ static MTKView* mtk_view;
         styleMask:style
         backing:NSBackingStoreBuffered
         defer:NO];
+    [window setTitle:[NSString stringWithUTF8String:window_title]];
     [window setAcceptsMouseMovedEvents:YES];
+    [window center];
     [window setRestorable:YES];
     [window setDelegate:window_delegate];
 
@@ -71,6 +75,9 @@ static MTKView* mtk_view;
     [mtk_view setDevice: mtl_device];
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
+    CGSize drawableSize = { width, height };
+    [mtk_view setDrawableSize:drawableSize];
+    [mtk_view setSampleCount:sample_count];
     [window setContentView:mtk_view];
     [window makeKeyAndOrderFront:nil];
 
@@ -186,9 +193,11 @@ static MTKView* mtk_view;
 @end
 
 //------------------------------------------------------------------------------
-void osx_start(int w, int h, osx_init_func ifun, osx_frame_func ffun, osx_shutdown_func sfun) {
+void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifun, osx_frame_func ffun, osx_shutdown_func sfun) {
     width = w;
     height = h;
+    sample_count = smp_count;
+    window_title = title;
     init_func = ifun;
     frame_func = ffun;
     shutdown_func = sfun;
@@ -198,4 +207,20 @@ void osx_start(int w, int h, osx_init_func ifun, osx_frame_func ffun, osx_shutdo
     [NSApp setDelegate:delg];
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp run];
+}
+
+const void* osx_mtk_get_render_pass_descriptor() {
+    return CFBridgingRetain([mtk_view currentRenderPassDescriptor]);
+}
+
+const void* osx_mtk_get_drawable() {
+    return CFBridgingRetain([mtk_view currentDrawable]);
+}
+
+int osx_width() {
+    return (int)[mtk_view drawableSize].width;
+}
+
+int osx_height() {
+    return (int)[mtk_view drawableSize].height;
 }

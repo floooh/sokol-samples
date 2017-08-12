@@ -27,12 +27,12 @@ int main() {
     ctx = emscripten_webgl_create_context(0, &attrs);
     emscripten_webgl_make_context_current(ctx);
     
-    // setup sokol_gfx
+    /* setup sokol_gfx */
     sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    // setup pass action to clear to red
+    /* setup pass action to clear to red */
     pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
@@ -42,12 +42,12 @@ int main() {
 }
 
 void draw() {
-    // animate clear colors
-    float g = pass_action.colors[0].val[1] + 0.01;
+    /* animate clear colors */
+    float g = pass_action.colors[0].val[1] + 0.01f;
     if (g > 1.0f) g = 0.0f;
     pass_action.colors[0].val[1] = g;
 
-    // draw one frame
+    /* draw one frame */
     sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
     sg_end_pass();
     sg_commit();

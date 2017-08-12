@@ -68,6 +68,17 @@ To build for emscripten:
 ...
 ```
 
+To build for Metal on OSX:
+```
+> cd ~/scratch/sokol-samples
+> ./fips set config metal-osx-xcode-debug
+> ./fips build
+...
+> ./fips list targets
+...
+> ./fips run clear-metal
+```
+
 Type ```./fips help``` for more build system options.
 
 ## Thanks to:
