@@ -7,3 +7,9 @@ fips_begin_app(clear-metal windowed)
     fips_files(clear-metal.c)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(triangle-metal windowed)
+    fips_files(triangle-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
+

@@ -4,16 +4,7 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-void init(const void* mtl_device);
-void frame();
-void shutdown();
-
 sg_pass_action pass_action;
-
-int main() {
-    osx_start(640, 480, 1, "Sokol Clear (Metal)", init, frame, shutdown);
-    return 0;
-}
 
 void init(const void* mtl_device) {
     /* setup sokol */
@@ -46,3 +37,7 @@ void shutdown() {
     sg_shutdown();
 }
 
+int main() {
+    osx_start(640, 480, 1, "Sokol Clear (Metal)", init, frame, shutdown);
+    return 0;
+}

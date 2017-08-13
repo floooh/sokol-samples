@@ -86,8 +86,8 @@ int main() {
             .stride = 28,
             .attrs = {
                 /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-                [0] = { .index=0, .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .index=1, .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         }
     });
