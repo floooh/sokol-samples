@@ -31,7 +31,7 @@ void init(const void* mtl_device) {
 
     /* a shader pair, compiled from source code */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.func = "vs_main",
+        .vs.entry = "vs_main",
         .vs.source =
             "#include <metal_stdlib>\n"
             "#include <simd/simd.h>\n"
@@ -50,7 +50,7 @@ void init(const void* mtl_device) {
             "  out.color = in.color;\n"
             "  return out;\n"
             "}\n",
-        .fs.func = "fs_main",
+        .fs.entry = "fs_main",
         .fs.source =
             "#include <metal_stdlib>\n"
             "#include <simd/simd.h>\n"
@@ -83,10 +83,8 @@ void init(const void* mtl_device) {
 
 void frame() {
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    /*
     sg_apply_draw_state(&draw_state);
     sg_draw(0, 3, 1);
-    */
     sg_end_pass();
     sg_commit();
 }
