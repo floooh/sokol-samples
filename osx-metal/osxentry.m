@@ -70,15 +70,16 @@ static MTKView* mtk_view;
     mtk_view_delegate = [[SokolViewDelegate alloc] init];
     mtl_device = MTLCreateSystemDefaultDevice();
     mtk_view = [[SokolMTKView alloc] init];
+    [window setContentView:mtk_view];
     [mtk_view setPreferredFramesPerSecond:60];
     [mtk_view setDelegate:mtk_view_delegate];
     [mtk_view setDevice: mtl_device];
+    [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    CGSize drawableSize = { width, height };
-    [mtk_view setDrawableSize:drawableSize];
+    CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
+    [mtk_view setDrawableSize:drawable_size];
     [mtk_view setSampleCount:sample_count];
-    [window setContentView:mtk_view];
     [window makeKeyAndOrderFront:nil];
 
     // call the init function
@@ -218,9 +219,9 @@ const void* osx_mtk_get_drawable() {
 }
 
 int osx_width() {
-    return (int)[mtk_view drawableSize].width;
+    return (int) [mtk_view drawableSize].width;
 }
 
 int osx_height() {
-    return (int)[mtk_view drawableSize].height;
+    return (int) [mtk_view drawableSize].height;
 }
