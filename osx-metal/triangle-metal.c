@@ -26,13 +26,23 @@ void init(const void* mtl_device) {
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)
     });
 
     /* a shader pair, compiled from source code */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        /* 
+            the Metal backend offers different options to define a shader:
+            
+            - common source with separate vs/fs entry points
+            - separate vs/fs sources with separate vs/fs entry points
+            - common byte code with separate vs/fs entry points
+            - ...and separate vs/fs bytecode with separate entry points
+
+           this example uses a common source with a vs and fs entry point function
+        */
         .vs.entry = "vs_main",
-        .vs.source =
+        .fs.entry = "fs_main",
+        .source =
             "#include <metal_stdlib>\n"
             "#include <simd/simd.h>\n"
             "using namespace metal;\n"
@@ -40,32 +50,24 @@ void init(const void* mtl_device) {
             "  float4 position [[attribute(0)]];\n"
             "  float4 color [[attribute(1)]];\n"
             "};\n"
-            "struct vs_out {\n"
-            "  float4 color [[user(locn0)]];\n"
+            "struct vs_out_fs_in {\n"
             "  float4 position [[position]];\n"
-            "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]]) {\n"
-            "  vs_out out;\n"
-            "  out.position = in.position;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
-            "}\n",
-        .fs.entry = "fs_main",
-        .fs.source =
-            "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
-            "using namespace metal;\n"
-            "struct fs_in {\n"
-            "  float4 color [[user(locn0)]];\n"
+            "  float4 color;\n"
             "};\n"
             "struct fs_out {\n"
             "  float4 color [[color(0)]];\n"
             "};\n"
-            "fragment fs_out fs_main(fs_in in [[stage_in]]) {\n"
-            "  fs_out out;\n"
+            "vertex vs_out_fs_in vs_main(vs_in in [[stage_in]]) {\n"
+            "  vs_out_fs_in out;\n"
+            "  out.position = in.position;\n"
             "  out.color = in.color;\n"
             "  return out;\n"
             "}\n"
+            "fragment fs_out fs_main(vs_out_fs_in in [[stage_in]]) {\n"
+            "  fs_out out;\n"
+            "  out.color = in.color;\n"
+            "  return out;\n"
+            "};\n"
     });
 
     /* create a pipeline object */

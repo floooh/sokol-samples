@@ -80,7 +80,6 @@ int main() {
     sg_buffer_desc vbuf_desc = { 
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)
     };
 
     /* create an index buffer for the cube */
@@ -96,7 +95,6 @@ int main() {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
-        .data_size = sizeof(indices)
     };
 
     /* create a checkerboard texture */

@@ -113,7 +113,6 @@ int main() {
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(cube_vertices),
         .data_ptr = cube_vertices,
-        .data_size = sizeof(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -129,7 +128,6 @@ int main() {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(cube_indices),
         .data_ptr = cube_indices,
-        .data_size = sizeof(cube_indices)
     });
 
     /* a shader to render the cube into offscreen MRT render targets */
@@ -194,7 +192,6 @@ int main() {
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(quad_vertices),
         .data_ptr = quad_vertices,
-        .data_size = sizeof(quad_vertices)
     });
 
     /* a shader to render a fullscreen rectangle, which 'composes'

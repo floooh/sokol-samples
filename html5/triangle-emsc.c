@@ -45,7 +45,6 @@ int main() {
     sg_buffer_desc buf_desc = {
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)
     };
 
     /* create a shader */

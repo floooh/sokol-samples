@@ -112,7 +112,6 @@ int main() {
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)
     });
 
     /* create an index buffer for the cube */
@@ -128,7 +127,6 @@ int main() {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
-        .data_size = sizeof(indices)
     });
 
     /* shader to sample from array texture */

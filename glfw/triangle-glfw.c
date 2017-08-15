@@ -79,7 +79,6 @@ int main() {
         .vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
             .size = sizeof(vertices),
             .data_ptr = vertices, 
-            .data_size = sizeof(vertices)
         })
     };
 

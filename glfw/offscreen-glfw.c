@@ -103,7 +103,6 @@ int main() {
     sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
         .data_ptr = vertices,
-        .data_size = sizeof(vertices)
     };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
@@ -120,7 +119,6 @@ int main() {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .data_ptr = indices,
-        .data_size = sizeof(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
