@@ -13,3 +13,13 @@ fips_begin_app(triangle-metal windowed)
     fips_deps(osxentry)
 fips_end_app()
 
+fips_begin_app(quad-metal windowed)
+    fips_files(quad-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
+
+fips_begin_app(cube-metal windowed)
+    fips_files(cube-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
+
