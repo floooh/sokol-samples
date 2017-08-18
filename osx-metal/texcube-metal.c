@@ -126,11 +126,11 @@ void init(const void* mtl_device) {
             "  vs_out out;\n"
             "  out.pos = params.mvp * in.position;\n"
             "  out.color = in.color;\n"
-            "  out.uv = in.uv;\n"
+            "  out.uv = in.uv * 5.0;\n"
             "  return out;\n"
             "}\n"
             "fragment float4 fs_main(vs_out in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-            "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
+            "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
             "};\n"
     });
 
