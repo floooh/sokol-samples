@@ -27,3 +27,8 @@ fips_begin_app(texcube-metal windowed)
     fips_files(texcube-metal.c)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(offscreen-metal windowed)
+    fips_files(offscreen-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
