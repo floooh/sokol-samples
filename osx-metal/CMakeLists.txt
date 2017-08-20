@@ -37,3 +37,8 @@ fips_begin_app(mrt-metal windowed)
     fips_files(mrt-metal.c)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(instancing-metal windowed)
+    fips_files(instancing-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
