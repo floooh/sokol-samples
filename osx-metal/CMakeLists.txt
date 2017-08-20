@@ -32,3 +32,8 @@ fips_begin_app(offscreen-metal windowed)
     fips_files(offscreen-metal.c)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(mrt-metal windowed)
+    fips_files(mrt-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
