@@ -131,7 +131,7 @@ void init(const void* mtl_device) {
             .depth_write_enabled = true,
         },
         .rasterizer = {
-            .cull_mode = SG_CULLMODE_NONE,
+            .cull_mode = SG_CULLMODE_BACK,
             .sample_count = MSAA_SAMPLES
         }
     });
