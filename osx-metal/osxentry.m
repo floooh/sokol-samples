@@ -22,6 +22,13 @@ static const char* window_title;
 static osx_init_func init_func;
 static osx_frame_func frame_func;
 static osx_shutdown_func shutdown_func;
+static osx_key_func key_down_func;
+static osx_key_func key_up_func;
+static osx_char_func char_func;
+static osx_mouse_btn_func mouse_btn_down_func;
+static osx_mouse_btn_func mouse_btn_up_func;
+static osx_mouse_pos_func mouse_pos_func;
+static osx_mouse_wheel_func mouse_wheel_func;
 static id window_delegate;
 static id window;
 static id<MTLDevice> mtl_device;
@@ -153,43 +160,85 @@ static MTKView* mtk_view;
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    // FIXME
+    if (mouse_btn_down_func) {
+        mouse_btn_down_func(0);
+    }
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-    // FIXME
+    [self mouseMoved:event];
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    // FIXME
+    if (mouse_btn_up_func) {
+        mouse_btn_up_func(0);
+    }
+}
+
+- (void)mouseMoved:(NSEvent*)event {
+    if (mouse_pos_func) {
+        const NSRect content_rect = [mtk_view frame];
+        const NSPoint pos = [event locationInWindow];
+        mouse_pos_func(pos.x, content_rect.size.height - pos.y);
+    }
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
-    // FIXME
+    if (mouse_btn_down_func) {
+        mouse_btn_down_func(1);
+    }
 }
 
 - (void)rightMouseDragged:(NSEvent*)event {
-    // FIXME
+    [self mouseMoved:event];
 }
 
 - (void)rightMouseUp:(NSEvent*)event {
-    // FIXME
+    if (mouse_btn_up_func) {
+        mouse_btn_up_func(1);
+    }
 }
 
 - (void)keyDown:(NSEvent*)event {
-    // FIXME
-} 
+    if (key_down_func) {
+        key_down_func([event keyCode]);
+    }
+    if (char_func) {
+        const NSString* characters = [event characters];
+        const NSUInteger length = [characters length];
+        for (NSUInteger i = 0; i < length; i++) {
+            const unichar codepoint = [characters characterAtIndex:i];
+            if ((codepoint & 0xFF00) == 0xF700) {
+                continue;
+            }
+            char_func(codepoint);
+        }
+    }
+}
 
 - (void)flagsChanged:(NSEvent*)event {
-    // FIXME
+    if (key_up_func) {
+        key_up_func([event keyCode]);
+    }
 }
 
 - (void)keyUp:(NSEvent*)event {
-    // FIXME
+    if (key_up_func) {
+        key_up_func([event keyCode]);
+    }
 }
 
 - (void)scrollWheel:(NSEvent*)event {
-    // FIXME
+    if (mouse_wheel_func) {
+        double dy = [event scrollingDeltaY];
+        if ([event hasPreciseScrollingDeltas]) {
+            dy *= 0.1;
+        }
+        else {
+            dy = [event deltaY];
+        }
+        mouse_wheel_func(dy);
+    }
 }
 @end
 
@@ -202,6 +251,13 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     init_func = ifun;
     frame_func = ffun;
     shutdown_func = sfun;
+    key_down_func = 0;
+    key_up_func = 0;
+    char_func = 0;
+    mouse_btn_down_func = 0;
+    mouse_btn_up_func = 0;
+    mouse_pos_func = 0;
+    mouse_wheel_func = 0;
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
@@ -210,18 +266,45 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     [NSApp run];
 }
 
+/* get an MTLRenderPassDescriptor from the MTKView */
 const void* osx_mtk_get_render_pass_descriptor() {
     return CFBridgingRetain([mtk_view currentRenderPassDescriptor]);
 }
 
+/* get the current CAMetalDrawable from MTKView */
 const void* osx_mtk_get_drawable() {
     return CFBridgingRetain([mtk_view currentDrawable]);
 }
 
+/* return current MTKView drawable width */
 int osx_width() {
     return (int) [mtk_view drawableSize].width;
 }
 
+/* return current MTKView drawable height */
 int osx_height() {
     return (int) [mtk_view drawableSize].height;
+}
+
+/* register input callbacks */
+void osx_key_down(osx_key_func fn) {
+    key_down_func = fn;
+}
+void osx_key_up(osx_key_func fn) {
+    key_up_func = fn;
+}
+void osx_char(osx_char_func fn) {
+    char_func = fn;
+}
+void osx_mouse_btn_down(osx_mouse_btn_func fn) {
+    mouse_btn_down_func = fn;
+}
+void osx_mouse_btn_up(osx_mouse_btn_func fn) {
+    mouse_btn_up_func = fn;
+}
+void osx_mouse_pos(osx_mouse_pos_func fn) {
+    mouse_pos_func = fn;
+}
+void osx_mouse_wheel(osx_mouse_wheel_func fn) {
+    mouse_wheel_func = fn;
 }
