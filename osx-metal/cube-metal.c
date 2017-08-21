@@ -64,7 +64,7 @@ void init(const void* mtl_device) {
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices
+        .content = vertices
     });
 
     /* create an index buffer for the cube */
@@ -79,7 +79,7 @@ void init(const void* mtl_device) {
     draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices
     });
 
     /*

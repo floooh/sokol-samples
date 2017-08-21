@@ -113,18 +113,16 @@ int main() {
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    const int font_img_size = font_width * font_height * sizeof(uint32_t);
-    const void* img_data_ptrs[] = { font_pixels };
-    const int img_data_sizes[] = { font_img_size };
     sg_image_desc img_desc = { };
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.num_data_items = 1;
-    img_desc.data_ptrs = img_data_ptrs;
-    img_desc.data_sizes = img_data_sizes;
+    img_desc.content.subimage[0][0] = {
+        .ptr = font_pixels,
+        .size = font_width * font_height * sizeof(uint32_t)
+    };
     draw_state.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering

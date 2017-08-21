@@ -25,7 +25,7 @@ void init(const void* mtl_device) {
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices
     });
 
     /* a shader pair, compiled from source code */

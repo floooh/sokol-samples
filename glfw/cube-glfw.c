@@ -72,7 +72,7 @@ int main() {
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     });
 
     /* create an index buffer for the cube */
@@ -87,7 +87,7 @@ int main() {
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices,
     });
 
     /* create shader */

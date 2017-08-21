@@ -64,7 +64,7 @@ void init(const void* mtl_device) {
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     });
 
     /* create an index buffer for the cube */
@@ -79,7 +79,7 @@ void init(const void* mtl_device) {
     draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices,
     });
 
     /* create a checkerboard texture */
@@ -89,14 +89,13 @@ void init(const void* mtl_device) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    const void* img_data_ptrs[] = { pixels };
-    const int img_data_sizes[] = { sizeof(pixels) };
     draw_state.fs_images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
-        .num_data_items = 1,
-        .data_ptrs = img_data_ptrs,
-        .data_sizes = img_data_sizes
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
     });
 
     /* a shader */

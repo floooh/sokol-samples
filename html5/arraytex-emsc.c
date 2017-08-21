@@ -72,8 +72,6 @@ int main() {
             }
         }
     }
-    const void* img_data_ptrs[] = { pixels };
-    const int img_data_sizes[] = { sizeof(pixels) };
     sg_image img = sg_make_image(&(sg_image_desc) {
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
@@ -82,9 +80,10 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .num_data_items = 1,
-        .data_ptrs = img_data_ptrs,
-        .data_sizes = img_data_sizes
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
     });
 
     /* cube vertex buffer */
@@ -122,7 +121,7 @@ int main() {
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     });
 
     /* create an index buffer for the cube */
@@ -137,7 +136,7 @@ int main() {
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices,
     });
 
     /* shader to sample from array texture */

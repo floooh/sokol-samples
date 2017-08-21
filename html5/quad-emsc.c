@@ -45,7 +45,7 @@ int main() {
     };
     sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     };
 
     /* an index buffer */
@@ -56,7 +56,7 @@ int main() {
     sg_buffer_desc ibuf_desc = {
         .size = sizeof(indices),
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data_ptr = indices,
+        .content = indices,
     };
 
     /* create a shader */

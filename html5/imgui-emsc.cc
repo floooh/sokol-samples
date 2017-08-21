@@ -139,18 +139,16 @@ int main() {
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    const int font_img_size = font_width * font_height * sizeof(uint32_t);
-    const void* img_data_ptrs[] = { font_pixels };
-    const int img_data_sizes[] = { font_img_size };
     sg_image_desc img_desc = {
         .width = uint16_t(font_width),
         .height = uint16_t(font_height),
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .num_data_items = 1,
-        .data_ptrs = img_data_ptrs,
-        .data_sizes = img_data_sizes
+        .content.subimage[0][0] = {
+            .ptr = font_pixels,
+            .size = font_width * font_height * sizeof(uint32_t)
+        }
     };
     draw_state.fs_images[0] = sg_make_image(&img_desc);
 

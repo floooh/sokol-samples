@@ -79,7 +79,7 @@ int main() {
     };
     sg_buffer_desc vbuf_desc = { 
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     };
 
     /* create an index buffer for the cube */
@@ -94,7 +94,7 @@ int main() {
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices,
     };
 
     /* create a checkerboard texture */
@@ -104,14 +104,13 @@ int main() {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    const void* img_data_ptrs[] = { pixels };
-    const int img_data_sizes[] = { sizeof(pixels) };
     sg_image_desc img_desc = {
         .width = 4,
         .height = 4,
-        .num_data_items = 1,
-        .data_ptrs = img_data_ptrs,
-        .data_sizes = img_data_sizes
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
     };
 
     /* create shader */

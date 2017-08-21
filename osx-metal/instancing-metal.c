@@ -53,7 +53,7 @@ void init(const void* mtl_device) {
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .data_ptr = vertices,
+        .content = vertices,
     });
 
     /* index buffer for static geometry */
@@ -64,7 +64,7 @@ void init(const void* mtl_device) {
     draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .data_ptr = indices,
+        .content = indices,
     });
 
     /* empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1 */
