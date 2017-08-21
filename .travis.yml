@@ -3,18 +3,9 @@
 git:
   depth: 3
 language: cpp
-compiler: gcc
+compiler: clang
 os: 
   - osx
-  - linux
-addons:
-  apt:
-    packages:
-      - cmake
-      - cmake-data
-      - libglu1-mesa-dev
-      - xorg-dev
 script:
   - cmake --version
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then python fips build osx-make-debug; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then python fips build linux-make-debug; fi
+  - python fips build osx-make-debug
