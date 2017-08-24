@@ -3,6 +3,7 @@
 //  Shader uniform updates.
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
+#define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
