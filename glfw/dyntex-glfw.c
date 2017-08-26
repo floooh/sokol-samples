@@ -19,9 +19,15 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-#define IMAGE_WIDTH (128)
-#define IMAGE_HEIGHT (128)
+/* width/height must be 2^N */
+#define IMAGE_WIDTH (64)
+#define IMAGE_HEIGHT (64)
+#define LIVING (0xFFFFFFFF)
+#define DEAD (0xFF000000)
 uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
+
+void game_of_life_init();
+void game_of_life_update();
 
 int main() {
     /* create GLFW window and initialize GL */
@@ -53,36 +59,36 @@ int main() {
 
     /* a cube vertex- and index-buffer */
     float vertices[] = {
-        /* pos                  uvs */
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
+        /* pos                  color                       uvs */
+        -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
-         1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
+         1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
 
-         1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,    0.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
-        -1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,    1.0f, 1.0f,
-         1.0f, -1.0f, -1.0f,    0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
-         1.0f,  1.0f, -1.0f,    0.0f, 1.0f
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
@@ -115,29 +121,34 @@ int main() {
             "#version 330\n"
             "uniform mat4 mvp;\n"
             "in vec4 position;\n"
+            "in vec4 color0;\n"
             "in vec2 texcoord0;\n"
             "out vec2 uv;"
+            "out vec4 color;"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
             "  uv = texcoord0;\n"
+            "  color = color0;\n"
             "}\n",
         .fs.source =
             "#version 330\n"
             "uniform sampler2D tex;"
+            "in vec4 color;\n"
             "in vec2 uv;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
-            "  frag_color = texture(tex, uv);\n"
+            "  frag_color = texture(tex, uv) * color;\n"
             "}\n"
     });
 
     /* a pipeline-state-object for the textured cube */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .vertex_layouts[0] = {
-            .stride = 20,
+            .stride = 36,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="texcoord0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .name="position",   .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0",     .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .name="texcoord0",  .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = shd,
@@ -162,27 +173,24 @@ int main() {
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)DISPLAY_WIDTH/(float)DISPLAY_HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* FIXME: initial game-of-life seed state */
+    /* initial game-of-life seed state */
+    game_of_life_init();
 
     vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
     while (!glfwWindowShouldClose(w)) {
         /* model-view-projection matrix from rotated model matrix */
-        rx += 1.0f; ry += 2.0f;
+        rx += 0.1f; ry += 0.2f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        /* FIXME: update game-of-life state */
-        for (int y = 0; y < IMAGE_HEIGHT; y++) {
-            for (int x = 0; x < IMAGE_WIDTH; x++) {
-                pixels[y][x] = rand();
-            }
-        }
+        /* update game-of-life state */
+        game_of_life_update();
 
         /* update the dynamic image */
         sg_update_image(img, &(sg_image_content){ 
@@ -208,4 +216,55 @@ int main() {
 
     sg_shutdown();
     glfwTerminate();
+}
+
+void game_of_life_init() {
+    for (int y = 0; y < IMAGE_HEIGHT; y++) {
+        for (int x = 0; x < IMAGE_WIDTH; x++) {
+            if ((rand() & 255) > 230) {
+                pixels[y][x] = LIVING;
+            }
+            else {
+                pixels[y][x] = DEAD;
+            }
+        }
+    }
+}
+
+void game_of_life_update() {
+    static int update_count = 0;
+    for (int y = 0; y < IMAGE_HEIGHT; y++) {
+        for (int x = 0; x < IMAGE_WIDTH; x++) {
+            int num_living_neighbours = 0;
+            for (int ny = -1; ny < 2; ny++) {
+                for (int nx = -1; nx < 2; nx++) {
+                    if ((nx == 0) && (ny == 0)) {
+                        continue;
+                    }
+                    if (pixels[(y+ny)&(IMAGE_HEIGHT-1)][(x+nx)&(IMAGE_WIDTH-1)] == LIVING) {
+                        num_living_neighbours++;
+                    }
+                }
+            }
+            /* any live cell... */
+            if (pixels[y][x] == LIVING) {
+                if (num_living_neighbours < 2) {
+                    /* ... with fewer than 2 living neighbours dies, as if caused by underpopulation */
+                    pixels[y][x] = DEAD;
+                }
+                else if (num_living_neighbours > 3) {
+                    /* ... with more than 3 living neighbours dies, as if caused by overpopulation */
+                    pixels[y][x] = DEAD;
+                }
+            }
+            else if (num_living_neighbours == 3) {
+                /* any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction */
+                pixels[y][x] = LIVING;
+            }
+        }
+    }
+    if (update_count++ > 240) {
+        game_of_life_init();
+        update_count = 0;
+    }
 }
