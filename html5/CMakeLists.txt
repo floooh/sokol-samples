@@ -38,3 +38,7 @@ fips_begin_app(imgui-emsc windowed)
     fips_files(imgui-emsc.cc)
     fips_deps(imgui)
 fips_end_app()
+
+fips_begin_app(dyntex-emsc windowed)
+    fips_files(dyntex-emsc.c)
+fips_end_app()

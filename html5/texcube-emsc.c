@@ -40,8 +40,7 @@ int main() {
     emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){0});
     assert(sg_isvalid());
     
     /* cube vertex buffer */
