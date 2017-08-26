@@ -52,3 +52,9 @@ fips_begin_app(imgui-metal windowed)
     fips_files(imgui-metal.cc)
     fips_deps(osxentry imgui)
 fips_end_app()
+
+fips_begin_app(dyntex-metal windowed)
+    fips_files(dyntex-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
+
