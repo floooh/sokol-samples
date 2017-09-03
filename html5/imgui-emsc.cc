@@ -37,7 +37,7 @@ void imgui_draw_cb(ImDrawData*);
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_size(Width, Height);
+    emscripten_set_canvas_element_size("#canvas", Width, Height);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);

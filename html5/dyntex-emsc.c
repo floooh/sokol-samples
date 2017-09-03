@@ -42,7 +42,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_size(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    emscripten_set_canvas_element_size("#canvas", DISPLAY_WIDTH, DISPLAY_HEIGHT);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
