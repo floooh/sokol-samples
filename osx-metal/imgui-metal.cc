@@ -85,8 +85,8 @@ void init(const void* mtl_device) {
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
     sg_image_desc img_desc = {
-        .width = uint16_t(font_width),
-        .height = uint16_t(font_height),
+        .width = font_width,
+        .height = font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
