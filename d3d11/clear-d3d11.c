@@ -9,7 +9,7 @@
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     const int WIDTH = 640;
     const int HEIGHT = 480;
-    d3d11_init(WIDTH, HEIGHT, 1, "Sokol Clear D3D11");
+    d3d11_init(WIDTH, HEIGHT, 1, L"Sokol Clear D3D11");
     while (d3d11_process_events()) {
         d3d11_present();
     }

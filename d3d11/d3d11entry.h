@@ -2,6 +2,9 @@
 /*
     app wrapper for D3D11 samples
 */
+#ifndef UNICODE
+#define UNICODE
+#endif
 #include <windows.h>
 #include <d3d11.h>
 #include <stdbool.h>
@@ -12,7 +15,7 @@ extern "C" {
 #endif
 
 /* initialize (window, d3d11 device, swapchain, ...) */
-extern void d3d11_init(int w, int h, int sample_count, const char* title);
+extern void d3d11_init(int w, int h, int sample_count, const wchar_t* title);
 /* shutdown function */
 extern void d3d11_shutdown();
 /* present the current frame */
