@@ -17,6 +17,7 @@
 #include <dxgi.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
