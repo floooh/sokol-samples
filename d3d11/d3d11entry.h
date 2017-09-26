@@ -2,11 +2,6 @@
 /*
     app wrapper for D3D11 samples
 */
-#pragma comment (lib, "user32.lib")
-#pragma comment (lib, "dxgi.lib")
-#pragma comment (lib, "d3d11.lib")
-#pragma comment (lib, "dxguid.lib")
-
 #ifndef UNICODE
 #define UNICODE
 #endif
