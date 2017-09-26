@@ -27,6 +27,15 @@ extern void d3d11_present();
 /* handle messages, return true if app should quit */
 extern bool d3d11_process_events();
 
+/* get pointer to D3D11Device */
+extern ID3D11Device* d3d11_device();
+/* get pointer to D3D11DeviceContext */
+extern ID3D11DeviceContext* d3d11_device_context();
+/* get current framebuffer width */
+extern int d3d11_width();
+/* get current framebuffer height */
+extern int d3d11_height();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
