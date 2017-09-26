@@ -2,11 +2,19 @@
 /*
     app wrapper for D3D11 samples
 */
+#pragma comment (lib, "user32.lib")
+#pragma comment (lib, "dxgi.lib")
+#pragma comment (lib, "d3d11.lib")
+#pragma comment (lib, "dxguid.lib")
+
 #ifndef UNICODE
 #define UNICODE
 #endif
+#define COBJMACROS
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <d3d11.h>
+#include <dxgi.h>
 #include <stdbool.h>
 #include <stdint.h>
 
