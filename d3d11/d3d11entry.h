@@ -2,14 +2,6 @@
 /*
     app wrapper for D3D11 samples
 */
-#ifndef UNICODE
-#define UNICODE
-#endif
-#define COBJMACROS
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <d3d11.h>
-#include <dxgi.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <assert.h>
@@ -28,9 +20,13 @@ extern void d3d11_present();
 extern bool d3d11_process_events();
 
 /* get pointer to D3D11Device */
-extern ID3D11Device* d3d11_device();
+extern const void* d3d11_device(void);
 /* get pointer to D3D11DeviceContext */
-extern ID3D11DeviceContext* d3d11_device_context();
+extern const void* d3d11_device_context(void);
+/* get pointer to current render-target-view object */
+extern const void* d3d11_render_target_view(void);
+/* get pointer to current depth-stencil-view object */
+extern const void* d3d11_depth_stencil_view(void);
 /* get current framebuffer width */
 extern int d3d11_width();
 /* get current framebuffer height */

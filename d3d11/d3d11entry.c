@@ -1,4 +1,12 @@
 #include "d3d11entry.h"
+#ifndef UNICODE
+#define UNICODE
+#endif
+#define COBJMACROS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <d3d11.h>
+#include <dxgi.h>
 
 static LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static void d3d11_create_default_render_target();
@@ -202,12 +210,20 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-ID3D11Device* d3d11_device() { 
-    return device;
+const void* d3d11_device() { 
+    return (const void*) device;
 }
 
-ID3D11DeviceContext* d3d11_device_context() {
-    return device_context;
+const void* d3d11_device_context() {
+    return (const void*) device_context;
+}
+
+const void* d3d11_render_target_view() {
+    return (const void*) render_target_view;
+}
+
+const void* d3d11_depth_stencil_view() {
+    return (const void*) depth_stencil_view;
 }
 
 int d3d11_width() {
