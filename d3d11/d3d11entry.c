@@ -195,9 +195,11 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
         case WM_SIZE:
             if (!in_create_window) {
-                width = LOWORD(lParam);
-                height = HIWORD(lParam);
-                d3d11_update_default_render_target();
+                int w = LOWORD(lParam);
+                int h = HIWORD(lParam);
+                if (w > 0 && h > 0) {
+                    d3d11_update_default_render_target();
+                }
             }
             return 0;
 
