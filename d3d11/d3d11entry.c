@@ -42,7 +42,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         .lpfnWndProc = (WNDPROC) d3d11_winproc,
         .hInstance = GetModuleHandleW(NULL),
         .hCursor = LoadCursor(NULL, IDC_ARROW),
-        .hIcon = LoadIconW(NULL, IDI_WINLOGO),
+        .hIcon = LoadIcon(NULL, IDI_WINLOGO),
         .lpszClassName = L"SOKOLD3D11"
     });
 
@@ -52,7 +52,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     AdjustWindowRectEx(&rect, win_style, FALSE, win_ex_style);
     const int win_width = rect.right - rect.left;
     const int win_height = rect.bottom - rect.top;
-    hwnd = CreateWindowEx(
+    hwnd = CreateWindowExW(
         win_ex_style,       // dwExStyle
         L"SOKOLD3D11",      // lpClassName
         title,              // lpWindowName
@@ -185,6 +185,20 @@ bool d3d11_process_events() {
 
 void d3d11_present() {
     IDXGISwapChain_Present(swap_chain, 1, 0);
+    /* handle window resizing */
+    RECT r;
+    if (GetClientRect(hwnd, &r)) {
+        const int cur_width = r.right - r.left;
+        const int cur_height = r.bottom - r.top;
+        if (((cur_width > 0) && (cur_width != width)) ||
+            ((cur_height > 0) && (cur_height != height))) 
+        {
+            /* need to reallocate the default render target */
+            width = cur_width;
+            height = cur_height;
+            d3d11_update_default_render_target();
+        }
+    }
 }
 
 LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -192,20 +206,8 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
         case WM_CLOSE:
             quit_requested = true;
             return 0;
-
-        case WM_SIZE:
-            if (!in_create_window) {
-                int w = LOWORD(lParam);
-                int h = HIWORD(lParam);
-                if (w > 0 && h > 0) {
-                    d3d11_update_default_render_target();
-                }
-            }
-            return 0;
-
         case WM_ERASEBKGND:
             return TRUE;
-
         default:
             break;
     }
