@@ -4,6 +4,7 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
+#define SOKOL_D3D11_SHADER_COMPILER
 #include "sokol_gfx.h"
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
@@ -34,39 +35,51 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     });
 
     /* a shader to render the triangle */
-    /*
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        0
+        .vs.source =
+            "struct vs_in {\n"
+            "  float4 pos : POS;\n"
+            "  float4 color : COLOR;\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 pos : SV_Position;\n"
+            "  float4 color : COLOR;\n"
+            "};\n"
+            "vs_out main(vs_in inp) {\n"
+            "  vs_out outp;\n"
+            "  outp.pos = inp.pos;\n"
+            "  outp.color = inp.color;\n"
+            "  return outp;\n"
+            "}\n",
+        .fs.source = 
+            "float4 main(float4 color : COLOR) : SV_Target0 {\n"
+            "  return color;\n"
+            "}\n"
     });
-    */
 
     /* a pipeline object */
-    /*
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
-                [0] = { .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd
     });
-    */
 
     /* a draw state struct with all the resource bindings */
-    /*
     sg_draw_state draw_state = {
         .pipeline = pip,
         .vertex_buffers[0] = vbuf
     };
-    */
 
     /* the draw loop */
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        //sg_apply_draw_state(&draw_state);
-        //sg_draw(0, 3, 1);
+        sg_apply_draw_state(&draw_state);
+        sg_draw(0, 3, 1);
         sg_end_pass();
         sg_commit();
         d3d11_present();
