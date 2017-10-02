@@ -4,5 +4,7 @@ generator: Visual Studio 15 Win64
 build_tool: cmake
 build_type: Release
 defines:
-    ORYOL_USE_D3D11: ON
+    SOKOL_USE_D3D11: ON
+
+
 
