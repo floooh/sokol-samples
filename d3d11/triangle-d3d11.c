@@ -39,12 +39,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "struct vs_in {\n"
-            "  float4 pos : POS;\n"
-            "  float4 color : COLOR;\n"
+            "  float4 pos: POS;\n"
+            "  float4 color: COLOR;\n"
             "};\n"
             "struct vs_out {\n"
-            "  float4 pos : SV_Position;\n"
-            "  float4 color : COLOR;\n"
+            "  float4 color: COLOR0;\n"
+            "  float4 pos: SV_Position;\n"
             "};\n"
             "vs_out main(vs_in inp) {\n"
             "  vs_out outp;\n"
@@ -53,7 +53,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             "  return outp;\n"
             "}\n",
         .fs.source = 
-            "float4 main(float4 color : COLOR) : SV_Target0 {\n"
+            "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
             "}\n"
     });
