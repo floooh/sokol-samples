@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  triangle-d3d11.c
-//  Canonical triangle sample for sokol_gfx with D3D11 backend.
+//  quad-d3d11.c
+//  Render a quad with vertex indices.
 //------------------------------------------------------------------------------
 #include "d3d11entry.h"
 #define SOKOL_IMPL
@@ -10,10 +10,8 @@
 #include "sokol_gfx.h"
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    /* setup d3d11 app wrapper */
-    d3d11_init(640, 480, 1, L"Sokol Triangle D3D11");
-
-    /* setup sokol gfx */
+    /* setup d3d11 app wrapper and sokol_gfx */
+    d3d11_init(640, 480, 1, L"Sokol Quad D3D11");
     sg_setup(&(sg_desc){
         .d3d11_device = d3d11_device(),
         .d3d11_device_context = d3d11_device_context(),
@@ -21,22 +19,29 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
         .d3d11_depth_stencil_view_cb = d3d11_depth_stencil_view
     });
 
-    /* default pass action (clear to grey) */
-    sg_pass_action pass_action = { 0 };
-
-    /* a vertex buffer with the triangle vertices */
+    /* vertex and index buffer */
     const float vertices[] = {
         /* positions            colors */
-         0.0f, 0.5f, 0.5f,      1.0f, 0.0f, 0.0f, 1.0f,
-         0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
+        -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
+         0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
+         0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f, 
+    };
+    const uint16_t indices[] = {
+        0, 1, 2,    /* first triangle */
+        0, 2, 3,    /* second triangle */
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
+    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .content = indices
+    });
 
-    /* a shader to render the triangle */
+    /* a shader to render the quad */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "struct vs_in {\n"
@@ -59,34 +64,38 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
             "}\n"
     });
 
-    /* a pipeline object */
+    /* pipeline state object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
                 [0] = { .name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
             }
-        },
-        .shader = shd
+        }
     });
 
-    /* a draw state struct with all the resource bindings */
+    /* draw state struct with resource bindings */
     sg_draw_state draw_state = {
         .pipeline = pip,
-        .vertex_buffers[0] = vbuf
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
     };
 
-    /* the draw loop */
+    /* a default pass action */
+    sg_pass_action pass_action = { 0 };
+
+    /* draw loop */
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_apply_draw_state(&draw_state);
-        sg_draw(0, 3, 1);
+        sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();
         d3d11_present();
     }
-    /* shutdown everything */
     sg_shutdown();
     d3d11_shutdown();
     return 0;
