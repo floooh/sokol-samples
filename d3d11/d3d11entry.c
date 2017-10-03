@@ -1,7 +1,4 @@
 #include "d3d11entry.h"
-#ifndef UNICODE
-#define UNICODE
-#endif
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -66,9 +63,6 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         GetModuleHandle(NULL),  //hInstance
         NULL);              // lpParam
     ShowWindow(hwnd, SW_SHOW);
-    BringWindowToTop(hwnd);
-    SetForegroundWindow(hwnd);
-    SetFocus(hwnd);
     in_create_window = false;
 
     /* create device and swap chain */
@@ -171,13 +165,13 @@ void d3d11_update_default_render_target() {
 
 bool d3d11_process_events() {
     MSG msg;
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (WM_QUIT == msg.message) {
             quit_requested = true;
         }
         else {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageW(&msg);
         }
     } 
     return !quit_requested;
@@ -211,7 +205,7 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
         default:
             break;
     }
-    return DefWindowProc(hWnd, uMsg, wParam, lParam);
+    return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
 const void* d3d11_device() { 
