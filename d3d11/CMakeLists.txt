@@ -21,3 +21,8 @@ fips_begin_app(cube-d3d11 windowed)
     fips_files(cube-d3d11.c)
     fips_deps(d3d11entry)
 fips_end_app()
+
+fips_begin_app(texcube-d3d11 windowed)
+    fips_files(texcube-d3d11.c)
+    fips_deps(d3d11entry)
+fips_end_app()
