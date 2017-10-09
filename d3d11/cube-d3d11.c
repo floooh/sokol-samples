@@ -92,7 +92,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "};\n"
             "struct vs_in {\n"
             "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR;\n"
+            "  float4 color: COLOR1;\n"
             "};\n"
             "struct vs_out {\n"
             "  float4 color: COLOR0;\n"
@@ -115,8 +115,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
-                [0] = { .name = "POSITION", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 }, 
-                [1] = { .name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .sem_name="POSITION", .offset=0, .format = SG_VERTEXFORMAT_FLOAT3 }, 
+                [1] = { .sem_name="COLOR", .sem_index=1, .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd,

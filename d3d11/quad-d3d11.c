@@ -71,8 +71,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
-                [0] = { .name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .sem_name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
             }
         }
     });

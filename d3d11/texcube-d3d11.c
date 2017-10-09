@@ -113,8 +113,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "};\n"
             "struct vs_in {\n"
             "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR;\n"
-            "  float2 uv: TEXCOORD0;\n"
+            "  float4 color: COLOR1;\n"
+            "  float2 uv: TEXCOORD1;\n"
             "};\n"
             "struct vs_out {\n"
             "  float4 color: COLOR0;\n"
@@ -125,7 +125,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  vs_out outp;\n"
             "  outp.pos = mul(mvp, inp.pos);\n"
             "  outp.color = inp.color;\n"
-            "  outp.uv = inp.uv;\n"
+            "  outp.uv = inp.uv * 5.0;\n"
             "  return outp;\n"
             "};\n",
         .fs.source =
@@ -136,16 +136,59 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
+    /* pipeline object */
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .vertex_layouts[0] = {
+            .stride = 36,
+            .attrs = {
+                [0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="COLOR", .sem_index=1, .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .sem_name="TEXCOORD", .sem_index=1, .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+            }
+        },
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK,
+            .sample_count = msaa_samples
+        }
+    });
+
     /* default pass action (clear to gray) */
     sg_pass_action pass_action = { 0 };
+
+    /* a draw state with the resource bindings */
+    sg_draw_state draw_state = {
+        .pipeline = pip,
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = img
+    };
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
+    float rx = 0.0f, ry = 0.0f;
     while (d3d11_process_events()) {
+        /* model-view-proj matrix for vertex shader */
+        vs_params_t vs_params;
+        rx += 1.0f; ry += 2.0f;
+        hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+        hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+
+        /* draw frame */
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_apply_draw_state(&draw_state);
+        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
         d3d11_present();
