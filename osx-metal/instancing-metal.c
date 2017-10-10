@@ -69,7 +69,7 @@ void init(const void* mtl_device) {
 
     /* empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1 */
     draw_state.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
-        .size = MAX_PARTICLES * sizeof(hmm_vec4),
+        .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     });
 

@@ -77,7 +77,7 @@ int main() {
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
-        .size = MAX_PARTICLES * sizeof(hmm_vec4),
+        .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     });
 

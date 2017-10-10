@@ -82,7 +82,7 @@ int main() {
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
     sg_buffer_desc inst_vbuf_desc = {
-        .size = MAX_PARTICLES * sizeof(hmm_vec4),
+        .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     };
 
