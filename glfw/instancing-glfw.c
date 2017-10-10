@@ -166,9 +166,9 @@ int main() {
             if (cur_num_particles < MAX_PARTICLES) {
                 pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
                 vel[cur_num_particles] = HMM_Vec3(
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
-                    ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
+                    ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f,
+                    ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                    ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f);
                 cur_num_particles++;
             }
             else {
