@@ -31,3 +31,9 @@ fips_begin_app(instancing-d3d11 windowed)
     fips_files(instancing-d3d11.c)
     fips_deps(d3d11entry)
 fips_end_app()
+
+fips_begin_app(offscreen-d3d11 windowed)
+    fips_files(offscreen-d3d11.c)
+    fips_deps(d3d11entry)
+fips_end_app()
+
