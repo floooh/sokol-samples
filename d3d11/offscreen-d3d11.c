@@ -20,7 +20,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int width = 800;
     const int height = 600;
     const int sample_count = 4;
-    d3d11_init(width, height, sample_count, L"Sokol Instancing D3D11");
+    d3d11_init(width, height, sample_count, L"Sokol Offscreen D3D11");
     sg_setup(&(sg_desc){
         .d3d11_device = d3d11_device(),
         .d3d11_device_context = d3d11_device_context(),
