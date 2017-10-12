@@ -271,7 +271,6 @@ int main() {
             .shader = sg_make_shader(&(sg_shader_desc){
                 .vs.source =
                     "#version 330\n"
-                    "uniform vec2 offset;"
                     "in vec2 pos;\n"
                     "out vec2 uv;\n"
                     "void main() {\n"
