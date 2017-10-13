@@ -41,3 +41,8 @@ fips_begin_app(mrt-d3d11 windowed)
     fips_files(mrt-d3d11.c)
     fips_deps(d3d11entry)
 fips_end_app()
+
+fips_begin_app(arraytex-d3d11 windowed)
+    fips_files(arraytex-d3d11.c)
+    fips_deps(d3d11entry)
+fips_end_app()
