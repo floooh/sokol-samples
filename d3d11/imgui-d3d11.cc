@@ -31,7 +31,7 @@ void imgui_draw_cb(ImDrawData*);
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     // setup d3d11 app wrapper and sokol_gfx
-    d3d11_init(Width, Height, 1, L"Sokol Cube D3D11");
+    d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
     sg_desc desc = { };
     desc.d3d11_device = d3d11_device();
     desc.d3d11_device_context = d3d11_device_context();
