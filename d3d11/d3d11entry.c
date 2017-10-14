@@ -2,6 +2,7 @@
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include <d3d11.h>
 #include <dxgi.h>
 
@@ -25,6 +26,14 @@ static ID3D11Texture2D* render_target = 0;
 static ID3D11RenderTargetView* render_target_view = 0;
 static ID3D11Texture2D* depth_stencil_buffer = 0;
 static ID3D11DepthStencilView* depth_stencil_view = 0;
+
+static d3d11_key_func key_down_func = 0;
+static d3d11_key_func key_up_func = 0;
+static d3d11_char_func char_func = 0;
+static d3d11_mouse_btn_func mouse_btn_down_func = 0;
+static d3d11_mouse_btn_func mouse_btn_up_func = 0;
+static d3d11_mouse_pos_func mouse_pos_func = 0;
+static d3d11_mouse_wheel_func mouse_wheel_func = 0;
 
 #define SAFE_RELEASE(class, obj) if (obj) { class##_Release(obj); obj=0; }
 
@@ -202,6 +211,53 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
             return 0;
         case WM_ERASEBKGND:
             return TRUE;
+        case WM_LBUTTONDOWN:
+            if (mouse_btn_down_func) {
+                mouse_btn_down_func(0);
+            }
+            break;
+        case WM_RBUTTONDOWN:
+            if (mouse_btn_down_func) {
+                mouse_btn_down_func(1);
+            }
+            break;
+        case WM_LBUTTONUP:
+            if (mouse_btn_up_func) {
+                mouse_btn_up_func(0);
+            }
+            break;
+        case WM_RBUTTONUP:
+            if (mouse_btn_up_func) {
+                mouse_btn_up_func(1);
+            }
+            break;
+        case WM_MOUSEMOVE:
+            if (mouse_pos_func) {
+                const int x = GET_X_LPARAM(lParam);
+                const int y = GET_Y_LPARAM(lParam);
+                mouse_pos_func((float)x, (float)y);
+            }
+            break;
+        case WM_MOUSEWHEEL:
+            if (mouse_wheel_func) {
+                mouse_wheel_func((float)((SHORT)HIWORD(wParam) / 30.0f));
+            }
+            break;
+        case WM_CHAR:
+            if (char_func) {
+                char_func((wchar_t)wParam);
+            }
+            break;
+        case WM_KEYDOWN:
+            if (key_down_func) {
+                key_down_func((int)wParam);
+            }
+            break;
+        case WM_KEYUP:
+            if (key_up_func) {
+                key_up_func((int)wParam);
+            }
+            break;
         default:
             break;
     }
@@ -230,4 +286,33 @@ int d3d11_width() {
 
 int d3d11_height() {
     return height;
+}
+
+/* register input callbacks */
+void d3d11_key_down(d3d11_key_func f) {
+    key_down_func = f;
+}
+
+void d3d11_key_up(d3d11_key_func f) {
+    key_up_func = f;
+}
+
+void d3d11_char(d3d11_char_func f) {
+    char_func = f;
+}
+
+void d3d11_mouse_btn_down(d3d11_mouse_btn_func f) {
+    mouse_btn_down_func = f;
+}
+
+void d3d11_mouse_btn_up(d3d11_mouse_btn_func f) {
+    mouse_btn_up_func = f;
+}
+
+void d3d11_mouse_pos(d3d11_mouse_pos_func f) {
+    mouse_pos_func = f;
+}
+
+void d3d11_mouse_wheel(d3d11_mouse_wheel_func f) {
+    mouse_wheel_func = f;
 }
