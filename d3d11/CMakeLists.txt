@@ -52,3 +52,7 @@ fips_begin_app(dyntex-d3d11 windowed)
     fips_deps(d3d11entry)
 fips_end_app()
 
+fips_begin_app(binshader-d3d11 windowed)
+    fips_files(binshader-d3d11.c binshader_vs.h binshader_fs.h)
+    fips_deps(d3d11entry)
+fips_end_app()
