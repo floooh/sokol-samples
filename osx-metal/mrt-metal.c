@@ -185,7 +185,7 @@ void init(const void* mtl_device) {
             .depth_write_enabled = true
         },
         .blend = {
-            .mrt_count = 3,
+            .color_attachment_count = 3,
             .color_format = SG_PIXELFORMAT_RGBA8,
             .depth_format = SG_PIXELFORMAT_DEPTH
         },
