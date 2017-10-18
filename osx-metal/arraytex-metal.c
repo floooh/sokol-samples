@@ -124,12 +124,8 @@ void init(const void* mtl_device) {
     /* shader to sample from array texture */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].type = SG_IMAGETYPE_ARRAY,
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
+        .vs.source =
             "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
             "  float4x4 mvp;\n"
@@ -147,15 +143,24 @@ void init(const void* mtl_device) {
             "  float3 uv1;\n"
             "  float3 uv2;\n"
             "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
             "  vs_out out;\n"
             "  out.pos = params.mvp * in.pos;\n"
             "  out.uv0 = float3(in.uv + params.offset0, 0.0);\n"
             "  out.uv1 = float3(in.uv + params.offset1, 1.0);\n"
             "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
             "  return out;\n"
-            "}\n"
-            "fragment float4 fs_main(vs_out in [[stage_in]], texture2d_array<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+            "}\n",
+        .fs.images[0].type = SG_IMAGETYPE_ARRAY,
+        .fs.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct fs_in {\n"
+            "  float3 uv0;\n"
+            "  float3 uv1;\n"
+            "  float3 uv2;\n"
+            "};\n"
+            "fragment float4 _main(fs_in in [[stage_in]], texture2d_array<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
             "  float4 c0 = tex.sample(smp, in.uv0.xy, int(in.uv0.z));\n"
             "  float4 c1 = tex.sample(smp, in.uv1.xy, int(in.uv1.z));\n"
             "  float4 c2 = tex.sample(smp, in.uv2.xy, int(in.uv2.z));\n"

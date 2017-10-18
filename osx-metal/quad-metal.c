@@ -39,11 +39,8 @@ void init(const void* mtl_device) {
 
     /* a shader (use separate shader sources here */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
         .vs.source =
             "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
             "using namespace metal;\n"
             "struct vs_in {\n"
             "  float4 position [[attribute(0)]];\n"
@@ -53,7 +50,7 @@ void init(const void* mtl_device) {
             "  float4 position [[position]];\n"
             "  float4 color [[user(usr0)]];\n"
             "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]]) {\n"
+            "vertex vs_out _main(vs_in in [[stage_in]]) {\n"
             "  vs_out out;\n"
             "  out.position = in.position;\n"
             "  out.color = in.color;\n"
@@ -66,13 +63,8 @@ void init(const void* mtl_device) {
             "struct fs_in {\n"
             "  float4 color [[user(usr0)]];\n"
             "};\n"
-            "struct fs_out {\n"
-            "  float4 color [[color(0)]];\n"
-            "};\n"
-            "fragment fs_out fs_main(fs_in in [[stage_in]]) {\n"
-            "  fs_out out;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
+            "fragment float4 _main(fs_in in [[stage_in]]) {\n"
+            "  return in.color;\n"
             "};\n"
     });
 

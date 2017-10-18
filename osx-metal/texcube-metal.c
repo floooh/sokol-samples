@@ -100,37 +100,50 @@ void init(const void* mtl_device) {
 
     /* a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].type = SG_IMAGETYPE_2D,
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
-            "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 position [[attribute(0)]];\n"
-            "  float4 color [[attribute(1)]];\n"
-            "  float2 uv [[attribute(2)]];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float4 color;\n"
-            "  float2 uv;\n"
-            "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = params.mvp * in.position;\n"
-            "  out.color = in.color;\n"
-            "  out.uv = in.uv * 5.0;\n"
-            "  return out;\n"
-            "}\n"
-            "fragment float4 fs_main(vs_out in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-            "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
-            "};\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .entry = "vs_main",
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct params_t {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 position [[attribute(0)]];\n"
+                "  float4 color [[attribute(1)]];\n"
+                "  float2 uv [[attribute(2)]];\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 pos [[position]];\n"
+                "  float4 color;\n"
+                "  float2 uv;\n"
+                "};\n"
+                "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+                "  vs_out out;\n"
+                "  out.pos = params.mvp * in.position;\n"
+                "  out.color = in.color;\n"
+                "  out.uv = in.uv * 5.0;\n"
+                "  return out;\n"
+                "}\n"
+        },
+        .fs = {
+            .images[0].type = SG_IMAGETYPE_2D,
+            .entry = "fs_main",
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct fs_in {\n"
+                "  float4 color;\n"
+                "  float2 uv;\n"
+                "};\n"
+                "fragment float4 fs_main(fs_in in [[stage_in]],\n"
+                "  texture2d<float> tex [[texture(0)]],\n"
+                "  sampler smp [[sampler(0)]])\n"
+                "{\n"
+                "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
+                "};\n"
+        }
     });
 
     /* a pipeline state object */

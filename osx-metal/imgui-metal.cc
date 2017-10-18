@@ -100,12 +100,8 @@ void init(const void* mtl_device) {
     // shader object for imgui renering
     sg_shader_desc shd_desc = {
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].type = SG_IMAGETYPE_2D,
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
+        .vs.source =
             "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
             "  float2 disp_size;\n"
@@ -120,14 +116,22 @@ void init(const void* mtl_device) {
             "  float2 uv;\n"
             "  float4 color;\n"
             "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
             "  vs_out out;\n"
             "  out.pos = float4(((in.pos / params.disp_size)-0.5)*float2(2.0,-2.0), 0.5, 1.0);\n"
             "  out.uv = in.uv;\n"
             "  out.color = in.color;\n"
             "  return out;\n"
-            "}\n"
-            "fragment float4 fs_main(vs_out in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+            "}\n",
+        .fs.images[0].type = SG_IMAGETYPE_2D,
+        .fs.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct fs_in {\n"
+            "  float2 uv;\n"
+            "  float4 color;\n"
+            "};\n"
+            "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
             "  return tex.sample(smp, in.uv) * in.color;\n"
             "}\n"
     };

@@ -132,11 +132,8 @@ void init(const void* mtl_device) {
     /* a shader to render the cube into offscreen MRT render targest */
     sg_shader cube_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(offscreen_params_t),
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
+        .vs.source =
             "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
             "  float4x4 mvp;\n"
@@ -149,22 +146,25 @@ void init(const void* mtl_device) {
             "  float4 pos [[position]];\n"
             "  float bright;\n"
             "};\n"
+            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+            "  vs_out out;\n"
+            "  out.pos = params.mvp * in.pos;\n"
+            "  out.bright = in.bright;\n"
+            "  return out;\n"
+            "}\n",
+        .fs.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
             "struct fs_out {\n"
             "  float4 color0 [[color(0)]];\n"
             "  float4 color1 [[color(1)]];\n"
             "  float4 color2 [[color(2)]];\n"
             "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = params.mvp * in.pos;\n"
-            "  out.bright = in.bright;\n"
-            "  return out;\n"
-            "}\n"
-            "fragment fs_out fs_main(vs_out in [[stage_in]]) {\n"
+            "fragment fs_out _main(float bright [[stage_in]]) {\n"
             "  fs_out out;\n"
-            "  out.color0 = float4(in.bright, 0.0, 0.0, 1.0);\n"
-            "  out.color1 = float4(0.0, in.bright, 0.0, 1.0);\n"
-            "  out.color2 = float4(0.0, 0.0, in.bright, 1.0);\n"
+            "  out.color0 = float4(bright, 0.0, 0.0, 1.0);\n"
+            "  out.color1 = float4(0.0, bright, 0.0, 1.0);\n"
+            "  out.color2 = float4(0.0, 0.0, bright, 1.0);\n"
             "  return out;\n"
             "}\n"
     });
@@ -211,48 +211,57 @@ void init(const void* mtl_device) {
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(params_t),
-        .fs.images = {
-            [0] = { .type = SG_IMAGETYPE_2D },
-            [1] = { .type = SG_IMAGETYPE_2D },
-            [2] = { .type = SG_IMAGETYPE_2D }
+        .vs = {
+            .uniform_blocks[0].size = sizeof(params_t),
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct params_t {\n"
+                "  float2 offset;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float2 pos [[attribute(0)]];\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 pos [[position]];\n"
+                "  float2 uv0;\n"
+                "  float2 uv1;\n"
+                "  float2 uv2;\n"
+                "};\n"
+                "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+                "  vs_out out;\n"
+                "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
+                "  out.uv0 = in.pos + float2(params.offset.x, 0.0);\n"
+                "  out.uv1 = in.pos + float2(0.0, params.offset.y);\n"
+                "  out.uv2 = in.pos;\n"
+                "  return out;\n"
+                "}\n"
         },
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
-            "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float2 offset;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float2 pos [[attribute(0)]];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float2 uv0;\n"
-            "  float2 uv1;\n"
-            "  float2 uv2;\n"
-            "};\n"
-            "vertex vs_out vs_main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
-            "  out.uv0 = in.pos + float2(params.offset.x, 0.0);\n"
-            "  out.uv1 = in.pos + float2(0.0, params.offset.y);\n"
-            "  out.uv2 = in.pos;\n"
-            "  return out;\n"
-            "}\n"
-            "fragment float4 fs_main(vs_out in[[stage_in]],\n"
-            "  texture2d<float> tex0 [[texture(0)]], sampler smp0 [[sampler(0)]],\n"
-            "  texture2d<float> tex1 [[texture(1)]], sampler smp1 [[sampler(1)]],\n"
-            "  texture2d<float> tex2 [[texture(2)]], sampler smp2 [[sampler(2)]])\n"
-            "{\n"
-            "  float3 c0 = tex0.sample(smp0, in.uv0).xyz;\n"
-            "  float3 c1 = tex1.sample(smp1, in.uv1).xyz;\n"
-            "  float3 c2 = tex2.sample(smp2, in.uv2).xyz;\n"
-            "  return float4(c0 + c1 + c2, 1.0);\n"
-            "}\n"
+        .fs = {
+            .images = {
+                [0] = { .type = SG_IMAGETYPE_2D },
+                [1] = { .type = SG_IMAGETYPE_2D },
+                [2] = { .type = SG_IMAGETYPE_2D }
+            },
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct fs_in {\n"
+                "  float2 uv0;\n"
+                "  float2 uv1;\n"
+                "  float2 uv2;\n"
+                "};\n"
+                "fragment float4 _main(fs_in in [[stage_in]],\n"
+                "  texture2d<float> tex0 [[texture(0)]], sampler smp0 [[sampler(0)]],\n"
+                "  texture2d<float> tex1 [[texture(1)]], sampler smp1 [[sampler(1)]],\n"
+                "  texture2d<float> tex2 [[texture(2)]], sampler smp2 [[sampler(2)]])\n"
+                "{\n"
+                "  float3 c0 = tex0.sample(smp0, in.uv0).xyz;\n"
+                "  float3 c1 = tex1.sample(smp1, in.uv1).xyz;\n"
+                "  float3 c2 = tex2.sample(smp2, in.uv2).xyz;\n"
+                "  return float4(c0 + c1 + c2, 1.0);\n"
+                "}\n"
+        }
     });
 
     /* the pipeline object to render the fullscreen quad */
@@ -287,12 +296,8 @@ void init(const void* mtl_device) {
             },
             .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
             .shader = sg_make_shader(&(sg_shader_desc){
-                .vs.entry = "vs_main",
-                .fs.entry = "fs_main",
-                .fs.images[0] = { .type = SG_IMAGETYPE_2D },
-                .source =
+                .vs.source =
                     "#include <metal_stdlib>\n"
-                    "#include <simd/simd.h>\n"
                     "using namespace metal;\n"
                     "struct vs_in {\n"
                     "  float2 pos [[attribute(0)]];\n"
@@ -301,14 +306,18 @@ void init(const void* mtl_device) {
                     "  float4 pos [[position]];\n"
                     "  float2 uv;\n"
                     "};\n"
-                    "vertex vs_out vs_main(vs_in in [[stage_in]]) {\n"
+                    "vertex vs_out _main(vs_in in [[stage_in]]) {\n"
                     "  vs_out out;\n"
                     "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
                     "  out.uv = in.pos;\n"
                     "  return out;\n"
-                    "}\n"
-                    "fragment float4 fs_main(vs_out in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-                    "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
+                    "}\n",
+                .fs.images[0].type = SG_IMAGETYPE_2D,
+                .fs.source =
+                    "#include <metal_stdlib>\n"
+                    "using namespace metal;\n"
+                    "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+                    "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
                     "}\n"
             }),
             .rasterizer.sample_count = MSAA_SAMPLES

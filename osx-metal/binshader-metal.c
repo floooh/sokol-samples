@@ -7,7 +7,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "binshader_bytecode.h"
+#include "binshader-metal.h"
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
@@ -86,11 +86,15 @@ void init(const void* mtl_device) {
 
     /* shader as precompiled metal lib */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .byte_code = shader_bytecode,
-        .byte_code_size = sizeof(shader_bytecode)
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .byte_code = vs_bytecode,
+            .byte_code_size = sizeof(vs_bytecode)
+        },
+        .fs = {
+            .byte_code = fs_bytecode,
+            .byte_code_size = sizeof(fs_bytecode)
+        }
     });
 
     /* pipeline object for rendering the cube */

@@ -30,43 +30,34 @@ void init(const void* mtl_device) {
 
     /* a shader pair, compiled from source code */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        /* 
-            the Metal backend offers different options to define a shader:
-            
-            - common source with separate vs/fs entry points
-            - separate vs/fs sources with separate vs/fs entry points
-            - common byte code with separate vs/fs entry points
-            - ...and separate vs/fs bytecode with separate entry points
-
-           this example uses a common source with a vs and fs entry point function
+        /*
+            The shader main() function cannot be called 'main' in 
+            the Metal shader languages, thus we define '_main' as the
+            default function. This can be override with the 
+            sg_shader_desc.vs.entry and sg_shader_desc.fs.entry fields.
         */
-        .vs.entry = "vs_main",
-        .fs.entry = "fs_main",
-        .source =
+        .vs.source =
             "#include <metal_stdlib>\n"
-            "#include <simd/simd.h>\n"
             "using namespace metal;\n"
             "struct vs_in {\n"
             "  float4 position [[attribute(0)]];\n"
             "  float4 color [[attribute(1)]];\n"
             "};\n"
-            "struct vs_out_fs_in {\n"
+            "struct vs_out {\n"
             "  float4 position [[position]];\n"
             "  float4 color;\n"
             "};\n"
-            "struct fs_out {\n"
-            "  float4 color [[color(0)]];\n"
-            "};\n"
-            "vertex vs_out_fs_in vs_main(vs_in in [[stage_in]]) {\n"
-            "  vs_out_fs_in out;\n"
-            "  out.position = in.position;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
-            "}\n"
-            "fragment fs_out fs_main(vs_out_fs_in in [[stage_in]]) {\n"
-            "  fs_out out;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
+            "vertex vs_out _main(vs_in inp [[stage_in]]) {\n"
+            "  vs_out outp;\n"
+            "  outp.position = inp.position;\n"
+            "  outp.color = inp.color;\n"
+            "  return outp;\n"
+            "}\n",
+        .fs.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "fragment float4 _main(float4 color [[stage_in]]) {\n"
+            "  return color;\n"
             "};\n"
     });
 
