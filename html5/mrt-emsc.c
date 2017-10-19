@@ -152,7 +152,7 @@ int main() {
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
-                [0] = { .name="mvp", .offset=offsetof(offscreen_params_t,mvp), .type=SG_UNIFORMTYPE_MAT4 }
+                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             }
         },
         .vs.source =
@@ -218,7 +218,7 @@ int main() {
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
-                [0] = { .name="offset", .offset=offsetof(params_t,offset), .type=SG_UNIFORMTYPE_FLOAT2}
+                [0] = { .name="offset", .type=SG_UNIFORMTYPE_FLOAT2}
             }
         },
         .fs.images = {

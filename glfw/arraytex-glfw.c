@@ -133,10 +133,10 @@ int main() {
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
-                [0] = { .name="mvp", .offset=offsetof(params_t,mvp), .type=SG_UNIFORMTYPE_MAT4 },
-                [1] = { .name="offset0", .offset=offsetof(params_t,offset0), .type=SG_UNIFORMTYPE_FLOAT2 },
-                [2] = { .name="offset1", .offset=offsetof(params_t,offset1), .type=SG_UNIFORMTYPE_FLOAT2 },
-                [3] = { .name="offset2", .offset=offsetof(params_t,offset2), .type=SG_UNIFORMTYPE_FLOAT2 }
+                [0] = { .name="mvp",     .type=SG_UNIFORMTYPE_MAT4 },
+                [1] = { .name="offset0", .type=SG_UNIFORMTYPE_FLOAT2 },
+                [2] = { .name="offset1", .type=SG_UNIFORMTYPE_FLOAT2 },
+                [3] = { .name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
             }
         },
         .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_ARRAY },

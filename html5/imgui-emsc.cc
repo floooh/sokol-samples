@@ -157,7 +157,7 @@ int main() {
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
-                [0] = { .name="disp_size", .offset=offsetof(vs_params_t,disp_size), .type=SG_UNIFORMTYPE_FLOAT2}
+                [0] = { .name="disp_size", .type=SG_UNIFORMTYPE_FLOAT2}
             }
         },
         .vs.source =

@@ -127,7 +127,7 @@ int main() {
     sg_shader_desc shd_desc = { };
     auto& ub = shd_desc.vs.uniform_blocks[0];
     ub.size = sizeof(vs_params_t);
-    ub.uniforms[0] = sg_named_uniform("disp_size", offsetof(vs_params_t, disp_size), SG_UNIFORMTYPE_FLOAT2, 1);
+    ub.uniforms[0] = sg_named_uniform("disp_size", SG_UNIFORMTYPE_FLOAT2, 1);
     shd_desc.vs.source =
         "#version 330\n"
         "uniform vec2 disp_size;\n"
