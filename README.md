@@ -87,6 +87,20 @@ To build for D3D11 on Windows:
 > fips run triangle-d3d11
 ```
 
+To build for Linux:
+```
+> cd ~/scratch/sokol-samples
+> ./fips set config linux-make-debug
+> ./fips build
+...
+> ./fips list targets
+...
+> ./fips run triangle-glfw
+...
+```
+You may need to install some dev-packages required for GLFW on Linux,
+see here: http://www.glfw.org/docs/latest/compile.html#compile_deps_x11
+
 Type ```./fips help``` for more build system options.
 
 ## Thanks to:
