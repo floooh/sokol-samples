@@ -15,9 +15,6 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
 ## How to build
 
-Currently only OSX and emscripten are tested. Linux and Windows may work too
-but expect compile errors and warnings (for now).
-
 Make sure that the following tools are in the path. Exact versions shouldn't
 matter:
 ```
@@ -76,7 +73,18 @@ To build for Metal on OSX:
 ...
 > ./fips list targets
 ...
-> ./fips run clear-metal
+> ./fips run triangle-metal
+```
+
+To build for D3D11 on Windows:
+```
+> cd /scratch/sokol-samples
+> fips set config d3d11-win64-vstudio-debug
+> fips build
+...
+> fips list targets
+...
+> fips run triangle-d3d11
 ```
 
 Type ```./fips help``` for more build system options.
