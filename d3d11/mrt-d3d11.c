@@ -175,6 +175,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
+        .blend = {
+            .color_attachment_count = 3,
+            .depth_format = SG_PIXELFORMAT_DEPTH
+        },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
             .sample_count = offscreen_sample_count
