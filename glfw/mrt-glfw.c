@@ -46,6 +46,7 @@ int main() {
     assert(sg_isvalid());
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
+    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4:1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = WIDTH,
@@ -54,7 +55,7 @@ int main() {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1
+        .sample_count = offscreen_sample_count
     };
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
@@ -176,7 +177,14 @@ int main() {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .blend = {
+            .color_attachment_count = 3,
+            .depth_format = SG_PIXELFORMAT_DEPTH
+        },
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK,
+            .sample_count = offscreen_sample_count
+        }
     });
 
     /* draw state for offscreen rendering */

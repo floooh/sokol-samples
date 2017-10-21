@@ -39,13 +39,14 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-buffer render target image */
+    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4:1;
     sg_image_desc img_desc = {
         .render_target = true,
         .width = 512,
         .height = 512,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1
+        .sample_count = offscreen_sample_count
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
@@ -197,7 +198,11 @@ int main() {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .blend.depth_format = SG_PIXELFORMAT_DEPTH,
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK,
+            .sample_count = offscreen_sample_count
+        }
     });
 
     /* and another pipeline object for the default pass */
