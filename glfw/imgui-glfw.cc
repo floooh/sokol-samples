@@ -120,7 +120,7 @@ int main() {
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.content.subimage[0][0].ptr = font_pixels;
-    img_desc.content.subimage[0][0].size = font_width * font_height * sizeof(uint32_t);
+    img_desc.content.subimage[0][0].size = font_width * font_height * 4;
     draw_state.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering

@@ -147,7 +147,7 @@ int main() {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .content.subimage[0][0] = {
             .ptr = font_pixels,
-            .size = font_width * font_height * sizeof(uint32_t)
+            .size = font_width * font_height * 4
         }
     };
     draw_state.fs_images[0] = sg_make_image(&img_desc);

@@ -196,7 +196,7 @@ int main() {
         sg_update_image(img, &(sg_image_content){ 
             .subimage[0][0] = { 
                 .ptr=pixels, 
-                .size=sizeof(pixels) 
+                .size=sizeof(pixels)
             } 
         });
 
