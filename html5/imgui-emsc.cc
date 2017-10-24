@@ -201,8 +201,7 @@ int main() {
             .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
             .color_write_mask = SG_COLORMASK_RGB
-        },
-        .rasterizer.scissor_test_enabled = true
+        }
     };
     draw_state.pipeline = sg_make_pipeline(&pip_desc);
 
