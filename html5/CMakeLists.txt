@@ -26,14 +26,6 @@ fips_begin_app(offscreen-emsc windowed)
     fips_files(offscreen-emsc.c)
 fips_end_app()
 
-fips_begin_app(mrt-emsc windowed)
-    fips_files(mrt-emsc.c)
-fips_end_app()
-
-fips_begin_app(arraytex-emsc windowed)
-    fips_files(arraytex-emsc.c)
-fips_end_app()
-
 fips_begin_app(imgui-emsc windowed)
     fips_files(imgui-emsc.cc)
     fips_deps(imgui)
@@ -42,3 +34,13 @@ fips_end_app()
 fips_begin_app(dyntex-emsc windowed)
     fips_files(dyntex-emsc.c)
 fips_end_app()
+
+# WebGL2 demos
+if (FIPS_EMSCRIPTEN_USE_WEBGL2)
+    fips_begin_app(mrt-emsc windowed)
+        fips_files(mrt-emsc.c)
+    fips_end_app()
+    fips_begin_app(arraytex-emsc windowed)
+        fips_files(arraytex-emsc.c)
+    fips_end_app()
+endif()
