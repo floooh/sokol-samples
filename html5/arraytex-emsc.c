@@ -26,15 +26,17 @@ typedef struct {
     hmm_vec2 offset1;
     hmm_vec2 offset2;
 } params_t;
-
+    
 #define IMG_LAYERS (3)
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
 
 void draw();
+void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL context */
+    sg_desc desc = {0};
     emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
@@ -43,16 +45,29 @@ int main() {
     attrs.majorVersion = 2;
     ctx = emscripten_webgl_create_context(0, &attrs);
     if (!ctx) {
-        /* WebGL not supported */
-        puts("WebGL2 required!\n");
-        return 10;
+        /* WebGL2 not supported, fall back to WebGL */
+        desc.gl_force_gles2 = true;
+        attrs.majorVersion = 1;
+        ctx = emscripten_webgl_create_context(0, &attrs);
+        if (!ctx) {
+            return 10;
+        }
     }
     emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
+
+    /* not much useful things to do in this demo if WebGL2 is not supported,
+       so just drop out and later render a dark red screen */
+    if (desc.gl_force_gles2) {
+        pass_action = (sg_pass_action){
+            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+        };
+        emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
+        return 0;
+    }
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
@@ -248,4 +263,14 @@ void draw() {
     sg_end_pass();
     sg_commit();
     frame_index++;
+}
+
+/* this is used as draw callback if webgl2 is not supported */
+void draw_webgl_fallback() {
+    float g = pass_action.colors[0].val[1] + 0.01f;
+    if (g > 0.5f) g = 0.0f;
+    pass_action.colors[0].val[1] = g;
+    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+    sg_end_pass();
+    sg_commit();
 }
