@@ -40,9 +40,11 @@ typedef struct {
 } params_t;
 
 void draw();
+void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL context */
+    sg_desc desc = {0};
     emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
@@ -51,16 +53,29 @@ int main() {
     attrs.majorVersion = 2;
     ctx = emscripten_webgl_create_context(0, &attrs);
     if (!ctx) {
-        /* WebGL not supported */
-        puts("WebGL2 required!\n");
-        return 10;
+        /* WebGL2 not supported, fall back to WebGL */
+        desc.gl_force_gles2 = true;
+        attrs.majorVersion = 1;
+        ctx = emscripten_webgl_create_context(0, &attrs);
+        if (!ctx) {
+            return 10;
+        }
     }
     emscripten_webgl_make_context_current(ctx);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
+
+    /* not much useful things to do in this demo if WebGL2 is not supported,
+       so just drop out and later render a dark red screen */
+    if (desc.gl_force_gles2) {
+        default_pass_action = (sg_pass_action){
+            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+        };
+        emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
+        return 0;
+    }
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
     const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1;
@@ -373,6 +388,16 @@ void draw() {
         sg_apply_draw_state(&dbg_draw_state);
         sg_draw(0, 4, 1);
     }
+    sg_end_pass();
+    sg_commit();
+}
+
+/* this is used as draw callback if webgl2 is not supported */
+void draw_webgl_fallback() {
+    float g = default_pass_action.colors[0].val[1] + 0.01f;
+    if (g > 0.5f) g = 0.0f;
+    default_pass_action.colors[0].val[1] = g;
+    sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
     sg_end_pass();
     sg_commit();
 }
