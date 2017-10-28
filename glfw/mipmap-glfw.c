@@ -128,7 +128,7 @@ int main() {
                 "}\n"
         },
         .fs = {
-            .images[0].type = SG_IMAGETYPE_2D,
+            .images[0] = { .name="tex", .type = SG_IMAGETYPE_2D },
             .source =
                 "#version 330\n"
                 "uniform sampler2D tex;"
