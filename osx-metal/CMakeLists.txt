@@ -63,3 +63,7 @@ fips_begin_app(binshader-metal windowed)
     fips_deps(osxentry)
 fips_end_app()
 
+fips_begin_app(mipmap-metal windowed)
+    fips_files(mipmap-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
