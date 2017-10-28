@@ -162,8 +162,10 @@ void init(const void* mtl_device) {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = MSAA_SAMPLES
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK,
+            .sample_count = MSAA_SAMPLES
+        }
     });
 
     /* view-projection matrix */
