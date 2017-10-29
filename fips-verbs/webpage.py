@@ -20,6 +20,8 @@ samples = [
     [ 'instancing', 'instancing-emsc.c' ],
     [ 'mrt', 'mrt-emsc.c' ],
     [ 'arraytex', 'arraytex-emsc.c' ],
+    [ 'dyntex', 'dyntex-emsc.c'],
+    [ 'mipmap', 'mipmap-emsc.c'],
     [ 'imgui', 'imgui-emsc.cc' ]
 ]
 
@@ -34,10 +36,8 @@ GameSeparator = 'simple-separator'
 BackgroundColor = '#00E676'
 
 # build configuration
-# EmscConfig  = 'webgl2-emsc-ninja-release'
-# WasmConfig  = 'webgl2-wasm-ninja-release'
-EmscConfig  = 'webgl2-emsc-ninja-release'
-WasmConfig  = 'webgl2-wasm-ninja-release'
+EmscConfig = 'webgl2-emsc-ninja-release'
+WasmConfig = 'webgl2-wasm-ninja-release'
 
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
