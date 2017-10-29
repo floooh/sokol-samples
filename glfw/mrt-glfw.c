@@ -33,7 +33,7 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol MRT GLFW", 0, 0);
     glfwMakeContextCurrent(w);
@@ -336,7 +336,9 @@ int main() {
 
         /* render fullscreen quad with the 'composed image', plus 3 small
            debug-views with the content of the offscreen render targets */
-        sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
+        int cur_width, cur_height;
+        glfwGetFramebufferSize(w, &cur_width, &cur_height);
+        sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
         sg_apply_draw_state(&fsq_ds);
         sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
         sg_draw(0, 4, 1);

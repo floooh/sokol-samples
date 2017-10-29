@@ -51,8 +51,9 @@ int main() {
     glfwWindowHint(GLFW_SAMPLES, MSAA_SAMPLES);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Mipmapping GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
@@ -180,7 +181,7 @@ int main() {
             .vertex_buffers[0] = vbuf
         };
         int cur_width, cur_height;
-        glfwGetWindowSize(w, &cur_width, &cur_height);
+        glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&(sg_pass_action){0}, cur_width, cur_height);
         for (int i = 0; i < 8; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;

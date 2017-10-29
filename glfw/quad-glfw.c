@@ -18,7 +18,7 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Quad GLFW", 0, 0);
     glfwMakeContextCurrent(w);
@@ -102,7 +102,9 @@ int main() {
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+        int cur_width, cur_height;
+        glfwGetFramebufferSize(w, &cur_width, &cur_height);
+        sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_draw_state(&draw_state);
         sg_draw(0, 6, 1);
         sg_end_pass();

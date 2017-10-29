@@ -36,8 +36,9 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
     GLFWwindow* w = glfwCreateWindow(Width, Height, "Sokol+ImGui+GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
@@ -178,7 +179,7 @@ int main() {
     // draw loop
     while (!glfwWindowShouldClose(w)) {
         int cur_width, cur_height;
-        glfwGetWindowSize(w, &cur_width, &cur_height);
+        glfwGetFramebufferSize(w, &cur_width, &cur_height);
 
         // this is standard ImGui demo code
         ImGuiIO& io = ImGui::GetIO();
@@ -292,4 +293,3 @@ void imgui_draw_cb(ImDrawData* draw_data) {
         }
     }
 }
-

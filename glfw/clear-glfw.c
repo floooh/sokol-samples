@@ -18,7 +18,7 @@ int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Clear GLFW", 0, 0);
     glfwMakeContextCurrent(w);
@@ -40,7 +40,9 @@ int main() {
         float g = (float)(pass_action.colors[0].val[1] + 0.01);
         if (g > 1.0f) g = 0.0f;
         pass_action.colors[0].val[1] = g;
-        sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+        int cur_width, cur_height;
+        glfwGetFramebufferSize(w, &cur_width, &cur_height);
+        sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
