@@ -1,5 +1,8 @@
 //------------------------------------------------------------------------------
 //  mipmap-glfw.c
+//  Test mipmapping behaviour.
+//  Top row: NEAREST_MIPMAP_NEAREST to LINEAR_MIPMAP_LINEAR
+//  Bottom row: anistropy levels 2, 4, 8 and 16
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -72,7 +75,7 @@ int main() {
         .content = vertices
     });
 
-    /* mipmapped images, with different sampling filters */
+    /* initialize mipmap content, different colors and checkboard pattern */
     sg_image_content img_content;
     uint32_t* ptr = pixels.mip0;
     bool even_odd = false;
@@ -88,23 +91,30 @@ int main() {
             even_odd = !even_odd;
         }
     }
+    /* the first 4 images are just different min-filters, the last
+       4 images are different anistropy levels */
+    sg_image img[8];
+    sg_image_desc img_desc = {
+        .width = 256,
+        .height = 256,
+        .num_mipmaps = 9,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .mag_filter = SG_FILTER_LINEAR,
+        .content = img_content
+    };
     sg_filter min_filter[] = {
         SG_FILTER_NEAREST_MIPMAP_NEAREST,
         SG_FILTER_LINEAR_MIPMAP_NEAREST,
         SG_FILTER_NEAREST_MIPMAP_LINEAR,
-        SG_FILTER_LINEAR_MIPMAP_LINEAR
+        SG_FILTER_LINEAR_MIPMAP_LINEAR,
     };
-    sg_image img[4];
     for (int i = 0; i < 4; i++) {
-        img[i] = sg_make_image(&(sg_image_desc){
-            .width = 256,
-            .height = 256,
-            .num_mipmaps = 9,
-            .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .min_filter = min_filter[i],
-            .mag_filter = SG_FILTER_LINEAR,
-            .content = img_content
-        });
+        img_desc.min_filter = min_filter[i];
+        img[i] = sg_make_image(&img_desc);
+    }
+    for (int i = 4; i < 8; i++) {
+        img_desc.max_anisotropy = 1<<(i-3);
+        img[i] = sg_make_image(&img_desc);
     }
 
     /* shader */
@@ -172,15 +182,10 @@ int main() {
         int cur_width, cur_height;
         glfwGetWindowSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&(sg_pass_action){0}, cur_width, cur_height);
-        for (int i = 0; i < 4; i++) {
-            hmm_vec3 pos;
-            switch (i) {
-                case 0: pos = HMM_Vec3(-3.0f, 0.0f, 0.0f); break;
-                case 1: pos = HMM_Vec3(-1.0f, 0.0f, 0.0f); break;
-                case 2: pos = HMM_Vec3(+1.0f, 0.0f, 0.0f); break;
-                case 3: pos = HMM_Vec3(+3.0f, 0.0f, 0.0f); break;
-            }
-            hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(pos), rm);
+        for (int i = 0; i < 8; i++) {
+            const float x = ((float)(i & 3) - 1.5f) * 2.0f;
+            const float y = (i < 4) ? 1.0f : -1.0f;
+            hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
             
             draw_state.fs_images[0] = img[i];
