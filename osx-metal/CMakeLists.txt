@@ -67,3 +67,8 @@ fips_begin_app(mipmap-metal windowed)
     fips_files(mipmap-metal.c)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(blend-metal windowed)
+    fips_files(blend-metal.c)
+    fips_deps(osxentry)
+fips_end_app()
