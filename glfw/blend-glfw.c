@@ -79,7 +79,7 @@ int main() {
                 "uniform float tick;\n"
                 "out vec4 frag_color;\n"
                 "void main() {\n"
-                "  vec2 xy = fract((gl_FragCoord.xy-vec2(tick)) / 50.0);"
+                "  vec2 xy = fract((gl_FragCoord.xy-vec2(tick)) / 50.0);\n"
                 "  frag_color = vec4(vec3(xy.x*xy.y), 1.0);\n"
                 "}\n"
         }
@@ -112,7 +112,7 @@ int main() {
             "in vec4 color0;\n"
             "out vec4 color;\n"
             "void main() {\n"
-            "  gl_Position = mvp * position;"
+            "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
         .fs.source =
