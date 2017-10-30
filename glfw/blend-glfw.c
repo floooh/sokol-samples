@@ -90,14 +90,11 @@ int main() {
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_UNIFORMTYPE_FLOAT2 }
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer = {
-            .sample_count = MSAA_SAMPLES
-        }
     });
 
     /* a shader for the blended quads */
@@ -142,16 +139,13 @@ int main() {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer = {
-            .sample_count = MSAA_SAMPLES
-        }
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             pip_desc.blend.src_factor_rgb = (sg_blend_factor) (src + 1);
             pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
             pip_desc.blend.src_factor_alpha = pip_desc.blend.src_factor_rgb;
-            pip_desc.blend.dst_factor_alpha = pip_desc.blend.src_factor_alpha;
+            pip_desc.blend.dst_factor_alpha = pip_desc.blend.dst_factor_rgb;
             pips[src][dst] = sg_make_pipeline(&pip_desc);
             assert(pips[src][dst].id != SG_INVALID_ID);
         }
