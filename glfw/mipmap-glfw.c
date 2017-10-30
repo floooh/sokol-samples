@@ -41,6 +41,7 @@ uint32_t mip_colors[9] = {
     0xFFFFA0FF,     /* orange */
     0xFFA000FF,     /* purple */
 };
+
 int main() {
     const int WIDTH = 800;
     const int HEIGHT = 600;
@@ -60,9 +61,7 @@ int main() {
     flextInit(w);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
-    assert(sg_isvalid());
+    sg_setup(&(sg_desc){0});
     
     /* a plane vertex buffer */
     float vertices[] = {
