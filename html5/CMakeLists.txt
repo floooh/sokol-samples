@@ -39,6 +39,10 @@ fips_begin_app(mipmap-emsc windowed)
     fips_files(mipmap-emsc.c)
 fips_end_app()
 
+fips_begin_app(blend-emsc windowed)
+    fips_files(blend-emsc.c)
+fips_end_app()
+
 # WebGL2 demos
 if (FIPS_EMSCRIPTEN_USE_WEBGL2)
     fips_begin_app(mrt-emsc windowed)
