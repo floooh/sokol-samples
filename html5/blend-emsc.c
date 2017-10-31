@@ -174,8 +174,8 @@ int main() {
             if (valid) {
                 pip_desc.blend.src_factor_rgb = src_blend;
                 pip_desc.blend.dst_factor_rgb = dst_blend;
-                pip_desc.blend.src_factor_alpha = src_blend;
-                pip_desc.blend.dst_factor_alpha = dst_blend;
+                pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
+                pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
                 pips[src][dst] = sg_make_pipeline(&pip_desc);
                 assert(pips[src][dst].id != SG_INVALID_ID);
             }
