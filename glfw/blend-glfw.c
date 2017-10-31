@@ -144,8 +144,8 @@ int main() {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
             const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            pip_desc.blend.src_factor_rgb = (sg_blend_factor) (src + 1);
-            pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
+            pip_desc.blend.src_factor_rgb = src_blend;
+            pip_desc.blend.dst_factor_rgb = dst_blend;
             pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
             pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
             pips[src][dst] = sg_make_pipeline(&pip_desc);
