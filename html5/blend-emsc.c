@@ -146,6 +146,7 @@ int main() {
         .blend = {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
+            .color_write_mask = SG_COLORMASK_RGB,
         },
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {

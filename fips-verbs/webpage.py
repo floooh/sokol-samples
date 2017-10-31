@@ -22,6 +22,7 @@ samples = [
     [ 'arraytex', 'arraytex-emsc.c' ],
     [ 'dyntex', 'dyntex-emsc.c'],
     [ 'mipmap', 'mipmap-emsc.c'],
+    [ 'blend', 'blend-emsc.c' ],
     [ 'imgui', 'imgui-emsc.cc' ]
 ]
 
