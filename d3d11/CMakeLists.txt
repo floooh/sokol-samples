@@ -66,3 +66,8 @@ fips_begin_app(mipmap-d3d11 windowed)
     fips_files(mipmap-d3d11.c)
     fips_deps(d3d11entry)
 fips_end_app()
+
+fips_begin_app(blend-d3d11 windowed)
+    fips_files(blend-d3d11.c)
+    fips_deps(d3d11entry)
+fips_end_app()
