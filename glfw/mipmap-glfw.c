@@ -93,7 +93,7 @@ int main() {
     }
     /* the first 4 images are just different min-filters, the last
        4 images are different anistropy levels */
-    sg_image img[8];
+    sg_image img[12];
     sg_image_desc img_desc = {
         .width = 256,
         .height = 256,
@@ -112,8 +112,16 @@ int main() {
         img_desc.min_filter = min_filter[i];
         img[i] = sg_make_image(&img_desc);
     }
+    img_desc.min_lod = 2.0f;
+    img_desc.max_lod = 4.0f;
     for (int i = 4; i < 8; i++) {
-        img_desc.max_anisotropy = 1<<(i-3);
+        img_desc.min_filter = min_filter[i-4];
+        img[i] = sg_make_image(&img_desc);
+    }
+    img_desc.min_lod = 0.0f;
+    img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
+    for (int i = 8; i < 12; i++) {
+        img_desc.max_anisotropy = 1<<(i-7);
         img[i] = sg_make_image(&img_desc);
     }
 
@@ -182,9 +190,9 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&(sg_pass_action){0}, cur_width, cur_height);
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;
-            const float y = (i < 4) ? 1.0f : -1.0f;
+            const float y = ((float)(i / 4) - 1.0f) * -2.0f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
             
