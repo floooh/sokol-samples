@@ -37,7 +37,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .d3d11_render_target_view_cb = d3d11_render_target_view,
         .d3d11_depth_stencil_view_cb = d3d11_depth_stencil_view
     });
-    assert(sg_query_feature(SG_FEATURE_INSTANCED_ARRAYS));
 
     /* vertex buffer for static geometry (goes into vb slot 0) */
     const float r = 0.05f;
