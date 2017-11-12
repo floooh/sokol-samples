@@ -13,10 +13,12 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
-#define MAX_PARTICLES 524288 /* 512*1024, this is necessary for VS */
-const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
+enum {
+    WIDTH = 800,
+    HEIGHT = 600,
+    MAX_PARTICLES = 512*1024,
+    NUM_PARTICLES_EMITTED_PER_FRAME = 10
+};
 
 /* vertex shader uniform block */
 typedef struct {

@@ -18,14 +18,15 @@ typedef struct {
     hmm_vec2 offset2;
 } params_t;
 
-#define IMG_LAYERS (3)
-#define IMG_WIDTH (16)
-#define IMG_HEIGHT (16)
+enum {
+    WIDTH = 800,
+    HEIGHT = 600,
+    IMG_LAYERS = 3,
+    IMG_WIDTH = 16,
+    IMG_HEIGHT = 16
+};
 
 int main() {
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
-
     /* create GLFW window and initialize GL */
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);

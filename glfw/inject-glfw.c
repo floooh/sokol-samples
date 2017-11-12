@@ -12,12 +12,15 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
-static const int WIDTH = 640;
-static const int HEIGHT = 480;
-static const int IMG_WIDTH = 32;
-static const int IMG_HEIGHT = 32;
+// constants (VS doesn't like "const int" for array size)
+enum { 
+    WIDTH = 640,
+    HEIGHT = 480,
+    IMG_WIDTH = 32, 
+    IMG_HEIGHT = 32,
+};
 
-uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
+uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
 typedef struct {
     hmm_mat4 mvp;

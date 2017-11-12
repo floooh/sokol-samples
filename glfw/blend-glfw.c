@@ -20,7 +20,7 @@ typedef struct {
     float tick;
 } fs_params_t;
 
-#define NUM_BLEND_FACTORS (15)
+enum { NUM_BLEND_FACTORS = 15 };
 sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int main() {
