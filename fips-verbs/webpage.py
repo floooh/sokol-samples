@@ -99,7 +99,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             name = sample[0]
             source = sample[1]
             log.info('> generate emscripten HTML page: {}'.format(name))
-            for ext in ['js', 'html.mem'] :
+            for ext in ['js'] :
                 src_path = '{}/{}-emsc.{}'.format(emsc_deploy_dir, name, ext)
                 if os.path.isfile(src_path) :
                     shutil.copy(src_path, '{}/asmjs/'.format(webpage_dir))
