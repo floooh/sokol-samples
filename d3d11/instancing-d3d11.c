@@ -12,8 +12,10 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-#define MAX_PARTICLES 524288    /* 512 * 1024 */
-const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
+enum {
+    MAX_PARTICLES = 512 * 1024,
+    NUM_PARTICLES_EMITTED_PER_FRAME = 10,
+};
 
 /* vertex shader uniform block */
 typedef struct {

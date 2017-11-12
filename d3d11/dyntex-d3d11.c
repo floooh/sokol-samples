@@ -16,10 +16,12 @@ typedef struct {
 } vs_params_t;
 
 /* width/height must be 2^N */
-#define IMAGE_WIDTH (64)
-#define IMAGE_HEIGHT (64)
-#define LIVING (0xFFFFFFFF)
-#define DEAD (0xFF000000)
+enum {
+    IMAGE_WIDTH = 64,
+    IMAGE_HEIGHT = 64,
+    LIVING  = 0xFFFFFFFF,
+    DEAD = 0xFF000000
+};
 uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
 void game_of_life_init();
