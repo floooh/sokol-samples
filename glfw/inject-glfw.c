@@ -110,9 +110,9 @@ int main() {
         .gl_buffers[0] = gl_ibuf
     });
 
-    /* create dynamically updated textures, in the sokol_gfx backend,
+    /* create dynamically updated textures, in GL the backend,
        dynamic textures are rotated through, so need to create
-       SG_NUM_INFLIGHT_FRAMES of those
+       SG_NUM_INFLIGHT_FRAMES GL textures
     */
     const int img_width = 32;
     const int img_height = 32;
