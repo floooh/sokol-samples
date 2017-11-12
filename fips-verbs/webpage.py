@@ -23,6 +23,7 @@ samples = [
     [ 'dyntex', 'dyntex-emsc.c'],
     [ 'mipmap', 'mipmap-emsc.c'],
     [ 'blend', 'blend-emsc.c' ],
+    [ 'inject', 'inject-emsc.c' ],
     [ 'imgui', 'imgui-emsc.cc' ]
 ]
 

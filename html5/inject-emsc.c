@@ -14,7 +14,6 @@
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
 
-
 const int WIDTH = 640;
 const int HEIGHT = 480;
 const int IMG_WIDTH = 32;
@@ -22,7 +21,9 @@ const int IMG_HEIGHT = 32;
 uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
 sg_draw_state draw_state;
-sg_pass_action pass_action = { 0 };
+sg_pass_action pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+};
 float rx = 0.0f;
 float ry = 0.0f;
 hmm_mat4 view_proj;
