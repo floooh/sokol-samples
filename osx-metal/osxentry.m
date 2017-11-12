@@ -90,7 +90,7 @@ static MTKView* mtk_view;
     [window makeKeyAndOrderFront:nil];
 
     // call the init function
-    init_func(CFBridgingRetain(mtl_device));
+    init_func((__bridge const void*)mtl_device);
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -268,12 +268,12 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
 
 /* get an MTLRenderPassDescriptor from the MTKView */
 const void* osx_mtk_get_render_pass_descriptor() {
-    return CFBridgingRetain([mtk_view currentRenderPassDescriptor]);
+    return (__bridge const void*) [mtk_view currentRenderPassDescriptor];
 }
 
 /* get the current CAMetalDrawable from MTKView */
 const void* osx_mtk_get_drawable() {
-    return CFBridgingRetain([mtk_view currentDrawable]);
+    return (__bridge const void*) [mtk_view currentDrawable];
 }
 
 /* return current MTKView drawable width */
@@ -308,3 +308,9 @@ void osx_mouse_pos(osx_mouse_pos_func fn) {
 void osx_mouse_wheel(osx_mouse_wheel_func fn) {
     mouse_wheel_func = fn;
 }
+
+#if defined(__OBJC__)
+id<MTLDevice> osx_mtl_device() {
+    return mtl_device;
+}
+#endif

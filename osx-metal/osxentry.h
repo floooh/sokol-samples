@@ -44,6 +44,13 @@ extern void osx_mouse_pos(osx_mouse_pos_func);
 /* register mouse wheel callback */
 extern void osx_mouse_wheel(osx_mouse_wheel_func);
 
+/* direct Objective-C access functions */
+#if defined(__OBJC__)
+#import <Metal/Metal.h>
+
+extern id<MTLDevice> osx_mtl_device();
+#endif
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
