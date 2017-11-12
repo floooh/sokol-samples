@@ -12,8 +12,12 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
+static const int WIDTH = 640;
+static const int HEIGHT = 480;
+static const int IMG_WIDTH = 32;
+static const int IMG_HEIGHT = 32;
+
+uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
 
 typedef struct {
     hmm_mat4 mvp;
@@ -38,36 +42,36 @@ int main() {
 
     /* create a native GL vertex and index buffer */
     float vertices[] = {
-        /* pos                  color                       uvs */
-        -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 1.0f,
+        /* pos                  uvs */
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
+        -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
-         1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+         1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
+        -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
-        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
+        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
+        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f,
 
-         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
+        -1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
+         1.0f, -1.0f,  1.0f,    1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
+        -1.0f,  1.0f, -1.0f,    0.0f, 0.0f,
+        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
+         1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
@@ -103,24 +107,34 @@ int main() {
         .gl_buffers[0] = gl_ibuf
     });
 
-    /* create a checkerboard texture */
-    uint32_t pixels[4*4] = {
-        0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-        0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-        0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-    };
-    sg_image img = sg_make_image(&(sg_image_desc){
-        .width = 4,
-        .height = 4,
+    /* create dynamically updated textures, in the sokol_gfx backend,
+       dynamic textures are rotated through, so need to create
+       SG_NUM_INFLIGHT_FRAMES of those
+    */
+    const int img_width = 32;
+    const int img_height = 32;
+    sg_image_desc img_desc = {
+        .usage = SG_USAGE_STREAM,
+        .width = img_width,
+        .height = img_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
-    });
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+    };
+    glGenTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
+    glActiveTexture(GL_TEXTURE0);
+    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
+        glBindTexture(GL_TEXTURE_2D, img_desc.gl_textures[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    }
+    sg_reset_state_cache();
+    sg_image img = sg_make_image(&img_desc);
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
@@ -135,34 +149,29 @@ int main() {
             "#version 330\n"
             "uniform mat4 mvp;\n"
             "in vec4 position;\n"
-            "in vec4 color0;\n"
             "in vec2 texcoord0;\n"
-            "out vec4 color;\n"
             "out vec2 uv;"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
-            "  color = color0;\n"
-            "  uv = texcoord0 * 5.0;\n"
+            "  uv = texcoord0;\n"
             "}\n",
         .fs.source =
             "#version 330\n"
             "uniform sampler2D tex;"
-            "in vec4 color;\n"
             "in vec2 uv;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
-            "  frag_color = texture(tex, uv) * color;\n"
+            "  frag_color = texture(tex, uv);\n"
             "}\n"
     });
 
     /* create pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .vertex_layouts[0] = {
-            .stride = 36,
+            .stride = 20,
             .attrs = {
                 [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .name="texcoord0", .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [1] = { .name="texcoord0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = shd,
@@ -192,15 +201,31 @@ int main() {
 
     vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
+    uint32_t counter = 0;
     while (!glfwWindowShouldClose(w)) {
         /* rotated model matrix */
-        rx += 1.0f; ry += 2.0f;
+        rx += 0.5f; ry += 0.75f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
         /* model-view-projection matrix for vertex shader */
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+
+        /* update texture image with some generated pixel data */
+        for (int y = 0; y < IMG_WIDTH; y++) {
+            for (int x = 0; x < IMG_HEIGHT; x++) {
+                pixels[y * IMG_WIDTH + x] = 0xFF000000 |
+                             (counter & 0xFF)<<16 |
+                             ((counter*3) & 0xFF)<<8 |
+                             ((counter*23) & 0xFF);
+                counter++;
+            }
+        }
+        counter++;
+        sg_update_image(img, &(sg_image_content){
+            .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
+        });
 
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
@@ -219,6 +244,7 @@ int main() {
     /* sokol_gfx doesn't destroy any externally created resource object */
     glDeleteBuffers(1, &gl_vbuf); gl_vbuf = 0;
     glDeleteBuffers(1, &gl_ibuf); gl_ibuf = 0;
+    glDeleteTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
 
     glfwTerminate();
 }
