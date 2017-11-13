@@ -110,16 +110,14 @@ int main() {
         .gl_buffers[0] = gl_ibuf
     });
 
-    /* create dynamically updated textures, in GL the backend,
+    /* create dynamically updated textures, in the GL backend
        dynamic textures are rotated through, so need to create
        SG_NUM_INFLIGHT_FRAMES GL textures
     */
-    const int img_width = 32;
-    const int img_height = 32;
     sg_image_desc img_desc = {
         .usage = SG_USAGE_STREAM,
-        .width = img_width,
-        .height = img_height,
+        .width = IMG_WIDTH,
+        .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
@@ -134,7 +132,7 @@ int main() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     sg_reset_state_cache();
     sg_image img = sg_make_image(&img_desc);
