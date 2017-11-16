@@ -6,6 +6,10 @@
 //  move the sokol_gfx implementation into it's own .m file.
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
+#if defined(SOKOL_USE_MACOS)
 #define SOKOL_METAL_MACOS
+#else
+#define SOKOL_METAL_IOS
+#endif
 #include "sokol_gfx.h"
 

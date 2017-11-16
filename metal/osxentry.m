@@ -1,15 +1,23 @@
+#ifdef SOKOL_USE_MACOS
 #import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
+#endif
+
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
-#import <QuartzCore/QuartzCore.h>
 #include "osxentry.h"
 
+#if SOKOL_USE_MACOS
 @interface SokolApp : NSApplication
 @end
 @interface SokolAppDelegate<NSApplicationDelegate> : NSObject
 @end
 @interface SokolWindowDelegate<NSWindowDelegate> : NSObject
 @end
+#else
+@interface SokolAppDelegate<UIKitApplicationDelegate> : NSObject
+@end
+#endif
 @interface SokolViewDelegate<MTKViewDelegate> : NSObject
 @end
 @interface SokolMTKView : MTKView
@@ -36,6 +44,7 @@ static id mtk_view_delegate;
 static MTKView* mtk_view;
 
 //------------------------------------------------------------------------------
+#ifdef SOKOL_USE_MACOS
 @implementation SokolApp
 // From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
 // This works around an AppKit bug, where key up events while holding
@@ -49,14 +58,23 @@ static MTKView* mtk_view;
     }
 }
 @end
+#endif
 
 //------------------------------------------------------------------------------
 @implementation SokolAppDelegate
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
     // window delegate
+    #ifdef SOKOL_USE_IOS
+    window_delegate = [UIApplication sharedApplication].delegate;
+    #else
     window_delegate = [[SokolWindowDelegate alloc] init];
+    #endif
 
-    // window
+    // main window
+    #ifdef SOKOL_USE_IOS
+    CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
+    window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
+    #else
     const NSUInteger style =
         NSWindowStyleMaskTitled |
         NSWindowStyleMaskClosable |
@@ -72,30 +90,40 @@ static MTKView* mtk_view;
     [window center];
     [window setRestorable:YES];
     [window setDelegate:window_delegate];
+    #endif
 
     // view delegate, MTKView and Metal device
     mtk_view_delegate = [[SokolViewDelegate alloc] init];
     mtl_device = MTLCreateSystemDefaultDevice();
     mtk_view = [[SokolMTKView alloc] init];
+    #ifdef SOKOL_USE_MACOS
     [window setContentView:mtk_view];
+    #endif
     [mtk_view setPreferredFramesPerSecond:60];
     [mtk_view setDelegate:mtk_view_delegate];
     [mtk_view setDevice: mtl_device];
+    #ifdef SOKOL_USE_MACOS
     [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
+    #endif
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
     CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
     [mtk_view setDrawableSize:drawable_size];
     [mtk_view setSampleCount:sample_count];
+    #ifdef SOKOL_USE_MACOS
     [window makeKeyAndOrderFront:nil];
+    #endif
 
     // call the init function
     init_func((__bridge const void*)mtl_device);
 }
 
+
+#ifdef SOKOL_USE_MACOS
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
     return YES;
 }
+#endif
 @end
 
 //------------------------------------------------------------------------------
@@ -159,6 +187,7 @@ static MTKView* mtk_view;
     return YES;
 }
 
+#ifdef SOKOL_USE_MACOS
 - (void)mouseDown:(NSEvent*)event {
     if (mouse_btn_down_func) {
         mouse_btn_down_func(0);
@@ -240,6 +269,7 @@ static MTKView* mtk_view;
         mouse_wheel_func(dy);
     }
 }
+#endif
 @end
 
 //------------------------------------------------------------------------------
@@ -258,12 +288,20 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     mouse_btn_up_func = 0;
     mouse_pos_func = 0;
     mouse_wheel_func = 0;
+    #ifdef SOKOL_USE_MACOS
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
     [NSApp setDelegate:delg];
     [NSApp activateIgnoringOtherApps:YES];
     [NSApp run];
+    #else
+    @autoreleasepool {
+        int argc = 0;
+        char* argv[] = {};
+        UIApplicationMain(argc, argv, nil, NSStringFromClass([SokolAppDelegate class]));
+    }
+    #endif
 }
 
 /* get an MTLRenderPassDescriptor from the MTKView */
