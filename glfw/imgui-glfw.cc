@@ -4,13 +4,13 @@
 //  texture or custom font support).
 //------------------------------------------------------------------------------
 #include "imgui.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
 #include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 const int Width = 1024;
 const int Height = 768;

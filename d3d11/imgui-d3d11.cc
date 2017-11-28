@@ -8,6 +8,7 @@
 #define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
+#include "sokol_time.h"
 #include "imgui.h"
 
 const int Width = 1024;
@@ -15,6 +16,7 @@ const int Height = 768;
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
 
+uint64_t last_time = 0;
 bool show_test_window = true;
 bool show_another_window = false;
 
@@ -30,7 +32,7 @@ typedef struct {
 void imgui_draw_cb(ImDrawData*);
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-    // setup d3d11 app wrapper and sokol_gfx
+    // setup d3d11 app wrapper, sokol_gfx, sokol_time
     d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
     sg_desc desc = { };
     desc.d3d11_device = d3d11_device();
@@ -38,6 +40,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     desc.d3d11_render_target_view_cb = d3d11_render_target_view;
     desc.d3d11_depth_stencil_view_cb = d3d11_depth_stencil_view;
     sg_setup(&desc);
+    stm_setup();
 
     // input forwarding
     d3d11_mouse_pos([] (float x, float y)   { ImGui::GetIO().MousePos = ImVec2(x, y); });
@@ -161,7 +164,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // this is standard ImGui demo code
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
-        io.DeltaTime = 1.0f / 60.0f;
+        io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();
 
         // 1. Show a simple window
