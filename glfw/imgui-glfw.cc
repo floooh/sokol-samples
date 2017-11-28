@@ -10,12 +10,14 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#include "sokol_time.h"
 
 const int Width = 1024;
 const int Height = 768;
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
 
+uint64_t last_time = 0;
 bool show_test_window = true;
 bool show_another_window = false;
 
@@ -70,7 +72,8 @@ int main() {
         ImGui::GetIO().AddInputCharacter((ImWchar)codepoint);
     });
 
-    // setup sokol_gfx
+    // setup sokol_gfx and sokol_time
+    stm_setup();
     sg_desc desc = { }; 
     sg_setup(&desc);
     assert(sg_isvalid());
@@ -184,7 +187,7 @@ int main() {
         // this is standard ImGui demo code
         ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
-        io.DeltaTime = 1.0f / 60.0f;
+        io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();
 
         // 1. Show a simple window

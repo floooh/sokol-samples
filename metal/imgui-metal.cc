@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_time.h"
 #include "imgui.h"
 
 const int WIDTH = 1024;
@@ -12,6 +13,7 @@ const int HEIGHT = 768;
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
 
+uint64_t last_time = 0;
 bool show_test_window = true;
 bool show_another_window = false;
 
@@ -27,13 +29,14 @@ typedef struct {
 void imgui_draw_cb(ImDrawData*);
 
 void init(const void* mtl_device) {
-    // setup sokol
+    // setup sokol_gfx and sokol_time
     sg_desc desc = {
         .mtl_device = mtl_device,
         .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
         .mtl_drawable_cb = osx_mtk_get_drawable
     };
     sg_setup(&desc);
+    stm_setup();
 
     // setup the imgui environment
     ImGuiIO& io = ImGui::GetIO();
@@ -170,7 +173,7 @@ void frame() {
 
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(width, height);
-    io.DeltaTime = 1.0f / 60.0f;
+    io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
     ImGui::NewFrame();
 
     // 1. Show a simple window
@@ -202,7 +205,6 @@ void frame() {
     ImGui::Render();
     sg_end_pass();
     sg_commit();
-
 }
 
 void shutdown() {
