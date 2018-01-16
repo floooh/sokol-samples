@@ -2,6 +2,12 @@
 //  inject-metal.m
 //------------------------------------------------------------------------------
 #include "osxentry.h"
+#define SOKOL_IMPL
+#if defined(SOKOL_USE_MACOS)
+#define SOKOL_METAL_MACOS
+#else
+#define SOKOL_METAL_IOS
+#endif
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -17,8 +23,8 @@ const int IMG_HEIGHT = 32;
 
 uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
 
-sg_pass_action pass_action = {0};
-sg_draw_state draw_state = {0};
+sg_pass_action pass_action = { };
+sg_draw_state draw_state = { };
 float rx = 0.0f;
 float ry = 0.0f;
 uint32_t counter = 0;
@@ -30,11 +36,12 @@ typedef struct {
 
 void init(const void* mtl_device) {
     /* setup sokol_gfx */
-    sg_setup(&(sg_desc){
+    sg_desc desc = {
         .mtl_device = mtl_device,
         .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
         .mtl_drawable_cb = osx_mtk_get_drawable
-    });
+    };
+    sg_setup(&desc);
 
     /* create native Metal vertex- and index-buffer */
     float vertices[] = {
@@ -88,15 +95,17 @@ void init(const void* mtl_device) {
     sg_reset_state_cache();
 
     /* create sokol_gfx buffers with injected Metal buffer objects */
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
-    });
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    };
+    draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
-    });
+    };
+    draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* create dynamically updated Metal texture objects, these will
        be rotated through by sokol_gfx as they are updated, so we need
@@ -129,7 +138,7 @@ void init(const void* mtl_device) {
     draw_state.fs_images[0] = sg_make_image(&img_desc);
 
     /* a shader */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+    sg_shader_desc shader_desc = {
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
             .entry = "vs_main",
@@ -170,10 +179,11 @@ void init(const void* mtl_device) {
                 "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
                 "};\n"
         }
-    });
+    };
+    sg_shader shd = sg_make_shader(&shader_desc);
 
     /* a pipeline state object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    sg_pipeline_desc pip_desc = {
         .vertex_layouts[0] = {
             .stride = 20,
             .attrs = {
@@ -191,7 +201,8 @@ void init(const void* mtl_device) {
             .cull_mode = SG_CULLMODE_BACK,
             .sample_count = MSAA_SAMPLES
         }
-    });
+    };
+    draw_state.pipeline = sg_make_pipeline(&pip_desc);
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
@@ -219,9 +230,10 @@ void frame() {
         }
     }
     counter++;
-    sg_update_image(draw_state.fs_images[0], &(sg_image_content){
+    sg_image_content content = {
         .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
-    });
+    };
+    sg_update_image(draw_state.fs_images[0], &content);
 
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
     sg_apply_draw_state(&draw_state);
