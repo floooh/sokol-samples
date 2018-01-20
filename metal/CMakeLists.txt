@@ -90,3 +90,8 @@ fips_begin_app(inject-metal windowed)
     fips_files(inject-metal.mm)
     fips_deps(osxentry)
 fips_end_app()
+
+fips_begin_app(releasetest-metal windowed)
+    fips_files(releasetest-metal.c)
+    fips_deps(osxentry sokol_gfx)
+fips_end_app()
