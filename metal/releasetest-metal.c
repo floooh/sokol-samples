@@ -93,7 +93,7 @@ void frame() {
     sg_end_pass();
     sg_commit();
 
-    /* release the buffer and pipeline */
+    /* release the resource we created above */
     sg_destroy_buffer(draw_state.vertex_buffers[0]);
     sg_destroy_pipeline(draw_state.pipeline);
     sg_destroy_shader(shd);
