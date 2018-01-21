@@ -125,7 +125,7 @@ void init(const void* mtl_device) {
             .stride = 28,
             .attrs = {
                 [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [1] = { .name="color", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd,

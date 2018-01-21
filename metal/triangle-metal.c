@@ -66,8 +66,8 @@ void init(const void* mtl_device) {
         .vertex_layouts[0] = {
             .stride = 28,
             .attrs = {
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             },
         },
         .shader = shd
