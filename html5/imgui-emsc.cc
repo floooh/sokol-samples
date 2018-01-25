@@ -189,8 +189,8 @@ int main() {
 
     // pipeline object for imgui rendering
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = sizeof(ImDrawVert),
+        .layout = {
+            .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
                 [0] = { .name="position", .offset=offsetof(ImDrawVert,pos), .format=SG_VERTEXFORMAT_FLOAT2 },
                 [1] = { .name="texcoord0", .offset=offsetof(ImDrawVert,uv), .format=SG_VERTEXFORMAT_FLOAT2 },

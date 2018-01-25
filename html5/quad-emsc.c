@@ -79,11 +79,12 @@ int main() {
     
     /* a pipeline object (default render state is fine) */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
+                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd_id,

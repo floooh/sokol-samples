@@ -97,10 +97,10 @@ int main() {
 
     /* a pipeline state object for rendering the background quad */
     bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = bg_shd,
@@ -134,11 +134,10 @@ int main() {
 
     /* one pipeline object per blend-factor combination */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = quad_shd,

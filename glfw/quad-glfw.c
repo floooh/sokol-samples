@@ -80,8 +80,8 @@ int main() {
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
                 /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
                 [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },

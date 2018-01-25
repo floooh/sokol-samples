@@ -114,20 +114,15 @@ int main() {
 
     /* pipeline state object, note the vertex layout definition */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts = {
-            [0] = {
-                .stride = 28,
-                .attrs = {
-                    [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                    [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
-                }
+        .layout = {
+            .buffers = {
+                [0] = { .stride = 28 },
+                [1] = { .stride = 12, .step_func=SG_VERTEXSTEP_PER_INSTANCE }
             },
-            [1] = {
-                .stride = 12,
-                .step_func = SG_VERTEXSTEP_PER_INSTANCE,
-                .attrs = {
-                    [0] = { .name="instance_pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 } 
-                }
+            .attrs = {
+                [0] = { .name="position", .offset = 0, .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [1] = { .name="color0", .offset = 12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [2] = { .name="instance_pos", .offset = 0, .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,

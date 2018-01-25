@@ -159,11 +159,11 @@ int main() {
 
     // pipeline object for imgui rendering
     sg_pipeline_desc pip_desc = { };
-    auto& layouts = pip_desc.vertex_layouts;
-    layouts[0].stride = sizeof(ImDrawVert);
-    layouts[0].attrs[0] = sg_named_attr("position", offsetof(ImDrawVert, pos), SG_VERTEXFORMAT_FLOAT2);
-    layouts[0].attrs[1] = sg_named_attr("texcoord0", offsetof(ImDrawVert, uv), SG_VERTEXFORMAT_FLOAT2);
-    layouts[0].attrs[2] = sg_named_attr("color0", offsetof(ImDrawVert, col), SG_VERTEXFORMAT_UBYTE4N);
+    pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
+    auto& attrs = pip_desc.layout.attrs;
+    attrs[0] = sg_named_attr("position", offsetof(ImDrawVert, pos), SG_VERTEXFORMAT_FLOAT2, 0);
+    attrs[1] = sg_named_attr("texcoord0", offsetof(ImDrawVert, uv), SG_VERTEXFORMAT_FLOAT2, 0);
+    attrs[2] = sg_named_attr("color0", offsetof(ImDrawVert, col), SG_VERTEXFORMAT_UBYTE4N, 0);
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.blend.enabled = true;
