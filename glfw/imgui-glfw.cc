@@ -131,7 +131,8 @@ int main() {
     sg_shader_desc shd_desc = { };
     auto& ub = shd_desc.vs.uniform_blocks[0];
     ub.size = sizeof(vs_params_t);
-    ub.uniforms[0] = sg_named_uniform("disp_size", SG_UNIFORMTYPE_FLOAT2, 1);
+    ub.uniforms[0].name = "disp_size";
+    ub.uniforms[0].type = SG_UNIFORMTYPE_FLOAT2;
     shd_desc.vs.source =
         "#version 330\n"
         "uniform vec2 disp_size;\n"
@@ -145,7 +146,8 @@ int main() {
         "    uv = texcoord0;\n"
         "    color = color0;\n"
         "}\n";
-    shd_desc.fs.images[0] = sg_named_image("tex", SG_IMAGETYPE_2D);
+    shd_desc.fs.images[0].name = "tex";
+    shd_desc.fs.images[0].type = SG_IMAGETYPE_2D;
     shd_desc.fs.source =
         "#version 330\n"
         "uniform sampler2D tex;\n"
@@ -161,9 +163,9 @@ int main() {
     sg_pipeline_desc pip_desc = { };
     pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
     auto& attrs = pip_desc.layout.attrs;
-    attrs[0] = sg_named_attr("position", offsetof(ImDrawVert, pos), SG_VERTEXFORMAT_FLOAT2, 0);
-    attrs[1] = sg_named_attr("texcoord0", offsetof(ImDrawVert, uv), SG_VERTEXFORMAT_FLOAT2, 0);
-    attrs[2] = sg_named_attr("color0", offsetof(ImDrawVert, col), SG_VERTEXFORMAT_UBYTE4N, 0);
+    attrs[0].name = "position";  attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[1].name = "texcoord0"; attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[2].name = "color0";    attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.blend.enabled = true;
