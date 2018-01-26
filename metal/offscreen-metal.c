@@ -189,11 +189,12 @@ void init(const void* mtl_device) {
 
     /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
+            /* need to set stride to skip uv-coords gap */
+            .buffers[0].stride = 36,
             .attrs = {
-                [0] = { .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },    /* position */
-                [1] = { .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 },   /* color */
+                [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },   /* position */
+                [1] = { .format = SG_VERTEXFORMAT_FLOAT4 },   /* color */
             }
         },
         .shader = offscreen_shd,
@@ -214,12 +215,11 @@ void init(const void* mtl_device) {
 
     /* and another pipeline-state-object for the default pass */
     sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
             .attrs = {
-                [0] = { .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },    /* position */
-                [1] = { .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 },   /* color */
-                [2] = { .offset = 28, .format = SG_VERTEXFORMAT_FLOAT2 },   /* uv */
+                [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },    /* position */
+                [1] = { .format = SG_VERTEXFORMAT_FLOAT4 },   /* color */
+                [2] = { .format = SG_VERTEXFORMAT_FLOAT2 },   /* uv */
             }
         },
         .shader = default_shd,

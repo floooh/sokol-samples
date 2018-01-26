@@ -63,11 +63,14 @@ void init(const void* mtl_device) {
 
     /* create a pipeline object */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        /* Metal has explicit attribute locations, and the vertex layout
+           has no gaps, so we don't need to provide stride, offsets
+           or attribute names
+        */
+        .layout = {
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             },
         },
         .shader = shd

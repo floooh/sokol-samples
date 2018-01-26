@@ -99,11 +99,10 @@ void init(const void* mtl_device) {
 
     /* pipeline object for rendering the cube */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
             .attrs = {
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd,

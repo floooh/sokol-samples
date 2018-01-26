@@ -148,12 +148,11 @@ void init(const void* mtl_device) {
 
     /* a pipeline state object */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
             .attrs = {
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .format=SG_VERTEXFORMAT_FLOAT2 }
             },
         },
         .shader = shd,

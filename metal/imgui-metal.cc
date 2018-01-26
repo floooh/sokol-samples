@@ -142,8 +142,8 @@ void init(const void* mtl_device) {
 
     // pipeline object for imgui rendering
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = sizeof(ImDrawVert),
+        .layout = {
+            .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
                 [0] = { .offset=offsetof(ImDrawVert,pos), .format=SG_VERTEXFORMAT_FLOAT2 },
                 [1] = { .offset=offsetof(ImDrawVert,uv), .format=SG_VERTEXFORMAT_FLOAT2 },
