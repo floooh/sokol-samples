@@ -61,11 +61,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
+        .layout = {
             .attrs = {
-                [0] = { .sem_name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .sem_name = "POS", .format = SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name = "COLOR", .format = SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd

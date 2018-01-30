@@ -80,10 +80,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a pipeline state object for rendering the background quad */
     sg_pipeline bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .sem_name="POS", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = bg_shd,
@@ -119,11 +119,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* one pipeline object per blend-factor combination */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
             .attrs = {
-                [0] = { .sem_name="POS", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="COLOR", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = quad_shd,

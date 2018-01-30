@@ -103,20 +103,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pipeline object, note the vertex layout description */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts = {
-            [0] = {
-                .stride = 28,
-                .attrs = {
-                    [0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                    [1] = { .sem_name="COLOR", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
-                }
+        /* NOTE: the strides and attribute offsets here are not necessary,
+           since both buffers have no gaps between vertices, it's just here
+           for better understanding what's going on :)
+        */
+        .layout = {
+            .buffers = {
+                [0] = { .stride = 28 },
+                [1] = { .stride = 12, .step_func = SG_VERTEXSTEP_PER_INSTANCE }
             },
-            [1] = {
-                .stride = 12,
-                .step_func = SG_VERTEXSTEP_PER_INSTANCE,
-                .attrs = {
-                    [0] = { .sem_name="INSTPOS", .format=SG_VERTEXFORMAT_FLOAT3 }
-                }
+            .attrs = {
+                [0] = { .sem_name="POSITION", .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [1] = { .sem_name="COLOR",    .offset=12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [2] = { .sem_name="INSTPOS",  .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,

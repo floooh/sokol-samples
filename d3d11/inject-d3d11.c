@@ -171,7 +171,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "};\n"
             "struct vs_in {\n"
             "  float4 pos: POSITION;\n"
-            "  float2 uv: TEXCOORD1;\n"
+            "  float2 uv: TEXCOORD0;\n"
             "};\n"
             "struct vs_out {\n"
             "  float2 uv: TEXCOORD0;\n"
@@ -193,11 +193,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 20,
+        .layout = {
             .attrs = {
-                [0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="TEXCOORD", .sem_index=1, .offset=12, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = shd,
