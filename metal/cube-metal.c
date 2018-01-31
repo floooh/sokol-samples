@@ -121,14 +121,14 @@ void init(const void* mtl_device) {
         MSAA sample count of the default framebuffer
     */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            /* test to provide buffer stride, but no attr offsets */
+            .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             }
-        },
-        .shader = shd,
+        },        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,

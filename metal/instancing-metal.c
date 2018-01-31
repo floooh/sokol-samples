@@ -108,20 +108,13 @@ void init(const void* mtl_device) {
 
     /* a pipeline object */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts = {
-            [0] = {
-                .stride = 28,
-                .attrs = {
-                    [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },    /* position */
-                    [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }    /* color */
-                }
-            },
-            [1] = {
-                .stride = 12,
-                .step_func = SG_VERTEXSTEP_PER_INSTANCE,
-                .attrs = {
-                    [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 }     /* instance_pos */
-                }
+        .layout = {
+            /* vertex buffer at slot 1 must step per instance */
+            .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
+            .attrs = {
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },  /* position */
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },  /* color */
+                [2] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 },  /* instance_pos */
             }
         },
         .shader = shd,

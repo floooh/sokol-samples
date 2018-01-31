@@ -70,15 +70,15 @@ void init(const void* mtl_device) {
 
     /* a pipeline state object */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .layout = {
+            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
                 [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
-        },
-        .shader = shd,
-        .index_type = SG_INDEXTYPE_UINT16
+        }
     });
 }
 

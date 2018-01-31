@@ -162,8 +162,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pipeline object for the offscreen-rendered cube */
     sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = sizeof(vertex_t),
+        .layout = {
+            .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
                 [0] = { .sem_name="POSITION", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .sem_name="BRIGHT", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
@@ -252,9 +252,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 8,
-            .attrs[0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+        .layout = {
+            .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
@@ -275,9 +274,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
        of the offscreen render target contents */
     sg_draw_state dbg_ds = {
         .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .vertex_layouts[0] = {
-                .stride = 8,
-                .attrs[0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+            .layout = {
+                .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
             },
             .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
             .shader = sg_make_shader(&(sg_shader_desc){

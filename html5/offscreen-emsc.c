@@ -190,11 +190,13 @@ int main() {
 
     /* pipeline object for offscreen rendering, don't need texcoords here */
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
+            /* need to provide stride, because the buffer's texcoord is skipped */
+            .buffers[0].stride = 36,
+            /* but don't need to provide attr offsets, because pos and color are continuous */
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = offscreen_shd,
@@ -212,12 +214,12 @@ int main() {
 
     /* and another pipeline object for the default pass */
     sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
+            /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .name="texcoord0", .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .name="texcoord0", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = default_shd,

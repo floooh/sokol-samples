@@ -119,11 +119,12 @@ int main() {
 
     /* create pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            /* test to provide buffer stride, but no attr offsets */
+            .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd,

@@ -197,8 +197,8 @@ int main() {
 
     /* pipeline object for the offscreen-rendered cube */
     sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = sizeof(vertex_t),
+        .layout = {
+            .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
                 [0] = { .name="position", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
@@ -282,9 +282,8 @@ int main() {
     
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 8,
-            .attrs[0] = { .name="pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+        .layout = {
+            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
@@ -305,9 +304,8 @@ int main() {
        of the offscreen render target contents */
     dbg_draw_state = (sg_draw_state){
         .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .vertex_layouts[0] = {
-                .stride = 8,
-                .attrs[0] = { .name="pos", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+            .layout = {
+                .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
             },
             .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
             .shader = sg_make_shader(&(sg_shader_desc){

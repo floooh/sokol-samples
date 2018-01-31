@@ -175,11 +175,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pipeline object for offscreen rendering */
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
+            /* skip the uv coords */
+            .buffers[0].stride = 36,
             .attrs = {
-                [0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="COLOR", .sem_index=0, .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
             },
         },
         .shader = offscreen_shd,
@@ -197,12 +198,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pipeline object for rendering textured cube in default pass */
     sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 36,
+        .layout = {
             .attrs = {
-                [0] = { .sem_name="POSITION", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="COLOR", .sem_index=0, .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .sem_name="TEXCOORD", .sem_index=0, .offset=28, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 },
+                [2] = { .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = default_shd,

@@ -68,11 +68,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
+            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
-                [0] = { .sem_name = "POS", .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name = "COLOR", .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
+                /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
+                [0] = { .sem_name="POS", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .sem_name="COLOR", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         }
     });

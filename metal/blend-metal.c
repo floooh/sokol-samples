@@ -96,10 +96,14 @@ void init(const void* mtl_device) {
 
     /* a pipeline state object for rendering the background quad */
     bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 28,
+        /* we use the same vertex buffer as for the colored 3D quads,
+           but only the first two floats from the position, need to
+           provide a stride to skip the gap to the next vertex
+        */
+        .layout = {
+            .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = bg_shd,
@@ -149,11 +153,10 @@ void init(const void* mtl_device) {
 
     /* one pipeline object per blend-factor combination */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 28,
+        .layout = {
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = quad_shd,

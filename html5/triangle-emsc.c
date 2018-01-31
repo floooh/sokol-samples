@@ -67,14 +67,14 @@ int main() {
 
     /* create a pipeline object (default render states are fine for triangle) */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 28,
+        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
+        .shader = sg_make_shader(&shd_desc),
+        .layout = {
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
-        .shader = sg_make_shader(&shd_desc),
     };
 
     /* setup the draw state with resource bindings */

@@ -171,8 +171,8 @@ void init(const void* mtl_device) {
 
     /* pipeline object for the offscreen-rendered cube */
     sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = sizeof(vertex_t),
+        .layout = {
+            .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
                 [0] = { .offset = offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .offset = offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
@@ -266,9 +266,8 @@ void init(const void* mtl_device) {
 
     /* the pipeline object to render the fullscreen quad */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 8,
-            .attrs[0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT2 }
+        .layout = {
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -290,9 +289,8 @@ void init(const void* mtl_device) {
        of the offscreen render targets */
     dbg_draw_state = (sg_draw_state){
         .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .vertex_layouts[0] = {
-                .stride = 8,
-                .attrs[0] = { .offset = 0, .format = SG_VERTEXFORMAT_FLOAT2 }
+            .layout = {
+                .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
             },
             .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
             .shader = sg_make_shader(&(sg_shader_desc){

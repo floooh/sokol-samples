@@ -168,11 +168,10 @@ int main() {
 
     /* create pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .vertex_layouts[0] = {
-            .stride = 20,
+        .layout = {
             .attrs = {
-                [0] = { .name="position", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="texcoord0", .offset=12, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="texcoord0", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
         },
         .shader = shd,

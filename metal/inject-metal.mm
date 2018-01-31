@@ -184,11 +184,10 @@ void init(const void* mtl_device) {
 
     /* a pipeline state object */
     sg_pipeline_desc pip_desc = {
-        .vertex_layouts[0] = {
-            .stride = 20,
+        .layout = {
             .attrs = {
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT2 }
             },
         },
         .shader = shd,
