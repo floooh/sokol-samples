@@ -1,6 +1,8 @@
 #ifdef SOKOL_USE_MACOS
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
+#else
+#import <UIKit/UIKit.h>
 #endif
 
 #import <Metal/Metal.h>
@@ -42,9 +44,12 @@ static id window;
 static id<MTLDevice> mtl_device;
 static id mtk_view_delegate;
 static MTKView* mtk_view;
+#ifdef SOKOL_USE_IOS
+static id mtk_view_controller;
+#endif
 
-//------------------------------------------------------------------------------
 #ifdef SOKOL_USE_MACOS
+//------------------------------------------------------------------------------
 @implementation SokolApp
 // From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
 // This works around an AppKit bug, where key up events while holding
@@ -62,62 +67,68 @@ static MTKView* mtk_view;
 
 //------------------------------------------------------------------------------
 @implementation SokolAppDelegate
+#ifdef SOKOL_USE_MACOS
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
-    // window delegate
+#else
+- (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+#endif
+    // window delegate and main window
     #ifdef SOKOL_USE_IOS
-    window_delegate = [UIApplication sharedApplication].delegate;
+        window_delegate = [UIApplication sharedApplication].delegate;
+        CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
+        window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
     #else
-    window_delegate = [[SokolWindowDelegate alloc] init];
-    #endif
-
-    // main window
-    #ifdef SOKOL_USE_IOS
-    CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
-    window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
-    #else
-    const NSUInteger style =
-        NSWindowStyleMaskTitled |
-        NSWindowStyleMaskClosable |
-        NSWindowStyleMaskMiniaturizable |
-        NSWindowStyleMaskResizable;
-    window = [[NSWindow alloc]
-        initWithContentRect:NSMakeRect(0, 0, width, height)
-        styleMask:style
-        backing:NSBackingStoreBuffered
-        defer:NO];
-    [window setTitle:[NSString stringWithUTF8String:window_title]];
-    [window setAcceptsMouseMovedEvents:YES];
-    [window center];
-    [window setRestorable:YES];
-    [window setDelegate:window_delegate];
+        window_delegate = [[SokolWindowDelegate alloc] init];
+        const NSUInteger style =
+            NSWindowStyleMaskTitled |
+            NSWindowStyleMaskClosable |
+            NSWindowStyleMaskMiniaturizable |
+            NSWindowStyleMaskResizable;
+        window = [[NSWindow alloc]
+            initWithContentRect:NSMakeRect(0, 0, width, height)
+            styleMask:style
+            backing:NSBackingStoreBuffered
+            defer:NO];
+        [window setTitle:[NSString stringWithUTF8String:window_title]];
+        [window setAcceptsMouseMovedEvents:YES];
+        [window center];
+        [window setRestorable:YES];
+        [window setDelegate:window_delegate];
     #endif
 
     // view delegate, MTKView and Metal device
     mtk_view_delegate = [[SokolViewDelegate alloc] init];
     mtl_device = MTLCreateSystemDefaultDevice();
     mtk_view = [[SokolMTKView alloc] init];
-    #ifdef SOKOL_USE_MACOS
-    [window setContentView:mtk_view];
-    #endif
     [mtk_view setPreferredFramesPerSecond:60];
     [mtk_view setDelegate:mtk_view_delegate];
     [mtk_view setDevice: mtl_device];
-    #ifdef SOKOL_USE_MACOS
-    [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
-    #endif
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
-    [mtk_view setDrawableSize:drawable_size];
     [mtk_view setSampleCount:sample_count];
     #ifdef SOKOL_USE_MACOS
-    [window makeKeyAndOrderFront:nil];
+        CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
+        [mtk_view setDrawableSize:drawable_size];
+        [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
+        [window setContentView:mtk_view];
+        [window makeKeyAndOrderFront:nil];
+    #else
+        [mtk_view setContentScaleFactor:1.0f];
+        [mtk_view setUserInteractionEnabled:YES];
+        [mtk_view setMultipleTouchEnabled:YES];
+        [window addSubview:mtk_view];
+        mtk_view_controller = [[UIViewController<MTKViewDelegate> alloc] init];
+        [mtk_view_controller setView:mtk_view];
+        [window setRootViewController:mtk_view_controller];
+        [window makeKeyAndVisible];
     #endif
 
     // call the init function
     init_func((__bridge const void*)mtl_device);
+    #ifdef SOKOL_USE_IOS
+        return YES;
+    #endif
 }
-
 
 #ifdef SOKOL_USE_MACOS
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -127,6 +138,7 @@ static MTKView* mtk_view;
 @end
 
 //------------------------------------------------------------------------------
+#if SOKOL_USE_MACOS
 @implementation SokolWindowDelegate
 - (BOOL)windowShouldClose:(id)sender {
     shutdown_func();
@@ -157,6 +169,7 @@ static MTKView* mtk_view;
     // FIXME
 }
 @end
+#endif
 
 //------------------------------------------------------------------------------
 @implementation SokolViewDelegate
