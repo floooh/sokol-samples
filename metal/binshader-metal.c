@@ -7,7 +7,11 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "binshader-metal.h"
+#ifdef SOKOL_USE_MACOS
+#include "binshader-metal-macosx.h"
+#else
+#include "binshader-metal-iphoneos.h"
+#endif
 
 const int WIDTH = 640;
 const int HEIGHT = 480;

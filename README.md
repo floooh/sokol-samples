@@ -30,7 +30,7 @@ GNU Make 3.81
 Xcode 9.0
 ```
 
-Clone, build and run the native samples:
+### Clone, build and run the native samples:
 ```
 > mkdir ~/scratch
 > cd ~/scratch
@@ -44,14 +44,14 @@ Clone, build and run the native samples:
 ...
 ```
 
-To open the project in Xcode or Visual Studio:
+### To open the project in Xcode or Visual Studio:
 
 ```
 > cd ~/scratch/sokol-samples
 > ./fips open
 ```
 
-To build for emscripten:
+### To build for emscripten:
 ```
 > cd ~/scratch/sokol-samples
 > ./fips setup emscripten
@@ -65,7 +65,7 @@ To build for emscripten:
 ...
 ```
 
-To build for Metal on OSX:
+### To build for Metal on OSX:
 ```
 > cd ~/scratch/sokol-samples
 > ./fips set config metal-osx-xcode-debug
@@ -76,7 +76,26 @@ To build for Metal on OSX:
 > ./fips run triangle-metal
 ```
 
-To build for D3D11 on Windows:
+### To build for Metal on iOS:
+```
+> cd ~/scratch/sokol-samples
+> ./fips set config metal-ios-xcode-debug
+> ./fips set iosteam [YOUR-TEAM-ID]
+> ./fips gen
+> ./fips open
+# Xcode should open now, where you can build and run the iOS code as usual
+```
+The \[YOUR-TEAM-ID\] must be replaced with your Apple Developer Team ID, this
+is a 10-character string which you can look up on
+developer.apple.com/account/#/membership. If you only want to run on the
+emulator you can skip this, it's only needed for code-signing when running on
+hardware. If you get build errors about 32-bit targets, exit Xcode, run
+```./fips clean```, ```./fips gen``` and ```./fips open``` again. This
+is a known but unsolved issue which I need to investigate.
+
+Another known issue: The arraytex-metal sample currently has a weird rendering artefact at least on my iPad Mini4 which looks like Z-fighting.
+
+### To build for D3D11 on Windows:
 ```
 > cd /scratch/sokol-samples
 > fips set config d3d11-win64-vstudio-debug
@@ -87,7 +106,7 @@ To build for D3D11 on Windows:
 > fips run triangle-d3d11
 ```
 
-To build for Linux:
+### To build for Linux:
 ```
 > cd ~/scratch/sokol-samples
 > ./fips set config linux-make-debug

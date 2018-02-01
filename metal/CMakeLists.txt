@@ -72,7 +72,12 @@ fips_begin_app(dyntex-metal windowed)
 fips_end_app()
 
 fips_begin_app(binshader-metal windowed)
-    fips_files(binshader-metal.c binshader-metal.h)
+    fips_files(binshader-metal.c)
+    if (FIPS_MACOS)
+        fips_files(binshader-metal-macosx.h)
+    elseif (FIPS_IOS)
+        fips_files(binshader-metal-iphoneos.h)
+    endif()
     fips_deps(osxentry sokol_gfx)
 fips_end_app()
 
