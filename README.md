@@ -87,7 +87,7 @@ Xcode 9.0
 ```
 The \[YOUR-TEAM-ID\] must be replaced with your Apple Developer Team ID, this
 is a 10-character string which you can look up on
-developer.apple.com/account/#/membership. If you only want to run on the
+https://developer.apple.com/account/#/membership. If you only want to run on the
 emulator you can skip this, it's only needed for code-signing when running on
 hardware. If you get build errors about 32-bit targets, exit Xcode, run
 ```./fips clean```, ```./fips gen``` and ```./fips open``` again. This
