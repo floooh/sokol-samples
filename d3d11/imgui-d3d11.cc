@@ -188,7 +188,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
         if (show_test_window) {
             ImGui::SetNextWindowPos(ImVec2(460, 20), ImGuiSetCond_FirstUseEver);
-            ImGui::ShowTestWindow(&show_test_window);
+            ImGui::ShowTestWindow();
         }
 
         // the sokol_gfx draw pass
