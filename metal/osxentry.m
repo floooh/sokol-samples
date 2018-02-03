@@ -107,10 +107,10 @@ static id mtk_view_controller;
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
     [mtk_view setSampleCount:sample_count];
     #ifdef SOKOL_USE_MACOS
+        [window setContentView:mtk_view];
         CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
         [mtk_view setDrawableSize:drawable_size];
         [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
-        [window setContentView:mtk_view];
         [window makeKeyAndOrderFront:nil];
     #else
         [mtk_view setContentScaleFactor:1.0f];
