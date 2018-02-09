@@ -42,7 +42,7 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Instancing GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit(w);
+    flextInit();
 
     /* setup sokol_gfx */
     sg_desc desc = {0}; 

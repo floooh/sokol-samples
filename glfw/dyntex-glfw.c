@@ -42,7 +42,7 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(DISPLAY_WIDTH, DISPLAY_HEIGHT, "Sokol Dynamic Texture GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit(w);
+    flextInit();
 
     /* init sokol_gfx */
     sg_setup(&(sg_desc){0});

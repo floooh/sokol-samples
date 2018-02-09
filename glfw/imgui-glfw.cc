@@ -44,7 +44,7 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(Width, Height, "Sokol+ImGui+GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit(w);
+    flextInit();
     
     // GLFW to ImGui input forwarding
     glfwSetMouseButtonCallback(w, [](GLFWwindow* w, int btn, int action, int mods) {

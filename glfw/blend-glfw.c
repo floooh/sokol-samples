@@ -38,7 +38,7 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Blend GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit(w);
+    flextInit();
 
     /* setup sokol_gfx (need to increase pipeline pool size) */
     sg_desc desc = {
