@@ -8,6 +8,6 @@ imports:
   sokol:
     git: https://github.com/floooh/sokol
   fips-glfw:
-    git: https://github.com/floooh/fips-glfw
+    git: https://github.com/fips-libs/fips-glfw
   fips-imgui:
-    git: https://github.com/fungos/fips-imgui.git
+    git: https://github.com/fips-libs/fips-imgui.git
