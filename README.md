@@ -30,6 +30,15 @@ GNU Make 3.81
 Xcode 9.0
 ```
 
+### Public Service Announcements
+
+- **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
+https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which 
+required some code changes. If you already had checked out sokol-samples, perform the following
+steps to udpate:
+    1. delete the fips-imgui directory
+    2. in the sokol-samples directory, run **./fips fetch**
+
 ### Clone, build and run the native samples:
 ```
 > mkdir ~/scratch

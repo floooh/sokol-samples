@@ -52,6 +52,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_key_up([] (int key)               { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
 
     // setup Dear Imgui 
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
@@ -198,6 +200,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_commit();
         d3d11_present();
     }
+    ImGui::DestroyContext();
     sg_shutdown();
     d3d11_shutdown();
 }
