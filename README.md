@@ -13,6 +13,15 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 |Windows|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)|
 |OSX|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
 
+## Public Service Announcements
+
+- **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
+https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which 
+required some code changes. If you already had checked out sokol-samples, perform the following
+steps to udpate:
+    1. delete the fips-imgui directory
+    2. in the sokol-samples directory, run **./fips fetch**
+
 ## How to build
 
 Make sure that the following tools are in the path. Exact versions shouldn't
@@ -29,15 +38,6 @@ GNU Make 3.81
 > xcodebuild -version
 Xcode 9.0
 ```
-
-### Public Service Announcements
-
-- **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
-https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which 
-required some code changes. If you already had checked out sokol-samples, perform the following
-steps to udpate:
-    1. delete the fips-imgui directory
-    2. in the sokol-samples directory, run **./fips fetch**
 
 ### Clone, build and run the native samples:
 ```
