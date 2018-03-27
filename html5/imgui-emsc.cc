@@ -54,6 +54,8 @@ int main() {
     assert(sg_isvalid());
     
     // setup the ImGui environment
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;

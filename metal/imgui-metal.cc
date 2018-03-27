@@ -39,6 +39,8 @@ void init(const void* mtl_device) {
     stm_setup();
 
     // setup the imgui environment
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
@@ -208,7 +210,7 @@ void frame() {
 }
 
 void shutdown() {
-    ImGui::Shutdown();
+    ImGui::DestroyContext();
     sg_shutdown();
 }
 

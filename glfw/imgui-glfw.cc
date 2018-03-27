@@ -79,6 +79,8 @@ int main() {
     assert(sg_isvalid());
 
     // setup Dear Imgui 
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
@@ -226,7 +228,7 @@ int main() {
     }
 
     /* cleanup */
-    ImGui::Shutdown();
+    ImGui::DestroyContext();
     sg_shutdown();
     glfwTerminate();
     return 0;
