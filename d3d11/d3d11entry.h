@@ -38,6 +38,7 @@ typedef void(*d3d11_char_func)(wchar_t c);
 typedef void(*d3d11_mouse_btn_func)(int btn);
 typedef void(*d3d11_mouse_pos_func)(float x, float y);
 typedef void(*d3d11_mouse_wheel_func)(float v);
+typedef void(*d3d11_window_resize_func)(int width, int height);
 
 /* register key-down callback */
 extern void d3d11_key_down(d3d11_key_func);
@@ -53,6 +54,8 @@ extern void d3d11_mouse_btn_up(d3d11_mouse_btn_func);
 extern void d3d11_mouse_pos(d3d11_mouse_pos_func);
 /* register mouse wheel callback */
 extern void d3d11_mouse_wheel(d3d11_mouse_wheel_func);
+/* register window resize callback */
+extern void d3d11_window_resize(d3d11_window_resize_func);
 
 #ifdef __cplusplus
 } // extern "C"

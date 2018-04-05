@@ -34,6 +34,7 @@ static d3d11_mouse_btn_func mouse_btn_down_func = 0;
 static d3d11_mouse_btn_func mouse_btn_up_func = 0;
 static d3d11_mouse_pos_func mouse_pos_func = 0;
 static d3d11_mouse_wheel_func mouse_wheel_func = 0;
+static d3d11_window_resize_func window_resize_func = 0;
 
 #define SAFE_RELEASE(class, obj) if (obj) { class##_Release(obj); obj=0; }
 
@@ -165,7 +166,7 @@ void d3d11_destroy_default_render_target() {
 }
 
 void d3d11_update_default_render_target() {
-    if (swap_chain) {
+    if (swap_chain && width > 0 && height > 0) {
         d3d11_destroy_default_render_target();
         IDXGISwapChain_ResizeBuffers(swap_chain, 1, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
         d3d11_create_default_render_target();
@@ -188,20 +189,6 @@ bool d3d11_process_events() {
 
 void d3d11_present() {
     IDXGISwapChain_Present(swap_chain, 1, 0);
-    /* handle window resizing */
-    RECT r;
-    if (GetClientRect(hwnd, &r)) {
-        const int cur_width = r.right - r.left;
-        const int cur_height = r.bottom - r.top;
-        if (((cur_width > 0) && (cur_width != width)) ||
-            ((cur_height > 0) && (cur_height != height))) 
-        {
-            /* need to reallocate the default render target */
-            width = cur_width;
-            height = cur_height;
-            d3d11_update_default_render_target();
-        }
-    }
 }
 
 LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -256,6 +243,28 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
         case WM_KEYUP:
             if (key_up_func) {
                 key_up_func((int)wParam);
+            }
+            break;
+        case WM_WINDOWPOSCHANGED:
+            {   
+                //WINDOWPOSCHANGED may be used instead of WM_SIZE, WM_MOVE and WM_SHOWWINDOW
+                //More info: https://blogs.msdn.microsoft.com/oldnewthing/20080115-00/?p=23813
+                const WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+                if(!(pwp->flags & SWP_NOSIZE)) {
+                    /* handle window resizing */
+                    // WINDOWPOS provides window size including borders, so it is not exactly what we need
+                    RECT r;
+                    if (GetClientRect(hwnd, &r)) {
+                        width = r.right - r.left;
+                        height = r.bottom - r.top;
+                        /* need to reallocate the default render target */
+                        d3d11_update_default_render_target();
+                        if (window_resize_func && !quit_requested) {
+                            window_resize_func(width, height);
+                        }
+                    }
+                    
+                }
             }
             break;
         default:
@@ -315,4 +324,8 @@ void d3d11_mouse_pos(d3d11_mouse_pos_func f) {
 
 void d3d11_mouse_wheel(d3d11_mouse_wheel_func f) {
     mouse_wheel_func = f;
+}
+
+void d3d11_window_resize(d3d11_window_resize_func f) {
+    window_resize_func = f;
 }
