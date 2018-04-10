@@ -62,13 +62,6 @@ int main() {
         .content = indices
     });
 
-    /* a pass action to clear to blue-ish */
-    sg_pass_action pass_action = {
-        .colors = {
-            [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
-        }
-    };
-
     /* create a shader to render 2D colored shapes */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
@@ -77,7 +70,7 @@ int main() {
             "in vec3 color0;"
             "out vec4 color;"
             "void main() {"
-            "  gl_Position = vec4(pos.x, pos.y, 0.5, 1.0);\n"
+            "  gl_Position = vec4(pos, 0.5, 1.0);\n"
             "  color = vec4(color0, 1.0);\n"
             "}\n",
         .fs.source =
@@ -109,6 +102,13 @@ int main() {
        .vertex_buffers[0] = vb,
        .index_buffer = ib
    };
+
+    /* a pass action to clear to blue-ish */
+    sg_pass_action pass_action = {
+        .colors = {
+            [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
+        }
+    };
 
     while (!glfwWindowShouldClose(w)) {
         int cur_width, cur_height;
