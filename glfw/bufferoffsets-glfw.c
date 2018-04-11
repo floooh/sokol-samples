@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 //  bufferoffsets-glfw.c
-//  Demonstrates vertexbuffer- and indexbuffer-offsets.
+//  Render separate geometries in vertex- and index-buffers with
+//  buffer offsets.
 //------------------------------------------------------------------------------
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
@@ -8,7 +9,6 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
-#include <math.h>
 
 typedef struct {
     float x, y, r, g, b;
@@ -25,7 +25,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Cube GLFW", 0, 0);
+    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Buffer Offsets GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
     flextInit();

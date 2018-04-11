@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------------
 //  bufferoffsets-glfw.c
-//  Demonstrates vertexbuffer- and indexbuffer-offsets.
+//  Render separate geometries in vertex- and index-buffers with
+//  buffer offsets.
 //------------------------------------------------------------------------------
 #include "d3d11entry.h"
 #define SOKOL_IMPL
@@ -8,8 +9,6 @@
 #define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
 
 typedef struct {
     float x, y, r, g, b;
@@ -20,7 +19,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int msaa_samples = 4;
     const int width = 800;
     const int height = 600;
-    d3d11_init(width, height, msaa_samples, L"Sokol Cube D3D11");
+    d3d11_init(width, height, msaa_samples, L"Sokol Buffer Offsets D3D11");
     sg_setup(&(sg_desc){
         .d3d11_device = d3d11_device(),
         .d3d11_device_context = d3d11_device_context(),
