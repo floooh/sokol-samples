@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  bufferoffset-metal.c
+//  bufferoffsets-metal.c
 //  Render separate geometries in vertex- and index-buffers with
 //  buffer offsets.
 //------------------------------------------------------------------------------
