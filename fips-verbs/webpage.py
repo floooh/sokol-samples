@@ -14,6 +14,7 @@ samples = [
     [ 'clear', 'clear-emsc.c' ],
     [ 'triangle', 'triangle-emsc.c' ],
     [ 'quad', 'quad-emsc.c' ],
+    [ 'bufferoffsets', 'bufferoffsets-emsc.c'],
     [ 'cube', 'cube-emsc.c' ],
     [ 'texcube', 'texcube-emsc.c' ],
     [ 'offscreen', 'offscreen-emsc.c' ],
