@@ -100,3 +100,8 @@ fips_begin_app(releasetest-metal windowed)
     fips_files(releasetest-metal.c)
     fips_deps(osxentry sokol_gfx)
 fips_end_app()
+
+fips_begin_app(bufferoffset-metal windowed)
+    fips_files(bufferoffset-metal.c)
+    fips_deps(osxentry sokol_gfx)
+fips_end_app()
