@@ -15,6 +15,10 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
 ## Public Service Announcements
 
+- **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer- 
+and index-buffer-offsets in the sg\_draw\_state struct. Also the location of fips build-system
+files have changed, please update fips with a 'git pull' from the fips directory.
+
 - **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
 https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which 
 required some code changes. If you already had checked out sokol-samples, perform the following
