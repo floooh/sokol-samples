@@ -105,3 +105,8 @@ fips_begin_app(bufferoffsets-metal windowed)
     fips_files(bufferoffsets-metal.c)
     fips_deps(osxentry sokol_gfx)
 fips_end_app()
+
+fips_begin_app(noninterleaved-metal windowed)
+    fips_files(noninterleaved-metal.c)
+    fips_deps(osxentry sokol_gfx)
+fips_end_app()
