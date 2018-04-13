@@ -16,6 +16,7 @@ samples = [
     [ 'quad', 'quad-emsc.c' ],
     [ 'bufferoffsets', 'bufferoffsets-emsc.c'],
     [ 'cube', 'cube-emsc.c' ],
+    [ 'noninterleaved', 'noninterleaved-emsc.c'],
     [ 'texcube', 'texcube-emsc.c' ],
     [ 'offscreen', 'offscreen-emsc.c' ],
     [ 'instancing', 'instancing-emsc.c' ],
