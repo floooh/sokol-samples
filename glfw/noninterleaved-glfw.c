@@ -1,6 +1,10 @@
 //------------------------------------------------------------------------------
-//  cube-glfw.c
-//  Shader uniform updates.
+//  noninterleaved-glfw.c
+//  How to use non-interleaved vertex data (vertex components in 
+//  separate non-interleaved chunks in the same vertex buffers). Note
+//  that only 4 separate chunks are currently possible because there 
+//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -28,7 +32,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Cube GLFW", 0, 0);
+    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Non-Interleaved Vertex Data GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
     flextInit();
@@ -40,35 +44,67 @@ int main() {
 
     /* cube vertex buffer */
     float vertices[] = {
-        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0, 
-         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        /* positions */
+        -1.0, -1.0, -1.0, 
+         1.0, -1.0, -1.0,
+         1.0,  1.0, -1.0,
+        -1.0,  1.0, -1.0,
 
-        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0, 
-         1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        -1.0, -1.0,  1.0,
+         1.0, -1.0,  1.0, 
+         1.0,  1.0,  1.0,
+        -1.0,  1.0,  1.0,
 
-        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0, 
-        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0, 
-        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0, 
-        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0, -1.0, -1.0, 
+        -1.0,  1.0, -1.0, 
+        -1.0,  1.0,  1.0, 
+        -1.0, -1.0,  1.0,
 
-        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0, 
-        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0, 
-        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0, 
-        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+         1.0, -1.0, -1.0, 
+         1.0,  1.0, -1.0, 
+         1.0,  1.0,  1.0, 
+         1.0, -1.0,  1.0, 
 
-        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0, 
-        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0, 
-         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0, 
-         1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0, -1.0, 
+        -1.0, -1.0,  1.0, 
+         1.0, -1.0,  1.0, 
+         1.0, -1.0, -1.0,
 
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0, 
-        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
-         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+        -1.0,  1.0, -1.0, 
+        -1.0,  1.0,  1.0, 
+         1.0,  1.0,  1.0, 
+         1.0,  1.0, -1.0,
+
+         /* colors */
+        1.0, 0.5, 0.0, 1.0, 
+        1.0, 0.5, 0.0, 1.0,
+        1.0, 0.5, 0.0, 1.0,
+        1.0, 0.5, 0.0, 1.0,
+
+        0.5, 1.0, 0.0, 1.0,
+        0.5, 1.0, 0.0, 1.0, 
+        0.5, 1.0, 0.0, 1.0,
+        0.5, 1.0, 0.0, 1.0,
+
+        0.5, 0.0, 1.0, 1.0, 
+        0.5, 0.0, 1.0, 1.0, 
+        0.5, 0.0, 1.0, 1.0, 
+        0.5, 0.0, 1.0, 1.0,
+
+        1.0, 0.5, 1.0, 1.0, 
+        1.0, 0.5, 1.0, 1.0, 
+        1.0, 0.5, 1.0, 1.0, 
+        1.0, 0.5, 1.0, 1.0,
+
+        0.5, 1.0, 1.0, 1.0, 
+        0.5, 1.0, 1.0, 1.0, 
+        0.5, 1.0, 1.0, 1.0, 
+        0.5, 1.0, 1.0, 1.0,
+
+        1.0, 1.0, 0.5, 1.0, 
+        1.0, 1.0, 0.5, 1.0, 
+        1.0, 1.0, 0.5, 1.0, 
+        1.0, 1.0, 0.5, 1.0,
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
@@ -120,11 +156,12 @@ int main() {
     /* create pipeline object */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* test to provide buffer stride, but no attr offsets */
-            .buffers[0].stride = 28,
+            /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                /* positions come from vertex buffer slot 0 */
+                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                /* colors come from vertex buffer slot 1 */
+                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
         .shader = shd,
@@ -136,10 +173,22 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* draw state struct with resource bindings */
+    /* draw state struct with resource bindings, note how the same vertex 
+       buffer is bound the the first two slots, and the vertex-buffer-offsets
+       are used to point to the position- and color-components.
+    */
     sg_draw_state draw_state = {
         .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
+        .vertex_buffers = {
+            [0] = vbuf,
+            [1] = vbuf
+        },
+        .vertex_buffer_offsets = {
+            /* position components are at start of buffer */
+            [0] = 0,
+            /* byte offset of color components in buffer */
+            [1] = 24 * 3 * sizeof(float)
+        },
         .index_buffer = ibuf
     };
 
@@ -178,3 +227,4 @@ int main() {
     sg_shutdown();
     glfwTerminate();
 }
+
