@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  multiwindow-glfw.c
 //  How to use sokol-gfx with multiple GLFW windows and GL contexts.
-//  The sample does one default-render-pass per GLFW window. Between 
-//  each pass, the GL context is switched, and sg_reset_state_cache() is called.
+//  The sample does one default-render-pass per GLFW window. Look for the
+//  functions sg_setup_context(), sg_activate_context() and sg_discard_context()
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #include "HandmadeMath.h"
