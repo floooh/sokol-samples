@@ -99,9 +99,10 @@ int main() {
     sg_context ctx[3];
     sg_draw_state ds[3] = { {0} };
     for (int i = 0; i < 3; i++) {
-        /* switch GL context and flush sokol state cache */
+        /* for each GL context, setup a sokol context */
         glfwMakeContextCurrent(w[i]);
         ctx[i] = sg_setup_context();
+        /* create the usual resources per context (buffers, shader, pipeline) */
         ds[i].vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
             .size = sizeof(vertices),
             .content = vertices
@@ -173,7 +174,7 @@ int main() {
 
         for (int i = 0; i < 3; i++) {
             if (w[i]) {
-                /* switch GL context and flush sokol state cache */
+                /* switch GL context and sokol context */
                 glfwMakeContextCurrent(w[i]);
                 sg_activate_context(ctx[i]);
 
