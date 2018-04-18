@@ -33,8 +33,8 @@ typedef struct {
 
 int main() {
     /* setup GLFW and create a couple of windows with shared GL context */
-    const int WIDTH = 640;
-    const int HEIGHT = 480;
+    const int WIDTH = 512;
+    const int HEIGHT = 384;
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -42,8 +42,11 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* w[3];
     w[0] = glfwCreateWindow(WIDTH, HEIGHT, "Window 0", 0, 0);
+    glfwSetWindowPos(w[0], 0, 0);
     w[1] = glfwCreateWindow(WIDTH, HEIGHT, "Window 1", 0, w[0]);
+    glfwSetWindowPos(w[1], WIDTH, 0);
     w[2] = glfwCreateWindow(WIDTH, HEIGHT, "Window 2", 0, w[0]);
+    glfwSetWindowPos(w[2], WIDTH/2, HEIGHT);
     glfwMakeContextCurrent(w[0]);
     glfwSwapInterval(1);
     flextInit();
