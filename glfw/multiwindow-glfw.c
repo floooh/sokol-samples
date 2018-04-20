@@ -5,6 +5,7 @@
 //  functions sg_setup_context(), sg_activate_context() and sg_discard_context()
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
+#define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
@@ -32,7 +33,7 @@ typedef struct {
 } params_t;
 
 int main() {
-    /* setup GLFW and create a couple of windows with shared GL context */
+    /* setup GLFW and create a couple of windows each with its own GL context behind */
     const int WIDTH = 512;
     const int HEIGHT = 384;
     glfwInit();
@@ -42,17 +43,17 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* w[3];
     w[0] = glfwCreateWindow(WIDTH, HEIGHT, "Window 0", 0, 0);
-    glfwSetWindowPos(w[0], 0, 0);
-    w[1] = glfwCreateWindow(WIDTH, HEIGHT, "Window 1", 0, w[0]);
-    glfwSetWindowPos(w[1], WIDTH, 0);
-    w[2] = glfwCreateWindow(WIDTH, HEIGHT, "Window 2", 0, w[0]);
-    glfwSetWindowPos(w[2], WIDTH/2, HEIGHT);
+    glfwSetWindowPos(w[0], 40, 40);
+    w[1] = glfwCreateWindow(WIDTH, HEIGHT, "Window 1", 0, 0);
+    glfwSetWindowPos(w[1], 40+WIDTH, 40);
+    w[2] = glfwCreateWindow(WIDTH, HEIGHT, "Window 2", 0, 0);
+    glfwSetWindowPos(w[2], 40+WIDTH/2, 40+HEIGHT);
     glfwMakeContextCurrent(w[0]);
     glfwSwapInterval(1);
     flextInit();
 
     /* setup sokol-gfx */
-    sg_setup(&(sg_desc){});
+    sg_setup(&(sg_desc) {0});
 
     /* cube vertices and indices */
     static const float vertices[] = {
