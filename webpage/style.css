@@ -144,7 +144,7 @@ a.thumb-link:hover, a.thumb-link:active {
 }
 
 .gallery-bottom {
-    height: 1px;
+    height: 60px;
     clear: both;
 }
 
