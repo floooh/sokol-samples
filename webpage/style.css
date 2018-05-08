@@ -28,17 +28,11 @@ body {
     left: 3px;
     font-size: 30px;
 }
-.rainbow-separator {
-    margin-top: -10px;
-    height: 14px;
-    background: linear-gradient(red,orange,yellow,green,blue);
-}
 .simple-separator {
     margin-top: -2px;
     height: 3px;
     background: black;
 }
-
 
 /** navigation bar **/
 .nav-bar {
@@ -154,45 +148,39 @@ a.thumb-link:hover, a.thumb-link:active {
     clear: both;
 }
 
-.bottom {
-    height: 20px;
-}
-
 /** game page styling **/
 .game-title {
-    text-align: center;
+    pointer-events: none;
+    position: absolute;
+    color: white;
+    z-index: 1;
+    text-align: left;
     font-family: 'Racing Sans One';
-    font-size: 40px;
-    background-color: white;
-    min-width: 500px;
+    font-size: 30px;
     margin-top: 0px;
-    padding-left: 20px;
+    padding-left: 10px;
 }
-.game-subtitle {
+.game-menu-item {
+    pointer-events: auto;
+    color: white;
     font-size: 18px;
-    padding-left: 20px;
+    padding-left: 10px;
 }
-.game-sdk-link {
+.game-menu-link {
     text-decoration: none;
-    color: black;
+    color: white;
 }
-.game-rainbow-separator {
-    margin-top: 0px;
-    height: 10px;
-    background: linear-gradient(red,orange,yellow,green,blue);
-}
-.game-border {
-    margin-top: 0px;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-}
+
 /* the emscripten canvas must not have any border or padding, or mouse coords will be wrong */
 .game {
-    padding: 0px;
-    margin-left: auto;
-    margin-right: auto;
-    border: 0px none;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    margin: 0px;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     display: block;
     image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
@@ -203,41 +191,3 @@ a.thumb-link:hover, a.thumb-link:active {
     image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
 }
-.game:-webkit-full-screen {
-    width: 100%;
-    height: 100%;
-}
-.game-output {
-    background-color: #BAE3FF;
-    font-family: courier;
-    font-size: 12px;
-    margin-top: 10px;
-    margin-left: auto;
-    margin-right: auto;
-    display: none;
-    border: 0px none;
-}
-
-/* styling for the about page */
-.about-textbox {
-    text-align: center;
-    font-family: 'courier';
-    font-size: 20px;    
-    margin-top: 40px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 20px;
-    width: 700px;
-    height: auto;
-    background-color: white;
-    outline: black solid thin;
-}
-a.about-link:link, a.about-link:visited {
-    color: #19A3FF;
-    text-decoration: none;
-}
-
-a.about-link:hover, a.about-link:active {
-    color: #0C5280;
-}
-

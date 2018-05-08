@@ -5,14 +5,13 @@
 //  Bottom row: anistropy levels 2, 4, 8 and 16
 //------------------------------------------------------------------------------
 #include <GLES3/gl3.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
+#include "emsc.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -42,38 +41,23 @@ uint32_t mip_colors[9] = {
     0xFFA000FF,     /* purple */
 };
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
 sg_draw_state draw_state;
 sg_image img[12];
-sg_pass_action pass_action;
+sg_pass_action pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+};
 float r = 0.0f;
-hmm_mat4 view_proj;
 
 void draw();
 
 int main() {
     /* try to setup WebGL2 context (for the mipmap min/max lod stuff) */
-    sg_desc desc = {0};
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    attrs.majorVersion = 2;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    if (!ctx) {
-        /* no WebGL2, fall back to WebGL, the mipmap min/max lod is simply ignored there */
-        desc.gl_force_gles2 = true;
-        attrs.majorVersion = 1;
-        ctx = emscripten_webgl_create_context(0, &attrs);
-        if (!ctx) {
-            return 10;
-        }
-    }
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
+    sg_desc desc = {
+        .gl_force_gles2 = emsc_webgl_fallback()
+    };
     sg_setup(&desc);
     
     /* a plane vertex buffer */
@@ -180,22 +164,22 @@ int main() {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-    
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
 }
 
 void draw() {
+    /* view-projection matrix */
+    hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    
     vs_params_t vs_params;
     r += 0.1f;
     hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-    sg_begin_default_pass(&(sg_pass_action){0}, WIDTH, HEIGHT);
+    sg_begin_default_pass(&(sg_pass_action){0}, emsc_width(), emsc_height());
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;

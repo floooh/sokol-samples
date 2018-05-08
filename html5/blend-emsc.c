@@ -5,14 +5,13 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "emsc.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -22,14 +21,11 @@ typedef struct {
     float tick;
 } fs_params_t;
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
 sg_draw_state draw_state;
 #define NUM_BLEND_FACTORS (15)
 sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 sg_pipeline bg_pip;
 float r = 0.0f;
-hmm_mat4 view_proj;
 vs_params_t vs_params;
 fs_params_t fs_params;
 
@@ -44,13 +40,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx (need to increase pipeline pool size) */
     sg_desc desc = {
@@ -185,18 +175,18 @@ int main() {
         }
     }
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
 }
 
 void draw() {
-    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+    /* compute view-proj matrix from current width/height */
+    hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 100.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
 
     /* draw a background quad */
     draw_state.pipeline = bg_pip;

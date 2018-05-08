@@ -5,17 +5,14 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "emsc.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
 sg_pass offscreen_pass;
 sg_draw_state offscreen_draw_state;
 sg_draw_state default_draw_state;
@@ -32,9 +29,6 @@ sg_pass_action default_pass_action = {
 float rx = 0.0f;
 float ry = 0.0f;
 
-/* constant view-projection matrix */
-hmm_mat4 view_proj;
-
 typedef struct {
     hmm_mat4 mvp;
 } params_t;
@@ -43,13 +37,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -247,11 +235,6 @@ int main() {
         .fs_images[0] = color_img
     };
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
@@ -262,6 +245,9 @@ void draw() {
         we just use the same matrix for the offscreen- and default-pass */
     params_t vs_params;
     rx += 1.0f; ry += 2.0f;
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 model = HMM_MultiplyMat4(
         HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f)),
         HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
@@ -277,7 +263,7 @@ void draw() {
 
     /* and the default pass, this renders a textured cube, using the 
         offscreen render target as texture image */
-    sg_begin_default_pass(&default_pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
     sg_apply_draw_state(&default_draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);

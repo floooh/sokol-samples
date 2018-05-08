@@ -6,17 +6,13 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
-
-const int DISPLAY_WIDTH = 640;
-const int DISPLAY_HEIGHT = 480;
+#include "emsc.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -30,11 +26,12 @@ typedef struct {
 uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
 sg_draw_state draw_state = { 0 };
-sg_pass_action pass_action = { 0 };
+sg_pass_action pass_action = {
+    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+};
 float rx = 0.0f;
 float ry = 0.0f;
 int update_count = 0;
-hmm_mat4 view_proj;
 
 void game_of_life_init();
 void game_of_life_update();
@@ -42,13 +39,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", DISPLAY_WIDTH, DISPLAY_HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -175,11 +166,6 @@ int main() {
         .fs_images[0] = img
     };
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)DISPLAY_WIDTH/(float)DISPLAY_HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-
     /* initial game-of-life seed state */
     game_of_life_init();
 
@@ -190,6 +176,9 @@ int main() {
 
 void draw() {
     /* model-view-projection matrix from rotated model matrix */
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
     rx += 0.1f; ry += 0.2f;
     hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -209,7 +198,7 @@ void draw() {
     });
 
     /* draw pass */
-    sg_begin_default_pass(&pass_action, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);

@@ -6,14 +6,10 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
-
-const int WIDTH = 640;
-const int HEIGHT = 480;
+#include "emsc.h"
 
 sg_draw_state draw_state;
 sg_pass_action pass_action = {
@@ -31,12 +27,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_NONE);
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -104,7 +95,7 @@ int main() {
 }
 
 void draw() {
-    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     /* render triangle */
     draw_state.vertex_buffer_offsets[0] = 0;
     draw_state.index_buffer_offset = 0;

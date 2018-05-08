@@ -5,17 +5,14 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "emsc.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
 const int IMG_WIDTH = 32;
 const int IMG_HEIGHT = 32;
 uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
@@ -26,7 +23,6 @@ sg_pass_action pass_action = {
 };
 float rx = 0.0f;
 float ry = 0.0f;
-hmm_mat4 view_proj;
 uint32_t counter = 0;
 
 typedef struct {
@@ -37,13 +33,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){0});
@@ -186,11 +176,6 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
@@ -198,6 +183,9 @@ int main() {
 
 void draw() {
     /* compute model-view-projection matrix for vertex shader */
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
     rx += 1.0f; ry += 2.0f;
     hmm_mat4 model = HMM_MultiplyMat4(
@@ -221,7 +209,7 @@ void draw() {
     });
 
     /* ...and draw */
-    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);

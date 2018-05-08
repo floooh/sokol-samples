@@ -9,15 +9,12 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "emsc.h"
 
-const int Width = 1024;
-const int Height = 768;
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
 
@@ -39,13 +36,7 @@ void imgui_draw_cb(ImDrawData*);
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", Width, Height);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    attrs.antialias = true;
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_NONE);
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
@@ -222,7 +213,7 @@ int main() {
 // the main draw loop, this draw the standard ImGui demo windows
 void draw() {
     ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(float(Width), float(Height));
+    io.DisplaySize = ImVec2(float(emsc_width()), float(emsc_height()));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
     ImGui::NewFrame();
 
@@ -251,7 +242,7 @@ void draw() {
     }
 
     // the sokol_gfx draw pass
-    sg_begin_default_pass(&pass_action, Width, Height);
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     ImGui::Render();
     sg_end_pass();
     sg_commit();

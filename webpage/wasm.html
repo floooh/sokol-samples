@@ -7,22 +7,14 @@
 <link rel="stylesheet" type="text/css" href="../style.css"/>
 <link rel="icon" type="image/png" href="favicon.png"/>
 </head>
-<body>
-  <div class="game-title">${name}<span class="game-subtitle"><a class="game-sdk-link" href="https://github.com/WebAssembly/">WebAssembly</a></span></div>
-  <div class="game-rainbow"></div>
-
-  <div class="nav-bar" style="width:200px">
-    <ul class="nav-list">
-        <li class="nav-item"><a class="nav-link" style="width:100px" href="../index.html">home</a></li>
-        <li class="nav-item"><a class="nav-link" style="width:100px" href="${source}" target="_blank">source</a></li>
-        <div class="break"></div>
-    </ul>
+<body style="background:black">
+  <div class="game-title">${name}
+      <span class="game-menu-item"><a class="game-menu-link" href="../index.html">home</a></span>
+      <span class="game-menu-item"><a class="game-menu-link" href="${source}" target="_blank">src</a></span>
+      <span class="game-menu-item"><a class="game-menu-link" href="http://webassembly.org/" target="_blank">wasm</a></span>
   </div>
 
-  <div class="game-border">
-    <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()" width="100" height="100"></canvas>
-  </div>
-  <div class="bottom"></div>
+  <canvas class="game" id="canvas" hidden oncontextmenu="event.preventDefault()"></canvas>
 
   <script type="text/javascript" src="../wasm.js"></script>
   <script>

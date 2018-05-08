@@ -5,17 +5,14 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <emscripten/emscripten.h>
-#include <emscripten/html5.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "emsc.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
 const int MAX_PARTICLES = 512 * 1024;
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
@@ -26,7 +23,6 @@ sg_pass_action pass_action = {
 
 sg_draw_state draw_state;
 float roty = 0.0f;
-hmm_mat4 view_proj;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -41,12 +37,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emscripten_set_canvas_element_size("#canvas", WIDTH, HEIGHT);
-    EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
-    EmscriptenWebGLContextAttributes attrs;
-    emscripten_webgl_init_context_attributes(&attrs);
-    ctx = emscripten_webgl_create_context(0, &attrs);
-    emscripten_webgl_make_context_current(ctx);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -142,11 +133,6 @@ int main() {
         .index_buffer = sg_make_buffer(&ibuf_desc)
     };
 
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
-
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
@@ -189,12 +175,15 @@ void draw() {
     sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
 
     /* model-view-projection matrix */
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     roty += 1.0f;
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
     /* and the actual draw pass... */
-    sg_begin_default_pass(&pass_action, WIDTH, HEIGHT);
+    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 24, cur_num_particles);
