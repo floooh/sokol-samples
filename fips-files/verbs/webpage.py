@@ -31,13 +31,6 @@ samples = [
 
 # webpage template arguments
 GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/html5/'
-DocTitle = 'Sokol Samples'
-Title = 'Sokol'
-Subtitle = 'samples'
-
-Separator = 'simple-separator'
-GameSeparator = 'simple-separator'
-BackgroundColor = '#00E676'
 
 # build configuration
 EmscConfig = 'webgl2-emsc-ninja-release'
@@ -78,14 +71,14 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     # populate the html template, and write to the build directory
     with open(proj_dir + '/webpage/index.html', 'r') as f :
         templ = Template(f.read())
-    html = templ.safe_substitute(doctitle=DocTitle, title=Title, subtitle=Subtitle, samples=content, separator=Separator)
+    html = templ.safe_substitute(samples=content)
     with open(webpage_dir + '/index.html', 'w') as f :
         f.write(html)
 
     # and the same with the CSS template
     with open(proj_dir + '/webpage/style.css', 'r') as f :
         templ = Template(f.read())
-    css = templ.safe_substitute(background=BackgroundColor)
+    css = templ.safe_substitute()
     with open(webpage_dir +'/style.css', 'w') as f :
         f.write(css)
 
@@ -108,7 +101,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             with open(proj_dir + '/webpage/emsc.html', 'r') as f :
                 templ = Template(f.read())
             src_url = GitHubSamplesURL + source
-            html = templ.safe_substitute(name=name+'-emsc', source=src_url, separator=GameSeparator)
+            html = templ.safe_substitute(name=name, prog=name+'-emsc', source=src_url)
             with open('{}/asmjs/{}-emsc.html'.format(webpage_dir, name, name), 'w') as f :
                 f.write(html)
 
@@ -130,7 +123,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                 templ = Template(f.read())
             src_url = GitHubSamplesURL + source
-            html = templ.safe_substitute(name=name+'-emsc', source=src_url, separator=GameSeparator)
+            html = templ.safe_substitute(name=name, prog=name+'-emsc', source=src_url)
             with open('{}/wasm/{}-emsc.html'.format(webpage_dir, name), 'w') as f :
                 f.write(html)
 

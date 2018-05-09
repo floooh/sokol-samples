@@ -3,10 +3,10 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 
-const char* _emsc_canvas_name = 0;
-bool _emsc_is_webgl2 = false;
-double _emsc_width = 0;
-double _emsc_height = 0;
+static const char* _emsc_canvas_name = 0;
+static bool _emsc_is_webgl2 = false;
+static double _emsc_width = 0;
+static double _emsc_height = 0;
 
 enum {
     EMSC_NONE = 0,
@@ -15,7 +15,7 @@ enum {
 };
 
 /* track CSS element size changes and update the WebGL canvas size */
-EM_BOOL _emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
+static EM_BOOL _emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
     emscripten_get_element_css_size(_emsc_canvas_name, &_emsc_width, &_emsc_height);
     emscripten_set_canvas_element_size(_emsc_canvas_name, _emsc_width, _emsc_height);
     return true;

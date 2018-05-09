@@ -1,151 +1,26 @@
 body {
     margin: 0;
-    background-color: ${background};
+    background-color: #292d3e
 }
 
 /** sample header styling **/
 .title {    
-    text-align: center;
-    text-shadow: 3px 2px #E3E3E3;
-    font-family: 'Racing Sans One';
-    font-size: 80px;
-    background-color: white;
-    min-width: 500px;
-    margin-top: 0px;
-}
-.subtitle {
-    text-align: center;
-    font-family: 'Racing Sans One';
-    font-size: 40px;
-    background-color: rgba(0, 0, 0, 0); /*transparent background*/
-    min-width: 500px;
-    margin-top: 0px;
+    color: #3dbb87;
+    text-align: left;
     padding-left: 20px;
-}
-.cr {
-    position: relative;
-    top: -33px;
-    left: 3px;
-    font-size: 30px;
-}
-.simple-separator {
-    margin-top: -2px;
-    height: 3px;
-    background: black;
+    font-family: 'Racing Sans One';
+    font-size: 60px;
+    margin-top: 0px;
 }
 
-/** navigation bar **/
-.nav-bar {
-    margin-top: 8px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 10px;
-    width: 300px;
-    height: auto;
-    background-color: white;
-    outline: black solid thin;
+.main-menu-item {
+    font-size: 18px;
+    padding-left: 10px;
 }
-.nav-list {
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 0px; 
-    margin-bottom: 0px;
-    list-style-type: none;
-    padding: 0px;
-}
-.nav-item {
-    display: inline;
-    float: left;
-}
-a.nav-link:link, a.nav-link:visited {
-    font-family: 'Racing Sans One';
-    font-size: 22px;    
-    display: block;
-    width: 100px;
-    color: black;
-    text-align: center;
+
+.main-menu-link {
     text-decoration: none;
-}
-a.nav-link:hover, a.nav-link:active {
-    background-color: #CCCCCC;
-}
-
-/* this breaks the float after the navbar */
-.break {
-    clear: both;
-}
-
-/** thumbnail gallery **/
-.gallery {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-    width: 790px;
-    height: auto;
-}
-.thumb {
-    width: 240px;
-    height: 220px;
-    margin-left: 10px;
-    margin-right: 10px;
-    margin-top: 15px;
-    padding: 1px;
-    float: left;
-    background: white;
-    outline: rgb(0, 0, 0) solid thin;
-}
-.thumb-title {
-    text-align: center;
-    font-family: 'Racing Sans One';
-    font-size: 20px;        
-}
-.img-frame {
-    margin: 2px;
-    width: auto;
-    height: 165px;
-}
-.image {
-    display: block;
-    height: 165px;
-    width: auto;
-    max-width: 236px;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 3px;
-}
-.thumb-bar {
-    padding: 0;
-    width: 240px;
-    background-color: red;
-    vertical-align: bottom;
-}
-.thumb-list {
-    margin: 0;
-    padding: 0;
-    list-style-type: none;
-}
-.thumb-item {
-    display: inline;
-    float: left;
-}
-a.thumb-link:link, a.thumb-link:visited {
-    font-family: 'Racing Sans One';
-    font-size: 16px;    
-    display: block;
-    width: 80px;
-    color: black;
-    background-color: white;
-    text-align: center;
-    text-decoration: none;
-}
-
-a.thumb-link:hover, a.thumb-link:active {
-    background-color: rgb(220, 220, 220);
-}
-
-.gallery-bottom {
-    height: 60px;
-    clear: both;
+    color: #3dbb87;
 }
 
 /** game page styling **/
@@ -162,13 +37,79 @@ a.thumb-link:hover, a.thumb-link:active {
 }
 .game-menu-item {
     pointer-events: auto;
-    color: white;
     font-size: 18px;
     padding-left: 10px;
 }
 .game-menu-link {
     text-decoration: none;
     color: white;
+}
+
+/** thumbnail gallery **/
+.gallery {
+    margin-left: 70px;
+    margin-right: auto;
+    display: block;
+    height: auto;
+}
+.thumb {
+    width: 240px;
+    height: 220px;
+    margin-left: 10px;
+    margin-right: 10px;
+    margin-top: 15px;
+    padding: 1px;
+    float: left;
+    background: #333649;
+}
+.thumb-title {
+    text-align: center;
+    color: #3dbb87;
+    font-family: 'Racing Sans One';
+    font-size: 20px;        
+}
+.img-frame {
+    margin: 2px;
+    width: auto;
+    height: 165px;
+}
+.image {
+    display: block;
+    height: 165px;
+    width: auto;
+    max-width: 236px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid black;
+}
+.thumb-bar {
+    padding: 0;
+    width: 240px;
+    vertical-align: bottom;
+}
+.thumb-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+.thumb-item {
+    display: inline;
+    float: left;
+}
+a.thumb-link:link, a.thumb-link:visited {
+    font-family: 'Racing Sans One';
+    font-size: 16px;    
+    display: block;
+    width: 80px;
+    color: #3dbb87;
+    /*background-color: white;*/
+    text-align: center;
+    text-decoration: none;
+}
+
+.gallery-bottom {
+    height: 60px;
+    clear: both;
 }
 
 /* the emscripten canvas must not have any border or padding, or mouse coords will be wrong */

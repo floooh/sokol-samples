@@ -19,12 +19,12 @@
   <script type="text/javascript" src="../wasm.js"></script>
   <script>
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '${name}.wasm.txt', true)
+    xhr.open('GET', '${prog}.wasm.txt', true)
     xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
       Module.wasmBinary = xhr.response;
       var script = document.createElement('script');
-      script.src = "${name}.js";
+      script.src = "${prog}.js";
       document.body.appendChild(script);
     };
     xhr.send(null);
