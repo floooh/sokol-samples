@@ -1,4 +1,3 @@
-
 var loaded = false;
 var Module = {
     preRun: [],
@@ -12,15 +11,6 @@ var Module = {
     printErr: function(text) {
         text = Array.prototype.slice.call(arguments).join(' ');
         console.error(text);
-        if (text == 'no native wasm support detected') {
-            text += '\n\nyou need the latest Firefox Nightly or Chrome Canary and manually enable WebAssembly support:\n\n';
-            text += 'Firefox Nightly: about:config -> javascript.options.wasm -> true\n';
-            text += 'Chrome Canary: chrome://flags/#enable-webassembly -> check\n';
-        }
-        var elm = document.getElementById('output');
-        elm.style.display = 'block';
-        elm.value += text + '\n';
-        elm.scrollTop = elm.scrollHeight;
     },
     canvas: (function() {
         var canvas = document.getElementById('canvas');
