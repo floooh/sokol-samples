@@ -3,11 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #define SOKOL_IMPL
-#if defined(SOKOL_USE_MACOS)
-#define SOKOL_METAL_MACOS
-#else
-#define SOKOL_METAL_IOS
-#endif
+#define SOKOL_METAL
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE

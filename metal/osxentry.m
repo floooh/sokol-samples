@@ -1,4 +1,5 @@
-#ifdef SOKOL_USE_MACOS
+#include <TargetConditionals.h>
+#if !TARGET_OS_IPHONE
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 #else
@@ -9,7 +10,7 @@
 #import <MetalKit/MetalKit.h>
 #include "osxentry.h"
 
-#if SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 @interface SokolApp : NSApplication
 @end
 @interface SokolAppDelegate : NSObject<NSApplicationDelegate>
@@ -44,11 +45,11 @@ static id window;
 static id<MTLDevice> mtl_device;
 static id mtk_view_delegate;
 static MTKView* mtk_view;
-#ifdef SOKOL_USE_IOS
+#if TARGET_OS_IPHONE
 static id mtk_view_controller;
 #endif
 
-#ifdef SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 //------------------------------------------------------------------------------
 @implementation SokolApp
 // From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
@@ -67,13 +68,13 @@ static id mtk_view_controller;
 
 //------------------------------------------------------------------------------
 @implementation SokolAppDelegate
-#ifdef SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
 #else
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 #endif
     // window delegate and main window
-    #ifdef SOKOL_USE_IOS
+    #if TARGET_OS_IPHONE
         window_delegate = [UIApplication sharedApplication].delegate;
         CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
         window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
@@ -106,7 +107,7 @@ static id mtk_view_controller;
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
     [mtk_view setSampleCount:sample_count];
-    #ifdef SOKOL_USE_MACOS
+    #if !TARGET_OS_IPHONE
         [window setContentView:mtk_view];
         CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
         [mtk_view setDrawableSize:drawable_size];
@@ -125,12 +126,12 @@ static id mtk_view_controller;
 
     // call the init function
     init_func((__bridge const void*)mtl_device);
-    #ifdef SOKOL_USE_IOS
+    #if TARGET_OS_IPHONE
         return YES;
     #endif
 }
 
-#ifdef SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
     return YES;
 }
@@ -138,7 +139,7 @@ static id mtk_view_controller;
 @end
 
 //------------------------------------------------------------------------------
-#if SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 @implementation SokolWindowDelegate
 - (BOOL)windowShouldClose:(id)sender {
     shutdown_func();
@@ -200,7 +201,7 @@ static id mtk_view_controller;
     return YES;
 }
 
-#ifdef SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE 
 - (void)mouseDown:(NSEvent*)event {
     if (mouse_btn_down_func) {
         mouse_btn_down_func(0);
@@ -301,7 +302,7 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     mouse_btn_up_func = 0;
     mouse_pos_func = 0;
     mouse_wheel_func = 0;
-    #ifdef SOKOL_USE_MACOS
+    #if !TARGET_OS_IPHONE
     [SokolApp sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
