@@ -12,15 +12,15 @@
 #if SOKOL_USE_MACOS
 @interface SokolApp : NSApplication
 @end
-@interface SokolAppDelegate<NSApplicationDelegate> : NSObject
+@interface SokolAppDelegate : NSObject<NSApplicationDelegate>
 @end
-@interface SokolWindowDelegate<NSWindowDelegate> : NSObject
+@interface SokolWindowDelegate : NSObject<NSWindowDelegate>
 @end
 #else
-@interface SokolAppDelegate<UIKitApplicationDelegate> : NSObject
+@interface SokolAppDelegate : NSObject<UIApplicationDelegate>
 @end
 #endif
-@interface SokolViewDelegate<MTKViewDelegate> : NSObject
+@interface SokolViewDelegate : NSObject<MTKViewDelegate>
 @end
 @interface SokolMTKView : MTKView
 @end
