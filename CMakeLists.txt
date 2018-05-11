@@ -36,6 +36,10 @@ else()
     add_subdirectory(glfw)
 endif()
 
+if (FIPS_MACOS AND SOKOL_USE_METAL)
+    add_subdirectory(sapp)
+endif()
+
 fips_finish()
 
 
