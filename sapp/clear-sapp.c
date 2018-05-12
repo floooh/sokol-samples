@@ -32,4 +32,5 @@ void sokol_frame() {
 
 void sokol_shutdown() {
     sg_shutdown();
+    sapp_shutdown();
 }
