@@ -1,0 +1,9 @@
+---
+platform: osx
+generator: Ninja 
+build_tool: vscode_cmake
+build_type: Debug
+vscode_additional_defines: [ 'SOKOL_IMPL', 'SOKOL_D3D11', 'SOKOL_METAL', 'SOKOL_GLCORE33', 'SOKOL_GLES3', 'SOKOL_GLES2' ]
+defines:
+    USE_SOKOL_APP: ON
+    FIPS_OSX_USE_ARC: ON

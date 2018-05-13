@@ -1,0 +1,8 @@
+---
+platform: osx
+generator: Xcode
+build_tool: xcodebuild
+build_type: Debug
+defines:
+    USE_SOKOL_APP: ON
+    FIPS_OSX_USE_ARC: ON
