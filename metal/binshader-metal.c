@@ -7,7 +7,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#ifdef SOKOL_USE_MACOS
+#if !TARGET_OS_IPHONE
 #include "binshader-metal-macosx.h"
 #else
 #include "binshader-metal-iphoneos.h"

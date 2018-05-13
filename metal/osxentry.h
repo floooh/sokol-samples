@@ -2,6 +2,7 @@
 /*
     Quick'n'dirty app wrapper for OSX without using a .xib file.
 */
+#include <TargetConditionals.h>
 #include <wchar.h>
 #include <stdbool.h>
 
