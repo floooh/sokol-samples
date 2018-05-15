@@ -75,7 +75,6 @@ static id mtk_view_controller;
 #endif
     // window delegate and main window
     #if TARGET_OS_IPHONE
-        window_delegate = [UIApplication sharedApplication].delegate;
         CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
         window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
     #else
@@ -193,6 +192,7 @@ static id mtk_view_controller;
     return YES;
 }
 
+#if !TARGET_OS_IPHONE 
 - (BOOL)canBecomeKey {
     return YES;
 }
@@ -201,7 +201,6 @@ static id mtk_view_controller;
     return YES;
 }
 
-#if !TARGET_OS_IPHONE 
 - (void)mouseDown:(NSEvent*)event {
     if (mouse_btn_down_func) {
         mouse_btn_down_func(0);
