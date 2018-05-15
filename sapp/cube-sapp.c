@@ -9,7 +9,7 @@
 
 extern const char *vs_src, *fs_src;
 
-const int SAMPLE_COUNT = 1;
+const int SAMPLE_COUNT = 4;
 float rx = 0.0f;
 float ry = 0.0f;
 sg_draw_state draw_state;
