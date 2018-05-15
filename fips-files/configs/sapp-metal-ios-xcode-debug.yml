@@ -1,0 +1,11 @@
+---
+platform: ios 
+generator: Xcode
+build_tool: xcodebuild
+build_type: Debug
+cmake-toolchain: ios.toolchain.cmake
+defines:
+    USE_SOKOL_APP: ON
+    SOKOL_USE_METAL: ON
+    FIPS_IOS_USE_ARC: ON
+
