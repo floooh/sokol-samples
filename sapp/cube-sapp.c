@@ -173,6 +173,25 @@ const char* fs_src =
     "void main() {\n"
     "  frag_color = color;\n"
     "}\n";
+#elif defined(SOKOL_GLES3)
+const char* vs_src =
+    "#version 300 es\n"
+    "uniform mat4 mvp;\n"
+    "in vec4 position;\n"
+    "in vec4 color0;\n"
+    "out vec4 color;\n"
+    "void main() {\n"
+    "  gl_Position = mvp * position;\n"
+    "  color = color0;\n"
+    "}\n";
+const char* fs_src =
+    "#version 300 es\n"
+    "precision mediump float;\n"
+    "in vec4 color;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "  frag_color = color;\n"
+    "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =
     "#include <metal_stdlib>\n"
