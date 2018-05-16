@@ -6,13 +6,17 @@
 
 sg_pass_action pass_action;
 
-void sokol_init() {
-    sapp_setup(&(sapp_desc){
+sapp_desc sokol_main(int argc, char* argv[]) {
+    return (sapp_desc){
         .width = 400,
         .height = 300,
-        .window_title = "Clear (sokol-app)"
-    });
+        .window_title = "Clear (sokol app)"
+    };
+}
+
+void sokol_init() {
     sg_setup(&(sg_desc){
+        .gl_force_gles2 = sapp_gles2_fallback(),
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
@@ -32,5 +36,5 @@ void sokol_frame() {
 
 void sokol_shutdown() {
     sg_shutdown();
-    sapp_shutdown();
 }
+
