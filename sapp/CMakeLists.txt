@@ -52,3 +52,9 @@ fips_begin_app(cube-sapp windowed)
     fips_deps(sokol)
 fips_end_app()
 
+fips_begin_app(imgui-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(imgui-sapp.cc)
+    fips_deps(sokol imgui)
+fips_end_app()
+
