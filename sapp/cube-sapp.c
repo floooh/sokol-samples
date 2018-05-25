@@ -18,16 +18,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    return (sapp_desc){
-        .width = 800,
-        .height = 600,
-        .sample_count = SAMPLE_COUNT,
-        .window_title = "Cube (sokol-app)"
-    };
-}
-
-void sokol_init() {
+void init() {
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2_fallback(),
         .mtl_device = sapp_metal_get_device(),
@@ -127,7 +118,7 @@ void sokol_init() {
     };
 }
 
-void sokol_frame() {
+void frame() {
     vs_params_t vs_params;
     const float w = (float) sapp_width();
     const float h = (float) sapp_height();
@@ -151,8 +142,20 @@ void sokol_frame() {
     sg_commit();
 }
 
-void sokol_shutdown() {
+void shutdown() {
     sg_shutdown();
+}
+
+sapp_desc sokol_main(int argc, char* argv[]) {
+    return (sapp_desc){
+        .init_cb = init,
+        .frame_cb = frame,
+        .shutdown_cb = shutdown,
+        .width = 800,
+        .height = 600,
+        .sample_count = SAMPLE_COUNT,
+        .window_title = "Cube (sokol-app)"
+    };
 }
 
 #if defined(SOKOL_GLCORE33)

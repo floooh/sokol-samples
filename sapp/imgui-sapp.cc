@@ -27,15 +27,7 @@ void imgui_draw_cb(ImDrawData*);
 extern const char* vs_src;
 extern const char* fs_src;
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    sapp_desc desc = { };
-    desc.width = 1024;
-    desc.height = 768;
-    desc.window_title = "Dear ImGui (sokol-sapp)";
-    return desc;
-}
-
-void sokol_init() {
+void init() {
     // setup sokol-gfx and sokol-time
     sg_desc desc = { };
     desc.gl_force_gles2 = sapp_gles2_fallback(),
@@ -133,7 +125,7 @@ void sokol_init() {
     pass_action.colors[0].val[3] = 1.0f;
 }
 
-void sokol_frame() {
+void frame() {
     const int cur_width = sapp_width();
     const int cur_height = sapp_height();
 
@@ -174,8 +166,19 @@ void sokol_frame() {
     sg_commit();
 }
 
-void sokol_shutdown() {
+void shutdown() {
     sg_shutdown();
+}
+
+sapp_desc sokol_main(int argc, char* argv[]) {
+    sapp_desc desc = { };
+    desc.init_cb = init;
+    desc.frame_cb = frame;
+    desc.shutdown_cb = shutdown;
+    desc.width = 1024;
+    desc.height = 768;
+    desc.window_title = "Dear ImGui (sokol-sapp)";
+    return desc;
 }
 
 // imgui draw callback

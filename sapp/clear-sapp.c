@@ -6,15 +6,7 @@
 
 sg_pass_action pass_action;
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    return (sapp_desc){
-        .width = 400,
-        .height = 300,
-        .window_title = "Clear (sokol app)"
-    };
-}
-
-void sokol_init() {
+void init() {
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2_fallback(),
         .mtl_device = sapp_metal_get_device(),
@@ -26,7 +18,7 @@ void sokol_init() {
     };
 }
 
-void sokol_frame() {
+void frame() {
     float g = pass_action.colors[0].val[1] + 0.01f;
     pass_action.colors[0].val[1] = (g > 1.0f) ? 0.0f : g;
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
@@ -34,7 +26,18 @@ void sokol_frame() {
     sg_commit();
 }
 
-void sokol_shutdown() {
+void shutdown() {
     sg_shutdown();
+}
+
+sapp_desc sokol_main(int argc, char* argv[]) {
+    return (sapp_desc){
+        .init_cb = init,
+        .frame_cb = frame,
+        .shutdown_cb = shutdown,
+        .width = 400,
+        .height = 300,
+        .window_title = "Clear (sokol app)"
+    };
 }
 
