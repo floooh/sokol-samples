@@ -17,6 +17,8 @@ sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
 ImDrawVert vertices[MaxVertices];
 uint16_t indices[MaxIndices];
+bool btn_down[SAPP_MAX_MOUSE_BUTTONS] = { };
+bool btn_up[SAPP_MAX_MOUSE_BUTTONS] = { };
 
 typedef struct {
     ImVec2 disp_size;
@@ -129,10 +131,23 @@ void frame() {
     const int cur_width = sapp_width();
     const int cur_height = sapp_height();
 
-    // this is standard ImGui demo code
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
+    for (int i = 0; i < SAPP_MAX_MOUSE_BUTTONS; i++) {
+        if (io.MouseDown[i]) {
+            if (btn_up[i]) {
+                io.MouseDown[i] = false;
+                btn_up[i] = false;
+            }
+        }
+        else {
+            if (btn_down[i]) {
+                io.MouseDown[i] = true;
+                btn_down[i] = false;
+            }
+        }
+    }
     ImGui::NewFrame();
 
     // 1. Show a simple window
@@ -170,11 +185,38 @@ void shutdown() {
     sg_shutdown();
 }
 
+void input(const sapp_event* event) {
+    auto& io = ImGui::GetIO();
+    switch (event->type) {
+        case SAPP_EVENTTYPE_MOUSE_DOWN:
+            io.MousePos.x = event->mouse_x;
+            io.MousePos.y = event->mouse_y;
+            btn_down[event->mouse_button] = true;
+            break;
+        case SAPP_EVENTTYPE_MOUSE_UP:
+            io.MousePos.x = event->mouse_x;
+            io.MousePos.y = event->mouse_y;
+            btn_up[event->mouse_button] = true;
+            break;
+        case SAPP_EVENTTYPE_MOUSE_MOVE:
+            io.MousePos.x = event->mouse_x;
+            io.MousePos.y = event->mouse_y;
+            break;
+        case SAPP_EVENTTYPE_MOUSE_SCROLL:
+            io.MouseWheelH = event->scroll_x;
+            io.MouseWheel = event->scroll_y;
+            break;
+        default:
+            break;
+    }
+}
+
 sapp_desc sokol_main(int argc, char* argv[]) {
     sapp_desc desc = { };
     desc.init_cb = init;
     desc.frame_cb = frame;
     desc.shutdown_cb = shutdown;
+    desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
     desc.window_title = "Dear ImGui (sokol-sapp)";
