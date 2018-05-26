@@ -26,7 +26,7 @@ void frame() {
     sg_commit();
 }
 
-void shutdown() {
+void cleanup() {
     sg_shutdown();
 }
 
@@ -34,10 +34,11 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,
-        .shutdown_cb = shutdown,
+        .cleanup_cb = cleanup,
         .width = 400,
         .height = 300,
-        .window_title = "Clear (sokol app)"
+        .window_title = "Clear (sokol app)",
+        .html5_canvas_resize = true
     };
 }
 

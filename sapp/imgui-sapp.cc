@@ -181,7 +181,7 @@ void frame() {
     sg_commit();
 }
 
-void shutdown() {
+void cleanup() {
     sg_shutdown();
 }
 
@@ -215,11 +215,12 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     sapp_desc desc = { };
     desc.init_cb = init;
     desc.frame_cb = frame;
-    desc.shutdown_cb = shutdown;
+    desc.cleanup_cb = cleanup;
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
     desc.window_title = "Dear ImGui (sokol-sapp)";
+    desc.html5_canvas_resize = true;
     return desc;
 }
 
