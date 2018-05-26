@@ -276,9 +276,6 @@ static id mtk_view_controller;
         if ([event hasPreciseScrollingDeltas]) {
             dy *= 0.1;
         }
-        else {
-            dy = [event deltaY];
-        }
         mouse_wheel_func(dy);
     }
 }
