@@ -24,6 +24,8 @@ bool show_another_window = false;
 
 sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
+bool btn_down[3] = { };
+bool btn_up[3] = { };
 ImDrawVert vertices[MaxVertices];
 uint16_t indices[MaxIndices];
 
@@ -72,7 +74,7 @@ int main() {
 
     // emscripten to ImGui input forwarding
     emscripten_set_keydown_callback(0, nullptr, true, 
-        [](int, const EmscriptenKeyboardEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             if (e->keyCode < 512) {
                 ImGui::GetIO().KeysDown[e->keyCode] = true;
             }
@@ -80,7 +82,7 @@ int main() {
             return e->keyCode < 32;
         });
     emscripten_set_keyup_callback(0, nullptr, true, 
-        [](int, const EmscriptenKeyboardEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             if (e->keyCode < 512) {
                 ImGui::GetIO().KeysDown[e->keyCode] = false;
             }
@@ -88,33 +90,34 @@ int main() {
             return e->keyCode < 32;
         });
     emscripten_set_keypress_callback(0, nullptr, true,
-        [](int, const EmscriptenKeyboardEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             ImGui::GetIO().AddInputCharacter((ImWchar)e->charCode);
             return true;
         });
     emscripten_set_mousedown_callback("#canvas", nullptr, true, 
-        [](int, const EmscriptenMouseEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             if ((e->button >= 0) && (e->button < 3)) {
-                ImGui::GetIO().MouseDown[e->button] = true;
+                btn_down[e->button] = true;
             }
             return true;
         });
     emscripten_set_mouseup_callback("#canvas", nullptr, true, 
-        [](int, const EmscriptenMouseEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             if ((e->button >= 0) && (e->button < 3)) {
-                ImGui::GetIO().MouseDown[e->button] = false;
+                btn_up[e->button] = true;
             }
             return true;
         });
     emscripten_set_mousemove_callback("#canvas", nullptr, true, 
-        [](int, const EmscriptenMouseEvent* e, void*)->EMSCRIPTEN_RESULT {
+        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             ImGui::GetIO().MousePos.x = (float) e->canvasX;
             ImGui::GetIO().MousePos.y = (float) e->canvasY;
             return true;
         });
     emscripten_set_wheel_callback("#canvas", nullptr, true, 
-        [](int, const EmscriptenWheelEvent* e, void*)->EMSCRIPTEN_RESULT {
-            ImGui::GetIO().MouseWheel = (float) -0.25f * e->deltaY;
+        [](int, const EmscriptenWheelEvent* e, void*)->EM_BOOL {
+            ImGui::GetIO().MouseWheelH = -0.1f * (float)e->deltaX;
+            ImGui::GetIO().MouseWheel = -0.1f * (float)e->deltaY;
             return true;
         });
 
@@ -215,6 +218,22 @@ void draw() {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(emsc_width()), float(emsc_height()));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
+    // this mouse button handling fixes the problem when down- and up-events 
+    // happen in the same frame
+    for (int i = 0; i < 3; i++) {
+        if (io.MouseDown[i]) {
+            if (btn_up[i]) {
+                io.MouseDown[i] = false;
+                btn_up[i] = false;
+            }
+        }
+        else {
+            if (btn_down[i]) {
+                io.MouseDown[i] = true;
+                btn_down[i] = false;
+            }
+        }
+    }
     ImGui::NewFrame();
 
     // 1. Show a simple window
