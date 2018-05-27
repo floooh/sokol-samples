@@ -217,6 +217,9 @@ void input(const sapp_event* event) {
         case SAPP_EVENTTYPE_KEY_UP:
             io.KeysDown[event->key_code] = false;
             break;
+        case SAPP_EVENTTYPE_CHAR:
+            io.AddInputCharacter((ImWchar)event->char_code);
+            break;
         default:
             break;
     }
