@@ -46,25 +46,26 @@ void init() {
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
-    /*
-    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-    io.KeyMap[ImGuiKey_Home] = VK_HOME;
-    io.KeyMap[ImGuiKey_End] = VK_END;
-    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-    io.KeyMap[ImGuiKey_A] = 'A';
-    io.KeyMap[ImGuiKey_C] = 'C';
-    io.KeyMap[ImGuiKey_V] = 'V';
-    io.KeyMap[ImGuiKey_X] = 'X';
-    io.KeyMap[ImGuiKey_Y] = 'Y';
-    io.KeyMap[ImGuiKey_Z] = 'Z';
-    */
+    io.KeyMap[ImGuiKey_Tab] = SAPP_KEYCODE_TAB;
+    io.KeyMap[ImGuiKey_LeftArrow] = SAPP_KEYCODE_LEFT;
+    io.KeyMap[ImGuiKey_RightArrow] = SAPP_KEYCODE_RIGHT;
+    io.KeyMap[ImGuiKey_UpArrow] = SAPP_KEYCODE_UP;
+    io.KeyMap[ImGuiKey_DownArrow] = SAPP_KEYCODE_DOWN;
+    io.KeyMap[ImGuiKey_PageUp] = SAPP_KEYCODE_PAGE_UP;
+    io.KeyMap[ImGuiKey_PageDown] = SAPP_KEYCODE_PAGE_DOWN;
+    io.KeyMap[ImGuiKey_Home] = SAPP_KEYCODE_HOME;
+    io.KeyMap[ImGuiKey_End] = SAPP_KEYCODE_END;
+    io.KeyMap[ImGuiKey_Delete] = SAPP_KEYCODE_DELETE;
+    io.KeyMap[ImGuiKey_Backspace] = SAPP_KEYCODE_BACKSPACE;
+    io.KeyMap[ImGuiKey_Space] = SAPP_KEYCODE_SPACE;
+    io.KeyMap[ImGuiKey_Enter] = SAPP_KEYCODE_ENTER;
+    io.KeyMap[ImGuiKey_Escape] = SAPP_KEYCODE_ESCAPE;
+    io.KeyMap[ImGuiKey_A] = SAPP_KEYCODE_A;
+    io.KeyMap[ImGuiKey_C] = SAPP_KEYCODE_C;
+    io.KeyMap[ImGuiKey_V] = SAPP_KEYCODE_V;
+    io.KeyMap[ImGuiKey_X] = SAPP_KEYCODE_X;
+    io.KeyMap[ImGuiKey_Y] = SAPP_KEYCODE_Y;
+    io.KeyMap[ImGuiKey_Z] = SAPP_KEYCODE_Z;
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
@@ -187,6 +188,10 @@ void cleanup() {
 
 void input(const sapp_event* event) {
     auto& io = ImGui::GetIO();
+    io.KeyAlt = (event->modifiers & SAPP_MODIFIER_ALT) != 0;
+    io.KeyCtrl = (event->modifiers & SAPP_MODIFIER_CTRL) != 0;
+    io.KeyShift = (event->modifiers & SAPP_MODIFIER_SHIFT) != 0;
+    io.KeySuper = (event->modifiers & SAPP_MODIFIER_SUPER) != 0;
     switch (event->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
             io.MousePos.x = event->mouse_x;
@@ -205,6 +210,12 @@ void input(const sapp_event* event) {
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
             io.MouseWheelH = event->scroll_x;
             io.MouseWheel = event->scroll_y;
+            break;
+        case SAPP_EVENTTYPE_KEY_DOWN:
+            io.KeysDown[event->key_code] = true;
+            break;
+        case SAPP_EVENTTYPE_KEY_UP:
+            io.KeysDown[event->key_code] = false;
             break;
         default:
             break;
