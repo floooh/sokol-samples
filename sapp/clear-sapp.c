@@ -38,7 +38,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 400,
         .height = 300,
         .window_title = "Clear (sokol app)",
-        .html5_canvas_resize = true
     };
 }
 

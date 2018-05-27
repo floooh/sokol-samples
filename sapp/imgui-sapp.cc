@@ -298,10 +298,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.frame_cb = frame;
     desc.cleanup_cb = cleanup;
     desc.event_cb = input;
-    desc.width = 1024;
-    desc.height = 768;
+    desc.width = 800;
+    desc.height = 600;
     desc.window_title = "Dear ImGui (sokol-sapp)";
-    desc.html5_canvas_resize = true;
     return desc;
 }
 

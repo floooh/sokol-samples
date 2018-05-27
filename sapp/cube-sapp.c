@@ -155,7 +155,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .sample_count = SAMPLE_COUNT,
         .window_title = "Cube (sokol-app)",
-        .html5_canvas_resize = true
     };
 }
 
