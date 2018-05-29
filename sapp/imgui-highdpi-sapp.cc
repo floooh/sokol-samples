@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
-//  imgui-sapp.c
+//  imgui-highdpi-sapp.c
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #include "imgui.h"
+#include "imgui_font.h"
 
 const int MaxVertices = (1<<16);
 const int MaxIndices = MaxVertices * 3;
@@ -48,7 +49,7 @@ void init() {
     fontCfg.OversampleH = 2;
     fontCfg.OversampleV = 2;
     fontCfg.RasterizerMultiply = 1.5f;
-    io.Fonts->AddFontDefault();
+    io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
     io.IniFilename = nullptr;
     io.RenderDrawListsFn = imgui_draw_cb;
     io.KeyMap[ImGuiKey_Tab] = SAPP_KEYCODE_TAB;
@@ -199,20 +200,21 @@ void input(const sapp_event* event) {
     io.KeyCtrl = (event->modifiers & SAPP_MODIFIER_CTRL) != 0;
     io.KeyShift = (event->modifiers & SAPP_MODIFIER_SHIFT) != 0;
     io.KeySuper = (event->modifiers & SAPP_MODIFIER_SUPER) != 0;
+    const float dpi_scale = sapp_dpi_scale();
     switch (event->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
-            io.MousePos.x = event->mouse_x;
-            io.MousePos.y = event->mouse_y;
+            io.MousePos.x = event->mouse_x / dpi_scale;
+            io.MousePos.y = event->mouse_y / dpi_scale;
             btn_down[event->mouse_button] = true;
             break;
         case SAPP_EVENTTYPE_MOUSE_UP:
-            io.MousePos.x = event->mouse_x;
-            io.MousePos.y = event->mouse_y;
+            io.MousePos.x = event->mouse_x / dpi_scale;
+            io.MousePos.y = event->mouse_y / dpi_scale;
             btn_up[event->mouse_button] = true;
             break;
         case SAPP_EVENTTYPE_MOUSE_MOVE:
-            io.MousePos.x = event->mouse_x;
-            io.MousePos.y = event->mouse_y;
+            io.MousePos.x = event->mouse_x / dpi_scale;
+            io.MousePos.y = event->mouse_y / dpi_scale;
             break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
             io.MouseWheelH = event->scroll_x;
@@ -275,9 +277,10 @@ void imgui_draw_cb(ImDrawData* draw_data) {
     sg_update_buffer(draw_state.index_buffer, indices, index_data_size);
 
     // render the command list
+    const float dpi_scale = sapp_dpi_scale();
     vs_params_t vs_params;
-    vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
-    vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
+    vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x / dpi_scale;
+    vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y / dpi_scale;
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     int base_element = 0;
@@ -288,10 +291,10 @@ void imgui_draw_cb(ImDrawData* draw_data) {
                 pcmd.UserCallback(cmd_list, &pcmd);
             }
             else {
-                const int scissor_x = (int) (pcmd.ClipRect.x);
-                const int scissor_y = (int) (pcmd.ClipRect.y);
-                const int scissor_w = (int) (pcmd.ClipRect.z - pcmd.ClipRect.x);
-                const int scissor_h = (int) (pcmd.ClipRect.w - pcmd.ClipRect.y);
+                const int scissor_x = (int) (pcmd.ClipRect.x * dpi_scale);
+                const int scissor_y = (int) (pcmd.ClipRect.y * dpi_scale);
+                const int scissor_w = (int) ((pcmd.ClipRect.z - pcmd.ClipRect.x) * dpi_scale);
+                const int scissor_h = (int) ((pcmd.ClipRect.w - pcmd.ClipRect.y) * dpi_scale);
                 sg_apply_scissor_rect(scissor_x, scissor_y, scissor_w, scissor_h, true);
                 sg_draw(base_element, pcmd.ElemCount, 1);
             }
@@ -308,6 +311,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 800;
     desc.height = 600;
+    desc.high_dpi = true;
     desc.window_title = "Dear ImGui (sokol-sapp)";
     return desc;
 }

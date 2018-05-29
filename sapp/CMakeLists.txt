@@ -58,3 +58,8 @@ fips_begin_app(imgui-sapp windowed)
     fips_deps(sokol imgui)
 fips_end_app()
 
+fips_begin_app(imgui-highdpi-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(imgui-highdpi-sapp.cc)
+    fips_deps(sokol imgui)
+fips_end_app()

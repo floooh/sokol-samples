@@ -15,9 +15,9 @@ sg_pass_action pass_action;
 void draw();
 
 int main() {
-    // setup WebGL1 context, no antialiasing
+    /* setup WebGL1 context, no antialiasing */
     emsc_init("#canvas", EMSC_NONE);
-    
+
     /* setup sokol_gfx */
     sg_desc desc = {0};
     sg_setup(&desc);
