@@ -214,6 +214,14 @@ void input(const sapp_event* event) {
             io.MousePos.x = event->mouse_x;
             io.MousePos.y = event->mouse_y;
             break;
+        case SAPP_EVENTTYPE_MOUSE_ENTER:
+        case SAPP_EVENTTYPE_MOUSE_LEAVE:
+            for (int i = 0; i < 3; i++) {
+                btn_down[i] = false;
+                btn_up[i] = false;
+                io.MouseDown[i] = false;
+            }
+            break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
             io.MouseWheelH = event->scroll_x;
             io.MouseWheel = event->scroll_y;
