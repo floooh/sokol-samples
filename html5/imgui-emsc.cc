@@ -96,15 +96,35 @@ int main() {
         });
     emscripten_set_mousedown_callback("#canvas", nullptr, true, 
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            if ((e->button >= 0) && (e->button < 3)) {
-                btn_down[e->button] = true;
+            switch (e->button) {
+                case 0: btn_down[0] = true; break;
+                case 2: btn_down[1] = true; break;
             }
             return true;
         });
     emscripten_set_mouseup_callback("#canvas", nullptr, true, 
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            if ((e->button >= 0) && (e->button < 3)) {
-                btn_up[e->button] = true;
+            switch (e->button) {
+                case 0: btn_up[0] = true; break;
+                case 2: btn_up[1] = true; break;
+            }
+            return true;
+        });
+    emscripten_set_mouseenter_callback("#canvas", nullptr, true,
+        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
+            auto& io = ImGui::GetIO();
+            for (int i = 0; i < 3; i++) {
+                btn_down[i] = btn_up[i] = false;
+                io.MouseDown[i] = false;
+            }
+            return true;
+        });
+    emscripten_set_mouseleave_callback("#canvas", nullptr, true,
+        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
+            auto& io = ImGui::GetIO();
+            for (int i = 0; i < 3; i++) {
+                btn_down[i] = btn_up[i] = false;
+                io.MouseDown[i] = false;
             }
             return true;
         });
