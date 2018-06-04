@@ -32,13 +32,13 @@ int main() {
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
-    sg_buffer_desc buf_desc = {
+    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
-    };
+    });
 
     /* create a shader */
-    sg_shader_desc shd_desc = {
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "attribute vec4 position;\n"
             "attribute vec4 color0;\n"
@@ -53,24 +53,24 @@ int main() {
             "void main() {\n"
             "  gl_FragColor = color;\n"
             "}\n"
-    };
+    });
 
     /* create a pipeline object (default render states are fine for triangle) */
-    sg_pipeline_desc pip_desc = {
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
-        .shader = sg_make_shader(&shd_desc),
+        .shader = shd,
         .layout = {
             .attrs = {
                 [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
-    };
+    });
 
     /* setup the draw state with resource bindings */
     draw_state = (sg_draw_state){
-        .pipeline = sg_make_pipeline(&pip_desc),
-        .vertex_buffers[0] = sg_make_buffer(&buf_desc)
+        .pipeline = pip,
+        .vertex_buffers[0] = vbuf,
     };
 
     /* hand off control to browser loop */
