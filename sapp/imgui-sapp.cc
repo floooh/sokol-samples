@@ -226,6 +226,23 @@ void input(const sapp_event* event) {
             io.MouseWheelH = event->scroll_x;
             io.MouseWheel = event->scroll_y;
             break;
+        case SAPP_EVENTTYPE_TOUCHES_BEGAN:
+            btn_down[0] = true;
+            io.MousePos.x = event->touches[0].pos_x;
+            io.MousePos.y = event->touches[0].pos_y;
+            break;
+        case SAPP_EVENTTYPE_TOUCHES_MOVED:
+            io.MousePos.x = event->touches[0].pos_x;
+            io.MousePos.y = event->touches[0].pos_y;
+            break;
+        case SAPP_EVENTTYPE_TOUCHES_ENDED:
+            btn_up[0] = true;
+            io.MousePos.x = event->touches[0].pos_x;
+            io.MousePos.y = event->touches[0].pos_y;
+            break;
+        case SAPP_EVENTTYPE_TOUCHES_CANCELLED:
+            btn_up[0] = btn_down[0] = false;
+            break;
         case SAPP_EVENTTYPE_KEY_DOWN:
             io.KeysDown[event->key_code] = true;
             break;
