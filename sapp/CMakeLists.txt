@@ -1,5 +1,5 @@
 if (FIPS_EMSCRIPTEN)
-    add_definitions(-DSOKOL_GLES3)
+    add_definitions(-DSOKOL_GLES2)
 elseif (FIPS_RASPBERRYPI)
     add_definitions(-DSOKOL_GLES2)
 elseif (FIPS_ANDROID)
