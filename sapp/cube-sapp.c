@@ -18,7 +18,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-void init() {
+void init(void) {
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2(),
         .mtl_device = sapp_metal_get_device(),
@@ -118,7 +118,7 @@ void init() {
     };
 }
 
-void frame() {
+void frame(void) {
     vs_params_t vs_params;
     const float w = (float) sapp_width();
     const float h = (float) sapp_height();
@@ -134,7 +134,7 @@ void frame() {
     sg_pass_action pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
-    sg_begin_default_pass(&pass_action, w, h);
+    sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_draw_state(&draw_state);
     sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
@@ -142,7 +142,7 @@ void frame() {
     sg_commit();
 }
 
-void cleanup() {
+void cleanup(void) {
     sg_shutdown();
 }
 
@@ -219,4 +219,7 @@ const char* fs_src =
     "fragment float4 _main(float4 color [[stage_in]]) {\n"
     "  return color;\n"
     "}\n";
+#elif defined(SOKOL_D3D11)
+const char* vs_src = "FIXME";
+const char* fs_src = "FIXME";
 #endif

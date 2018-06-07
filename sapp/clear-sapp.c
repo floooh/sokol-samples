@@ -6,7 +6,7 @@
 
 sg_pass_action pass_action;
 
-void init() {
+void init(void) {
     sg_setup(&(sg_desc){
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
@@ -17,7 +17,7 @@ void init() {
     };
 }
 
-void frame() {
+void frame(void) {
     float g = pass_action.colors[0].val[1] + 0.01f;
     pass_action.colors[0].val[1] = (g > 1.0f) ? 0.0f : g;
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
@@ -25,7 +25,7 @@ void frame() {
     sg_commit();
 }
 
-void cleanup() {
+void cleanup(void) {
     sg_shutdown();
 }
 

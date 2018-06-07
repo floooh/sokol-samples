@@ -414,4 +414,7 @@ const char* fs_src =
     "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
     "  return tex.sample(smp, in.uv) * in.color;\n"
     "}\n";
+#elif defined(SOKOL_D3D11)
+const char* vs_src = "FIXME";
+const char* fs_src = "FIXME";
 #endif
