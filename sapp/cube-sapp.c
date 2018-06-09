@@ -100,8 +100,8 @@ void init(void) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
         .shader = shd,
@@ -224,6 +224,26 @@ const char* fs_src =
     "  return color;\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src = "FIXME";
-const char* fs_src = "FIXME";
+const char* vs_src =
+    "cbuffer params: register(b0) {\n"
+    "  float4x4 mvp;\n"
+    "};\n"
+    "struct vs_in {\n"
+    "  float4 pos: POS;\n"
+    "  float4 color: COLOR0;\n"
+    "};\n"
+    "struct vs_out {\n"
+    "  float4 color: COLOR0;\n"
+    "  float4 pos: SV_Position;\n"
+    "};\n"
+    "vs_out main(vs_in inp) {\n"
+    "  vs_out outp;\n"
+    "  outp.pos = mul(mvp, inp.pos);\n"
+    "  outp.color = inp.color;\n"
+    "  return outp;\n"
+    "};\n";
+const char* fs_src =
+    "float4 main(float4 color: COLOR0): SV_Target0 {\n"
+    "  return color;\n"
+    "}\n";
 #endif
