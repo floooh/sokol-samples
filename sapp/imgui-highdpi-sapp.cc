@@ -33,9 +33,13 @@ extern const char* fs_src;
 void init() {
     // setup sokol-gfx and sokol-time
     sg_desc desc = { };
-    desc.mtl_device = sapp_metal_get_device(),
-    desc.mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-    desc.mtl_drawable_cb = sapp_metal_get_drawable,
+    desc.mtl_device = sapp_metal_get_device();
+    desc.mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor;
+    desc.mtl_drawable_cb = sapp_metal_get_drawable;
+    desc.d3d11_device = sapp_d3d11_get_device();
+    desc.d3d11_device_context = sapp_d3d11_get_device_context();
+    desc.d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view;
+    desc.d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
     sg_setup(&desc);
     stm_setup();
 
