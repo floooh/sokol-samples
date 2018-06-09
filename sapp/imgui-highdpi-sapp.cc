@@ -147,17 +147,13 @@ void frame() {
     io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
     for (int i = 0; i < SAPP_MAX_MOUSE_BUTTONS; i++) {
-        if (io.MouseDown[i]) {
-            if (btn_up[i]) {
-                io.MouseDown[i] = false;
-                btn_up[i] = false;
-            }
+        if (btn_down[i]) {
+            btn_down[i] = false;
+            io.MouseDown[i] = true;
         }
-        else {
-            if (btn_down[i]) {
-                io.MouseDown[i] = true;
-                btn_down[i] = false;
-            }
+        else if (btn_up[i]) {
+            btn_up[i] = false;
+            io.MouseDown[i] = false;
         }
     }
     ImGui::NewFrame();

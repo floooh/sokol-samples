@@ -146,17 +146,13 @@ void frame() {
     io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
     for (int i = 0; i < SAPP_MAX_MOUSE_BUTTONS; i++) {
-        if (io.MouseDown[i]) {
-            if (btn_up[i]) {
-                io.MouseDown[i] = false;
-                btn_up[i] = false;
-            }
+        if (btn_down[i]) {
+            btn_down[i] = false;
+            io.MouseDown[i] = true;
         }
-        else {
-            if (btn_down[i]) {
-                io.MouseDown[i] = true;
-                btn_down[i] = false;
-            }
+        else if (btn_up[i]) {
+            btn_up[i] = false;
+            io.MouseDown[i] = false;
         }
     }
     ImGui::NewFrame();
@@ -170,6 +166,8 @@ void frame() {
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Text("btn_down: %d %d %d\n", btn_down[0], btn_down[1], btn_down[2]);
+    ImGui::Text("btn_up: %d %d %d\n", btn_up[0], btn_up[1], btn_up[2]);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
     if (show_another_window) {
@@ -419,6 +417,31 @@ const char* fs_src =
     "  return tex.sample(smp, in.uv) * in.color;\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src = "FIXME";
-const char* fs_src = "FIXME";
+const char* vs_src =
+    "cbuffer params {\n"
+    "  float2 disp_size;\n"
+    "};\n"
+    "struct vs_in {\n"
+    "  float2 pos: POSITION;\n"
+    "  float2 uv: TEXCOORD0;\n"
+    "  float4 color: COLOR0;\n"
+    "};\n"
+    "struct vs_out {\n"
+    "  float2 uv: TEXCOORD0;\n"
+    "  float4 color: COLOR0;\n"
+    "  float4 pos: SV_Position;\n"
+    "};\n"
+    "vs_out main(vs_in inp) {\n"
+    "  vs_out outp;\n"
+    "  outp.pos = float4(((inp.pos/disp_size)-0.5)*float2(2.0,-2.0), 0.5, 1.0);\n"
+    "  outp.uv = inp.uv;\n"
+    "  outp.color = inp.color;\n"
+    "  return outp;\n"
+    "}\n";
+const char* fs_src =
+    "Texture2D<float4> tex: register(t0);\n"
+    "sampler smp: register(s0);\n"
+    "float4 main(float2 uv: TEXCOORD0, float4 color: COLOR0): SV_Target0 {\n"
+    "  return tex.Sample(smp, uv) * color;\n"
+    "}\n";
 #endif
