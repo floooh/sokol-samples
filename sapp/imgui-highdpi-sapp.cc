@@ -419,6 +419,31 @@ const char* fs_src =
     "  return tex.sample(smp, in.uv) * in.color;\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src = "FIXME";
-const char* fs_src = "FIXME";
+const char* vs_src =
+    "cbuffer params {\n"
+    "  float2 disp_size;\n"
+    "};\n"
+    "struct vs_in {\n"
+    "  float2 pos: POSITION;\n"
+    "  float2 uv: TEXCOORD0;\n"
+    "  float4 color: COLOR0;\n"
+    "};\n"
+    "struct vs_out {\n"
+    "  float2 uv: TEXCOORD0;\n"
+    "  float4 color: COLOR0;\n"
+    "  float4 pos: SV_Position;\n"
+    "};\n"
+    "vs_out main(vs_in inp) {\n"
+    "  vs_out outp;\n"
+    "  outp.pos = float4(((inp.pos/disp_size)-0.5)*float2(2.0,-2.0), 0.5, 1.0);\n"
+    "  outp.uv = inp.uv;\n"
+    "  outp.color = inp.color;\n"
+    "  return outp;\n"
+    "}\n";
+const char* fs_src =
+    "Texture2D<float4> tex: register(t0);\n"
+    "sampler smp: register(s0);\n"
+    "float4 main(float2 uv: TEXCOORD0, float4 color: COLOR0): SV_Target0 {\n"
+    "  return tex.Sample(smp, uv) * color;\n"
+    "}\n";
 #endif
