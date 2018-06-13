@@ -382,6 +382,30 @@ const char* fs_src =
     "void main() {\n"
     "    gl_FragColor = texture2D(tex, uv) * color;\n"
     "}\n";
+#elif defined(SOKOL_GLES3)
+const char* vs_src =
+    "#version 300 es\n"
+    "uniform vec2 disp_size;\n"
+    "in vec2 position;\n"
+    "in vec2 texcoord0;\n"
+    "in vec4 color0;\n"
+    "out vec2 uv;\n"
+    "out vec4 color;\n"
+    "void main() {\n"
+    "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
+    "    uv = texcoord0;\n"
+    "    color = color0;\n"
+    "}\n";
+const char* fs_src =
+    "#version 300 es\n"
+    "precision mediump float;"
+    "uniform sampler2D tex;\n"
+    "in vec2 uv;\n"
+    "in vec4 color;\n"
+    "out vec4 frag_color;\n"
+    "void main() {\n"
+    "    frag_color = texture(tex, uv) * color;\n"
+    "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =
     "#include <metal_stdlib>\n"
