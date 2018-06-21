@@ -5,6 +5,6 @@ build_tool: xcodebuild
 build_type: Release 
 cmake-toolchain: ios.toolchain.cmake
 defines:
-    FIPS_USE_METAL: ON
+    SOKOL_USE_METAL: ON
     FIPS_IOS_USE_ARC: ON
 
