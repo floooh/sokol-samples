@@ -1,5 +1,6 @@
 # force old non-container infrastructure, to see whether this
 # is the reason why the IO test hangs
+dist: trusty
 git:
   depth: 3
 language: cpp
@@ -18,6 +19,7 @@ script:
   - echo $TRAVIS_OS_NAME
   - cmake --version
   - gcc --version
+  - python fips clean
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-debug; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-release; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build metal-osx-make-debug; fi
