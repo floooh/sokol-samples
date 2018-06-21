@@ -19,6 +19,11 @@ addons:
       - cmake-data
       - libglu1-mesa-dev
       - xorg-dev
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "linux"  ]; then sudo apt-get -qq update;    fi
+before_script:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50; fi
 script:
   - echo $TRAVIS_OS_NAME
   - cmake --version
