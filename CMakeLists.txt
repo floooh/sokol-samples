@@ -2,6 +2,8 @@
 # project: sokol-samples
 #
 cmake_minimum_required(VERSION 2.8)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
 
 # include the fips main cmake file
 get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
