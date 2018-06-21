@@ -12,8 +12,6 @@ script:
   - python fips build osx-make-release
   - python fips build metal-osx-make-debug
   - python fips build metal-osx-make-release
-  # these iOS configs are actually Metal
-  - python fips build ios-xcode-debug
-  - python fips build ios-xcode-release
-
+  - python fips build sapp-metal-osx-make-debug
+  - python fips build sapp-metal-osx-make-release
 
