@@ -3,15 +3,27 @@
 git:
   depth: 3
 language: cpp
-compiler: clang
+compiler: gcc
 os: 
   - osx
-script:
+  - linux
+addons:
+  apt:
+    packages:
+      - cmake
+      - cmake-data
+      - libglu1-mesa-dev
+      - xorg-dev
+install:
+  - echo $TRAVIS_OS_NAME
   - cmake --version
-  - python fips build osx-make-debug
-  - python fips build osx-make-release
-  - python fips build metal-osx-make-debug
-  - python fips build metal-osx-make-release
-  - python fips build sapp-metal-osx-make-debug
-  - python fips build sapp-metal-osx-make-release
-
+  - gcc --version
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-release; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build metal-osx-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build metal-osx-make-release; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build sapp-metal-osx-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build sapp-metal-osx-make-release; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build linux-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build linux-make-release; fi

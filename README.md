@@ -11,7 +11,7 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 |Platform|Build Status|
 |--------|------|
 |Windows|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)|
-|OSX|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
+|OSX/Linux|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
 
 ## Public Service Announcements
 
