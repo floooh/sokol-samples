@@ -11,7 +11,7 @@ include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
 fips_setup(PROJECT sokol-samples)
 fips_ide_group("Imports")
-if (NOT SOKOL_USE_D3D11 AND NOT SOKOL_USE_METAL)
+if (NOT USE_SOKOL_APP AND NOT SOKOL_USE_D3D11 AND NOT SOKOL_USE_METAL)
     fips_import_fips_glfw_glfw3()
 endif()
 fips_import_fips_imgui_imgui()
