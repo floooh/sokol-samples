@@ -335,6 +335,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
+    desc.fullscreen = true;
     desc.high_dpi = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-sapp)";
     return desc;
