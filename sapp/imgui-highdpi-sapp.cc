@@ -18,8 +18,8 @@ sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
 ImDrawVert vertices[MaxVertices];
 uint16_t indices[MaxIndices];
-bool btn_down[SAPP_MAX_MOUSE_BUTTONS] = { };
-bool btn_up[SAPP_MAX_MOUSE_BUTTONS] = { };
+bool btn_down[SAPP_MAX_MOUSEBUTTONS] = { };
+bool btn_up[SAPP_MAX_MOUSEBUTTONS] = { };
 
 typedef struct {
     ImVec2 disp_size;
@@ -146,7 +146,7 @@ void frame() {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
-    for (int i = 0; i < SAPP_MAX_MOUSE_BUTTONS; i++) {
+    for (int i = 0; i < SAPP_MAX_MOUSEBUTTONS; i++) {
         if (btn_down[i]) {
             btn_down[i] = false;
             io.MouseDown[i] = true;
