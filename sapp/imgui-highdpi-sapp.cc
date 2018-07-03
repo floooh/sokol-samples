@@ -156,6 +156,12 @@ void frame() {
             io.MouseDown[i] = false;
         }
     }
+    if (io.WantTextInput && !sapp_keyboard_shown()) {
+        sapp_show_keyboard(true);
+    }
+    if (!io.WantTextInput && sapp_keyboard_shown()) {
+        sapp_show_keyboard(false);
+    }
     ImGui::NewFrame();
 
     // 1. Show a simple window
@@ -337,6 +343,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.height = 768;
     desc.fullscreen = true;
     desc.high_dpi = true;
+    desc.ios_keyboard_resizes_canvas = false;
     desc.window_title = "Dear ImGui HighDPI (sokol-sapp)";
     return desc;
 }

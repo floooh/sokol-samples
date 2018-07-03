@@ -155,6 +155,12 @@ void frame() {
             io.MouseDown[i] = false;
         }
     }
+    if (io.WantTextInput && !sapp_keyboard_shown()) {
+        sapp_show_keyboard(true);
+    }
+    if (!io.WantTextInput && sapp_keyboard_shown()) {
+        sapp_show_keyboard(false);
+    }
     ImGui::NewFrame();
 
     // 1. Show a simple window
@@ -335,6 +341,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.width = 1024;
     desc.height = 768;
     desc.window_title = "Dear ImGui (sokol-sapp)";
+    desc.ios_keyboard_resizes_canvas = false;
     return desc;
 }
 
