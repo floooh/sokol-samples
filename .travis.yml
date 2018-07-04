@@ -17,7 +17,7 @@ addons:
       - g++-6
       - cmake
       - cmake-data
-      - libglu1-mesa-dev
+      - mesa-common-dev
       - xorg-dev
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux"  ]; then sudo apt-get -qq update;    fi
