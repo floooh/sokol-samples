@@ -37,3 +37,5 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build sapp-metal-osx-make-release; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build linux-make-debug; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build linux-make-release; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build sapp-linux-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips build sapp-linux-make-release; fi
