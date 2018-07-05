@@ -95,6 +95,8 @@ void init(const void* mtl_device) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
         .content.subimage[0][0] = {
             .ptr = font_pixels,
             .size = font_width * font_height * 4
