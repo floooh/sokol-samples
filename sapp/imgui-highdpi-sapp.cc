@@ -344,7 +344,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.fullscreen = true;
     desc.high_dpi = true;
     desc.ios_keyboard_resizes_canvas = false;
-    desc.window_title = "Dear ImGui HighDPI (sokol-sapp)";
+    desc.window_title = "Dear ImGui HighDPI (sokol-app)";
     return desc;
 }
 

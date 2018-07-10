@@ -340,7 +340,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
-    desc.window_title = "Dear ImGui (sokol-sapp)";
+    desc.window_title = "Dear ImGui (sokol-app)";
     desc.ios_keyboard_resizes_canvas = false;
     return desc;
 }
