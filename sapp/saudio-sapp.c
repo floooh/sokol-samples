@@ -10,9 +10,15 @@ sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.5f, 0.0f, 1.0f } }
 };
 
-void stream(float* buffer, int num_samples) {
+static uint32_t even_odd;
+void stream(float* ptr, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
-        buffer[i] = 0.0f;
+        if (even_odd++ & (1<<5)) {
+            ptr[i] = 0.5f;
+        }
+        else {
+            ptr[i] = -0.5f;
+        }
     }
 }
 
