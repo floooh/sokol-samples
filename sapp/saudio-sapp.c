@@ -14,10 +14,10 @@ static uint32_t even_odd;
 void stream(float* ptr, int num_samples) {
     for (int i = 0; i < num_samples; i++) {
         if (even_odd++ & (1<<5)) {
-            ptr[i] = 0.5f;
+            ptr[i] = 0.1f;
         }
         else {
-            ptr[i] = -0.5f;
+            ptr[i] = -0.1f;
         }
     }
 }
@@ -34,12 +34,23 @@ void init(void) {
     });
     saudio_setup(&(saudio_desc){
         .sample_rate = 44100,
-        .stream_cb = stream
+        //.stream_cb = stream
     });
 }
 
 void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    int num_samples = saudio_pushable_samples();
+    float s;
+    for (int i = 0; i < num_samples; i++) {
+        if (even_odd++ & (1<<5)) {
+            s = 0.1f;
+        }
+        else {
+            s = -0.1f;
+        }
+        saudio_push(&s, 1);
+    }
     sg_end_pass();
     sg_commit();
 }
