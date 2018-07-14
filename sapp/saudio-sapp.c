@@ -6,21 +6,15 @@
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
 
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.5f, 0.0f, 1.0f } }
 };
 
 static uint32_t even_odd;
-void stream(float* ptr, int num_samples) {
-    for (int i = 0; i < num_samples; i++) {
-        if (even_odd++ & (1<<5)) {
-            ptr[i] = 0.1f;
-        }
-        else {
-            ptr[i] = -0.1f;
-        }
-    }
-}
+
+#define NUM_SAMPLES (32)
+static int sample_pos;
+static float samples[NUM_SAMPLES];
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -32,24 +26,25 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
-    saudio_setup(&(saudio_desc){
-        .sample_rate = 44100,
-        //.stream_cb = stream
-    });
+    saudio_setup(&(saudio_desc){0});
 }
 
 void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    int num_samples = saudio_pushable_samples();
+    int num_frames = saudio_expect();
     float s;
-    for (int i = 0; i < num_samples; i++) {
-        if (even_odd++ & (1<<5)) {
+    for (int i = 0; i < num_frames; i++) {
+        if (even_odd++ & (1<<3)) {
             s = 0.1f;
         }
         else {
             s = -0.1f;
         }
-        saudio_push(&s, 1);
+        samples[sample_pos++] = s;
+        if (sample_pos == NUM_SAMPLES) {
+            sample_pos = 0;
+            saudio_push(samples, NUM_SAMPLES);
+        }
     }
     sg_end_pass();
     sg_commit();
