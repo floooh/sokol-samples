@@ -43,7 +43,15 @@ GNU Make 3.81
 Xcode 9.0
 ```
 
-### Clone, build and run the native samples:
+### Building the platform-specific samples
+
+There are two types of samples, platform-specific samples in the
+folders ```d3d11```, ```glfw```, ```html5``` and ```metal```, and
+platform-agnostic samples using the ```sokol_app.h``` application-wrapper
+header.
+
+### To build the GLFW samples on Linux, MacOS and Windows:
+
 ```
 > mkdir ~/scratch
 > cd ~/scratch
@@ -57,28 +65,11 @@ Xcode 9.0
 ...
 ```
 
-### To open the project in Xcode or Visual Studio:
-
-```
-> cd ~/scratch/sokol-samples
-> ./fips open
-```
-
-### To build for emscripten:
-```
-> cd ~/scratch/sokol-samples
-> ./fips setup emscripten
-[...this will take a while]
-> ./fips set config webgl2-emsc-make-release
-> ./fips build
-...
-> ./fips list targets
-...
-> ./fips run triangle-emsc
-...
-```
+On Linux you'll need to install a couple of development packages for
+GLFW: http://www.glfw.org/docs/latest/compile.html#compile_deps_x11
 
 ### To build for Metal on OSX:
+
 ```
 > cd ~/scratch/sokol-samples
 > ./fips set config metal-osx-xcode-debug
@@ -90,6 +81,7 @@ Xcode 9.0
 ```
 
 ### To build for Metal on iOS:
+
 ```
 > cd ~/scratch/sokol-samples
 > ./fips set config metal-ios-xcode-debug
@@ -108,6 +100,7 @@ to investigate.
 Another known issue: The arraytex-metal sample currently has a weird rendering artefact at least on my iPad Mini4 which looks like Z-fighting.
 
 ### To build for D3D11 on Windows:
+
 ```
 > cd /scratch/sokol-samples
 > fips set config d3d11-win64-vstudio-debug
@@ -118,21 +111,53 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 > fips run triangle-d3d11
 ```
 
-### To build for Linux:
+### To build for emscripten:
+
 ```
 > cd ~/scratch/sokol-samples
-> ./fips set config linux-make-debug
+> ./fips setup emscripten
+[...this will take a while]
+> ./fips set config webgl2-emsc-make-release
 > ./fips build
 ...
 > ./fips list targets
 ...
-> ./fips run triangle-glfw
+> ./fips run triangle-emsc
 ...
 ```
-You may need to install some dev-packages required for GLFW on Linux,
-see here: http://www.glfw.org/docs/latest/compile.html#compile_deps_x11
 
-Type ```./fips help``` for more build system options.
+## To build the platform-agnostic sokol_app.h samples:
+
+Building the sokol_app.h samples is currently supported for MacOS, Windows, 
+Linux, iOS and HTML5 (which Android and RaspberryPi planned).
+
+Use any of the following custom build configs starting with ```sapp-```
+which matches you platform and build system:
+
+```bash
+> ./fips list configs | grep sapp-
+  sapp-d3d11-win64-vs2017-debug
+  sapp-d3d11-win64-vs2017-release
+  sapp-d3d11-win64-vscode-debug
+  sapp-d3d11-win64-vstudio-debug
+  sapp-d3d11-win64-vstudio-release
+  sapp-ios-xcode-debug
+  ...
+  sapp-win64-vstudio-debug
+  sapp-win64-vstudio-release
+> ./fips set config sapp-...
+> ./fips build
+> ./fips list targets
+> ./fips run cube-sapp
+```
+
+Note the following caveats:
+- for HTML5, first install the emscripten SDK as described above in the
+native HTML5 sample section
+- for iOS, set the developer team id, as described above in the iOS section
+- OpenGL is currently not supported on MacOS because NSOpenGLView and
+friends are broken on the MacOS Mojave beta, instead use the
+```sapp-metal-*``` build configs (GLES on iOS is supported though)
 
 ## Thanks to:
 
