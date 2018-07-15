@@ -4,6 +4,8 @@ Sample code for https://github.com/floooh/sokol
 
 asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
+Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8bit
+
 *Work In Progress*
 
 ### Build Status:
