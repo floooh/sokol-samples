@@ -131,7 +131,7 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 ## To build the platform-agnostic sokol_app.h samples:
 
 Building the sokol_app.h samples is currently supported for MacOS, Windows, 
-Linux, iOS and HTML5 (which Android and RaspberryPi planned).
+Linux, iOS and HTML5 (Android and RaspberryPi is planned).
 
 Use any of the following custom build configs starting with ```sapp-```
 which matches you platform and build system:
