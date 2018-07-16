@@ -50,7 +50,7 @@ Xcode 9.0
 There are two types of samples, platform-specific samples in the
 folders ```d3d11```, ```glfw```, ```html5``` and ```metal```, and
 platform-agnostic samples using the ```sokol_app.h``` application-wrapper
-header.
+header in the folder ```sapp```.
 
 ### To build the GLFW samples on Linux, MacOS and Windows:
 
