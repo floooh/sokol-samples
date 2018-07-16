@@ -81,3 +81,13 @@ fips_begin_app(saudio-sapp windowed)
         fips_files(ios-info.plist)
     endif()
 fips_end_app()
+
+fips_begin_app(events-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(events-sapp.c)
+    fips_deps(sokol)
+    if (FIPS_IOS)
+        fips_files(ios-info.plist)
+    endif()
+fips_end_app()
+
