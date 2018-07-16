@@ -80,21 +80,23 @@ void event(const sapp_event* e) {
             printf("TOUCHES_CANCELLED   frame_count:%d num_touches:%d\n", e->frame_count, e->num_touches);
             print_touches(e);
             break;
-        case SAPP_EVENTTYPE_WINDOW_POS:
+        case SAPP_EVENTTYPE_RESIZED:
+            printf("RESIZED         frame_count:%d win_width:%d win_height:%d fb_width:%d fb_height:%d\n",
+                e->frame_count, e->window_width, e->window_height, e->framebuffer_width, e->framebuffer_height);
             break;
-        case SAPP_EVENTTYPE_WINDOW_SIZE:
+        case SAPP_EVENTTYPE_ICONIFIED:
+            printf("ICONIFIED       frame_count:%d win_width:%d win_height:%d fb_width:%d fb_height:%d\n",
+                e->frame_count, e->window_width, e->window_height, e->framebuffer_width, e->framebuffer_height);
             break;
-        case SAPP_EVENTTYPE_WINDOW_MINIMIZED:
+        case SAPP_EVENTTYPE_RESTORED:
+            printf("RESTORED        frame_count:%d win_width:%d win_height:%d fb_width:%d fb_height:%d\n",
+                e->frame_count, e->window_width, e->window_height, e->framebuffer_width, e->framebuffer_height);
             break;
-        case SAPP_EVENTTYPE_WINDOW_MAXIMIZED:
+        case SAPP_EVENTTYPE_SUSPENDED:
+            printf("SUSPENDED       frame_count:%d\n", e->frame_count);
             break;
-        case SAPP_EVENTTYPE_WINDOW_RESTORED:
-            break;
-        case SAPP_EVENTTYPE_FRAMEBUFFER_SIZE:
-            break;
-        case SAPP_EVENTTYPE_APP_SUSPEND:
-            break;
-        case SAPP_EVENTTYPE_APP_RESUME:
+        case SAPP_EVENTTYPE_RESUMED:
+            printf("RESUMED         frame_count:%d\n", e->frame_count);
             break;
         default:
             printf("Unknown event!\n");
