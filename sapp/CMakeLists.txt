@@ -17,7 +17,7 @@ else()
 endif()
 
 fips_begin_lib(sokol)
-    fips_vs_warning_level(3)
+    fips_vs_warning_level(4)
     if (FIPS_OSX)
         fips_files(sokol.m)
         if (FIPS_IOS)
