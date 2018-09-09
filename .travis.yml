@@ -19,6 +19,7 @@ addons:
       - cmake-data
       - mesa-common-dev
       - xorg-dev
+      - libasound-dev
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "linux"  ]; then sudo apt-get -qq update;    fi
 before_script:
