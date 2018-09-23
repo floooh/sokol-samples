@@ -14,7 +14,7 @@ static ModPlugFile* mpf;
 
 /* integer-to-float conversion buffer */
 #define SRCBUF_SAMPLES (4096)
-int src_buf[SRCBUF_SAMPLES];
+static int src_buf[SRCBUF_SAMPLES];
 
 static void stream_cb(float* buffer, int num_samples) {
     assert(num_samples < SRCBUF_SAMPLES);
