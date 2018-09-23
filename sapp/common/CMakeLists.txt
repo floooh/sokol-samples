@@ -1,0 +1,25 @@
+# select the sokol-gfx backend depending on platform
+if (FIPS_WINDOWS)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+# a lib of common code shared between all emulators
+fips_begin_lib(common)
+    fips_vs_warning_level(3)
+    fips_files(common.c common.h)
+    fips_files(args.h fs.h)
+    if (FIPS_OSX)
+        fips_files(sokol.m)
+        if (FIPS_IOS)
+            fips_frameworks_osx(UIKit Metal MetalKit AudioToolbox)
+        else()
+            fips_frameworks_osx(Cocoa QuartzCore Metal MetalKit AudioToolbox)
+        endif()
+    else()
+        fips_files(sokol.c)
+        if (FIPS_LINUX)
+            fips_libs(X11 GL m dl asound)
+        endif()
+    endif()
+fips_end_lib()
+
