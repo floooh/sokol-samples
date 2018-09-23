@@ -13,13 +13,15 @@ static bool mpf_valid = false;
 static ModPlugFile* mpf;
 
 /* integer-to-float conversion buffer */
-#define SRCBUF_SAMPLES (4096)
+#define SRCBUF_SAMPLES (8192)
 static int src_buf[SRCBUF_SAMPLES];
 
 static void stream_cb(float* buffer, int num_samples) {
     assert(num_samples < SRCBUF_SAMPLES);
     if (mpf_valid) {
-        /* read sampled from libmodplug, and convert to float */
+        /* read sampled from libmodplug, and convert to float, left/right
+           channel are interleaved
+        */
         int res = ModPlug_Read(mpf, (void*)src_buf, sizeof(int)*num_samples);
         int samples_in_buffer = res / sizeof(int);
         int i;
@@ -50,15 +52,16 @@ void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
 
-    /* setup sokol_audio (default is 44100hz, mono) */
+    /* setup sokol_audio (default sample rate is 44100Hz) */
     saudio_setup(&(saudio_desc){
+        .num_channels = 2,
         .stream_cb = stream_cb
     });
 
     /* setup libmodplug and load mod from embedded C array */
     ModPlug_Settings mps;
     ModPlug_GetSettings(&mps);
-    mps.mChannels = 1;
+    mps.mChannels = saudio_channels();
     mps.mBits = 32;
     mps.mFrequency = saudio_sample_rate();
     mps.mResamplingMode = MODPLUG_RESAMPLE_LINEAR;
@@ -67,7 +70,7 @@ void init(void) {
     mps.mFlags = MODPLUG_ENABLE_OVERSAMPLING;
     ModPlug_SetSettings(&mps);
 
-    mpf = ModPlug_Load(dump_comsi, sizeof(dump_comsi));
+    mpf = ModPlug_Load(dump_disco_feva_baby, sizeof(dump_disco_feva_baby));
     if (mpf) {
         mpf_valid = true;
     }
