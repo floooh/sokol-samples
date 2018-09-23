@@ -9,11 +9,7 @@
 #include "data/mods.h"
 #include <assert.h>
 
-static sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
-};
-
-static volatile bool mpf_valid = false;
+static bool mpf_valid = false;
 static ModPlugFile* mpf;
 
 /* integer-to-float conversion buffer */
@@ -21,7 +17,7 @@ static ModPlugFile* mpf;
 int src_buf[SRCBUF_SAMPLES];
 
 static void stream_cb(float* buffer, int num_samples) {
-    assert(num_samples < 4096);
+    assert(num_samples < SRCBUF_SAMPLES);
     if (mpf_valid) {
         /* read sampled from libmodplug, and convert to float */
         int res = ModPlug_Read(mpf, (void*)src_buf, sizeof(int)*num_samples);
@@ -64,7 +60,7 @@ void init(void) {
     ModPlug_GetSettings(&mps);
     mps.mChannels = 1;
     mps.mBits = 32;
-    mps.mFrequency = 44100;
+    mps.mFrequency = saudio_sample_rate();
     mps.mResamplingMode = MODPLUG_RESAMPLE_LINEAR;
     mps.mMaxMixChannels = 64;
     mps.mLoopCount = -1;
@@ -74,12 +70,13 @@ void init(void) {
     mpf = ModPlug_Load(dump_comsi, sizeof(dump_comsi));
     if (mpf) {
         mpf_valid = true;
-        pass_action.colors[0].val[0] = 0.5f;
-        pass_action.colors[0].val[1] = 1.0f;
     }
 }
 
 void frame(void) {
+    sg_pass_action pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 1.0f, 0.0f, 1.0f } }
+    };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_end_pass();
     sg_commit();
