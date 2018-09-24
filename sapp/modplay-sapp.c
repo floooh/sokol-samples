@@ -25,12 +25,12 @@ static int int_buf[MODPLAY_SRCBUF_SAMPLES];
 static float flt_buf[MODPLAY_SRCBUF_SAMPLES];
 #endif
 
-#if !MODPLAY_USE_PUSH
-static void stream_cb(float* buffer, int num_samples) {
-    assert(num_samples < MODPLAY_SRCBUF_SAMPLES);
+/* common function to read sample stream from libmodplug and convert to float */
+static void read_samples(float* buffer, int num_samples) {
+    assert(num_samples <= MODPLAY_SRCBUF_SAMPLES);
     if (mpf_valid) {
-        /* read sampled from libmodplug, and convert to float, left/right
-           channel are interleaved
+        /* read sample stream from libmodplug, and convert to float, left/right
+           channels are interleaved
         */
         int res = ModPlug_Read(mpf, (void*)int_buf, sizeof(int)*num_samples);
         int samples_in_buffer = res / sizeof(int);
@@ -48,6 +48,14 @@ static void stream_cb(float* buffer, int num_samples) {
             buffer[i] = 0.0f;
         }
     }
+}
+
+/* stream callback, called by sokol_audio when new samples are needed,
+    on most platforms, this runs on a separate thread
+*/
+#if !MODPLAY_USE_PUSH
+static void stream_cb(float* buffer, int num_samples) {
+    read_samples(buffer, num_samples);
 }
 #endif
 
@@ -90,27 +98,20 @@ void init(void) {
 }
 
 void frame(void) {
+    /* alternative way to get audio data into sokol_audio: push the
+        data from the main thread, this appends the sample data to a ring
+        buffer where the audio thread will pull from
+    */
     #if MODPLAY_USE_PUSH
-        int num_frames = saudio_expect();
+        /* NOTE: if you application generates new samples at the same
+           rate they are consumed (e.g. a steady 44100 frames per second,
+           you don't need the call to saudio_expect(), instead just call
+           saudio_push() as new sample data gets generated
+        */
+        const int num_frames = saudio_expect();
         if (num_frames > 0) {
-            int num_samples = num_frames * MODPLAY_NUM_CHANNELS;
-            assert(num_samples <= MODPLAY_SRCBUF_SAMPLES);
-            if (mpf_valid) {
-                int res = ModPlug_Read(mpf, (void*)int_buf, sizeof(int)*num_samples);
-                int samples_in_buffer = res / sizeof(int);
-                int i;
-                for (i = 0; i < samples_in_buffer; i++) {
-                    flt_buf[i] = int_buf[i] / (float)0x7fffffff;
-                }
-                for (; i < num_samples; i++) {
-                    flt_buf[i] = 0.0f;
-                }
-            }
-            else {
-                for (int i = 0; i < num_samples; i++) {
-                    flt_buf[i] = 0.0f;
-                }
-            }
+            const int num_samples = num_frames * saudio_channels();
+            read_samples(flt_buf, num_samples);
             saudio_push(flt_buf, num_frames);
         }
     #endif
