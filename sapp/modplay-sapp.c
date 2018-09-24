@@ -29,8 +29,8 @@ static float flt_buf[MODPLAY_SRCBUF_SAMPLES];
 static void read_samples(float* buffer, int num_samples) {
     assert(num_samples <= MODPLAY_SRCBUF_SAMPLES);
     if (mpf_valid) {
-        /* read sample stream from libmodplug, and convert to float, left/right
-           channels are interleaved
+        /* NOTE: for multi-channel playback, the samples are interleaved
+           (e.g. left/right/left/right/...)
         */
         int res = ModPlug_Read(mpf, (void*)int_buf, sizeof(int)*num_samples);
         int samples_in_buffer = res / sizeof(int);
@@ -103,7 +103,7 @@ void frame(void) {
         buffer where the audio thread will pull from
     */
     #if MODPLAY_USE_PUSH
-        /* NOTE: if you application generates new samples at the same
+        /* NOTE: if your application generates new samples at the same
            rate they are consumed (e.g. a steady 44100 frames per second,
            you don't need the call to saudio_expect(), instead just call
            saudio_push() as new sample data gets generated
