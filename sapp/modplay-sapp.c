@@ -9,6 +9,8 @@
 #include "data/mods.h"
 #include <assert.h>
 
+#define MODPLAY_NUM_CHANNELS (2)
+
 static bool mpf_valid = false;
 static ModPlugFile* mpf;
 
@@ -54,7 +56,7 @@ void init(void) {
 
     /* setup sokol_audio (default sample rate is 44100Hz) */
     saudio_setup(&(saudio_desc){
-        .num_channels = 2,
+        .num_channels = MODPLAY_NUM_CHANNELS,
         .stream_cb = stream_cb
     });
 
