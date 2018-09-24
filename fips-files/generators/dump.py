@@ -3,7 +3,7 @@
 #   Dump binary files into C arrays.
 #-------------------------------------------------------------------------------
 
-Version = 11
+Version = 13
 
 import os.path
 import yaml
@@ -31,7 +31,7 @@ def gen_header(out_hdr, files) :
         for file in files :
             file_path = get_file_path(file, out_hdr)
             if os.path.isfile(file_path) :
-                with open(file_path, 'r') as src_file:
+                with open(file_path, 'rb') as src_file:
                     file_data = src_file.read()
                     file_name = get_file_cname(file)
                     file_size = os.path.getsize(file_path)
@@ -39,7 +39,7 @@ def gen_header(out_hdr, files) :
                     f.write('unsigned char {}[{}] = {{\n'.format(file_name, file_size))               
                     num = 0
                     for byte in file_data :
-                        f.write(hex(ord(byte)) + ', ')
+                        f.write(hex(ord(chr(byte))) + ', ')
                         num += 1
                         if 0 == num%16:
                             f.write('\n')
