@@ -12,7 +12,7 @@
 /* select between mono (1) and stereo (2) */
 #define MODPLAY_NUM_CHANNELS (2)
 /* use stream callback (0) or push-from-mainthread (1) model */
-#define MODPLAY_USE_PUSH (1)
+#define MODPLAY_USE_PUSH (0)
 /* big enough for packet_size * num_packets * num_channels */
 #define MODPLAY_SRCBUF_SAMPLES (16*1024)
 
