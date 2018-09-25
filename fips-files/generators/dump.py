@@ -3,8 +3,9 @@
 #   Dump binary files into C arrays.
 #-------------------------------------------------------------------------------
 
-Version = 13
+Version = 1
 
+import sys
 import os.path
 import yaml
 import genutil
@@ -39,7 +40,10 @@ def gen_header(out_hdr, files) :
                     f.write('unsigned char {}[{}] = {{\n'.format(file_name, file_size))               
                     num = 0
                     for byte in file_data :
-                        f.write(hex(ord(chr(byte))) + ', ')
+                        if sys.version_info[0] >= 3:
+                            f.write(hex(ord(chr(byte))) + ', ')
+                        else:
+                            f.write(hex(ord(byte)) + ', ')
                         num += 1
                         if 0 == num%16:
                             f.write('\n')
