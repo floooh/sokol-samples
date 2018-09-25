@@ -54,7 +54,8 @@ static void read_samples(float* buffer, int num_samples) {
     on most platforms, this runs on a separate thread
 */
 #if !MODPLAY_USE_PUSH
-static void stream_cb(float* buffer, int num_samples) {
+static void stream_cb(float* buffer, int num_frames, int num_channels) {
+    const int num_samples = num_frames * num_channels;
     read_samples(buffer, num_samples);
 }
 #endif
