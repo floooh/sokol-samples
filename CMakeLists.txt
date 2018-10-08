@@ -41,6 +41,7 @@ else()
         add_subdirectory(glfw)
     endif()
 endif()
+add_subdirectory(tests)
 
 fips_finish()
 
