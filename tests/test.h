@@ -2,6 +2,7 @@
 /* simple test helper functions */
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #if !defined(NDEBUG)
 /* debug mode, use asserts to quit right when test fails */
@@ -11,6 +12,7 @@
 /* release mode, just keep track of success/fail */
 #define T(x) {if(x){_test_state.num_success++;}else{_test_state.num_fail++;};}
 #endif
+#define TSTR(s0,s1) {T(0==strcmp(s0,s1));}
 
 typedef struct {
     const char* name;
