@@ -23,6 +23,8 @@ void init(void) {
     printf("macos window: %p\n", macos_window);
     const void* ios_window = sapp_ios_get_window();
     printf("ios window: %p\n", ios_window);
+    const void* win32_hwnd = sapp_win32_get_hwnd();
+    printf("win32 hwnd: %p\n", win32_hwnd);
 }
 
 void print_touches(const sapp_event* e) {
@@ -57,8 +59,10 @@ void event(const sapp_event* e) {
                 e->frame_count, e->modifiers, e->scroll_x, e->scroll_y);
             break;
         case SAPP_EVENTTYPE_MOUSE_MOVE:
+        /*
             printf("MOUSE_MOVE      frame_count:%d modifiers:%x mouse_x:%.2f mouse_y:%.2f\n",
                 e->frame_count, e->modifiers, e->mouse_x, e->mouse_y);
+        */
             break;
         case SAPP_EVENTTYPE_MOUSE_ENTER: 
             printf("MOUSE_ENTER     frame_count:%d modifiers:%x mouse_x:%.2f mouse_y:%.2f\n",
@@ -102,7 +106,7 @@ void event(const sapp_event* e) {
         case SAPP_EVENTTYPE_RESUMED:
             printf("RESUMED         frame_count:%d\n", e->frame_count);
             break;
-        case SAPP_EVENTTYPE_CURSOR_UPDATE:
+        case SAPP_EVENTTYPE_UPDATE_CURSOR:
             printf("CURSOR UPDATE   frame_count:%d\n", e->frame_count);
             break;
         default:
@@ -129,6 +133,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 400,
         .height = 300,
-        .window_title = "Clear (sokol app)",
+        .window_title = "Events (sokol app)",
+        .user_cursor = true
     };
 }
