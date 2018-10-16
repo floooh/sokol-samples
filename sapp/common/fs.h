@@ -47,7 +47,7 @@ bool fs_load_file(const char* path) {
     FILE* fp = fopen(path, "rb");
     if (fp) {
         fseek(fp, 0, SEEK_END);
-        int size = ftell(fp);
+        int size = (int) ftell(fp);
         if (size <= FS_MAX_SIZE) {
             fs.size = size;
             fseek(fp, 0, SEEK_SET);
