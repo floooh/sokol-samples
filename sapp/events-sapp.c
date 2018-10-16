@@ -59,10 +59,8 @@ void event(const sapp_event* e) {
                 e->frame_count, e->modifiers, e->scroll_x, e->scroll_y);
             break;
         case SAPP_EVENTTYPE_MOUSE_MOVE:
-        /*
             printf("MOUSE_MOVE      frame_count:%d modifiers:%x mouse_x:%.2f mouse_y:%.2f\n",
                 e->frame_count, e->modifiers, e->mouse_x, e->mouse_y);
-        */
             break;
         case SAPP_EVENTTYPE_MOUSE_ENTER: 
             printf("MOUSE_ENTER     frame_count:%d modifiers:%x mouse_x:%.2f mouse_y:%.2f\n",
@@ -107,7 +105,7 @@ void event(const sapp_event* e) {
             printf("RESUMED         frame_count:%d\n", e->frame_count);
             break;
         case SAPP_EVENTTYPE_UPDATE_CURSOR:
-            printf("CURSOR UPDATE   frame_count:%d\n", e->frame_count);
+            printf("UPDATE CURSOR frame_count:%d\n", e->frame_count);
             break;
         default:
             printf("Unknown event!\n");
