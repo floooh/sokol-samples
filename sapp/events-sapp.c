@@ -19,6 +19,10 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
+    const void* macos_window = sapp_macos_get_window();
+    printf("macos window: %p\n", macos_window);
+    const void* ios_window = sapp_ios_get_window();
+    printf("ios window: %p\n", ios_window);
 }
 
 void print_touches(const sapp_event* e) {
@@ -97,6 +101,9 @@ void event(const sapp_event* e) {
             break;
         case SAPP_EVENTTYPE_RESUMED:
             printf("RESUMED         frame_count:%d\n", e->frame_count);
+            break;
+        case SAPP_EVENTTYPE_CURSOR_UPDATE:
+            printf("CURSOR UPDATE   frame_count:%d\n", e->frame_count);
             break;
         default:
             printf("Unknown event!\n");
