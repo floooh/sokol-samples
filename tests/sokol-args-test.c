@@ -7,14 +7,8 @@
 
 #define NUM_ARGS(x) (sizeof(x)/sizeof(void*))
 
-static const char* argv_0[] = { "exe_name " };
-static const char* argv_1[] = { "exe_name", "kvp0=val0", "kvp1=val1", "kvp2=val2" };
-static const char* argv_2[] = { "exe_name", "kvp0  = val0 ", "  \tkvp1=  val1", "kvp2  = val2   "};
-static const char* argv_3[] = { "exe_name", "kvp0:val0 ", "  kvp1:  val1", "kvp2 \t: val2   "};
-static const char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
-static const char* argv_5[] = { "exe_name", "kvp0='bla bla'", "kvp1=' blub blub'", "kvp2='blob blob '"};
-static const char* argv_6[] = { "exe_name", "kvp0=\"bla bla\"", "kvp1=\" blub blub\"", "kvp2=\"blob blob \""};
 
+static const char* argv_0[] = { "exe_name " };
 static void test_init_shutdown(void) {
     test("sokol-args init shutdown");
     sargs_setup(&(sargs_desc){0});
@@ -50,6 +44,7 @@ static void test_no_args(void) {
     sargs_shutdown();
 }
 
+static const char* argv_1[] = { "exe_name", "kvp0=val0", "kvp1=val1", "kvp2=val2" };
 static void test_simple_args(void) {
     test("sokol-args simple args");
     sargs_setup(&(sargs_desc){
@@ -74,6 +69,7 @@ static void test_simple_args(void) {
     sargs_shutdown();
 }
 
+static const char* argv_2[] = { "exe_name", "kvp0  = val0 ", "  \tkvp1=  val1", "kvp2  = val2   "};
 static void test_simple_whitespace(void) {
     test("sokol-args simple whitespace");
     sargs_setup(&(sargs_desc){
@@ -98,6 +94,7 @@ static void test_simple_whitespace(void) {
     sargs_shutdown();
 }
 
+static const char* argv_3[] = { "exe_name", "kvp0:val0 ", "  kvp1:  val1", "kvp2 \t: val2   "};
 static void test_colon_separator(void) {
     test("sokol-args colon separator");
     sargs_setup(&(sargs_desc){
@@ -122,6 +119,7 @@ static void test_colon_separator(void) {
     sargs_shutdown();
 }
 
+static const char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
 static void test_standalone_separator(void) {
     test("sokol-args standalone separator");
     sargs_setup(&(sargs_desc){
@@ -146,6 +144,7 @@ static void test_standalone_separator(void) {
     sargs_shutdown();
 }
 
+static const char* argv_5[] = { "exe_name", "kvp0='bla bla'", "kvp1=' blub blub'", "kvp2='blob blob '"};
 static void test_single_quotes(void) {
     test("sokol-args single quotes");
     sargs_setup(&(sargs_desc){
@@ -169,6 +168,7 @@ static void test_single_quotes(void) {
     sargs_shutdown();
 }
 
+static const char* argv_6[] = { "exe_name", "kvp0=\"bla bla\"", "kvp1=\" blub blub\"", "kvp2=\"blob blob \""};
 static void test_double_quotes(void) {
     test("sokol-args double quotes");
     sargs_setup(&(sargs_desc){
@@ -192,6 +192,54 @@ static void test_double_quotes(void) {
     sargs_shutdown();
 }
 
+static const char* argv_7[] = { "exe_name", "kvp0='bla \"bla\"'", "kvp1=' \"blub blub\"'", "kvp2='blob \"blob\" '"};
+static void test_double_in_single_quotes(void) {
+    test("sokol-args double in single quotes");
+    sargs_setup(&(sargs_desc){
+        .argc = NUM_ARGS(argv_7),
+        .argv = argv_7
+    });
+    T(sargs_isvalid());
+    T(sargs_num_args() == 3);
+    T(0 == sargs_find("kvp0"));
+    TSTR(sargs_value("kvp0"), "bla \"bla\"");
+    TSTR(sargs_key_at(0), "kvp0");
+    TSTR(sargs_value_at(0), "bla \"bla\"");
+    T(1 == sargs_find("kvp1"));
+    TSTR(sargs_value("kvp1"), " \"blub blub\"");
+    TSTR(sargs_key_at(1), "kvp1");
+    TSTR(sargs_value_at(1), " \"blub blub\"");
+    T(2 == sargs_find("kvp2"));
+    TSTR(sargs_value("kvp2"), "blob \"blob\" ");
+    TSTR(sargs_key_at(2), "kvp2");
+    TSTR(sargs_value_at(2), "blob \"blob\" ");
+    sargs_shutdown();
+}
+
+static const char* argv_8[] = { "exe_name", "kvp0=\"bla 'bla'\"", "kvp1=\" 'blub blub'\"", "kvp2=\"blob 'blob' \""};
+static void test_single_in_double_quotes(void) {
+    test("sokol-args single in double quotes");
+    sargs_setup(&(sargs_desc){
+        .argc = NUM_ARGS(argv_8),
+        .argv = argv_8
+    });
+    T(sargs_isvalid());
+    T(sargs_num_args() == 3);
+    T(0 == sargs_find("kvp0"));
+    TSTR(sargs_value("kvp0"), "bla 'bla'");
+    TSTR(sargs_key_at(0), "kvp0");
+    TSTR(sargs_value_at(0), "bla 'bla'");
+    T(1 == sargs_find("kvp1"));
+    TSTR(sargs_value("kvp1"), " 'blub blub'");
+    TSTR(sargs_key_at(1), "kvp1");
+    TSTR(sargs_value_at(1), " 'blub blub'");
+    T(2 == sargs_find("kvp2"));
+    TSTR(sargs_value("kvp2"), "blob 'blob' ");
+    TSTR(sargs_key_at(2), "kvp2");
+    TSTR(sargs_value_at(2), "blob 'blob' ");
+    sargs_shutdown();
+}
+
 int main() {
     test_begin("sokol-args-test");
     test_init_shutdown();
@@ -202,6 +250,8 @@ int main() {
     test_standalone_separator();
     test_single_quotes();
     test_double_quotes();
+    test_double_in_single_quotes();
+    test_single_in_double_quotes();
     return test_end();
 }
 
