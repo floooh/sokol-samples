@@ -94,31 +94,6 @@ static void test_simple_whitespace(void) {
     sargs_shutdown();
 }
 
-static char* argv_3[] = { "exe_name", "kvp0:val0 ", "  kvp1:  val1", "kvp2 \t: val2   "};
-static void test_colon_separator(void) {
-    test("sokol-args colon separator");
-    sargs_setup(&(sargs_desc){
-        .argc = NUM_ARGS(argv_3),
-        .argv = argv_3
-    });
-    T(sargs_isvalid());
-    T(sargs_num_args() == 3);
-    T(0 == sargs_find("kvp0"));
-    TSTR(sargs_value("kvp0"), "val0");
-    TSTR(sargs_key_at(0), "kvp0");
-    TSTR(sargs_value_at(0), "val0");
-    T(1 == sargs_find("kvp1"));
-    TSTR(sargs_value("kvp1"), "val1");
-    TSTR(sargs_key_at(1), "kvp1");
-    TSTR(sargs_value_at(1), "val1");
-    T(2 == sargs_find("kvp2"));
-    TSTR(sargs_value("kvp2"), "val2");
-    TSTR(sargs_key_at(2), "kvp2");
-    TSTR(sargs_value_at(2), "val2");
-    T(_sargs.buf_pos == 31);
-    sargs_shutdown();
-}
-
 static char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
 static void test_standalone_separator(void) {
     test("sokol-args standalone separator");
@@ -293,7 +268,6 @@ int main() {
     test_no_args();
     test_simple_args();
     test_simple_whitespace();
-    test_colon_separator();
     test_standalone_separator();
     test_single_quotes();
     test_double_quotes();
