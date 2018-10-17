@@ -264,6 +264,29 @@ static void test_split_quotes(void) {
     sargs_shutdown();
 }
 
+static const char* argv_10[] = { "exe_name", "kvp0=\\\\val0\\nval1", "kvp1=val1\\rval2", "kvp2='val2\\tval3'" };
+static void test_escape_sequence(void) {
+    test("sokol-args escape sequence");
+    sargs_setup(&(sargs_desc){
+        .argc = NUM_ARGS(argv_10),
+        .argv = argv_10,
+    });
+    T(sargs_isvalid());
+    T(sargs_num_args() == 3);
+    T(0 == sargs_find("kvp0"));
+    TSTR(sargs_value("kvp0"), "\\val0\nval1");
+    TSTR(sargs_key_at(0), "kvp0");
+    TSTR(sargs_value_at(0), "\\val0\nval1");
+    T(1 == sargs_find("kvp1"));
+    TSTR(sargs_value("kvp1"), "val1\rval2");
+    TSTR(sargs_key_at(1), "kvp1");
+    TSTR(sargs_value_at(1), "val1\rval2");
+    T(2 == sargs_find("kvp2"));
+    TSTR(sargs_value("kvp2"), "val2\tval3");
+    TSTR(sargs_key_at(2), "kvp2");
+    TSTR(sargs_value_at(2), "val2\tval3");
+    sargs_shutdown();
+}
 int main() {
     test_begin("sokol-args-test");
     test_init_shutdown();
@@ -277,6 +300,7 @@ int main() {
     test_double_in_single_quotes();
     test_single_in_double_quotes();
     test_split_quotes();
+    test_escape_sequence();
     return test_end();
 }
 
