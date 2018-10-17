@@ -240,6 +240,30 @@ static void test_single_in_double_quotes(void) {
     sargs_shutdown();
 }
 
+static const char* argv_9[] = { "exe_name", "kvp0='bla ", "bla'", "kvp1= ' blub", " blub'", "kvp2='blob blob '"};
+static void test_split_quotes(void) {
+    test("sokol-args split quotes");
+    sargs_setup(&(sargs_desc){
+        .argc = NUM_ARGS(argv_9),
+        .argv = argv_9
+    });
+    T(sargs_isvalid());
+    T(sargs_num_args() == 3);
+    T(0 == sargs_find("kvp0"));
+    TSTR(sargs_value("kvp0"), "bla bla");
+    TSTR(sargs_key_at(0), "kvp0");
+    TSTR(sargs_value_at(0), "bla bla");
+    T(1 == sargs_find("kvp1"));
+    TSTR(sargs_value("kvp1"), " blub blub");
+    TSTR(sargs_key_at(1), "kvp1");
+    TSTR(sargs_value_at(1), " blub blub");
+    T(2 == sargs_find("kvp2"));
+    TSTR(sargs_value("kvp2"), "blob blob ");
+    TSTR(sargs_key_at(2), "kvp2");
+    TSTR(sargs_value_at(2), "blob blob ");
+    sargs_shutdown();
+}
+
 int main() {
     test_begin("sokol-args-test");
     test_init_shutdown();
@@ -252,6 +276,7 @@ int main() {
     test_double_quotes();
     test_double_in_single_quotes();
     test_single_in_double_quotes();
+    test_split_quotes();
     return test_end();
 }
 
