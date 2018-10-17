@@ -8,7 +8,7 @@
 #define NUM_ARGS(x) (sizeof(x)/sizeof(void*))
 
 
-static const char* argv_0[] = { "exe_name " };
+static char* argv_0[] = { "exe_name " };
 static void test_init_shutdown(void) {
     test("sokol-args init shutdown");
     sargs_setup(&(sargs_desc){0});
@@ -44,7 +44,7 @@ static void test_no_args(void) {
     sargs_shutdown();
 }
 
-static const char* argv_1[] = { "exe_name", "kvp0=val0", "kvp1=val1", "kvp2=val2" };
+static char* argv_1[] = { "exe_name", "kvp0=val0", "kvp1=val1", "kvp2=val2" };
 static void test_simple_args(void) {
     test("sokol-args simple args");
     sargs_setup(&(sargs_desc){
@@ -69,7 +69,7 @@ static void test_simple_args(void) {
     sargs_shutdown();
 }
 
-static const char* argv_2[] = { "exe_name", "kvp0  = val0 ", "  \tkvp1=  val1", "kvp2  = val2   "};
+static char* argv_2[] = { "exe_name", "kvp0  = val0 ", "  \tkvp1=  val1", "kvp2  = val2   "};
 static void test_simple_whitespace(void) {
     test("sokol-args simple whitespace");
     sargs_setup(&(sargs_desc){
@@ -94,7 +94,7 @@ static void test_simple_whitespace(void) {
     sargs_shutdown();
 }
 
-static const char* argv_3[] = { "exe_name", "kvp0:val0 ", "  kvp1:  val1", "kvp2 \t: val2   "};
+static char* argv_3[] = { "exe_name", "kvp0:val0 ", "  kvp1:  val1", "kvp2 \t: val2   "};
 static void test_colon_separator(void) {
     test("sokol-args colon separator");
     sargs_setup(&(sargs_desc){
@@ -119,7 +119,7 @@ static void test_colon_separator(void) {
     sargs_shutdown();
 }
 
-static const char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
+static char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
 static void test_standalone_separator(void) {
     test("sokol-args standalone separator");
     sargs_setup(&(sargs_desc){
@@ -144,7 +144,7 @@ static void test_standalone_separator(void) {
     sargs_shutdown();
 }
 
-static const char* argv_5[] = { "exe_name", "kvp0='bla bla'", "kvp1=' blub blub'", "kvp2='blob blob '"};
+static char* argv_5[] = { "exe_name", "kvp0='bla bla'", "kvp1=' blub blub'", "kvp2='blob blob '"};
 static void test_single_quotes(void) {
     test("sokol-args single quotes");
     sargs_setup(&(sargs_desc){
@@ -168,7 +168,7 @@ static void test_single_quotes(void) {
     sargs_shutdown();
 }
 
-static const char* argv_6[] = { "exe_name", "kvp0=\"bla bla\"", "kvp1=\" blub blub\"", "kvp2=\"blob blob \""};
+static char* argv_6[] = { "exe_name", "kvp0=\"bla bla\"", "kvp1=\" blub blub\"", "kvp2=\"blob blob \""};
 static void test_double_quotes(void) {
     test("sokol-args double quotes");
     sargs_setup(&(sargs_desc){
@@ -192,7 +192,7 @@ static void test_double_quotes(void) {
     sargs_shutdown();
 }
 
-static const char* argv_7[] = { "exe_name", "kvp0='bla \"bla\"'", "kvp1=' \"blub blub\"'", "kvp2='blob \"blob\" '"};
+static char* argv_7[] = { "exe_name", "kvp0='bla \"bla\"'", "kvp1=' \"blub blub\"'", "kvp2='blob \"blob\" '"};
 static void test_double_in_single_quotes(void) {
     test("sokol-args double in single quotes");
     sargs_setup(&(sargs_desc){
@@ -216,7 +216,7 @@ static void test_double_in_single_quotes(void) {
     sargs_shutdown();
 }
 
-static const char* argv_8[] = { "exe_name", "kvp0=\"bla 'bla'\"", "kvp1=\" 'blub blub'\"", "kvp2=\"blob 'blob' \""};
+static char* argv_8[] = { "exe_name", "kvp0=\"bla 'bla'\"", "kvp1=\" 'blub blub'\"", "kvp2=\"blob 'blob' \""};
 static void test_single_in_double_quotes(void) {
     test("sokol-args single in double quotes");
     sargs_setup(&(sargs_desc){
@@ -240,7 +240,7 @@ static void test_single_in_double_quotes(void) {
     sargs_shutdown();
 }
 
-static const char* argv_9[] = { "exe_name", "kvp0='bla ", "bla'", "kvp1= ' blub", " blub'", "kvp2='blob blob '"};
+static char* argv_9[] = { "exe_name", "kvp0='bla ", "bla'", "kvp1= ' blub", " blub'", "kvp2='blob blob '"};
 static void test_split_quotes(void) {
     test("sokol-args split quotes");
     sargs_setup(&(sargs_desc){
@@ -264,7 +264,7 @@ static void test_split_quotes(void) {
     sargs_shutdown();
 }
 
-static const char* argv_10[] = { "exe_name", "kvp0=\\\\val0\\nval1", "kvp1=val1\\rval2", "kvp2='val2\\tval3'" };
+static char* argv_10[] = { "exe_name", "kvp0=\\\\val0\\nval1", "kvp1=val1\\rval2", "kvp2='val2\\tval3'" };
 static void test_escape_sequence(void) {
     test("sokol-args escape sequence");
     sargs_setup(&(sargs_desc){
