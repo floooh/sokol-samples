@@ -104,7 +104,6 @@ void frame() {
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();
-
 }
 
 void shutdown() {

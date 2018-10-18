@@ -37,6 +37,12 @@ fips_begin_app(quad-sapp windowed)
     fips_deps(common)
 fips_end_app()
 
+fips_begin_app(bufferoffsets-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(bufferoffsets-sapp.c)
+    fips_deps(common)
+fips_end_app()
+
 fips_begin_app(cube-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(cube-sapp.c)
