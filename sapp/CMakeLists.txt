@@ -43,6 +43,12 @@ fips_begin_app(cube-sapp windowed)
     fips_deps(common)
 fips_end_app()
 
+fips_begin_app(texcube-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(texcube-sapp.c)
+    fips_deps(common)
+fips_end_app()
+
 fips_begin_app(imgui-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(imgui-sapp.cc)
