@@ -115,7 +115,7 @@ void init(void) {
             .source = vs_src
         },
         .fs = {
-            .images[0].type = SG_IMAGETYPE_2D,
+            .images[0] = { .name="tex", .type = SG_IMAGETYPE_2D },
             .source = fs_src
         }
     });
@@ -124,7 +124,7 @@ void init(void) {
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
+                [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 },
                 [2] = { .name="texcoord0", .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
             }
@@ -290,12 +290,12 @@ const char* vs_src =
     "};\n"
     "struct vs_in {\n"
     "  float4 pos: POSITION;\n"
-    "  float4 color: COLOR1;\n"
-    "  float2 uv: TEXCOORD1;\n"
-    "};\n"
-    "struct vs_out {\n"
     "  float4 color: COLOR0;\n"
     "  float2 uv: TEXCOORD0;\n"
+    "};\n"
+    "struct vs_out {\n"
+    "  float4 color: COLOR;\n"
+    "  float2 uv: TEXCOORD;\n"
     "  float4 pos: SV_Position;\n"
     "};\n"
     "vs_out main(vs_in inp) {\n"
@@ -308,7 +308,7 @@ const char* vs_src =
 const char* fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
-    "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+    "float4 main(float4 color: COLOR, float2 uv: TEXCOORD): SV_Target0 {\n"
     "  return tex.Sample(smp, uv) * color;\n"
     "}\n";
 #endif

@@ -69,7 +69,7 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 },
+                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT2 },
                 [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT3 }
             }
         }
