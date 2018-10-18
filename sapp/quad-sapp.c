@@ -64,7 +64,7 @@ void init(void) {
     });
 }
 
-void frame() {
+void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_draw_state(&draw_state);
     sg_draw(0, 6, 1);
@@ -72,7 +72,7 @@ void frame() {
     sg_commit();
 }
 
-void cleanup() {
+void cleanup(void) {
     sg_shutdown();
 }
 
