@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  triangle-sapp.c
-//  Simple 2D rendering from vertex buffer.
+//  quad-sapp.c
+//  Simple 2D rendering with vertex- and index-buffer.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -24,41 +24,50 @@ void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
 
-    /* a vertex buffer with 3 vertices */
+    /* a vertex buffer */
     float vertices[] = {
-        // positions            // colors
-         0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
-         0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
+        // positions            colors
+        -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
+         0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
+         0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .content = vertices,
+        .content = vertices
     });
 
-    /* create a shader */
+    /* an index buffer with 2 triangles */
+    uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
+    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .content = indices
+    });
+
+    /* a shader (use separate shader sources here */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source = vs_src,
         .fs.source = fs_src
     });
 
-    /* create a pipeline object (default render states are fine for triangle) */
+    /* a pipeline state object */
     draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
                 [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
-        },
+        }
     });
 }
 
 void frame() {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_draw_state(&draw_state);
-    sg_draw(0, 3, 1);
+    sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();
 }
@@ -74,7 +83,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .window_title = "Triangle (sokol-app)",
+        .window_title = "Quad (sokol-app)",
     };
 }
 
