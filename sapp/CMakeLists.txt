@@ -49,6 +49,12 @@ fips_begin_app(cube-sapp windowed)
     fips_deps(common)
 fips_end_app()
 
+fips_begin_app(noninterleaved-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(noninterleaved-sapp.c)
+    fips_deps(common)
+fips_end_app()
+
 fips_begin_app(texcube-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(texcube-sapp.c)
