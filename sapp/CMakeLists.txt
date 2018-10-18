@@ -25,6 +25,12 @@ fips_begin_app(clear-sapp windowed)
     fips_deps(common)
 fips_end_app()
 
+fips_begin_app(triangle-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(triangle-sapp.c)
+    fips_deps(common)
+fips_end_app()
+
 fips_begin_app(cube-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(cube-sapp.c)
