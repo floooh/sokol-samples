@@ -12,9 +12,9 @@
 
 extern const char *vs_src, *fs_src;
 
-const int MSAA_SAMPLES = 4;
-const int MAX_PARTICLES = 512 * 1024;
-const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
+#define MSAA_SAMPLES (4)
+#define MAX_PARTICLES (512 * 1024)
+#define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
 /* a pass-action to clear to black */
 sg_pass_action pass_action = {
@@ -122,9 +122,9 @@ void frame(void) {
         if (cur_num_particles < MAX_PARTICLES) {
             pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
             vel[cur_num_particles] = HMM_Vec3(
-                ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
-                ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
-                ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
+                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f,
+                ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f);
             cur_num_particles++;
         }
         else {
