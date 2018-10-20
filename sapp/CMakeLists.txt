@@ -97,6 +97,12 @@ fips_begin_app(mipmap-sapp windowed)
     fips_deps(common)
 fips_end_app()
 
+fips_begin_app(blend-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(blend-sapp.c)
+    fips_deps(common)
+fips_end_app()
+
 fips_begin_app(imgui-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(imgui-sapp.cc)
