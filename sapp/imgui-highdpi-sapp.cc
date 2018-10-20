@@ -30,7 +30,7 @@ void imgui_draw_cb(ImDrawData*);
 extern const char* vs_src;
 extern const char* fs_src;
 
-void init() {
+void init(void) {
     // setup sokol-gfx and sokol-time
     sg_desc desc = { };
     desc.mtl_device = sapp_metal_get_device();
@@ -40,6 +40,7 @@ void init() {
     desc.d3d11_device_context = sapp_d3d11_get_device_context();
     desc.d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view;
     desc.d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
+    desc.gl_force_gles2 = sapp_gles2();
     sg_setup(&desc);
     stm_setup();
 
@@ -139,7 +140,7 @@ void init() {
     pass_action.colors[0].val[3] = 1.0f;
 }
 
-void frame() {
+void frame(void) {
     const int cur_width = sapp_width();
     const int cur_height = sapp_height();
 
@@ -195,7 +196,7 @@ void frame() {
     sg_commit();
 }
 
-void cleanup() {
+void cleanup(void) {
     sg_shutdown();
 }
 
@@ -344,6 +345,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.fullscreen = true;
     desc.high_dpi = true;
     desc.ios_keyboard_resizes_canvas = false;
+    desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
     return desc;
 }
@@ -371,7 +373,7 @@ const char* fs_src =
     "void main() {\n"
     "    frag_color = texture(tex, uv) * color;\n"
     "}\n";
-#elif defined(SOKOL_GLES2)
+#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
 const char* vs_src =
     "uniform vec2 disp_size;\n"
     "attribute vec2 position;\n"
@@ -391,30 +393,6 @@ const char* fs_src =
     "varying vec4 color;\n"
     "void main() {\n"
     "    gl_FragColor = texture2D(tex, uv) * color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-const char* vs_src =
-    "#version 300 es\n"
-    "uniform vec2 disp_size;\n"
-    "in vec2 position;\n"
-    "in vec2 texcoord0;\n"
-    "in vec4 color0;\n"
-    "out vec2 uv;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
-    "    uv = texcoord0;\n"
-    "    color = color0;\n"
-    "}\n";
-const char* fs_src =
-    "#version 300 es\n"
-    "precision mediump float;"
-    "uniform sampler2D tex;\n"
-    "in vec2 uv;\n"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "    frag_color = texture(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =

@@ -253,6 +253,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = MSAA_SAMPLES,
+        .gl_force_gles2 = true,
         .window_title = "Offscreen Rendering (sokol-app)",
     };
 }
@@ -297,7 +298,7 @@ const char* default_fs_src =
     "void main() {\n"
     "  frag_color = texture(tex, uv) + color * 0.5;\n"
     "}\n";
-#elif defined(SOKOL_GLES2)
+#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
 const char* offscreen_vs_src = 
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
@@ -332,48 +333,6 @@ const char* default_fs_src =
     "varying vec2 uv;\n"
     "void main() {\n"
     "  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-const char* offscreen_vs_src =
-    "#version 300 es\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "}\n";
-const char* offscreen_fs_src =
-    "#version 300 es\n"
-    "precision mediump float;\n"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
-    "}\n";
-const char* default_vs_src =
-    "#version 300 es\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "in vec2 texcoord0;\n"
-    "out vec4 color;\n"
-    "out vec2 uv;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "  uv = texcoord0;\n"
-    "}\n";
-const char* default_fs_src =
-    "#version 300 es\n"
-    "precision mediump float;\n"
-    "uniform sampler2D tex;\n"
-    "in vec4 color;\n"
-    "in vec2 uv;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = texture(tex, uv) + color * 0.5;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
 const char* offscreen_vs_src =

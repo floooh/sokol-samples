@@ -14,7 +14,7 @@ sg_draw_state draw_state = {0};
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
+        .gl_force_gles2 = true,
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
@@ -74,6 +74,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
+        .gl_force_gles2 = true,
         .window_title = "Triangle (sokol-app)",
     };
 }
@@ -95,7 +96,7 @@ const char* fs_src =
     "void main() {\n"
     "  frag_color = color;\n"
     "}\n";
-#elif defined(SOKOL_GLES2)
+#elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
 const char* vs_src =
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -109,24 +110,6 @@ const char* fs_src =
     "varying vec4 color;\n"
     "void main() {\n"
     "  gl_FragColor = color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-const char* vs_src =
-    "#version 300 es\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = position;\n"
-    "  color = color0;\n"
-    "}\n";
-const char* fs_src =
-    "#version 300 es\n"
-    "precision mediump float;"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =

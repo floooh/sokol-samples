@@ -174,6 +174,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = SAMPLE_COUNT,
+        .gl_force_gles2 = true,
         .window_title = "Textured Cube (sokol-app)",
     };
 }
@@ -201,7 +202,7 @@ const char* fs_src =
     "void main() {\n"
     "  frag_color = texture(tex, uv) * color;\n"
     "}\n";
-#elif defined(SOKOL_GLES2)
+#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
 const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
@@ -221,30 +222,6 @@ const char* fs_src =
     "varying vec2 uv;\n"
     "void main() {\n"
     "  gl_FragColor = texture2D(tex, uv) * color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-const char* vs_src =
-    "#version 300 es\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "in vec2 texcoord0;\n"
-    "out vec4 color;\n"
-    "out vec2 uv;"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "  uv = texcoord0 * 5.0;\n"
-    "}\n";
-const char* fs_src =
-    "#version 300 es\n"
-    "precision mediump float;"
-    "uniform sampler2D tex;"
-    "in vec4 color;\n"
-    "in vec2 uv;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = texture(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =

@@ -178,6 +178,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = MSAA_SAMPLES,
+        .gl_force_gles2 = true,
         .window_title = "Instancing (sokol-app)",
     };
 }
@@ -202,7 +203,7 @@ const char* fs_src =
     "void main() {\n"
     "  frag_color = color;\n"
     "}\n";
-#elif defined(SOKOL_GLES2)
+#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
 const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec3 position;\n"
@@ -219,27 +220,6 @@ const char* fs_src =
     "varying vec4 color;\n"
     "void main() {\n"
     "  gl_FragColor = color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-const char* vs_src =
-    "#version 300 es\n"
-    "uniform mat4 mvp;\n"
-    "in vec3 position;\n"
-    "in vec4 color0;\n"
-    "in vec3 instance_pos;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  vec4 pos = vec4(position + instance_pos, 1.0);"
-    "  gl_Position = mvp * pos;\n"
-    "  color = color0;\n"
-    "}\n";
-const char* fs_src =
-    "#version 300 es\n"
-    "precision mediump float;"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
 const char* vs_src =

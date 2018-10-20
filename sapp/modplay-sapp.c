@@ -139,6 +139,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 400,
         .height = 300,
+        .gl_force_gles2 = true,
         .window_title = "Sokol Audio + LibModPlug",
     };
 }

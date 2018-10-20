@@ -132,6 +132,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 400,
         .height = 300,
         .window_title = "Events (sokol app)",
-        .user_cursor = true
+        .user_cursor = true,
+        .gl_force_gles2 = true
     };
 }
