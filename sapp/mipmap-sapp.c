@@ -266,25 +266,22 @@ const char* vs_src =
     "};\n"
     "struct vs_in {\n"
     "  float4 pos: POSITION;\n"
-    "  float4 color: COLOR0;\n"
     "  float2 uv: TEXCOORD0;\n"
     "};\n"
     "struct vs_out {\n"
-    "  float4 color: COLOR0;\n"
     "  float2 uv: TEXCOORD0;\n"
     "  float4 pos: SV_Position;\n"
     "};\n"
     "vs_out main(vs_in inp) {\n"
     "  vs_out outp;\n"
     "  outp.pos = mul(mvp, inp.pos);\n"
-    "  outp.color = inp.color;\n"
     "  outp.uv = inp.uv;\n"
     "  return outp;\n"
-    "}\n";
+    "};\n";
 const char* fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
-    "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-    "  return tex.Sample(smp, uv) + color * 0.5;\n"
-    "}\n";
+    "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
+    "  return tex.Sample(smp, uv);\n"
+    "};\n";
 #endif
