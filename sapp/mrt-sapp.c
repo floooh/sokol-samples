@@ -289,6 +289,8 @@ void draw_gles2_fallback(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } },
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_end_pass();
+    sg_commit();
 }
 
 void frame(void) {
