@@ -96,7 +96,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             for ext in ['wasm'] :
                 src_path = '{}/{}-sapp.{}'.format(wasm_deploy_dir, name, ext)
                 if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/wasm/{}-sapp.{}.txt'.format(webpage_dir, name, ext))
+                    shutil.copy(src_path, '{}/wasm/{}-sapp.{}'.format(webpage_dir, name, ext))
             with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                 templ = Template(f.read())
             src_url = GitHubSamplesURL + source
