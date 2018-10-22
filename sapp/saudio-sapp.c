@@ -34,11 +34,11 @@ void frame(void) {
     int num_frames = saudio_expect();
     float s;
     for (int i = 0; i < num_frames; i++) {
-        if (even_odd++ & (1<<3)) {
-            s = 0.1f;
+        if (even_odd++ & (1<<5)) {
+            s = 0.05f;
         }
         else {
-            s = -0.1f;
+            s = -0.05f;
         }
         samples[sample_pos++] = s;
         if (sample_pos == NUM_SAMPLES) {

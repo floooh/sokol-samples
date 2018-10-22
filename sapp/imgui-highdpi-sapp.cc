@@ -134,9 +134,9 @@ void init(void) {
 
     // initial clear color
     pass_action.colors[0].action = SG_ACTION_CLEAR;
-    pass_action.colors[0].val[0] = 0.0f;
-    pass_action.colors[0].val[1] = 0.5f;
-    pass_action.colors[0].val[2] = 0.7f;
+    pass_action.colors[0].val[0] = 0.3f;
+    pass_action.colors[0].val[1] = 0.7f;
+    pass_action.colors[0].val[2] = 0.0f;
     pass_action.colors[0].val[3] = 1.0f;
 }
 

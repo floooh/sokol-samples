@@ -117,7 +117,7 @@ void frame(void) {
         }
     #endif
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 1.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.4f, 0.7f, 1.0f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_end_pass();

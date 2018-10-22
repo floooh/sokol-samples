@@ -11,30 +11,31 @@ from mod import log, util, project, emscripten, android
 
 # sample attributes
 samples = [
-    [ 'clear', 'clear-emsc.c' ],
-    [ 'triangle', 'triangle-emsc.c' ],
-    [ 'quad', 'quad-emsc.c' ],
-    [ 'bufferoffsets', 'bufferoffsets-emsc.c'],
-    [ 'cube', 'cube-emsc.c' ],
-    [ 'noninterleaved', 'noninterleaved-emsc.c'],
-    [ 'texcube', 'texcube-emsc.c' ],
-    [ 'offscreen', 'offscreen-emsc.c' ],
-    [ 'instancing', 'instancing-emsc.c' ],
-    [ 'mrt', 'mrt-emsc.c' ],
-    [ 'arraytex', 'arraytex-emsc.c' ],
-    [ 'dyntex', 'dyntex-emsc.c'],
-    [ 'mipmap', 'mipmap-emsc.c'],
-    [ 'blend', 'blend-emsc.c' ],
-    [ 'inject', 'inject-emsc.c' ],
-    [ 'imgui', 'imgui-emsc.cc' ]
+    [ 'clear', 'clear-sapp.c' ],
+    [ 'triangle', 'triangle-sapp.c' ],
+    [ 'quad', 'quad-sapp.c' ],
+    [ 'bufferoffsets', 'bufferoffsets-sapp.c'],
+    [ 'cube', 'cube-sapp.c' ],
+    [ 'noninterleaved', 'noninterleaved-sapp.c'],
+    [ 'texcube', 'texcube-sapp.c' ],
+    [ 'offscreen', 'offscreen-sapp.c' ],
+    [ 'instancing', 'instancing-sapp.c' ],
+    [ 'mrt', 'mrt-sapp.c' ],
+    [ 'arraytex', 'arraytex-sapp.c' ],
+    [ 'dyntex', 'dyntex-sapp.c'],
+    [ 'mipmap', 'mipmap-sapp.c'],
+    [ 'blend', 'blend-sapp.c' ],
+    [ 'imgui', 'imgui-sapp.cc' ],
+    [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc' ],
+    [ 'saudio', 'saudio-sapp.c'],
+    [ 'modplay', 'modplay-sapp.c' ]
 ]
 
 # webpage template arguments
-GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/html5/'
+GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
 
 # build configuration
-EmscConfig = 'webgl2-emsc-ninja-release'
-WasmConfig = 'webgl2-wasm-ninja-release'
+WasmConfig = 'sapp-webgl2-wasm-ninja-release'
 
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
@@ -42,7 +43,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     ws_dir = util.get_workspace_dir(fips_dir)
 
     # create directories
-    for platform in ['asmjs', 'wasm'] :
+    for platform in ['wasm'] :
         platform_dir = '{}/{}'.format(webpage_dir, platform)
         if not os.path.isdir(platform_dir) :
             os.makedirs(platform_dir)
@@ -59,13 +60,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             img_path = proj_dir + 'webpage/dummy.jpg'
         content += '<div class="thumb">\n'
         content += '  <div class="thumb-title">{}</div>\n'.format(name)
-        content += '  <div class="img-frame"><a href="asmjs/{}-emsc.html"><img class="image" src="{}"></img></a></div>\n'.format(name,img_name)
-        content += '  <div class="thumb-bar">\n'
-        content += '    <ul class="thumb-list">\n'
-        content += '      <li class="thumb-item"><a class="thumb-link" href="asmjs/{}-emsc.html">asm.js</a></li>\n'.format(name)
-        content += '      <li class="thumb-item"><a class="thumb-link" href="wasm/{}-emsc.html">wasm</a></li>\n'.format(name)
-        content += '    </ul>\n'
-        content += '  </div>\n'
+        content += '  <div class="img-frame"><a href="wasm/{}-sapp.html"><img class="image" src="{}"></img></a></div>\n'.format(name,img_name)
         content += '</div>\n'
 
     # populate the html template, and write to the build directory
@@ -87,24 +82,6 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         log.info('> copy file: {}'.format(name))
         shutil.copy(proj_dir + '/webpage/' + name, webpage_dir + '/' + name)
 
-    # generate emscripten HTML pages
-    if emscripten.check_exists(fips_dir) :
-        emsc_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, EmscConfig)
-        for sample in samples :
-            name = sample[0]
-            source = sample[1]
-            log.info('> generate emscripten HTML page: {}'.format(name))
-            for ext in ['js'] :
-                src_path = '{}/{}-emsc.{}'.format(emsc_deploy_dir, name, ext)
-                if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/asmjs/'.format(webpage_dir))
-            with open(proj_dir + '/webpage/emsc.html', 'r') as f :
-                templ = Template(f.read())
-            src_url = GitHubSamplesURL + source
-            html = templ.safe_substitute(name=name, prog=name+'-emsc', source=src_url)
-            with open('{}/asmjs/{}-emsc.html'.format(webpage_dir, name, name), 'w') as f :
-                f.write(html)
-
     # generate WebAssembly HTML pages
     if emscripten.check_exists(fips_dir) :
         wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, WasmConfig)
@@ -112,19 +89,19 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             name = sample[0]
             source = sample[1]
             log.info('> generate wasm HTML page: {}'.format(name))
-            for ext in ['js', 'wasm.mappedGlobals'] :
-                src_path = '{}/{}-emsc.{}'.format(wasm_deploy_dir, name, ext)
+            for ext in ['js'] :
+                src_path = '{}/{}-sapp.{}'.format(wasm_deploy_dir, name, ext)
                 if os.path.isfile(src_path) :
                     shutil.copy(src_path, '{}/wasm/'.format(webpage_dir))
             for ext in ['wasm'] :
-                src_path = '{}/{}-emsc.{}'.format(wasm_deploy_dir, name, ext)
+                src_path = '{}/{}-sapp.{}'.format(wasm_deploy_dir, name, ext)
                 if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/wasm/{}-emsc.{}.txt'.format(webpage_dir, name, ext))
+                    shutil.copy(src_path, '{}/wasm/{}-sapp.{}.txt'.format(webpage_dir, name, ext))
             with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                 templ = Template(f.read())
             src_url = GitHubSamplesURL + source
-            html = templ.safe_substitute(name=name, prog=name+'-emsc', source=src_url)
-            with open('{}/wasm/{}-emsc.html'.format(webpage_dir, name), 'w') as f :
+            html = templ.safe_substitute(name=name, prog=name+'-sapp', source=src_url)
+            with open('{}/wasm/{}-sapp.html'.format(webpage_dir, name), 'w') as f :
                 f.write(html)
 
     # copy the screenshots
@@ -147,9 +124,6 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
         os.makedirs(webpage_dir)
 
     # compile samples
-    if emscripten.check_exists(fips_dir) :
-        project.gen(fips_dir, proj_dir, EmscConfig)
-        project.build(fips_dir, proj_dir, EmscConfig)
     if emscripten.check_exists(fips_dir) :
         project.gen(fips_dir, proj_dir, WasmConfig)
         project.build(fips_dir, proj_dir, WasmConfig)
