@@ -7,7 +7,11 @@
 #include "imgui.h"
 #include "imgui_font.h"
 
-const int MaxVertices = (1<<16);
+/* even though we use 16-bit indices, the vertex buffer may hold
+    more then 64k vertices, because it will be rendered with
+    in chunks via buffer offsets
+*/
+const int MaxVertices = (1<<17);
 const int MaxIndices = MaxVertices * 3;
 
 uint64_t last_time = 0;
@@ -272,54 +276,38 @@ void imgui_draw_cb(ImDrawData* draw_data) {
         return;
     }
 
-    // copy vertices and indices
-    int num_vertices = 0;
-    int num_indices = 0;
-    int num_cmdlists = 0;
-    for (num_cmdlists = 0; num_cmdlists < draw_data->CmdListsCount; num_cmdlists++) {
-        const ImDrawList* cl = draw_data->CmdLists[num_cmdlists];
-        const int cl_num_vertices = cl->VtxBuffer.size();
-        const int cl_num_indices = cl->IdxBuffer.size();
-
-        // overflow check
-        if ((num_vertices + cl_num_vertices) > MaxVertices) {
-            break;
-        }
-        if ((num_indices + cl_num_indices) > MaxIndices) {
-            break;
-        }
-
-        // copy vertices
-        memcpy(&vertices[num_vertices], &cl->VtxBuffer.front(), cl_num_vertices*sizeof(ImDrawVert));
-
-        // copy indices, need to 'rebase' indices to start of global vertex buffer
-        const ImDrawIdx* src_index_ptr = &cl->IdxBuffer.front();
-        const uint16_t base_vertex_index = num_vertices;
-        for (int i = 0; i < cl_num_indices; i++) {
-            indices[num_indices++] = src_index_ptr[i] + base_vertex_index;
-        }
-        num_vertices += cl_num_vertices;
-    }
-
-    // update vertex and index buffers
-    const int vertex_data_size = num_vertices * sizeof(ImDrawVert);
-    const int index_data_size = num_indices * sizeof(uint16_t);
-    sg_update_buffer(draw_state.vertex_buffers[0], vertices, vertex_data_size);
-    sg_update_buffer(draw_state.index_buffer, indices, index_data_size);
-
     // render the command list
     const float dpi_scale = sapp_dpi_scale();
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x / dpi_scale;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y / dpi_scale;
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-    int base_element = 0;
-    for (int cl_index=0; cl_index<num_cmdlists; cl_index++) {
-        const ImDrawList* cmd_list = draw_data->CmdLists[cl_index];
-        for (const ImDrawCmd& pcmd : cmd_list->CmdBuffer) {
+    for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
+        const ImDrawList* cl = draw_data->CmdLists[cl_index];
+
+        // append vertices and indices to buffers, record start offsets in draw state
+        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const int vb_offset = sg_append_buffer(draw_state.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
+        const int ib_offset = sg_append_buffer(draw_state.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        /* don't render anything if the buffer is in overflow state (this is also
+            checked internally in sokol_gfx, draw calls that attempt from
+            overflowed buffers will be silently dropped)
+        */
+        if (sg_query_buffer_overflow(draw_state.vertex_buffers[0]) ||
+            sg_query_buffer_overflow(draw_state.index_buffer))
+        {
+            continue;
+        }
+
+        draw_state.vertex_buffer_offsets[0] = vb_offset;
+        draw_state.index_buffer_offset = ib_offset;
+        sg_apply_draw_state(&draw_state);
+        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+
+        int base_element = 0;
+        for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
             if (pcmd.UserCallback) {
-                pcmd.UserCallback(cmd_list, &pcmd);
+                pcmd.UserCallback(cl, &pcmd);
             }
             else {
                 const int scissor_x = (int) (pcmd.ClipRect.x * dpi_scale);
