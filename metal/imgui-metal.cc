@@ -19,8 +19,6 @@ bool show_another_window = false;
 
 sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
-ImDrawVert vertices[MaxVertices];
-uint16_t indices[MaxIndices];
 
 typedef struct {
     ImVec2 disp_size;
@@ -75,13 +73,13 @@ void init(const void* mtl_device) {
     // dynamic vertex- and index-buffers for ImGui-generated geometry
     sg_buffer_desc vbuf_desc = {
         .usage = SG_USAGE_STREAM,
-        .size = sizeof(vertices)
+        .size = MaxVertices * sizeof(ImDrawVert)
     };
     draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .usage = SG_USAGE_STREAM,
-        .size = sizeof(indices)
+        .size = MaxIndices * sizeof(ImDrawIdx)
     };
     draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
 
