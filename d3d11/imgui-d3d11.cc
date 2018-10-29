@@ -22,8 +22,6 @@ bool show_another_window = false;
 
 sg_draw_state draw_state = { };
 sg_pass_action pass_action = { };
-ImDrawVert vertices[MaxVertices];
-uint16_t indices[MaxIndices];
 
 typedef struct {
     ImVec2 disp_size;
@@ -79,13 +77,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
     vbuf_desc.usage = SG_USAGE_STREAM;
-    vbuf_desc.size = sizeof(vertices);
+    vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
     draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     sg_buffer_desc ibuf_desc = { };
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.usage = SG_USAGE_STREAM;
-    ibuf_desc.size = sizeof(indices);
+    ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
     draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
 
     // font texture for imgui's default font
