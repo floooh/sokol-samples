@@ -4,8 +4,9 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action = { 0 };
-sg_draw_state draw_state = { 0 };
+sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
 
 void init(const void* mtl_device) {
     /* setup sokol */
@@ -24,14 +25,14 @@ void init(const void* mtl_device) {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
 
     /* an index buffer with 2 triangles */
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices
@@ -69,7 +70,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline state object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -84,7 +85,8 @@ void init(const void* mtl_device) {
 
 void frame() {
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();

@@ -8,8 +8,9 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action = {0};
-sg_draw_state draw_state = {0};
+sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
 
 void init(const void* mtl_device) {
     /* setup sokol, keep pool size small so the bug would trigger earlier */
@@ -36,7 +37,7 @@ void frame() {
          0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -75,7 +76,7 @@ void frame() {
     });
 
     /* create a pipeline object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -87,14 +88,15 @@ void frame() {
 
     /* draw one frame */
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();
 
     /* release the resource we created above */
-    sg_destroy_buffer(draw_state.vertex_buffers[0]);
-    sg_destroy_pipeline(draw_state.pipeline);
+    sg_destroy_buffer(bind.vertex_buffers[0]);
+    sg_destroy_pipeline(pip);
     sg_destroy_shader(shd);
 }
 

@@ -18,9 +18,9 @@ const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-
-sg_draw_state draw_state;
-float ry = 0.0f;
+sg_pipeline pip;
+sg_bindings bind;
+float ry;
 hmm_mat4 view_proj;
 
 typedef struct {
@@ -51,7 +51,7 @@ void init(const void* mtl_device) {
           -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -61,14 +61,14 @@ void init(const void* mtl_device) {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
     });
 
     /* empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1 */
-    draw_state.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     });
@@ -107,7 +107,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* vertex buffer at slot 1 must step per instance */
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
@@ -168,7 +168,7 @@ void frame() {
     }
 
     /* update instance data */
-    sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
+    sg_update_buffer(bind.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
 
     /* model-view-projection matrix */
     ry += 1.0f;
@@ -177,8 +177,9 @@ void frame() {
 
     /* ...and draw */
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 24, cur_num_particles);
     sg_end_pass();
     sg_commit();

@@ -4,8 +4,9 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action = {0};
-sg_draw_state draw_state = {0};
+sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
 
 void init(const void* mtl_device) {
     /* setup sokol */
@@ -23,7 +24,7 @@ void init(const void* mtl_device) {
          0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -62,7 +63,7 @@ void init(const void* mtl_device) {
     });
 
     /* create a pipeline object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* Metal has explicit attribute locations, and the vertex layout
            has no gaps, so we don't need to provide stride, offsets
            or attribute names
@@ -79,7 +80,8 @@ void init(const void* mtl_device) {
 
 void frame() {
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();
