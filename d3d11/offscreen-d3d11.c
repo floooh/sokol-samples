@@ -217,16 +217,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state for offscreen rendering */
-    sg_draw_state offscreen_draw_state = {
-        .pipeline = offscreen_pip,
+    /* resource bindings for offscreen rendering */
+    sg_bindings offscreen_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* draw state for default pass */
-    sg_draw_state default_draw_state = {
-        .pipeline = default_pip,
+    /* resource bindings for default pass */
+    sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = color_img
@@ -251,15 +249,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
         /* offscreen pass, rendering an untextured cube */
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-        sg_apply_draw_state(&offscreen_draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(offscreen_pip);
+        sg_apply_bindings(&offscreen_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
         /* default pass, render cube textured with offscreen render target image */
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&default_draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(default_pip);
+        sg_apply_bindings(&default_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 

@@ -36,6 +36,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .content = vertices
     });
 
+    /* define resource bindings */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf
+    };
+
     /* a shader to render the triangle */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
@@ -71,16 +76,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .shader = shd
     });
 
-    /* a draw state struct with all the resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf
-    };
-
     /* the draw loop */
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
         sg_end_pass();
         sg_commit();

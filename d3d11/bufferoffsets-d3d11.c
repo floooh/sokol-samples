@@ -89,11 +89,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* a draw state object with the resource bindings, before drawing,
-       the buffer offsets will be updates
-    */
-    sg_draw_state ds = {
-        .pipeline = pip,
+    /* the resource bindings, before drawing the buffer offsets will be updated */
+    sg_bindings bind = {
         .vertex_buffers[0] = vb,
         .index_buffer = ib
     };
@@ -107,21 +104,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_apply_pipeline(pip);
         /* render the triangle */
-        ds.vertex_buffer_offsets[0] = 0;
-        ds.index_buffer_offset = 0;
-        sg_apply_draw_state(&ds);
+        bind.vertex_buffer_offsets[0] = 0;
+        bind.index_buffer_offset = 0;
+        sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
         /* render the quad from the same vertex- and index-buffer */
-        ds.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-        ds.index_buffer_offset = 3 * sizeof(uint16_t);
-        sg_apply_draw_state(&ds);
+        bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+        bind.index_buffer_offset = 3 * sizeof(uint16_t);
+        sg_apply_bindings(&bind);
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();
         d3d11_present();
     }
-
     sg_shutdown();
     d3d11_shutdown();
     return 0;

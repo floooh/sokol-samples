@@ -19,7 +19,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-struct {
+static struct {
     uint32_t mip0[65536];   /* 256x256 */
     uint32_t mip1[16384];   /* 128x128 */
     uint32_t mip2[4096];    /* 64*64 */
@@ -31,7 +31,7 @@ struct {
     uint32_t mip8[1];       /* 1*2 */
 } pixels;
 
-uint32_t mip_colors[9] = {
+static uint32_t mip_colors[9] = {
     0xFF0000FF,     /* red */
     0xFF00FF00,     /* green */
     0xFFFF0000,     /* blue */
@@ -175,20 +175,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         r += 0.1f;
         hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-        sg_draw_state draw_state = {
-            .pipeline = pip,
+        sg_begin_default_pass(&(sg_pass_action){0}, d3d11_width(), d3d11_height());
+        sg_apply_pipeline(pip);
+        sg_bindings bind = {
             .vertex_buffers[0] = vbuf
         };
-        sg_begin_default_pass(&(sg_pass_action){0}, d3d11_width(), d3d11_height());
         for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;
             const float y = ((float)(i / 4) - 1.0f) * -2.0f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
             
-            draw_state.fs_images[0] = img[i];
-            sg_apply_draw_state(&draw_state);
-            sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+            bind.fs_images[0] = img[i];
+            sg_apply_bindings(&bind);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
             sg_draw(0, 4, 1);
         }
         sg_end_pass();

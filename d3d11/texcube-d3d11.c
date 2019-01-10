@@ -159,9 +159,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* default pass action (clear to gray) */
     sg_pass_action pass_action = { 0 };
 
-    /* a draw state with the resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    /* resource bindings */
+    sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
@@ -184,8 +183,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
         /* draw frame */
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

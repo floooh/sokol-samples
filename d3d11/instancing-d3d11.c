@@ -23,9 +23,9 @@ typedef struct {
 } vs_params_t;
 
 /* particle positions and velocity */
-int cur_num_particles = 0;
-hmm_vec3 pos[MAX_PARTICLES];
-hmm_vec3 vel[MAX_PARTICLES];
+static int cur_num_particles = 0;
+static hmm_vec3 pos[MAX_PARTICLES];
+static hmm_vec3 vel[MAX_PARTICLES];
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
@@ -130,9 +130,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state with resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    /* resource bindings */
+    sg_bindings bind = {
         .vertex_buffers = {
             [0] = vbuf_geom,
             [1] = vbuf_inst
@@ -189,8 +188,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();

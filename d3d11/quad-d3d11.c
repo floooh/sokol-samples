@@ -78,9 +78,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state struct with resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    /* resource bindings */
+    sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
@@ -91,7 +90,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* draw loop */
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();

@@ -24,7 +24,6 @@ typedef struct {
     hmm_vec2 offset;
 } params_t;
 
-
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
     const int width = 800;
@@ -125,7 +124,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
 
     /* a shader to render a cube into MRT offscreen render targets */
-    sg_shader cube_shd = sg_make_shader(&(sg_shader_desc){
+    sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(offscreen_params_t),
         .vs.source = 
             "cbuffer params: register(b0) {\n"
@@ -161,7 +160,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
 
     /* pipeline object for the offscreen-rendered cube */
-    sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
@@ -169,7 +168,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 [1] = { .sem_name="BRIGHT", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
-        .shader = cube_shd,
+        .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -185,9 +184,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state for offscreen rendering */
-    sg_draw_state offscreen_ds = {
-        .pipeline = cube_pip, 
+    /* resource bindings for offscreen rendering */
+    sg_bindings offscreen_bind = {
         .vertex_buffers[0] = cube_vbuf,
         .index_buffer = cube_ibuf
     };
@@ -259,9 +257,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
 
-    /* draw state to render the fullscreen quad */
-    sg_draw_state fsq_ds = {
-        .pipeline = fsq_pip,
+    /* resource bindings for the fullscreen quad */
+    sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_buf,
         .fs_images = {
             [0] = offscreen_pass_desc.color_attachments[0].image,
@@ -270,42 +267,42 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     };
 
-    /* and prepare a quick'n'dirty draw state to render a debug visualizations
-       of the offscreen render target contents */
-    sg_draw_state dbg_ds = {
-        .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .layout = {
-                .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
-            },
-            .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-            .shader = sg_make_shader(&(sg_shader_desc){
-                .vs.source =
-                    "struct vs_in {\n"
-                    "  float2 pos: POSITION;\n"
-                    "};\n"
-                    "struct vs_out {\n"
-                    "  float2 uv: TEXCOORD0;\n"
-                    "  float4 pos: SV_Position;\n"
-                    "};\n"
-                    "vs_out main(vs_in inp) {\n"
-                    "  vs_out outp;\n"
-                    "  outp.pos = float4(inp.pos*2.0-1.0, 0.5, 1.0);\n"
-                    "  outp.uv = inp.pos;\n"
-                    "  return outp;\n"
-                    "}\n",
-                .fs.images[0].type=SG_IMAGETYPE_2D,
-                .fs.source =
-                    "Texture2D<float4> tex: register(t0);\n"
-                    "sampler smp: register(s0);\n"
-                    "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
-                    "  return float4(tex.Sample(smp, uv).xyz, 1.0);\n"
-                    "}\n"
-            })
-        }),
+    /* pipeline and resource bindings to render a debug visualizations
+       of the offscreen render target contents
+    */
+    sg_pipeline dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
+        },
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .shader = sg_make_shader(&(sg_shader_desc){
+            .vs.source =
+                "struct vs_in {\n"
+                "  float2 pos: POSITION;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = float4(inp.pos*2.0-1.0, 0.5, 1.0);\n"
+                "  outp.uv = inp.pos;\n"
+                "  return outp;\n"
+                "}\n",
+            .fs.images[0].type=SG_IMAGETYPE_2D,
+            .fs.source =
+                "Texture2D<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
+                "  return float4(tex.Sample(smp, uv).xyz, 1.0);\n"
+                "}\n"
+        })
+    });
+    sg_bindings dbg_bind = {
         .vertex_buffers[0] = quad_buf,
         /* images will be filled right before rendering */
     };
-
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
@@ -336,25 +333,27 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
         /* render cube into MRT offscreen render targets */
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-        sg_apply_draw_state(&offscreen_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+        sg_apply_pipeline(offscreen_pip);
+        sg_apply_bindings(&offscreen_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
         /* render fullscreen quad with the 'composed image', plus 3 small
            debug-views with the content of the offscreen render targets */
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&fsq_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+        sg_apply_pipeline(fsq_pip);
+        sg_apply_bindings(&fsq_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
         sg_draw(0, 4, 1);
+        sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_ds.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
-            sg_apply_draw_state(&dbg_ds);
+            dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+            sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }
         sg_end_pass();
-        
         sg_commit();
         d3d11_present();
     }
