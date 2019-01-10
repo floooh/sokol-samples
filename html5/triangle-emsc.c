@@ -10,8 +10,9 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static sg_pipeline pip;
+static sg_bindings bind;
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 void draw();
@@ -32,7 +33,7 @@ int main() {
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -56,7 +57,7 @@ int main() {
     });
 
     /* create a pipeline object (default render states are fine for triangle) */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .shader = shd,
         .layout = {
@@ -67,12 +68,6 @@ int main() {
         },
     });
 
-    /* setup the draw state with resource bindings */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-    };
-
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
@@ -81,7 +76,8 @@ int main() {
 /* draw one frame */
 void draw() {
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();

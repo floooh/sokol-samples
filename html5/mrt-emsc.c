@@ -12,15 +12,17 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
     
-sg_pass_desc offscreen_pass_desc;
-sg_pass offscreen_pass;
-sg_pass_action offscreen_pass_action;
-sg_pass_action default_pass_action;
-sg_draw_state offscreen_draw_state;
-sg_draw_state fsq_draw_state;
-sg_draw_state dbg_draw_state;
-float rx = 0.0f;
-float ry = 0.0f;
+static sg_pass_desc offscreen_pass_desc;
+static sg_pass offscreen_pass;
+static sg_pass_action offscreen_pass_action;
+static sg_pass_action default_pass_action;
+static sg_pipeline offscreen_pip;
+static sg_bindings offscreen_bind;
+static sg_pipeline fsq_pip;
+static sg_bindings fsq_bind;
+static sg_pipeline dbg_pip;
+static sg_bindings dbg_bind;
+static float rx, ry;
 
 typedef struct {
     float x, y, z;
@@ -35,8 +37,8 @@ typedef struct {
     hmm_vec2 offset;
 } params_t;
 
-void draw();
-void draw_webgl_fallback();
+static void draw();
+static void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL context */
@@ -144,9 +146,15 @@ int main() {
         .size = sizeof(cube_indices),
         .content = cube_indices,
     });
+    
+    /* resource bindings for offscreen rendering */
+    offscreen_bind = (sg_bindings){
+        .vertex_buffers[0] = cube_vbuf,
+        .index_buffer = cube_ibuf
+    };
 
     /* a shader to render the cube into offscreen MRT render targets */
-    sg_shader cube_shd = sg_make_shader(&(sg_shader_desc){
+    sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
@@ -178,7 +186,7 @@ int main() {
     });
 
     /* pipeline object for the offscreen-rendered cube */
-    sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
@@ -186,7 +194,7 @@ int main() {
                 [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
-        .shader = cube_shd,
+        .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -202,13 +210,6 @@ int main() {
         }
     });
 
-    /* draw state for offscreen rendering */
-    offscreen_draw_state = (sg_draw_state){
-        .pipeline = cube_pip, 
-        .vertex_buffers[0] = cube_vbuf,
-        .index_buffer = cube_ibuf
-    };
-
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
@@ -216,6 +217,16 @@ int main() {
         .size = sizeof(quad_vertices),
         .content = quad_vertices,
     });
+
+    /* resource bindings to render the fullscreen quad */
+    fsq_bind = (sg_bindings){
+        .vertex_buffers[0] = quad_buf,
+        .fs_images = {
+            [0] = offscreen_pass_desc.color_attachments[0].image,
+            [1] = offscreen_pass_desc.color_attachments[1].image,
+            [2] = offscreen_pass_desc.color_attachments[2].image,
+        }
+    };
 
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
@@ -263,7 +274,7 @@ int main() {
     });
     
     /* the pipeline object for the fullscreen rectangle */
-    sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
         },
@@ -271,47 +282,37 @@ int main() {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
 
-    /* draw state to render the fullscreen quad */
-    fsq_draw_state = (sg_draw_state){
-        .pipeline = fsq_pip,
-        .vertex_buffers[0] = quad_buf,
-        .fs_images = {
-            [0] = offscreen_pass_desc.color_attachments[0].image,
-            [1] = offscreen_pass_desc.color_attachments[1].image,
-            [2] = offscreen_pass_desc.color_attachments[2].image,
-        }
-    };
-
-    /* and prepare a quick'n'dirty draw state to render a debug visualizations
-       of the offscreen render target contents */
-    dbg_draw_state = (sg_draw_state){
-        .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .layout = {
-                .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
-            },
-            .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-            .shader = sg_make_shader(&(sg_shader_desc){
-                .vs.source =
-                    "#version 300 es\n"
-                    "uniform vec2 offset;"
-                    "in vec2 pos;\n"
-                    "out vec2 uv;\n"
-                    "void main() {\n"
-                    "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-                    "  uv = pos;\n"
-                    "}\n",
-                .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
-                .fs.source =
-                    "#version 300 es\n"
-                    "precision mediump float;\n"
-                    "uniform sampler2D tex;\n"
-                    "in vec2 uv;\n"
-                    "out vec4 frag_color;\n"
-                    "void main() {\n"
-                    "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
-                    "}\n"
-            })
-        }),
+    /* and prepare a pipeline and bindings to render a debug visualizations
+       of the offscreen render target contents
+    */
+    dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
+        },
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .shader = sg_make_shader(&(sg_shader_desc){
+            .vs.source =
+                "#version 300 es\n"
+                "uniform vec2 offset;"
+                "in vec2 pos;\n"
+                "out vec2 uv;\n"
+                "void main() {\n"
+                "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+                "  uv = pos;\n"
+                "}\n",
+            .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+            .fs.source =
+                "#version 300 es\n"
+                "precision mediump float;\n"
+                "uniform sampler2D tex;\n"
+                "in vec2 uv;\n"
+                "out vec4 frag_color;\n"
+                "void main() {\n"
+                "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
+                "}\n"
+        })
+    });
+    dbg_bind = (sg_bindings) {
         .vertex_buffers[0] = quad_buf,
         /* images will be filled right before rendering */
     };
@@ -349,21 +350,24 @@ void draw() {
         
     /* render cube into MRT offscreen render targets */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_draw_state(&offscreen_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+    sg_apply_pipeline(offscreen_pip);
+    sg_apply_bindings(&offscreen_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* render fullscreen quad with the 'composed image', plus 3 small
         debug-views with the content of the offscreen render targets */
     sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&fsq_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+    sg_apply_pipeline(fsq_pip);
+    sg_apply_bindings(&fsq_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
     sg_draw(0, 4, 1);
+    sg_apply_pipeline(dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        dbg_draw_state.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
-        sg_apply_draw_state(&dbg_draw_state);
+        dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+        sg_apply_bindings(&dbg_bind);
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

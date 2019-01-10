@@ -13,18 +13,18 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static sg_pipeline pip;
+static sg_bindings bind;
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-float rx = 0.0f;
-float ry = 0.0f;
+static float rx, ry;
 
 typedef struct {
     hmm_mat4 mvp;
 } params_t;
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -67,10 +67,10 @@ int main() {
          1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
-    sg_buffer_desc vbuf_desc = {
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
-    };
+    });
 
     /* create an index buffer for the cube */
     uint16_t indices[] = {
@@ -81,14 +81,14 @@ int main() {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer_desc ibuf_desc = {
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
-    };
+    });
 
     /* create shader */
-    sg_shader_desc shd_desc = {
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -110,10 +110,10 @@ int main() {
             "void main() {\n"
             "  gl_FragColor = color;\n"
             "}\n"
-    };
+    });
 
     /* create pipeline object */
-    sg_pipeline_desc pip_desc = {
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
@@ -122,21 +122,14 @@ int main() {
                 [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
-        .shader = sg_make_shader(&shd_desc),
+        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK
-    };
-
-    /* setup draw state with resource bindings */
-    draw_state = (sg_draw_state){
-        .pipeline = sg_make_pipeline(&pip_desc),
-        .vertex_buffers[0] = sg_make_buffer(&vbuf_desc),
-        .index_buffer = sg_make_buffer(&ibuf_desc)
-    };
+    });
 
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
@@ -159,8 +152,9 @@ void draw() {
 
     /* ...and draw */
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

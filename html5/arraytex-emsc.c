@@ -11,10 +11,11 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_draw_state draw_state;
-sg_pass_action pass_action;
-float rx = 0.0f, ry = 0.0f;
-int frame_index = 0;
+static sg_pass_action pass_action;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
+static int frame_index;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -27,8 +28,8 @@ typedef struct {
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
 
-void draw();
-void draw_webgl_fallback();
+static void draw();
+static void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL2 context */
@@ -135,6 +136,13 @@ int main() {
         .content = indices,
     });
 
+    /* define the resource bindings */
+    bind = (sg_bindings){
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = img
+    };
+
     /* shader to sample from array texture */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
@@ -182,7 +190,7 @@ int main() {
     });
 
     /* create pipeline object */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -197,14 +205,6 @@ int main() {
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
-
-    /* draw state */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
-        .fs_images[0] = img
-    };
 
     /* default pass action */
     pass_action = (sg_pass_action){
@@ -235,8 +235,9 @@ void draw() {
     vs_params.offset2 = HMM_Vec2(0.0f, 0.0f);
 
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

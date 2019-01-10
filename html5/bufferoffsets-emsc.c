@@ -11,8 +11,9 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static sg_pipeline pip;
+static sg_bindings bind;
+static sg_pass_action pass_action = {
     .colors = {
         [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
     }
@@ -23,7 +24,7 @@ typedef struct {
     float r, g, b;
 } vertex_t;
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -50,11 +51,11 @@ int main() {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices
@@ -79,7 +80,7 @@ int main() {
     });
 
     /* a pipeline state object, default states are fine */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -96,15 +97,16 @@ int main() {
 
 void draw() {
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(pip);
     /* render triangle */
-    draw_state.vertex_buffer_offsets[0] = 0;
-    draw_state.index_buffer_offset = 0;
-    sg_apply_draw_state(&draw_state);
+    bind.vertex_buffer_offsets[0] = 0;
+    bind.index_buffer_offset = 0;
+    sg_apply_bindings(&bind);
     sg_draw(0, 3, 1);
     /* render quad */
-    draw_state.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    draw_state.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_draw_state(&draw_state);
+    bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+    bind.index_buffer_offset = 3 * sizeof(uint16_t);
+    sg_apply_bindings(&bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();

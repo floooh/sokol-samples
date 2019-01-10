@@ -13,27 +13,28 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-const int MAX_PARTICLES = 512 * 1024;
-const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
+static const int MAX_PARTICLES = 512 * 1024;
+static const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
 /* clear to black */
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 
-sg_draw_state draw_state;
-float roty = 0.0f;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float roty;
 
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
 /* particle positions and velocity */
-int cur_num_particles = 0;
-hmm_vec3 pos[MAX_PARTICLES];
-hmm_vec3 vel[MAX_PARTICLES];
+static int cur_num_particles = 0;
+static hmm_vec3 pos[MAX_PARTICLES];
+static hmm_vec3 vel[MAX_PARTICLES];
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -55,30 +56,39 @@ int main() {
           -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
-    sg_buffer_desc geom_vbuf_desc = {
+    sg_buffer geom_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
-    };
+    });
 
     /* index buffer for static geometry */
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
-    sg_buffer_desc ibuf_desc = {
+    sg_buffer ibuf= sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
-    };
+    });
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
-    sg_buffer_desc inst_vbuf_desc = {
+    sg_buffer inst_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
+    });
+
+    /* the resource bindings */
+    bind = (sg_bindings){
+        .vertex_buffers = {
+            [0] = geom_vbuf,
+            [1] = inst_vbuf
+        },
+        .index_buffer = ibuf
     };
 
     /* create a shader */
-    sg_shader_desc shd_desc = {
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
@@ -102,10 +112,10 @@ int main() {
             "void main() {\n"
             "  gl_FragColor = color;\n"
             "}\n"
-    };
+    });
 
     /* pipeline state object, note the vertex attribute definition */
-    sg_pipeline_desc pip_desc = {
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
@@ -114,24 +124,14 @@ int main() {
                 [2] = { .name="instance_pos", .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
-        .shader = sg_make_shader(&shd_desc),
+        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_NONE
-    };
-
-    /* setup draw state with resource bindings */
-    draw_state = (sg_draw_state){
-        .pipeline = sg_make_pipeline(&pip_desc),
-        .vertex_buffers = {
-            [0] = sg_make_buffer(&geom_vbuf_desc),
-            [1] = sg_make_buffer(&inst_vbuf_desc)
-        },
-        .index_buffer = sg_make_buffer(&ibuf_desc)
-    };
+    });
 
     /* hand off control to browser loop */
     emscripten_set_main_loop(draw, 0, 1);
@@ -172,7 +172,7 @@ void draw() {
     }
 
     /* update instance data */
-    sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
+    sg_update_buffer(bind.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
 
     /* model-view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
@@ -184,8 +184,9 @@ void draw() {
 
     /* and the actual draw pass... */
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 24, cur_num_particles);
     sg_end_pass();
     sg_commit();
