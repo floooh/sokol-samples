@@ -10,23 +10,24 @@
     more then 64k vertices, because it will be rendered with
     in chunks via buffer offsets
 */
-const int MaxVertices = (1<<17);
-const int MaxIndices = MaxVertices * 3;
+static const int MaxVertices = (1<<17);
+static const int MaxIndices = MaxVertices * 3;
 
-uint64_t last_time = 0;
-bool show_test_window = true;
-bool show_another_window = false;
+static uint64_t last_time = 0;
+static bool show_test_window = true;
+static bool show_another_window = false;
 
-sg_draw_state draw_state = { };
-sg_pass_action pass_action = { };
-bool btn_down[SAPP_MAX_MOUSEBUTTONS] = { };
-bool btn_up[SAPP_MAX_MOUSEBUTTONS] = { };
+static sg_pass_action pass_action;
+static sg_pipeline pip;
+static sg_bindings bind;
+static bool btn_down[SAPP_MAX_MOUSEBUTTONS];
+static bool btn_up[SAPP_MAX_MOUSEBUTTONS];
 
 typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-void imgui_draw_cb(ImDrawData*);
+static void imgui_draw_cb(ImDrawData*);
 
 extern const char* vs_src;
 extern const char* fs_src;
@@ -82,13 +83,13 @@ void init(void) {
     sg_buffer_desc vbuf_desc = { };
     vbuf_desc.usage = SG_USAGE_STREAM;
     vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
-    draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     sg_buffer_desc ibuf_desc = { };
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.usage = SG_USAGE_STREAM;
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
-    draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
+    bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
     // font texture for imgui's default font
     unsigned char* font_pixels;
@@ -104,7 +105,7 @@ void init(void) {
     img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.content.subimage[0][0].ptr = font_pixels;
     img_desc.content.subimage[0][0].size = font_width * font_height * 4;
-    draw_state.fs_images[0] = sg_make_image(&img_desc);
+    bind.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
@@ -131,7 +132,7 @@ void init(void) {
     pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
     pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     pip_desc.blend.color_write_mask = SG_COLORMASK_RGB;
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+    pip = sg_make_pipeline(&pip_desc);
 
     // initial clear color
     pass_action.colors[0].action = SG_ACTION_CLEAR;
@@ -275,31 +276,32 @@ void imgui_draw_cb(ImDrawData* draw_data) {
     }
 
     // render the command list
+    sg_apply_pipeline(pip);
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
-        // append vertices and indices to buffers, record start offsets in draw state
+        // append vertices and indices to buffers, record start offsets in bindings struct
         const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
         const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(draw_state.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(draw_state.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
+        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)
         */
-        if (sg_query_buffer_overflow(draw_state.vertex_buffers[0]) ||
-            sg_query_buffer_overflow(draw_state.index_buffer))
+        if (sg_query_buffer_overflow(bind.vertex_buffers[0]) ||
+            sg_query_buffer_overflow(bind.index_buffer))
         {
             continue;
         }
 
-        draw_state.vertex_buffer_offsets[0] = vb_offset;
-        draw_state.index_buffer_offset = ib_offset;
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        bind.vertex_buffer_offsets[0] = vb_offset;
+        bind.index_buffer_offset = ib_offset;
+        sg_apply_bindings(&bind);
 
         int base_element = 0;
         for (const ImDrawCmd& pcmd : cl->CmdBuffer) {

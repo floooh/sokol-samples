@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #define GL_GLEXT_PROTOTYPES
@@ -122,7 +122,7 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
 
-    /* draw state struct with resource bindings, note how the same vertex 
+    /* define the resource bindings, note how the same vertex 
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */

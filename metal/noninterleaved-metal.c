@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #include "osxentry.h"

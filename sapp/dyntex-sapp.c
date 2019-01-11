@@ -15,22 +15,22 @@
 #define LIVING (0xFFFFFFFF)
 #define DEAD (0xFF000000)
 
-extern const char *vs_src, *fs_src;
+static const char *vs_src, *fs_src;
 
-sg_pass_action pass_action = {0};
-sg_draw_state draw_state = {0};
-float rx = 0.0f;
-float ry = 0.0f;
-int update_count = 0;
+static sg_pass_action pass_action;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
+static int update_count;
 
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
+static uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
-void game_of_life_init();
-void game_of_life_update();
+static void game_of_life_init();
+static void game_of_life_update();
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -121,7 +121,7 @@ void init(void) {
     });
 
     /* a pipeline state object */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position",   .sem_name="POSITION",   .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -139,9 +139,8 @@ void init(void) {
         .rasterizer.sample_count = MSAA_SAMPLES
     });
 
-    /* setup the draw state */
-    draw_state = (sg_draw_state) {
-        .pipeline = pip,
+    /* setup the resource bindings */
+    bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
@@ -167,7 +166,7 @@ void frame(void) {
     game_of_life_update();
     
     /* update the texture */
-    sg_update_image(draw_state.fs_images[0], &(sg_image_content){
+    sg_update_image(bind.fs_images[0], &(sg_image_content){
         .subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
@@ -176,8 +175,9 @@ void frame(void) {
     
     /* render the frame */
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -251,7 +251,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -264,7 +264,7 @@ const char* vs_src =
     "  uv = texcoord0;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "uniform sampler2D tex;\n"
     "in vec4 color;\n"
@@ -274,7 +274,7 @@ const char* fs_src =
     "  frag_color = texture(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-const char* vs_src =
+static const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -286,7 +286,7 @@ const char* vs_src =
     "  uv = texcoord0;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "precision mediump float;\n"
     "uniform sampler2D tex;\n"
     "varying vec4 color;\n"
@@ -295,7 +295,7 @@ const char* fs_src =
     "  gl_FragColor = texture2D(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -318,7 +318,7 @@ const char* vs_src =
     "  out.uv = in.uv;\n"
     "  return out;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -329,7 +329,7 @@ const char* fs_src =
     "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
     "};\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "cbuffer params {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -350,7 +350,7 @@ const char* vs_src =
     "  outp.uv = inp.uv;\n"
     "  return outp;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"

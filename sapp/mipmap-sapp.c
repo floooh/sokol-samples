@@ -10,12 +10,12 @@
 
 #define MSAA_SAMPLES (4)
 
-extern const char *vs_src, *fs_src;
+static  const char *vs_src, *fs_src;
 
-sg_pipeline pip;
-sg_buffer vbuf;
-sg_image img[12];
-float r = 0.0f;
+static sg_pipeline pip;
+static sg_buffer vbuf;
+static sg_image img[12];
+static float r;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -153,20 +153,20 @@ void frame(void) {
     r += 0.1f;
     hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
     sg_begin_default_pass(&(sg_pass_action){0}, sapp_width(), sapp_height());
+    sg_apply_pipeline(pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
         
-        draw_state.fs_images[0] = img[i];
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        bind.fs_images[0] = img[i];
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
@@ -191,7 +191,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -201,7 +201,7 @@ const char* vs_src =
     "  gl_Position = mvp * position;\n"
     "  uv = texcoord0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "uniform sampler2D tex;"
     "in vec2 uv;\n"
@@ -210,7 +210,7 @@ const char* fs_src =
     "  frag_color = texture(tex, uv);\n"
     "}\n";
 #elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-const char* vs_src =
+static const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec2 texcoord0;\n"
@@ -219,7 +219,7 @@ const char* vs_src =
     "  gl_Position = mvp * position;\n"
     "  uv = texcoord0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "precision mediump float;"
     "uniform sampler2D tex;"
     "varying vec2 uv;\n"
@@ -227,7 +227,7 @@ const char* fs_src =
     "  gl_FragColor = texture2D(tex, uv);\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -247,7 +247,7 @@ const char* vs_src =
     "  out.uv = in.uv;\n"
     "  return out;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -260,7 +260,7 @@ const char* fs_src =
     "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -278,7 +278,7 @@ const char* vs_src =
     "  outp.uv = inp.uv;\n"
     "  return outp;\n"
     "};\n";
-const char* fs_src =
+static const char* fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"

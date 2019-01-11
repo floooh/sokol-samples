@@ -4,7 +4,7 @@
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 
-sg_pass_action pass_action;
+static sg_pass_action pass_action;
 
 void init(void) {
     sg_setup(&(sg_desc){

@@ -302,7 +302,7 @@ void imgui_draw_cb(ImDrawData* draw_data) {
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
-        // append vertices and indices to buffers, record start offsets in draw state
+        // append vertices and indices to buffers, record start offsets in binding struct
         const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
         const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
         const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);

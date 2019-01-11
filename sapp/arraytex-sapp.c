@@ -8,20 +8,20 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-const char *vs_src, *fs_src;
+static const char *vs_src, *fs_src;
 
 #define MSAA_SAMPLES (4)
 #define IMG_LAYERS (3)
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
 
-sg_draw_state draw_state;
-hmm_mat4 view_proj;
-float rx = 0.0f, ry = 0.0f;
-int frame_index = 0;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
+static int frame_index;
 
 /* default pass action (clear to black) */
-const sg_pass_action pass_action = {
+static const sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
 };
 
@@ -150,7 +150,7 @@ void init(void) {
     });
 
     /* a pipeline object */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -169,9 +169,8 @@ void init(void) {
         }
     });
 
-    /* populate the draw state struct */
-    draw_state = (sg_draw_state) {
-        .pipeline = pip,
+    /* populate the resource bindings struct */
+    bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
@@ -216,8 +215,9 @@ void frame(void) {
 
     /* render the frame */
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -240,7 +240,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "uniform vec2 offset0;\n"
@@ -257,7 +257,7 @@ const char* vs_src =
     "  uv1 = vec3(texcoord0 + offset1, 1.0);\n"
     "  uv2 = vec3(texcoord0 + offset2, 2.0);\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "uniform sampler2DArray tex;\n"
     "in vec3 uv0;\n"
@@ -271,7 +271,7 @@ const char* fs_src =
     "  frag_color = vec4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_GLES3)
-const char* vs_src =
+static const char* vs_src =
     "#version 300 es\n"
     "uniform mat4 mvp;\n"
     "uniform vec2 offset0;\n"
@@ -288,7 +288,7 @@ const char* vs_src =
     "  uv1 = vec3(texcoord0 + offset1, 1.0);\n"
     "  uv2 = vec3(texcoord0 + offset2, 2.0);\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 300 es\n"
     "precision mediump float;\n"
     "precision lowp sampler2DArray;\n"
@@ -304,7 +304,7 @@ const char* fs_src =
     "  frag_color = vec4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -331,7 +331,7 @@ const char* vs_src =
     "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
     "  return out;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -346,7 +346,7 @@ const char* fs_src =
     "  return float4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "cbuffer params {\n"
     "  float4x4 mvp;\n"
     "  float2 offset0;\n"
@@ -371,7 +371,7 @@ const char* vs_src =
     "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
     "  return outp;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "Texture2DArray<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "struct fs_in {\n"

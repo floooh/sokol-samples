@@ -5,7 +5,7 @@
 #include "sokol_app.h"
 #include <stdio.h>  // printf
 
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.5f, 0.0f, 1.0f} }
 };
 

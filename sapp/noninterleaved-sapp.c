@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
@@ -12,14 +12,14 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-extern const char *vs_src, *fs_src;
+static const char *vs_src, *fs_src;
 
-const int SAMPLE_COUNT = 4;
+static const int SAMPLE_COUNT = 4;
 
-sg_pass_action pass_action;
-sg_draw_state draw_state;
-float rx = 0.0f;
-float ry = 0.0f;
+static sg_pass_action pass_action;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -95,7 +95,7 @@ void init(void) {
         a pipeline object, note that we need to provide the
         MSAA sample count of the default framebuffer
     */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
@@ -114,12 +114,11 @@ void init(void) {
         .rasterizer.sample_count = SAMPLE_COUNT
     });
 
-    /* fill the draw state struct with resource bindings, note how the same vertex 
+    /* fill the resource bindings, note how the same vertex
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
+    bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
@@ -147,8 +146,9 @@ void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -172,7 +172,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -182,7 +182,7 @@ const char* vs_src =
     "  gl_Position = mvp * position;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "in vec4 color;\n"
     "out vec4 frag_color;\n"
@@ -190,7 +190,7 @@ const char* fs_src =
     "  frag_color = color;\n"
     "}\n";
 #elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
-const char* vs_src =
+static const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -199,14 +199,14 @@ const char* vs_src =
     "  gl_Position = mvp * position;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "precision mediump float;\n"
     "varying vec4 color;\n"
     "void main() {\n"
     "  gl_FragColor = color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -226,14 +226,14 @@ const char* vs_src =
     "  out.color = in.color;\n"
     "  return out;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "fragment float4 _main(float4 color [[stage_in]]) {\n"
     "  return color;\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -251,7 +251,7 @@ const char* vs_src =
     "  outp.color = inp.color;\n"
     "  return outp;\n"
     "};\n";
-const char* fs_src =
+static const char* fs_src =
     "float4 main(float4 color: COLOR0): SV_Target0 {\n"
     "  return color;\n"
     "}\n";
