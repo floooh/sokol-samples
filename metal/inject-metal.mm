@@ -19,11 +19,11 @@ const int IMG_HEIGHT = 32;
 
 uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
 
-sg_pass_action pass_action = { };
-sg_draw_state draw_state = { };
-float rx = 0.0f;
-float ry = 0.0f;
-uint32_t counter = 0;
+sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
+float rx, ry;
+uint32_t counter;
 hmm_mat4 view_proj;
 
 typedef struct {
@@ -95,13 +95,13 @@ void init(const void* mtl_device) {
         .size = sizeof(vertices),
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
     };
-    draw_state.index_buffer = sg_make_buffer(&ibuf_desc);
+    bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* create dynamically updated Metal texture objects, these will
        be rotated through by sokol_gfx as they are updated, so we need
@@ -131,7 +131,7 @@ void init(const void* mtl_device) {
         img_desc.mtl_textures[i] = (__bridge const void*) mtl_tex[i];
     }
     sg_reset_state_cache();
-    draw_state.fs_images[0] = sg_make_image(&img_desc);
+    bind.fs_images[0] = sg_make_image(&img_desc);
 
     /* a shader */
     sg_shader_desc shader_desc = {
@@ -197,7 +197,7 @@ void init(const void* mtl_device) {
             .sample_count = MSAA_SAMPLES
         }
     };
-    draw_state.pipeline = sg_make_pipeline(&pip_desc);
+    pip = sg_make_pipeline(&pip_desc);
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
@@ -228,11 +228,12 @@ void frame() {
     sg_image_content content = {
         .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
     };
-    sg_update_image(draw_state.fs_images[0], &content);
+    sg_update_image(bind.fs_images[0], &content);
 
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

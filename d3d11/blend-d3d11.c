@@ -21,7 +21,7 @@ typedef struct {
 } fs_params_t;
 
 enum { NUM_BLEND_FACTORS = 15 };
-sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
+static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
@@ -157,8 +157,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* a draw state with resource bindings */
-    sg_draw_state draw_state = {
+    /* resource bindings */
+    sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
 
@@ -170,9 +170,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
 
         /* draw a background quad */
-        draw_state.pipeline = bg_pip;
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
+        sg_apply_pipeline(bg_pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
         sg_draw(0, 4, 1);
 
         /* draw the blended quads */
@@ -186,9 +186,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
                 vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-                draw_state.pipeline = pips[src][dst];
-                sg_apply_draw_state(&draw_state);
-                sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+                sg_apply_pipeline(pips[src][dst]);
+                sg_apply_bindings(&bind);
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

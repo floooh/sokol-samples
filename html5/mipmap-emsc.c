@@ -17,7 +17,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-struct {
+static struct {
     uint32_t mip0[65536];   /* 256x256 */
     uint32_t mip1[16384];   /* 128x128 */
     uint32_t mip2[4096];    /* 64*64 */
@@ -29,7 +29,7 @@ struct {
     uint32_t mip8[1];       /* 1*2 */
 } pixels;
 
-uint32_t mip_colors[9] = {
+static uint32_t mip_colors[9] = {
     0xFF0000FF,     /* red */
     0xFF00FF00,     /* green */
     0xFFFF0000,     /* blue */
@@ -41,14 +41,12 @@ uint32_t mip_colors[9] = {
     0xFFA000FF,     /* purple */
 };
 
-sg_draw_state draw_state;
-sg_image img[12];
-sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
-};
-float r = 0.0f;
+static sg_pipeline pip;
+static sg_bindings bind;
+static sg_image img[12];
+static float r;
 
-void draw();
+static void draw();
 
 int main() {
     /* try to setup WebGL2 context (for the mipmap min/max lod stuff) */
@@ -67,7 +65,7 @@ int main() {
         -1.0, +1.0, 0.0,  0.0, 1.0,
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -153,7 +151,7 @@ int main() {
     });
 
     /* pipeline state */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc) {
+    pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
                 [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -180,15 +178,16 @@ void draw() {
     hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
     sg_begin_default_pass(&(sg_pass_action){0}, emsc_width(), emsc_height());
+    sg_apply_pipeline(pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
         
-        draw_state.fs_images[0] = img[i];
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        bind.fs_images[0] = img[i];
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

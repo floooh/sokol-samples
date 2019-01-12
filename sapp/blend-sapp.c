@@ -9,7 +9,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-extern const char *bg_vs_src, *bg_fs_src, *quad_vs_src, *quad_fs_src;
+const char *bg_vs_src, *bg_fs_src, *quad_vs_src, *quad_fs_src;
 
 #define MSAA_SAMPLES (4)
 
@@ -21,16 +21,16 @@ typedef struct {
     float tick;
 } fs_params_t;
 
-sg_draw_state draw_state;
+static sg_bindings bind;
 #define NUM_BLEND_FACTORS (15)
-sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
-sg_pipeline bg_pip;
-float r = 0.0f;
-vs_params_t vs_params;
-fs_params_t fs_params;
+static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
+static sg_pipeline bg_pip;
+static float r;
+static vs_params_t vs_params;
+static fs_params_t fs_params;
 
 /* a pass action which does not clear, since the entire screen is overwritten anyway */
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0].action = SG_ACTION_DONTCARE ,
     .depth.action = SG_ACTION_DONTCARE,
     .stencil.action = SG_ACTION_DONTCARE
@@ -57,7 +57,7 @@ void init(void) {
         -1.0f, +1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f,
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -171,9 +171,9 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
 
     /* draw a background quad */
-    draw_state.pipeline = bg_pip;
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
+    sg_apply_pipeline(bg_pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
@@ -188,9 +188,9 @@ void frame(void) {
                 hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
                 vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-                draw_state.pipeline = pips[src][dst];
-                sg_apply_draw_state(&draw_state);
-                sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+                sg_apply_pipeline(pips[src][dst]);
+                sg_apply_bindings(&bind);
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

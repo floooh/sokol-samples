@@ -11,10 +11,10 @@ const int WIDTH = 640;
 const int HEIGHT = 480;
 const int MSAA_SAMPLES = 4;
 
-sg_pass_action pass_action = {0};
-sg_draw_state draw_state = {0};
-float rx = 0.0f;
-float ry = 0.0f;
+sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
+float rx, ry;
 hmm_mat4 view_proj;
 
 typedef struct {
@@ -62,7 +62,7 @@ void init(const void* mtl_device) {
          1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -76,7 +76,7 @@ void init(const void* mtl_device) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
@@ -89,7 +89,7 @@ void init(const void* mtl_device) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    draw_state.fs_images[0] = sg_make_image(&(sg_image_desc){
+    bind.fs_images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .content.subimage[0][0] = {
@@ -147,7 +147,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline state object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -183,8 +183,9 @@ void frame() {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

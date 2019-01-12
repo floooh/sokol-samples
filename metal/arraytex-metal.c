@@ -11,11 +11,12 @@ const int WIDTH = 640;
 const int HEIGHT = 480;
 const int MSAA_SAMPLES = 4;
 
-sg_draw_state draw_state;
 sg_pass_action pass_action;
+sg_pipeline pip;
+sg_bindings bind;
 hmm_mat4 view_proj;
-float rx = 0.0f, ry = 0.0f;
-int frame_index = 0;
+float rx, ry;
+int frame_index;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -54,7 +55,7 @@ void init(const void* mtl_device) {
             }
         }
     }
-    sg_image img = sg_make_image(&(sg_image_desc) {
+    bind.fs_images[0] = sg_make_image(&(sg_image_desc) {
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
@@ -101,7 +102,7 @@ void init(const void* mtl_device) {
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -115,7 +116,7 @@ void init(const void* mtl_device) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
@@ -169,7 +170,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline object */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },
@@ -187,14 +188,6 @@ void init(const void* mtl_device) {
             .sample_count = MSAA_SAMPLES
         }
     });
-
-    /* populate the draw state struct */
-    draw_state = (sg_draw_state) {
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
-        .fs_images[0] = img
-    };
 
     /* default pass action (clear to black) */
     pass_action = (sg_pass_action) {
@@ -226,8 +219,9 @@ void frame() {
 
     /* render the frame */
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

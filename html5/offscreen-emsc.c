@@ -13,27 +13,28 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_pass offscreen_pass;
-sg_draw_state offscreen_draw_state;
-sg_draw_state default_draw_state;
+static sg_pass offscreen_pass;
+static sg_pipeline offscreen_pip;
+static sg_bindings offscreen_bind;
+static sg_pipeline default_pip;
+static sg_bindings default_bind;
 
 /* offscreen: clear to black */
-sg_pass_action offscreen_pass_action = {
+static sg_pass_action offscreen_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 /* display: clear to blue-ish */ 
-sg_pass_action default_pass_action = {
+static sg_pass_action default_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
 };
 /* rotation angles */
-float rx = 0.0f;
-float ry = 0.0f;
+static float rx, ry;
 
 typedef struct {
     hmm_mat4 mvp;
 } params_t;
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -177,7 +178,7 @@ int main() {
     });
 
     /* pipeline object for offscreen rendering, don't need texcoords here */
-    sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to provide stride, because the buffer's texcoord is skipped */
             .buffers[0].stride = 36,
@@ -201,7 +202,7 @@ int main() {
     });
 
     /* and another pipeline object for the default pass */
-    sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    default_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
@@ -219,17 +220,15 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
 
-    /* the draw state for offscreen rendering with all the required resources */
-    offscreen_draw_state = (sg_draw_state){
-        .pipeline = offscreen_pip,
+    /* the resource bindings for offscreen rendering */
+    offscreen_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* and the draw state for the default pass where a textured cube will
+    /* and the resource bindings for the default pass where a textured cube will
        rendered, note how the color rendertarget image is used as texture here */
-    default_draw_state = (sg_draw_state){
-        .pipeline = default_pip,
+    default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = color_img
@@ -256,16 +255,18 @@ void draw() {
     /* offscreen pass, this renders a rotating, untextured cube to the
         offscreen render target */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_draw_state(&offscreen_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(offscreen_pip);
+    sg_apply_bindings(&offscreen_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* and the default pass, this renders a textured cube, using the 
         offscreen render target as texture image */
     sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&default_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(default_pip);
+    sg_apply_bindings(&default_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

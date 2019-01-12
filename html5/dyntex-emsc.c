@@ -25,17 +25,17 @@ typedef struct {
 #define DEAD (0xFF000000)
 uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
-sg_draw_state draw_state = { 0 };
-sg_pass_action pass_action = {
+static sg_pipeline pip;
+static sg_bindings bind;
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-float rx = 0.0f;
-float ry = 0.0f;
-int update_count = 0;
+static float rx, ry;
+static int update_count;
 
-void game_of_life_init();
-void game_of_life_update();
-void draw();
+static void game_of_life_init();
+static void game_of_life_update();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -109,6 +109,13 @@ int main() {
         .content = indices,
     });
 
+    /* define the resource bindings */
+    bind = (sg_bindings){
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = img
+    };
+
     /* a shader to render textured cube */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
@@ -141,7 +148,7 @@ int main() {
     });
 
     /* a pipeline-state-object for the textured cube */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position",   .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -157,14 +164,6 @@ int main() {
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
-
-    /* draw state with resource bindings */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
-        .fs_images[0] = img
-    };
 
     /* initial game-of-life seed state */
     game_of_life_init();
@@ -190,7 +189,7 @@ void draw() {
     game_of_life_update();
 
     /* update the dynamic image */
-    sg_update_image(draw_state.fs_images[0], &(sg_image_content){ 
+    sg_update_image(bind.fs_images[0], &(sg_image_content){ 
         .subimage[0][0] = { 
             .ptr=pixels, 
             .size=sizeof(pixels) 
@@ -199,8 +198,9 @@ void draw() {
 
     /* draw pass */
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

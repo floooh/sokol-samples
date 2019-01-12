@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #include "osxentry.h"
@@ -17,9 +17,9 @@ const int HEIGHT = 480;
 const int MSAA_SAMPLES = 4;
 
 sg_pass_action pass_action;
-sg_draw_state draw_state;
-float rx = 0.0f;
-float ry = 0.0f;
+sg_pipeline pip;
+sg_bindings bind;
+float rx, ry;
 hmm_mat4 view_proj;
 
 typedef struct {
@@ -111,7 +111,7 @@ void init(const void* mtl_device) {
         a pipeline object, note that we need to provide the
         MSAA sample count of the default framebuffer
     */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
@@ -130,12 +130,11 @@ void init(const void* mtl_device) {
         .rasterizer.sample_count = MSAA_SAMPLES
     });
 
-    /* fill the draw state struct with resource bindings, note how the same vertex 
+    /* fill the resource bindings, note how the same vertex 
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
+    bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
@@ -165,8 +164,9 @@ void frame() {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

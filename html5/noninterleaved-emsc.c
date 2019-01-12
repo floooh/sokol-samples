@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #define GL_GLEXT_PROTOTYPES
@@ -17,18 +17,18 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-float rx = 0.0f;
-float ry = 0.0f;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
 
 typedef struct {
     hmm_mat4 mvp;
 } params_t;
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -103,7 +103,7 @@ int main() {
     });
 
     /* create pipeline object */
-    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
@@ -122,12 +122,11 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
 
-    /* draw state struct with resource bindings, note how the same vertex 
+    /* define the resource bindings, note how the same vertex 
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
-    draw_state = (sg_draw_state){
-        .pipeline = pip,
+    bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
@@ -161,8 +160,9 @@ void draw() {
 
     /* ...and draw */
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

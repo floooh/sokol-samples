@@ -8,15 +8,15 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-extern const char *vs_src, *fs_src;
+static const char *vs_src, *fs_src;
 
-const int SAMPLE_COUNT = 4;
-float rx = 0.0f;
-float ry = 0.0f;
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static const int SAMPLE_COUNT = 4;
+static float rx, ry;
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
 };
+static sg_pipeline pip;
+static sg_bindings bind;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -67,7 +67,7 @@ void init(void) {
          1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -81,7 +81,7 @@ void init(void) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
@@ -94,7 +94,7 @@ void init(void) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    draw_state.fs_images[0] = sg_make_image(&(sg_image_desc){
+    bind.fs_images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .content.subimage[0][0] = {
@@ -121,7 +121,7 @@ void init(void) {
     });
 
     /* a pipeline state object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -155,8 +155,9 @@ void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -180,7 +181,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -193,7 +194,7 @@ const char* vs_src =
     "  color = color0;\n"
     "  uv = texcoord0 * 5.0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "uniform sampler2D tex;"
     "in vec4 color;\n"
@@ -203,7 +204,7 @@ const char* fs_src =
     "  frag_color = texture(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-const char* vs_src =
+static const char* vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -215,7 +216,7 @@ const char* vs_src =
     "  color = color0;\n"
     "  uv = texcoord0 * 5.0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "precision mediump float;\n"
     "uniform sampler2D tex;\n"
     "varying vec4 color;\n"
@@ -224,7 +225,7 @@ const char* fs_src =
     "  gl_FragColor = texture2D(tex, uv) * color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -247,7 +248,7 @@ const char* vs_src =
     "  out.uv = in.uv * 5.0;\n"
     "  return out;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -261,7 +262,7 @@ const char* fs_src =
     "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -282,7 +283,7 @@ const char* vs_src =
     "  outp.uv = inp.uv * 5.0;\n"
     "  return outp;\n"
     "};\n";
-const char* fs_src =
+static const char* fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "float4 main(float4 color: COLOR, float2 uv: TEXCOORD): SV_Target0 {\n"

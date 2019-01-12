@@ -84,6 +84,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .content = indices
     });
 
+    /* define resource bindings */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
+
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
@@ -113,13 +119,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state with resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf
-    };
-
     /* default pass action (clear to gray) */
     sg_pass_action pass_action = { 0 };
 
@@ -139,8 +138,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

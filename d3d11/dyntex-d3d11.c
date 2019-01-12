@@ -22,10 +22,10 @@ enum {
     LIVING  = 0xFFFFFFFF,
     DEAD = 0xFF000000
 };
-uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
+static uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
-void game_of_life_init();
-void game_of_life_update();
+static void game_of_life_init();
+static void game_of_life_update();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
@@ -103,6 +103,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .content = indices,
     });
 
+    /* resource bindings */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = img
+    };
+
     /* a shader to render textured cube */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
@@ -157,14 +164,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* draw state with resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
-        .fs_images[0] = img
-    };
-
     /* default pass action (clear to grey) */
     sg_pass_action pass_action = {0};
 
@@ -198,8 +197,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         });
 
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

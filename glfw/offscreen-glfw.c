@@ -226,17 +226,16 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK
     });
 
-    /* the draw state for offscreen rendering with all the required resources */
-    sg_draw_state offscreen_ds = {
-        .pipeline = offscreen_pip,
+    /* resource bindings for offscreen rendering */
+    sg_bindings offscreen_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* and the draw state for the default pass where a textured cube will
-       rendered, note how the render-target image is used as texture here */
-    sg_draw_state default_ds = {
-        .pipeline = default_pip,
+    /* and the resource bindings for the default pass where a textured cube will
+       rendered, note how the render-target image is used as texture here
+    */
+    sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = color_img
@@ -263,8 +262,9 @@ int main() {
         /* offscreen pass, this renders a rotating, untextured cube to the
            offscreen render target */
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-        sg_apply_draw_state(&offscreen_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(offscreen_pip);
+        sg_apply_bindings(&offscreen_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -273,8 +273,9 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
-        sg_apply_draw_state(&default_ds);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(default_pip);
+        sg_apply_bindings(&default_bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

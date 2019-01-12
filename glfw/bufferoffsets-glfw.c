@@ -62,6 +62,12 @@ int main() {
         .content = indices
     });
 
+    /* setup resource bindings struct */
+   sg_bindings bind = {
+       .vertex_buffers[0] = vb,
+       .index_buffer = ib
+   };
+
     /* create a shader to render 2D colored shapes */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
@@ -94,15 +100,6 @@ int main() {
         }
     });
 
-    /* a draw state object with the resource bindings, before drawing,
-       the buffer offsets will be updates
-    */
-   sg_draw_state ds = {
-       .pipeline = pip,
-       .vertex_buffers[0] = vb,
-       .index_buffer = ib
-   };
-
     /* a pass action to clear to blue-ish */
     sg_pass_action pass_action = {
         .colors = {
@@ -114,15 +111,16 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_apply_pipeline(pip);
         /* render the triangle */
-        ds.vertex_buffer_offsets[0] = 0;
-        ds.index_buffer_offset = 0;
-        sg_apply_draw_state(&ds);
+        bind.vertex_buffer_offsets[0] = 0;
+        bind.index_buffer_offset = 0;
+        sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
         /* render the quad from the same vertex- and index-buffer */
-        ds.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-        ds.index_buffer_offset = 3 * sizeof(uint16_t);
-        sg_apply_draw_state(&ds);
+        bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+        bind.index_buffer_offset = 3 * sizeof(uint16_t);
+        sg_apply_bindings(&bind);
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();

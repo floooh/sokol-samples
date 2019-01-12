@@ -5,12 +5,13 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 
-extern const char *vs_src, *fs_src;
+static const char *vs_src, *fs_src;
 
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f } }
 };
-sg_draw_state draw_state = {0};
+static sg_pipeline pip;
+static sg_bindings bind;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -32,14 +33,14 @@ void init(void) {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
 
     /* an index buffer with 2 triangles */
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices
@@ -52,7 +53,7 @@ void init(void) {
     });
 
     /* a pipeline state object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -66,7 +67,8 @@ void init(void) {
 
 void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&draw_state);
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();
@@ -89,7 +91,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* vs_src =
+static const char* vs_src =
     "#version 330\n"
     "in vec4 position;\n"
     "in vec4 color0;\n"
@@ -98,7 +100,7 @@ const char* vs_src =
     "  gl_Position = position;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#version 330\n"
     "in vec4 color;\n"
     "out vec4 frag_color;\n"
@@ -106,7 +108,7 @@ const char* fs_src =
     "  frag_color = color;\n"
     "}\n";
 #elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
-const char* vs_src =
+static const char* vs_src =
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
     "varying vec4 color;\n"
@@ -114,14 +116,14 @@ const char* vs_src =
     "  gl_Position = position;\n"
     "  color = color0;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "precision mediump float;\n"
     "varying vec4 color;\n"
     "void main() {\n"
     "  gl_FragColor = color;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* vs_src =
+static const char* vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct vs_in {\n"
@@ -138,14 +140,14 @@ const char* vs_src =
     "  outp.color = inp.color;\n"
     "  return outp;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "fragment float4 _main(float4 color [[stage_in]]) {\n"
     "  return color;\n"
     "};\n";
 #elif defined(SOKOL_D3D11)
-const char* vs_src =
+static const char* vs_src =
     "struct vs_in {\n"
     "  float4 pos: POS;\n"
     "  float4 color: COLOR;\n"
@@ -160,7 +162,7 @@ const char* vs_src =
     "  outp.color = inp.color;\n"
     "  return outp;\n"
     "}\n";
-const char* fs_src =
+static const char* fs_src =
     "float4 main(float4 color: COLOR0): SV_Target0 {\n"
     "  return color;\n"
     "}\n";

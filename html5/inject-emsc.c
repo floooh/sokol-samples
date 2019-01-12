@@ -13,23 +13,23 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-const int IMG_WIDTH = 32;
-const int IMG_HEIGHT = 32;
-uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
+static const int IMG_WIDTH = 32;
+static const int IMG_HEIGHT = 32;
+static uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
-sg_draw_state draw_state;
-sg_pass_action pass_action = {
+static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-float rx = 0.0f;
-float ry = 0.0f;
-uint32_t counter = 0;
+static sg_pipeline pip;
+static sg_bindings bind;
+static float rx, ry;
+static uint32_t counter;
 
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
@@ -93,12 +93,12 @@ int main() {
        GL functions and before calling sokol functions again
     */
     sg_reset_state_cache();
-    draw_state.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .usage = SG_USAGE_IMMUTABLE,
         .size = sizeof(vertices),
         .gl_buffers[0] = gl_vbuf
     });
-    draw_state.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .usage = SG_USAGE_IMMUTABLE,
         .size = sizeof(indices),
@@ -130,7 +130,7 @@ int main() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     sg_reset_state_cache();
-    draw_state.fs_images[0] = sg_make_image(&img_desc);
+    bind.fs_images[0] = sg_make_image(&img_desc);
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
@@ -160,7 +160,7 @@ int main() {
     });
 
     /* create pipeline object */
-    draw_state.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -204,14 +204,15 @@ void draw() {
         }
     }
     counter++;
-    sg_update_image(draw_state.fs_images[0], &(sg_image_content){
+    sg_update_image(bind.fs_images[0], &(sg_image_content){
         .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
     });
 
     /* ...and draw */
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_draw_state(&draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

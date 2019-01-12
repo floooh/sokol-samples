@@ -1,3 +1,4 @@
+add_definitions(-DSOKOL_NO_DEPRECATED)
 if (FIPS_EMSCRIPTEN)
     add_definitions(-DSOKOL_GLES3)
 elseif (FIPS_RASPBERRYPI)

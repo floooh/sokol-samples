@@ -9,27 +9,28 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-const int MSAA_SAMPLES = 4;
+static const int MSAA_SAMPLES = 4;
 
-const char *offscreen_vs_src, *offscreen_fs_src, *default_vs_src, *default_fs_src;
+static const char *offscreen_vs_src, *offscreen_fs_src, *default_vs_src, *default_fs_src;
 
-sg_pass offscreen_pass;
-sg_draw_state offscreen_draw_state;
-sg_draw_state default_draw_state;
+static sg_pass offscreen_pass;
+static sg_pipeline offscreen_pip;
+static sg_bindings offscreen_bind;
+static sg_pipeline default_pip;
+static sg_bindings default_bind;
 
 /* offscreen: clear to black */
-sg_pass_action offscreen_pass_action = {
+static sg_pass_action offscreen_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 
 /* display: clear to blue-ish */
-sg_pass_action default_pass_action = {
+static sg_pass_action default_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
 };
 
 /* rotation angles */
-float rx = 0.0f;
-float ry = 0.0f;
+static float rx, ry;
 
 /* vertex-shader params (just a model-view-projection matrix) */
 typedef struct {
@@ -146,7 +147,7 @@ void init(void) {
     });
 
     /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
-    sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to provide stride, because the buffer's texcoord is skipped */
             .buffers[0].stride = 36,
@@ -173,7 +174,7 @@ void init(void) {
     });
 
     /* and another pipeline-state-object for the default pass */
-    sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    default_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
@@ -194,16 +195,14 @@ void init(void) {
         }
     });
 
-    /* the offscreen draw state for rendering a non-textured cube into render target */
-    offscreen_draw_state = (sg_draw_state){
-        .pipeline = offscreen_pip,
+    /* the resource bindings for rendering a non-textured cube into offscreen render target */
+    offscreen_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* and a draw state to render a textured cube, using the offscreen render target as texture */
-    default_draw_state = (sg_draw_state){
-        .pipeline = default_pip,
+    /* resource bindings to render a textured cube, using the offscreen render target as texture */
+    default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = color_img
@@ -225,16 +224,18 @@ void frame(void) {
 
     /* the offscreen pass, rendering an rotating, untextured cube into a render target image */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_draw_state(&offscreen_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(offscreen_pip);
+    sg_apply_bindings(&offscreen_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* and the display-pass, rendering a rotating, textured cube, using the
        previously rendered offscreen render-target as texture */
     sg_begin_default_pass(&default_pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&default_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(default_pip);
+    sg_apply_bindings(&default_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -259,7 +260,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* offscreen_vs_src =
+static const char* offscreen_vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -269,14 +270,14 @@ const char* offscreen_vs_src =
     "  gl_Position = mvp * position;\n"
     "  color = color0;\n"
     "}\n";
-const char* offscreen_fs_src =
+static const char* offscreen_fs_src =
     "#version 330\n"
     "in vec4 color;\n"
     "out vec4 frag_color;\n"
     "void main() {\n"
     "  frag_color = color;\n"
     "}\n";
-const char* default_vs_src =
+static const char* default_vs_src =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -289,7 +290,7 @@ const char* default_vs_src =
     "  color = color0;\n"
     "  uv = texcoord0;\n"
     "}\n";
-const char* default_fs_src =
+static const char* default_fs_src =
     "#version 330\n"
     "uniform sampler2D tex;\n"
     "in vec4 color;\n"
@@ -299,7 +300,7 @@ const char* default_fs_src =
     "  frag_color = texture(tex, uv) + color * 0.5;\n"
     "}\n";
 #elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-const char* offscreen_vs_src = 
+static const char* offscreen_vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -308,13 +309,13 @@ const char* offscreen_vs_src =
     "  gl_Position = mvp * position;\n"
     "  color = color0;\n"
     "}\n";
-const char* offscreen_fs_src =
+static const char* offscreen_fs_src =
     "precision mediump float;\n"
     "varying vec4 color;\n"
     "void main() {\n"
     "  gl_FragColor = color;\n"
     "}\n";
-const char* default_vs_src =
+static const char* default_vs_src =
     "uniform mat4 mvp;\n"
     "attribute vec4 position;\n"
     "attribute vec4 color0;\n"
@@ -326,7 +327,7 @@ const char* default_vs_src =
     "  color = color0;\n"
     "  uv = texcoord0;\n"
     "}\n";
-const char* default_fs_src =
+static const char* default_fs_src =
     "precision mediump float;"
     "uniform sampler2D tex;\n"
     "varying vec4 color;\n"
@@ -335,7 +336,7 @@ const char* default_fs_src =
     "  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* offscreen_vs_src =
+static const char* offscreen_vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -355,13 +356,13 @@ const char* offscreen_vs_src =
     "  out.color = in.color;\n"
     "  return out;\n"
     "}\n";
-const char* offscreen_fs_src =
+static const char* offscreen_fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "fragment float4 _main(float4 color [[stage_in]]) {\n"
     "  return color;\n"
     "};\n";
-const char* default_vs_src =
+static const char* default_vs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -384,7 +385,7 @@ const char* default_vs_src =
     "  out.uv = in.uv;\n"
     "  return out;\n"
     "}\n";
-const char* default_fs_src =
+static const char* default_fs_src =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -395,7 +396,7 @@ const char* default_fs_src =
     "  return float4(tex.sample(smp, in.uv).xyz + in.color.xyz * 0.5, 1.0);\n"
     "};\n";
 #elif defined(SOKOL_D3D11)
-const char* offscreen_vs_src =
+static const char* offscreen_vs_src =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -413,11 +414,11 @@ const char* offscreen_vs_src =
     "  outp.color = inp.color;\n"
     "  return outp;\n"
     "}\n";
-const char* offscreen_fs_src =
+static const char* offscreen_fs_src =
     "float4 main(float4 color: COLOR0): SV_Target0 {\n"
     "  return color;\n"
     "}\n";
-const char* default_vs_src =
+static const char* default_vs_src =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -438,7 +439,7 @@ const char* default_vs_src =
     "  outp.uv = inp.uv;\n"
     "  return outp;\n"
     "}\n";
-const char* default_fs_src =
+static const char* default_fs_src =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"

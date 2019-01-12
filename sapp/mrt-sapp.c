@@ -12,16 +12,19 @@
 
 #define MSAA_SAMPLES (4)
 
-extern const char *cube_vs, *cube_fs, *fsq_vs, *fsq_fs, *dbg_vs, *dbg_fs;
+static const char *cube_vs, *cube_fs, *fsq_vs, *fsq_fs, *dbg_vs, *dbg_fs;
 
-sg_pass_desc offscreen_pass_desc;
-sg_pass offscreen_pass;
-sg_draw_state offscreen_draw_state;
-sg_draw_state fsq_draw_state;
-sg_draw_state dbg_draw_state;
+static sg_pass_desc offscreen_pass_desc;
+static sg_pass offscreen_pass;
+static sg_pipeline offscreen_pip;
+static sg_bindings offscreen_bind;
+static sg_pipeline fsq_pip;
+static sg_bindings fsq_bind;
+static sg_pipeline dbg_pip;
+static sg_bindings dbg_bind;
 
 /* pass action to clear the MRT render target */
-const sg_pass_action offscreen_pass_action = {
+static const sg_pass_action offscreen_pass_action = {
     .colors = {
         [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
         [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
@@ -30,7 +33,7 @@ const sg_pass_action offscreen_pass_action = {
 };
 
 /* default pass action, no clear needed, since whole screen is overwritten */
-const sg_pass_action default_pass_action = {
+static const sg_pass_action default_pass_action = {
     .colors = {
         [0].action = SG_ACTION_DONTCARE,
         [1].action = SG_ACTION_DONTCARE,
@@ -40,8 +43,7 @@ const sg_pass_action default_pass_action = {
     .stencil.action = SG_ACTION_DONTCARE
 };
 
-float rx = 0.0f;
-float ry = 0.0f;
+static float rx, ry;
 
 typedef struct {
     float x, y, z, b;
@@ -88,9 +90,9 @@ void create_offscreen_pass(int width, int height) {
     };
     offscreen_pass = sg_make_pass(&offscreen_pass_desc);
 
-    /* also need to update the fullscreen-quad-drawstate texture bindings */
+    /* also need to update the fullscreen-quad texture bindings */
     for (int i = 0; i < 3; i++) {
-        fsq_draw_state.fs_images[i] = offscreen_pass_desc.color_attachments[i].image;
+        fsq_bind.fs_images[i] = offscreen_pass_desc.color_attachments[i].image;
     }
 }
 
@@ -174,7 +176,7 @@ void init(void) {
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
-    sg_shader cube_shd = sg_make_shader(&(sg_shader_desc){
+    sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
@@ -186,7 +188,7 @@ void init(void) {
     });
 
     /* pipeline object for the offscreen-rendered cube */
-    sg_pipeline cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
@@ -194,7 +196,7 @@ void init(void) {
                 [1] = { .name="bright0", .sem_name="BRIGHT", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
-        .shader = cube_shd,
+        .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -211,9 +213,8 @@ void init(void) {
         }
     });
 
-    /* draw state for offscreen rendering */
-    offscreen_draw_state = (sg_draw_state){
-        .pipeline = cube_pip,
+    /* resource bindings for offscreen rendering */
+    offscreen_bind = (sg_bindings){
         .vertex_buffers[0] = cube_vbuf,
         .index_buffer = cube_ibuf
     };
@@ -243,7 +244,7 @@ void init(void) {
     });
 
     /* the pipeline object to render the fullscreen quad */
-    sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0] = { .name="pos", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
         },
@@ -252,9 +253,8 @@ void init(void) {
         .rasterizer.sample_count = MSAA_SAMPLES
     });
 
-    /* draw state to render a fullscreen quad */
-    fsq_draw_state = (sg_draw_state){
-        .pipeline = fsq_pip,
+    /* resource bindings to render a fullscreen quad */
+    fsq_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .fs_images = {
             [0] = offscreen_pass_desc.color_attachments[0].image,
@@ -263,21 +263,20 @@ void init(void) {
         }
     };
 
-    /* and a draw-state to render debug-visualization quads with the content
-       of the offscreen render targets */
-    dbg_draw_state = (sg_draw_state){
-        .pipeline = sg_make_pipeline(&(sg_pipeline_desc){
-            .layout = {
-                .attrs[0] = { .name="pos", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
-            },
-            .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-            .shader = sg_make_shader(&(sg_shader_desc){
-                .vs.source = dbg_vs,
-                .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
-                .fs.source = dbg_fs
-            }),
-            .rasterizer.sample_count = MSAA_SAMPLES
+    /* pipeline and resource bindings to render debug-visualization quads */
+    dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[0] = { .name="pos", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
+        },
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .shader = sg_make_shader(&(sg_shader_desc){
+            .vs.source = dbg_vs,
+            .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+            .fs.source = dbg_fs
         }),
+        .rasterizer.sample_count = MSAA_SAMPLES
+    }),
+    dbg_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf
         /* images will be filled right before rendering */
     };
@@ -317,21 +316,24 @@ void frame(void) {
 
     /* render cube into MRT offscreen render targets */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_draw_state(&offscreen_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+    sg_apply_pipeline(offscreen_pip);
+    sg_apply_bindings(&offscreen_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* render fullscreen quad with the 'composed image', plus 3
        small debug-view quads */
     sg_begin_default_pass(&default_pass_action, sapp_width(), sapp_height());
-    sg_apply_draw_state(&fsq_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+    sg_apply_pipeline(fsq_pip);
+    sg_apply_bindings(&fsq_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
     sg_draw(0, 4, 1);
+    sg_apply_pipeline(dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        dbg_draw_state.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
-        sg_apply_draw_state(&dbg_draw_state);
+        dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+        sg_apply_bindings(&dbg_bind);
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
@@ -356,7 +358,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 #if defined(SOKOL_GLCORE33)
-const char* cube_vs =
+static const char* cube_vs =
     "#version 330\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -366,7 +368,7 @@ const char* cube_vs =
     "  gl_Position = mvp * position;\n"
     "  bright = bright0;\n"
     "}\n";
-const char* cube_fs =
+static const char* cube_fs =
     "#version 330\n"
     "in float bright;\n"
     "layout(location=0) out vec4 frag_color_0;\n"
@@ -377,7 +379,7 @@ const char* cube_fs =
     "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
     "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
     "}\n";
-const char* fsq_vs =
+static const char* fsq_vs =
     "#version 330\n"
     "uniform vec2 offset;"
     "in vec2 pos;\n"
@@ -390,7 +392,7 @@ const char* fsq_vs =
     "  uv1 = pos + vec2(0.0, offset.y);\n"
     "  uv2 = pos;\n"
     "}\n";
-const char* fsq_fs =
+static const char* fsq_fs =
     "#version 330\n"
     "uniform sampler2D tex0;\n"
     "uniform sampler2D tex1;\n"
@@ -405,7 +407,7 @@ const char* fsq_fs =
     "  vec3 c2 = texture(tex2, uv2).xyz;\n"
     "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
     "}\n";
-const char* dbg_vs =
+static const char* dbg_vs =
     "#version 330\n"
     "in vec2 pos;\n"
     "out vec2 uv;\n"
@@ -413,7 +415,7 @@ const char* dbg_vs =
     "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
     "  uv = pos;\n"
     "}\n";
-const char* dbg_fs =
+static const char* dbg_fs =
     "#version 330\n"
     "uniform sampler2D tex;\n"
     "in vec2 uv;\n"
@@ -422,7 +424,7 @@ const char* dbg_fs =
     "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_GLES3)
-const char* cube_vs =
+static const char* cube_vs =
     "#version 300 es\n"
     "uniform mat4 mvp;\n"
     "in vec4 position;\n"
@@ -432,7 +434,7 @@ const char* cube_vs =
     "  gl_Position = mvp * position;\n"
     "  bright = bright0;\n"
     "}\n";
-const char* cube_fs =
+static const char* cube_fs =
     "#version 300 es\n"
     "precision mediump float;\n"
     "in float bright;\n"
@@ -444,7 +446,7 @@ const char* cube_fs =
     "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
     "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
     "}\n";
-const char* fsq_vs =
+static const char* fsq_vs =
     "#version 300 es\n"
     "uniform vec2 offset;"
     "in vec2 pos;\n"
@@ -457,7 +459,7 @@ const char* fsq_vs =
     "  uv1 = pos + vec2(0.0, offset.y);\n"
     "  uv2 = pos;\n"
     "}\n";
-const char* fsq_fs =
+static const char* fsq_fs =
     "#version 300 es\n"
     "precision mediump float;\n"
     "uniform sampler2D tex0;\n"
@@ -473,7 +475,7 @@ const char* fsq_fs =
     "  vec3 c2 = texture(tex2, uv2).xyz;\n"
     "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
     "}\n";
-const char* dbg_vs =
+static const char* dbg_vs =
     "#version 300 es\n"
     "uniform vec2 offset;"
     "in vec2 pos;\n"
@@ -482,7 +484,7 @@ const char* dbg_vs =
     "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
     "  uv = pos;\n"
     "}\n";
-const char* dbg_fs =
+static const char* dbg_fs =
     "#version 300 es\n"
     "precision mediump float;\n"
     "uniform sampler2D tex;\n"
@@ -492,7 +494,7 @@ const char* dbg_fs =
     "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_METAL)
-const char* cube_vs = 
+static const char* cube_vs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -512,7 +514,7 @@ const char* cube_vs =
     "  out.bright = in.bright;\n"
     "  return out;\n"
     "}\n";
-const char* cube_fs =
+static const char* cube_fs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_out {\n"
@@ -527,7 +529,7 @@ const char* cube_fs =
     "  out.color2 = float4(0.0, 0.0, bright, 1.0);\n"
     "  return out;\n"
     "}\n";
-const char* fsq_vs =
+static const char* fsq_vs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct params_t {\n"
@@ -550,7 +552,7 @@ const char* fsq_vs =
     "  out.uv2 = in.pos;\n"
     "  return out;\n"
     "}\n";
-const char* fsq_fs =
+static const char* fsq_fs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct fs_in {\n"
@@ -568,7 +570,7 @@ const char* fsq_fs =
     "  float3 c2 = tex2.sample(smp2, in.uv2).xyz;\n"
     "  return float4(c0 + c1 + c2, 1.0);\n"
     "}\n";
-const char* dbg_vs =
+static const char* dbg_vs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "struct vs_in {\n"
@@ -584,14 +586,14 @@ const char* dbg_vs =
     "  out.uv = in.pos;\n"
     "  return out;\n"
     "}\n";
-const char* dbg_fs =
+static const char* dbg_fs =
     "#include <metal_stdlib>\n"
     "using namespace metal;\n"
     "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
     "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
     "}\n";
 #elif defined(SOKOL_D3D11)
-const char* cube_vs =
+static const char* cube_vs =
     "cbuffer params: register(b0) {\n"
     "  float4x4 mvp;\n"
     "};\n"
@@ -609,7 +611,7 @@ const char* cube_vs =
     "  outp.bright = inp.bright;\n"
     "  return outp;\n"
     "}\n";
-const char* cube_fs =
+static const char* cube_fs =
     "struct fs_out {\n"
     "  float4 c0: SV_Target0;\n"
     "  float4 c1: SV_Target1;\n"
@@ -622,7 +624,7 @@ const char* cube_fs =
     "  outp.c2 = float4(0.0, 0.0, b, 1.0);\n"
     "  return outp;\n"
     "}\n";
-const char* fsq_vs =
+static const char* fsq_vs =
     "cbuffer params {\n"
     "  float2 offset;\n"
     "};\n"
@@ -643,7 +645,7 @@ const char* fsq_vs =
     "  outp.uv2 = inp.pos;\n"
     "  return outp;\n"
     "}\n";
-const char* fsq_fs =
+static const char* fsq_fs =
     "Texture2D<float4> tex0: register(t0);\n"
     "Texture2D<float4> tex1: register(t1);\n"
     "Texture2D<float4> tex2: register(t2);\n"
@@ -662,7 +664,7 @@ const char* fsq_fs =
     "  float4 c = float4(c0 + c1 + c2, 1.0);\n"
     "  return c;\n"
     "}\n";
-const char* dbg_vs =
+static const char* dbg_vs =
     "struct vs_in {\n"
     "  float2 pos: POSITION;\n"
     "};\n"
@@ -676,7 +678,7 @@ const char* dbg_vs =
     "  outp.uv = inp.pos;\n"
     "  return outp;\n"
     "}\n";
-const char* dbg_fs =
+static const char* dbg_fs =
     "Texture2D<float4> tex: register(t0);\n"
     "sampler smp: register(s0);\n"
     "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"

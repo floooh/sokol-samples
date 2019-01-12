@@ -136,8 +136,7 @@ int main() {
 
     /* setup resource bindings, note how the instance-data buffer
        goes into vertex buffer slot 1 */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    sg_bindings bind = {
         .vertex_buffers = {
             [0] = vbuf_geom,
             [1] = vbuf_inst
@@ -187,7 +186,7 @@ int main() {
         }
 
         /* update instance data */
-        sg_update_buffer(draw_state.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
+        sg_update_buffer(bind.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
 
         /* model-view-projection matrix */
         roty += 1.0f;
@@ -196,8 +195,9 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();

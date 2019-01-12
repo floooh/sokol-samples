@@ -15,7 +15,8 @@ sg_pass_action pass_action = {
         [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
     }
 };
-sg_draw_state ds = { 0 };
+sg_pipeline pip;
+sg_bindings bind;
 
 void init(const void* mtl_device) {
     sg_setup(&(sg_desc){
@@ -41,11 +42,11 @@ void init(const void* mtl_device) {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    ds.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
-    ds.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices
@@ -78,7 +79,7 @@ void init(const void* mtl_device) {
             "}\n"
     });
 
-    ds.pipeline = sg_make_pipeline(&(sg_pipeline_desc){
+    pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -92,15 +93,16 @@ void init(const void* mtl_device) {
 
 void frame() {
     sg_begin_default_pass(&pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(pip);
     /* render the triangle */
-    ds.vertex_buffer_offsets[0] = 0;
-    ds.index_buffer_offset = 0;
-    sg_apply_draw_state(&ds);
+    bind.vertex_buffer_offsets[0] = 0;
+    bind.index_buffer_offset = 0;
+    sg_apply_bindings(&bind);
     sg_draw(0, 3, 1);
     /* render the quad */
-    ds.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    ds.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_draw_state(&ds);
+    bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+    bind.index_buffer_offset = 3 * sizeof(uint16_t);
+    sg_apply_bindings(&bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();

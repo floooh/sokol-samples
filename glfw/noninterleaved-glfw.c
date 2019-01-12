@@ -3,7 +3,7 @@
 //  How to use non-interleaved vertex data (vertex components in 
 //  separate non-interleaved chunks in the same vertex buffers). Note
 //  that only 4 separate chunks are currently possible because there 
-//  are 4 vertex buffer bind slots in sg_draw_state, but you can keep
+//  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -127,12 +127,11 @@ int main() {
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* draw state struct with resource bindings, note how the same vertex 
+    /* define the resource bindings, note how the same vertex
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
+    sg_bindings bind = {
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
@@ -169,8 +168,9 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

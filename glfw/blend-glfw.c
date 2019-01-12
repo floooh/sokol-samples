@@ -164,11 +164,9 @@ int main() {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* a draw state with resource bindings */
-    sg_draw_state draw_state = {
+    sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
-
     vs_params_t vs_params;
     fs_params_t fs_params;
     float r = 0.0f;
@@ -179,9 +177,9 @@ int main() {
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
 
         /* draw a background quad */
-        draw_state.pipeline = bg_pip;
-        sg_apply_draw_state(&draw_state);
-        sg_apply_uniform_block(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
+        sg_apply_pipeline(bg_pip);
+        sg_apply_bindings(&bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
         sg_draw(0, 4, 1);
 
         /* draw the blended quads */
@@ -195,9 +193,9 @@ int main() {
                 hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
                 vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-                draw_state.pipeline = pips[src][dst];
-                sg_apply_draw_state(&draw_state);
-                sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+                sg_apply_pipeline(pips[src][dst]);
+                sg_apply_bindings(&bind);
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

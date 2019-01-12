@@ -176,28 +176,28 @@ int main() {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf
+    };
     vs_params_t vs_params;
     float r = 0.0f;
     while (!glfwWindowShouldClose(w)) {
         r += 0.1f;
         hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-        sg_draw_state draw_state = {
-            .pipeline = pip,
-            .vertex_buffers[0] = vbuf
-        };
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&(sg_pass_action){0}, cur_width, cur_height);
+        sg_apply_pipeline(pip);
         for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;
             const float y = ((float)(i / 4) - 1.0f) * -2.0f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
             
-            draw_state.fs_images[0] = img[i];
-            sg_apply_draw_state(&draw_state);
-            sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+            bind.fs_images[0] = img[i];
+            sg_apply_bindings(&bind);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
             sg_draw(0, 4, 1);
         }
         sg_end_pass();

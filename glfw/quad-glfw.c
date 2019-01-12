@@ -56,6 +56,12 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
+    /* define the resource bindings */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
+
     /* create a shader (use vertex attribute locations) */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
@@ -90,13 +96,6 @@ int main() {
         }
     });
 
-    /* draw state struct with resource bindings */
-    sg_draw_state draw_state = {
-        .pipeline = pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf
-    };
-
     /* default pass action */
     sg_pass_action pass_action = { 0 };
 
@@ -105,7 +104,8 @@ int main() {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
-        sg_apply_draw_state(&draw_state);
+        sg_apply_pipeline(pip);
+        sg_apply_bindings(&bind);
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();

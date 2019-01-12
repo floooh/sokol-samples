@@ -12,8 +12,10 @@ const int HEIGHT = 480;
 const int MSAA_SAMPLES = 4;
 
 sg_pass offscreen_pass;
-sg_draw_state offscreen_draw_state;
-sg_draw_state default_draw_state;
+sg_pipeline offscreen_pip;
+sg_bindings offscreen_bind;
+sg_pipeline default_pip;
+sg_bindings default_bind;
 
 /* offscreen: clear to black */
 sg_pass_action offscreen_pass_action = {
@@ -26,8 +28,7 @@ sg_pass_action default_pass_action = {
 };
 
 /* rotation angles */
-float rx = 0.0f;
-float ry = 0.0f;
+float rx, ry;
 
 /* constant view-projection matrix */
 hmm_mat4 view_proj;
@@ -116,6 +117,19 @@ void init(const void* mtl_device) {
         .content = indices
     });
 
+    /* the offscreen resource bindings for rendering a non-textured cube into render target */
+    offscreen_bind = (sg_bindings){
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf
+    };
+
+    /* and the bindings to render a textured cube, using the offscreen render target as texture */
+    default_bind = (sg_bindings){
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[0] = color_img
+    };
+
     /* a shader for a non-textured cube, rendered in the offscreen pass */
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
@@ -188,7 +202,7 @@ void init(const void* mtl_device) {
     });
 
     /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
-    sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to set stride to skip uv-coords gap */
             .buffers[0].stride = 36,
@@ -214,7 +228,7 @@ void init(const void* mtl_device) {
     });
 
     /* and another pipeline-state-object for the default pass */
-    sg_pipeline default_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    default_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },    /* position */
@@ -234,21 +248,6 @@ void init(const void* mtl_device) {
         }
     });
 
-    /* the offscreen draw state for rendering a non-textured cube into render target */
-    offscreen_draw_state = (sg_draw_state){
-        .pipeline = offscreen_pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf
-    };
-
-    /* and a draw state to render a textured cube, using the offscreen render target as texture */
-    default_draw_state = (sg_draw_state){
-        .pipeline = default_pip,
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
-        .fs_images[0] = color_img
-    };
-
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -267,16 +266,18 @@ void frame() {
 
     /* the offscreen pass, rendering an rotating, untextured cube into a render target image */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_draw_state(&offscreen_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(offscreen_pip);
+    sg_apply_bindings(&offscreen_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* and the display-pass, rendering a rotating, textured cube, using the
        previously rendered offscreen render-target as texture */
     sg_begin_default_pass(&default_pass_action, osx_width(), osx_height());
-    sg_apply_draw_state(&default_draw_state);
-    sg_apply_uniform_block(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_pipeline(default_pip);
+    sg_apply_bindings(&default_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
