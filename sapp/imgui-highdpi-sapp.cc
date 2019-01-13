@@ -14,7 +14,6 @@
 static const int MaxVertices = (1<<17);
 static const int MaxIndices = MaxVertices * 3;
 
-static uint64_t last_time = 0;
 static bool show_test_window = true;
 static bool show_another_window = false;
 
@@ -45,7 +44,6 @@ void init(void) {
     desc.d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
     desc.gl_force_gles2 = sapp_gles2();
     sg_setup(&desc);
-    stm_setup();
 
     // setup Dear Imgui 
     ImGui::CreateContext();
@@ -149,7 +147,7 @@ void frame(void) {
 
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
-    io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
+    io.DeltaTime = 1.0f / 60.0f;    /* just assume 60 Hz */
     for (int i = 0; i < SAPP_MAX_MOUSEBUTTONS; i++) {
         if (btn_down[i]) {
             btn_down[i] = false;
