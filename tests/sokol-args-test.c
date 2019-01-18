@@ -7,7 +7,6 @@
 
 #define NUM_ARGS(x) (sizeof(x)/sizeof(void*))
 
-
 static char* argv_0[] = { "exe_name " };
 static void test_init_shutdown(void) {
     test("sokol-args init shutdown");
