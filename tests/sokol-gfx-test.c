@@ -459,7 +459,7 @@ static void test_generation_counter(void) {
         });
         T(buf.id != SG_INVALID_ID);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_VALID);
-        T((buf.id >> 16) == (i + 1));   /* this is the generation counter */
+        T((buf.id >> 16) == (uint32_t)(i + 1));   /* this is the generation counter */
         T(_sg_slot_index(buf.id) == 1); /* slot index should remain the same */
         sg_destroy_buffer(buf);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_INVALID);
