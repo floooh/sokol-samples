@@ -45,4 +45,5 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips set config linux-make-release; fi
   - python fips run sokol-audio-test
   - python fips run sokol-args-test
+  - python fips run sokol-gfx-test
 
