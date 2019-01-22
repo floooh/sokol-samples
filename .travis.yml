@@ -30,7 +30,7 @@ script:
   - cmake --version
   - gcc --version
   - touch dummy.hpp
-  - cpp -dM ./dummy.hpp
+  - g++ -dM ./dummy.hpp
   - python fips clean
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-debug; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-release; fi
