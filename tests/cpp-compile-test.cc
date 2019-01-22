@@ -12,6 +12,7 @@
     #define SOKOL_GLCORE33
 #endif
 #define SOKOL_IMPL
+#define SOKOL_WIN32_FORCE_MAIN
 #include "sokol_app.h"
 #include "sokol_args.h"
 #include "sokol_audio.h"
