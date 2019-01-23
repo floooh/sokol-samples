@@ -1,7 +1,5 @@
-# force old non-container infrastructure, to see whether this
-# is the reason why the IO test hangs
 git:
-  depth: 3
+  depth: 1
 language: c
 os: 
   - osx
