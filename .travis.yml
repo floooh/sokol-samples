@@ -1,8 +1,8 @@
 # force old non-container infrastructure, to see whether this
 # is the reason why the IO test hangs
-# dist: trusty
 git:
   depth: 3
+language: c
 os: 
   - osx
   - linux
