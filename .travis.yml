@@ -8,6 +8,7 @@ compiler: gcc
 os: 
   - osx
   - linux
+  - windows
 addons:
   apt:
     sources:
@@ -28,9 +29,7 @@ before_script:
 script:
   - echo $TRAVIS_OS_NAME
   - cmake --version
-  - gcc --version
-  - touch dummy.hpp
-  - g++ -dM ./dummy.hpp
+  - if [[ "$TRAVIS_OS_NAME" != "windows"]]; then gcc --version; fi
   - python fips clean
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-debug; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips build osx-make-release; fi
