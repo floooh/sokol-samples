@@ -28,7 +28,7 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-static void imgui_draw_cb(ImDrawData*);
+static void draw_imgui(ImDrawData*);
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     // setup d3d11 app wrapper, sokol_gfx, sokol_time
@@ -55,7 +55,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
-    io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
     io.KeyMap[ImGuiKey_Tab] = VK_TAB;
     io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
@@ -195,6 +194,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // the sokol_gfx draw pass
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         ImGui::Render();
+        draw_imgui(ImGui::GetDrawData());
         sg_end_pass();
         sg_commit();
         d3d11_present();
@@ -204,8 +204,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_shutdown();
 }
 
-// imgui draw callback
-void imgui_draw_cb(ImDrawData* draw_data) {
+// render ImGui draw lists through sokol-gfx
+void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
         return;
