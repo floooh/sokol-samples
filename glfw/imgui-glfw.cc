@@ -29,7 +29,7 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-void imgui_draw_cb(ImDrawData*);
+static void draw_imgui(ImDrawData*);
 
 int main() {
 
@@ -82,7 +82,6 @@ int main() {
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
-    io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
     io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB; 
     io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
@@ -220,6 +219,7 @@ int main() {
         // the sokol_gfx draw pass
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         ImGui::Render();
+        draw_imgui(ImGui::GetDrawData());
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
@@ -233,8 +233,8 @@ int main() {
     return 0;
 }
 
-// imgui draw callback
-void imgui_draw_cb(ImDrawData* draw_data) {
+// draw ImGui draw lists via sokol-gfx
+void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
         return;

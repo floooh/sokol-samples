@@ -33,7 +33,7 @@ typedef struct {
 } vs_params_t;
 
 static void draw();
-static void imgui_draw_cb(ImDrawData*);
+static void draw_imgui(ImDrawData*);
 
 int main() {
     /* setup WebGL context */
@@ -50,7 +50,6 @@ int main() {
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
-    io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
     // emscripten has no clearly defined key code constants
     io.KeyMap[ImGuiKey_Tab] = 9;
@@ -282,12 +281,13 @@ void draw() {
     // the sokol_gfx draw pass
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     ImGui::Render();
+    draw_imgui(ImGui::GetDrawData());
     sg_end_pass();
     sg_commit();
 }
 
 // imgui draw callback
-void imgui_draw_cb(ImDrawData* draw_data) {
+void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
         return;

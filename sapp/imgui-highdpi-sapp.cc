@@ -27,7 +27,7 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-static void imgui_draw_cb(ImDrawData*);
+static void draw_imgui(ImDrawData*);
 
 extern const char* vs_src;
 extern const char* fs_src;
@@ -56,7 +56,6 @@ void init(void) {
     fontCfg.RasterizerMultiply = 1.5f;
     io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
     io.IniFilename = nullptr;
-    io.RenderDrawListsFn = imgui_draw_cb;
     io.KeyMap[ImGuiKey_Tab] = SAPP_KEYCODE_TAB;
     io.KeyMap[ImGuiKey_LeftArrow] = SAPP_KEYCODE_LEFT;
     io.KeyMap[ImGuiKey_RightArrow] = SAPP_KEYCODE_RIGHT;
@@ -193,6 +192,7 @@ void frame(void) {
     // the sokol_gfx draw pass
     sg_begin_default_pass(&pass_action, cur_width, cur_height);
     ImGui::Render();
+    draw_imgui(ImGui::GetDrawData());
     sg_end_pass();
     sg_commit();
 }
@@ -266,8 +266,8 @@ void input(const sapp_event* event) {
     }
 }
 
-// imgui draw callback
-void imgui_draw_cb(ImDrawData* draw_data) {
+// draw the ImGui draw lists through sokol-gfx
+void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
         return;

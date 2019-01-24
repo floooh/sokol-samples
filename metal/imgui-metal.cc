@@ -25,7 +25,7 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-void imgui_draw_cb(ImDrawData*);
+static void draw_imgui(ImDrawData*);
 
 void init(const void* mtl_device) {
     // setup sokol_gfx and sokol_time
@@ -42,7 +42,6 @@ void init(const void* mtl_device) {
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
-    io.RenderDrawListsFn = imgui_draw_cb;
     io.Fonts->AddFontDefault();
     io.KeyMap[ImGuiKey_Tab] = 0x30;
     io.KeyMap[ImGuiKey_LeftArrow] = 0x7B;
@@ -206,6 +205,7 @@ void frame() {
     // the sokol draw pass
     sg_begin_default_pass(&pass_action, width, height);
     ImGui::Render();
+    draw_imgui(ImGui::GetDrawData());
     sg_end_pass();
     sg_commit();
 }
@@ -220,7 +220,7 @@ int main() {
     return 0;
 }
 
-void imgui_draw_cb(ImDrawData* draw_data) {
+void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
     if (draw_data->CmdListsCount == 0) {
         return;
