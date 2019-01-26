@@ -17,6 +17,8 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## Public Service Announcements
 
+- **26-Jan-2019**: The sokol_app.h samples now also work on Android. See below for build instructions.
+
 - **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer- 
 and index-buffer-offsets in the sg\_draw\_state struct. Also the location of fips build-system
 files have changed, please update fips with a 'git pull' from the fips directory.
@@ -128,16 +130,42 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 ...
 ```
 
+### To build for Android:
+
+There are no "standalone" samples for Android, but the sokol_app.h samples
+can be built for Android. Plug you Android device into your computer, and then:
+
+```
+> cd ~/scratch/sokol-samples
+> ./fips setup android
+[...this will install a local Android SDK/NDK under ../fips-sdks/android]
+> ./fips set config sapp-android-make-debug
+> ./fips build
+...
+> ./fips list targets
+...
+> ./fips run triangle-sapp
+...
+```
+The last command should install and run the ```triangle-sapp``` sample on your
+connected Android device.
+
+To debug Android applications I'd recommend using Android Studio with
+"Profile or debug APK". You can find the compiled APK files under
+```../fips-deploy/[project]/[config]```.
+
 ## To build the platform-agnostic sokol_app.h samples:
 
 Building the sokol_app.h samples is currently supported for MacOS, Windows, 
-Linux, iOS and HTML5 (Android and RaspberryPi is planned).
+Linux, iOS, HTML5 and Android (RaspberryPi is planned).
 
 Use any of the following custom build configs starting with ```sapp-```
-which matches you platform and build system:
+which matches your platform and build system:
 
 ```bash
 > ./fips list configs | grep sapp-
+  sapp-android-make-debug
+  ...
   sapp-d3d11-win64-vs2017-debug
   sapp-d3d11-win64-vs2017-release
   sapp-d3d11-win64-vscode-debug
