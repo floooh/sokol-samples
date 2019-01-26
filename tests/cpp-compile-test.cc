@@ -8,6 +8,8 @@
     #define SOKOL_GLES2
 #elif defined(_WIN32)
     #define SOKOL_D3D11
+#elif defined(__ANDROID__)
+    #define SOKOL_GLES3
 #else
     #define SOKOL_GLCORE33
 #endif
