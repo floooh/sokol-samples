@@ -132,8 +132,7 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 
 ### To build for Android:
 
-There are no "standalone" samples for Android, but the sokol_app.h samples
-can be built for Android. Plug you Android device into your computer, and then:
+Plug an Android device into your computer, and then:
 
 ```
 > cd ~/scratch/sokol-samples
@@ -147,10 +146,10 @@ can be built for Android. Plug you Android device into your computer, and then:
 > ./fips run triangle-sapp
 ...
 ```
-The last command should install and run the ```triangle-sapp``` sample on your
+The last command should install and run the ```triangle-sapp``` sample on the
 connected Android device.
 
-To debug Android applications I'd recommend using Android Studio with
+To debug Android applications I recommend using Android Studio with
 "Profile or debug APK". You can find the compiled APK files under
 ```../fips-deploy/[project]/[config]```.
 
