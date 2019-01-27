@@ -17,7 +17,7 @@ else()
     endif()
 endif()
 
-# a lib of common code shared between all emulators
+# a lib of common code shared between all samples
 fips_begin_lib(sokol)
     fips_vs_warning_level(3)
     if (FIPS_OSX)
@@ -34,7 +34,7 @@ fips_begin_lib(sokol)
     else()
         fips_files(sokol.c)
         if (FIPS_ANDROID)
-            fips_libs(GLESv3 EGL android)
+            fips_libs(GLESv3 EGL log android)
         elseif (FIPS_LINUX)
             fips_libs(X11 GL m dl asound)
         endif()
