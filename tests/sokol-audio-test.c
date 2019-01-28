@@ -8,7 +8,7 @@
 
 static void test_ring_buffer(void) {
     test("sokol-audio ring buffer");
-    _saudio_ring rb;
+    _saudio_ring_t rb;
     _saudio_ring_init(&rb, 4);
     T(0 == rb.head);
     T(0 == rb.tail);
