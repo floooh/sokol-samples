@@ -224,7 +224,7 @@ static void test_make_destroy_buffers(void) {
         T(buf[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.buffer_pool.queue_top);
         T(sg_query_buffer_state(buf[i]) == SG_RESOURCESTATE_VALID);
-        const _sg_buffer* bufptr = _sg_lookup_buffer(&_sg.pools, buf[i].id);
+        const _sg_buffer_t* bufptr = _sg_lookup_buffer(&_sg.pools, buf[i].id);
         T(bufptr);
         T(bufptr->slot.id == buf[i].id);
         T(bufptr->slot.ctx_id == _sg.active_context.id);
@@ -274,7 +274,7 @@ static void test_make_destroy_images(void) {
         T(img[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.image_pool.queue_top);
         T(sg_query_image_state(img[i]) == SG_RESOURCESTATE_VALID);
-        const _sg_image* imgptr = _sg_lookup_image(&_sg.pools, img[i].id);
+        const _sg_image_t* imgptr = _sg_lookup_image(&_sg.pools, img[i].id);
         T(imgptr);
         T(imgptr->slot.id == img[i].id);
         T(imgptr->slot.ctx_id == _sg.active_context.id);
@@ -327,7 +327,7 @@ static void test_make_destroy_shaders(void) {
         T(shd[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.shader_pool.queue_top);
         T(sg_query_shader_state(shd[i]) == SG_RESOURCESTATE_VALID);
-        const _sg_shader* shdptr = _sg_lookup_shader(&_sg.pools, shd[i].id);
+        const _sg_shader_t* shdptr = _sg_lookup_shader(&_sg.pools, shd[i].id);
         T(shdptr);
         T(shdptr->slot.id == shd[i].id);
         T(shdptr->slot.ctx_id == _sg.active_context.id);
@@ -371,7 +371,7 @@ static void test_make_destroy_pipelines(void) {
         T(pip[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pipeline_pool.queue_top);
         T(sg_query_pipeline_state(pip[i]) == SG_RESOURCESTATE_VALID);
-        const _sg_pipeline* pipptr = _sg_lookup_pipeline(&_sg.pools, pip[i].id);
+        const _sg_pipeline_t* pipptr = _sg_lookup_pipeline(&_sg.pools, pip[i].id);
         T(pipptr);
         T(pipptr->slot.id == pip[i].id);
         T(pipptr->slot.ctx_id == _sg.active_context.id);
@@ -423,7 +423,7 @@ static void test_make_destroy_passes(void) {
         T(pass[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pass_pool.queue_top);
         T(sg_query_pass_state(pass[i]) == SG_RESOURCESTATE_VALID);
-        const _sg_pass* passptr = _sg_lookup_pass(&_sg.pools, pass[i].id);
+        const _sg_pass_t* passptr = _sg_lookup_pass(&_sg.pools, pass[i].id);
         T(passptr);
         T(passptr->slot.id == pass[i].id);
         T(passptr->slot.ctx_id == _sg.active_context.id);
