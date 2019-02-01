@@ -8,7 +8,7 @@
 #include "sokol_app.h"
 #if defined(USE_DBG_UI)
 // from cube-sapp-ui.cc
-extern void dbgui_setup(void);
+extern void dbgui_setup(int sample_count);
 extern void dbgui_shutdown(void);
 extern void dbgui_draw(void);
 extern void dbgui_event(const sapp_event* e);
@@ -37,7 +37,7 @@ void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
     #if defined(USE_DBG_UI)
-    dbgui_setup();
+    dbgui_setup(SAMPLE_COUNT);
     #endif
 
     /* cube vertex buffer */

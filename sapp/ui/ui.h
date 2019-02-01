@@ -9,7 +9,7 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-void imgui_init(void);
+void imgui_init(int sample_count);
 void imgui_newframe(void);
 void imgui_draw(void);
 void imgui_event(const sapp_event* event);
@@ -33,16 +33,20 @@ static bool btn_down[SAPP_MAX_MOUSEBUTTONS];
 static bool btn_up[SAPP_MAX_MOUSEBUTTONS];
 static const int MaxVertices = (1<<17);
 static const int MaxIndices = MaxVertices * 3;
-static sg_pipeline pip;
-static sg_bindings bind;
+static sg_pipeline imgui_pip;
+static sg_bindings imgui_bind;
 
 extern const char* vs_src_imgui;
 extern const char* fs_src_imgui;
 
-void imgui_init(void) {
+void imgui_init(int sample_count) {
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
-    ImGuiIO& io = ImGui::GetIO();
+    auto& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.WindowBorderSize = 1.0f;
+    style.Alpha = 0.75f;
+    auto& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
     io.IniFilename = nullptr;
     io.KeyMap[ImGuiKey_Tab] = SAPP_KEYCODE_TAB;
@@ -70,13 +74,13 @@ void imgui_init(void) {
     sg_buffer_desc vbuf_desc = { };
     vbuf_desc.usage = SG_USAGE_STREAM;
     vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
-    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    imgui_bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     sg_buffer_desc ibuf_desc = { };
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.usage = SG_USAGE_STREAM;
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
-    bind.index_buffer = sg_make_buffer(&ibuf_desc);
+    imgui_bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
     // font texture for imgui's default font
     unsigned char* font_pixels;
@@ -119,7 +123,8 @@ void imgui_init(void) {
     pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
     pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     pip_desc.blend.color_write_mask = SG_COLORMASK_RGB;
-    pip = sg_make_pipeline(&pip_desc);
+    pip_desc.rasterizer.sample_count = sample_count;
+    imgui_pip = sg_make_pipeline(&pip_desc);
 }
 
 void imgui_newframe(void) {
@@ -161,25 +166,25 @@ void imgui_draw(void) {
         // append vertices and indices to buffers, record start offsets in draw state
         const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
         const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const int vb_offset = sg_append_buffer(imgui_bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
+        const int ib_offset = sg_append_buffer(imgui_bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)
         */
-        if (sg_query_buffer_overflow(bind.vertex_buffers[0]) ||
-            sg_query_buffer_overflow(bind.index_buffer))
+        if (sg_query_buffer_overflow(imgui_bind.vertex_buffers[0]) ||
+            sg_query_buffer_overflow(imgui_bind.index_buffer))
         {
             continue;
         }
 
         ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
-        bind.vertex_buffer_offsets[0] = vb_offset;
-        bind.index_buffer_offset = ib_offset;
-        bind.fs_images[0].id = (uint32_t)(uintptr_t)tex_id;
+        imgui_bind.vertex_buffer_offsets[0] = vb_offset;
+        imgui_bind.index_buffer_offset = ib_offset;
+        imgui_bind.fs_images[0].id = (uint32_t)(uintptr_t)tex_id;
 
-        sg_apply_pipeline(pip);
-        sg_apply_bindings(&bind);
+        sg_apply_pipeline(imgui_pip);
+        sg_apply_bindings(&imgui_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         int base_element = 0;
         for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
@@ -189,8 +194,8 @@ void imgui_draw(void) {
             else {
                 if (tex_id != pcmd.TextureId) {
                     tex_id = pcmd.TextureId;
-                    bind.fs_images[0].id = (uint32_t)(uintptr_t)tex_id;
-                    sg_apply_bindings(&bind);
+                    imgui_bind.fs_images[0].id = (uint32_t)(uintptr_t)tex_id;
+                    sg_apply_bindings(&imgui_bind);
                 }
                 const int scissor_x = (int) (pcmd.ClipRect.x);
                 const int scissor_y = (int) (pcmd.ClipRect.y);

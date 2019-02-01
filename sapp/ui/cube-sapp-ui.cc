@@ -8,12 +8,15 @@
 
 extern "C" {
 
-void dbgui_setup(void) {
-    imgui_init();
+static sg_imgui_t sg_imgui;
+
+void dbgui_setup(int sample_count) {
+    imgui_init(sample_count);
+    sg_imgui_init(&sg_imgui);
 }
 
 void dbgui_shutdown(void) {
-
+    sg_imgui_discard(&sg_imgui);
 }
 
 void dbgui_draw(void) {
@@ -21,16 +24,17 @@ void dbgui_draw(void) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("sokol-gfx")) {
             ImGui::MenuItem("Global State");
-            ImGui::MenuItem("Buffers");
-            ImGui::MenuItem("Images");
-            ImGui::MenuItem("Shaders");
-            ImGui::MenuItem("Pipelines");
-            ImGui::MenuItem("Passes");
+            ImGui::MenuItem("Buffers", 0, &sg_imgui.buffers.open);
+            ImGui::MenuItem("Images", 0, &sg_imgui.images.open);
+            ImGui::MenuItem("Shaders", 0, &sg_imgui.shaders.open);
+            ImGui::MenuItem("Pipelines", 0, &sg_imgui.pipelines.open);
+            ImGui::MenuItem("Passes", 0, &sg_imgui.passes.open);
             ImGui::MenuItem("Call List");
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
+    sg_imgui_draw(&sg_imgui);
     imgui_draw();
 }
 
