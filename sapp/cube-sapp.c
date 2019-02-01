@@ -6,6 +6,13 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#if defined(USE_DBG_UI)
+// from cube-sapp-ui.cc
+extern void dbgui_setup(void);
+extern void dbgui_shutdown(void);
+extern void dbgui_draw(void);
+extern void dbgui_event(const sapp_event* e);
+#endif
 
 static const char *vs_src, *fs_src;
 
@@ -29,6 +36,9 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
+    #if defined(USE_DBG_UI)
+    dbgui_setup();
+    #endif
 
     /* cube vertex buffer */
     float vertices[] = {
@@ -142,11 +152,17 @@ void frame(void) {
     sg_apply_bindings(&bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
+    #if defined(USE_DBG_UI)
+    dbgui_draw();
+    #endif
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
+    #if defined(USE_DBG_UI)
+    dbgui_shutdown();
+    #endif
     sg_shutdown();
 }
 
@@ -155,6 +171,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        #if defined(USE_DBG_UI)
+        .event_cb = dbgui_event,
+        #endif
         .width = 800,
         .height = 600,
         .sample_count = SAMPLE_COUNT,
