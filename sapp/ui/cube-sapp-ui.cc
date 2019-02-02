@@ -2,6 +2,7 @@
 //  cube-sapp-ui.cc
 //  Optional debugging UI implementation for cube-sapp
 //------------------------------------------------------------------------------
+#include "sokol_gfx.h"
 #include "sokol_gfx_imgui.h"
 #define UI_IMPL
 #include "ui.h"
@@ -11,8 +12,8 @@ extern "C" {
 static sg_imgui_t sg_imgui;
 
 void dbgui_setup(int sample_count) {
-    imgui_init(sample_count);
     sg_imgui_init(&sg_imgui);
+    imgui_init(sample_count);
 }
 
 void dbgui_shutdown(void) {
@@ -23,7 +24,6 @@ void dbgui_draw(void) {
     imgui_newframe();
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("sokol-gfx")) {
-            ImGui::MenuItem("Global State");
             ImGui::MenuItem("Buffers", 0, &sg_imgui.buffers.open);
             ImGui::MenuItem("Images", 0, &sg_imgui.images.open);
             ImGui::MenuItem("Shaders", 0, &sg_imgui.shaders.open);

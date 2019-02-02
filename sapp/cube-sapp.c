@@ -75,6 +75,7 @@ void init(void) {
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
+        .trace_label = "cube-vertices"
     });
 
     /* create an index buffer for the cube */
@@ -90,6 +91,7 @@ void init(void) {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
+        .trace_label = "cube-indices"
     });
 
     /* create shader */
@@ -101,7 +103,8 @@ void init(void) {
             }
         },
         .vs.source = vs_src,
-        .fs.source = fs_src
+        .fs.source = fs_src,
+        .trace_label = "cube-shader"
     });
 
     /* create pipeline object */
@@ -122,6 +125,7 @@ void init(void) {
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
         .rasterizer.sample_count = SAMPLE_COUNT,
+        .trace_label = "cube-pipeline"
     });
 
     /* setup resource bindings */

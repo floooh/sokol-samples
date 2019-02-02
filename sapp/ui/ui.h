@@ -45,7 +45,7 @@ void imgui_init(int sample_count) {
     auto& style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
     style.WindowBorderSize = 1.0f;
-    style.Alpha = 0.75f;
+    style.Alpha = 1.0f;
     auto& io = ImGui::GetIO();
     io.Fonts->AddFontDefault();
     io.IniFilename = nullptr;
@@ -74,12 +74,14 @@ void imgui_init(int sample_count) {
     sg_buffer_desc vbuf_desc = { };
     vbuf_desc.usage = SG_USAGE_STREAM;
     vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
+    vbuf_desc.trace_label = "imgui-vertices";
     imgui_bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     sg_buffer_desc ibuf_desc = { };
     ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
     ibuf_desc.usage = SG_USAGE_STREAM;
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
+    ibuf_desc.trace_label = "imgui-indices";
     imgui_bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
     // font texture for imgui's default font
@@ -96,6 +98,7 @@ void imgui_init(int sample_count) {
     img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.content.subimage[0][0].ptr = font_pixels;
     img_desc.content.subimage[0][0].size = font_width * font_height * 4;
+    img_desc.trace_label = "imgui-font";
     io.Fonts->TexID = (ImTextureID)(uintptr_t) sg_make_image(&img_desc).id;
 
     // shader object for imgui rendering
@@ -108,6 +111,7 @@ void imgui_init(int sample_count) {
     shd_desc.fs.images[0].type = SG_IMAGETYPE_2D;
     shd_desc.vs.source = vs_src_imgui;
     shd_desc.fs.source = fs_src_imgui;
+    shd_desc.trace_label = "imgui-shader";
     sg_shader shd = sg_make_shader(&shd_desc);
 
     // pipeline object for imgui rendering
@@ -124,6 +128,7 @@ void imgui_init(int sample_count) {
     pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
     pip_desc.blend.color_write_mask = SG_COLORMASK_RGB;
     pip_desc.rasterizer.sample_count = sample_count;
+    pip_desc.trace_label = "imgui-pipeline";
     imgui_pip = sg_make_pipeline(&pip_desc);
 }
 
