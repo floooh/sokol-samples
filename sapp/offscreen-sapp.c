@@ -8,6 +8,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
+#include "ui/dbgui.h"
 
 static const int MSAA_SAMPLES = 4;
 
@@ -48,6 +49,7 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
+    __dbgui_setup(MSAA_SAMPLES);
 
     /* a render pass with one color- and one depth-attachment image */
     sg_image_desc img_desc = {
@@ -57,14 +59,17 @@ void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .sample_count = MSAA_SAMPLES
+        .sample_count = MSAA_SAMPLES,
+        .label = "color-image"
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
     offscreen_pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img
+        .depth_stencil_attachment.image = depth_img,
+        .label = "offscreen-pass"
     });
 
     /* cube vertex buffer with positions, colors and tex coords */
@@ -102,7 +107,8 @@ void init(void) {
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
-        .content = vertices
+        .content = vertices,
+        .label = "cube-vertices"
     });
 
     /* an index buffer for the cube */
@@ -117,7 +123,8 @@ void init(void) {
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .content = indices
+        .content = indices,
+        .label = "cube-indices"
     });
 
     /* a shader for a non-textured cube, rendered in the offscreen pass */
@@ -129,7 +136,8 @@ void init(void) {
             }
         },
         .vs.source = offscreen_vs_src,
-        .fs.source = offscreen_fs_src
+        .fs.source = offscreen_fs_src,
+        .label = "offscreen-shader"
     });
 
     /* ...and another shader for the display-pass, rendering a textured cube
@@ -143,7 +151,8 @@ void init(void) {
         },
         .vs.source = default_vs_src,
         .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
-        .fs.source = default_fs_src
+        .fs.source = default_fs_src,
+        .label = "default-shader"
     });
 
     /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
@@ -170,7 +179,8 @@ void init(void) {
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
             .sample_count = MSAA_SAMPLES
-        }
+        },
+        .label = "offscreen-pipeline"
     });
 
     /* and another pipeline-state-object for the default pass */
@@ -192,7 +202,8 @@ void init(void) {
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
             .sample_count = MSAA_SAMPLES
-        }
+        },
+        .label = "default-pipeline"
     });
 
     /* the resource bindings for rendering a non-textured cube into offscreen render target */
@@ -237,12 +248,14 @@ void frame(void) {
     sg_apply_bindings(&default_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
+    __dbgui_draw();
     sg_end_pass();
 
     sg_commit();
 }
 
 void cleanup(void) {
+    __dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -251,6 +264,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = MSAA_SAMPLES,

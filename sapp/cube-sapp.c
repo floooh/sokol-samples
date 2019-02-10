@@ -6,13 +6,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
-#if defined(USE_DBG_UI)
-// from cube-sapp-ui.cc
-extern void dbgui_setup(int sample_count);
-extern void dbgui_shutdown(void);
-extern void dbgui_draw(void);
-extern void dbgui_event(const sapp_event* e);
-#endif
+#include "ui/dbgui.h"
 
 static const char *vs_src, *fs_src;
 
@@ -36,9 +30,7 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
-    #if defined(USE_DBG_UI)
-    dbgui_setup(SAMPLE_COUNT);
-    #endif
+    __dbgui_setup(SAMPLE_COUNT);
 
     /* cube vertex buffer */
     float vertices[] = {
@@ -75,7 +67,7 @@ void init(void) {
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
-        .trace_label = "cube-vertices"
+        .label = "cube-vertices"
     });
 
     /* create an index buffer for the cube */
@@ -91,7 +83,7 @@ void init(void) {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
-        .trace_label = "cube-indices"
+        .label = "cube-indices"
     });
 
     /* create shader */
@@ -104,7 +96,7 @@ void init(void) {
         },
         .vs.source = vs_src,
         .fs.source = fs_src,
-        .trace_label = "cube-shader"
+        .label = "cube-shader"
     });
 
     /* create pipeline object */
@@ -125,7 +117,7 @@ void init(void) {
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
         .rasterizer.sample_count = SAMPLE_COUNT,
-        .trace_label = "cube-pipeline"
+        .label = "cube-pipeline"
     });
 
     /* setup resource bindings */
@@ -156,17 +148,13 @@ void frame(void) {
     sg_apply_bindings(&bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
-    #if defined(USE_DBG_UI)
-    dbgui_draw();
-    #endif
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
-    #if defined(USE_DBG_UI)
-    dbgui_shutdown();
-    #endif
+    __dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -175,9 +163,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        #if defined(USE_DBG_UI)
-        .event_cb = dbgui_event,
-        #endif
+        .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = SAMPLE_COUNT,

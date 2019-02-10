@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  cube-sapp-ui.cc
-//  Optional debugging UI implementation for cube-sapp
+//  dbgui.cc
+//  Implementation file for the generic debug UI overlay.
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_gfx_imgui.h"
@@ -11,16 +11,16 @@ extern "C" {
 
 static sg_imgui_t sg_imgui;
 
-void dbgui_setup(int sample_count) {
+void __dbgui_setup(int sample_count) {
     sg_imgui_init(&sg_imgui);
     imgui_init(sample_count);
 }
 
-void dbgui_shutdown(void) {
+void __dbgui_shutdown(void) {
     sg_imgui_discard(&sg_imgui);
 }
 
-void dbgui_draw(void) {
+void __dbgui_draw(void) {
     imgui_newframe();
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("sokol-gfx")) {
@@ -38,7 +38,7 @@ void dbgui_draw(void) {
     imgui_draw();
 }
 
-void dbgui_event(const sapp_event* e) {
+void __dbgui_event(const sapp_event* e) {
     imgui_event(e);
 }
 
