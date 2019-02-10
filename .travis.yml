@@ -9,6 +9,7 @@ os:
 addons:
   apt:
     packages:
+      - libglu1-mesa-dev
       - mesa-common-dev
       - xorg-dev
       - libasound-dev
