@@ -18,5 +18,5 @@ extern void __dbgui_event(const sapp_event* e);
 #define __dbgui_setup(x)
 #define __dbgui_shutdown()
 #define __dbgui_draw()
-#define __dbgui_event (0)
+#define __dbgui_event(x) (void)(0)
 #endif

@@ -8,6 +8,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
+#include "ui/dbgui.h"
 
 const char *bg_vs_src, *bg_fs_src, *quad_vs_src, *quad_fs_src;
 
@@ -48,6 +49,7 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
+    __dbgui_setup(MSAA_SAMPLES);
 
     /* a quad vertex buffer */
     float vertices[] = {
@@ -195,6 +197,7 @@ void frame(void) {
             }
         }
     }
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
     r += 0.6f;
@@ -202,6 +205,7 @@ void frame(void) {
 }
 
 void cleanup(void) {
+    __dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -210,6 +214,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = MSAA_SAMPLES,
