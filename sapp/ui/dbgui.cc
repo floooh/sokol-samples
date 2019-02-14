@@ -29,7 +29,7 @@ void __dbgui_draw(void) {
             ImGui::MenuItem("Shaders", 0, &sg_imgui.shaders.open);
             ImGui::MenuItem("Pipelines", 0, &sg_imgui.pipelines.open);
             ImGui::MenuItem("Passes", 0, &sg_imgui.passes.open);
-            ImGui::MenuItem("Call List");
+            ImGui::MenuItem("Calls", 0, &sg_imgui.capture.open);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
