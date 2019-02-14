@@ -15,8 +15,8 @@ extern void __dbgui_event(const sapp_event* e);
 } // extern "C"
 #endif
 #else
-#define __dbgui_setup(x)
-#define __dbgui_shutdown()
-#define __dbgui_draw()
-#define __dbgui_event(x) (void)(0)
+static inline void __dbgui_setup(int sample_count) { (void)(sample_count); }
+static inline void __dbgui_shutdown(void) { }
+static inline void __dbgui_draw(void) { }
+static inline void __dbgui_event(const sapp_event* e) { (void)(e); }
 #endif
