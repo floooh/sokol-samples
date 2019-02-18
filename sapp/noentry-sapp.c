@@ -34,14 +34,8 @@ void cleanup(void);
 int main(int argc, char* argv[]) {
 #else
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-    (void)(hInstance);
-    (void)(hPrevInstance);
-    (void)(lpCmdLine);
-    (void)(nCmdShow);
-    int argc = __argc;
-    char* argv[] = __argv;
 #endif
-    sapp_run(argc, argv, &(sapp_desc){
+    return sapp_run(&(sapp_desc){
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
