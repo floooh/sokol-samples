@@ -12,13 +12,14 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include <Windows.h>
 
 static const char *vs_src, *fs_src;
 
 static const int SAMPLE_COUNT = 4;
 static float rx, ry;
 static sg_pipeline pip;
-static sg_bindings bind;
+static sg_bindings bindings;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -144,7 +145,7 @@ void init(void) {
     });
 
     /* setup resource bindings */
-    bind = (sg_bindings) {
+    bindings = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
@@ -168,7 +169,7 @@ void frame(void) {
     };
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_apply_bindings(&bindings);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
