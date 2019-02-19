@@ -17,6 +17,10 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## Public Service Announcements
 
+- **19-Feb-2019**: a new sokol_app.h sample has been added to demonstrate the
+new SOKOL_NO_ENTRY feature (in which sokol_app.h doesn't hijack the main function):
+```sapp/noentry-sapp.c```
+
 - **26-Jan-2019**: The sokol_app.h samples now also work on Android. See below for build instructions.
 
 - **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer- 
