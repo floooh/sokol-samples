@@ -12,7 +12,9 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#if defined(_WIN32)
 #include <Windows.h>
+#endif
 
 static const char *vs_src, *fs_src;
 
