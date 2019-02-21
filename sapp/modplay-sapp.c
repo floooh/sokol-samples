@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
 //  modplay-sapp.c
 //  sokol_app + sokol_audio + libmodplug
+//  This uses the user-data callback model both for sokol_app.h and
+//  sokol_audio.h
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -16,27 +18,29 @@
 /* big enough for packet_size * num_packets * num_channels */
 #define MODPLAY_SRCBUF_SAMPLES (16*1024)
 
-static bool mpf_valid = false;
-static ModPlugFile* mpf;
+typedef struct {
+    bool mpf_valid;
+    ModPlugFile* mpf;
+    int int_buf[MODPLAY_SRCBUF_SAMPLES];
+    #if MODPLAY_USE_PUSH
+    float flt_buf[MODPLAY_SRCBUF_SAMPLES];
+    #endif
+} state_t;
 
 /* integer-to-float conversion buffer */
-static int int_buf[MODPLAY_SRCBUF_SAMPLES];
-#if MODPLAY_USE_PUSH
-static float flt_buf[MODPLAY_SRCBUF_SAMPLES];
-#endif
 
 /* common function to read sample stream from libmodplug and convert to float */
-static void read_samples(float* buffer, int num_samples) {
+static void read_samples(state_t* state, float* buffer, int num_samples) {
     assert(num_samples <= MODPLAY_SRCBUF_SAMPLES);
-    if (mpf_valid) {
+    if (state->mpf_valid) {
         /* NOTE: for multi-channel playback, the samples are interleaved
            (e.g. left/right/left/right/...)
         */
-        int res = ModPlug_Read(mpf, (void*)int_buf, sizeof(int)*num_samples);
+        int res = ModPlug_Read(state->mpf, (void*)state->int_buf, sizeof(int)*num_samples);
         int samples_in_buffer = res / sizeof(int);
         int i;
         for (i = 0; i < samples_in_buffer; i++) {
-            buffer[i] = int_buf[i] / (float)0x7fffffff;
+            buffer[i] = state->int_buf[i] / (float)0x7fffffff;
         }
         for (; i < num_samples; i++) {
             buffer[i] = 0.0f;
@@ -54,13 +58,15 @@ static void read_samples(float* buffer, int num_samples) {
     on most platforms, this runs on a separate thread
 */
 #if !MODPLAY_USE_PUSH
-static void stream_cb(float* buffer, int num_frames, int num_channels) {
+static void stream_cb(float* buffer, int num_frames, int num_channels, void* user_data) {
+    state_t* state = (state_t*) user_data;
     const int num_samples = num_frames * num_channels;
-    read_samples(buffer, num_samples);
+    read_samples(state, buffer, num_samples);
 }
 #endif
 
-void init(void) {
+void init(void* user_data) {
+    state_t* state = (state_t*) user_data;
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
         .mtl_device = sapp_metal_get_device(),
@@ -76,7 +82,8 @@ void init(void) {
     saudio_setup(&(saudio_desc){
         .num_channels = MODPLAY_NUM_CHANNELS,
         #if !MODPLAY_USE_PUSH
-        .stream_cb = stream_cb
+        .stream_userdata_cb = stream_cb,
+        .user_data = state
         #endif
     });
 
@@ -92,13 +99,13 @@ void init(void) {
     mps.mFlags = MODPLUG_ENABLE_OVERSAMPLING;
     ModPlug_SetSettings(&mps);
 
-    mpf = ModPlug_Load(dump_disco_feva_baby, sizeof(dump_disco_feva_baby));
-    if (mpf) {
-        mpf_valid = true;
+    state->mpf = ModPlug_Load(dump_disco_feva_baby, sizeof(dump_disco_feva_baby));
+    if (state->mpf) {
+        state->mpf_valid = true;
     }
 }
 
-void frame(void) {
+void frame(void* user_data) {
     /* alternative way to get audio data into sokol_audio: push the
         data from the main thread, this appends the sample data to a ring
         buffer where the audio thread will pull from
@@ -109,10 +116,11 @@ void frame(void) {
            you don't need the call to saudio_expect(), instead just call
            saudio_push() as new sample data gets generated
         */
+        state_t* state = (state_t*) user_data;
         const int num_frames = saudio_expect();
         if (num_frames > 0) {
             const int num_samples = num_frames * saudio_channels();
-            read_samples(flt_buf, num_samples);
+            read_samples(state, flt_buf, num_samples);
             saudio_push(flt_buf, num_frames);
         }
     #endif
@@ -124,19 +132,22 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+void cleanup(void* user_data) {
+    state_t* state = (state_t*) user_data;
     saudio_shutdown();
-    if (mpf_valid) {
-        ModPlug_Unload(mpf);
+    if (state->mpf_valid) {
+        ModPlug_Unload(state->mpf);
     }
     sg_shutdown();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    static state_t state;   /* static structs are implicitely zero-initialized */
     return (sapp_desc){
-        .init_cb = init,
-        .frame_cb = frame,
-        .cleanup_cb = cleanup,
+        .init_userdata_cb = init,
+        .frame_userdata_cb = frame,
+        .cleanup_userdata_cb = cleanup,
+        .user_data = &state,
         .width = 400,
         .height = 300,
         .gl_force_gles2 = true,
