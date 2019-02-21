@@ -120,8 +120,8 @@ void frame(void* user_data) {
         const int num_frames = saudio_expect();
         if (num_frames > 0) {
             const int num_samples = num_frames * saudio_channels();
-            read_samples(state, flt_buf, num_samples);
-            saudio_push(flt_buf, num_frames);
+            read_samples(state, state->flt_buf, num_samples);
+            saudio_push(state->flt_buf, num_frames);
         }
     #endif
     sg_pass_action pass_action = {
