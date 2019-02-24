@@ -70,6 +70,8 @@ void imgui_init(int sample_count) {
     io.KeyMap[ImGuiKey_Y] = SAPP_KEYCODE_Y;
     io.KeyMap[ImGuiKey_Z] = SAPP_KEYCODE_Z;
 
+    sg_push_debug_group("imgui init");
+
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
     vbuf_desc.usage = SG_USAGE_STREAM;
@@ -130,6 +132,8 @@ void imgui_init(int sample_count) {
     pip_desc.rasterizer.sample_count = sample_count;
     pip_desc.label = "imgui-pipeline";
     imgui_pip = sg_make_pipeline(&pip_desc);
+
+    sg_pop_debug_group();
 }
 
 void imgui_newframe(void) {
@@ -162,6 +166,7 @@ void imgui_draw(void) {
     }
 
     // render the command list
+    sg_push_debug_group("imgui render");
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
@@ -212,6 +217,7 @@ void imgui_draw(void) {
             base_element += pcmd.ElemCount;
         }
     }
+    sg_pop_debug_group();
 }
 
 void imgui_event(const sapp_event* event) {
