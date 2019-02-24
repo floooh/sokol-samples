@@ -166,7 +166,7 @@ void imgui_draw(void) {
     }
 
     // render the command list
-    sg_push_debug_group("imgui render");
+    sg_push_debug_group("imgui");
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
@@ -185,7 +185,7 @@ void imgui_draw(void) {
         if (sg_query_buffer_overflow(imgui_bind.vertex_buffers[0]) ||
             sg_query_buffer_overflow(imgui_bind.index_buffer))
         {
-            continue;
+            break;
         }
 
         ImTextureID tex_id = ImGui::GetIO().Fonts->TexID;
