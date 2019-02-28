@@ -9,6 +9,7 @@ static sg_pass_action pass_action;
 
 void init(void) {
     sg_setup(&(sg_desc){
+        .gl_force_gles2 = true,
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
