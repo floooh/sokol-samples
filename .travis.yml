@@ -1,27 +1,18 @@
 git:
   depth: 1
 language: c
+dist: xenial
 os: 
   - osx
   - linux
   - windows
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
-      - gcc-6
-      - g++-6
-      - cmake
-      - cmake-data
+      - libglu1-mesa-dev
       - mesa-common-dev
       - xorg-dev
       - libasound-dev
-before_install:
-  - if [ "$TRAVIS_OS_NAME" = "linux"  ]; then sudo apt-get -qq update;    fi
-before_script:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50; fi
 script:
   - echo $TRAVIS_OS_NAME
   - cmake --version

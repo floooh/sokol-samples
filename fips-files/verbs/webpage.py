@@ -28,7 +28,8 @@ samples = [
     [ 'imgui', 'imgui-sapp.cc' ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc' ],
     [ 'saudio', 'saudio-sapp.c'],
-    [ 'modplay', 'modplay-sapp.c' ]
+    [ 'modplay', 'modplay-sapp.c' ],
+    [ 'noentry', 'noentry-sapp.c' ]
 ]
 
 # webpage template arguments
