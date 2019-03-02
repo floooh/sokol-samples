@@ -167,9 +167,11 @@ void imgui_draw(void) {
 
     // render the command list
     sg_push_debug_group("imgui");
+    sg_apply_pipeline(imgui_pip);
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
@@ -193,9 +195,7 @@ void imgui_draw(void) {
         imgui_bind.index_buffer_offset = ib_offset;
         imgui_bind.fs_images[0].id = (uint32_t)(uintptr_t)tex_id;
 
-        sg_apply_pipeline(imgui_pip);
         sg_apply_bindings(&imgui_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
         int base_element = 0;
         for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
             if (pcmd.UserCallback) {
