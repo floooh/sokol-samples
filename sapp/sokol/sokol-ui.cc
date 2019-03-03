@@ -5,8 +5,7 @@
 //  target Dear ImGui, the implementation must be compiled as C++
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_D3D11_SHADER_COMPILER
-#define SOKOL_IMPL
+#define SOKOL_TRACE_HOOKS
 #define SOKOL_D3D11_SHADER_COMPILER
 #if defined(_WIN32)
 #include <Windows.h>

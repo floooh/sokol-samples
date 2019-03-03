@@ -3,6 +3,7 @@
 //  This is the same as sokol-ui.cc, but for compiling as Objective-C++.
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
+#define SOKOL_TRACE_HOOKS
 /* sokol 3D-API defines are provided by build options */
 #include "sokol_app.h"
 #include "sokol_gfx.h"
