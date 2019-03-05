@@ -18,10 +18,6 @@ void imgui_event(const sapp_event* event);
 #endif
 
 //------------------------------------------------------------------------------
-#if defined(__INTELLISENSE__)
-#define UI_IMPL
-#endif
-
 #if defined(UI_IMPL)
 #include "imgui.h"
 
