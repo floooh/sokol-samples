@@ -28,14 +28,15 @@ body {
 .game-title {
     pointer-events: none;
     position: absolute;
+    bottom: 10px;
+    margin-top: 0px;
+    padding-left: 10px;
     color: white;
     text-decoration: none;
     z-index: 1;
     text-align: left;
     font-family: "Arial Black", Gadget, sans-serif;
     font-size: 30px;
-    margin-top: 0px;
-    padding-left: 10px;
 }
 .game-menu-item {
     pointer-events: auto;
@@ -56,6 +57,7 @@ body {
     height: auto;
 }
 .thumb {
+    position: relative;
     width: 250px;
     height: 220px;
     margin-left: 15px;
@@ -77,6 +79,33 @@ body {
     width: auto;
     height: 165px;
 }
+.img-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    padding: 2px;
+    display: block;
+    background-color: #3dbb87;
+    cursor: pointer;
+    border-radius: 4px;
+    border-style: solid;
+    border-color: black;
+    text-align: center;
+    color: black;
+}
+.img-btn:hover {
+    background-color: black;
+    border-color: #3dbb87;
+    color: #3dbb87;
+}
+.img-btn-link {
+    text-decoration: none;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 16px;
+    color: inherit;
+}
 .image {
     display: block;
     height: 165px;
@@ -87,30 +116,15 @@ body {
     border: 1px solid black;
 }
 .thumb-bar {
-    padding: 0;
-    width: 240px;
     vertical-align: bottom;
-}
-.thumb-list {
-    margin: 0px;
-    margin-left: 45px;
-    padding: 0;
-    list-style-type: none;
-}
-.thumb-item {
-    float: left;
-    display: inline;
-}
-a.thumb-link:link, a.thumb-link:visited {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 16px;    
-    display: block;
-    width: 80px;
-    color: #3dbb87;
+    padding-top: 5px;
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    color: limegreen;
     text-align: center;
     text-decoration: none;
 }
-
 .gallery-bottom {
     height: 60px;
     clear: both;

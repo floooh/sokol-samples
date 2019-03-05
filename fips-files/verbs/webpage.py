@@ -36,12 +36,13 @@ samples = [
 GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
 
 # build configuration
-WasmConfig = 'sapp-webgl2-wasm-ninja-release'
+BuildConfig = 'sapp-webgl2-wasm-ninja-release'
 
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     """builds the final webpage under under fips-deploy/sokol-webpage"""
     ws_dir = util.get_workspace_dir(fips_dir)
+    wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, BuildConfig)
 
     # create directories
     for platform in ['wasm'] :
@@ -54,6 +55,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     for sample in samples :
         name = sample[0]
         log.info('> adding thumbnail for {}'.format(name))
+        url = "wasm/{}-sapp.html".format(name)
+        ui_url = "wasm/{}-sapp-ui.html".format(name)
         img_name = name + '.jpg'
         img_path = proj_dir + '/webpage/' + img_name
         if not os.path.exists(img_path):
@@ -61,7 +64,9 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             img_path = proj_dir + 'webpage/dummy.jpg'
         content += '<div class="thumb">\n'
         content += '  <div class="thumb-title">{}</div>\n'.format(name)
-        content += '  <div class="img-frame"><a href="wasm/{}-sapp.html"><img class="image" src="{}"></img></a></div>\n'.format(name,img_name)
+        if os.path.exists(wasm_deploy_dir + '/' + name + '-sapp-ui.js'):
+            content += '<a class="img-btn-link" href="{}"><div class="img-btn">UI</div></a>'.format(ui_url)
+        content += '  <div class="img-frame"><a href="{}"><img class="image" src="{}"></img></a></div>\n'.format(url,img_name)
         content += '</div>\n'
 
     # populate the html template, and write to the build directory
@@ -85,25 +90,21 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
 
     # generate WebAssembly HTML pages
     if emscripten.check_exists(fips_dir) :
-        wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, WasmConfig)
         for sample in samples :
             name = sample[0]
             source = sample[1]
             log.info('> generate wasm HTML page: {}'.format(name))
-            for ext in ['js'] :
-                src_path = '{}/{}-sapp.{}'.format(wasm_deploy_dir, name, ext)
-                if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/wasm/'.format(webpage_dir))
-            for ext in ['wasm'] :
-                src_path = '{}/{}-sapp.{}'.format(wasm_deploy_dir, name, ext)
-                if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/wasm/{}-sapp.{}'.format(webpage_dir, name, ext))
-            with open(proj_dir + '/webpage/wasm.html', 'r') as f :
-                templ = Template(f.read())
-            src_url = GitHubSamplesURL + source
-            html = templ.safe_substitute(name=name, prog=name+'-sapp', source=src_url)
-            with open('{}/wasm/{}-sapp.html'.format(webpage_dir, name), 'w') as f :
-                f.write(html)
+            for postfix in ['sapp', 'sapp-ui']:
+                for ext in ['wasm', 'js'] :
+                    src_path = '{}/{}-{}.{}'.format(wasm_deploy_dir, name, postfix, ext)
+                    if os.path.isfile(src_path) :
+                        shutil.copy(src_path, '{}/wasm/'.format(webpage_dir))
+                    with open(proj_dir + '/webpage/wasm.html', 'r') as f :
+                        templ = Template(f.read())
+                    src_url = GitHubSamplesURL + source
+                    html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url)
+                    with open('{}/wasm/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
+                        f.write(html)
 
     # copy the screenshots
     for sample in samples :
@@ -126,8 +127,8 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
 
     # compile samples
     if emscripten.check_exists(fips_dir) :
-        project.gen(fips_dir, proj_dir, WasmConfig)
-        project.build(fips_dir, proj_dir, WasmConfig)
+        project.gen(fips_dir, proj_dir, BuildConfig)
+        project.build(fips_dir, proj_dir, BuildConfig)
     
     # deploy the webpage
     deploy_webpage(fips_dir, proj_dir, webpage_dir)

@@ -17,6 +17,11 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## Public Service Announcements
 
+- **05-Mar-2019**: the sokol-app samples (in the sapp directory) now come with optional
+debugging UIs implemented via the new Dear ImGui based debug-inspection headers, these
+are compiled as separate executables, so the executable-versions without UI are still as
+small as possible.
+
 - **19-Feb-2019**: a new sokol_app.h sample has been added to demonstrate the
 new SOKOL_NO_ENTRY feature (in which sokol_app.h doesn't hijack the main function):
 ```sapp/noentry-sapp.c```

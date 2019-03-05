@@ -9,6 +9,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
+#include "ui/dbgui.h"
 
 #define MSAA_SAMPLES (4)
 
@@ -76,17 +77,20 @@ void create_offscreen_pass(int width, int height) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = offscreen_sample_count
+        .sample_count = offscreen_sample_count,
+        .label = "color image"
     };
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    depth_img_desc.label = "depth image";
     offscreen_pass_desc = (sg_pass_desc){
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc),
+        .label = "offscreen pass"
     };
     offscreen_pass = sg_make_pass(&offscreen_pass_desc);
 
@@ -101,6 +105,7 @@ void event(const sapp_event* e) {
     if (e->type == SAPP_EVENTTYPE_RESIZED) {
         create_offscreen_pass(e->framebuffer_width, e->framebuffer_height);
     }
+    __dbgui_event(e);
 }
 
 void init(void) {
@@ -114,6 +119,7 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
+    __dbgui_setup(MSAA_SAMPLES);
     if (sapp_gles2()) {
         /* this demo needs GLES3/WebGL */
         return;
@@ -158,6 +164,7 @@ void init(void) {
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(cube_vertices),
         .content = cube_vertices,
+        .label = "cube vertices"
     });
 
     /* index buffer for the cube */
@@ -173,6 +180,7 @@ void init(void) {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(cube_indices),
         .content = cube_indices,
+        .label = "cube indices"
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
@@ -185,6 +193,7 @@ void init(void) {
         },
         .vs.source = cube_vs,
         .fs.source = cube_fs,
+        .label = "offscreen shader"
     });
 
     /* pipeline object for the offscreen-rendered cube */
@@ -210,7 +219,8 @@ void init(void) {
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
             .sample_count = MSAA_SAMPLES
-        }
+        },
+        .label = "offscreen pipeline"
     });
 
     /* resource bindings for offscreen rendering */
@@ -223,7 +233,8 @@ void init(void) {
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(quad_vertices),
-        .content = quad_vertices
+        .content = quad_vertices,
+        .label = "quad vertices"
     });
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
@@ -240,7 +251,8 @@ void init(void) {
             [2] = { .name="tex2", .type=SG_IMAGETYPE_2D }
         },
         .vs.source = fsq_vs,
-        .fs.source = fsq_fs
+        .fs.source = fsq_fs,
+        .label = "fullscreen quad shader"
     });
 
     /* the pipeline object to render the fullscreen quad */
@@ -250,7 +262,8 @@ void init(void) {
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
+        .rasterizer.sample_count = MSAA_SAMPLES,
+        .label = "fullscreen quad pipeline"
     });
 
     /* resource bindings to render a fullscreen quad */
@@ -272,9 +285,11 @@ void init(void) {
         .shader = sg_make_shader(&(sg_shader_desc){
             .vs.source = dbg_vs,
             .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
-            .fs.source = dbg_fs
+            .fs.source = dbg_fs,
+            .label = "dbgvis quad shader"
         }),
-        .rasterizer.sample_count = MSAA_SAMPLES
+        .rasterizer.sample_count = MSAA_SAMPLES,
+        .label = "dbgvis quad pipeline"
     }),
     dbg_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf
@@ -288,6 +303,7 @@ void draw_gles2_fallback(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } },
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -336,11 +352,14 @@ void frame(void) {
         sg_apply_bindings(&dbg_bind);
         sg_draw(0, 4, 1);
     }
+    sg_apply_viewport(0, 0, sapp_width(), sapp_height(), false);
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
+    __dbgui_shutdown();
     sg_shutdown();
 }
 
