@@ -1,27 +1,37 @@
 //------------------------------------------------------------------------------
 //  dbgui.cc
-//  Implementation file for the generic debug UI overlay.
+//  Implementation file for the generic debug UI overlay, using 
+//  the sokol_imgui.h utility header which implements the Dear ImGui
+//  glue code.
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
+#include "sokol_app.h"
+#include "imgui.h"
 #include "sokol_gfx_imgui.h"
-#define UI_IMPL
-#include "ui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol_imgui.h"
 
 extern "C" {
 
 static sg_imgui_t sg_imgui;
 
 void __dbgui_setup(int sample_count) {
+    // setup debug inspection header(s)
     sg_imgui_init(&sg_imgui);
-    imgui_init(sample_count);
+    
+    // setup the sokol-imgui utility header
+    simgui_desc_t simgui_desc = { };
+    simgui_desc.sample_count = sample_count;
+    simgui_setup(&simgui_desc);
 }
 
 void __dbgui_shutdown(void) {
+    simgui_shutdown();
     sg_imgui_discard(&sg_imgui);
 }
 
 void __dbgui_draw(void) {
-    imgui_newframe();
+    simgui_newframe(sapp_width(), sapp_height(), 1.0/60.0);
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("sokol-gfx")) {
             ImGui::MenuItem("Buffers", 0, &sg_imgui.buffers.open);
@@ -35,11 +45,11 @@ void __dbgui_draw(void) {
         ImGui::EndMainMenuBar();
     }
     sg_imgui_draw(&sg_imgui);
-    imgui_draw();
+    simgui_render();
 }
 
 void __dbgui_event(const sapp_event* e) {
-    imgui_event(e);
+    simgui_handle_event(e);
 }
 
 } // extern "C"
