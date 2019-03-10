@@ -17,6 +17,24 @@ static void test_init_shutdown(void) {
     T(!sg_isvalid());
 }
 
+static void test_query_desc(void) {
+    test("query desc");
+    sg_setup(&(sg_desc){
+        .buffer_pool_size = 1024,
+        .shader_pool_size = 128,
+        .pass_pool_size = 64,
+    });
+    const sg_desc desc = sg_query_desc();
+    T(desc.buffer_pool_size == 1024);
+    T(desc.image_pool_size == _SG_DEFAULT_IMAGE_POOL_SIZE);
+    T(desc.shader_pool_size == 128);
+    T(desc.pipeline_pool_size == _SG_DEFAULT_PIPELINE_POOL_SIZE);
+    T(desc.pass_pool_size == 64);
+    T(desc.context_pool_size == _SG_DEFAULT_CONTEXT_POOL_SIZE);
+    T(desc.mtl_global_uniform_buffer_size == _SG_MTL_DEFAULT_UB_SIZE);
+    T(desc.mtl_sampler_cache_size == _SG_MTL_DEFAULT_SAMPLER_CACHE_CAPACITY);
+}
+
 static void test_pool_size(void) {
     test("pool size");
     sg_setup(&(sg_desc){
@@ -470,6 +488,7 @@ static void test_generation_counter(void) {
 int main() {
     test_begin("sokol-gfx-test");
     test_init_shutdown();
+    test_query_desc();
     test_pool_size();
     test_alloc_fail_destroy_buffers();
     test_alloc_fail_destroy_images();
