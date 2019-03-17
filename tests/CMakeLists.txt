@@ -13,6 +13,11 @@ fips_begin_app(sokol-gfx-test cmdline)
     fips_files(sokol-gfx-test.c)
 fips_end_app()
 
+fips_begin_app(sokol-gl-test cmdline)
+    fips_vs_warning_level(3)
+    fips_files(sokol-gl-test.c)
+fips_end_app()
+
 if (FIPS_OSX)
     if (USE_SOKOL_APP OR SOKOL_USE_METAL)
         # ob Apple with Metal, must compile as Objective-C++
