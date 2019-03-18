@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
+#include <float.h>
 
 #if !defined(NDEBUG)
 /* debug mode, use asserts to quit right when test fails */
@@ -13,6 +15,7 @@
 #define T(x) {if(x){_test_state.num_success++;}else{_test_state.num_fail++;};}
 #endif
 #define TSTR(s0,s1) {T(0==strcmp(s0,s1));}
+#define TFLT(f0,f1,epsilon) {T(fabs((f0)-(f1))<=(epsilon));}
 
 typedef struct {
     const char* name;
