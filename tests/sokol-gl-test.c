@@ -129,9 +129,9 @@ static void test_texture(void) {
 static void test_texcoord_int_bits(void) {
     test("texcoord-int-bits");
     init();
-    sgl_texcoord_int_bits(3);
+    sgl_texcoord_int_bits(3, 4);
     TFLT(_sgl.u_scale, 8.0f, FLT_MIN);
-    TFLT(_sgl.v_scale, 8.0f, FLT_MIN);
+    TFLT(_sgl.v_scale, 16.0f, FLT_MIN);
     shutdown();
 }
 
