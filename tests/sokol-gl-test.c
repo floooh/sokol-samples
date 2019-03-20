@@ -138,9 +138,9 @@ static void test_begin_end(void) {
     init();
     sgl_enable(SGL_DEPTH_TEST);
     sgl_begin(SGL_TRIANGLES);
-    sgl_vtx3f(1.0f, 2.0f, 3.0f);
-    sgl_vtx3f(4.0f, 5.0f, 6.0f);
-    sgl_vtx3f(7.0f, 8.0f, 9.0f);
+    sgl_v3f(1.0f, 2.0f, 3.0f);
+    sgl_v3f(4.0f, 5.0f, 6.0f);
+    sgl_v3f(7.0f, 8.0f, 9.0f);
     sgl_end();
     T(_sgl.base_vertex == 0);
     T(_sgl.cur_vertex == 3);
