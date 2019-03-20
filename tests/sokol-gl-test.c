@@ -33,10 +33,10 @@ static void test_default_init_shutdown(void) {
     T(_sgl.commands != 0);
     T(_sgl.error == SGL_NO_ERROR);
     T(!_sgl.in_begin);
-    T(_sgl.state[SGL_ORIGIN_TOP_LEFT]);
-    T(!_sgl.state[SGL_ALPHABLEND]);
-    T(!_sgl.state[SGL_TEXTURING]);
-    T(!_sgl.state[SGL_CULL_FACE]);
+    T(!_sgl_state(SGL_DEPTH_TEST));
+    T(!_sgl_state(SGL_BLEND));
+    T(!_sgl_state(SGL_TEXTURING));
+    T(!_sgl_state(SGL_CULL_FACE));
     T((_sgl.u == 0) && (_sgl.v == 0));
     TFLT(_sgl.u_scale, 1.0f, FLT_MIN);
     TFLT(_sgl.v_scale, 1.0f, FLT_MIN);
@@ -48,12 +48,12 @@ static void test_default_init_shutdown(void) {
 static void test_enable_disable(void) {
     test("enable/disable");
     init();
-    sgl_enable(SGL_ORIGIN_TOP_LEFT); T(sgl_is_enabled(SGL_ORIGIN_TOP_LEFT));
-    sgl_enable(SGL_ALPHABLEND); T(sgl_is_enabled(SGL_ALPHABLEND));
+    sgl_enable(SGL_DEPTH_TEST); T(sgl_is_enabled(SGL_DEPTH_TEST));
+    sgl_enable(SGL_BLEND); T(sgl_is_enabled(SGL_BLEND));
     sgl_enable(SGL_TEXTURING); T(sgl_is_enabled(SGL_TEXTURING));
     sgl_enable(SGL_CULL_FACE); T(sgl_is_enabled(SGL_CULL_FACE));
-    sgl_disable(SGL_ORIGIN_TOP_LEFT); T(!sgl_is_enabled(SGL_ORIGIN_TOP_LEFT));
-    sgl_disable(SGL_ALPHABLEND); T(!sgl_is_enabled(SGL_ALPHABLEND));
+    sgl_disable(SGL_DEPTH_TEST); T(!sgl_is_enabled(SGL_DEPTH_TEST));
+    sgl_disable(SGL_BLEND); T(!sgl_is_enabled(SGL_BLEND));
     sgl_disable(SGL_TEXTURING); T(!sgl_is_enabled(SGL_TEXTURING));
     sgl_disable(SGL_CULL_FACE); T(!sgl_is_enabled(SGL_CULL_FACE));
     shutdown();
@@ -62,7 +62,7 @@ static void test_enable_disable(void) {
 static void test_viewport(void) {
     test("viewport");
     init();
-    sgl_viewport(1, 2, 3, 4);
+    sgl_viewport(1, 2, 3, 4, true);
     T(_sgl.cur_command == 1);
     T(_sgl.commands[0].cmd == SGL_COMMAND_VIEWPORT);
     T(_sgl.commands[0].args.viewport.x == 1);
@@ -70,8 +70,7 @@ static void test_viewport(void) {
     T(_sgl.commands[0].args.viewport.w == 3);
     T(_sgl.commands[0].args.viewport.h == 4);
     T(_sgl.commands[0].args.viewport.origin_top_left);
-    sgl_disable(SGL_ORIGIN_TOP_LEFT);
-    sgl_viewport(5, 6, 7, 8);
+    sgl_viewport(5, 6, 7, 8, false);
     T(_sgl.cur_command == 2);
     T(_sgl.commands[1].cmd == SGL_COMMAND_VIEWPORT);
     T(_sgl.commands[1].args.viewport.x == 5);
@@ -85,7 +84,7 @@ static void test_viewport(void) {
 static void test_scissor_rect(void) {
     test("scissor rect");
     init();
-    sgl_scissor_rect(10, 20, 30, 40);
+    sgl_scissor_rect(10, 20, 30, 40, true);
     T(_sgl.cur_command == 1);
     T(_sgl.commands[0].cmd == SGL_COMMAND_SCISSOR_RECT);
     T(_sgl.commands[0].args.scissor_rect.x == 10);
@@ -93,8 +92,7 @@ static void test_scissor_rect(void) {
     T(_sgl.commands[0].args.scissor_rect.w == 30);
     T(_sgl.commands[0].args.scissor_rect.h == 40);
     T(_sgl.commands[0].args.scissor_rect.origin_top_left);
-    sgl_disable(SGL_ORIGIN_TOP_LEFT);
-    sgl_scissor_rect(50, 60, 70, 80);
+    sgl_scissor_rect(50, 60, 70, 80, false);
     T(_sgl.cur_command == 2);
     T(_sgl.commands[1].cmd == SGL_COMMAND_SCISSOR_RECT);
     T(_sgl.commands[1].args.scissor_rect.x == 50);
@@ -135,6 +133,28 @@ static void test_texcoord_int_bits(void) {
     shutdown();
 }
 
+static void test_begin_end(void) {
+    test("begin end");
+    init();
+    sgl_enable(SGL_DEPTH_TEST);
+    sgl_begin(SGL_TRIANGLES);
+    sgl_vtx3f(1.0f, 2.0f, 3.0f);
+    sgl_vtx3f(4.0f, 5.0f, 6.0f);
+    sgl_vtx3f(7.0f, 8.0f, 9.0f);
+    sgl_end();
+    T(_sgl.base_vertex == 0);
+    T(_sgl.cur_vertex == 3);
+    T(_sgl.cur_command == 1);
+    T(_sgl.cur_uniform == 1);
+    T(_sgl.commands[0].cmd == SGL_COMMAND_DRAW);
+    T(_sgl.commands[0].args.draw.prim_type == SGL_TRIANGLES);
+    T(_sgl.commands[0].args.draw.state == (1<<SGL_DEPTH_TEST));
+    T(_sgl.commands[0].args.draw.base_vertex == 0);
+    T(_sgl.commands[0].args.draw.num_vertices == 3);
+    T(_sgl.commands[0].args.draw.uniform_index == 0);
+    shutdown();
+}
+
 int main() {
     test_begin("sokol-gl-test");
     test_default_init_shutdown();
@@ -143,5 +163,6 @@ int main() {
     test_scissor_rect();
     test_texture();
     test_texcoord_int_bits();
+    test_begin_end();
     return test_end();
 }
