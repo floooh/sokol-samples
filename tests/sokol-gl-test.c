@@ -64,7 +64,7 @@ static void test_viewport(void) {
     init();
     sgl_viewport(1, 2, 3, 4);
     T(_sgl.cur_command == 1);
-    T(_sgl.commands[0].cmd = SGL_COMMAND_VIEWPORT);
+    T(_sgl.commands[0].cmd == SGL_COMMAND_VIEWPORT);
     T(_sgl.commands[0].args.viewport.x == 1);
     T(_sgl.commands[0].args.viewport.y == 2);
     T(_sgl.commands[0].args.viewport.w == 3);
@@ -73,7 +73,7 @@ static void test_viewport(void) {
     sgl_disable(SGL_ORIGIN_TOP_LEFT);
     sgl_viewport(5, 6, 7, 8);
     T(_sgl.cur_command == 2);
-    T(_sgl.commands[1].cmd = SGL_COMMAND_VIEWPORT);
+    T(_sgl.commands[1].cmd == SGL_COMMAND_VIEWPORT);
     T(_sgl.commands[1].args.viewport.x == 5);
     T(_sgl.commands[1].args.viewport.y == 6);
     T(_sgl.commands[1].args.viewport.w == 7);
@@ -87,7 +87,7 @@ static void test_scissor_rect(void) {
     init();
     sgl_scissor_rect(10, 20, 30, 40);
     T(_sgl.cur_command == 1);
-    T(_sgl.commands[0].cmd = SGL_COMMAND_SCISSOR_RECT);
+    T(_sgl.commands[0].cmd == SGL_COMMAND_SCISSOR_RECT);
     T(_sgl.commands[0].args.scissor_rect.x == 10);
     T(_sgl.commands[0].args.scissor_rect.y == 20);
     T(_sgl.commands[0].args.scissor_rect.w == 30);
@@ -96,7 +96,7 @@ static void test_scissor_rect(void) {
     sgl_disable(SGL_ORIGIN_TOP_LEFT);
     sgl_scissor_rect(50, 60, 70, 80);
     T(_sgl.cur_command == 2);
-    T(_sgl.commands[1].cmd = SGL_COMMAND_SCISSOR_RECT);
+    T(_sgl.commands[1].cmd == SGL_COMMAND_SCISSOR_RECT);
     T(_sgl.commands[1].args.scissor_rect.x == 50);
     T(_sgl.commands[1].args.scissor_rect.y == 60);
     T(_sgl.commands[1].args.scissor_rect.w == 70);
