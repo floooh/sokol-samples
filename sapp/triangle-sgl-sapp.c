@@ -34,9 +34,9 @@ void init(void) {
 void frame(void) {
     /* all sokol-gl functions except sgl_draw() can be called anywhere in the frame */
     sgl_begin(SGL_TRIANGLES);
-    sgl_v2f_c4ub( 0.0f,  0.5f,  255, 0, 0, 255);
-    sgl_v2f_c4ub( 0.5f, -0.5f,  0, 255, 0, 255);
-    sgl_v2f_c4ub(-0.5f, -0.5f,  0, 0, 255, 255);
+    sgl_v2f_c4b( 0.0f,  0.5f,  255, 0, 0, 255);
+    sgl_v2f_c4b( 0.5f, -0.5f,  0, 255, 0, 255);
+    sgl_v2f_c4b(-0.5f, -0.5f,  0, 0, 255, 255);
     sgl_end();
 
     /* Render the sokol-gfx default pass, all sokol-gl commands
