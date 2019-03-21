@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  sgl-triangle-sapp.c
+//  triangle-sgl-sapp.c
 //  Hello Triangle via sokol_gl.h
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
@@ -7,6 +7,13 @@
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include "ui/dbgui.h"
+
+static sg_pass_action pass_action = {
+    .colors[0] = {
+        .action = SG_ACTION_CLEAR,
+        .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+    }
+};
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -19,24 +26,26 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
-    sgl_setup(&(sgl_desc_t){0});
     __dbgui_setup(1);
+    /* setup sokol-gl with all-default settings */
+    sgl_setup(&(sgl_desc_t){0});
 }
 
 void frame(void) {
-    sg_pass_action pass_action = {
-        .colors[0] = {
-            .action = SG_ACTION_CLEAR,
-            .val = { 0.024f, 0.353f, 0.271f, 1.0f }
-        }
-    };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    /* all sokol-gl functions except sgl_draw() can be called anywhere in the frame */
     sgl_begin(SGL_TRIANGLES);
-    /*              pos                  color */ 
-    sgl_v3f_c4f( 0.0f,  0.5f, 0.5f,  1.0f, 0.0f, 0.0f, 1.0f);
-    sgl_v3f_c4f( 0.5f, -0.5f, 0.5f,  0.0f, 1.0f, 0.0f, 1.0f);
-    sgl_v3f_c4f(-0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f, 1.0f);
+    sgl_v2f_c4ub( 0.0f,  0.5f,  255, 0, 0, 255);
+    sgl_v2f_c4ub( 0.5f, -0.5f,  0, 255, 0, 255);
+    sgl_v2f_c4ub(-0.5f, -0.5f,  0, 0, 255, 255);
     sgl_end();
+
+    /* Render the sokol-gfx default pass, all sokol-gl commands
+       that happened so far are rendered inside sgl_draw(), and this
+       is the only sokol-gl function that must be called inside
+       a sokol-gfx begin/end pass pair.
+       sgl_draw() also 'rewinds' sokol-gl for the next frame.
+    */
+    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();
@@ -58,6 +67,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .gl_force_gles2 = true,
-        .window_title = "Sokol GL Triangle (sokol-app)",
+        .window_title = "Triangle (sokol-gl + sokol-app)",
     };
 }

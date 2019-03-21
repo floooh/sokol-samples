@@ -33,10 +33,10 @@ static void test_default_init_shutdown(void) {
     T(_sgl.commands != 0);
     T(_sgl.error == SGL_NO_ERROR);
     T(!_sgl.in_begin);
-    T(!_sgl_state(SGL_DEPTH_TEST));
-    T(!_sgl_state(SGL_BLEND));
-    T(!_sgl_state(SGL_TEXTURING));
-    T(!_sgl_state(SGL_CULL_FACE));
+    T(!_sgl_state(_sgl.state, SGL_DEPTH_TEST));
+    T(!_sgl_state(_sgl.state, SGL_BLEND));
+    T(!_sgl_state(_sgl.state, SGL_TEXTURING));
+    T(!_sgl_state(_sgl.state, SGL_CULL_FACE));
     T((_sgl.u == 0) && (_sgl.v == 0));
     TFLT(_sgl.u_scale, 1.0f, FLT_MIN);
     TFLT(_sgl.v_scale, 1.0f, FLT_MIN);
