@@ -33,10 +33,10 @@ static void test_default_init_shutdown(void) {
     T(_sgl.commands != 0);
     T(_sgl.error == SGL_NO_ERROR);
     T(!_sgl.in_begin);
-    T(!_sgl_state(SGL_DEPTH_TEST, _sgl.state_bits));
-    T(!_sgl_state(SGL_BLEND, _sgl.state_bits));
-    T(!_sgl_state(SGL_TEXTURING, _sgl.state_bits));
-    T(!_sgl_state(SGL_CULL_FACE, _sgl.state_bits));
+    T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
+    T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
+    T(!_sgl_state(SGL_STATE_TEXTURING, _sgl.state_bits));
+    T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
     T((_sgl.u == 0) && (_sgl.v == 0));
     TFLT(_sgl.u_scale, 1.0f, FLT_MIN);
     TFLT(_sgl.v_scale, 1.0f, FLT_MIN);
@@ -54,14 +54,14 @@ static void test_enable_disable(void) {
         T(_sgl_prim_type(_sgl.state_bits) == prim_type);
         sgl_end();
         T(_sgl_prim_type(_sgl.state_bits) == prim_type);
-        sgl_enable(SGL_DEPTH_TEST); T(sgl_is_enabled(SGL_DEPTH_TEST));
-        sgl_enable(SGL_BLEND); T(sgl_is_enabled(SGL_BLEND));
-        sgl_enable(SGL_TEXTURING); T(sgl_is_enabled(SGL_TEXTURING));
-        sgl_enable(SGL_CULL_FACE); T(sgl_is_enabled(SGL_CULL_FACE));
-        sgl_disable(SGL_DEPTH_TEST); T(!sgl_is_enabled(SGL_DEPTH_TEST));
-        sgl_disable(SGL_BLEND); T(!sgl_is_enabled(SGL_BLEND));
-        sgl_disable(SGL_TEXTURING); T(!sgl_is_enabled(SGL_TEXTURING));
-        sgl_disable(SGL_CULL_FACE); T(!sgl_is_enabled(SGL_CULL_FACE));
+        sgl_enable(SGL_STATE_DEPTHTEST); T(sgl_is_enabled(SGL_STATE_DEPTHTEST));
+        sgl_enable(SGL_STATE_BLEND); T(sgl_is_enabled(SGL_STATE_BLEND));
+        sgl_enable(SGL_STATE_TEXTURING); T(sgl_is_enabled(SGL_STATE_TEXTURING));
+        sgl_enable(SGL_STATE_CULLFACE); T(sgl_is_enabled(SGL_STATE_CULLFACE));
+        sgl_disable(SGL_STATE_DEPTHTEST); T(!sgl_is_enabled(SGL_STATE_DEPTHTEST));
+        sgl_disable(SGL_STATE_BLEND); T(!sgl_is_enabled(SGL_STATE_BLEND));
+        sgl_disable(SGL_STATE_TEXTURING); T(!sgl_is_enabled(SGL_STATE_TEXTURING));
+        sgl_disable(SGL_STATE_CULLFACE); T(!sgl_is_enabled(SGL_STATE_CULLFACE));
         T(_sgl_prim_type(_sgl.state_bits) == prim_type);
     }
     shutdown();
@@ -144,7 +144,7 @@ static void test_texcoord_int_bits(void) {
 static void test_begin_end(void) {
     test("begin end");
     init();
-    sgl_enable(SGL_DEPTH_TEST);
+    sgl_enable(SGL_STATE_DEPTHTEST);
     sgl_begin(SGL_TRIANGLES);
     sgl_v3f(1.0f, 2.0f, 3.0f);
     sgl_v3f(4.0f, 5.0f, 6.0f);
@@ -156,10 +156,19 @@ static void test_begin_end(void) {
     T(_sgl.cur_uniform == 1);
     T(_sgl.commands[0].cmd == SGL_COMMAND_DRAW);
     T(_sgl_prim_type(_sgl.commands[0].args.draw.state_bits) == SGL_TRIANGLES);
-    T(_sgl_state(SGL_DEPTH_TEST, _sgl.commands[0].args.draw.state_bits));
+    T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.commands[0].args.draw.state_bits));
     T(_sgl.commands[0].args.draw.base_vertex == 0);
     T(_sgl.commands[0].args.draw.num_vertices == 3);
     T(_sgl.commands[0].args.draw.uniform_index == 0);
+    shutdown();
+}
+
+static void test_matrix_mode(void) {
+    test("matrix mode");
+    init();
+    sgl_matrix_mode(SGL_MATRIXMODE_MODELVIEW); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
+    sgl_matrix_mode(SGL_MATRIXMODE_PROJECTION); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
+    sgl_matrix_mode(SGL_MATRIXMODE_TEXTURE); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_TEXTURE);
     shutdown();
 }
 
@@ -172,5 +181,6 @@ int main() {
     test_texture();
     test_texcoord_int_bits();
     test_begin_end();
+    test_matrix_mode();
     return test_end();
 }
