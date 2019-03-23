@@ -172,6 +172,48 @@ static void test_matrix_mode(void) {
     shutdown();
 }
 
+static void test_load_identity(void) {
+    test("load identity");
+    init();
+    sgl_load_identity();
+    const _sgl_matrix_t* m = _sgl_matrix_modelview();
+    TFLT(m->v[0][0], 1.0f, FLT_MIN); TFLT(m->v[0][1], 0.0f, FLT_MIN); TFLT(m->v[0][2], 0.0f, FLT_MIN); TFLT(m->v[0][3], 0.0f, FLT_MIN);
+    TFLT(m->v[1][0], 0.0f, FLT_MIN); TFLT(m->v[1][1], 1.0f, FLT_MIN); TFLT(m->v[1][2], 0.0f, FLT_MIN); TFLT(m->v[1][3], 0.0f, FLT_MIN);
+    TFLT(m->v[2][0], 0.0f, FLT_MIN); TFLT(m->v[2][1], 0.0f, FLT_MIN); TFLT(m->v[2][2], 1.0f, FLT_MIN); TFLT(m->v[2][3], 0.0f, FLT_MIN);
+    TFLT(m->v[3][0], 0.0f, FLT_MIN); TFLT(m->v[3][1], 0.0f, FLT_MIN); TFLT(m->v[3][2], 0.0f, FLT_MIN); TFLT(m->v[3][3], 1.0f, FLT_MIN);
+    shutdown();
+}
+
+static void test_load_matrix(void) {
+    test("load matrix");
+    init();
+    const float m[16] = {
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        2.0f, 3.0f, 4.0f, 1.0f
+    };
+    sgl_load_matrix(m);
+    const _sgl_matrix_t* m0 = _sgl_matrix_modelview();
+    TFLT(m0->v[0][0], 0.5f, FLT_MIN);
+    TFLT(m0->v[1][1], 0.5f, FLT_MIN);
+    TFLT(m0->v[2][2], 0.5f, FLT_MIN);
+    TFLT(m0->v[3][0], 2.0f, FLT_MIN);
+    TFLT(m0->v[3][1], 3.0f, FLT_MIN);
+    TFLT(m0->v[3][2], 4.0f, FLT_MIN);
+    TFLT(m0->v[3][3], 1.0f, FLT_MIN);
+    sgl_load_transpose_matrix(m);
+    const _sgl_matrix_t* m1 = _sgl_matrix_modelview();
+    TFLT(m1->v[0][0], 0.5f, FLT_MIN);
+    TFLT(m1->v[1][1], 0.5f, FLT_MIN);
+    TFLT(m1->v[2][2], 0.5f, FLT_MIN);
+    TFLT(m1->v[0][3], 2.0f, FLT_MIN);
+    TFLT(m1->v[1][3], 3.0f, FLT_MIN);
+    TFLT(m1->v[2][3], 4.0f, FLT_MIN);
+    TFLT(m1->v[3][3], 1.0f, FLT_MIN);
+    shutdown();
+}
+
 int main() {
     test_begin("sokol-gl-test");
     test_default_init_shutdown();
@@ -182,5 +224,7 @@ int main() {
     test_texcoord_int_bits();
     test_begin_end();
     test_matrix_mode();
+    test_load_identity();
+    test_load_matrix();
     return test_end();
 }
