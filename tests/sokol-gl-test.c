@@ -35,13 +35,13 @@ static void test_default_init_shutdown(void) {
     T(!_sgl.in_begin);
     T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
     T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    T(!_sgl_state(SGL_STATE_TEXTURING, _sgl.state_bits));
+    T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
     T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
     T((_sgl.u == 0) && (_sgl.v == 0));
     TFLT(_sgl.u_scale, 1.0f, FLT_MIN);
     TFLT(_sgl.v_scale, 1.0f, FLT_MIN);
     T(_sgl.rgba == 0xFFFFFFFF);
-    T(_sgl.tex.id == _sgl.img.id);
+    T(_sgl.cur_img.id == _sgl.def_img.id);
     shutdown();
 }
 
@@ -49,21 +49,19 @@ static void test_enable_disable(void) {
     test("enable/disable");
     init();
     /* also test that primitive type doesn't mess up state bits */
-    for (int prim_type = 0; prim_type < SGL_NUM_PRIMITIVE_TYPES; prim_type++) {
-        sgl_begin(prim_type);
-        T(_sgl_prim_type(_sgl.state_bits) == prim_type);
-        sgl_end();
-        T(_sgl_prim_type(_sgl.state_bits) == prim_type);
-        sgl_enable(SGL_STATE_DEPTHTEST); T(sgl_is_enabled(SGL_STATE_DEPTHTEST));
-        sgl_enable(SGL_STATE_BLEND); T(sgl_is_enabled(SGL_STATE_BLEND));
-        sgl_enable(SGL_STATE_TEXTURING); T(sgl_is_enabled(SGL_STATE_TEXTURING));
-        sgl_enable(SGL_STATE_CULLFACE); T(sgl_is_enabled(SGL_STATE_CULLFACE));
-        sgl_disable(SGL_STATE_DEPTHTEST); T(!sgl_is_enabled(SGL_STATE_DEPTHTEST));
-        sgl_disable(SGL_STATE_BLEND); T(!sgl_is_enabled(SGL_STATE_BLEND));
-        sgl_disable(SGL_STATE_TEXTURING); T(!sgl_is_enabled(SGL_STATE_TEXTURING));
-        sgl_disable(SGL_STATE_CULLFACE); T(!sgl_is_enabled(SGL_STATE_CULLFACE));
-        T(_sgl_prim_type(_sgl.state_bits) == prim_type);
-    }
+    sgl_begin_triangle_strip();
+    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
+    sgl_end();
+    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
+    sgl_enable_depth_test(); T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
+    sgl_enable_blend(); T(_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
+    sgl_enable_texture(); T(_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
+    sgl_enable_cull_face(); T(_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
+    sgl_disable_depth_test(); T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
+    sgl_disable_blend(); T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
+    sgl_disable_texture(); T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
+    sgl_disable_cull_face(); T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
+    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
     shutdown();
 }
 
@@ -114,7 +112,7 @@ static void test_scissor_rect(void) {
 static void test_texture(void) {
     test("texture");
     init();
-    T(_sgl.tex.id == _sgl.img.id);
+    T(_sgl.cur_img.id == _sgl.def_img.id);
     uint32_t pixels[64] = { 0 };
     sg_image img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
@@ -128,7 +126,7 @@ static void test_texture(void) {
         }
     });
     sgl_texture(img);
-    T(_sgl.tex.id == img.id);
+    T(_sgl.cur_img.id == img.id);
     shutdown();
 }
 
@@ -144,8 +142,8 @@ static void test_texcoord_int_bits(void) {
 static void test_begin_end(void) {
     test("begin end");
     init();
-    sgl_enable(SGL_STATE_DEPTHTEST);
-    sgl_begin(SGL_TRIANGLES);
+    sgl_enable_depth_test();
+    sgl_begin_triangles();
     sgl_v3f(1.0f, 2.0f, 3.0f);
     sgl_v3f(4.0f, 5.0f, 6.0f);
     sgl_v3f(7.0f, 8.0f, 9.0f);
@@ -155,7 +153,7 @@ static void test_begin_end(void) {
     T(_sgl.cur_command == 1);
     T(_sgl.cur_uniform == 1);
     T(_sgl.commands[0].cmd == SGL_COMMAND_DRAW);
-    T(_sgl_prim_type(_sgl.commands[0].args.draw.state_bits) == SGL_TRIANGLES);
+    T(_sgl_prim_type(_sgl.commands[0].args.draw.state_bits) == SGL_PRIMITIVETYPE_TRIANGLES);
     T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.commands[0].args.draw.state_bits));
     T(_sgl.commands[0].args.draw.base_vertex == 0);
     T(_sgl.commands[0].args.draw.num_vertices == 3);
@@ -166,9 +164,9 @@ static void test_begin_end(void) {
 static void test_matrix_mode(void) {
     test("matrix mode");
     init();
-    sgl_matrix_mode(SGL_MATRIXMODE_MODELVIEW); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
-    sgl_matrix_mode(SGL_MATRIXMODE_PROJECTION); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
-    sgl_matrix_mode(SGL_MATRIXMODE_TEXTURE); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_TEXTURE);
+    sgl_matrix_mode_modelview(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
+    sgl_matrix_mode_projection(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
+    sgl_matrix_mode_texture(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_TEXTURE);
     shutdown();
 }
 
@@ -193,7 +191,7 @@ static void test_load_matrix(void) {
         0.0f, 0.0f, 0.5f, 0.0f,
         2.0f, 3.0f, 4.0f, 1.0f
     };
-    sgl_load_matrix(m);
+    sgl_load_transpose_matrix(m);
     const _sgl_matrix_t* m0 = _sgl_matrix_modelview();
     TFLT(m0->v[0][0], 0.5f, FLT_MIN);
     TFLT(m0->v[1][1], 0.5f, FLT_MIN);
@@ -202,7 +200,7 @@ static void test_load_matrix(void) {
     TFLT(m0->v[3][1], 3.0f, FLT_MIN);
     TFLT(m0->v[3][2], 4.0f, FLT_MIN);
     TFLT(m0->v[3][3], 1.0f, FLT_MIN);
-    sgl_load_transpose_matrix(m);
+    sgl_load_matrix(m);
     const _sgl_matrix_t* m1 = _sgl_matrix_modelview();
     TFLT(m1->v[0][0], 0.5f, FLT_MIN);
     TFLT(m1->v[1][1], 0.5f, FLT_MIN);

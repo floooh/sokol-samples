@@ -33,10 +33,20 @@ void init(void) {
 
 void frame(void) {
     /* all sokol-gl functions except sgl_draw() can be called anywhere in the frame */
-    sgl_begin(SGL_TRIANGLES);
-    sgl_v2f_c4b( 0.0f,  0.5f,  255, 0, 0, 255);
-    sgl_v2f_c4b( 0.5f, -0.5f,  0, 255, 0, 255);
-    sgl_v2f_c4b(-0.5f, -0.5f,  0, 0, 255, 255);
+    static float a = 0.0f;
+    a += 1.0f;
+    sgl_load_identity();
+    sgl_rotate(a, 0.0f, 0.0f, 1.0f);
+    sgl_translate(0.5f, 0.0f, 0.0f);
+    sgl_rotate(a, 0.0f, 0.0f, 1.0f);
+    sgl_scale(0.5f, 0.5f, 0.5f);
+    sgl_begin_triangles();
+    sgl_v2f_c3b( -0.5f,  0.5f,  255, 0, 0);
+    sgl_v2f_c3b(  0.5f,  0.5f,  0, 255, 0);
+    sgl_v2f_c3b(  0.5f, -0.5f,  0, 0, 255);
+    sgl_v2f_c3b( -0.5f,  0.5f,  255, 0, 0);
+    sgl_v2f_c3b(  0.5f, -0.5f,  0, 0, 255);
+    sgl_v2f_c3b( -0.5f, -0.5f,  255, 255, 0);
     sgl_end();
 
     /* Render the sokol-gfx default pass, all sokol-gl commands
@@ -64,8 +74,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = __dbgui_event,
-        .width = 800,
-        .height = 600,
+        .width = 512,
+        .height = 512,
         .gl_force_gles2 = true,
         .window_title = "Triangle (sokol-gl + sokol-app)",
     };
