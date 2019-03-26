@@ -29,7 +29,7 @@ static void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
-    __dbgui_setup(1);
+    __dbgui_setup(SAMPLE_COUNT);
     /* setup sokol-gl with all-default settings */
     sgl_setup(&(sgl_desc_t){
         .sample_count = SAMPLE_COUNT
@@ -76,6 +76,7 @@ static void draw_quad(void) {
     sgl_end();
 }
 
+/* vertex specification for a cube with colored sides and texture coords */
 static void cube(void) {
     sgl_begin_quads();
     sgl_c3f(1.0f, 0.0f, 0.0f);
@@ -129,18 +130,18 @@ static void draw_cubes(void) {
     sgl_rotate(sgl_rad(rot[1]), 0.0f, 1.0f, 0.0f);
     cube();
     sgl_push_matrix();
-    sgl_translate(0.0f, 0.0f, 3.0f);
-    sgl_scale(0.5f, 0.5f, 0.5f);
-    sgl_rotate(-2.0f * sgl_rad(rot[0]), 1.0f, 0.0f, 0.0f);
-    sgl_rotate(-2.0f * sgl_rad(rot[1]), 0.0f, 1.0f, 0.0f);
-    cube();
-    sgl_push_matrix();
-    sgl_translate(0.0f, 0.0f, 3.0f);
-    sgl_scale(0.5f, 0.5f, 0.5f);
-    sgl_rotate(-3.0f * sgl_rad(2*rot[0]), 1.0f, 0.0f, 0.0f);
-    sgl_rotate(3.0f * sgl_rad(2*rot[1]), 0.0f, 0.0f, 1.0f);
-    cube();
-    sgl_pop_matrix();
+        sgl_translate(0.0f, 0.0f, 3.0f);
+        sgl_scale(0.5f, 0.5f, 0.5f);
+        sgl_rotate(-2.0f * sgl_rad(rot[0]), 1.0f, 0.0f, 0.0f);
+        sgl_rotate(-2.0f * sgl_rad(rot[1]), 0.0f, 1.0f, 0.0f);
+        cube();
+        sgl_push_matrix();
+            sgl_translate(0.0f, 0.0f, 3.0f);
+            sgl_scale(0.5f, 0.5f, 0.5f);
+            sgl_rotate(-3.0f * sgl_rad(2*rot[0]), 1.0f, 0.0f, 0.0f);
+            sgl_rotate(3.0f * sgl_rad(2*rot[1]), 0.0f, 0.0f, 1.0f);
+            cube();
+        sgl_pop_matrix();
     sgl_pop_matrix();
 }
 
@@ -182,6 +183,7 @@ static void frame(void) {
     draw_cubes();
     sgl_viewport(wh, hh, wh, hh, true);
     draw_tex_cube();
+    sgl_viewport(0, 0, w, h, true);
 
     /* Render the sokol-gfx default pass, all sokol-gl commands
        that happened so far are rendered inside sgl_draw(), and this
