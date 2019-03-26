@@ -37,9 +37,8 @@ static void test_default_init_shutdown(void) {
     T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
     T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
     T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
-    T((_sgl.u == 0) && (_sgl.v == 0));
-    TFLT(_sgl.u_scale, 1.0f, FLT_MIN);
-    TFLT(_sgl.v_scale, 1.0f, FLT_MIN);
+    TFLT(_sgl.u, 0.0f, FLT_MIN);
+    TFLT(_sgl.v, 0.0f, FLT_MIN);
     T(_sgl.rgba == 0xFFFFFFFF);
     T(_sgl.cur_img.id == _sgl.def_img.id);
     shutdown();
@@ -130,15 +129,6 @@ static void test_texture(void) {
     shutdown();
 }
 
-static void test_texcoord_int_bits(void) {
-    test("texcoord-int-bits");
-    init();
-    sgl_texcoord_int_bits(3, 4);
-    TFLT(_sgl.u_scale, 8.0f, FLT_MIN);
-    TFLT(_sgl.v_scale, 16.0f, FLT_MIN);
-    shutdown();
-}
-
 static void test_begin_end(void) {
     test("begin end");
     init();
@@ -219,7 +209,6 @@ int main() {
     test_viewport();
     test_scissor_rect();
     test_texture();
-    test_texcoord_int_bits();
     test_begin_end();
     test_matrix_mode();
     test_load_identity();
