@@ -10,7 +10,7 @@
 
 #define SAMPLE_COUNT (4)
 
-static sg_pass_action pass_action = {
+static const sg_pass_action pass_action = {
     .colors[0] = {
         .action = SG_ACTION_CLEAR,
         .val = { 0.0f, 0.0f, 0.0f, 1.0f }
@@ -30,7 +30,7 @@ static void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
     __dbgui_setup(SAMPLE_COUNT);
-    /* setup sokol-gl with all-default settings */
+    /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
         .sample_count = SAMPLE_COUNT
     });
@@ -176,20 +176,27 @@ static void draw_tex_cube(void) {
 }
 
 static void frame(void) {
+    /* compute viewport rectangles so that the views are horizontally
+       centered and keep a 1:1 aspect ratio
+    */
+    const int dw = sapp_width();
+    const int dh = sapp_height();
+    const int ww = dh/2; /* not a bug */
+    const int hh = dh/2;
+    const int x0 = dw/2 - hh;
+    const int x1 = dw/2;
+    const int y0 = 0;
+    const int y1 = dh/2;
     /* all sokol-gl functions except sgl_draw() can be called anywhere in the frame */
-    const int w = sapp_width();
-    const int h = sapp_height();
-    const int wh = w/2;
-    const int hh = h/2;
-    sgl_viewport(0, 0, wh, hh, true);
+    sgl_viewport(x0, y0, ww, hh, true);
     draw_triangle();
-    sgl_viewport(wh, 0, wh, hh, true);
+    sgl_viewport(x1, y0, ww, hh, true);
     draw_quad();
-    sgl_viewport(0, hh, wh, hh, true);
+    sgl_viewport(x0, y1, ww, hh, true);
     draw_cubes();
-    sgl_viewport(wh, hh, wh, hh, true);
+    sgl_viewport(x1, y1, ww, hh, true);
     draw_tex_cube();
-    sgl_viewport(0, 0, w, h, true);
+    sgl_viewport(0, 0, dw, dh, true);
 
     /* Render the sokol-gfx default pass, all sokol-gl commands
        that happened so far are rendered inside sgl_draw(), and this
