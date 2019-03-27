@@ -52,14 +52,14 @@ static void test_enable_disable(void) {
     T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
     sgl_end();
     T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
-    sgl_enable_depth_test(); T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
-    sgl_enable_blend(); T(_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    sgl_enable_texture(); T(_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
-    sgl_enable_cull_face(); T(_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
-    sgl_disable_depth_test(); T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
-    sgl_disable_blend(); T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    sgl_disable_texture(); T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
-    sgl_disable_cull_face(); T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
+    sgl_state_depth_test(true); T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
+    sgl_state_blend(true); T(_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
+    sgl_state_texture(true); T(_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
+    sgl_state_cull_face(true); T(_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
+    sgl_state_depth_test(false); T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
+    sgl_state_blend(false); T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
+    sgl_state_texture(false); T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
+    sgl_state_cull_face(false); T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
     T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
     shutdown();
 }
@@ -132,7 +132,7 @@ static void test_texture(void) {
 static void test_begin_end(void) {
     test("begin end");
     init();
-    sgl_enable_depth_test();
+    sgl_state_depth_test(true);
     sgl_begin_triangles();
     sgl_v3f(1.0f, 2.0f, 3.0f);
     sgl_v3f(4.0f, 5.0f, 6.0f);

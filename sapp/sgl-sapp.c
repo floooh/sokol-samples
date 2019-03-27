@@ -53,7 +53,7 @@ static void init(void) {
 }
 
 static void draw_triangle(void) {
-    sgl_default_state();
+    sgl_defaults();
     sgl_begin_triangles();
     sgl_v2f_c3b( 0.0f,  0.5f, 255, 0, 0);
     sgl_v2f_c3b(-0.5f, -0.5f, 0, 0, 255);
@@ -65,7 +65,7 @@ static void draw_quad(void) {
     static float angle_deg = 0.0f;
     float scale = 1.0f + sinf(sgl_rad(angle_deg)) * 0.5f;
     angle_deg += 1.0f;
-    sgl_default_state();
+    sgl_defaults();
     sgl_rotate(sgl_rad(angle_deg), 0.0f, 0.0f, 1.0f);
     sgl_scale(scale, scale, 1.0f);
     sgl_begin_quads();
@@ -117,9 +117,9 @@ static void draw_cubes(void) {
     rot[0] += 1.0f;
     rot[1] += 2.0f;
 
-    sgl_default_state();
-    sgl_enable_depth_test();
-    sgl_enable_cull_face();
+    sgl_defaults();
+    sgl_state_depth_test(true);
+    sgl_state_cull_face(true);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
@@ -148,20 +148,21 @@ static void draw_cubes(void) {
 static void draw_tex_cube(void) {
     static float frame_count = 0.0f;
     frame_count += 1.0f;
+    float a = sgl_rad(frame_count);
 
     /* texture matrix rotation and scale */
-    float tex_rot = 0.5f * sgl_rad(frame_count);
-    const float tex_scale = 1.0f + sinf(sgl_rad(frame_count)) * 0.5f;
+    float tex_rot = 0.5f * a;
+    const float tex_scale = 1.0f + sinf(a) * 0.5f;
 
     /* compute an orbiting eye-position for testing sgl_lookat() */
-    float eye_x = sinf(sgl_rad(frame_count)) * 6.0f;
-    float eye_z = cosf(sgl_rad(frame_count)) * 6.0f;
-    float eye_y = sinf(sgl_rad(frame_count)) * 3.0f;
+    float eye_x = sinf(a) * 6.0f;
+    float eye_z = cosf(a) * 6.0f;
+    float eye_y = sinf(a) * 3.0f;
 
-    sgl_default_state();
-    sgl_enable_depth_test();
-    sgl_enable_cull_face();
-    sgl_enable_texture();
+    sgl_defaults();
+    sgl_state_depth_test(true);
+    sgl_state_cull_face(true);
+    sgl_state_texture(true);
     sgl_texture(img);
 
     sgl_matrix_mode_projection();
