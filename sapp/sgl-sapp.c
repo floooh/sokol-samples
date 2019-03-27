@@ -146,10 +146,17 @@ static void draw_cubes(void) {
 }
 
 static void draw_tex_cube(void) {
-    static float rot[2] = { 0.0f, 0.0f };
-    rot[0] += 0.1f;
-    rot[1] += 0.2f;
-    const float s = 1.0f + sinf(rot[0]) * 0.5f;
+    static float frame_count = 0.0f;
+    frame_count += 1.0f;
+
+    /* texture matrix rotation and scale */
+    float tex_rot = 0.5f * sgl_rad(frame_count);
+    const float tex_scale = 1.0f + sinf(sgl_rad(frame_count)) * 0.5f;
+
+    /* compute an orbiting eye-position for testing sgl_lookat() */
+    float eye_x = sinf(sgl_rad(frame_count)) * 6.0f;
+    float eye_z = cosf(sgl_rad(frame_count)) * 6.0f;
+    float eye_y = sinf(sgl_rad(frame_count)) * 3.0f;
 
     sgl_default_state();
     sgl_enable_depth_test();
@@ -160,12 +167,10 @@ static void draw_tex_cube(void) {
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
     sgl_matrix_mode_modelview();
-    sgl_translate(0.0f, 0.0f, -6.0f);
-    sgl_rotate(sgl_rad(rot[0]), 1.0f, 0.0f, 0.0f);
-    sgl_rotate(sgl_rad(rot[1]), 0.0f, 1.0f, 0.0f);
+    sgl_lookat(eye_x, eye_y, eye_z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
     sgl_matrix_mode_texture();
-    sgl_rotate(5.0f * sgl_rad(rot[0]), 0.0f, 0.0f, 1.0f);
-    sgl_scale(s, s, 1.0f);
+    sgl_rotate(tex_rot, 0.0f, 0.0f, 1.0f);
+    sgl_scale(tex_scale, tex_scale, 1.0f);
     cube();
 }
 
