@@ -158,6 +158,12 @@ fips_begin_app(sgl-sapp windowed)
     fips_deps(sokol)
 fips_end_app()
 
+fips_begin_app(sgl-lines-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(sgl-lines-sapp.c)
+    fips_deps(sokol)
+fips_end_app()
+
 #-------------------------------------------------------------------------------
 #   The same samples, but with debugging UI
 #
@@ -265,6 +271,13 @@ fips_begin_app(sgl-sapp-ui windowed)
     fips_deps(sokol dbgui imgui)
 fips_end_app()
 target_compile_definitions(sgl-sapp-ui PRIVATE USE_DBG_UI)
+
+fips_begin_app(sgl-lines-sapp-ui windowed)
+    fips_vs_warning_level(3)
+    fips_files(sgl-lines-sapp.c)
+    fips_deps(sokol dbgui imgui)
+fips_end_app()
+target_compile_definitions(sgl-lines-sapp-ui PRIVATE USE_DBG_UI)
 
 if (NOT FIPS_ANDROID)
 fips_begin_app(noentry-sapp windowed)
