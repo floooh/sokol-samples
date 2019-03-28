@@ -1,6 +1,9 @@
 fips_begin_lib(flextgl)
-    fips_vs_warning_level(3)
     fips_src(flextgl)
+fips_end_lib()
+
+fips_begin_lib(flextgl12)
+    fips_src(flextgl12)
 fips_end_lib()
 
 fips_begin_app(clear-glfw cmdline)
@@ -103,4 +106,10 @@ fips_begin_app(multiwindow-glfw cmdline)
     fips_vs_warning_level(3)
     fips_files(multiwindow-glfw.c)
     fips_deps(glfw3 flextgl)
+fips_end_app()
+
+fips_begin_app(sgl-test-glfw cmdline)
+    fips_vs_warning_level(3)
+    fips_files(sgl-test-glfw.c)
+    fips_deps(glfw3 flextgl12)
 fips_end_app()
