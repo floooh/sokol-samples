@@ -16,7 +16,7 @@ static const sg_pass_action pass_action = {
         .val = { 0.0f, 0.0f, 0.0f, 1.0f }
     }
 };
-sg_image img;
+static sg_image img;
 
 static void init(void) {
     sg_setup(&(sg_desc){
