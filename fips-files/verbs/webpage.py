@@ -27,6 +27,7 @@ samples = [
     [ 'blend', 'blend-sapp.c' ],
     [ 'imgui', 'imgui-sapp.cc' ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc' ],
+    [ 'sgl-microui', 'sgl-microui-sapp.c'],
     [ 'saudio', 'saudio-sapp.c'],
     [ 'modplay', 'modplay-sapp.c' ],
     [ 'noentry', 'noentry-sapp.c' ],
