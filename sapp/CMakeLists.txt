@@ -289,7 +289,7 @@ target_compile_definitions(sgl-lines-sapp-ui PRIVATE USE_DBG_UI)
 fips_begin_app(sgl-microui-sapp-ui windowed)
     fips_vs_warning_level(3)
     fips_files(sgl-microui-sapp.c)
-    fips_deps(sokol microui)
+    fips_deps(sokol dbgui imgui microui)
 fips_end_app()
 target_compile_definitions(sgl-microui-sapp-ui PRIVATE USE_DBG_UI)
 

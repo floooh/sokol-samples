@@ -10,6 +10,7 @@
 #include "microui/atlas.inl"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
+#include "ui/dbgui.h"
 #include <stdio.h> /* sprintf */
 
 static mu_Context mu_ctx;
@@ -70,6 +71,7 @@ static void init() {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
+    __dbgui_setup(1);
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){0});
@@ -95,6 +97,8 @@ static const char key_map[512] = {
 };
 
 static void event(const sapp_event* ev) {
+    /* FIXME: need to filter out events consumed by the Dear ImGui debug UI */
+    __dbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
             mu_input_mousedown(&mu_ctx, ev->mouse_x, ev->mouse_y, (1<<ev->mouse_button));
@@ -156,11 +160,13 @@ void frame(void) {
             }
         }, sapp_width(), sapp_height());
     r_draw();
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
+    __dbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
