@@ -23,11 +23,11 @@ static inline void gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear
     double radians = fovy / 2 * M_PI / 180;
 
     deltaZ = zFar - zNear;
-    sine = sinf(radians);
+    sine = sin(radians);
     if ((deltaZ == 0) || (sine == 0) || (aspect == 0)) {
         return;
     }
-    cotangent = cosf(radians) / sine;
+    cotangent = cos(radians) / sine;
 
     __gluMakeIdentityd(&m[0][0]);
     m[0][0] = cotangent / aspect;
@@ -43,7 +43,7 @@ static inline void normalize(float v[3])
 {
     float r;
 
-    r = sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
+    r = sqrtf( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
     if (r == 0.0) return;
 
     v[0] /= r;
@@ -66,13 +66,13 @@ gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
     float forward[3], side[3], up[3];
     GLfloat m[4][4];
 
-    forward[0] = centerx - eyex;
-    forward[1] = centery - eyey;
-    forward[2] = centerz - eyez;
+    forward[0] = (float) (centerx - eyex);
+    forward[1] = (float) (centery - eyey);
+    forward[2] = (float) (centerz - eyez);
 
-    up[0] = upx;
-    up[1] = upy;
-    up[2] = upz;
+    up[0] = (float) upx;
+    up[1] = (float) upy;
+    up[2] = (float) upz;
 
     normalize(forward);
 
