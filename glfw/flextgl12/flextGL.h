@@ -31,6 +31,7 @@ extern "C" {
 /* -------------------------------- DATA TYPES ------------------------------- */
 
 #include <stdint.h>
+#include <stddef.h>
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
 typedef unsigned int GLbitfield;
@@ -46,6 +47,8 @@ typedef float GLfloat;
 typedef float GLclampf;
 typedef double GLdouble;
 typedef double GLclampd;
+typedef ptrdiff_t  GLintptr;
+typedef ptrdiff_t  GLsizeiptr;
 
 /* ----------------------------------- ENUMS --------------------------------- */
 
