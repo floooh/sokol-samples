@@ -4,6 +4,9 @@
 //  https://github.com/rxi/microui sample using sokol_gl.h, sokol_gfx.h
 //  and sokol_app.h
 //------------------------------------------------------------------------------
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_WARNINGS (1)
+#endif
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "microui/microui.h"
@@ -40,7 +43,7 @@ static void r_set_clip_rect(mu_Rect rect);
 /* callbacks */
 static int text_width_cb(mu_Font font, const char* text, int len) {
     if (len == -1) {
-        len = strlen(text);
+        len = (int) strlen(text);
     }
     return r_get_text_width(text, len);
 }
@@ -59,7 +62,7 @@ static void write_log(const char* text) {
 }
 
 /* initialization */
-static void init() {
+static void init(void) {
     /* setup sokol-gfx */
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2(),
@@ -101,16 +104,16 @@ static void event(const sapp_event* ev) {
     __dbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
-            mu_input_mousedown(&mu_ctx, ev->mouse_x, ev->mouse_y, (1<<ev->mouse_button));
+            mu_input_mousedown(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
             break;
         case SAPP_EVENTTYPE_MOUSE_UP:
-            mu_input_mouseup(&mu_ctx, ev->mouse_x, ev->mouse_y, (1<<ev->mouse_button));
+            mu_input_mouseup(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
             break;
         case SAPP_EVENTTYPE_MOUSE_MOVE:
-            mu_input_mousemove(&mu_ctx, ev->mouse_x, ev->mouse_y);
+            mu_input_mousemove(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y);
             break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            mu_input_mousewheel(&mu_ctx, ev->scroll_y);
+            mu_input_mousewheel(&mu_ctx, (int)ev->scroll_y);
             break;
         case SAPP_EVENTTYPE_KEY_DOWN:
             mu_input_keydown(&mu_ctx, key_map[ev->key_code & 511]);
@@ -267,7 +270,7 @@ static void test_window(mu_Context* ctx) {
             mu_layout_end_column(ctx);
             /* color preview */
             mu_Rect r = mu_layout_next(ctx);
-            mu_draw_rect(ctx, r, mu_color(bg[0], bg[1], bg[2], 255));
+            mu_draw_rect(ctx, r, mu_color((int)bg[0], (int)bg[1], (int)bg[2], 255));
             char buf[32];
             sprintf(buf, "#%02X%02X%02X", (int) bg[0], (int) bg[1], (int) bg[2]);
             mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
@@ -321,8 +324,8 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
     static float tmp;
     mu_push_id(ctx, &value, sizeof(value));
     tmp = *value;
-    int res = mu_slider_ex(ctx, &tmp, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
-    *value = tmp;
+    int res = mu_slider_ex(ctx, (mu_Real*)&tmp, (mu_Real)low, (mu_Real)high, 0, "%.0f", MU_OPT_ALIGNCENTER);
+    *value = (unsigned char)tmp;
     mu_pop_id(ctx);
     return res;
 }
@@ -355,7 +358,7 @@ static void style_window(mu_Context *ctx) {
     };
 
     if (mu_begin_window(ctx, &window, "Style Editor")) {
-        int sw = mu_get_container(ctx)->body.w * 0.14;
+        int sw = (int)(mu_get_container(ctx)->body.w * 0.14f);
         mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
         for (int i = 0; colors[i].label; i++) {
           mu_label(ctx, colors[i].label);
@@ -435,15 +438,15 @@ static void r_draw(void) {
 }
 
 static void r_push_quad(mu_Rect dst, mu_Rect src, mu_Color color) {
-    const float u0 = src.x / (float) ATLAS_WIDTH;
-    const float v0 = src.y / (float) ATLAS_HEIGHT;
-    const float u1 = (src.x + src.w) / (float) ATLAS_WIDTH;
-    const float v1 = (src.y + src.h) / (float) ATLAS_HEIGHT;
+    float u0 = (float) src.x / (float) ATLAS_WIDTH;
+    float v0 = (float) src.y / (float) ATLAS_HEIGHT;
+    float u1 = (float) (src.x + src.w) / (float) ATLAS_WIDTH;
+    float v1 = (float) (src.y + src.h) / (float) ATLAS_HEIGHT;
 
-    const float x0 = dst.x;
-    const float y0 = dst.y;
-    const float x1 = dst.x + dst.w;
-    const float y1 = dst.y + dst.h;
+    float x0 = (float) dst.x;
+    float y0 = (float) dst.y;
+    float x1 = (float) (dst.x + dst.w);
+    float y1 = (float) (dst.y + dst.h);
 
     sgl_c4b(color.r, color.g, color.b, color.a);
     sgl_v2f_t2f(x0, y0, u0, v0);
