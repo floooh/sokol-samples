@@ -47,7 +47,6 @@ typedef struct {
     sg_pass_action offscreen_pass_action;
     sg_pass_action display_pass_action;
     mesh_t cube;
-    mesh_t sphere;
     sg_pipeline offscreen_pip;
     sg_pipeline display_pip;
     hmm_mat4 offscreen_proj;
@@ -58,7 +57,6 @@ static app_t app;
 static const char* vs_src, *offscreen_fs_src, *display_fs_src;
 
 static mesh_t make_cube_mesh(void);
-static mesh_t make_sphere_mesh(void);
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -107,9 +105,8 @@ void init(void) {
         });
     }
 
-    /* vertex- and index-buffers for cube and sphere */
+    /* vertex- and index-buffers for cube  */
     app.cube = make_cube_mesh();
-    app.sphere = make_sphere_mesh();
 
     /* shader and pipeline objects for offscreen-rendering */
     sg_shader_uniform_block_desc ub_desc = {
@@ -212,15 +209,59 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 static mesh_t make_cube_mesh(void) {
-    // FIXME
-    mesh_t res = {{0}};
-    return res;
-}
+    vertex_t vertices[] =  {
+        { { -1.0, -1.0, -1.0 }, { 0.0, 0.0, -1.0 } },
+        { {  1.0, -1.0, -1.0 }, { 0.0, 0.0, -1.0 } },
+        { {  1.0,  1.0, -1.0 }, { 0.0, 0.0, -1.0 } },
+        { { -1.0,  1.0, -1.0 }, { 0.0, 0.0, -1.0 } },
 
-static mesh_t make_sphere_mesh(void) {
-    // FIXME
-    mesh_t res = {{0}};
-    return res;
+        { { -1.0, -1.0,  1.0 }, { 0.0, 0.0, 1.0 } },
+        { {  1.0, -1.0,  1.0 }, { 0.0, 0.0, 1.0 } },
+        { {  1.0,  1.0,  1.0 }, { 0.0, 0.0, 1.0 } },
+        { { -1.0,  1.0,  1.0 }, { 0.0, 0.0, 1.0 } },
+
+        { { -1.0, -1.0, -1.0 }, { -1.0, 0.0, 0.0 } },
+        { { -1.0,  1.0, -1.0 }, { -1.0, 0.0, 0.0 } },
+        { { -1.0,  1.0,  1.0 }, { -1.0, 0.0, 0.0 } },
+        { { -1.0, -1.0,  1.0 }, { -1.0, 0.0, 0.0 } },
+
+        { { 1.0, -1.0, -1.0, }, { 1.0, 0.0, 0.0 } },
+        { { 1.0,  1.0, -1.0, }, { 1.0, 0.0, 0.0 } },
+        { { 1.0,  1.0,  1.0, }, { 1.0, 0.0, 0.0 } },
+        { { 1.0, -1.0,  1.0, }, { 1.0, 0.0, 0.0 } },
+
+        { { -1.0, -1.0, -1.0 }, { 0.0, -1.0, 0.0 } },
+        { { -1.0, -1.0,  1.0 }, { 0.0, -1.0, 0.0 } },
+        { {  1.0, -1.0,  1.0 }, { 0.0, -1.0, 0.0 } },
+        { {  1.0, -1.0, -1.0 }, { 0.0, -1.0, 0.0 } },
+
+        { { -1.0,  1.0, -1.0 }, { 0.0, 1.0, 0.0 } },
+        { { -1.0,  1.0,  1.0 }, { 0.0, 1.0, 0.0 } },
+        { {  1.0,  1.0,  1.0 }, { 0.0, 1.0, 0.0 } },
+        { {  1.0,  1.0, -1.0 }, { 0.0, 1.0, 0.0 } }
+    };
+    uint16_t indices[] = {
+        0, 1, 2,  0, 2, 3,
+        6, 5, 4,  7, 6, 4,
+        8, 9, 10,  8, 10, 11,
+        14, 13, 12,  15, 14, 12,
+        16, 17, 18,  16, 18, 19,
+        22, 21, 20,  23, 22, 20
+    };
+    mesh_t mesh = {
+        .vbuf = sg_make_buffer(&(sg_buffer_desc){
+            .size = sizeof(vertices),
+            .content = vertices,
+            .label = "cube-vertices"
+        }),
+        .ibuf = sg_make_buffer(&(sg_buffer_desc){
+            .type = SG_BUFFERTYPE_INDEXBUFFER,
+            .size = sizeof(indices),
+            .content = indices,
+            .label = "cube-indices"
+        })
+    };
+    return mesh;
 }
 
 #if defined(SOKOL_GLCORE33)
