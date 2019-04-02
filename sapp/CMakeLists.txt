@@ -171,6 +171,12 @@ fips_begin_app(sgl-microui-sapp windowed)
     fips_deps(sokol microui)
 fips_end_app()
 
+#fips_begin_app(cubemaprt-sapp windowed)
+#    fips_vs_warning_level(3)
+#    fips_files(cubemaprt-sapp.c)
+#    fips_deps(sokol)
+#fips_end_app()
+
 #-------------------------------------------------------------------------------
 #   The same samples, but with debugging UI
 #
@@ -292,6 +298,13 @@ fips_begin_app(sgl-microui-sapp-ui windowed)
     fips_deps(sokol dbgui imgui microui)
 fips_end_app()
 target_compile_definitions(sgl-microui-sapp-ui PRIVATE USE_DBG_UI)
+
+#fips_begin_app(cubemaprt-sapp-ui windowed)
+#    fips_vs_warning_level(3)
+#    fips_files(cubemaprt-sapp.c)
+#    fips_deps(sokol dbgui imgui)
+#fips_end_app()
+#target_compile_definitions(cubemaprt-sapp-ui PRIVATE USE_DBG_UI)
 
 if (NOT FIPS_ANDROID)
 fips_begin_app(noentry-sapp windowed)
