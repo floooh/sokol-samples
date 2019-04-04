@@ -233,7 +233,7 @@ void frame(void) {
 
     /* update the little cubes that are reflected in the big cube */
     for (int i = 0; i < NUM_SHAPES; i++) {
-//        app.shapes[i].angle += app.shapes[i].angular_velocity * (1.0f/60.0f);
+        app.shapes[i].angle += app.shapes[i].angular_velocity * (1.0f/60.0f);
         hmm_mat4 scale = HMM_Scale(HMM_Vec3(0.25f, 0.25f, 0.25f));
         hmm_mat4 rot = HMM_Rotate(app.shapes[i].angle, app.shapes[i].axis);
         hmm_mat4 trans = HMM_Translate(HMM_Vec3(0.0f, 0.0f, app.shapes[i].radius));
@@ -241,11 +241,14 @@ void frame(void) {
     }
 
     /* offscreen pass which renders the environment cubemap */
+    /* FIXME: these values work for Metal and D3D11, not for GL, because
+       of the different handedness of the cubemap coordinate systems
+    */
     hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
         { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X= 0.0f, .Y=+1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z= 1.0f } },
         { { .X= 0.0f, .Y=-1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=-1.0f } },
+        { { .X= 0.0f, .Y=+1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=+1.0f } },
         { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
     };
@@ -262,7 +265,7 @@ void frame(void) {
     const int h = sapp_height();
     sg_begin_default_pass(&app.display_pass_action, sapp_width(), sapp_height());
 
-    hmm_vec3 eye_pos = HMM_Vec3(-30.0f, 0.0f, 0.0f);
+    hmm_vec3 eye_pos = HMM_Vec3(0.0f, 0.0f, 30.0f);
     hmm_mat4 proj = HMM_Perspective(45.0f, (float)w/(float)h, 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -271,7 +274,7 @@ void frame(void) {
     draw_cubes(app.display_shapes_pip, eye_pos, view_proj);
 
     /* render a big cube in the middle with environment mapping */
-//    app.rx += 0.1f; app.ry += 0.2f;
+    app.rx += 0.1f; app.ry += 0.2f;
     hmm_mat4 rxm = HMM_Rotate(app.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(app.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(HMM_MultiplyMat4(rxm, rym), HMM_Scale(HMM_Vec3(2.0f, 2.0f, 2.f)));
@@ -482,7 +485,7 @@ static const char* display_fs_src =
 "fragment float4 _main(fs_in in [[stage_in]], texturecube<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
 "  float3 eye_vec = normalize(in.world_eye_pos - in.world_position);\n"
 "  float3 nrm = normalize(in.world_normal);\n"
-"  float3 refl_vec = normalize(in.world_position);\n"
+"  float3 refl_vec = normalize(in.world_position).xyz * float3(1.0f, -1.0f, 1.0f);\n"
 "  float4 refl_color = tex.sample(smp, refl_vec);\n"
 "  float3 light_dir = normalize(in.world_light_dir);\n"
 "  float3 frag_color = light(in.color.xyz * refl_color.xyz, eye_vec, nrm, light_dir);\n"
