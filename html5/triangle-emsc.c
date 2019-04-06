@@ -19,7 +19,7 @@ void draw();
 
 int main() {
     /* setup WebGL context */
-    emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
