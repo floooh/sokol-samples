@@ -10,8 +10,13 @@
 #include "ui/dbgui.h"
 #include <stddef.h> /* offsetof */
 
+/* change the OFFSCREEN_SAMPLE_COUNT between 1 and 4 to test the
+   different cubemap-rendering-paths in sokol (one rendering to a
+   separate MSAA surface, and MSAA-resolve in sg_end_pass(), and
+   the other (without MSAA) rendering directly to the cubemap faces
+*/
+#define OFFSCREEN_SAMPLE_COUNT (4)
 #define DISPLAY_SAMPLE_COUNT (4)
-#define OFFSCREEN_SAMPLE_COUNT (1)
 #define NUM_SHAPES (32)
 
 /* state struct for the little cubes rotating around the big cube */
@@ -244,6 +249,7 @@ void frame(void) {
     /* FIXME: these values work for Metal and D3D11, not for GL, because
        of the different handedness of the cubemap coordinate systems
     */
+    #if defined(SOKOL_METAL) || defined(SOKOL_D3D11)
     hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
         { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
@@ -252,6 +258,16 @@ void frame(void) {
         { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
     };
+    #else /* GL */
+    hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
+        { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
+        { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
+        { { .X= 0.0f, .Y=+1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=+1.0f } },
+        { { .X= 0.0f, .Y=-1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=-1.0f } },
+        { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
+        { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
+    };
+    #endif
     for (int face = 0; face < SG_CUBEFACE_NUM; face++) {
         sg_begin_pass(app.offscreen_pass[face], &app.offscreen_pass_action);
         hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 0.0f), center_and_up[face][0], center_and_up[face][1]);
@@ -396,7 +412,79 @@ static mesh_t make_cube_mesh(void) {
 }
 
 #if defined(SOKOL_GLCORE33)
-#error "FIXME!"
+static const char* vs_src =
+"#version 330\n"
+"uniform mat4 mvp;\n"
+"uniform mat4 model;\n"
+"uniform vec4 shape_color;\n"
+"uniform vec4 light_dir;\n"
+"uniform vec4 eye_pos;\n"
+"in vec4 pos;\n"
+"in vec3 norm;\n"
+"out vec3 world_position;\n"
+"out vec3 world_normal;\n"
+"out vec3 world_eyepos;\n"
+"out vec3 world_lightdir;\n"
+"out vec4 color;\n"
+"void main() {\n"
+"  gl_Position = mvp * pos;\n"
+"  world_position = vec4(model * pos).xyz;\n"
+"  world_normal = vec4(model * vec4(norm, 0.0)).xyz;\n"
+"  world_eyepos = eye_pos.xyz;\n"
+"  world_lightdir = light_dir.xyz;\n"
+"  color = shape_color;\n"
+"}\n";
+static const char* offscreen_fs_src =
+"#version 330\n"
+"in vec3 world_normal;\n"
+"in vec3 world_position;\n"
+"in vec3 world_eyepos;\n"
+"in vec3 world_lightdir;\n"
+"in vec4 color;\n"
+"out vec4 frag_color;\n"
+"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
+"  float ambient = 0.25f;\n"
+"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
+"  float diff = n_dot_l + ambient;\n"
+"  float spec_power = 16.0;\n"
+"  vec3 r = reflect(-light_vec, normal);\n"
+"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
+"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
+"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
+"}\n"
+"void main() {\n"
+"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
+"  vec3 nrm = normalize(world_normal);\n"
+"  vec3 light_dir = normalize(world_lightdir);\n"
+"  frag_color = vec4(light(color.xyz, eye_vec, nrm, light_dir), 1.0f);\n"
+"}\n";
+static const char* display_fs_src =
+"#version 330\n"
+"uniform samplerCube tex;\n"
+"in vec3 world_normal;\n"
+"in vec3 world_position;\n"
+"in vec3 world_eyepos;\n"
+"in vec3 world_lightdir;\n"
+"in vec4 color;\n"
+"out vec4 frag_color;\n"
+"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
+"  float ambient = 0.25f;\n"
+"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
+"  float diff = n_dot_l + ambient;\n"
+"  float spec_power = 16.0;\n"
+"  vec3 r = reflect(-light_vec, normal);\n"
+"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
+"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
+"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
+"}\n"
+"void main() {\n"
+"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
+"  vec3 nrm = normalize(world_normal);\n"
+"  vec3 light_dir = normalize(world_lightdir);\n"
+"  vec3 refl_vec = normalize(world_position);\n"
+"  vec3 refl_color = texture(tex, refl_vec).xyz;\n"
+"  frag_color = vec4(light(refl_color * color.xyz, eye_vec, nrm, light_dir), 1.0f);\n"
+"}\n";
 #elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
 #error "FIXME!"
 #elif defined(SOKOL_METAL)
