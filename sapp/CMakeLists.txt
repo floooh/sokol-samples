@@ -171,11 +171,11 @@ fips_begin_app(sgl-microui-sapp windowed)
     fips_deps(sokol microui)
 fips_end_app()
 
-#fips_begin_app(cubemaprt-sapp windowed)
-#    fips_vs_warning_level(3)
-#    fips_files(cubemaprt-sapp.c)
-#    fips_deps(sokol)
-#fips_end_app()
+fips_begin_app(cubemaprt-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(cubemaprt-sapp.c)
+    fips_deps(sokol)
+fips_end_app()
 
 #-------------------------------------------------------------------------------
 #   The same samples, but with debugging UI
