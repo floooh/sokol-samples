@@ -178,6 +178,46 @@ static void test_load_matrix(void) {
     shutdown();
 }
 
+static void test_make_destroy_pipelines(void) {
+    test("pipeline make=>destroy");
+    sg_setup(&(sg_desc){0});
+    sgl_setup(&(sgl_desc_t){
+        /* one pool slot is used by soko-gl itself */
+        .pipeline_pool_size = 4
+    });
+
+    sgl_pipeline pip[3] = { {0} };
+    sg_pipeline_desc desc = {
+        .depth_stencil = {
+            .depth_write_enabled = true,
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        }
+    };
+    for (int i = 0; i < 3; i++) {
+        pip[i] = sgl_make_pipeline(&desc);
+        T(pip[i].id != SG_INVALID_ID);
+        T((2-i) == _sgl.pip_pool.pool.queue_top);
+        const _sgl_pipeline_t* pip_ptr = _sgl_lookup_pipeline(pip[i].id);
+        T(pip_ptr);
+        T(pip_ptr->slot.id == pip[i].id);
+        T(pip_ptr->slot.state == SG_RESOURCESTATE_VALID);
+    }
+    /* trying to create another one fails because buffer is exhausted */
+    T(sgl_make_pipeline(&desc).id == SG_INVALID_ID);
+
+    for (int i = 0; i < 3; i++) {
+        sgl_destroy_pipeline(pip[i]);
+        T(0 == _sgl_lookup_pipeline(pip[i].id));
+        const _sgl_pipeline_t* pip_ptr = _sgl_pipeline_at(pip[i].id);
+        T(pip_ptr);
+        T(pip_ptr->slot.id == SG_INVALID_ID);
+        T(pip_ptr->slot.state == SG_RESOURCESTATE_INITIAL);
+        T((i+1) == _sgl.pip_pool.pool.queue_top);
+    }
+    sgl_shutdown();
+    sg_shutdown();
+}
+
 int main() {
     test_begin("sokol-gl-test");
     test_default_init_shutdown();
@@ -188,5 +228,6 @@ int main() {
     test_matrix_mode();
     test_load_identity();
     test_load_matrix();
+    test_make_destroy_pipelines();
     return test_end();
 }
