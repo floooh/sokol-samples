@@ -116,9 +116,9 @@ static void hairball(uint32_t frame_count) {
     float vx = rnd();
     float vy = rnd();
     float vz = rnd();
-    float r = rnd() * 0.5f + 1.0f;
-    float g = rnd() * 0.5f + 1.0f;
-    float b = rnd() * 0.5f + 1.0f;
+    float r = (rnd() + 1.0f) * 0.5f;
+    float g = (rnd() + 1.0f) * 0.5f;
+    float b = (rnd() + 1.0f) * 0.5f;
     float x = ring[head][0];
     float y = ring[head][1];
     float z = ring[head][2];

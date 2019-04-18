@@ -399,7 +399,7 @@ static void r_init(void) {
     for (int y = 0; y < ATLAS_HEIGHT; y++) {
         for (int x = 0; x < ATLAS_WIDTH; x++) {
             uint32_t index = y*ATLAS_WIDTH + x;
-            rgba8_pixels[index] = 0x00FFFFFF | (atlas_texture[index]<<24);
+            rgba8_pixels[index] = 0x00FFFFFF | ((uint32_t)atlas_texture[index]<<24);
         }
     }
     atlas_img = sg_make_image(&(sg_image_desc){
