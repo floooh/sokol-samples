@@ -17,6 +17,8 @@ static const sg_pass_action pass_action = {
     }
 };
 
+static sgl_pipeline depth_test_pip;
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2(),
@@ -29,9 +31,18 @@ static void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
     __dbgui_setup(SAMPLE_COUNT);
+
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
         .sample_count = SAMPLE_COUNT
+    });
+
+    /* a pipeline object with less-equal depth-testing */
+    depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
+        .depth_stencil = {
+            .depth_write_enabled = true,
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        }
     });
 }
 
@@ -133,7 +144,7 @@ static void frame(void) {
     frame_count++;
 
     sgl_defaults();
-    sgl_state_depth_test(true);
+    sgl_push_pipeline(depth_test_pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), aspect, 0.1f, 1000.0f);
     sgl_matrix_mode_modelview();
@@ -159,6 +170,7 @@ static void frame(void) {
         sgl_c3f(0.5f, 1.0f, 0.0f);
         hairball(frame_count);
     sgl_pop_matrix();
+    sgl_pop_pipeline();
 
     /* sokol-gfx default pass with the actual sokol-gl drawing */
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());

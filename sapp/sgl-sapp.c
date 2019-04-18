@@ -17,6 +17,8 @@ static const sg_pass_action pass_action = {
     }
 };
 static sg_image img;
+/* a sokol_gl pipeline object for 3d rendering */
+static sgl_pipeline pip_3d;
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -30,6 +32,7 @@ static void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
     __dbgui_setup(SAMPLE_COUNT);
+
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
         .sample_count = SAMPLE_COUNT
@@ -48,6 +51,21 @@ static void init(void) {
         .content.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
+        }
+    });
+
+    /* create a pipeline object for 3d rendering, with less-equal
+       depth-test and cull-face enabled, not that we don't provide
+       a shader, vertex-layout, pixel formats and sample count here,
+       these are all filled in by sokol-gl
+    */
+    pip_3d = sgl_make_pipeline(&(sg_pipeline_desc){
+        .depth_stencil = {
+            .depth_write_enabled = true,
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+        },
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK
         }
     });
 }
@@ -118,8 +136,7 @@ static void draw_cubes(void) {
     rot[1] += 2.0f;
 
     sgl_defaults();
-    sgl_state_depth_test(true);
-    sgl_state_cull_face(true);
+    sgl_load_pipeline(pip_3d);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
@@ -150,18 +167,18 @@ static void draw_tex_cube(void) {
     frame_count += 1.0f;
     float a = sgl_rad(frame_count);
 
-    /* texture matrix rotation and scale */
+    // texture matrix rotation and scale
     float tex_rot = 0.5f * a;
     const float tex_scale = 1.0f + sinf(a) * 0.5f;
 
-    /* compute an orbiting eye-position for testing sgl_lookat() */
+    // compute an orbiting eye-position for testing sgl_lookat()
     float eye_x = sinf(a) * 6.0f;
     float eye_z = cosf(a) * 6.0f;
     float eye_y = sinf(a) * 3.0f;
 
     sgl_defaults();
-    sgl_state_depth_test(true);
-    sgl_state_cull_face(true);
+    sgl_load_pipeline(pip_3d);
+
     sgl_state_texture(true);
     sgl_texture(img);
 
