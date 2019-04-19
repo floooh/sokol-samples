@@ -45,4 +45,5 @@ script:
   - python fips run sokol-audio-test
   - python fips run sokol-args-test
   - python fips run sokol-gfx-test
+  - python fips run sokol-gl-test
 

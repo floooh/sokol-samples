@@ -19,4 +19,5 @@ build_script:
     - cmd: c:/Python36/python.exe fips run sokol-audio-test
     - cmd: c:/Python36/python.exe fips run sokol-args-test
     - cmd: c:/Python36/python.exe fips run sokol-gfx-test
+    - cmd: c:/Python36/python.exe fips run sokol-gl-test
 

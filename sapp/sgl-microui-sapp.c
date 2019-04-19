@@ -387,6 +387,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 
 /*== micrui renderer =========================================================*/
 static sg_image atlas_img;
+static sgl_pipeline pip;
 
 static void r_init(void) {
 
@@ -398,7 +399,7 @@ static void r_init(void) {
     for (int y = 0; y < ATLAS_HEIGHT; y++) {
         for (int x = 0; x < ATLAS_WIDTH; x++) {
             uint32_t index = y*ATLAS_WIDTH + x;
-            rgba8_pixels[index] = 0x00FFFFFF | (atlas_texture[index]<<24);
+            rgba8_pixels[index] = 0x00FFFFFF | ((uint32_t)atlas_texture[index]<<24);
         }
     }
     atlas_img = sg_make_image(&(sg_image_desc){
@@ -416,14 +417,22 @@ static void r_init(void) {
             }
         }
     });
+    pip = sgl_make_pipeline(&(sg_pipeline_desc){
+        .blend = {
+            .enabled = true,
+            .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+            .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA
+        }
+    });
+
     free(rgba8_pixels);
 }
 
 static void r_begin(int disp_width, int disp_height) {
     sgl_defaults();
-    sgl_state_blend(true);
-    sgl_state_cull_face(false);
-    sgl_state_texture(true);
+    sgl_push_pipeline();
+    sgl_load_pipeline(pip);
+    sgl_enable_texture();
     sgl_texture(atlas_img);
     sgl_ortho(0.0f, (float) disp_width, (float) disp_height, 0.0f, -1.0f, +1.0f);
     sgl_begin_quads();
@@ -431,6 +440,7 @@ static void r_begin(int disp_width, int disp_height) {
 
 static void r_end(void) {
     sgl_end();
+    sgl_pop_pipeline();
 }
 
 static void r_draw(void) {

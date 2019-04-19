@@ -33,34 +33,12 @@ static void test_default_init_shutdown(void) {
     T(_sgl.commands != 0);
     T(_sgl.error == SGL_NO_ERROR);
     T(!_sgl.in_begin);
-    T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
-    T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
-    T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
+    T(_sgl.def_pip.id != SG_INVALID_ID);
+    T(_sgl.pip_pool.pool.size == (_SGL_DEFAULT_PIPELINE_POOL_SIZE + 1));
     TFLT(_sgl.u, 0.0f, FLT_MIN);
     TFLT(_sgl.v, 0.0f, FLT_MIN);
     T(_sgl.rgba == 0xFFFFFFFF);
     T(_sgl.cur_img.id == _sgl.def_img.id);
-    shutdown();
-}
-
-static void test_enable_disable(void) {
-    test("enable/disable");
-    init();
-    /* also test that primitive type doesn't mess up state bits */
-    sgl_begin_triangle_strip();
-    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
-    sgl_end();
-    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
-    sgl_state_depth_test(true); T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
-    sgl_state_blend(true); T(_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    sgl_state_texture(true); T(_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
-    sgl_state_cull_face(true); T(_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
-    sgl_state_depth_test(false); T(!_sgl_state(SGL_STATE_DEPTHTEST, _sgl.state_bits));
-    sgl_state_blend(false); T(!_sgl_state(SGL_STATE_BLEND, _sgl.state_bits));
-    sgl_state_texture(false); T(!_sgl_state(SGL_STATE_TEXTURE, _sgl.state_bits));
-    sgl_state_cull_face(false); T(!_sgl_state(SGL_STATE_CULLFACE, _sgl.state_bits));
-    T(_sgl_prim_type(_sgl.state_bits) == SGL_PRIMITIVETYPE_TRIANGLE_STRIP);
     shutdown();
 }
 
@@ -132,7 +110,6 @@ static void test_texture(void) {
 static void test_begin_end(void) {
     test("begin end");
     init();
-    sgl_state_depth_test(true);
     sgl_begin_triangles();
     sgl_v3f(1.0f, 2.0f, 3.0f);
     sgl_v3f(4.0f, 5.0f, 6.0f);
@@ -143,8 +120,7 @@ static void test_begin_end(void) {
     T(_sgl.cur_command == 1);
     T(_sgl.cur_uniform == 1);
     T(_sgl.commands[0].cmd == SGL_COMMAND_DRAW);
-    T(_sgl_prim_type(_sgl.commands[0].args.draw.state_bits) == SGL_PRIMITIVETYPE_TRIANGLES);
-    T(_sgl_state(SGL_STATE_DEPTHTEST, _sgl.commands[0].args.draw.state_bits));
+    T(_sgl.commands[0].args.draw.pip.id == _sgl_pipeline_at(_sgl.def_pip.id)->pip[SGL_PRIMITIVETYPE_TRIANGLES].id);
     T(_sgl.commands[0].args.draw.base_vertex == 0);
     T(_sgl.commands[0].args.draw.num_vertices == 3);
     T(_sgl.commands[0].args.draw.uniform_index == 0);
@@ -181,7 +157,7 @@ static void test_load_matrix(void) {
         0.0f, 0.0f, 0.5f, 0.0f,
         2.0f, 3.0f, 4.0f, 1.0f
     };
-    sgl_load_transpose_matrix(m);
+    sgl_load_matrix(m);
     const _sgl_matrix_t* m0 = _sgl_matrix_modelview();
     TFLT(m0->v[0][0], 0.5f, FLT_MIN);
     TFLT(m0->v[1][1], 0.5f, FLT_MIN);
@@ -190,7 +166,7 @@ static void test_load_matrix(void) {
     TFLT(m0->v[3][1], 3.0f, FLT_MIN);
     TFLT(m0->v[3][2], 4.0f, FLT_MIN);
     TFLT(m0->v[3][3], 1.0f, FLT_MIN);
-    sgl_load_matrix(m);
+    sgl_load_transpose_matrix(m);
     const _sgl_matrix_t* m1 = _sgl_matrix_modelview();
     TFLT(m1->v[0][0], 0.5f, FLT_MIN);
     TFLT(m1->v[1][1], 0.5f, FLT_MIN);
@@ -202,10 +178,49 @@ static void test_load_matrix(void) {
     shutdown();
 }
 
+static void test_make_destroy_pipelines(void) {
+    test("pipeline make=>destroy");
+    sg_setup(&(sg_desc){0});
+    sgl_setup(&(sgl_desc_t){
+        /* one pool slot is used by soko-gl itself */
+        .pipeline_pool_size = 4
+    });
+
+    sgl_pipeline pip[3] = { {0} };
+    sg_pipeline_desc desc = {
+        .depth_stencil = {
+            .depth_write_enabled = true,
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        }
+    };
+    for (int i = 0; i < 3; i++) {
+        pip[i] = sgl_make_pipeline(&desc);
+        T(pip[i].id != SG_INVALID_ID);
+        T((2-i) == _sgl.pip_pool.pool.queue_top);
+        const _sgl_pipeline_t* pip_ptr = _sgl_lookup_pipeline(pip[i].id);
+        T(pip_ptr);
+        T(pip_ptr->slot.id == pip[i].id);
+        T(pip_ptr->slot.state == SG_RESOURCESTATE_VALID);
+    }
+    /* trying to create another one fails because buffer is exhausted */
+    T(sgl_make_pipeline(&desc).id == SG_INVALID_ID);
+
+    for (int i = 0; i < 3; i++) {
+        sgl_destroy_pipeline(pip[i]);
+        T(0 == _sgl_lookup_pipeline(pip[i].id));
+        const _sgl_pipeline_t* pip_ptr = _sgl_pipeline_at(pip[i].id);
+        T(pip_ptr);
+        T(pip_ptr->slot.id == SG_INVALID_ID);
+        T(pip_ptr->slot.state == SG_RESOURCESTATE_INITIAL);
+        T((i+1) == _sgl.pip_pool.pool.queue_top);
+    }
+    sgl_shutdown();
+    sg_shutdown();
+}
+
 int main() {
     test_begin("sokol-gl-test");
     test_default_init_shutdown();
-    test_enable_disable();
     test_viewport();
     test_scissor_rect();
     test_texture();
@@ -213,5 +228,6 @@ int main() {
     test_matrix_mode();
     test_load_identity();
     test_load_matrix();
+    test_make_destroy_pipelines();
     return test_end();
 }
