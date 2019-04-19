@@ -430,8 +430,9 @@ static void r_init(void) {
 
 static void r_begin(int disp_width, int disp_height) {
     sgl_defaults();
-    sgl_push_pipeline(pip);
-    sgl_state_texture(true);
+    sgl_push_pipeline();
+    sgl_load_pipeline(pip);
+    sgl_enable_texture();
     sgl_texture(atlas_img);
     sgl_ortho(0.0f, (float) disp_width, (float) disp_height, 0.0f, -1.0f, +1.0f);
     sgl_begin_quads();

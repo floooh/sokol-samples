@@ -144,7 +144,8 @@ static void frame(void) {
     frame_count++;
 
     sgl_defaults();
-    sgl_push_pipeline(depth_test_pip);
+    sgl_push_pipeline();
+    sgl_load_pipeline(depth_test_pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), aspect, 0.1f, 1000.0f);
     sgl_matrix_mode_modelview();

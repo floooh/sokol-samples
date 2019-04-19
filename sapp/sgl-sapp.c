@@ -179,7 +179,7 @@ static void draw_tex_cube(void) {
     sgl_defaults();
     sgl_load_pipeline(pip_3d);
 
-    sgl_state_texture(true);
+    sgl_enable_texture();
     sgl_texture(img);
 
     sgl_matrix_mode_projection();
