@@ -31,6 +31,7 @@ fips_end_app()
 fips_begin_app(triangle-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(triangle-sapp.c)
+    sokol_shader(triangle-sapp.glsl)
     fips_deps(sokol)
 fips_end_app()
 
