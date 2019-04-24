@@ -185,6 +185,10 @@ void init(void) {
 
     /* a shader to render the cube into offscreen MRT render targest */
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POSITION" },
+            [1] = { .name="bright0", .sem_name="BRIGHT" }
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
@@ -201,8 +205,8 @@ void init(void) {
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [0] = { .name="position", .sem_name="POSITION", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="bright0", .sem_name="BRIGHT", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -239,6 +243,7 @@ void init(void) {
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs[0] = { .name="pos", .sem_name="POSITION" },
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -258,7 +263,7 @@ void init(void) {
     /* the pipeline object to render the fullscreen quad */
     fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0] = { .name="pos", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -279,10 +284,11 @@ void init(void) {
     /* pipeline and resource bindings to render debug-visualization quads */
     dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0] = { .name="pos", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
+            .attrs[0] = { .name="pos", .sem_name="POSITION" },
             .vs.source = dbg_vs,
             .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
             .fs.source = dbg_fs,

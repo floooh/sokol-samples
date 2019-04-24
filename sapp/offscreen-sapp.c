@@ -129,6 +129,10 @@ void init(void) {
 
     /* a shader for a non-textured cube, rendered in the offscreen pass */
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POSITION" },
+            [1] = { .name="color0", .sem_name="COLOR" }
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -143,6 +147,11 @@ void init(void) {
     /* ...and another shader for the display-pass, rendering a textured cube
        using the offscreen render target as texture */
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POSITION" },
+            [1] = { .name="color0", .sem_name="COLOR" },
+            [2] = { .name="texcoord0", .sem_name="TEXCOORD" }
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -162,8 +171,8 @@ void init(void) {
             .buffers[0].stride = 36,
             /* but don't need to provide attr offsets, because pos and color are continuous */
             .attrs = {
-                [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = offscreen_shd,
@@ -188,9 +197,9 @@ void init(void) {
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
-                [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .name="texcoord0", .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4,
+                [2].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = default_shd,

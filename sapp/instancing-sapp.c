@@ -85,6 +85,11 @@ void init(void) {
 
     /* a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POSITION" },
+            [1] = { .name="color0", .sem_name="COLOR" },
+            [2] = { .name="instance_pos", .sem_name="INSTPOS" }
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
@@ -102,9 +107,9 @@ void init(void) {
             /* vertex buffer at slot 1 must step per instance */
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
-                [0] = { .name="position",     .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                [1] = { .name="color0",       .sem_name="COLOR",    .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
-                [2] = { .name="instance_pos", .sem_name="INSTPOS",  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [2] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,
