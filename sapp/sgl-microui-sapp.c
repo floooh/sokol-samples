@@ -434,12 +434,15 @@ static void r_begin(int disp_width, int disp_height) {
     sgl_load_pipeline(pip);
     sgl_enable_texture();
     sgl_texture(atlas_img);
+    sgl_matrix_mode_projection();
+    sgl_push_matrix();
     sgl_ortho(0.0f, (float) disp_width, (float) disp_height, 0.0f, -1.0f, +1.0f);
     sgl_begin_quads();
 }
 
 static void r_end(void) {
     sgl_end();
+    sgl_pop_matrix();
     sgl_pop_pipeline();
 }
 
