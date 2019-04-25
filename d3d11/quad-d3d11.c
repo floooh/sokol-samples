@@ -43,6 +43,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a shader to render the quad */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POS",
+            [1].sem_name = "COLOR"
+        },
         .vs.source =
             "struct vs_in {\n"
             "  float4 pos: POS;\n"
@@ -72,8 +76,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
                 /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-                [0] = { .sem_name="POS", .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="COLOR", .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         }
     });

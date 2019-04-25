@@ -52,6 +52,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a shader for the fullscreen background quad */
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs[0].sem_name = "POS",
         .vs.source =
             "struct vs_in {\n"
             "  float2 pos: POS;\n"
@@ -82,9 +83,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = 28,
-            .attrs = {
-                [0] = { .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT2 }
-            }
+            .attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -92,6 +91,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a shader for the blended quads */
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POS",
+            [1].sem_name = "COLOR"
+        },
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source =
             "cbuffer params: register(b0) {\n"
@@ -121,8 +124,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
-                [0] = { .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format = SG_VERTEXFORMAT_FLOAT3,
+                [1].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = quad_shd,
