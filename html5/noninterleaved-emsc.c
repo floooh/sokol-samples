@@ -79,6 +79,10 @@ int main() {
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position",
+            [1].name = "color0"
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -108,9 +112,9 @@ int main() {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
                 /* positions come from vertex buffer slot 0 */
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
                 /* colors come from vertex buffer slot 1 */
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
         .shader = shd,

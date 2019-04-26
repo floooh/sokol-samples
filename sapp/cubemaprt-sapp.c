@@ -157,11 +157,15 @@ void init(void) {
     };
     sg_layout_desc layout_desc = {
         .attrs = {
-            [0] = { .name="pos", .sem_name="POS", .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
-            [1] = { .name="norm", .sem_name="NORM", .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
+            [0] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
+            [1] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
         }
     };
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="pos", .sem_name="POS" },
+            [1] = { .name="norm", .sem_name="NORM" }
+        },
         .vs = {
             .source = vs_src,
             .uniform_blocks[0] = ub_desc
@@ -194,6 +198,10 @@ void init(void) {
 
     /* shader and pipeline objects for display-rendering */
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="pos", .sem_name="POS" },
+            [1] = { .name="norm", .sem_name="NORM" }
+        },
         .vs = {
             .source = vs_src,
             .uniform_blocks[0] = ub_desc

@@ -379,8 +379,8 @@ static void test_make_destroy_pipelines(void) {
         .shader = sg_make_shader(&(sg_shader_desc){ 0 }),
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             }
         },
     };

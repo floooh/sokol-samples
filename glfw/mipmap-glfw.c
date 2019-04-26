@@ -137,8 +137,8 @@ int main() {
             .source =
                 "#version 330\n"
                 "uniform mat4 mvp;\n"
-                "in vec4 position;\n"
-                "in vec2 texcoord0;\n"
+                "layout(location=0) in vec4 position;\n"
+                "layout(location=1) in vec2 texcoord0;\n"
                 "out vec2 uv;\n"
                 "void main() {\n"
                 "  gl_Position = mvp * position;\n"
@@ -162,8 +162,8 @@ int main() {
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="texcoord0", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = shd,

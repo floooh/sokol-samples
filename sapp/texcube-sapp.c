@@ -110,6 +110,11 @@ void init(void) {
 
     /* a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
+        .attrs = {
+            [0] = { .name="position", .sem_name="POSITION" },
+            [1] = { .name="color0", .sem_name="COLOR0" },
+            [2] = { .name="texcoord0", .sem_name="TEXCOORD" }
+        },
         .vs = {
             .uniform_blocks[0] = {
                 .size = sizeof(vs_params_t),
@@ -130,9 +135,9 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0] = { .name="position", .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .name="texcoord0", .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4,
+                [2].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = shd,

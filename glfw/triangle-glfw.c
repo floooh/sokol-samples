@@ -44,6 +44,13 @@ int main() {
 
     /* a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        /* vertex attribute lookup by name is optional in GL3.x, we
+           could also use "layout(location=N)" in the shader
+        */
+        .attrs = {
+            [0].name = "position",
+            [1].name = "color0"
+        },
         .vs.source = 
             "#version 330\n"
             "in vec4 position;\n"
@@ -68,8 +75,8 @@ int main() {
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         }
     });

@@ -42,6 +42,10 @@ void init(void) {
 
     /* create a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POS" },
+            [1] = { .name="color0", .sem_name="COLOR" }
+        },
         .vs.source = vs_src,
         .fs.source = fs_src,
         .label = "triangle-shader"
@@ -53,8 +57,8 @@ void init(void) {
         .shader = shd,
         .layout = {
             .attrs = {
-                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .label = "triangle-pipeline"

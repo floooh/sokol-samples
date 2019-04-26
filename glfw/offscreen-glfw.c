@@ -134,8 +134,8 @@ int main() {
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
-            "in vec4 position;\n"
-            "in vec4 color0;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
             "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
@@ -162,9 +162,9 @@ int main() {
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
-            "in vec4 position;\n"
-            "in vec4 color0;\n"
-            "in vec2 texcoord0;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "layout(location=2) in vec2 texcoord0;\n"
             "out vec4 color;\n"
             "out vec2 uv;\n"
             "void main() {\n"
@@ -190,8 +190,8 @@ int main() {
             .buffers[0].stride = 36,
             /* but don't need to provide attr offsets, because pos and color are continuous */
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = offscreen_shd,
@@ -212,9 +212,9 @@ int main() {
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 },
-                [2] = { .name="texcoord0", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4,
+                [2].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = default_shd,

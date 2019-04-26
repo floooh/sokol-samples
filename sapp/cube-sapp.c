@@ -88,6 +88,10 @@ void init(void) {
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
+        .attrs = {
+            [0] = { .name="position", .sem_name="POS" },
+            [1] = { .name="color0", .sem_name="COLOR" }
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
@@ -105,8 +109,8 @@ void init(void) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,

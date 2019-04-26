@@ -43,6 +43,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a shader to render the triangle */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POS",
+            [1].sem_name = "COLOR"
+        },
         .vs.source =
             "struct vs_in {\n"
             "  float4 pos: POS;\n"
@@ -69,8 +73,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .layout = {
             .attrs = {
-                [0] = { .sem_name = "POS", .format = SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name = "COLOR", .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0].format = SG_VERTEXFORMAT_FLOAT3,
+                [1].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd

@@ -104,6 +104,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_shader_desc shd_desc = { };
     auto& ub = shd_desc.vs.uniform_blocks[0];
     ub.size = sizeof(vs_params_t);
+    shd_desc.attrs[0].sem_name = "POSITION";
+    shd_desc.attrs[1].sem_name = "TEXCOORD";
+    shd_desc.attrs[2].sem_name = "COLOR";
     shd_desc.vs.source =
         "cbuffer params {\n"
         "  float2 disp_size;\n"
@@ -138,9 +141,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline_desc pip_desc = { };
     pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
     auto& attrs = pip_desc.layout.attrs;
-    attrs[0].sem_name="POSITION"; attrs[0].offset=offsetof(ImDrawVert, pos); attrs[0].format=SG_VERTEXFORMAT_FLOAT2;
-    attrs[1].sem_name="TEXCOORD"; attrs[1].offset=offsetof(ImDrawVert, uv); attrs[1].format=SG_VERTEXFORMAT_FLOAT2;
-    attrs[2].sem_name="COLOR"; attrs[2].offset=offsetof(ImDrawVert, col); attrs[2].format=SG_VERTEXFORMAT_UBYTE4N;
+    attrs[0].offset=offsetof(ImDrawVert, pos); attrs[0].format=SG_VERTEXFORMAT_FLOAT2;
+    attrs[1].offset=offsetof(ImDrawVert, uv); attrs[1].format=SG_VERTEXFORMAT_FLOAT2;
+    attrs[2].offset=offsetof(ImDrawVert, col); attrs[2].format=SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.blend.enabled = true;

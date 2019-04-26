@@ -72,8 +72,8 @@ int main() {
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#version 330\n"
-            "in vec2 pos;"
-            "in vec3 color0;"
+            "layout(location=0) in vec2 pos;"
+            "layout(location=1) in vec3 color0;"
             "out vec4 color;"
             "void main() {"
             "  gl_Position = vec4(pos, 0.5, 1.0);\n"
@@ -94,8 +94,8 @@ int main() {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT3 }
+                [0].format=SG_VERTEXFORMAT_FLOAT2,
+                [1].format=SG_VERTEXFORMAT_FLOAT3
             }
         }
     });

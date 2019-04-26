@@ -125,6 +125,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* a shader to render a cube into MRT offscreen render targets */
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POSITION",
+            [1].sem_name = "BRIGHT"
+        },
         .vs.uniform_blocks[0].size = sizeof(offscreen_params_t),
         .vs.source = 
             "cbuffer params: register(b0) {\n"
@@ -164,8 +168,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [0] = { .sem_name="POSITION", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="BRIGHT", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -200,6 +204,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs[0].sem_name = "POSITION",
         .vs.uniform_blocks[0].size = sizeof(params_t),
         .fs.images = {
             [0].type=SG_IMAGETYPE_2D,
@@ -250,9 +255,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout = {
-            .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
-        },
+        .layout.attrs[0].format=SG_VERTEXFORMAT_FLOAT2,
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
@@ -271,11 +274,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
        of the offscreen render target contents
     */
     sg_pipeline dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout = {
-            .attrs[0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT2 }
-        },
+        .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
+            .attrs[0].sem_name = "POSITION",
             .vs.source =
                 "struct vs_in {\n"
                 "  float2 pos: POSITION;\n"

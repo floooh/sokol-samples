@@ -91,25 +91,31 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
-            "cbuffer params: register(b0) {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR1;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 color: COLOR0;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.color = inp.color;\n"
-            "  return outp;\n"
-            "};\n",
+        .attrs = {
+            [0] = { .sem_name = "POSITION" },
+            [1] = { .sem_name = "COLOR", .sem_index=1 }
+        },
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "cbuffer params: register(b0) {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float4 color: COLOR1;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 color: COLOR0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.color = inp.color;\n"
+                "  return outp;\n"
+                "};\n",
+        },
         .fs.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
@@ -122,8 +128,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .layout = {
             .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .sem_name="POSITION", .format = SG_VERTEXFORMAT_FLOAT3 }, 
-                [1] = { .sem_name="COLOR", .sem_index=1, .format = SG_VERTEXFORMAT_FLOAT4 }
+                [0].format = SG_VERTEXFORMAT_FLOAT3, 
+                [1].format = SG_VERTEXFORMAT_FLOAT4 
             }
         },
         .shader = shd,
