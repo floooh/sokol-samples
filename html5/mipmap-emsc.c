@@ -121,6 +121,10 @@ int main() {
 
     /* shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position",
+            [1].name = "texcoord0"
+        },
         .vs = {
             .uniform_blocks[0] = {
                 .size = sizeof(vs_params_t),
@@ -154,8 +158,8 @@ int main() {
     pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="texcoord0", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = shd,

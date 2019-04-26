@@ -53,6 +53,10 @@ int main() {
 
     /* create a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
+        .attrs = {
+            [0].name = "position",
+            [1].name = "color0"
+        },
         .vs.source =
             "attribute vec4 position;\n"
             "attribute vec4 color0;\n"
@@ -75,8 +79,8 @@ int main() {
             /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
                 /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,

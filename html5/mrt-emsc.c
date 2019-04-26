@@ -155,6 +155,10 @@ int main() {
 
     /* a shader to render the cube into offscreen MRT render targets */
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position",
+            [1].name = "bright0"
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(offscreen_params_t),
             .uniforms = {
@@ -190,8 +194,8 @@ int main() {
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [0] = { .name="position", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -231,6 +235,7 @@ int main() {
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs[0].name = "pos",
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
             .uniforms = {
@@ -275,9 +280,7 @@ int main() {
     
     /* the pipeline object for the fullscreen rectangle */
     fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout = {
-            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
-        },
+        .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
@@ -287,10 +290,11 @@ int main() {
     */
     dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
+            .attrs[0].name = "pos",
             .vs.source =
                 "#version 300 es\n"
                 "uniform vec2 offset;"

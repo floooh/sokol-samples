@@ -63,6 +63,9 @@ int main() {
 
     /* a shader for the fullscreen background quad */
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position"
+        },
         .vs.source =
             "attribute vec2 position;\n"
             "void main() {\n"
@@ -90,7 +93,7 @@ int main() {
         .layout = {
             .buffers[0].stride = 28,
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = bg_shd,
@@ -99,6 +102,10 @@ int main() {
 
     /* a shader for the blended quads */
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position",
+            [1].name = "color0"
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
@@ -126,8 +133,8 @@ int main() {
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = quad_shd,
