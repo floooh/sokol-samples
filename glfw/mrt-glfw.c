@@ -142,8 +142,8 @@ int main() {
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
-            "in vec4 position;\n"
-            "in float bright0;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in float bright0;\n"
             "out float bright;\n"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
@@ -175,8 +175,8 @@ int main() {
                 /* offsets are not strictly needed here because the vertex layout 
                    is gapless, but this demonstrates that offsetof() can be used
                 */
-                [0] = { .name="position", .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="bright0", .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -230,7 +230,7 @@ int main() {
         .vs.source =
             "#version 330\n"
             "uniform vec2 offset;"
-            "in vec2 pos;\n"
+            "layout(location=0) in vec2 pos;\n"
             "out vec2 uv0;\n"
             "out vec2 uv1;\n"
             "out vec2 uv2;\n"
@@ -260,7 +260,7 @@ int main() {
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
@@ -271,13 +271,13 @@ int main() {
     */
     sg_pipeline dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 }
+            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
             .vs.source =
                 "#version 330\n"
-                "in vec2 pos;\n"
+                "layout(location=0) in vec2 pos;\n"
                 "out vec2 uv;\n"
                 "void main() {\n"
                 "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"

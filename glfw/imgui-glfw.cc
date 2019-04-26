@@ -136,9 +136,9 @@ int main() {
     shd_desc.vs.source =
         "#version 330\n"
         "uniform vec2 disp_size;\n"
-        "in vec2 position;\n"
-        "in vec2 texcoord0;\n"
-        "in vec4 color0;\n"
+        "layout(location=0) in vec2 position;\n"
+        "layout(location=1) in vec2 texcoord0;\n"
+        "layout(location=2) in vec4 color0;\n"
         "out vec2 uv;\n"
         "out vec4 color;\n"
         "void main() {\n"
@@ -163,9 +163,9 @@ int main() {
     sg_pipeline_desc pip_desc = { };
     pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
     auto& attrs = pip_desc.layout.attrs;
-    attrs[0].name = "position";  attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
-    attrs[1].name = "texcoord0"; attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
-    attrs[2].name = "color0";    attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
+    attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.blend.enabled = true;

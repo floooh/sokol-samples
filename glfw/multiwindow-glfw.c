@@ -124,8 +124,8 @@ int main() {
             .vs.source =
                 "#version 330\n"
                 "uniform mat4 mvp;\n"
-                "in vec4 position;\n"
-                "in vec4 color0;\n"
+                "layout(location=0) in vec4 position;\n"
+                "layout(location=1) in vec4 color0;\n"
                 "out vec4 color;\n"
                 "void main() {\n"
                 "  gl_Position = mvp * position;\n"
@@ -144,8 +144,8 @@ int main() {
                 /* test to provide buffer stride, but no attr offsets */
                 .buffers[0].stride = 28,
                 .attrs = {
-                    [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                    [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                    [0].format=SG_VERTEXFORMAT_FLOAT3,
+                    [1].format=SG_VERTEXFORMAT_FLOAT4
                 }
             },
             .shader = shd,
