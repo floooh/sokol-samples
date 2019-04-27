@@ -79,15 +79,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     with open(webpage_dir + '/index.html', 'w') as f :
         f.write(html)
 
-    # and the same with the CSS template
-    with open(proj_dir + '/webpage/style.css', 'r') as f :
-        templ = Template(f.read())
-    css = templ.safe_substitute()
-    with open(webpage_dir +'/style.css', 'w') as f :
-        f.write(css)
-
     # copy other required files
-    for name in ['dummy.jpg', 'emsc.js', 'favicon.png'] :
+    for name in ['dummy.jpg', 'favicon.png'] :
         log.info('> copy file: {}'.format(name))
         shutil.copy(proj_dir + '/webpage/' + name, webpage_dir + '/' + name)
 
