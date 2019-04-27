@@ -39,7 +39,7 @@ void init(void) {
         .label = "triangle-vertices"
     });
 
-    /* create shader via code-generated  */
+    /* create shader with code-generated sg_shader_desc */
     sg_shader shd = sg_make_shader(&triangle_shader_desc);
 
     /* create a pipeline object (default render states are fine for triangle) */
