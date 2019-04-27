@@ -125,6 +125,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* shader to sample from array texture */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POSITION",
+            [1].sem_name = "TEXCOORD"
+        },
         .vs.uniform_blocks[0].size = sizeof(params_t),
         .fs.images[0].type=SG_IMAGETYPE_ARRAY,
         .vs.source =
@@ -172,8 +176,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0] = { .sem_name="POSITION", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .sem_name="TEXCOORD", .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = shd,

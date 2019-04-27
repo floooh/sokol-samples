@@ -40,6 +40,10 @@ int main() {
 
     /* create a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "position",
+            [1].name = "color0"
+        },
         .vs.source =
             "attribute vec4 position;\n"
             "attribute vec4 color0;\n"
@@ -62,8 +66,8 @@ int main() {
         .shader = shd,
         .layout = {
             .attrs = {
-                [0] = { .name="position", .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT4 }
+                [0].format=SG_VERTEXFORMAT_FLOAT3,
+                [1].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
     });

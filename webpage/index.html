@@ -3,8 +3,109 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Sokol Samples</title>
-<link rel="stylesheet" type="text/css" href="style.css"/>
 <link rel="icon" type="image/png" href="favicon.png"/>
+<style type="text/css">
+body {
+    margin: 0;
+    background-color: #292d3e
+}
+.title {    
+    color: #3dbb87;
+    text-align: left;
+    padding-left: 20px;
+    font-family: "Arial Black", Gadget, sans-serif;
+    font-size: 60px;
+    margin-top: 0px;
+}
+.main-menu-item {
+    font-size: 18px;
+    padding-left: 10px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.main-menu-link {
+    text-decoration: none;
+    color: #3dbb87;
+}
+.gallery {
+    margin-left: 50px;
+    margin-right: auto;
+    display: block;
+    height: auto;
+}
+.thumb {
+    position: relative;
+    width: 250px;
+    height: 220px;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-top: 30px;
+    padding: 1px;
+    float: left;
+    background: #292d3e;
+    border: 1px solid #3dbb87;
+}
+.thumb-title {
+    text-align: center;
+    color: #3dbb87;
+    font-family: "Arial Black", Gadget, sans-serif;
+    font-size: 20px;        
+}
+.img-frame {
+    margin: 2px;
+    width: auto;
+    height: 165px;
+}
+.img-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    padding: 2px;
+    display: block;
+    background-color: #3dbb87;
+    cursor: pointer;
+    border-radius: 4px;
+    border-style: solid;
+    border-color: black;
+    text-align: center;
+    color: black;
+}
+.img-btn:hover {
+    background-color: black;
+    border-color: #3dbb87;
+    color: #3dbb87;
+}
+.img-btn-link {
+    text-decoration: none;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 16px;
+    color: inherit;
+}
+.image {
+    display: block;
+    height: 165px;
+    width: auto;
+    max-width: 236px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid black;
+}
+.thumb-bar {
+    vertical-align: bottom;
+    padding-top: 5px;
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    color: limegreen;
+    text-align: center;
+    text-decoration: none;
+}
+.gallery-bottom {
+    height: 60px;
+    clear: both;
+}
+</style>
 </head>
 <body>
 <div class="title"><a class="main-menu-link" href="https://github.com/floooh/sokol">Sokol Samples</a>

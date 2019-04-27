@@ -63,6 +63,10 @@ void init(void) {
 
     /* a shader and pipeline to render 2D shapes */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name="position", .sem_name="POS" },
+            [1] = { .name="color0", .sem_name="COLOR" }
+        },
         .vs.source = vs_src,
         .fs.source = fs_src
     });
@@ -71,8 +75,8 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [0] = { .name="position", .sem_name="POS", .format=SG_VERTEXFORMAT_FLOAT2 },
-                [1] = { .name="color0", .sem_name="COLOR", .format=SG_VERTEXFORMAT_FLOAT3 }
+                [0].format=SG_VERTEXFORMAT_FLOAT2,
+                [1].format=SG_VERTEXFORMAT_FLOAT3
             }
         }
     });

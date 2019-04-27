@@ -171,6 +171,11 @@ int main() {
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = {
+        .attrs = {
+            [0].name = "position",
+            [1].name = "texcoord0",
+            [2].name = "color0"
+        },
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
@@ -206,9 +211,9 @@ int main() {
         .layout = {
             .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
-                [0] = { .name="position", .offset=offsetof(ImDrawVert,pos), .format=SG_VERTEXFORMAT_FLOAT2 },
-                [1] = { .name="texcoord0", .offset=offsetof(ImDrawVert,uv), .format=SG_VERTEXFORMAT_FLOAT2 },
-                [2] = { .name="color0", .offset=offsetof(ImDrawVert,col), .format=SG_VERTEXFORMAT_UBYTE4N }
+                [0] = { .offset=offsetof(ImDrawVert,pos), .format=SG_VERTEXFORMAT_FLOAT2 },
+                [1] = { .offset=offsetof(ImDrawVert,uv), .format=SG_VERTEXFORMAT_FLOAT2 },
+                [2] = { .offset=offsetof(ImDrawVert,col), .format=SG_VERTEXFORMAT_UBYTE4N }
             }
         },
         .shader = shd,

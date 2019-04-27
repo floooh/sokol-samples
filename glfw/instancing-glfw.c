@@ -94,9 +94,9 @@ int main() {
         .vs.source = 
             "#version 330\n"
             "uniform mat4 mvp;\n"
-            "in vec3 position;\n"
-            "in vec4 color0;\n"
-            "in vec3 instance_pos;\n"
+            "layout(location=0) in vec3 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "layout(location=2) in vec3 instance_pos;\n"
             "out vec4 color;\n"
             "void main() {\n"
             "  vec4 pos = vec4(position + instance_pos, 1.0);"
@@ -120,9 +120,9 @@ int main() {
                 [1] = { .stride = 12, .step_func=SG_VERTEXSTEP_PER_INSTANCE }
             },
             .attrs = {
-                [0] = { .name="position", .offset = 0, .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                [1] = { .name="color0", .offset = 12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
-                [2] = { .name="instance_pos", .offset = 0, .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
+                [0] = { .offset = 0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [1] = { .offset = 12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [2] = { .offset = 0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,

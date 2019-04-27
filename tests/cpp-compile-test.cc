@@ -20,6 +20,8 @@
 #include "sokol_audio.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"
 
 static sapp_desc desc;
 

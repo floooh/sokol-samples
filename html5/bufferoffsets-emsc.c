@@ -63,6 +63,10 @@ int main() {
 
     /* create a shader to render 2D colored shapes */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].name = "pos",
+            [1].name = "color0"
+        },
         .vs.source =
             "attribute vec2 pos;"
             "attribute vec3 color0;"
@@ -85,8 +89,8 @@ int main() {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [0] = { .name="pos", .format=SG_VERTEXFORMAT_FLOAT2 },
-                [1] = { .name="color0", .format=SG_VERTEXFORMAT_FLOAT3 }
+                [0].format=SG_VERTEXFORMAT_FLOAT2,
+                [1].format=SG_VERTEXFORMAT_FLOAT3
             }
         }
     });

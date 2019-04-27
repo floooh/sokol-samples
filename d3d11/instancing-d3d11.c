@@ -75,6 +75,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].sem_name = "POSITION",
+            [1].sem_name = "COLOR",
+            [2].sem_name = "INSTPOS"
+        },
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source = 
             "cbuffer params: register(b0) {\n"
@@ -113,9 +118,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 [1] = { .stride = 12, .step_func = SG_VERTEXSTEP_PER_INSTANCE }
             },
             .attrs = {
-                [0] = { .sem_name="POSITION", .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                [1] = { .sem_name="COLOR",    .offset=12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
-                [2] = { .sem_name="INSTPOS",  .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
+                [0] = { .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [2] = { .offset=0,  .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,
