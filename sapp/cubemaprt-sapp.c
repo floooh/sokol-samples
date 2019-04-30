@@ -134,15 +134,18 @@ void init(void) {
     /* vertex- and index-buffers for cube  */
     app.cube = make_cube_mesh();
 
+    /* same vertex layout for all shaders */
+    sg_layout_desc layout = {
+        .attrs = {
+            [vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
+            [vs_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
+        }
+    };
+
     /* shader and pipeline objects for offscreen-rendering */
     sg_pipeline_desc pip_desc = {
         .shader = sg_make_shader(&shapes_shader_desc),
-        .layout = {
-            .attrs = {
-                [shapes_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [shapes_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
-            }
-        },
+        .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -166,12 +169,7 @@ void init(void) {
     /* shader and pipeline objects for display-rendering */
     app.display_cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(&cube_shader_desc),
-        .layout = {
-            .attrs = {
-                [cube_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [cube_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
-            }
-        },
+        .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,

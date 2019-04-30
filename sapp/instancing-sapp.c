@@ -87,9 +87,9 @@ void init(void) {
             /* vertex buffer at slot 1 must step per instance */
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
-                [instancing_pos]      = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                [instancing_color0]   = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
-                [instancing_inst_pos] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
+                [vs_pos]      = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [vs_color0]   = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [vs_inst_pos] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,

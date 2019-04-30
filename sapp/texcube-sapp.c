@@ -111,9 +111,9 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [texcube_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [texcube_color0].format = SG_VERTEXFORMAT_FLOAT4,
-                [texcube_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
+                [vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = shd,

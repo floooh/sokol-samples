@@ -18,8 +18,8 @@
 #include <Windows.h>    /* WinMain */
 #endif
 #include <stdlib.h>     /* calloc, free */
+#include "noentry-sapp.glsl.h"
 
-static const char *vs_src, *fs_src;
 #define SAMPLE_COUNT (4)
 
 typedef struct {
@@ -27,10 +27,6 @@ typedef struct {
     sg_pipeline pip;
     sg_bindings bind;
 } app_state_t;
-
-typedef struct {
-    hmm_mat4 mvp;
-} vs_params_t;
 
 /* user-provided callback prototypes */
 void init(void* user_data);
@@ -125,20 +121,7 @@ void init(void* user_data) {
     });
 
     /* create shader */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc) {
-        .attrs = {
-            [0] = { .name="position", .sem_name="POS" },
-            [1] = { .name="color0", .sem_name="COLOR" }
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source = vs_src,
-        .fs.source = fs_src
-    });
+    sg_shader shd = sg_make_shader(&noentry_shader_desc);
 
     /* create pipeline object */
     state->pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -146,8 +129,8 @@ void init(void* user_data) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [0].format = SG_VERTEXFORMAT_FLOAT3,
-                [1].format = SG_VERTEXFORMAT_FLOAT4
+                [vs_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,
@@ -187,7 +170,7 @@ void frame(void* user_data) {
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -196,89 +179,3 @@ void frame(void* user_data) {
 void cleanup() {
     sg_shutdown();
 }
-
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-    "#version 330\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "#version 330\n"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
-static const char* vs_src =
-    "uniform mat4 mvp;\n"
-    "attribute vec4 position;\n"
-    "attribute vec4 color0;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "precision mediump float;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_FragColor = color;\n"
-    "}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct params_t {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 position [[attribute(0)]];\n"
-    "  float4 color [[attribute(1)]];\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 pos [[position]];\n"
-    "  float4 color;\n"
-    "};\n"
-    "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-    "  vs_out out;\n"
-    "  out.pos = params.mvp * in.position;\n"
-    "  out.color = in.color;\n"
-    "  return out;\n"
-    "}\n";
-static const char* fs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "fragment float4 _main(float4 color [[stage_in]]) {\n"
-    "  return color;\n"
-    "}\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-    "cbuffer params: register(b0) {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 pos: POS;\n"
-    "  float4 color: COLOR0;\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 color: COLOR0;\n"
-    "  float4 pos: SV_Position;\n"
-    "};\n"
-    "vs_out main(vs_in inp) {\n"
-    "  vs_out outp;\n"
-    "  outp.pos = mul(mvp, inp.pos);\n"
-    "  outp.color = inp.color;\n"
-    "  return outp;\n"
-    "};\n";
-static const char* fs_src =
-    "float4 main(float4 color: COLOR0): SV_Target0 {\n"
-    "  return color;\n"
-    "}\n";
-#endif

@@ -128,8 +128,8 @@ void init(void) {
             .buffers[0].stride = 36,
             /* but don't need to provide attr offsets, because pos and color are continuous */
             .attrs = {
-                [offscreen_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
+                [vs_offscreen_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = sg_make_shader(&offscreen_shader_desc),
@@ -154,9 +154,9 @@ void init(void) {
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
-                [default_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [default_color0].format = SG_VERTEXFORMAT_FLOAT4,
-                [default_uv0].format = SG_VERTEXFORMAT_FLOAT2
+                [vs_default_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_default_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = sg_make_shader(&default_shader_desc),

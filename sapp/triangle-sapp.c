@@ -39,7 +39,7 @@ void init(void) {
         .label = "triangle-vertices"
     });
 
-    /* create shader with code-generated sg_shader_desc */
+    /* create shader from code-generated sg_shader_desc */
     sg_shader shd = sg_make_shader(&triangle_shader_desc);
 
     /* create a pipeline object (default render states are fine for triangle) */
@@ -48,8 +48,8 @@ void init(void) {
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .layout = {
             .attrs = {
-                [triangle_position].format=SG_VERTEXFORMAT_FLOAT3,
-                [triangle_color0].format=SG_VERTEXFORMAT_FLOAT4
+                [vs_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .label = "triangle-pipeline"

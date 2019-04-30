@@ -182,8 +182,8 @@ void init(void) {
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [vs_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [vs_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -224,7 +224,7 @@ void init(void) {
     /* the pipeline object to render the fullscreen quad */
     fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[vs_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -245,7 +245,7 @@ void init(void) {
     /* pipeline and resource bindings to render debug-visualization quads */
     dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[vs_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&dbg_shader_desc),

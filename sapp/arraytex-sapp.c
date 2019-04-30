@@ -134,8 +134,8 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [arraytex_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [arraytex_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
+                [vs_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = sg_make_shader(&arraytex_shader_desc),

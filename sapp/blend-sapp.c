@@ -67,7 +67,7 @@ void init(void) {
         .layout = {
             .buffers[0].stride = 28,
             .attrs = {
-                [bg_position].format=SG_VERTEXFORMAT_FLOAT2
+                [vs_bg_position].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = bg_shd,
@@ -82,8 +82,8 @@ void init(void) {
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
-                [quad_position].format=SG_VERTEXFORMAT_FLOAT3,
-                [quad_color0].format=SG_VERTEXFORMAT_FLOAT4
+                [vs_quad_position].format=SG_VERTEXFORMAT_FLOAT3,
+                [vs_quad_color0].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = quad_shd,

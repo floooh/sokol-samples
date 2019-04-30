@@ -119,8 +119,8 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
-                [mipmap_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [mipmap_uv0].format = SG_VERTEXFORMAT_FLOAT2
+                [vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = sg_make_shader(&mipmap_shader_desc),
