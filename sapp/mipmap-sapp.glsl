@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  Shader code for texcube-sapp sample.
+//  shaders for mipmap-sapp sample
 //------------------------------------------------------------------------------
 @type mat4 hmm_mat4
 
@@ -9,30 +9,25 @@ uniform vs_params {
 };
 
 in vec4 pos;
-in vec4 color0;
-in vec2 texcoord0;
+in vec2 uv0;
 
-out vec4 color;
 out vec2 uv;
 
 void main() {
     gl_Position = mvp * pos;
-    color = color0;
-    uv = texcoord0 * 5.0;
+    uv = uv0;
 }
 @end
 
 @fs fs
 uniform sampler2D tex;
-
-in vec4 color;
 in vec2 uv;
 out vec4 frag_color;
 
 void main() {
-    frag_color = texture(tex, uv) * color;
+    frag_color = texture(tex, uv);
 }
 @end
 
-@program texcube vs fs
+@program mipmap vs fs
 

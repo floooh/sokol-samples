@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  Shader code for texcube-sapp sample.
+//  shaders for dyntex-sapp sample
 //------------------------------------------------------------------------------
 @type mat4 hmm_mat4
 
@@ -8,25 +8,24 @@ uniform vs_params {
     mat4 mvp;
 };
 
-in vec4 pos;
+in vec4 position;
 in vec4 color0;
 in vec2 texcoord0;
 
-out vec4 color;
-out vec2 uv;
+layout(location=1) out vec2 uv;
+layout(location=0) out vec4 color;
 
 void main() {
-    gl_Position = mvp * pos;
+    gl_Position = mvp * position;
+    uv = texcoord0;
     color = color0;
-    uv = texcoord0 * 5.0;
 }
 @end
 
 @fs fs
 uniform sampler2D tex;
-
-in vec4 color;
-in vec2 uv;
+layout(location=0) in vec4 color;
+layout(location=1) in vec2 uv;
 out vec4 frag_color;
 
 void main() {
@@ -34,5 +33,4 @@ void main() {
 }
 @end
 
-@program texcube vs fs
-
+@program dyntex vs fs

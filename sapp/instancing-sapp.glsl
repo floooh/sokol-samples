@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  Shader code for texcube-sapp sample.
+//  shaders for instancing-sapp sample
 //------------------------------------------------------------------------------
 @type mat4 hmm_mat4
 
@@ -8,31 +8,26 @@ uniform vs_params {
     mat4 mvp;
 };
 
-in vec4 pos;
+in vec3 pos;
 in vec4 color0;
-in vec2 texcoord0;
+in vec3 inst_pos;
 
 out vec4 color;
-out vec2 uv;
 
 void main() {
+    vec4 pos = vec4(pos + inst_pos, 1.0);
     gl_Position = mvp * pos;
     color = color0;
-    uv = texcoord0 * 5.0;
 }
 @end
 
 @fs fs
-uniform sampler2D tex;
-
 in vec4 color;
-in vec2 uv;
 out vec4 frag_color;
-
 void main() {
-    frag_color = texture(tex, uv) * color;
+    frag_color = color;
 }
 @end
 
-@program texcube vs fs
+@program instancing vs fs
 

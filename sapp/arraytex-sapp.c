@@ -8,8 +8,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "ui/dbgui.h"
-
-static const char *vs_src, *fs_src;
+#include "arraytex-sapp.glsl.h"
 
 #define MSAA_SAMPLES (4)
 #define IMG_LAYERS (3)
@@ -25,13 +24,6 @@ static int frame_index;
 static const sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
 };
-
-typedef struct {
-    hmm_mat4 mvp;
-    hmm_vec2 offset0;
-    hmm_vec2 offset1;
-    hmm_vec2 offset2;
-} vs_params_t;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -138,36 +130,15 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* shader to sample from array texture */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .name="position", .sem_name="POSITION" },
-            [1] = { .name="texcoord0", .sem_name="TEXCOORD" }
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp",     .type=SG_UNIFORMTYPE_MAT4 },
-                [1] = { .name="offset0", .type=SG_UNIFORMTYPE_FLOAT2 },
-                [2] = { .name="offset1", .type=SG_UNIFORMTYPE_FLOAT2 },
-                [3] = { .name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
-            }
-        },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_ARRAY },
-        .vs.source = vs_src,
-        .fs.source = fs_src,
-        .label = "cube-shader"
-    });
-
     /* a pipeline object */
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0].format=SG_VERTEXFORMAT_FLOAT3,
-                [1].format=SG_VERTEXFORMAT_FLOAT2
+                [arraytex_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [arraytex_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
-        .shader = shd,
+        .shader = sg_make_shader(&arraytex_shader_desc),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -184,7 +155,7 @@ void init(void) {
     bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs_images[tex_slot] = img
     };
 }
 
@@ -229,7 +200,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();
@@ -253,151 +224,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "Array Texture (sokol-app)",
     };
 }
-
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-    "#version 330\n"
-    "uniform mat4 mvp;\n"
-    "uniform vec2 offset0;\n"
-    "uniform vec2 offset1;\n"
-    "uniform vec2 offset2;\n"
-    "in vec4 position;\n"
-    "in vec2 texcoord0;\n"
-    "out vec3 uv0;\n"
-    "out vec3 uv1;\n"
-    "out vec3 uv2;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  uv0 = vec3(texcoord0 + offset0, 0.0);\n"
-    "  uv1 = vec3(texcoord0 + offset1, 1.0);\n"
-    "  uv2 = vec3(texcoord0 + offset2, 2.0);\n"
-    "}\n";
-static const char* fs_src =
-    "#version 330\n"
-    "uniform sampler2DArray tex;\n"
-    "in vec3 uv0;\n"
-    "in vec3 uv1;\n"
-    "in vec3 uv2;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  vec4 c0 = texture(tex, uv0);\n"
-    "  vec4 c1 = texture(tex, uv1);\n"
-    "  vec4 c2 = texture(tex, uv2);\n"
-    "  frag_color = vec4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
-    "}\n";
-#elif defined(SOKOL_GLES3)
-static const char* vs_src =
-    "#version 300 es\n"
-    "uniform mat4 mvp;\n"
-    "uniform vec2 offset0;\n"
-    "uniform vec2 offset1;\n"
-    "uniform vec2 offset2;\n"
-    "in vec4 position;\n"
-    "in vec2 texcoord0;\n"
-    "out vec3 uv0;\n"
-    "out vec3 uv1;\n"
-    "out vec3 uv2;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  uv0 = vec3(texcoord0 + offset0, 0.0);\n"
-    "  uv1 = vec3(texcoord0 + offset1, 1.0);\n"
-    "  uv2 = vec3(texcoord0 + offset2, 2.0);\n"
-    "}\n";
-static const char* fs_src =
-    "#version 300 es\n"
-    "precision mediump float;\n"
-    "precision lowp sampler2DArray;\n"
-    "uniform sampler2DArray tex;\n"
-    "in vec3 uv0;\n"
-    "in vec3 uv1;\n"
-    "in vec3 uv2;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  vec4 c0 = texture(tex, uv0);\n"
-    "  vec4 c1 = texture(tex, uv1);\n"
-    "  vec4 c2 = texture(tex, uv2);\n"
-    "  frag_color = vec4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
-    "}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct params_t {\n"
-    "  float4x4 mvp;\n"
-    "  float2 offset0;\n"
-    "  float2 offset1;\n"
-    "  float2 offset2;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 pos [[attribute(0)]];\n"
-    "  float2 uv [[attribute(1)]];\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 pos [[position]];\n"
-    "  float3 uv0;\n"
-    "  float3 uv1;\n"
-    "  float3 uv2;\n"
-    "};\n"
-    "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-    "  vs_out out;\n"
-    "  out.pos = params.mvp * in.pos;\n"
-    "  out.uv0 = float3(in.uv + params.offset0, 0.0);\n"
-    "  out.uv1 = float3(in.uv + params.offset1, 1.0);\n"
-    "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
-    "  return out;\n"
-    "}\n";
-static const char* fs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct fs_in {\n"
-    "  float3 uv0;\n"
-    "  float3 uv1;\n"
-    "  float3 uv2;\n"
-    "};\n"
-    "fragment float4 _main(fs_in in [[stage_in]], texture2d_array<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-    "  float4 c0 = tex.sample(smp, in.uv0.xy, int(in.uv0.z));\n"
-    "  float4 c1 = tex.sample(smp, in.uv1.xy, int(in.uv1.z));\n"
-    "  float4 c2 = tex.sample(smp, in.uv2.xy, int(in.uv2.z));\n"
-    "  return float4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
-    "}\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-    "cbuffer params {\n"
-    "  float4x4 mvp;\n"
-    "  float2 offset0;\n"
-    "  float2 offset1;\n"
-    "  float2 offset2;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 pos: POSITION;\n"
-    "  float2 uv: TEXCOORD0;\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float3 uv0: TEXCOORD0;\n"
-    "  float3 uv1: TEXCOORD1;\n"
-    "  float3 uv2: TEXCOORD2;\n"
-    "  float4 pos: SV_Position;\n"
-    "};\n"
-    "vs_out main(vs_in inp) {\n"
-    "  vs_out outp;\n"
-    "  outp.pos = mul(mvp, inp.pos);\n"
-    "  outp.uv0 = float3(inp.uv + offset0, 0.0);\n"
-    "  outp.uv1 = float3(inp.uv + offset1, 1.0);\n"
-    "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
-    "  return outp;\n"
-    "}\n";
-static const char* fs_src =
-    "Texture2DArray<float4> tex: register(t0);\n"
-    "sampler smp: register(s0);\n"
-    "struct fs_in {\n"
-    "  float3 uv0: TEXCOORD0;\n"
-    "  float3 uv1: TEXCOORD1;\n"
-    "  float3 uv2: TEXCOORD2;\n"
-    "};\n"
-    "float4 main(fs_in inp): SV_Target0 {\n"
-    "  float3 c0 = tex.Sample(smp, inp.uv0).xyz;\n"
-    "  float3 c1 = tex.Sample(smp, inp.uv1).xyz;\n"
-    "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
-    "  return float4(c0+c1+c2, 1.0);\n"
-    "}\n";
-#endif

@@ -90,8 +90,8 @@ void init(void) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [0].format=SG_VERTEXFORMAT_FLOAT3,
-                [1].format=SG_VERTEXFORMAT_FLOAT4
+                [cube_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [cube_color0].format   = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,
