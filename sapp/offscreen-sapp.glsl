@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  shaders for offscreen-sapp sample
 //------------------------------------------------------------------------------
-@type mat4 hmm_mat4
+@ctype mat4 hmm_mat4
 
 // shared code for all shaders
 @block uniforms

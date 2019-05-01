@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  shaders for cubemaprt-sapp sample
 //------------------------------------------------------------------------------
-@type mat4 hmm_mat4
-@type vec4 hmm_vec4
+@ctype mat4 hmm_mat4
+@ctype vec4 hmm_vec4
 
 // same vertex shader for offscreen- and default-pass
 @vs vs

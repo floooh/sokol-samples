@@ -1,4 +1,4 @@
-@type mat4 hmm_mat4
+@ctype mat4 hmm_mat4
 
 @vs vs
 uniform vs_params {
