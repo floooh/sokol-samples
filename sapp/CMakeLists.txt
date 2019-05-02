@@ -2,7 +2,7 @@
 add_definitions(-DSOKOL_NO_DEPRECATED)
 if (FIPS_EMSCRIPTEN)
     add_definitions(-DSOKOL_GLES3)
-    set(slang "glsl300es")
+    set(slang "glsl300es:glsl100")
 elseif (FIPS_RASPBERRYPI)
     add_definitions(-DSOKOL_GLES2)
     set(slang "glsl100")

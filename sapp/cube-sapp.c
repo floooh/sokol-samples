@@ -82,7 +82,7 @@ void init(void) {
     });
 
     /* create shader */
-    sg_shader shd = sg_make_shader(&cube_shader_desc);
+    sg_shader shd = sg_make_shader(cube_shader_desc());
 
     /* create pipeline object */
     pip = sg_make_pipeline(&(sg_pipeline_desc){

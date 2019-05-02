@@ -40,7 +40,7 @@ void init(void) {
     });
 
     /* create shader from code-generated sg_shader_desc */
-    sg_shader shd = sg_make_shader(&triangle_shader_desc);
+    sg_shader shd = sg_make_shader(triangle_shader_desc());
 
     /* create a pipeline object (default render states are fine for triangle) */
     pip = sg_make_pipeline(&(sg_pipeline_desc){

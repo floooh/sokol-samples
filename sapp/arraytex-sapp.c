@@ -138,7 +138,7 @@ void init(void) {
                 [vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
-        .shader = sg_make_shader(&arraytex_shader_desc),
+        .shader = sg_make_shader(arraytex_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,

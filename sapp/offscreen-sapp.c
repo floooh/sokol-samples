@@ -132,7 +132,7 @@ void init(void) {
                 [vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
-        .shader = sg_make_shader(&offscreen_shader_desc),
+        .shader = sg_make_shader(offscreen_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -159,7 +159,7 @@ void init(void) {
                 [vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(&default_shader_desc),
+        .shader = sg_make_shader(default_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,

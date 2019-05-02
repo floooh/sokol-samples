@@ -50,7 +50,7 @@ void init(void) {
     });
 
     /* a shader (use separate shader sources here */
-    sg_shader shd = sg_make_shader(&quad_shader_desc);
+    sg_shader shd = sg_make_shader(quad_shader_desc());
 
     /* a pipeline state object */
     pip = sg_make_pipeline(&(sg_pipeline_desc){

@@ -123,7 +123,7 @@ void init(void) {
                 [vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
-        .shader = sg_make_shader(&mipmap_shader_desc),
+        .shader = sg_make_shader(mipmap_shader_desc()),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .rasterizer.sample_count = MSAA_SAMPLES,
     });

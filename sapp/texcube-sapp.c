@@ -105,7 +105,7 @@ void init(void) {
     });
 
     /* a shader */
-    sg_shader shd = sg_make_shader(&texcube_shader_desc);
+    sg_shader shd = sg_make_shader(texcube_shader_desc());
 
     /* a pipeline state object */
     pip = sg_make_pipeline(&(sg_pipeline_desc){

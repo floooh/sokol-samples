@@ -56,7 +56,7 @@ void init(void) {
     });
 
     /* a shader for the fullscreen background quad */
-    sg_shader bg_shd = sg_make_shader(&bg_shader_desc);
+    sg_shader bg_shd = sg_make_shader(bg_shader_desc());
 
     /* a pipeline state object for rendering the background quad */
     bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -76,7 +76,7 @@ void init(void) {
     });
 
     /* a shader for the blended quads */
-    sg_shader quad_shd = sg_make_shader(&quad_shader_desc);
+    sg_shader quad_shd = sg_make_shader(quad_shader_desc());
 
     /* one pipeline object per blend-factor combination */
     sg_pipeline_desc pip_desc = {
