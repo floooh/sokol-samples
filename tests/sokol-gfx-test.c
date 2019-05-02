@@ -33,6 +33,14 @@ static void test_query_desc(void) {
     T(desc.context_pool_size == _SG_DEFAULT_CONTEXT_POOL_SIZE);
     T(desc.mtl_global_uniform_buffer_size == _SG_MTL_DEFAULT_UB_SIZE);
     T(desc.mtl_sampler_cache_size == _SG_MTL_DEFAULT_SAMPLER_CACHE_CAPACITY);
+    sg_shutdown();
+}
+
+static void test_query_backend(void) {
+    test("query backend");
+    sg_setup(&(sg_desc){0});
+    T(sg_query_backend() == SG_BACKEND_DUMMY);
+    sg_shutdown();
 }
 
 static void test_pool_size(void) {
@@ -489,6 +497,7 @@ int main() {
     test_begin("sokol-gfx-test");
     test_init_shutdown();
     test_query_desc();
+    test_query_backend();
     test_pool_size();
     test_alloc_fail_destroy_buffers();
     test_alloc_fail_destroy_images();
