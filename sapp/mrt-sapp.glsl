@@ -6,6 +6,7 @@
 
 // shaders for offscreen-pass rendering
 @vs vs_offscreen
+
 uniform offscreen_params {
     mat4 mvp;
 };
@@ -39,6 +40,8 @@ void main() {
 
 // shaders for rendering a fullscreen-quad in default pass
 @vs vs_fsq
+@glsl_options flip_vert_y
+
 uniform fsq_params {
     vec2 offset;
 };
@@ -80,6 +83,8 @@ void main() {
 
 // shaders for rendering a debug visualization
 @vs vs_dbg
+@glsl_options flip_vert_y
+
 in vec2 pos;
 out vec2 uv;
 
