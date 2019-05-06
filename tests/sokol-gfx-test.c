@@ -7,18 +7,18 @@
 #define SOKOL_IMPL
 #define SOKOL_DUMMY_BACKEND
 #include "sokol_gfx.h"
-#include "test.h"
+#include "utest.h"
 
-static void test_init_shutdown(void) {
-    test("init/shutdown");
+#define T(b) EXPECT_TRUE(b)
+
+UTEST(sokol_gfx, init_shutdown) {
     sg_setup(&(sg_desc){0});
     T(sg_isvalid());
     sg_shutdown();
     T(!sg_isvalid());
 }
 
-static void test_query_desc(void) {
-    test("query desc");
+UTEST(sokol_gfx, query_desc) {
     sg_setup(&(sg_desc){
         .buffer_pool_size = 1024,
         .shader_pool_size = 128,
@@ -36,15 +36,13 @@ static void test_query_desc(void) {
     sg_shutdown();
 }
 
-static void test_query_backend(void) {
-    test("query backend");
+UTEST(sokol_gfx, query_backend) {
     sg_setup(&(sg_desc){0});
     T(sg_query_backend() == SG_BACKEND_DUMMY);
     sg_shutdown();
 }
 
-static void test_pool_size(void) {
-    test("pool size");
+UTEST(sokol_gfx, pool_size) {
     sg_setup(&(sg_desc){
         .buffer_pool_size = 1024,
         .image_pool_size = 2048,
@@ -70,8 +68,7 @@ static void test_pool_size(void) {
     sg_shutdown();
 }
 
-static void test_alloc_fail_destroy_buffers(void) {
-    test("buffer alloc=>fail=>destroy");
+UTEST(sokol_gfx, alloc_fail_destroy_buffers) {
     sg_setup(&(sg_desc){
         .buffer_pool_size = 3
     });
@@ -102,8 +99,7 @@ static void test_alloc_fail_destroy_buffers(void) {
     sg_shutdown();
 }
 
-static void test_alloc_fail_destroy_images(void) {
-    test("image alloc=>fail=>destroy");
+UTEST(sokol_gfx, alloc_fail_destroy_images) {
     sg_setup(&(sg_desc){
         .image_pool_size = 3
     });
@@ -134,8 +130,7 @@ static void test_alloc_fail_destroy_images(void) {
     sg_shutdown();
 }
 
-static void test_alloc_fail_destroy_shaders(void) {
-    test("shader alloc=>fail=>destroy");
+UTEST(sokol_gfx, alloc_fail_destroy_shaders) {
     sg_setup(&(sg_desc){
         .shader_pool_size = 3
     });
@@ -166,8 +161,7 @@ static void test_alloc_fail_destroy_shaders(void) {
     sg_shutdown();
 }
 
-static void test_alloc_fail_destroy_pipelines(void) {
-    test("pipeline alloc=>fail=>destroy");
+UTEST(sokol_gfx, alloc_fail_destroy_pipelines) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 3
     });
@@ -199,8 +193,7 @@ static void test_alloc_fail_destroy_pipelines(void) {
     sg_shutdown();
 }
 
-static void test_alloc_fail_destroy_passes(void) {
-    test("pass alloc=>fail=>destroy");
+UTEST(sokol_gfx, alloc_fail_destroy_passes) {
     sg_setup(&(sg_desc){
         .pass_pool_size = 3
     });
@@ -231,8 +224,7 @@ static void test_alloc_fail_destroy_passes(void) {
     sg_shutdown();
 }
 
-static void test_make_destroy_buffers(void) {
-    test("buffer make=>destroy");
+UTEST(sokol_gfx, make_destroy_buffers) {
     sg_setup(&(sg_desc){
         .buffer_pool_size = 3
     });
@@ -276,8 +268,7 @@ static void test_make_destroy_buffers(void) {
     sg_shutdown();
 }
 
-static void test_make_destroy_images(void) {
-    test("image make=>destroy");
+UTEST(sokol_gfx, make_destroy_images) {
     sg_setup(&(sg_desc){
         .image_pool_size = 3
     });
@@ -335,8 +326,7 @@ static void test_make_destroy_images(void) {
     sg_shutdown();
 }
 
-static void test_make_destroy_shaders(void) {
-    test("shader make=>destroy");
+UTEST(sokol_gfx, make_destroy_shaders) {
     sg_setup(&(sg_desc){
         .shader_pool_size = 3
     });
@@ -375,8 +365,7 @@ static void test_make_destroy_shaders(void) {
     sg_shutdown();
 }
 
-static void test_make_destroy_pipelines(void) {
-    test("pipeline make=>destroy");
+UTEST(sokol_gfx, make_destroy_pipelines) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 3
     });
@@ -423,8 +412,7 @@ static void test_make_destroy_pipelines(void) {
     sg_shutdown();
 }
 
-static void test_make_destroy_passes(void) {
-    test("pass make=>destroy");
+UTEST(sokol_gfx, make_destroy_passes) {
     sg_setup(&(sg_desc){
         .pass_pool_size = 3
     });
@@ -471,8 +459,7 @@ static void test_make_destroy_passes(void) {
     sg_shutdown();
 }
 
-static void test_generation_counter(void) {
-    test("pool slot generation counter");
+UTEST(sokol_gfx, generation_counter) {
     sg_setup(&(sg_desc){
         .buffer_pool_size = 1,
     });
@@ -491,24 +478,4 @@ static void test_generation_counter(void) {
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_INVALID);
     }
     sg_shutdown();
-}
-
-int main() {
-    test_begin("sokol-gfx-test");
-    test_init_shutdown();
-    test_query_desc();
-    test_query_backend();
-    test_pool_size();
-    test_alloc_fail_destroy_buffers();
-    test_alloc_fail_destroy_images();
-    test_alloc_fail_destroy_shaders();
-    test_alloc_fail_destroy_pipelines();
-    test_alloc_fail_destroy_passes();
-    test_make_destroy_buffers();
-    test_make_destroy_images(); 
-    test_make_destroy_shaders();
-    test_make_destroy_pipelines();
-    test_make_destroy_passes();
-    test_generation_counter();
-    return test_end();
 }

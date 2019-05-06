@@ -1,12 +1,15 @@
 //------------------------------------------------------------------------------
 //  sokol-gl-test.c
 //------------------------------------------------------------------------------
-#define SOKOL_IMPL
-#define SOKOL_DUMMY_BACKEND
 #include "sokol_gfx.h"
 #define SOKOL_GL_IMPL
+#define SOKOL_DUMMY_BACKEND
 #include "sokol_gl.h"
-#include "test.h"
+#include "utest.h"
+#include <float.h>
+
+#define T(b) EXPECT_TRUE(b)
+#define TFLT(f0,f1,epsilon) {T(fabs((f0)-(f1))<=(epsilon));}
 
 static void init(void) {
     sg_setup(&(sg_desc){0});
@@ -18,8 +21,7 @@ static void shutdown(void) {
     sg_shutdown();
 }
 
-static void test_default_init_shutdown(void) {
-    test("default init/shutdown");
+UTEST(sokol_gl, default_init_shutdown) {
     init();
     T(_sgl.init_cookie == _SGL_INIT_COOKIE);
     T(_sgl.num_vertices == 65536);
@@ -42,8 +44,7 @@ static void test_default_init_shutdown(void) {
     shutdown();
 }
 
-static void test_viewport(void) {
-    test("viewport");
+UTEST(sokol_gl, viewport) {
     init();
     sgl_viewport(1, 2, 3, 4, true);
     T(_sgl.cur_command == 1);
@@ -64,8 +65,7 @@ static void test_viewport(void) {
     shutdown();
 }
 
-static void test_scissor_rect(void) {
-    test("scissor rect");
+UTEST(sokol_gl, scissor_rect) {
     init();
     sgl_scissor_rect(10, 20, 30, 40, true);
     T(_sgl.cur_command == 1);
@@ -86,8 +86,7 @@ static void test_scissor_rect(void) {
     shutdown();
 }
 
-static void test_texture(void) {
-    test("texture");
+UTEST(sokol_gl, texture) {
     init();
     T(_sgl.cur_img.id == _sgl.def_img.id);
     uint32_t pixels[64] = { 0 };
@@ -107,8 +106,7 @@ static void test_texture(void) {
     shutdown();
 }
 
-static void test_begin_end(void) {
-    test("begin end");
+UTEST(sokol_gl, begin_end) {
     init();
     sgl_begin_triangles();
     sgl_v3f(1.0f, 2.0f, 3.0f);
@@ -127,8 +125,7 @@ static void test_begin_end(void) {
     shutdown();
 }
 
-static void test_matrix_mode(void) {
-    test("matrix mode");
+UTEST(sokol_gl, matrix_mode) {
     init();
     sgl_matrix_mode_modelview(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
     sgl_matrix_mode_projection(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
@@ -136,8 +133,7 @@ static void test_matrix_mode(void) {
     shutdown();
 }
 
-static void test_load_identity(void) {
-    test("load identity");
+UTEST(sokol_gl, load_identity) {
     init();
     sgl_load_identity();
     const _sgl_matrix_t* m = _sgl_matrix_modelview();
@@ -148,8 +144,7 @@ static void test_load_identity(void) {
     shutdown();
 }
 
-static void test_load_matrix(void) {
-    test("load matrix");
+UTEST(sokol_gl, load_matrix) {
     init();
     const float m[16] = {
         0.5f, 0.0f, 0.0f, 0.0f,
@@ -178,8 +173,7 @@ static void test_load_matrix(void) {
     shutdown();
 }
 
-static void test_make_destroy_pipelines(void) {
-    test("pipeline make=>destroy");
+UTEST(sokol_gl, make_destroy_pipelines) {
     sg_setup(&(sg_desc){0});
     sgl_setup(&(sgl_desc_t){
         /* one pool slot is used by soko-gl itself */
@@ -216,18 +210,4 @@ static void test_make_destroy_pipelines(void) {
     }
     sgl_shutdown();
     sg_shutdown();
-}
-
-int main() {
-    test_begin("sokol-gl-test");
-    test_default_init_shutdown();
-    test_viewport();
-    test_scissor_rect();
-    test_texture();
-    test_begin_end();
-    test_matrix_mode();
-    test_load_identity();
-    test_load_matrix();
-    test_make_destroy_pipelines();
-    return test_end();
 }

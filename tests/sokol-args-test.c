@@ -3,13 +3,14 @@
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
 #include "sokol_args.h"
-#include "test.h"
+#include "utest.h"
 
+#define T(b) EXPECT_TRUE(b)
+#define TSTR(s0, s1) EXPECT_TRUE(0 == strcmp(s0,s1))
 #define NUM_ARGS(x) (sizeof(x)/sizeof(void*))
 
 static char* argv_0[] = { "exe_name " };
-static void test_init_shutdown(void) {
-    test("sokol-args init shutdown");
+UTEST(sokol_args, init_shutdown) {
     sargs_setup(&(sargs_desc){0});
     T(sargs_isvalid());
     T(_sargs.max_args == _SARGS_MAX_ARGS_DEF);
@@ -26,8 +27,7 @@ static void test_init_shutdown(void) {
     T(0 == _sargs.buf);
 }
 
-static void test_no_args(void) {
-    test("sokol-args simple args");
+UTEST(sokol_args, no_args) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_0),
         .argv = argv_0
@@ -44,8 +44,7 @@ static void test_no_args(void) {
 }
 
 static char* argv_1[] = { "exe_name", "kvp0=val0", "kvp1=val1", "kvp2=val2" };
-static void test_simple_args(void) {
-    test("sokol-args simple args");
+UTEST(sokol_args, simple_args) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_1),
         .argv = argv_1,
@@ -69,8 +68,7 @@ static void test_simple_args(void) {
 }
 
 static char* argv_2[] = { "exe_name", "kvp0  = val0 ", "  \tkvp1=  val1", "kvp2  = val2   "};
-static void test_simple_whitespace(void) {
-    test("sokol-args simple whitespace");
+UTEST(sokol_args, simple_whitespace) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_2),
         .argv = argv_2
@@ -94,8 +92,7 @@ static void test_simple_whitespace(void) {
 }
 
 static char* argv_4[] = { "exe_name", "kvp0 ", "=val0 ", "  kvp1", "=", "val1", "kvp2 \t", "= val2   "};
-static void test_standalone_separator(void) {
-    test("sokol-args standalone separator");
+UTEST(sokol_args, standalone_separator) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_4),
         .argv = argv_4
@@ -119,8 +116,7 @@ static void test_standalone_separator(void) {
 }
 
 static char* argv_5[] = { "exe_name", "kvp0='bla bla'", "kvp1=' blub blub'", "kvp2='blob blob '"};
-static void test_single_quotes(void) {
-    test("sokol-args single quotes");
+UTEST(sokol_args, single_quotes) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_5),
         .argv = argv_5
@@ -143,8 +139,7 @@ static void test_single_quotes(void) {
 }
 
 static char* argv_6[] = { "exe_name", "kvp0=\"bla bla\"", "kvp1=\" blub blub\"", "kvp2=\"blob blob \""};
-static void test_double_quotes(void) {
-    test("sokol-args double quotes");
+UTEST(sokol_args, double_quotes) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_6),
         .argv = argv_6
@@ -167,8 +162,7 @@ static void test_double_quotes(void) {
 }
 
 static char* argv_7[] = { "exe_name", "kvp0='bla \"bla\"'", "kvp1=' \"blub blub\"'", "kvp2='blob \"blob\" '"};
-static void test_double_in_single_quotes(void) {
-    test("sokol-args double in single quotes");
+UTEST(sokol_args, double_in_single_quotes) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_7),
         .argv = argv_7
@@ -191,8 +185,7 @@ static void test_double_in_single_quotes(void) {
 }
 
 static char* argv_8[] = { "exe_name", "kvp0=\"bla 'bla'\"", "kvp1=\" 'blub blub'\"", "kvp2=\"blob 'blob' \""};
-static void test_single_in_double_quotes(void) {
-    test("sokol-args single in double quotes");
+UTEST(sokol_args, single_in_double_quotes) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_8),
         .argv = argv_8
@@ -215,8 +208,7 @@ static void test_single_in_double_quotes(void) {
 }
 
 static char* argv_9[] = { "exe_name", "kvp0='bla ", "bla'", "kvp1= ' blub", " blub'", "kvp2='blob blob '"};
-static void test_split_quotes(void) {
-    test("sokol-args split quotes");
+UTEST(sokol_args, test_split_quotes) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_9),
         .argv = argv_9
@@ -239,8 +231,7 @@ static void test_split_quotes(void) {
 }
 
 static char* argv_10[] = { "exe_name", "kvp0=\\\\val0\\nval1", "kvp1=val1\\rval2", "kvp2='val2\\tval3'" };
-static void test_escape_sequence(void) {
-    test("sokol-args escape sequence");
+UTEST(sokol_args, escape_sequence) {
     sargs_setup(&(sargs_desc){
         .argc = NUM_ARGS(argv_10),
         .argv = argv_10,
@@ -260,20 +251,5 @@ static void test_escape_sequence(void) {
     TSTR(sargs_key_at(2), "kvp2");
     TSTR(sargs_value_at(2), "val2\tval3");
     sargs_shutdown();
-}
-int main() {
-    test_begin("sokol-args-test");
-    test_init_shutdown();
-    test_no_args();
-    test_simple_args();
-    test_simple_whitespace();
-    test_standalone_separator();
-    test_single_quotes();
-    test_double_quotes();
-    test_double_in_single_quotes();
-    test_single_in_double_quotes();
-    test_split_quotes();
-    test_escape_sequence();
-    return test_end();
 }
 

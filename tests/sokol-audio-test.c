@@ -2,12 +2,13 @@
 //  sokol_audio_test.c
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_AUDIO_NO_BACKEND
+#define SOKOL_DUMMY_BACKEND
 #include "sokol_audio.h"
-#include "test.h"
+#include "utest.h"
 
-static void test_ring_buffer(void) {
-    test("sokol-audio ring buffer");
+#define T(b) EXPECT_TRUE(b)
+
+UTEST(sokol_audio, ring_buffer) {
     _saudio_ring_t rb;
     _saudio_ring_init(&rb, 4);
     T(0 == rb.head);
@@ -75,10 +76,4 @@ static void test_ring_buffer(void) {
     T(_saudio_ring_empty(&rb));
     T(3 == rb.head);
     T(3 == rb.tail);
-}
-
-int main() {
-    test_begin("sokol-audio-test");
-    test_ring_buffer();
-    return test_end();
 }
