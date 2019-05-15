@@ -119,8 +119,8 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
-                [vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = sg_make_shader(mipmap_shader_desc()),
@@ -148,9 +148,9 @@ void frame(void) {
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
         
-        bind.fs_images[tex_slot] = img[i];
+        bind.fs_images[SLOT_tex] = img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

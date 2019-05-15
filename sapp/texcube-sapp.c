@@ -94,7 +94,7 @@ void init(void) {
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
     /* NOTE: tex_slot is provided by shader code generation */
-    bind.fs_images[tex_slot] = sg_make_image(&(sg_image_desc){
+    bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .content.subimage[0][0] = {
@@ -111,9 +111,9 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_color0].format = SG_VERTEXFORMAT_FLOAT4,
-                [vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = shd,
@@ -145,7 +145,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

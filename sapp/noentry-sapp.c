@@ -129,8 +129,8 @@ void init(void* user_data) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_color0].format = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,
@@ -170,7 +170,7 @@ void frame(void* user_data) {
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

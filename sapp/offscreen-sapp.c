@@ -128,8 +128,8 @@ void init(void) {
             .buffers[0].stride = 36,
             /* but don't need to provide attr offsets, because pos and color are continuous */
             .attrs = {
-                [vs_offscreen_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_vs_offscreen_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc()),
@@ -154,9 +154,9 @@ void init(void) {
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
-                [vs_default_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_default_color0].format = SG_VERTEXFORMAT_FLOAT4,
-                [vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_default_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_default_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [ATTR_vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = sg_make_shader(default_shader_desc()),
@@ -182,7 +182,7 @@ void init(void) {
     default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[tex_slot] = color_img
+        .fs_images[SLOT_tex] = color_img
     };
 }
 
@@ -203,7 +203,7 @@ void frame(void) {
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
     sg_apply_pipeline(offscreen_pip);
     sg_apply_bindings(&offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -212,7 +212,7 @@ void frame(void) {
     sg_begin_default_pass(&default_pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(default_pip);
     sg_apply_bindings(&default_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

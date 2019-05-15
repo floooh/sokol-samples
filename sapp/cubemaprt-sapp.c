@@ -137,8 +137,8 @@ void init(void) {
     /* same vertex layout for all shaders */
     sg_layout_desc layout = {
         .attrs = {
-            [vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
-            [vs_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
+            [ATTR_vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
+            [ATTR_vs_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
         }
     };
 
@@ -259,7 +259,7 @@ void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
         .index_buffer = app.cube.ibuf,
-        .fs_images[tex_slot] = app.cubemap
+        .fs_images[SLOT_tex] = app.cubemap
     });
     shape_uniforms_t uniforms = {
         .mvp = HMM_MultiplyMat4(view_proj, model),
@@ -268,7 +268,7 @@ void frame(void) {
         .light_dir = app.light_dir,
         .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
     };
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, shape_uniforms_slot, &uniforms, sizeof(uniforms));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
     __dbgui_draw();
@@ -309,7 +309,7 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
             .light_dir = app.light_dir,
             .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, shape_uniforms_slot, &uniforms, sizeof(uniforms));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
         sg_draw(0, app.cube.num_elements, 1);
     }
 }

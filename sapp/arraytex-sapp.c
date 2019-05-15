@@ -134,8 +134,8 @@ void init(void) {
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             } 
         },
         .shader = sg_make_shader(arraytex_shader_desc()),
@@ -155,7 +155,7 @@ void init(void) {
     bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[tex_slot] = img
+        .fs_images[SLOT_tex] = img
     };
 }
 
@@ -200,7 +200,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, vs_params_slot, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

@@ -182,8 +182,8 @@ void init(void) {
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [vs_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [vs_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [ATTR_vs_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [ATTR_vs_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -224,7 +224,7 @@ void init(void) {
     /* the pipeline object to render the fullscreen quad */
     fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[vs_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_vs_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -236,16 +236,16 @@ void init(void) {
     fsq_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .fs_images = {
-            [tex0_slot] = offscreen_pass_desc.color_attachments[0].image,
-            [tex1_slot] = offscreen_pass_desc.color_attachments[1].image,
-            [tex2_slot] = offscreen_pass_desc.color_attachments[2].image
+            [SLOT_tex0] = offscreen_pass_desc.color_attachments[0].image,
+            [SLOT_tex1] = offscreen_pass_desc.color_attachments[1].image,
+            [SLOT_tex2] = offscreen_pass_desc.color_attachments[2].image
         }
     };
 
     /* pipeline and resource bindings to render debug-visualization quads */
     dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[vs_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_vs_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(dbg_shader_desc()),
@@ -295,7 +295,7 @@ void frame(void) {
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
     sg_apply_pipeline(offscreen_pip);
     sg_apply_bindings(&offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, offscreen_params_slot, &offscreen_params, sizeof(offscreen_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &offscreen_params, sizeof(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -304,12 +304,12 @@ void frame(void) {
     sg_begin_default_pass(&default_pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(fsq_pip);
     sg_apply_bindings(&fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, fsq_params_slot, &fsq_params, sizeof(fsq_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, &fsq_params, sizeof(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        dbg_bind.fs_images[tex_slot] = offscreen_pass_desc.color_attachments[i].image;
+        dbg_bind.fs_images[SLOT_tex] = offscreen_pass_desc.color_attachments[i].image;
         sg_apply_bindings(&dbg_bind);
         sg_draw(0, 4, 1);
     }
