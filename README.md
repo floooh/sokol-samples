@@ -17,6 +17,13 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## Public Service Announcements
 
+- **15-May-2019**: the sokol-app samples in the ```sapp``` directory have
+been "ported" to the new shader-cross-compiler solution ([see here for
+details](https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md)).
+Shaders are written as 'annotated GLSL', and cross-compiled to various
+GLSL dialects, HLSL and MSL through a custom-build job which invokes the
+```sokol-shdc``` command line tool.
+
 - **01-Apr-2019**: sample code for the new sokol_gl.h header:
     - [sapp/sgl-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-sapp.c): triangles, quads, texturing and the matrix stack
     - [sapp/sgl-lines-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-lines-sapp.c): lines and line strips
@@ -34,12 +41,12 @@ new SOKOL_NO_ENTRY feature (in which sokol_app.h doesn't hijack the main functio
 
 - **26-Jan-2019**: The sokol_app.h samples now also work on Android. See below for build instructions.
 
-- **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer- 
+- **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer-
 and index-buffer-offsets in the sg\_draw\_state struct. Also the location of fips build-system
 files have changed, please update fips with a 'git pull' from the fips directory.
 
 - **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
-https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which 
+https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which
 required some code changes. If you already had checked out sokol-samples, perform the following
 steps to udpate:
     1. delete the fips-imgui directory
@@ -170,7 +177,7 @@ To debug Android applications I recommend using Android Studio with
 
 ## To build the platform-agnostic sokol_app.h samples:
 
-Building the sokol_app.h samples is currently supported for MacOS, Windows, 
+Building the sokol_app.h samples is currently supported for MacOS, Windows,
 Linux, iOS, HTML5 and Android (RaspberryPi is planned).
 
 Use any of the following custom build configs starting with ```sapp-```

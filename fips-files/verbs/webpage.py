@@ -1,7 +1,7 @@
 """fips verb to build the samples webpage"""
 
 import os
-import yaml 
+import yaml
 import shutil
 import subprocess
 import glob
@@ -11,28 +11,28 @@ from mod import log, util, project, emscripten, android
 
 # sample attributes
 samples = [
-    [ 'clear', 'clear-sapp.c' ],
-    [ 'triangle', 'triangle-sapp.c' ],
-    [ 'quad', 'quad-sapp.c' ],
-    [ 'bufferoffsets', 'bufferoffsets-sapp.c'],
-    [ 'cube', 'cube-sapp.c' ],
-    [ 'noninterleaved', 'noninterleaved-sapp.c'],
-    [ 'texcube', 'texcube-sapp.c' ],
-    [ 'offscreen', 'offscreen-sapp.c' ],
-    [ 'instancing', 'instancing-sapp.c' ],
-    [ 'mrt', 'mrt-sapp.c' ],
-    [ 'arraytex', 'arraytex-sapp.c' ],
-    [ 'dyntex', 'dyntex-sapp.c'],
-    [ 'mipmap', 'mipmap-sapp.c'],
-    [ 'blend', 'blend-sapp.c' ],
-    [ 'imgui', 'imgui-sapp.cc' ],
-    [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc' ],
-    [ 'sgl-microui', 'sgl-microui-sapp.c'],
-    [ 'saudio', 'saudio-sapp.c'],
-    [ 'modplay', 'modplay-sapp.c' ],
-    [ 'noentry', 'noentry-sapp.c' ],
-    [ 'sgl', 'sgl-sapp.c' ],
-    [ 'sgl-lines', 'sgl-lines-sapp.c' ]
+    [ 'clear', 'clear-sapp.c', None],
+    [ 'triangle', 'triangle-sapp.c', 'triangle-sapp.glsl' ],
+    [ 'quad', 'quad-sapp.c', 'quad-sapp.glsl' ],
+    [ 'bufferoffsets', 'bufferoffsets-sapp.c', 'bufferoffsets-sapp.glsl'],
+    [ 'cube', 'cube-sapp.c', 'cube-sapp.glsl' ],
+    [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
+    [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
+    [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
+    [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
+    [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
+    [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
+    [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
+    [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
+    [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
+    [ 'imgui', 'imgui-sapp.cc', None ],
+    [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
+    [ 'sgl-microui', 'sgl-microui-sapp.c', None],
+    [ 'saudio', 'saudio-sapp.c', None],
+    [ 'modplay', 'modplay-sapp.c', None],
+    [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
+    [ 'sgl', 'sgl-sapp.c', None ],
+    [ 'sgl-lines', 'sgl-lines-sapp.c', None ]
 ]
 
 # webpage template arguments
@@ -89,6 +89,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         for sample in samples :
             name = sample[0]
             source = sample[1]
+            glsl = sample[2]
             log.info('> generate wasm HTML page: {}'.format(name))
             for postfix in ['sapp', 'sapp-ui']:
                 for ext in ['wasm', 'js'] :
@@ -98,7 +99,13 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
                     with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                         templ = Template(f.read())
                     src_url = GitHubSamplesURL + source
-                    html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url)
+                    if glsl is None:
+                        glsl_url = "."
+                        glsl_hidden = "hidden"
+                    else:
+                        glsl_url = GitHubSamplesURL + glsl
+                        glsl_hidden = ""
+                    html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url, glsl=glsl_url, hidden=glsl_hidden)
                     with open('{}/wasm/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
                         f.write(html)
 
@@ -125,7 +132,7 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
     if emscripten.check_exists(fips_dir) :
         project.gen(fips_dir, proj_dir, BuildConfig)
         project.build(fips_dir, proj_dir, BuildConfig)
-    
+
     # deploy the webpage
     deploy_webpage(fips_dir, proj_dir, webpage_dir)
 

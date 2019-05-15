@@ -9,6 +9,7 @@
 #include "sokol_app.h"
 #include "ui/dbgui.h"
 #include <stddef.h> /* offsetof */
+#include "cubemaprt-sapp.glsl.h"
 
 /* change the OFFSCREEN_SAMPLE_COUNT between 1 and 4 to test the
    different cubemap-rendering-paths in sokol (one rendering to a
@@ -35,15 +36,6 @@ typedef struct {
     float norm[3];
 } vertex_t;
 
-/* shader-uniform block */
-typedef struct {
-    hmm_mat4 mvp;
-    hmm_mat4 model;
-    hmm_vec4 shape_color;
-    hmm_vec4 light_dir;
-    hmm_vec4 eye_pos;
-} shape_uniforms_t;
-
 /* a mesh consists of a vertex- and index-buffer */
 typedef struct {
     sg_buffer vbuf;
@@ -60,15 +52,13 @@ typedef struct {
     mesh_t cube;
     sg_pipeline offscreen_shapes_pip;
     sg_pipeline display_shapes_pip;
-    sg_pipeline display_pip;
+    sg_pipeline display_cube_pip;
     hmm_mat4 offscreen_proj;
     hmm_vec4 light_dir;
     float rx, ry;
     shape_t shapes[NUM_SHAPES];
 } app_t;
 static app_t app;
-
-static const char* vs_src, *offscreen_fs_src, *display_fs_src;
 
 static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj);
 static mesh_t make_cube_mesh(void);
@@ -144,38 +134,18 @@ void init(void) {
     /* vertex- and index-buffers for cube  */
     app.cube = make_cube_mesh();
 
+    /* same vertex layout for all shaders */
+    sg_layout_desc layout = {
+        .attrs = {
+            [ATTR_vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
+            [ATTR_vs_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
+        }
+    };
+
     /* shader and pipeline objects for offscreen-rendering */
-    sg_shader_uniform_block_desc ub_desc = {
-        .size = sizeof(shape_uniforms_t),
-        .uniforms = {
-            [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 },
-            [1] = { .name="model", .type=SG_UNIFORMTYPE_MAT4 },
-            [2] = { .name="shape_color", .type=SG_UNIFORMTYPE_FLOAT4 },
-            [3] = { .name="light_dir", .type=SG_UNIFORMTYPE_FLOAT4 },
-            [4] = { .name="eye_pos", .type=SG_UNIFORMTYPE_FLOAT4 }
-        }
-    };
-    sg_layout_desc layout_desc = {
-        .attrs = {
-            [0] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
-            [1] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
-        }
-    };
-    sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .name="pos", .sem_name="POS" },
-            [1] = { .name="norm", .sem_name="NORM" }
-        },
-        .vs = {
-            .source = vs_src,
-            .uniform_blocks[0] = ub_desc
-        },
-        .fs.source = offscreen_fs_src,
-        .label = "offscreen-shader"
-    });
     sg_pipeline_desc pip_desc = {
-        .shader = offscreen_shd,
-        .layout = layout_desc,
+        .shader = sg_make_shader(shapes_shader_desc()),
+        .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -197,26 +167,9 @@ void init(void) {
     app.display_shapes_pip = sg_make_pipeline(&pip_desc);
 
     /* shader and pipeline objects for display-rendering */
-    sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .name="pos", .sem_name="POS" },
-            [1] = { .name="norm", .sem_name="NORM" }
-        },
-        .vs = {
-            .source = vs_src,
-            .uniform_blocks[0] = ub_desc
-        },
-        .fs = {
-            .source = display_fs_src,
-            .images[0] = {
-                .name = "tex",
-                .type = SG_IMAGETYPE_CUBE
-            }
-        }
-    });
-    app.display_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = display_shd,
-        .layout = layout_desc,
+    app.display_cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(cube_shader_desc()),
+        .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -302,11 +255,11 @@ void frame(void) {
     hmm_mat4 rxm = HMM_Rotate(app.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(app.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(HMM_MultiplyMat4(rxm, rym), HMM_Scale(HMM_Vec3(2.0f, 2.0f, 2.f)));
-    sg_apply_pipeline(app.display_pip);
+    sg_apply_pipeline(app.display_cube_pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
         .index_buffer = app.cube.ibuf,
-        .fs_images[0] = app.cubemap
+        .fs_images[SLOT_tex] = app.cubemap
     });
     shape_uniforms_t uniforms = {
         .mvp = HMM_MultiplyMat4(view_proj, model),
@@ -315,7 +268,7 @@ void frame(void) {
         .light_dir = app.light_dir,
         .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
     };
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &uniforms, sizeof(uniforms));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
     __dbgui_draw();
@@ -356,7 +309,7 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
             .light_dir = app.light_dir,
             .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &uniforms, sizeof(uniforms));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
         sg_draw(0, app.cube.num_elements, 1);
     }
 }
@@ -417,327 +370,3 @@ static mesh_t make_cube_mesh(void) {
     };
     return mesh;
 }
-
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-"#version 330\n"
-"uniform mat4 mvp;\n"
-"uniform mat4 model;\n"
-"uniform vec4 shape_color;\n"
-"uniform vec4 light_dir;\n"
-"uniform vec4 eye_pos;\n"
-"in vec4 pos;\n"
-"in vec3 norm;\n"
-"out vec3 world_position;\n"
-"out vec3 world_normal;\n"
-"out vec3 world_eyepos;\n"
-"out vec3 world_lightdir;\n"
-"out vec4 color;\n"
-"void main() {\n"
-"  gl_Position = mvp * pos;\n"
-"  world_position = vec4(model * pos).xyz;\n"
-"  world_normal = vec4(model * vec4(norm, 0.0)).xyz;\n"
-"  world_eyepos = eye_pos.xyz;\n"
-"  world_lightdir = light_dir.xyz;\n"
-"  color = shape_color;\n"
-"}\n";
-static const char* offscreen_fs_src =
-"#version 330\n"
-"in vec3 world_normal;\n"
-"in vec3 world_position;\n"
-"in vec3 world_eyepos;\n"
-"in vec3 world_lightdir;\n"
-"in vec4 color;\n"
-"out vec4 frag_color;\n"
-"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  vec3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
-"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
-"}\n"
-"void main() {\n"
-"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
-"  vec3 nrm = normalize(world_normal);\n"
-"  vec3 light_dir = normalize(world_lightdir);\n"
-"  frag_color = vec4(light(color.xyz, eye_vec, nrm, light_dir), 1.0);\n"
-"}\n";
-static const char* display_fs_src =
-"#version 330\n"
-"uniform samplerCube tex;\n"
-"in vec3 world_normal;\n"
-"in vec3 world_position;\n"
-"in vec3 world_eyepos;\n"
-"in vec3 world_lightdir;\n"
-"in vec4 color;\n"
-"out vec4 frag_color;\n"
-"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  vec3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
-"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
-"}\n"
-"void main() {\n"
-"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
-"  vec3 nrm = normalize(world_normal);\n"
-"  vec3 light_dir = normalize(world_lightdir);\n"
-"  vec3 refl_vec = normalize(world_position);\n"
-"  vec3 refl_color = texture(tex, refl_vec).xyz;\n"
-"  frag_color = vec4(light(refl_color * color.xyz, eye_vec, nrm, light_dir), 1.0);\n"
-"}\n";
-#elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
-static const char* vs_src =
-"uniform mat4 mvp;\n"
-"uniform mat4 model;\n"
-"uniform vec4 shape_color;\n"
-"uniform vec4 light_dir;\n"
-"uniform vec4 eye_pos;\n"
-"attribute vec4 pos;\n"
-"attribute vec3 norm;\n"
-"varying vec3 world_position;\n"
-"varying vec3 world_normal;\n"
-"varying vec3 world_eyepos;\n"
-"varying vec3 world_lightdir;\n"
-"varying vec4 color;\n"
-"void main() {\n"
-"  gl_Position = mvp * pos;\n"
-"  world_position = vec4(model * pos).xyz;\n"
-"  world_normal = vec4(model * vec4(norm, 0.0)).xyz;\n"
-"  world_eyepos = eye_pos.xyz;\n"
-"  world_lightdir = light_dir.xyz;\n"
-"  color = shape_color;\n"
-"}\n";
-static const char* offscreen_fs_src =
-"precision mediump float;\n"
-"varying vec3 world_normal;\n"
-"varying vec3 world_position;\n"
-"varying vec3 world_eyepos;\n"
-"varying vec3 world_lightdir;\n"
-"varying vec4 color;\n"
-"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  vec3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
-"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
-"}\n"
-"void main() {\n"
-"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
-"  vec3 nrm = normalize(world_normal);\n"
-"  vec3 light_dir = normalize(world_lightdir);\n"
-"  gl_FragColor = vec4(light(color.xyz, eye_vec, nrm, light_dir), 1.0);\n"
-"}\n";
-static const char* display_fs_src =
-"precision mediump float;\n"
-"uniform samplerCube tex;\n"
-"varying vec3 world_normal;\n"
-"varying vec3 world_position;\n"
-"varying vec3 world_eyepos;\n"
-"varying vec3 world_lightdir;\n"
-"varying vec4 color;\n"
-"vec3 light(vec3 base_color, vec3 eye_vec, vec3 normal, vec3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  vec3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;"
-"  return base_color * (diff+ambient) + vec3(spec,spec,spec);"
-"}\n"
-"void main() {\n"
-"  vec3 eye_vec = normalize(world_eyepos - world_position);\n"
-"  vec3 nrm = normalize(world_normal);\n"
-"  vec3 light_dir = normalize(world_lightdir);\n"
-"  vec3 refl_vec = normalize(world_position);\n"
-"  vec3 refl_color = textureCube(tex, refl_vec).xyz;\n"
-"  gl_FragColor = vec4(light(refl_color * color.xyz, eye_vec, nrm, light_dir), 1.0);\n"
-"}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-"#include <metal_stdlib>\n"
-"#include <simd/simd.h>\n"
-"using namespace metal;\n"
-"struct vs_params {\n"
-"  float4x4 mvp;\n"
-"  float4x4 model;\n"
-"  float4 shape_color;\n"
-"  float4 light_dir;\n"
-"  float4 eye_pos;\n"
-"};\n"
-"struct vs_in {\n"
-"  float4 pos [[attribute(0)]];\n"
-"  float3 norm [[attribute(1)]];\n"
-"};\n"
-"struct vs_out {\n"
-"  float3 world_position [[user(locn0)]];\n"
-"  float3 world_normal [[user(locn1)]];\n"
-"  float3 world_light_dir [[user(locn2)]];\n"
-"  float3 world_eye_pos [[user(locn3)]];\n"
-"  float4 color [[user(locn4)]];\n"
-"  float4 pos [[position]];\n"
-"};\n"
-"vertex vs_out _main(vs_in in [[stage_in]], constant vs_params& params [[buffer(0)]]) {\n"
-"  vs_out out;\n"
-"  out.pos = params.mvp * in.pos;\n"
-"  out.world_position = float4(params.model * in.pos).xyz;\n"
-"  out.world_normal = float4(params.model * float4(in.norm, 0.0f)).xyz;\n"
-"  out.world_eye_pos = params.eye_pos.xyz;\n"
-"  out.world_light_dir = params.light_dir.xyz;\n"
-"  out.color = params.shape_color;\n"
-"  return out;\n"
-"}\n";
-static const char* offscreen_fs_src =
-"#include <metal_stdlib>\n"
-"#include <simd/simd.h>\n"
-"using namespace metal;\n"
-"struct fs_in {\n"
-"  float3 world_position [[user(locn0)]];\n"
-"  float3 world_normal [[user(locn1)]];\n"
-"  float3 world_light_dir [[user(locn2)]];\n"
-"  float3 world_eye_pos [[user(locn3)]];\n"
-"  float4 color [[user(locn4)]];\n"
-"};\n"
-"float3 light(float3 base_color, float3 eye_vec, float3 normal, float3 light_vec) {\n"
-"  float ambient = 0.25f;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  float3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;\n"
-"  return (base_color * (diff + ambient)) + float3(spec, spec, spec);\n"
-"}\n"
-"fragment float4 _main(fs_in in [[stage_in]]) {\n"
-"  float3 nrm = normalize(in.world_normal);\n"
-"  float3 eye_vec = normalize(in.world_eye_pos - in.world_position);\n"
-"  float3 light_dir = normalize(in.world_light_dir);\n"
-"  float3 frag_color = light(in.color.xyz, eye_vec, nrm, light_dir);\n"
-"  return float4(frag_color, 1.0f);\n"
-"}\n";
-static const char* display_fs_src =
-"#include <metal_stdlib>\n"
-"#include <simd/simd.h>\n"
-"using namespace metal;\n"
-"struct fs_in {\n"
-"  float3 world_position [[user(locn0)]];\n"
-"  float3 world_normal [[user(locn1)]];\n"
-"  float3 world_light_dir [[user(locn2)]];\n"
-"  float3 world_eye_pos [[user(locn3)]];\n"
-"  float4 color [[user(locn4)]];\n"
-"};\n"
-"float3 light(float3 base_color, float3 eye_vec, float3 normal, float3 light_vec) {\n"
-"  float ambient = 0.25f;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  float3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;\n"
-"  return (base_color * (diff + ambient)) + float3(spec, spec, spec);\n"
-"}\n"
-"fragment float4 _main(fs_in in [[stage_in]], texturecube<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-"  float3 eye_vec = normalize(in.world_eye_pos - in.world_position);\n"
-"  float3 nrm = normalize(in.world_normal);\n"
-"  float3 refl_vec = normalize(in.world_position).xyz * float3(1.0f, -1.0f, 1.0f);\n"
-"  float4 refl_color = tex.sample(smp, refl_vec);\n"
-"  float3 light_dir = normalize(in.world_light_dir);\n"
-"  float3 frag_color = light(in.color.xyz * refl_color.xyz, eye_vec, nrm, light_dir);\n"
-"  return float4(frag_color, 1.0f);\n"
-"}\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-"cbuffer params: register(b0) {\n"
-"  float4x4 mvp;\n"
-"  float4x4 model;\n"
-"  float4 shape_color;\n"
-"  float4 light_dir;\n"
-"  float4 eye_pos;\n"
-"};\n"
-"struct vs_in {\n"
-"  float4 pos: POS;\n"
-"  float3 norm: NORM;\n"
-"};\n"
-"struct vs_out {\n"
-"  float3 world_position: TEXCOORD0;\n"
-"  float3 world_normal: TEXCOORD1;\n"
-"  float3 world_light_dir: TEXCOORD2;\n"
-"  float3 world_eye_pos: TEXCOORD3;\n"
-"  float4 color: TEXCOORD4;\n"
-"  float4 pos: SV_Position;\n"
-"};\n"
-"vs_out main(vs_in inp) {\n"
-"  vs_out outp;\n"
-"  outp.pos = mul(mvp, inp.pos);\n"
-"  outp.world_position = mul(model, inp.pos).xyz;\n"
-"  outp.world_normal = mul(model, float4(inp.norm, 0.0)).xyz;\n"
-"  outp.world_eye_pos = eye_pos.xyz;\n"
-"  outp.world_light_dir = light_dir.xyz;\n"
-"  outp.color = shape_color;\n"
-"  return outp;\n"
-"};\n";
-static const char* offscreen_fs_src =
-"struct fs_in {\n"
-"  float3 world_position: TEXCOORD0;\n"
-"  float3 world_normal: TEXCOORD1;\n"
-"  float3 world_light_dir: TEXCOORD2;\n"
-"  float3 world_eye_pos: TEXCOORD3;\n"
-"  float4 color: TEXCOORD4;\n"
-"};\n"
-"float3 light(float3 base_color, float3 eye_vec, float3 normal, float3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  float3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;\n"
-"  return (base_color * (diff + ambient)) + float3(spec, spec, spec);\n"
-"}\n"
-"float4 main(fs_in inp): SV_Target0 {\n"
-"  float3 nrm = normalize(inp.world_normal);\n"
-"  float3 eye_vec = normalize(inp.world_eye_pos - inp.world_position);\n"
-"  float3 light_dir = normalize(inp.world_light_dir);\n"
-"  float3 frag_color = light(inp.color.xyz, eye_vec, nrm, light_dir);\n"
-"  return float4(frag_color, 1.0);\n"
-"}\n";
-static const char* display_fs_src =
-"TextureCube<float4> tex: register(t0);\n"
-"sampler smp: register(s0);\n"
-"struct fs_in {\n"
-"  float3 world_position: TEXCOORD0;\n"
-"  float3 world_normal: TEXCOORD1;\n"
-"  float3 world_light_dir: TEXCOORD2;\n"
-"  float3 world_eye_pos: TEXCOORD3;\n"
-"  float4 color: TEXCOORD4;\n"
-"};\n"
-"float3 light(float3 base_color, float3 eye_vec, float3 normal, float3 light_vec) {\n"
-"  float ambient = 0.25;\n"
-"  float n_dot_l = max(dot(normal, light_vec), 0.0);\n"
-"  float diff = n_dot_l + ambient;\n"
-"  float spec_power = 16.0;\n"
-"  float3 r = reflect(-light_vec, normal);\n"
-"  float r_dot_v = max(dot(r, eye_vec), 0.0);\n"
-"  float spec = pow(r_dot_v, spec_power) * n_dot_l;\n"
-"  return (base_color * (diff + ambient)) + float3(spec, spec, spec);\n"
-"}\n"
-"float4 main(fs_in inp): SV_Target0 {\n"
-"  float3 nrm = normalize(inp.world_normal);\n"
-"  float3 eye_vec = normalize(inp.world_eye_pos - inp.world_position);\n"
-"  float3 refl_vec = normalize(inp.world_position).xyz * float3(1.0f, -1.0f, 1.0f);\n"
-"  float4 refl_color = tex.Sample(smp, refl_vec);\n"
-"  float3 light_dir = normalize(inp.world_light_dir);\n"
-"  float3 frag_color = light(inp.color.xyz * refl_color.xyz, eye_vec, nrm, light_dir);\n"
-"  return float4(frag_color, 1.0);\n"
-"}\n";
-#endif

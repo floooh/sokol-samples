@@ -7,6 +7,8 @@ policies:
 imports:
   sokol:
     git: https://github.com/floooh/sokol
+  sokol-tools-bin:
+    git: https://github.com/floooh/sokol-tools-bin
   fips-glfw:
     git: https://github.com/fips-libs/fips-glfw
   fips-imgui:

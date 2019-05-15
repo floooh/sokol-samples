@@ -12,8 +12,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "ui/dbgui.h"
-
-static const char *vs_src, *fs_src;
+#include "noninterleaved-sapp.glsl.h"
 
 static const int SAMPLE_COUNT = 4;
 
@@ -21,11 +20,6 @@ static sg_pass_action pass_action;
 static sg_pipeline pip;
 static sg_bindings bind;
 static float rx, ry;
-
-typedef struct {
-    hmm_mat4 mvp;
-} vs_params_t;
-
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -79,29 +73,11 @@ void init(void) {
     });
 
     /*
-        a shader, note that Metal only needs to know uniform block sizes, but
-        not their internal layout
-    */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .name="position", .sem_name="POS" },
-            [1] = { .name="color0", .sem_name="COLOR" }
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source = vs_src,
-        .fs.source = fs_src
-    });
-
-    /* 
         a pipeline object, note that we need to provide the
         MSAA sample count of the default framebuffer
     */
     pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(noninterleaved_shader_desc()),
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {
@@ -110,7 +86,7 @@ void init(void) {
                 /* colors come from vertex buffer slot 1 */
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
-        },        .shader = shd,
+        },
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -154,7 +130,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();
@@ -179,90 +155,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "Noninterleaved (sokol-app)",
     };
 }
-
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-    "#version 330\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "#version 330\n"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES3) || defined(SOKOL_GLES2)
-static const char* vs_src =
-    "uniform mat4 mvp;\n"
-    "attribute vec4 position;\n"
-    "attribute vec4 color0;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "precision mediump float;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_FragColor = color;\n"
-    "}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct params_t {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 position [[attribute(0)]];\n"
-    "  float4 color [[attribute(1)]];\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 pos [[position]];\n"
-    "  float4 color;\n"
-    "};\n"
-    "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-    "  vs_out out;\n"
-    "  out.pos = params.mvp * in.position;\n"
-    "  out.color = in.color;\n"
-    "  return out;\n"
-    "}\n";
-static const char* fs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "fragment float4 _main(float4 color [[stage_in]]) {\n"
-    "  return color;\n"
-    "}\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-    "cbuffer params: register(b0) {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 pos: POS;\n"
-    "  float4 color: COLOR0;\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 color: COLOR0;\n"
-    "  float4 pos: SV_Position;\n"
-    "};\n"
-    "vs_out main(vs_in inp) {\n"
-    "  vs_out outp;\n"
-    "  outp.pos = mul(mvp, inp.pos);\n"
-    "  outp.color = inp.color;\n"
-    "  return outp;\n"
-    "};\n";
-static const char* fs_src =
-    "float4 main(float4 color: COLOR0): SV_Target0 {\n"
-    "  return color;\n"
-    "}\n";
-#endif
-

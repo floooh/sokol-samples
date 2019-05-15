@@ -6,8 +6,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "ui/dbgui.h"
-
-static const char *vs_src, *fs_src;
+#include "bufferoffsets-sapp.glsl.h"
 
 typedef struct {
     float x, y, r, g, b;
@@ -62,16 +61,8 @@ void init(void) {
     });
 
     /* a shader and pipeline to render 2D shapes */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .name="position", .sem_name="POS" },
-            [1] = { .name="color0", .sem_name="COLOR" }
-        },
-        .vs.source = vs_src,
-        .fs.source = fs_src
-    });
     pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = shd,
+        .shader = sg_make_shader(bufferoffsets_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
@@ -118,80 +109,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     };
 }
 
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-    "#version 330\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "#version 330\n"
-    "in vec4 color;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-static const char* vs_src =
-    "attribute vec4 position;\n"
-    "attribute vec4 color0;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_Position = position;\n"
-    "  color = color0;\n"
-    "}\n";
-static const char* fs_src =
-    "precision mediump float;\n"
-    "varying vec4 color;\n"
-    "void main() {\n"
-    "  gl_FragColor = color;\n"
-    "}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct vs_in {\n"
-    "  float4 position [[attribute(0)]];\n"
-    "  float4 color [[attribute(1)]];\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 position [[position]];\n"
-    "  float4 color;\n"
-    "};\n"
-    "vertex vs_out _main(vs_in inp [[stage_in]]) {\n"
-    "  vs_out outp;\n"
-    "  outp.position = inp.position;\n"
-    "  outp.color = inp.color;\n"
-    "  return outp;\n"
-    "}\n";
-static const char* fs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "fragment float4 _main(float4 color [[stage_in]]) {\n"
-    "  return color;\n"
-    "};\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-    "struct vs_in {\n"
-    "  float4 pos: POS;\n"
-    "  float4 color: COLOR;\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 color: COLOR0;\n"
-    "  float4 pos: SV_Position;\n"
-    "};\n"
-    "vs_out main(vs_in inp) {\n"
-    "  vs_out outp;\n"
-    "  outp.pos = inp.pos;\n"
-    "  outp.color = inp.color;\n"
-    "  return outp;\n"
-    "}\n";
-static const char* fs_src =
-    "float4 main(float4 color: COLOR0): SV_Target0 {\n"
-    "  return color;\n"
-    "}\n";
-#endif

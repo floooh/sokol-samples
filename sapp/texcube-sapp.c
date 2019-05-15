@@ -8,8 +8,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "ui/dbgui.h"
-
-static const char *vs_src, *fs_src;
+#include "texcube-sapp.glsl.h"
 
 static const int SAMPLE_COUNT = 4;
 static float rx, ry;
@@ -18,10 +17,6 @@ static sg_pass_action pass_action = {
 };
 static sg_pipeline pip;
 static sg_bindings bind;
-
-typedef struct {
-    hmm_mat4 mvp;
-} vs_params_t;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -98,7 +93,8 @@ void init(void) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    bind.fs_images[0] = sg_make_image(&(sg_image_desc){
+    /* NOTE: tex_slot is provided by shader code generation */
+    bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .content.subimage[0][0] = {
@@ -109,35 +105,15 @@ void init(void) {
     });
 
     /* a shader */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc) {
-        .attrs = {
-            [0] = { .name="position", .sem_name="POSITION" },
-            [1] = { .name="color0", .sem_name="COLOR0" },
-            [2] = { .name="texcoord0", .sem_name="TEXCOORD" }
-        },
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(vs_params_t),
-                .uniforms = {
-                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-                }
-            },
-            .source = vs_src
-        },
-        .fs = {
-            .images[0] = { .name="tex", .type = SG_IMAGETYPE_2D },
-            .source = fs_src
-        },
-        .label = "cube-shader"
-    });
+    sg_shader shd = sg_make_shader(texcube_shader_desc());
 
     /* a pipeline state object */
     pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0].format=SG_VERTEXFORMAT_FLOAT3,
-                [1].format=SG_VERTEXFORMAT_FLOAT4,
-                [2].format=SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = shd,
@@ -169,7 +145,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();
@@ -194,114 +170,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "Textured Cube (sokol-app)",
     };
 }
-
-#if defined(SOKOL_GLCORE33)
-static const char* vs_src =
-    "#version 330\n"
-    "uniform mat4 mvp;\n"
-    "in vec4 position;\n"
-    "in vec4 color0;\n"
-    "in vec2 texcoord0;\n"
-    "out vec4 color;\n"
-    "out vec2 uv;"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "  uv = texcoord0 * 5.0;\n"
-    "}\n";
-static const char* fs_src =
-    "#version 330\n"
-    "uniform sampler2D tex;"
-    "in vec4 color;\n"
-    "in vec2 uv;\n"
-    "out vec4 frag_color;\n"
-    "void main() {\n"
-    "  frag_color = texture(tex, uv) * color;\n"
-    "}\n";
-#elif defined(SOKOL_GLES2) || defined(SOKOL_GLES3)
-static const char* vs_src =
-    "uniform mat4 mvp;\n"
-    "attribute vec4 position;\n"
-    "attribute vec4 color0;\n"
-    "attribute vec2 texcoord0;\n"
-    "varying vec4 color;\n"
-    "varying vec2 uv;"
-    "void main() {\n"
-    "  gl_Position = mvp * position;\n"
-    "  color = color0;\n"
-    "  uv = texcoord0 * 5.0;\n"
-    "}\n";
-static const char* fs_src =
-    "precision mediump float;\n"
-    "uniform sampler2D tex;\n"
-    "varying vec4 color;\n"
-    "varying vec2 uv;\n"
-    "void main() {\n"
-    "  gl_FragColor = texture2D(tex, uv) * color;\n"
-    "}\n";
-#elif defined(SOKOL_METAL)
-static const char* vs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct params_t {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 position [[attribute(0)]];\n"
-    "  float4 color [[attribute(1)]];\n"
-    "  float2 uv [[attribute(2)]];\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 pos [[position]];\n"
-    "  float4 color;\n"
-    "  float2 uv;\n"
-    "};\n"
-    "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-    "  vs_out out;\n"
-    "  out.pos = params.mvp * in.position;\n"
-    "  out.color = in.color;\n"
-    "  out.uv = in.uv * 5.0;\n"
-    "  return out;\n"
-    "}\n";
-static const char* fs_src =
-    "#include <metal_stdlib>\n"
-    "using namespace metal;\n"
-    "struct fs_in {\n"
-    "  float4 color;\n"
-    "  float2 uv;\n"
-    "};\n"
-    "fragment float4 _main(fs_in in [[stage_in]],\n"
-    "  texture2d<float> tex [[texture(0)]],\n"
-    "  sampler smp [[sampler(0)]])\n"
-    "{\n"
-    "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
-    "}\n";
-#elif defined(SOKOL_D3D11)
-static const char* vs_src =
-    "cbuffer params: register(b0) {\n"
-    "  float4x4 mvp;\n"
-    "};\n"
-    "struct vs_in {\n"
-    "  float4 pos: POSITION;\n"
-    "  float4 color: COLOR0;\n"
-    "  float2 uv: TEXCOORD0;\n"
-    "};\n"
-    "struct vs_out {\n"
-    "  float4 color: COLOR;\n"
-    "  float2 uv: TEXCOORD;\n"
-    "  float4 pos: SV_Position;\n"
-    "};\n"
-    "vs_out main(vs_in inp) {\n"
-    "  vs_out outp;\n"
-    "  outp.pos = mul(mvp, inp.pos);\n"
-    "  outp.color = inp.color;\n"
-    "  outp.uv = inp.uv * 5.0;\n"
-    "  return outp;\n"
-    "};\n";
-static const char* fs_src =
-    "Texture2D<float4> tex: register(t0);\n"
-    "sampler smp: register(s0);\n"
-    "float4 main(float4 color: COLOR, float2 uv: TEXCOORD): SV_Target0 {\n"
-    "  return tex.Sample(smp, uv) * color;\n"
-    "}\n";
-#endif
