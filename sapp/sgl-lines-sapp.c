@@ -6,7 +6,7 @@
 #include "sokol_gfx.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 
 #define SAMPLE_COUNT (4)
 

@@ -13,7 +13,7 @@
 #include "microui/atlas.inl"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include <stdio.h> /* sprintf */
 
 static mu_Context mu_ctx;

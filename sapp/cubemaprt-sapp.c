@@ -7,7 +7,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include <stddef.h> /* offsetof */
 #include "cubemaprt-sapp.glsl.h"
 

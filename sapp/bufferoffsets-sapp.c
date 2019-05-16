@@ -5,7 +5,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "bufferoffsets-sapp.glsl.h"
 
 typedef struct {

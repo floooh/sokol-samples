@@ -7,7 +7,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "arraytex-sapp.glsl.h"
 
 #define MSAA_SAMPLES (4)
@@ -83,7 +83,7 @@ void init(void) {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -136,7 +136,7 @@ void init(void) {
             .attrs = {
                 [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
                 [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = sg_make_shader(arraytex_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,

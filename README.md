@@ -216,6 +216,7 @@ friends are broken on the MacOS Mojave beta, instead use the
 - flextGL: https://github.com/ginkgo/flextGL
 - Handmade-Math: https://github.com/StrangeZak/Handmade-Math
 - Dear Imgui: https://github.com/ocornut/imgui
+- cimgui: https://github.com/cimgui/cimgui
 - utest.h: https://github.com/sheredom/utest.h
 
 Enjoy!

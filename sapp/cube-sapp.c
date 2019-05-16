@@ -6,7 +6,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "cube-sapp.glsl.h"
 
 static const int SAMPLE_COUNT = 4;

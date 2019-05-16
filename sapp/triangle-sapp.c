@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "triangle-sapp.glsl.h"
 
 static sg_pass_action pass_action = {

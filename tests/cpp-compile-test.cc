@@ -22,6 +22,10 @@
 #include "sokol_time.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui/cimgui.h"
+#define SOKOL_CIMGUI_IMPL
+#include "sokol_cimgui.h"
 
 static sapp_desc desc;
 

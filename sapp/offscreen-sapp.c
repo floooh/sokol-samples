@@ -8,7 +8,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "offscreen-sapp.glsl.h"
 
 static const int MSAA_SAMPLES = 4;

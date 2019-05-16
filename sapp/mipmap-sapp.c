@@ -7,7 +7,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 #include "mipmap-sapp.glsl.h"
 
 #define MSAA_SAMPLES (4)

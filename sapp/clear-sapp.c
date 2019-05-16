@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
-#include "ui/dbgui.h"
+#include "dbgui/dbgui.h"
 
 static sg_pass_action pass_action;
 
