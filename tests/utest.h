@@ -189,6 +189,9 @@ static UTEST_INLINE int64_t utest_ns(void) {
   return UTEST_CAST(int64_t, ts.tv_sec) * 1000 * 1000 * 1000 + ts.tv_nsec;
 #elif __APPLE__
   return UTEST_CAST(int64_t, mach_absolute_time());
+#else
+  /* hack to prevent warning on unsupported platforms */
+  return 1;
 #endif
 }
 
