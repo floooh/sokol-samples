@@ -3,7 +3,7 @@ branches:
     except:
         - gh-pages
 
-clone_depth: 3 
+clone_depth: 3
 
 build_script:
     - cmd: c:/Python36/python.exe fips build win64-vstudio-debug
@@ -15,6 +15,6 @@ build_script:
     - cmd: c:/Python36/python.exe fips build sapp-d3d11-win64-vstudio-debug
     - cmd: c:/Python36/python.exe fips build sapp-d3d11-win64-vstudio-release
       # run tests
-    - cmd: c:/Python36/python.exe fips set config win64-vstudio-debug
+    - cmd: c:/Python36/python.exe fips set config sapp-win64-vstudio-debug
     - cmd: c:/Python36/python.exe fips run sokol-test
 

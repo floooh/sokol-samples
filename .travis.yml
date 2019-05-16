@@ -2,7 +2,7 @@ git:
   depth: 1
 language: c
 dist: xenial
-os: 
+os:
   - osx
   - linux
   - windows
@@ -39,8 +39,8 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then python fips build sapp-win64-vstudio-release; fi
 
     # run tests
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips set config osx-make-debug; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips set config linux-make-debug; fi
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then python fips set config win64-vstudio-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python fips set config sapp-metal-osx-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then python fips set config sapp-linux-make-debug; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then python fips set config sapp-win64-vstudio-debug; fi
   - python fips run sokol-test
 
