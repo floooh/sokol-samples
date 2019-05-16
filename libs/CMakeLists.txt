@@ -3,6 +3,7 @@
 sokol_config()
 
 add_subdirectory(dbgui)
+add_subdirectory(cdbgui)
 add_subdirectory(microui)
 add_subdirectory(sokol)
 add_subdirectory(cimgui)

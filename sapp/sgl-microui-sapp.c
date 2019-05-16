@@ -3,6 +3,9 @@
 //
 //  https://github.com/rxi/microui sample using sokol_gl.h, sokol_gfx.h
 //  and sokol_app.h
+//
+//  NOTE: for the debugging UI, cimgui is used via sokol_gfx_cimgui.h
+//  (C bindings to Dear ImGui instead of the ImGui C++ API)
 //------------------------------------------------------------------------------
 #if defined(_MSC_VER)
 #define _CRT_SECURE_NO_WARNINGS (1)
@@ -13,7 +16,7 @@
 #include "microui/atlas.inl"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
-#include "dbgui/dbgui.h"
+#include "cdbgui/cdbgui.h"
 #include <stdio.h> /* sprintf */
 
 static mu_Context mu_ctx;
@@ -74,7 +77,7 @@ static void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
-    __dbgui_setup(1);
+    __cdbgui_setup(1);
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){0});
@@ -101,7 +104,7 @@ static const char key_map[512] = {
 
 static void event(const sapp_event* ev) {
     /* FIXME: need to filter out events consumed by the Dear ImGui debug UI */
-    __dbgui_event(ev);
+    __cdbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
             mu_input_mousedown(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
@@ -163,13 +166,13 @@ void frame(void) {
             }
         }, sapp_width(), sapp_height());
     r_draw();
-    __dbgui_draw();
+    __cdbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    __cdbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
