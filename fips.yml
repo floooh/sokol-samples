@@ -11,6 +11,8 @@ imports:
     git: https://github.com/floooh/sokol-tools-bin
   fips-glfw:
     git: https://github.com/fips-libs/fips-glfw
+  fips-cimgui:
+    git: https://github.com/fips-libs/fips-cimgui.git
   fips-imgui:
     git: https://github.com/fips-libs/fips-imgui.git
   fips-libmodplug:

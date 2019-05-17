@@ -1,8 +1,0 @@
-fips_begin_lib(cimgui)
-    fips_src(.)
-fips_end_lib(dbgui)
-if (FIPS_CLANG OR FIPS_GCC)
-    target_compile_options(cimgui PUBLIC -Wno-return-type-c-linkage)
-elseif (FIPS_MSVC)
-    target_compile_options(cimgui PUBLIC /wd4190)
-endif()
