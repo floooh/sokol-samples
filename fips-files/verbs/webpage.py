@@ -25,6 +25,7 @@ samples = [
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
+    [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],
     [ 'imgui', 'imgui-sapp.cc', None ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],

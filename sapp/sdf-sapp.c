@@ -1,7 +1,11 @@
 //------------------------------------------------------------------------------
 //  sdf-sapp.c
 //
-//  Signed-distance-field rendering demo.
+//  Signed-distance-field rendering demo to test the shader code generate
+//  with some non-trivial code.
+//
+//  https://www.iquilezles.org/www/articles/mandelbulb/mandelbulb.htm
+//  https://www.shadertoy.com/view/ltfSWn
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -28,12 +32,12 @@ void init(void) {
     });
     __dbgui_setup(1);
 
-    // a vertex buffer to render a fullscreen rectangle
-    float quad_vertices[] = { -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
+    // a vertex buffer to render a 'fullscreen triangle'
+    float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
-        .label = "quad vertices"
+        .size = sizeof(fsq_verts),
+        .content = fsq_verts,
+        .label = "fsq vertices"
     });
 
     // shader and pipeline object for rendering a fullscreen quad
@@ -42,7 +46,6 @@ void init(void) {
             .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
         },
         .shader = sg_make_shader(sdf_shader_desc()),
-        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
 
     // don't need to clear since the whole framebuffer is overwritten
@@ -52,12 +55,15 @@ void init(void) {
 }
 
 void frame(void) {
+    int w = sapp_width();
+    int h = sapp_height();
     state.vs_params.time += 1.0f / 60.0f;
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    state.vs_params.aspect = (float)w / (float)h;
+    sg_begin_default_pass(&state.pass_action, w, h);
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
-    sg_draw(0, 4, 1);
+    sg_draw(0, 3, 1);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
