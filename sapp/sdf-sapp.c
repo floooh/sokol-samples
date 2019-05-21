@@ -43,7 +43,7 @@ void init(void) {
     // shader and pipeline object for rendering a fullscreen quad
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT2
         },
         .shader = sg_make_shader(sdf_shader_desc()),
     });
