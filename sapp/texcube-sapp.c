@@ -49,7 +49,7 @@ void init(void) {
         and WebGL2 / GLES2 don't support integer vertex shader inputs.
     */
     vertex_t vertices[] = {
-        /* pos                  color                       uvs */
+        /* pos                  color       uvs */
         { -1.0f, -1.0f, -1.0f,  0xFF0000FF,     0,     0 },
         {  1.0f, -1.0f, -1.0f,  0xFF0000FF, 32767,     0 },
         {  1.0f,  1.0f, -1.0f,  0xFF0000FF, 32767, 32767 },
