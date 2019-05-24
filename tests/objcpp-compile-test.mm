@@ -5,7 +5,6 @@
 #if !defined(__APPLE__)
 #error "This is for Apple platforms only"
 #endif
-#define SOKOL_METAL
 #define SOKOL_IMPL
 #include "sokol_app.h"
 #include "sokol_args.h"

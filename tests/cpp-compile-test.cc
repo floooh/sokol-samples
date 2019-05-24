@@ -4,14 +4,6 @@
 //------------------------------------------------------------------------------
 #if defined(__APPLE__)
     #error "This is for non-apple platforms only"
-#elif defined(__EMSCRIPTEN__)
-    #define SOKOL_GLES2
-#elif defined(_WIN32)
-    #define SOKOL_D3D11
-#elif defined(__ANDROID__)
-    #define SOKOL_GLES3
-#else
-    #define SOKOL_GLCORE33
 #endif
 #define SOKOL_IMPL
 #define SOKOL_WIN32_FORCE_MAIN
