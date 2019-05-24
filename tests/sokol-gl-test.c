@@ -3,7 +3,6 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #define SOKOL_GL_IMPL
-#define SOKOL_DUMMY_BACKEND
 #include "sokol_gl.h"
 #include "utest.h"
 #include <float.h>
