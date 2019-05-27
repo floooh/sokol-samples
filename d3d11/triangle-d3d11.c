@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 
@@ -62,7 +61,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.color = inp.color;\n"
             "  return outp;\n"
             "}\n",
-        .fs.source = 
+        .fs.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
             "}\n"

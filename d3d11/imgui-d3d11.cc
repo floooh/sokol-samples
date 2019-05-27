@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 #include "sokol_time.h"
@@ -50,7 +49,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_key_down([] (int key)             { if (key < 512) ImGui::GetIO().KeysDown[key] = true; });
     d3d11_key_up([] (int key)               { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
 
-    // setup Dear Imgui 
+    // setup Dear Imgui
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
