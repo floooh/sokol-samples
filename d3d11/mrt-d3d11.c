@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -130,7 +129,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [1].sem_name = "BRIGHT"
         },
         .vs.uniform_blocks[0].size = sizeof(offscreen_params_t),
-        .vs.source = 
+        .vs.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
             "};\n"
@@ -252,7 +251,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  return c;\n"
             "}\n"
     });
-    
+
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format=SG_VERTEXFORMAT_FLOAT2,
@@ -308,7 +307,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
-        .colors = { 
+        .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
             [2].action = SG_ACTION_DONTCARE
@@ -321,7 +320,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    
+
     offscreen_params_t offscreen_params;
     params_t params;
     float rx = 0.0f, ry = 0.0f;

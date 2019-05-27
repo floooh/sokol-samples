@@ -6,7 +6,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 
@@ -38,7 +37,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
-        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }        
+        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }
     };
     uint16_t indices[9] = {
         0, 1, 2,

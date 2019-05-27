@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION

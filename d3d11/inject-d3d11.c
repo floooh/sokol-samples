@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -19,10 +18,10 @@
 #include <d3d11.h>
 
 // constants (VS doesn't like "const int" for array size)
-enum { 
+enum {
     WIDTH = 640,
     HEIGHT = 480,
-    IMG_WIDTH = 32, 
+    IMG_WIDTH = 32,
     IMG_HEIGHT = 32,
 };
 
@@ -54,7 +53,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -126,7 +125,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* can release the native D3D11 buffers now, sokol_gfx is holding on to them */
     ID3D11Buffer_Release(d3d11_vbuf); d3d11_vbuf = 0;
     ID3D11Buffer_Release(d3d11_ibuf); d3d11_ibuf = 0;
- 
+
     /* create a dynamically updated D3D11 texture, unlike the Metal and
        GL backends, we only need a single D3D11 texture
     */

@@ -5,7 +5,6 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_D3D11_SHADER_COMPILER
 #define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -66,7 +65,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .size = sizeof(indices),
         .content = indices,
     });
-    
+
     /* dynamic per-instance data, goes into vb slot 1 */
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
@@ -81,7 +80,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [2].sem_name = "INSTPOS"
         },
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source = 
+        .vs.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
             "};\n"
