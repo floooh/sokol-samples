@@ -1,4 +1,4 @@
-# the sokol implementations library without debugging UI
+# the sokol implementations library 
 fips_begin_lib(sokol)
     fips_vs_warning_level(3)
     if (FIPS_OSX)
@@ -54,4 +54,13 @@ fips_begin_lib(sokol-noentry)
         endif()
     endif()
 fips_end_lib()
+endif()
+
+# the sokol implementations library as DLL
+# FIXME: implement this also for other platforms
+if (FIPS_WINDOWS)
+fips_begin_sharedlib(sokol-dll)
+    fips_vs_warning_level(3)
+    fips_files(sokol-dll.c)
+fips_end_sharedlib()
 endif()
