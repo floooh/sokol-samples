@@ -30,6 +30,7 @@ samples = [
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
     [ 'sgl-microui', 'sgl-microui-sapp.c', None],
+    [ 'events', 'events-sapp.cc', None],
     [ 'saudio', 'saudio-sapp.c', None],
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
