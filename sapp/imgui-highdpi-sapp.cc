@@ -111,6 +111,10 @@ void frame(void) {
     }
 
     // 4. Prepare and conditionally open the "Really Quit?" popup
+    // FIXME: the centering is a hack, something's odd with how we handle
+    // HighDPI in sokol_imgui.h
+    ImVec2 modal_pos((float)width*0.25f, (float)height*0.25f);
+    ImGui::SetNextWindowPos(modal_pos, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal("Really Quit?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Do you really want to quit?\n");
         ImGui::Separator();
