@@ -14,6 +14,8 @@
 
 static bool show_test_window = true;
 static bool show_another_window = false;
+static bool show_quit_dialog = false;
+static bool html5_ask_leave_site = false;
 
 static sg_pass_action pass_action;
 
@@ -82,6 +84,16 @@ void frame(void) {
     ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
+    ImGui::Text("NOTE: programmatic quit isn't supported on web and mobile");
+    if (ImGui::Button("Soft Quit")) {
+        sapp_request_quit();
+    }
+    if (ImGui::Button("Hard Quit")) {
+        sapp_quit();
+    }
+    if (ImGui::Checkbox("HTML5 Ask Leave Site", &html5_ask_leave_site)) {
+        sapp_html5_ask_leave_site(html5_ask_leave_site);
+    }
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
@@ -98,6 +110,26 @@ void frame(void) {
         ImGui::ShowTestWindow();
     }
 
+    // 4. Prepare and conditionally open the "Really Quit?" popup
+    if (ImGui::BeginPopupModal("Really Quit?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Do you really want to quit?\n");
+        ImGui::Separator();
+        if (ImGui::Button("OK", ImVec2(120, 0))) {
+            sapp_quit();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+    if (show_quit_dialog) {
+        ImGui::OpenPopup("Really Quit?");
+        show_quit_dialog = false;
+    }
+
     // the sokol_gfx draw pass
     sg_begin_default_pass(&pass_action, width, height);
     simgui_render();
@@ -111,7 +143,13 @@ void cleanup(void) {
 }
 
 void input(const sapp_event* event) {
-    simgui_handle_event(event);
+    if (event->type == SAPP_EVENTTYPE_QUIT_REQUESTED) {
+        show_quit_dialog = true;
+        sapp_cancel_quit();
+    }
+    else {
+        simgui_handle_event(event);
+    }
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
@@ -124,6 +162,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.height = 768;
     desc.fullscreen = true;
     desc.high_dpi = true;
+    desc.html5_ask_leave_site = html5_ask_leave_site;
     desc.ios_keyboard_resizes_canvas = false;
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
