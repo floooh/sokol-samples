@@ -15,6 +15,7 @@
 static bool show_test_window = true;
 static bool show_another_window = false;
 static bool show_quit_dialog = false;
+static bool html5_ask_leave_site = false;
 
 static sg_pass_action pass_action;
 
@@ -90,6 +91,9 @@ void frame(void) {
     if (ImGui::Button("Hard Quit")) {
         sapp_quit();
     }
+    if (ImGui::Checkbox("HTML5 Ask Leave Site", &html5_ask_leave_site)) {
+        sapp_html5_ask_leave_site(html5_ask_leave_site);
+    }
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
@@ -158,7 +162,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.height = 768;
     desc.fullscreen = true;
     desc.high_dpi = true;
-    desc.html5_ask_leave_site = true;
+    desc.html5_ask_leave_site = html5_ask_leave_site;
     desc.ios_keyboard_resizes_canvas = false;
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
