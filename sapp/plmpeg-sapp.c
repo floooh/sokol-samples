@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_audio.h"
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
 #include "pl_mpeg/pl_mpeg.h"
@@ -49,7 +50,10 @@ void init(void) {
     plm_set_loop(state.plm, true);
     plm_set_audio_enabled(state.plm, true, 0);
     if (plm_get_num_audio_streams(state.plm) > 0) {
-        // FIXME: setup sokol-audio
+        saudio_setup(&(saudio_desc){
+            .sample_rate = plm_get_samplerate(state.plm),
+            .num_channels = 2,
+        });
     }
 
     // a vertex buffer to render a 'fullscreen triangle'
@@ -159,7 +163,7 @@ void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
 }
 
 void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
-    // FIXME!
+    saudio_push(samples->interleaved, samples->count);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
