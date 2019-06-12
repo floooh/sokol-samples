@@ -104,6 +104,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     if ((state.image_attrs[slot].width != (int)plane->width) ||
         (state.image_attrs[slot].height != (int)plane->height))
     {
+        state.image_attrs[slot].width = plane->width;
+        state.image_attrs[slot].height = plane->height;
+
         // NOTE: it's ok call to call sg_destroy_image() with SG_INVALID_ID
         sg_destroy_image(state.bind.fs_images[slot]);
         state.bind.fs_images[slot] = sg_make_image(&(sg_image_desc){
