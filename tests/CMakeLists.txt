@@ -7,6 +7,7 @@ fips_begin_app(sokol-test cmdline)
         sokol-audio-test.c
         sokol-gfx-test.c
         sokol-gl-test.c
+        sokol-fetch-test.c
         sokol-test.c
     )
     if (FIPS_LINUX)
