@@ -268,6 +268,57 @@ UTEST(sokol_fetch, queue_init_discard) {
     T(queue.outgoing.queue == 0);
 }
 
+UTEST(sokol_fetch, queue_enqueue_dequeue_incoming) {
+    _sfetch_queue_t queue = { };
+    _sfetch_queue_init(&queue, 8);
+    _sfetch_ring_t src = { };
+    _sfetch_ring_init(&src, 4);
+    for (uint32_t i = 0; i < 4; i++) {
+        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
+    }
+    T(_sfetch_ring_full(&src));
+    _sfetch_queue_enqueue_incoming(&queue, &src);
+    T(_sfetch_ring_empty(&src));
+    T(_sfetch_ring_count(&queue.incoming) == 4);
+    for (uint32_t i = 4; i < 8; i++) {
+        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
+    }
+    T(_sfetch_ring_full(&src));
+    _sfetch_queue_enqueue_incoming(&queue, &src);
+    T(_sfetch_ring_empty(&src));
+    T(_sfetch_ring_full(&queue.incoming));
+    for (uint32_t i = 0; i < 8; i++) {
+        T(_sfetch_queue_dequeue_incoming(&queue) == _sfetch_make_id(1, i+1));
+    }
+    T(_sfetch_ring_empty(&queue.incoming));
+    T(_sfetch_queue_dequeue_incoming(&queue) == _sfetch_make_id(0, 0));
+    _sfetch_ring_discard(&src);
+    _sfetch_queue_discard(&queue);
+}
+
+UTEST(sokol_fetch, queue_enqueue_dequeue_outgoing) {
+    _sfetch_queue_t queue = { };
+    _sfetch_queue_init(&queue, 4);
+    _sfetch_ring_t dst = { };
+    _sfetch_ring_init(&dst, 8);
+    for (uint32_t i = 0; i < 4; i++) {
+        _sfetch_queue_enqueue_outgoing(&queue, _sfetch_make_id(1, i+1));
+    }
+    T(_sfetch_ring_full(&queue.outgoing));
+    _sfetch_queue_dequeue_outgoing(&queue, &dst);
+    T(_sfetch_ring_empty(&queue.outgoing));
+    T(_sfetch_ring_count(&dst) == 4);
+    for (uint32_t i = 4; i < 8; i++) {
+        _sfetch_queue_enqueue_outgoing(&queue, _sfetch_make_id(1, i+1));
+    }
+    T(_sfetch_ring_full(&queue.outgoing));
+    _sfetch_queue_dequeue_outgoing(&queue, &dst);
+    T(_sfetch_ring_empty(&queue.outgoing));
+    T(_sfetch_ring_full(&dst));
+    _sfetch_ring_discard(&dst);
+    _sfetch_queue_discard(&queue);
+}
+
 /* public API functions */
 UTEST(sokol_fetch, max_path) {
     T(sfetch_max_path() == SFETCH_MAX_PATH);
