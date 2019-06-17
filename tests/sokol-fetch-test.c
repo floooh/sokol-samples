@@ -41,6 +41,7 @@ UTEST(sokol_fetch, item_init_discard) {
         .c = 789
     };
     sfetch_request_t request = {
+        .channel = 4,
         .path = "hello_world.txt",
         .user_data = &user_data,
         .user_data_size = sizeof(user_data)
@@ -49,6 +50,7 @@ UTEST(sokol_fetch, item_init_discard) {
     uint32_t slot_id = _sfetch_make_id(1, 1);
     _sfetch_item_init(&item, slot_id, &request);
     T(item.handle.id == slot_id);
+    T(item.channel == 4);
     T(item.state == SFETCH_STATE_INITIAL);
     TSTR(item.path.buf, request.path);
     T(item.user_data_size == sizeof(userdata_t));
@@ -210,6 +212,9 @@ UTEST(sokol_fetch, ring_enqueue_dequeue) {
     T(!_sfetch_ring_empty(&ring));
     T(_sfetch_ring_full(&ring));
     for (uint32_t i = 0; i < num_slots; i++) {
+        T(_sfetch_ring_peek(&ring, i) == _sfetch_make_id(1, i+1));
+    }
+    for (uint32_t i = 0; i < num_slots; i++) {
         T(!_sfetch_ring_empty(&ring));
         const uint32_t slot_id = _sfetch_ring_dequeue(&ring);
         T(slot_id == _sfetch_make_id(1, i+1));
@@ -243,83 +248,86 @@ UTEST(sokol_fetch, ring_wrap_around) {
     _sfetch_ring_discard(&ring);
 }
 
-UTEST(sokol_fetch, queue_init_discard) {
-    _sfetch_queue_t queue = { };
-    const int num_slots = 12;
-    _sfetch_queue_init(&queue, num_slots);
-    T(queue.valid);
-    T(queue.incoming.head == 0);
-    T(queue.incoming.tail == 0);
-    T(queue.incoming.num == (num_slots+1));
-    T(queue.incoming.queue != 0);
-    T(queue.outgoing.head == 0);
-    T(queue.outgoing.tail == 0);
-    T(queue.outgoing.num == (num_slots+1));
-    T(queue.outgoing.queue != 0);
-    _sfetch_queue_discard(&queue);
-    T(!queue.valid);
-    T(queue.incoming.head == 0);
-    T(queue.incoming.tail == 0);
-    T(queue.incoming.num == 0);
-    T(queue.incoming.queue == 0);
-    T(queue.outgoing.head == 0);
-    T(queue.outgoing.tail == 0);
-    T(queue.outgoing.num == 0);
-    T(queue.outgoing.queue == 0);
+/* NOTE: channel_worker is called from a thread */
+static int num_processed_items = 0;
+static void channel_worker(uint32_t slot_id) {
+    num_processed_items++;
 }
 
-UTEST(sokol_fetch, queue_enqueue_dequeue_incoming) {
-    _sfetch_queue_t queue = { };
-    _sfetch_queue_init(&queue, 8);
+UTEST(sokol_fetch, channel_init_discard) {
+    num_processed_items = 0;
+    _sfetch_channel_t chn = { };
+    const int num_slots = 12;
+    _sfetch_channel_init(&chn, num_slots, channel_worker);
+    T(chn.valid);
+    T(chn.incoming.head == 0);
+    T(chn.incoming.tail == 0);
+    T(chn.incoming.num == (num_slots+1));
+    T(chn.incoming.queue != 0);
+    T(chn.outgoing.head == 0);
+    T(chn.outgoing.tail == 0);
+    T(chn.outgoing.num == (num_slots+1));
+    T(chn.outgoing.queue != 0);
+    _sfetch_channel_discard(&chn);
+    T(!chn.valid);
+    T(chn.incoming.head == 0);
+    T(chn.incoming.tail == 0);
+    T(chn.incoming.num == 0);
+    T(chn.incoming.queue == 0);
+    T(chn.outgoing.head == 0);
+    T(chn.outgoing.tail == 0);
+    T(chn.outgoing.num == 0);
+    T(chn.outgoing.queue == 0);
+}
+
+UTEST(sokol_fetch, channel_push_pop) {
+    num_processed_items = 0;
+    _sfetch_channel_t chn = { };
+    _sfetch_channel_init(&chn, 4, channel_worker);
     _sfetch_ring_t src = { };
     _sfetch_ring_init(&src, 4);
-    for (uint32_t i = 0; i < 4; i++) {
-        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
-    }
-    T(_sfetch_ring_full(&src));
-    _sfetch_queue_enqueue_incoming(&queue, &src);
-    T(_sfetch_ring_empty(&src));
-    T(_sfetch_ring_count(&queue.incoming) == 4);
-    for (uint32_t i = 4; i < 8; i++) {
-        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
-    }
-    T(_sfetch_ring_full(&src));
-    _sfetch_queue_enqueue_incoming(&queue, &src);
-    T(_sfetch_ring_empty(&src));
-    T(_sfetch_ring_full(&queue.incoming));
-    for (uint32_t i = 0; i < 8; i++) {
-        T(_sfetch_queue_dequeue_incoming(&queue) == _sfetch_make_id(1, i+1));
-    }
-    T(_sfetch_ring_empty(&queue.incoming));
-    T(_sfetch_queue_dequeue_incoming(&queue) == _sfetch_make_id(0, 0));
-    _sfetch_ring_discard(&src);
-    _sfetch_queue_discard(&queue);
-}
-
-UTEST(sokol_fetch, queue_enqueue_dequeue_outgoing) {
-    _sfetch_queue_t queue = { };
-    _sfetch_queue_init(&queue, 4);
     _sfetch_ring_t dst = { };
-    _sfetch_ring_init(&dst, 8);
+    _sfetch_ring_init(&dst, 4);
     for (uint32_t i = 0; i < 4; i++) {
-        _sfetch_queue_enqueue_outgoing(&queue, _sfetch_make_id(1, i+1));
+        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
     }
-    T(_sfetch_ring_full(&queue.outgoing));
-    _sfetch_queue_dequeue_outgoing(&queue, &dst);
-    T(_sfetch_ring_empty(&queue.outgoing));
-    T(_sfetch_ring_count(&dst) == 4);
-    for (uint32_t i = 4; i < 8; i++) {
-        _sfetch_queue_enqueue_outgoing(&queue, _sfetch_make_id(1, i+1));
+    T(_sfetch_ring_full(&src));
+    _sfetch_channel_push(&chn, &src);
+    T(_sfetch_ring_empty(&src));
+    // this is a bit dirty, pull items in a busy loop until
+    // all items have been received
+    while (!_sfetch_ring_full(&dst)) {
+        _sfetch_channel_pop(&chn, &dst);
     }
-    T(_sfetch_ring_full(&queue.outgoing));
-    _sfetch_queue_dequeue_outgoing(&queue, &dst);
-    T(_sfetch_ring_empty(&queue.outgoing));
-    T(_sfetch_ring_full(&dst));
-    _sfetch_ring_discard(&dst);
-    _sfetch_queue_discard(&queue);
+    for (uint32_t i = 0; i < 4; i++) {
+        T(_sfetch_make_id(1, i+1) == _sfetch_ring_dequeue(&dst));
+    }
 }
 
 /* public API functions */
+UTEST(sokol_fetch, setup_shutdown) {
+    sfetch_setup(&(sfetch_desc_t){ });
+    T(sfetch_valid());
+    // check default values
+    T(sfetch_desc().max_requests == 128);
+    T(sfetch_desc().num_channels == 1);
+    T(sfetch_desc().timeout_num_frames == 30);
+    sfetch_shutdown();
+    T(!sfetch_valid());
+}
+
+UTEST(sokol_fetch, setup_too_many_channels) {
+    /* try to initialize with too many channels, this should clamp to
+       SFETCH_MAX_CHANNELS
+    */
+    sfetch_setup(&(sfetch_desc_t){
+        .num_channels = 64
+    });
+    T(sfetch_valid());
+    T(sfetch_desc().num_channels == SFETCH_MAX_CHANNELS);
+    sfetch_shutdown();
+}
+
 UTEST(sokol_fetch, max_path) {
     T(sfetch_max_path() == SFETCH_MAX_PATH);
 }
