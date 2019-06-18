@@ -302,6 +302,7 @@ UTEST(sokol_fetch, channel_push_pop) {
     for (uint32_t i = 0; i < 4; i++) {
         T(_sfetch_make_id(1, i+1) == _sfetch_ring_dequeue(&dst));
     }
+    _sfetch_channel_discard(&chn);
 }
 
 /* public API functions */
