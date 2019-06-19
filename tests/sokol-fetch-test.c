@@ -199,12 +199,12 @@ UTEST(sokol_fetch, ring_init_discard) {
     T(ring.head == 0);
     T(ring.tail == 0);
     T(ring.num == (num_slots + 1));
-    T(ring.queue);
+    T(ring.buf);
     _sfetch_ring_discard(&ring);
     T(ring.head == 0);
     T(ring.tail == 0);
     T(ring.num == 0);
-    T(ring.queue == 0);
+    T(ring.buf == 0);
 }
 
 UTEST(sokol_fetch, ring_enqueue_dequeue) {
@@ -275,21 +275,21 @@ UTEST(sokol_fetch, channel_init_discard) {
     T(chn.incoming.head == 0);
     T(chn.incoming.tail == 0);
     T(chn.incoming.num == (num_slots+1));
-    T(chn.incoming.queue != 0);
+    T(chn.incoming.buf != 0);
     T(chn.outgoing.head == 0);
     T(chn.outgoing.tail == 0);
     T(chn.outgoing.num == (num_slots+1));
-    T(chn.outgoing.queue != 0);
+    T(chn.outgoing.buf != 0);
     _sfetch_channel_discard(&chn);
     T(!chn.valid);
     T(chn.incoming.head == 0);
     T(chn.incoming.tail == 0);
     T(chn.incoming.num == 0);
-    T(chn.incoming.queue == 0);
+    T(chn.incoming.buf == 0);
     T(chn.outgoing.head == 0);
     T(chn.outgoing.tail == 0);
     T(chn.outgoing.num == 0);
-    T(chn.outgoing.queue == 0);
+    T(chn.outgoing.buf == 0);
 }
 
 UTEST(sokol_fetch, channel_push_pop) {
@@ -350,12 +350,9 @@ UTEST(sokol_fetch, max_userdata) {
 
 static bool fail_open_passed;
 static void fail_open_callback(sfetch_handle_t h) {
-    fail_open_passed = false;
     /* if opening a file fails, it will immediate switch into CLOSED state */
-    if (sfetch_state(h) == SFETCH_STATE_CLOSED) {
-        if (sfetch_failed(h)) {
-            fail_open_passed = true;
-        }
+    if (sfetch_state(h) == SFETCH_STATE_FAILED) {
+        fail_open_passed = true;
     }
 }
 
@@ -373,3 +370,44 @@ UTEST(sokol_fetch, fail_open) {
     T(fail_open_passed);
     sfetch_shutdown();
 }
+
+/*
+static uint8_t load_file_buf[500000];
+static bool load_file_opened_passed;
+static bool load_file_passed;
+static void load_file_callback(sfetch_handle_t h) {
+    const sfetch_state_t state = sfetch_state(h);
+    if (state == SFETCH_STATE_OPENED) {
+        const uint64_t content_size = sfetch_content_size(h);
+        if ((content_size > 0) && (content_size < sfetch_buffer(h).num_bytes)) {
+            load_file_opened_passed = true;
+        }
+
+    }
+
+
+    switch (sfetch_state(h)) {
+        case SFETCH_STATE_OPENED:
+
+            if (!sfetch_failed() && sfetch_content_size(h) )
+            break;
+        case SFETCH_STATE_CLOSED:
+            break;
+    }
+}
+
+UTEST(sokol_fetch, load_file_fixed_buffer) {
+    sfetch_setup(&(sfetch_desc_t){ });
+    sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = load_file_callback,
+        .buffer = {
+            .ptr = load_file_buf,
+            .size = sizeof(load_file_buf)
+        }
+    });
+    load_file_passed = false;
+
+
+}
+*/

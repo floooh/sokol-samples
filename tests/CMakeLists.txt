@@ -10,6 +10,8 @@ fips_begin_app(sokol-test cmdline)
         sokol-fetch-test.c
         sokol-test.c
     )
+    fips_dir(assets)
+    sokol_copy_files(sokol-fetch-test.yml)
     if (FIPS_LINUX)
         fips_libs(m)
     endif()
