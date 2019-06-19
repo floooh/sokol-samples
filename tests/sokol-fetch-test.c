@@ -16,6 +16,18 @@ typedef struct {
     int a, b, c;
 } userdata_t;
 
+#ifdef _WIN32
+#include <windows.h>
+static void sleep_ms(int ms) {
+    Sleep(ms);
+}
+#else
+#include <unistd.h>
+static void sleep_ms(int ms) {
+    usleep(ms * 1000);
+}
+#endif
+
 /* private implementation functions */
 UTEST(sokol_fetch, path_make) {
     const char* str31 = "1234567890123456789012345678901";
@@ -53,8 +65,8 @@ UTEST(sokol_fetch, item_init_discard) {
     T(item.channel == 4);
     T(item.state == SFETCH_STATE_INITIAL);
     TSTR(item.path.buf, request.path);
-    T(item.user_data_size == sizeof(userdata_t));
-    const userdata_t* ud = (const userdata_t*) item.user_data;
+    T(item.user.user_data_size == sizeof(userdata_t));
+    const userdata_t* ud = (const userdata_t*) item.user.user_data;
     T((((uintptr_t)ud) & 0x7) == 0); // check alignment
     T(ud->a == 123);
     T(ud->b == 456);
@@ -65,8 +77,8 @@ UTEST(sokol_fetch, item_init_discard) {
     T(item.handle.id == 0);
     T(item.path.buf[0] == 0);
     T(item.state == SFETCH_STATE_INITIAL);
-    T(item.user_data_size == 0);
-    T(item.user_data[0] == 0);
+    T(item.user.user_data_size == 0);
+    T(item.user.user_data[0] == 0);
 }
 
 UTEST(sokol_fetch, item_init_path_overflow) {
@@ -87,8 +99,8 @@ UTEST(sokol_fetch, item_init_userdata_overflow) {
     };
     _sfetch_item_t item = { };
     _sfetch_item_init(&item, _sfetch_make_id(1, 1), &request);
-    T(item.user_data_size == 0);
-    T(item.user_data[0] == 0);
+    T(item.user.user_data_size == 0);
+    T(item.user.user_data[0] == 0);
 }
 
 UTEST(sokol_fetch, pool_init_discard) {
@@ -123,15 +135,15 @@ UTEST(sokol_fetch, pool_alloc_free) {
     T(pool.items[1].state == SFETCH_STATE_ALLOCATED);
     T(pool.items[1].handle.id == slot_id);
     TSTR(pool.items[1].path.buf, "hello_world.txt");
-    T(pool.items[1].buffer.ptr == buf);
-    T(pool.items[1].buffer.num_bytes == sizeof(buf));
+    T(pool.items[1].user.buffer.ptr == buf);
+    T(pool.items[1].user.buffer.num_bytes == sizeof(buf));
     T(pool.free_top == 15);
     _sfetch_pool_item_free(&pool, slot_id);
     T(pool.items[1].handle.id == 0);
     T(pool.items[1].state == SFETCH_STATE_INITIAL);
     T(pool.items[1].path.buf[0] == 0);
-    T(pool.items[1].buffer.ptr == 0);
-    T(pool.items[1].buffer.num_bytes == 0);
+    T(pool.items[1].user.buffer.ptr == 0);
+    T(pool.items[1].user.buffer.num_bytes == 0);
     T(pool.free_top == 16);
     _sfetch_pool_discard(&pool);
 }
@@ -294,10 +306,9 @@ UTEST(sokol_fetch, channel_push_pop) {
     T(_sfetch_ring_full(&src));
     _sfetch_channel_push(&chn, &src);
     T(_sfetch_ring_empty(&src));
-    // this is a bit dirty, pull items in a busy loop until
-    // all items have been received
     while (!_sfetch_ring_full(&dst)) {
         _sfetch_channel_pop(&chn, &dst);
+        sleep_ms(1);
     }
     for (uint32_t i = 0; i < 4; i++) {
         T(_sfetch_make_id(1, i+1) == _sfetch_ring_dequeue(&dst));
@@ -337,3 +348,28 @@ UTEST(sokol_fetch, max_userdata) {
     T(sfetch_max_userdata_bytes() == (SFETCH_MAX_USERDATA_UINT64 * sizeof(uint64_t)));
 }
 
+static bool fail_open_passed;
+static void fail_open_callback(sfetch_handle_t h) {
+    fail_open_passed = false;
+    /* if opening a file fails, it will immediate switch into CLOSED state */
+    if (sfetch_state(h) == SFETCH_STATE_CLOSED) {
+        if (sfetch_failed(h)) {
+            fail_open_passed = true;
+        }
+    }
+}
+
+UTEST(sokol_fetch, fail_open) {
+    sfetch_setup(&(sfetch_desc_t){ });
+    sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
+        .path = "non_existing_file.txt",
+        .callback = fail_open_callback,
+    });
+    fail_open_passed = false;
+    while (sfetch_handle_valid(h)) {
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    T(fail_open_passed);
+    sfetch_shutdown();
+}
