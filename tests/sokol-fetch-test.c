@@ -260,6 +260,30 @@ UTEST(sokol_fetch, ring_wrap_around) {
     _sfetch_ring_discard(&ring);
 }
 
+UTEST(sokol_fetch, ring_wrap_count) {
+    _sfetch_ring_t ring = { };
+    _sfetch_ring_init(&ring, 8);
+    // add and remove 4 items to move tail to the middle
+    for (uint32_t i = 0; i < 4; i++) {
+        _sfetch_ring_enqueue(&ring, _sfetch_make_id(1, i+1));
+        _sfetch_ring_dequeue(&ring);
+        T(_sfetch_ring_empty(&ring));
+    }
+    // add another 8 items
+    for (uint32_t i = 0; i < 8; i++) {
+        _sfetch_ring_enqueue(&ring, _sfetch_make_id(1, i+1));
+    }
+    // now test, dequeue and test...
+    T(_sfetch_ring_full(&ring));
+    for (uint32_t i = 0; i < 8; i++) {
+        T(_sfetch_ring_count(&ring) == (8 - i));
+        _sfetch_ring_dequeue(&ring);
+    }
+    T(_sfetch_ring_count(&ring) == 0);
+    T(_sfetch_ring_empty(&ring));
+    _sfetch_ring_discard(&ring);
+}
+
 /* NOTE: channel_worker is called from a thread */
 static int num_processed_items = 0;
 static void channel_worker(uint32_t slot_id) {
