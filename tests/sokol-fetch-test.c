@@ -423,7 +423,7 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
     // send a load-request for a file where we know the max size upfront,
     // so we can provide a buffer right in the fetch request (otherwise
     // the buffer needs to be provided in the callback when the request
-    // is in OPENED state).
+    // is in OPENED state, since only then the file size will be known).
     sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = load_file_callback,
