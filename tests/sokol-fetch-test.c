@@ -398,8 +398,11 @@ UTEST(sokol_fetch, fail_open) {
 static bool load_file_passed;
 static uint8_t load_file_buf[500000];
 
-// the file callback is called from the user thread (same thread where
-// sfetch_setup() and sfetch_send() are called
+// The file callback is called from the "current user thread" (the same
+// thread where the sfetch_send() for this request was called). Note that you
+// can call sfetch_setup/shutdown() on multiple threads, each thread will
+// get its own thread-local "sokol-fetch instance" and its own set of
+// IO-channel threads.
 static void load_file_callback(sfetch_handle_t h) {
     const sfetch_state_t state = sfetch_state(h);
     // when loading the whole file at once, the CLOSED state
@@ -429,9 +432,9 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
             .num_bytes = sizeof(load_file_buf)
         }
     });
-    // simulate a frame loop for as long as the request is in flight, normally
-    // the sfetch_dowork() function is just called somewhere in the frame loop
-    // to pump messages in and out of the IO threads
+    // simulate a frame-loop for as long as the request is in flight, normally
+    // the sfetch_dowork() function is just called somewhere in the frame
+    // to pump messages in and out of the IO threads, and invoke user-callbacks
     while (sfetch_handle_valid(h)) {
         sfetch_dowork();
         sleep_ms(1);
