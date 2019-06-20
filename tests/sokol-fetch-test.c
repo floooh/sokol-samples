@@ -286,7 +286,7 @@ UTEST(sokol_fetch, ring_wrap_count) {
 
 /* NOTE: channel_worker is called from a thread */
 static int num_processed_items = 0;
-static void channel_worker(uint32_t slot_id) {
+static void channel_worker(_sfetch_t* ctx, uint32_t slot_id) {
     num_processed_items++;
 }
 
@@ -294,7 +294,7 @@ UTEST(sokol_fetch, channel_init_discard) {
     num_processed_items = 0;
     _sfetch_channel_t chn = { };
     const int num_slots = 12;
-    _sfetch_channel_init(&chn, num_slots, channel_worker);
+    _sfetch_channel_init(&chn, 0, num_slots, channel_worker);
     T(chn.valid);
     T(chn.incoming.head == 0);
     T(chn.incoming.tail == 0);
@@ -319,7 +319,7 @@ UTEST(sokol_fetch, channel_init_discard) {
 UTEST(sokol_fetch, channel_push_pop) {
     num_processed_items = 0;
     _sfetch_channel_t chn = { };
-    _sfetch_channel_init(&chn, 4, channel_worker);
+    _sfetch_channel_init(&chn, 0, 4, channel_worker);
     _sfetch_ring_t src = { };
     _sfetch_ring_init(&src, 4);
     _sfetch_ring_t dst = { };
@@ -395,49 +395,32 @@ UTEST(sokol_fetch, fail_open) {
     sfetch_shutdown();
 }
 
+static bool load_file_passed;
 static uint8_t load_file_buf[500000];
-static bool load_file_opened_passed;
-static bool load_file_fetched_passed;
-static bool load_file_closed_passed;
+
+// the file callback is called from the user thread (same thread where
+// sfetch_setup() and sfetch_send() are called
 static void load_file_callback(sfetch_handle_t h) {
     const sfetch_state_t state = sfetch_state(h);
-    if (state == SFETCH_STATE_OPENED) {
-        // data isn't loaded yet, only the size is known
-        const sfetch_buffer_t buf = sfetch_buffer(h);
-        uint64_t content_size = sfetch_content_size(h);
-        if ((buf.ptr == load_file_buf) &&
-            (buf.num_bytes == sizeof(load_file_buf)) &&
-            (content_size > 0) &&
-            (content_size < sizeof(load_file_buf)))
-        {
-            load_file_opened_passed = true;
-        }
-    }
-    else if (state == SFETCH_STATE_FETCHED) {
-        // the complete data should be loaded
+    // when loading the whole file at once, the CLOSED state
+    // is the best place to grab/process the data
+    if (state == SFETCH_STATE_CLOSED) {
         const sfetch_buffer_t data = sfetch_fetched_data(h);
         if ((data.ptr == load_file_buf) &&
             (data.num_bytes > 0) &&
             (data.num_bytes < sizeof(load_file_buf)))
         {
-            load_file_fetched_passed = true;
-        }
-    }
-    else if (state == SFETCH_STATE_CLOSED) {
-        // alternatively one frame later, we can also
-        // get the fetched data in the CLOSED state
-        const sfetch_buffer_t data = sfetch_fetched_data(h);
-        if ((data.ptr == load_file_buf) &&
-            (data.num_bytes > 0) &&
-            (data.num_bytes < sizeof(load_file_buf)))
-        {
-            load_file_closed_passed = true;
+            load_file_passed = true;
         }
     }
 }
 
 UTEST(sokol_fetch, load_file_fixed_buffer) {
     sfetch_setup(&(sfetch_desc_t){ });
+    // send a load-request for a file where we know the max size upfront,
+    // so we can provide a buffer right in the fetch request (otherwise
+    // the buffer needs to be provided in the callback when the request
+    // is in OPENED state).
     sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = load_file_callback,
@@ -446,14 +429,13 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
             .num_bytes = sizeof(load_file_buf)
         }
     });
-    load_file_opened_passed = false;
-    load_file_fetched_passed = false;
-    load_file_closed_passed = false;
+    // simulate a frame loop for as long as the request is in flight, normally
+    // the sfetch_dowork() function is just called somewhere in the frame loop
+    // to pump messages in and out of the IO threads
     while (sfetch_handle_valid(h)) {
         sfetch_dowork();
         sleep_ms(1);
     }
-    T(load_file_opened_passed);
-    T(load_file_fetched_passed);
-    T(load_file_closed_passed);
+    T(load_file_passed);
+    sfetch_shutdown();
 }
