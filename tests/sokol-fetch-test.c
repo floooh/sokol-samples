@@ -395,28 +395,44 @@ UTEST(sokol_fetch, fail_open) {
     sfetch_shutdown();
 }
 
-/*
 static uint8_t load_file_buf[500000];
 static bool load_file_opened_passed;
-static bool load_file_passed;
+static bool load_file_fetched_passed;
+static bool load_file_closed_passed;
 static void load_file_callback(sfetch_handle_t h) {
     const sfetch_state_t state = sfetch_state(h);
     if (state == SFETCH_STATE_OPENED) {
-        const uint64_t content_size = sfetch_content_size(h);
-        if ((content_size > 0) && (content_size < sfetch_buffer(h).num_bytes)) {
+        // data isn't loaded yet, only the size is known
+        const sfetch_buffer_t buf = sfetch_buffer(h);
+        uint64_t content_size = sfetch_content_size(h);
+        if ((buf.ptr == load_file_buf) &&
+            (buf.num_bytes == sizeof(load_file_buf)) &&
+            (content_size > 0) &&
+            (content_size < sizeof(load_file_buf)))
+        {
             load_file_opened_passed = true;
         }
-
     }
-
-
-    switch (sfetch_state(h)) {
-        case SFETCH_STATE_OPENED:
-
-            if (!sfetch_failed() && sfetch_content_size(h) )
-            break;
-        case SFETCH_STATE_CLOSED:
-            break;
+    else if (state == SFETCH_STATE_FETCHED) {
+        // the complete data should be loaded
+        const sfetch_buffer_t data = sfetch_fetched_data(h);
+        if ((data.ptr == load_file_buf) &&
+            (data.num_bytes > 0) &&
+            (data.num_bytes < sizeof(load_file_buf)))
+        {
+            load_file_fetched_passed = true;
+        }
+    }
+    else if (state == SFETCH_STATE_CLOSED) {
+        // alternatively one frame later, we can also
+        // get the fetched data in the CLOSED state
+        const sfetch_buffer_t data = sfetch_fetched_data(h);
+        if ((data.ptr == load_file_buf) &&
+            (data.num_bytes > 0) &&
+            (data.num_bytes < sizeof(load_file_buf)))
+        {
+            load_file_closed_passed = true;
+        }
     }
 }
 
@@ -427,11 +443,17 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
         .callback = load_file_callback,
         .buffer = {
             .ptr = load_file_buf,
-            .size = sizeof(load_file_buf)
+            .num_bytes = sizeof(load_file_buf)
         }
     });
-    load_file_passed = false;
-
-
+    load_file_opened_passed = false;
+    load_file_fetched_passed = false;
+    load_file_closed_passed = false;
+    while (sfetch_handle_valid(h)) {
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    T(load_file_opened_passed);
+    T(load_file_fetched_passed);
+    T(load_file_closed_passed);
 }
-*/
