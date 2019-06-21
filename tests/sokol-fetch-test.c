@@ -63,6 +63,7 @@ UTEST(sokol_fetch, item_init_discard) {
     _sfetch_item_init(&item, slot_id, &request);
     T(item.handle.id == slot_id);
     T(item.channel == 4);
+    T(item.lane == _SFETCH_INVALID_LANE);
     T(item.state == SFETCH_STATE_INITIAL);
     TSTR(item.path.buf, request.path);
     T(item.user.user_data_size == sizeof(userdata_t));
@@ -128,7 +129,7 @@ UTEST(sokol_fetch, pool_alloc_free) {
         .path = "hello_world.txt",
         .buffer = {
             .ptr = buf,
-            .num_bytes = sizeof(buf)
+            .size = sizeof(buf)
         },
     });
     T(slot_id == 0x00010001);
@@ -136,14 +137,14 @@ UTEST(sokol_fetch, pool_alloc_free) {
     T(pool.items[1].handle.id == slot_id);
     TSTR(pool.items[1].path.buf, "hello_world.txt");
     T(pool.items[1].user.buffer.ptr == buf);
-    T(pool.items[1].user.buffer.num_bytes == sizeof(buf));
+    T(pool.items[1].user.buffer.size == sizeof(buf));
     T(pool.free_top == 15);
     _sfetch_pool_item_free(&pool, slot_id);
     T(pool.items[1].handle.id == 0);
     T(pool.items[1].state == SFETCH_STATE_INITIAL);
     T(pool.items[1].path.buf[0] == 0);
     T(pool.items[1].user.buffer.ptr == 0);
-    T(pool.items[1].user.buffer.num_bytes == 0);
+    T(pool.items[1].user.buffer.size == 0);
     T(pool.free_top == 16);
     _sfetch_pool_discard(&pool);
 }
@@ -294,50 +295,59 @@ UTEST(sokol_fetch, channel_init_discard) {
     num_processed_items = 0;
     _sfetch_channel_t chn = { };
     const int num_slots = 12;
-    _sfetch_channel_init(&chn, 0, num_slots, channel_worker);
+    const int num_lanes = 64;
+    _sfetch_channel_init(&chn, 0, num_slots, num_lanes, channel_worker);
     T(chn.valid);
-    T(chn.incoming.head == 0);
-    T(chn.incoming.tail == 0);
-    T(chn.incoming.num == (num_slots+1));
-    T(chn.incoming.buf != 0);
-    T(chn.outgoing.head == 0);
-    T(chn.outgoing.tail == 0);
-    T(chn.outgoing.num == (num_slots+1));
-    T(chn.outgoing.buf != 0);
+    T(chn.free_lanes.head == 0);
+    T(chn.free_lanes.tail == 0);
+    T(chn.free_lanes.num == (num_lanes+1));
+    T(chn.free_lanes.buf != 0);
+    T(chn.user_sent.head == 0);
+    T(chn.user_sent.tail == 0);
+    T(chn.user_sent.num == (num_slots+1));
+    T(chn.user_sent.buf != 0);
+    T(chn.user_incoming.head == 0);
+    T(chn.user_incoming.tail == 0);
+    T(chn.user_incoming.num == (num_lanes+1));
+    T(chn.user_incoming.buf != 0);
+    T(chn.thread_incoming.head == 0);
+    T(chn.thread_incoming.tail == 0);
+    T(chn.thread_incoming.num == (num_lanes+1));
+    T(chn.thread_incoming.buf != 0);
+    T(chn.thread_outgoing.head == 0);
+    T(chn.thread_outgoing.tail == 0);
+    T(chn.thread_outgoing.num == (num_lanes+1));
+    T(chn.thread_outgoing.buf != 0);
+    T(chn.user_outgoing.head == 0);
+    T(chn.user_outgoing.tail == 0);
+    T(chn.user_outgoing.num == (num_lanes+1));
+    T(chn.user_outgoing.buf != 0);
     _sfetch_channel_discard(&chn);
     T(!chn.valid);
-    T(chn.incoming.head == 0);
-    T(chn.incoming.tail == 0);
-    T(chn.incoming.num == 0);
-    T(chn.incoming.buf == 0);
-    T(chn.outgoing.head == 0);
-    T(chn.outgoing.tail == 0);
-    T(chn.outgoing.num == 0);
-    T(chn.outgoing.buf == 0);
-}
-
-UTEST(sokol_fetch, channel_push_pop) {
-    num_processed_items = 0;
-    _sfetch_channel_t chn = { };
-    _sfetch_channel_init(&chn, 0, 4, channel_worker);
-    _sfetch_ring_t src = { };
-    _sfetch_ring_init(&src, 4);
-    _sfetch_ring_t dst = { };
-    _sfetch_ring_init(&dst, 4);
-    for (uint32_t i = 0; i < 4; i++) {
-        _sfetch_ring_enqueue(&src, _sfetch_make_id(1, i+1));
-    }
-    T(_sfetch_ring_full(&src));
-    _sfetch_channel_push(&chn, &src);
-    T(_sfetch_ring_empty(&src));
-    while (!_sfetch_ring_full(&dst)) {
-        _sfetch_channel_pop(&chn, &dst);
-        sleep_ms(1);
-    }
-    for (uint32_t i = 0; i < 4; i++) {
-        T(_sfetch_make_id(1, i+1) == _sfetch_ring_dequeue(&dst));
-    }
-    _sfetch_channel_discard(&chn);
+    T(chn.free_lanes.head == 0);
+    T(chn.free_lanes.tail == 0);
+    T(chn.free_lanes.num == 0);
+    T(chn.free_lanes.buf == 0);
+    T(chn.user_sent.head == 0);
+    T(chn.user_sent.tail == 0);
+    T(chn.user_sent.num == 0);
+    T(chn.user_sent.buf == 0);
+    T(chn.user_incoming.head == 0);
+    T(chn.user_incoming.tail == 0);
+    T(chn.user_incoming.num == 0);
+    T(chn.user_incoming.buf == 0);
+    T(chn.thread_incoming.head == 0);
+    T(chn.thread_incoming.tail == 0);
+    T(chn.thread_incoming.num == 0);
+    T(chn.thread_incoming.buf == 0);
+    T(chn.thread_outgoing.head == 0);
+    T(chn.thread_outgoing.tail == 0);
+    T(chn.thread_outgoing.num == 0);
+    T(chn.thread_outgoing.buf == 0);
+    T(chn.user_outgoing.head == 0);
+    T(chn.user_outgoing.tail == 0);
+    T(chn.user_outgoing.num == 0);
+    T(chn.user_outgoing.buf == 0);
 }
 
 /* public API functions */
@@ -347,6 +357,7 @@ UTEST(sokol_fetch, setup_shutdown) {
     // check default values
     T(sfetch_desc().max_requests == 128);
     T(sfetch_desc().num_channels == 1);
+    T(sfetch_desc().num_lanes == 16);
     T(sfetch_desc().timeout_num_frames == 30);
     sfetch_shutdown();
     T(!sfetch_valid());
@@ -373,9 +384,9 @@ UTEST(sokol_fetch, max_userdata) {
 }
 
 static bool fail_open_passed;
-static void fail_open_callback(sfetch_handle_t h) {
+static void fail_open_callback(sfetch_response_t response) {
     /* if opening a file fails, it will immediate switch into CLOSED state */
-    if (sfetch_state(h) == SFETCH_STATE_FAILED) {
+    if (response.state == SFETCH_STATE_FAILED) {
         fail_open_passed = true;
     }
 }
@@ -387,7 +398,8 @@ UTEST(sokol_fetch, fail_open) {
         .callback = fail_open_callback,
     });
     fail_open_passed = false;
-    while (sfetch_handle_valid(h)) {
+    int frame_count = 0;
+    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
         sfetch_dowork();
         sleep_ms(1);
     }
@@ -403,15 +415,15 @@ static uint8_t load_file_buf[500000];
 // can call sfetch_setup/shutdown() on multiple threads, each thread will
 // get its own thread-local "sokol-fetch instance" and its own set of
 // IO-channel threads.
-static void load_file_callback(sfetch_handle_t h) {
-    const sfetch_state_t state = sfetch_state(h);
-    // when loading the whole file at once, the CLOSED state
+static void load_file_callback(sfetch_response_t response) {
+    const uint64_t combatsignal_file_size = 409482;
+    // when loading the whole file at once, the COMPLETED state
     // is the best place to grab/process the data
-    if (state == SFETCH_STATE_CLOSED) {
-        const sfetch_buffer_t data = sfetch_fetched_data(h);
-        if ((data.ptr == load_file_buf) &&
-            (data.num_bytes > 0) &&
-            (data.num_bytes < sizeof(load_file_buf)))
+    if (response.state == SFETCH_STATE_FETCHED) {
+        if ((response.content_size == combatsignal_file_size) &&
+            (response.chunk_offset == 0) &&
+            (response.chunk.ptr == load_file_buf) &&
+            (response.chunk.size == combatsignal_file_size))
         {
             load_file_passed = true;
         }
@@ -429,13 +441,14 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
         .callback = load_file_callback,
         .buffer = {
             .ptr = load_file_buf,
-            .num_bytes = sizeof(load_file_buf)
+            .size = sizeof(load_file_buf)
         }
     });
     // simulate a frame-loop for as long as the request is in flight, normally
     // the sfetch_dowork() function is just called somewhere in the frame
     // to pump messages in and out of the IO threads, and invoke user-callbacks
-    while (sfetch_handle_valid(h)) {
+    int frame_count = 0;
+    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
         sfetch_dowork();
         sleep_ms(1);
     }
