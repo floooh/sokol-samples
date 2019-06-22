@@ -677,4 +677,58 @@ UTEST(sokol_fetch, load_file_throttle) {
             T(0 == memcmp(load_file_throttle_content[0][0], load_file_throttle_content[pass][lane], combatsignal_file_size));
         }
     }
+    sfetch_shutdown();
+}
+
+/* test parallel fetches on multiple channels */
+#define LOAD_CHANNEL_NUM_CHANNELS (4)
+uint8_t load_channel_buf[LOAD_CHANNEL_NUM_CHANNELS][500000];
+bool load_channel_passed[LOAD_CHANNEL_NUM_CHANNELS];
+
+void load_channel_callback(sfetch_response_t response) {
+    assert(response.channel < LOAD_CHANNEL_NUM_CHANNELS);
+    assert(!load_channel_passed[response.channel]);
+    if (response.state == SFETCH_STATE_FETCHED) {
+        if ((response.content_size == combatsignal_file_size) &&
+            (response.chunk.size == combatsignal_file_size) &&
+            response.finished)
+        {
+            load_channel_passed[response.channel] = true;
+        }
+    }
+}
+
+UTEST(sokol_fetch, load_channel) {
+    for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
+        memset(load_channel_buf[chn], chn, sizeof(load_channel_buf[chn]));
+    }
+    sfetch_setup(&(sfetch_desc_t){
+        .num_channels = LOAD_CHANNEL_NUM_CHANNELS
+    });
+    sfetch_handle_t h[LOAD_CHANNEL_NUM_CHANNELS];
+    for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
+        h[chn] = sfetch_send(&(sfetch_request_t){
+            .path = "comsi.s3m",
+            .channel = chn,
+            .callback = load_channel_callback,
+            .buffer = {
+                .ptr = load_channel_buf[chn],
+                .size = sizeof(load_channel_buf[chn])
+            }
+        });
+    }
+    bool done = false;
+    int frame_count = 0;
+    while (!done && (frame_count++ < 1000)) {
+        done = true;
+        for (int i = 0; i < LOAD_CHANNEL_NUM_CHANNELS; i++) {
+            done &= !sfetch_handle_valid(h[i]);
+        }
+        sfetch_dowork();
+    }
+    for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
+        T(load_channel_passed[chn]);
+        T(0 == memcmp(load_channel_buf[0], load_channel_buf[chn], combatsignal_file_size));
+    }
+    sfetch_shutdown();
 }
