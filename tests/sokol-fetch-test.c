@@ -12,6 +12,9 @@
 #define T(b) EXPECT_TRUE(b)
 #define TSTR(s0, s1) EXPECT_TRUE(0 == strcmp(s0,s1))
 
+static uint8_t load_file_buf[500000];
+static const uint64_t combatsignal_file_size = 409482;
+
 typedef struct {
     int a, b, c;
 } userdata_t;
@@ -367,8 +370,6 @@ UTEST(sokol_fetch, fail_open) {
 }
 
 static bool load_file_fixed_buffer_passed;
-static uint8_t load_file_buf[500000];
-static const uint64_t combatsignal_file_size = 409482;
 
 // The file callback is called from the "current user thread" (the same
 // thread where the sfetch_send() for this request was called). Note that you
@@ -501,4 +502,179 @@ UTEST(sokol_fetch, load_file_no_buffer) {
     T(load_file_no_buffer_opened_passed);
     T(load_file_no_buffer_failed_passed);
     sfetch_shutdown();
+}
+
+
+/* test loading a big file via a small chunk-buffer, the callback will
+   be called multiple times with the FETCHED state until the entire file
+   is loaded
+*/
+static bool load_file_chunked_passed;
+static uint8_t load_chunk_buf[8192];
+static uint8_t load_file_chunked_content[500000];
+static void load_file_chunked_callback(sfetch_response_t response) {
+    if (response.state == SFETCH_STATE_FETCHED) {
+        assert(response.content_size <= sizeof(load_file_chunked_content));
+        const uint8_t* src = response.chunk.ptr;
+        uint8_t* dst = &load_file_chunked_content[response.chunk_offset];
+        size_t num_bytes = response.chunk.size;
+        memcpy(dst, src, num_bytes);
+        if (response.finished) {
+            load_file_chunked_passed = true;
+        }
+    }
+}
+
+UTEST(sokol_fetch, load_file_chunked) {
+    memset(load_file_buf, 0, sizeof(load_file_buf));
+    memset(load_chunk_buf, 0, sizeof(load_chunk_buf));
+    memset(load_file_chunked_content, 0, sizeof(load_file_chunked_content));
+    load_file_fixed_buffer_passed = false;
+    sfetch_setup(&(sfetch_desc_t){0});
+    // request for chunked-loading
+    sfetch_handle_t h0 = sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = load_file_chunked_callback,
+        .buffer = {
+            .ptr = load_chunk_buf,
+            .size = sizeof(load_chunk_buf)
+        }
+    });
+    // request for all-in-one loading for comparing with the chunked buffer
+    sfetch_handle_t h1 = sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = load_file_fixed_buffer_callback,
+        .buffer = {
+            .ptr = load_file_buf,
+            .size = sizeof(load_file_buf)
+        }
+    });
+    int frame_count = 0;
+    while ((sfetch_handle_valid(h0) || sfetch_handle_valid(h1)) && (frame_count++ < 1000)) {
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    T(load_file_chunked_content);
+    T(0 == memcmp(load_file_chunked_content, load_file_buf, combatsignal_file_size));
+    sfetch_shutdown();
+}
+
+/* load N big files in small chunks interleaved on the same channel via lanes */
+#define LOAD_FILE_LANES_NUM_LANES (4)
+
+uint8_t load_file_lanes_chunk_buf[LOAD_FILE_LANES_NUM_LANES][8192];
+uint8_t load_file_lanes_content[LOAD_FILE_LANES_NUM_LANES][500000];
+int load_file_lanes_passed[LOAD_FILE_LANES_NUM_LANES];
+static void load_file_lanes_callback(sfetch_response_t response) {
+    assert((response.channel == 0) && (response.lane < LOAD_FILE_LANES_NUM_LANES));
+    if (response.state == SFETCH_STATE_FETCHED) {
+        assert(response.content_size == combatsignal_file_size);
+        const uint8_t* src = response.chunk.ptr;
+        uint8_t* dst = &load_file_lanes_content[response.lane][response.chunk_offset];
+        size_t num_bytes = response.chunk.size;
+        memcpy(dst, src, num_bytes);
+        if (response.finished) {
+            load_file_lanes_passed[response.lane]++;
+        }
+    }
+}
+
+UTEST(sokol_fetch, load_file_lanes) {
+    for (int i = 0; i < LOAD_FILE_LANES_NUM_LANES; i++) {
+        memset(load_file_lanes_content[i], i, sizeof(load_file_lanes_content[i]));
+    }
+    sfetch_setup(&(sfetch_desc_t){
+        .num_channels = 1,
+        .num_lanes = LOAD_FILE_LANES_NUM_LANES,
+    });
+    sfetch_handle_t h[LOAD_FILE_LANES_NUM_LANES];
+    for (int lane = 0; lane < LOAD_FILE_LANES_NUM_LANES; lane++) {
+        h[lane] = sfetch_send(&(sfetch_request_t){
+            .path = "comsi.s3m",
+            .callback = load_file_lanes_callback,
+            .buffer = {
+                .ptr = load_file_lanes_chunk_buf[lane],
+                .size = sizeof(load_file_lanes_chunk_buf[lane])
+            }
+        });
+    }
+    bool done = false;
+    int frame_count = 0;
+    while (!done && (frame_count++ < 1000)) {
+        done = true;
+        for (int i = 0; i < LOAD_FILE_LANES_NUM_LANES; i++) {
+            done &= !sfetch_handle_valid(h[i]);
+        }
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    for (int i = 0; i < LOAD_FILE_LANES_NUM_LANES; i++) {
+        T(1 == load_file_lanes_passed[i]);
+        T(0 == memcmp(load_file_lanes_content[0], load_file_lanes_content[i], combatsignal_file_size));
+    }
+    sfetch_shutdown();
+}
+
+/* same as above, but issue more requests than available lanes to test if rate-limiting works */
+#define LOAD_FILE_THROTTLE_NUM_LANES (4)
+#define LOAD_FILE_THROTTLE_NUM_PASSES (3)
+#define LOAD_FILE_THROTTLE_NUM_REQUESTS (12)    // lanes * passes
+
+uint8_t load_file_throttle_chunk_buf[LOAD_FILE_THROTTLE_NUM_LANES][128000];
+uint8_t load_file_throttle_content[LOAD_FILE_THROTTLE_NUM_PASSES][LOAD_FILE_THROTTLE_NUM_LANES][500000];
+int load_file_throttle_passed[LOAD_FILE_THROTTLE_NUM_LANES];
+
+static void load_file_throttle_callback(sfetch_response_t response) {
+    assert((response.channel == 0) && (response.lane < LOAD_FILE_LANES_NUM_LANES));
+    if (response.state == SFETCH_STATE_FETCHED) {
+        assert(response.content_size == combatsignal_file_size);
+        assert(load_file_throttle_passed[response.lane] < LOAD_FILE_THROTTLE_NUM_PASSES);
+        const uint8_t* src = response.chunk.ptr;
+        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response.lane]][response.lane][response.chunk_offset];
+        size_t num_bytes = response.chunk.size;
+        memcpy(dst, src, num_bytes);
+        if (response.finished) {
+            load_file_throttle_passed[response.lane]++;
+        }
+    }
+}
+
+UTEST(sokol_fetch, load_file_throttle) {
+    for (int pass = 0; pass < LOAD_FILE_THROTTLE_NUM_PASSES; pass++) {
+        for (int lane = 0; lane < LOAD_FILE_THROTTLE_NUM_LANES; lane++) {
+            memset(load_file_throttle_content[pass][lane], 10*pass+lane, sizeof(load_file_throttle_content[pass][lane]));
+        }
+    }
+    sfetch_setup(&(sfetch_desc_t){
+        .num_channels = 1,
+        .num_lanes = LOAD_FILE_THROTTLE_NUM_LANES,
+    });
+    sfetch_handle_t h[LOAD_FILE_THROTTLE_NUM_REQUESTS];
+    for (int i = 0; i < LOAD_FILE_THROTTLE_NUM_REQUESTS; i++) {
+        h[i] = sfetch_send(&(sfetch_request_t){
+            .path = "comsi.s3m",
+            .callback = load_file_throttle_callback,
+            .buffer = {
+                .ptr = load_file_throttle_chunk_buf[i % LOAD_FILE_THROTTLE_NUM_LANES],
+                .size = sizeof(load_file_throttle_chunk_buf[0])
+            }
+        });
+        T(sfetch_handle_valid(h[i]));
+    }
+    bool done = false;
+    int frame_count = 0;
+    while (!done && (frame_count++ < 1000)) {
+        done = true;
+        for (int i = 0; i < LOAD_FILE_THROTTLE_NUM_REQUESTS; i++) {
+            done &= !sfetch_handle_valid(h[i]);
+        }
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    for (int lane = 0; lane < LOAD_FILE_THROTTLE_NUM_LANES; lane++) {
+        T(LOAD_FILE_THROTTLE_NUM_PASSES == load_file_throttle_passed[lane]);
+        for (int pass = 0; pass < LOAD_FILE_THROTTLE_NUM_PASSES; pass++) {
+            T(0 == memcmp(load_file_throttle_content[0][0], load_file_throttle_content[pass][lane], combatsignal_file_size));
+        }
+    }
 }
