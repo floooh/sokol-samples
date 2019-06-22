@@ -681,7 +681,7 @@ UTEST(sokol_fetch, load_file_throttle) {
 }
 
 /* test parallel fetches on multiple channels */
-#define LOAD_CHANNEL_NUM_CHANNELS (4)
+#define LOAD_CHANNEL_NUM_CHANNELS (16)
 uint8_t load_channel_buf[LOAD_CHANNEL_NUM_CHANNELS][500000];
 bool load_channel_passed[LOAD_CHANNEL_NUM_CHANNELS];
 
