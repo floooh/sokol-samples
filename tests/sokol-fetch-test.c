@@ -16,6 +16,8 @@ typedef struct {
     int a, b, c;
 } userdata_t;
 
+static const _sfetch_item_t zeroed_item;
+
 #ifdef _WIN32
 #include <windows.h>
 static void sleep_ms(int ms) {
@@ -58,7 +60,7 @@ UTEST(sokol_fetch, item_init_discard) {
         .user_data = &user_data,
         .user_data_size = sizeof(user_data)
     };
-    _sfetch_item_t item = {0};
+    _sfetch_item_t item = zeroed_item;
     uint32_t slot_id = _sfetch_make_id(1, 1);
     _sfetch_item_init(&item, slot_id, &request);
     T(item.handle.id == slot_id);
@@ -86,7 +88,7 @@ UTEST(sokol_fetch, item_init_path_overflow) {
     sfetch_request_t request = {
         .path = "012345678901234567890123456789012",
     };
-    _sfetch_item_t item = {0};
+    _sfetch_item_t item = zeroed_item;
     _sfetch_item_init(&item, _sfetch_make_id(1, 1), &request);
     T(item.path.buf[0] == 0);
 }
@@ -98,7 +100,7 @@ UTEST(sokol_fetch, item_init_userdata_overflow) {
         .user_data = big_data,
         .user_data_size = sizeof(big_data)
     };
-    _sfetch_item_t item = {0};
+    _sfetch_item_t item = zeroed_item;
     _sfetch_item_init(&item, _sfetch_make_id(1, 1), &request);
     T(item.user.user_data_size == 0);
     T(item.user.user_data[0] == 0);
@@ -316,7 +318,6 @@ UTEST(sokol_fetch, setup_shutdown) {
     T(sfetch_desc().max_requests == 128);
     T(sfetch_desc().num_channels == 1);
     T(sfetch_desc().num_lanes == 16);
-    T(sfetch_desc().timeout_num_frames == 30);
     sfetch_shutdown();
     T(!sfetch_valid());
 }
