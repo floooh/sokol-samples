@@ -306,8 +306,10 @@ UTEST(sokol_fetch, channel_init_discard) {
     T(_sfetch_ring_full(&chn.free_lanes));
     T(_sfetch_ring_empty(&chn.user_sent));
     T(_sfetch_ring_empty(&chn.user_incoming));
+    #if !defined(__EMSCRIPTEN__)
     T(_sfetch_ring_empty(&chn.thread_incoming));
     T(_sfetch_ring_empty(&chn.thread_outgoing));
+    #endif
     T(_sfetch_ring_empty(&chn.user_outgoing));
     _sfetch_channel_discard(&chn);
     T(!chn.valid);
