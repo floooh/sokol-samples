@@ -182,7 +182,7 @@ static void fetch_callback(sfetch_response_t response) {
         */
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
-        const uint8_t* pixels = stbi_load_from_memory(
+        stbi_uc* pixels = stbi_load_from_memory(
             response.chunk.ptr,
             response.chunk.size,
             &png_width, &png_height,
@@ -198,6 +198,7 @@ static void fetch_callback(sfetch_response_t response) {
                     .size = png_width * png_height * 4,
                 }
             });
+            stbi_image_free(pixels);
         }
     }
     /* if everything is done (no matter if success or failure), make sure we don't leak any memory */
