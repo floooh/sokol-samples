@@ -133,7 +133,6 @@ See below for detailed the API documentation.
 #include <stdint.h>
 #include <stdio.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -594,6 +593,11 @@ plm_samples_t *plm_audio_decode(plm_audio_t *self);
 
 #include <string.h>
 #include <stdlib.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtypedef-redefinition"
+#endif
 
 #ifndef TRUE
 #define TRUE 1
@@ -3397,5 +3401,9 @@ void plm_audio_matrix_transform(int s[32][3], int ss, float *d, int dp) {
 	d[dp + 15] = t02; d[dp + 16] = 0.0;
 };
 
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #endif // PL_MPEG_IMPLEMENTATION
