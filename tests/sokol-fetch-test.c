@@ -556,7 +556,7 @@ UTEST(sokol_fetch, load_file_chunked) {
         sfetch_dowork();
         sleep_ms(1);
     }
-    T(load_file_chunked_content);
+    T(load_file_chunked_passed);
     T(0 == memcmp(load_file_chunked_content, load_file_buf, combatsignal_file_size));
     sfetch_shutdown();
 }
