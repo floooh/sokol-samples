@@ -20,7 +20,7 @@ def copy_files(src_dir, dst_dir, yml):
             os.makedirs(os.path.dirname(dst))
         try:
             shutil.copyfile(src, dst)
-        except IOError, err:
+        except IOError as err:
             # show a proper error if file copying fails
             util.fmtError("Failed to copy file '{}' with '{}'".format(err.filename, err.strerror))
 
