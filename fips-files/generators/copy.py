@@ -48,7 +48,7 @@ def generate(input, out_src, out_hdr, args):
     with open(input, 'r') as f:
         try:
             yml = yaml.load(f)
-        except yaml.YAMLError, exc:
+        except yaml.YAMLError as exc:
             # show a proper error if YAML parsing fails
             util.setErrorLocation(exc.problem_mark.name, exc.problem_mark.line-1)
             util.fmtError('YAML error: {}'.format(exc.problem))
