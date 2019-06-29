@@ -727,6 +727,7 @@ UTEST(sokol_fetch, load_channel) {
             done &= !sfetch_handle_valid(h[i]);
         }
         sfetch_dowork();
+        sleep_ms(1);
     }
     for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
         T(load_channel_passed[chn]);

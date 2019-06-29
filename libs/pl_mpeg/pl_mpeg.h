@@ -240,7 +240,7 @@ typedef void(*plm_buffer_load_callback)(plm_buffer_t *self, void *user);
 // Create a plmpeg instance with a filename. Returns NULL if the file could not
 // be opened.
 
-plm_t *plm_create_with_filename(const char *filename);
+//plm_t *plm_create_with_filename(const char *filename);
 
 
 // Create a plmpeg instance with file handle. Pass TRUE to close_when_done
@@ -383,7 +383,7 @@ plm_samples_t *plm_decode_audio(plm_t *self);
 // Create a buffer instance with a filename. Returns NULL if the file could not
 // be opened.
 
-plm_buffer_t *plm_buffer_create_with_filename(const char *filename);
+//plm_buffer_t *plm_buffer_create_with_filename(const char *filename);
 
 
 // Create a buffer instance with file handle. Pass TRUE to close_when_done
@@ -634,14 +634,6 @@ void plm_handle_end(plm_t *self);
 void plm_read_video_packet(plm_buffer_t *buffer, void *user);
 void plm_read_audio_packet(plm_buffer_t *buffer, void *user);
 void plm_read_packets(plm_t *self, int requested_type);
-
-plm_t *plm_create_with_filename(const char *filename) {
-	plm_buffer_t *buffer = plm_buffer_create_with_filename(filename);
-	if (!buffer) {
-		return NULL;
-	}
-	return plm_create_with_buffer(buffer, TRUE);
-}
 
 plm_t *plm_create_with_file(FILE *fh, int close_when_done) {
 	plm_buffer_t *buffer = plm_buffer_create_with_file(fh, close_when_done);
@@ -943,14 +935,6 @@ int plm_buffer_find_start_code(plm_buffer_t *self, int code);
 int plm_buffer_no_start_code(plm_buffer_t *self);
 int16_t plm_buffer_read_vlc(plm_buffer_t *self, const plm_vlc_t *table);
 uint16_t plm_buffer_read_vlc_uint(plm_buffer_t *self, const plm_vlc_uint_t *table);
-
-plm_buffer_t *plm_buffer_create_with_filename(const char *filename) {
-	FILE *fh = fopen(filename, "rb");
-	if (!fh) {
-		return NULL;
-	}
-	return plm_buffer_create_with_file(fh, TRUE);
-}
 
 plm_buffer_t *plm_buffer_create_with_file(FILE *fh, int close_when_done) {
 	plm_buffer_t *self = plm_buffer_create_with_capacity(PLM_BUFFER_DEFAULT_SIZE);
@@ -2801,10 +2785,10 @@ static const uint8_t PLM_AUDIO_QUANT_LUT_STEP_1[2][16] = {
 };
 
 // Quantizer lookup, step 2: bitrate class, sample rate -> B2 table idx, sblimit
-static const uint8_t PLM_AUDIO_QUANT_TAB_A = (27 | 64);   // Table 3-B.2a: high-rate, sblimit = 27
-static const uint8_t PLM_AUDIO_QUANT_TAB_B = (30 | 64);   // Table 3-B.2b: high-rate, sblimit = 30
-static const uint8_t PLM_AUDIO_QUANT_TAB_C = 8;           // Table 3-B.2c:  low-rate, sblimit =  8
-static const uint8_t PLM_AUDIO_QUANT_TAB_D = 12;          // Table 3-B.2d:  low-rate, sblimit = 12
+#define PLM_AUDIO_QUANT_TAB_A (91) //(27 | 64);   // Table 3-B.2a: high-rate, sblimit = 27
+#define PLM_AUDIO_QUANT_TAB_B (94) // (30 | 64);   // Table 3-B.2b: high-rate, sblimit = 30
+#define PLM_AUDIO_QUANT_TAB_C (8)           // Table 3-B.2c:  low-rate, sblimit =  8
+#define PLM_AUDIO_QUANT_TAB_D (12)          // Table 3-B.2d:  low-rate, sblimit = 12
 
 static const uint8_t QUANT_LUT_STEP_2[3][3] = {
 	//                44.1 kHz,                   48 kHz,                   32 kHz

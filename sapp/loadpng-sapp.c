@@ -184,7 +184,7 @@ static void fetch_callback(sfetch_response_t response) {
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
             response.chunk.ptr,
-            response.chunk.size,
+            (int)response.chunk.size,
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {

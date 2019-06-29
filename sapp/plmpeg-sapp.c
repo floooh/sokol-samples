@@ -258,7 +258,7 @@ static void plmpeg_load_callback(plm_buffer_t* self, void* user) {
         state.cur_read_pos = 0;
     }
     plm_buffer_discard_read_bytes(self);
-    uint32_t bytes_wanted = self->capacity - self->length;
+    uint32_t bytes_wanted = (uint32_t) (self->capacity - self->length);
     uint32_t bytes_available = BUFFER_SIZE - state.cur_read_pos;
     uint32_t bytes_to_copy = (bytes_wanted > bytes_available) ? bytes_available : bytes_wanted;
     uint8_t* dst = self->bytes + self->length;
