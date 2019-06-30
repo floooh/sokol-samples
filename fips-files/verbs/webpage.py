@@ -12,10 +12,10 @@ from mod import log, util, project, emscripten, android
 # sample attributes
 samples = [
     [ 'clear', 'clear-sapp.c', None],
-    [ 'triangle', 'triangle-sapp.c', 'triangle-sapp.glsl' ],
-    [ 'quad', 'quad-sapp.c', 'quad-sapp.glsl' ],
+    [ 'triangle', 'triangle-sapp.c', 'triangle-sapp.glsl'],
+    [ 'quad', 'quad-sapp.c', 'quad-sapp.glsl'],
     [ 'bufferoffsets', 'bufferoffsets-sapp.c', 'bufferoffsets-sapp.glsl'],
-    [ 'cube', 'cube-sapp.c', 'cube-sapp.glsl' ],
+    [ 'cube', 'cube-sapp.c', 'cube-sapp.glsl'],
     [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
     [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
@@ -35,7 +35,15 @@ samples = [
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
     [ 'sgl', 'sgl-sapp.c', None ],
-    [ 'sgl-lines', 'sgl-lines-sapp.c', None ]
+    [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
+    [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
+    [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl']
+]
+
+# assets that must also be copied
+assets = [
+    "baboon.png",
+    "bjork-all-is-full-of-love.mpg"
 ]
 
 # webpage template arguments
@@ -51,18 +59,16 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, BuildConfig)
 
     # create directories
-    for platform in ['wasm'] :
-        platform_dir = '{}/{}'.format(webpage_dir, platform)
-        if not os.path.isdir(platform_dir) :
-            os.makedirs(platform_dir)
+    if not os.path.exists(webpage_dir):
+        os.makedirs(webpage_dir)
 
     # build the thumbnail gallery
     content = ''
-    for sample in samples :
+    for sample in samples:
         name = sample[0]
         log.info('> adding thumbnail for {}'.format(name))
-        url = "wasm/{}-sapp.html".format(name)
-        ui_url = "wasm/{}-sapp-ui.html".format(name)
+        url = "{}-sapp.html".format(name)
+        ui_url = "{}-sapp-ui.html".format(name)
         img_name = name + '.jpg'
         img_path = proj_dir + '/webpage/' + img_name
         if not os.path.exists(img_path):
@@ -76,19 +82,19 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         content += '</div>\n'
 
     # populate the html template, and write to the build directory
-    with open(proj_dir + '/webpage/index.html', 'r') as f :
+    with open(proj_dir + '/webpage/index.html', 'r') as f:
         templ = Template(f.read())
     html = templ.safe_substitute(samples=content)
     with open(webpage_dir + '/index.html', 'w') as f :
         f.write(html)
 
     # copy other required files
-    for name in ['dummy.jpg', 'favicon.png'] :
+    for name in ['dummy.jpg', 'favicon.png']:
         log.info('> copy file: {}'.format(name))
         shutil.copy(proj_dir + '/webpage/' + name, webpage_dir + '/' + name)
 
     # generate WebAssembly HTML pages
-    if emscripten.check_exists(fips_dir) :
+    if emscripten.check_exists(fips_dir):
         for sample in samples :
             name = sample[0]
             source = sample[1]
@@ -98,7 +104,7 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
                 for ext in ['wasm', 'js'] :
                     src_path = '{}/{}-{}.{}'.format(wasm_deploy_dir, name, postfix, ext)
                     if os.path.isfile(src_path) :
-                        shutil.copy(src_path, '{}/wasm/'.format(webpage_dir))
+                        shutil.copy(src_path, '{}/'.format(webpage_dir))
                     with open(proj_dir + '/webpage/wasm.html', 'r') as f :
                         templ = Template(f.read())
                     src_url = GitHubSamplesURL + source
@@ -109,8 +115,15 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
                         glsl_url = GitHubSamplesURL + glsl
                         glsl_hidden = ""
                     html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url, glsl=glsl_url, hidden=glsl_hidden)
-                    with open('{}/wasm/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
+                    with open('{}/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
                         f.write(html)
+
+    # copy assets from deploy directory
+    for asset in assets:
+        log.info('> copy asset file: {}'.format(asset))
+        src_path = '{}/{}'.format(wasm_deploy_dir, asset)
+        if os.path.isfile(src_path):
+            shutil.copy(src_path, webpage_dir)
 
     # copy the screenshots
     for sample in samples :

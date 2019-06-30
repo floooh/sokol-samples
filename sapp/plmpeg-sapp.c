@@ -142,9 +142,12 @@ static void frame(void) {
         plm_set_audio_decode_callback(state.plm, audio_cb, 0);
         plm_set_loop(state.plm, true);
         plm_set_audio_enabled(state.plm, true, 0);
+        plm_set_audio_lead_time(state.plm, 0.25);
         if (plm_get_num_audio_streams(state.plm) > 0) {
             saudio_setup(&(saudio_desc){
                 .sample_rate = plm_get_samplerate(state.plm),
+                .buffer_frames = 8192,
+                .num_packets = 256,
                 .num_channels = 2,
             });
         }
