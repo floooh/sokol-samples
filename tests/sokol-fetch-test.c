@@ -735,3 +735,32 @@ UTEST(sokol_fetch, load_channel) {
     }
     sfetch_shutdown();
 }
+
+bool load_file_cancel_passed = false;
+void load_file_cancel_callback(sfetch_response_t response) {
+    if (response.state == SFETCH_STATE_OPENED) {
+        sfetch_cancel(response.handle);
+    }
+    if (response.state == SFETCH_STATE_FAILED) {
+        if ((response.cancelled) && (response.finished)) {
+            load_file_cancel_passed = true;
+        }
+    }
+}
+
+UTEST(sokol_fetch, load_file_cancel) {
+    sfetch_setup(&(sfetch_desc_t){
+        .num_channels = 1
+    });
+    sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = load_file_cancel_callback,
+    });
+    int frame_count = 0;
+    while (sfetch_handle_valid(h) && (frame_count++ < 1000)) {
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    T(load_file_cancel_passed);
+}
+
