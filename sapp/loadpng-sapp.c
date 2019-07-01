@@ -193,6 +193,8 @@ static void fetch_callback(sfetch_response_t response) {
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .min_filter = SG_FILTER_LINEAR,
+                .mag_filter = SG_FILTER_LINEAR,
                 .content.subimage[0][0] = {
                     .ptr = pixels,
                     .size = png_width * png_height * 4,
