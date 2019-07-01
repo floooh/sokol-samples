@@ -5,7 +5,9 @@
 //  https://github.com/phoboslab/pl_mpeg
 //  ...and sokol_fetch.h for streaming the video data.
 //------------------------------------------------------------------------------
-#include <assert.h>
+#define HANDMADE_MATH_IMPLEMENTATION
+#define HANDMADE_MATH_NO_SSE
+#include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_audio.h"
@@ -14,6 +16,9 @@
 #include "plmpeg-sapp.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
 #include "pl_mpeg/pl_mpeg.h"
+#include <assert.h>
+
+#define SAMPLE_COUNT (4)
 
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
@@ -35,6 +40,13 @@ static uint32_t ring_count(const ring_t* rb);
 static void ring_enqueue(ring_t* rb, int val);
 static int ring_dequeue(ring_t* rb);
 
+// a vertex with position and texcoords
+typedef struct {
+    float x, y, z;
+    float nx, ny, nz;
+    float u, v;
+} vertex_t;
+
 // application state
 static struct {
     plm_t* plm;
@@ -51,6 +63,7 @@ static struct {
     int cur_download_buffer;
     int cur_read_buffer;
     uint32_t cur_read_pos;
+    float ry;
 } state;
 
 // sokol-fetch callback
@@ -99,24 +112,68 @@ static void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
-    __dbgui_setup(1);
+    __dbgui_setup(SAMPLE_COUNT);
 
-    // create a vertex buffer and pipeline object to render a 'fullscreen triangle'
-    const float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };
+    // vertex-, index-buffer, shader and pipeline
+    const vertex_t vertices[] = {
+        /* pos         normal    uvs */
+        { -1, -1, -1,  0, 0,-1,  1, 1 },
+        {  1, -1, -1,  0, 0,-1,  0, 1 },
+        {  1,  1, -1,  0, 0,-1,  0, 0 },
+        { -1,  1, -1,  0, 0,-1,  1, 0 },
+
+        { -1, -1,  1,  0, 0, 1,  0, 1 },
+        {  1, -1,  1,  0, 0, 1,  1, 1 },
+        {  1,  1,  1,  0, 0, 1,  1, 0 },
+        { -1,  1,  1,  0, 0, 1,  0, 0 },
+
+        { -1, -1, -1, -1, 0, 0,  0, 1 },
+        { -1,  1, -1, -1, 0, 0,  0, 0 },
+        { -1,  1,  1, -1, 0, 0,  1, 0 },
+        { -1, -1,  1, -1, 0, 0,  1, 1 },
+
+        {  1, -1, -1,  1, 0, 0,  1, 1 },
+        {  1,  1, -1,  1, 0, 0,  1, 0 },
+        {  1,  1,  1,  1, 0, 0,  0, 0 },
+        {  1, -1,  1,  1, 0, 0,  0, 1 },
+    };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(fsq_verts),
-        .content = fsq_verts,
+        .size = sizeof(vertices),
+        .content = vertices,
     });
+
+    const uint16_t indices[] = {
+        0, 1, 2,  0, 2, 3,
+        6, 5, 4,  7, 6, 4,
+        8, 9, 10,  8, 10, 11,
+        14, 13, 12,  15, 14, 12,
+    };
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .content = indices
+    });
+
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+            .attrs[ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
+            .attrs[ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
         },
         .shader = sg_make_shader(plmpeg_shader_desc()),
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true
+        },
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_NONE,
+            .sample_count = SAMPLE_COUNT
+        }
     });
 
-    // don't need to clear since the whole framebuffer is overwritten
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_DONTCARE }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.569f, 0.918f, 1.0f } }
     };
 
     // NOTE: texture creation is deferred until first frame is decoded
@@ -146,19 +203,29 @@ static void frame(void) {
         if (plm_get_num_audio_streams(state.plm) > 0) {
             saudio_setup(&(saudio_desc){
                 .sample_rate = plm_get_samplerate(state.plm),
-                .buffer_frames = 8192,
+                .buffer_frames = 4096,
                 .num_packets = 256,
                 .num_channels = 2,
             });
         }
     }
 
+    // compute model-view-projection matrix for vertex shader
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    vs_params_t vs_params;
+    state.ry += -0.1f;
+    hmm_mat4 model = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     if (state.bind.fs_images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_draw(0, 3, 1);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        sg_draw(0, 24, 1);
     }
     __dbgui_draw();
     sg_end_pass();
@@ -284,6 +351,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 960,
         .height = 540,
+        .sample_count = SAMPLE_COUNT,
         .gl_force_gles2 = true,
         .window_title = "pl_mpeg demo"
     };

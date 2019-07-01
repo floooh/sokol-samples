@@ -67,8 +67,8 @@ static void init(void) {
     */
     state.bind.fs_images[SLOT_tex] = sg_alloc_image();
 
-    /* cube vertex buffer with packed colors and texcoords */
-    vertex_t vertices[] = {
+    /* cube vertex buffer with packed texcoords */
+    const vertex_t vertices[] = {
         /* pos                  uvs */
         { -1.0f, -1.0f, -1.0f,      0,     0 },
         {  1.0f, -1.0f, -1.0f,  32767,     0 },
@@ -107,7 +107,7 @@ static void init(void) {
     });
 
     /* create an index buffer for the cube */
-    uint16_t indices[] = {
+    const uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,

@@ -1,10 +1,19 @@
+@ctype mat4 hmm_mat4
+
 @vs vs
-in vec2 pos;
+uniform vs_params {
+    mat4 mvp;
+};
+
+in vec4 pos;
+in vec3 normal;
+in vec2 texcoord;
+
 out vec2 uv;
 
 void main() {
-    uv = pos;
-    gl_Position = vec4((pos * 2.0 - 1.0) * vec2(1.0, -1.0), 0.0, 1.0);
+    gl_Position = mvp * (pos * vec4(1.76, 1.0, 1.76, 1.0) + vec4(normal * 0.5, 0.0));
+    uv = texcoord;
 }
 @end
 
