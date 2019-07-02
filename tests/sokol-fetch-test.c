@@ -749,5 +749,6 @@ UTEST(sokol_fetch, load_file_cancel) {
         sleep_ms(1);
     }
     T(load_file_cancel_passed);
+    sfetch_shutdown();
 }
 
