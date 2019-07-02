@@ -95,10 +95,8 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = filename,
         .callback = fetch_callback,
-        .buffer = {
-            .ptr = buf[state.cur_download_buffer],
-            .size = BUFFER_SIZE
-        }
+        .buffer_ptr = buf[state.cur_download_buffer],
+        .buffer_size = BUFFER_SIZE
     });
 
     // initialize sokol-gfx
@@ -299,10 +297,8 @@ static void fetch_callback(sfetch_response_t response) {
         else {
             // ...otherwise start streaming into the next free buffer
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
-            sfetch_set_buffer(response.handle, &(sfetch_buffer_t){
-                .ptr = buf[state.cur_download_buffer],
-                .size = BUFFER_SIZE
-            });
+            sfetch_unbind_buffer(response.handle);
+            sfetch_bind_buffer(response.handle, buf[state.cur_download_buffer], BUFFER_SIZE);
         }
     }
     else if (response.state == SFETCH_STATE_PAUSED) {
@@ -310,10 +306,8 @@ static void fetch_callback(sfetch_response_t response) {
         // decoding has caught up
         if (!ring_empty(&state.free_buffers)) {
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
-            sfetch_set_buffer(response.handle, &(sfetch_buffer_t){
-                .ptr = buf[state.cur_download_buffer],
-                .size = BUFFER_SIZE
-            });
+            sfetch_unbind_buffer(response.handle);
+            sfetch_bind_buffer(response.handle, buf[state.cur_download_buffer], BUFFER_SIZE);
             sfetch_continue(response.handle);
         }
     }

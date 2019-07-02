@@ -171,10 +171,8 @@ static void fetch_callback(sfetch_response_t response) {
            sokol-fetch about it (we could also provide an buffer upfront in
            sfetch_send() if we know a maximum file size)
         */
-        sfetch_set_buffer(response.handle, &(sfetch_buffer_t){
-            .ptr = malloc(response.content_size),
-            .size = response.content_size
-        });
+        void* buf_ptr = malloc(response.content_size);
+        sfetch_bind_buffer(response.handle, buf_ptr, response.content_size);
     }
     else if (response.state == SFETCH_STATE_FETCHED) {
         /* the file data has been fetched, since we provided a big-enough
@@ -183,8 +181,8 @@ static void fetch_callback(sfetch_response_t response) {
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
-            response.chunk.ptr,
-            (int)response.chunk.size,
+            response.buffer_ptr,
+            (int)response.fetched_size,
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
@@ -205,8 +203,8 @@ static void fetch_callback(sfetch_response_t response) {
     }
     /* if everything is done (no matter if success or failure), make sure we don't leak any memory */
     if (response.finished) {
-        if (response.chunk.ptr) {
-            free(response.chunk.ptr);
+        if (response.buffer_ptr) {
+            free(response.buffer_ptr);
         }
     }
 }

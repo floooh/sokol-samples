@@ -60,7 +60,7 @@ UTEST(sokol_fetch, item_init_discard) {
     sfetch_request_t request = {
         .channel = 4,
         .path = "hello_world.txt",
-        .user_data = &user_data,
+        .user_data_ptr = &user_data,
         .user_data_size = sizeof(user_data)
     };
     _sfetch_item_t item = zeroed_item;
@@ -100,7 +100,7 @@ UTEST(sokol_fetch, item_init_userdata_overflow) {
     uint8_t big_data[128] = { 0xFF };
     sfetch_request_t request = {
         .path = "hello_world.txt",
-        .user_data = big_data,
+        .user_data_ptr = big_data,
         .user_data_size = sizeof(big_data)
     };
     _sfetch_item_t item = zeroed_item;
@@ -132,10 +132,8 @@ UTEST(sokol_fetch, pool_alloc_free) {
     _sfetch_pool_init(&pool, num_items);
     uint32_t slot_id = _sfetch_pool_item_alloc(&pool, &(sfetch_request_t){
         .path = "hello_world.txt",
-        .buffer = {
-            .ptr = buf,
-            .size = sizeof(buf)
-        },
+        .buffer_ptr = buf,
+        .buffer_size = sizeof(buf)
     });
     T(slot_id == 0x00010001);
     T(pool.items[1].state == SFETCH_STATE_ALLOCATED);
@@ -383,9 +381,10 @@ static void load_file_fixed_buffer_callback(sfetch_response_t response) {
     // is the best place to grab/process the data
     if (response.state == SFETCH_STATE_FETCHED) {
         if ((response.content_size == combatsignal_file_size) &&
-            (response.chunk_offset == 0) &&
-            (response.chunk.ptr == load_file_buf) &&
-            (response.chunk.size == combatsignal_file_size) &&
+            (response.content_offset == 0) &&
+            (response.fetched_size == combatsignal_file_size) &&
+            (response.buffer_ptr == load_file_buf) &&
+            (response.buffer_size == sizeof(load_file_buf)) &&
             response.finished)
         {
             load_file_fixed_buffer_passed = true;
@@ -403,10 +402,8 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
     sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = load_file_fixed_buffer_callback,
-        .buffer = {
-            .ptr = load_file_buf,
-            .size = sizeof(load_file_buf)
-        }
+        .buffer_ptr = load_file_buf,
+        .buffer_size = sizeof(load_file_buf)
     });
     // simulate a frame-loop for as long as the request is in flight, normally
     // the sfetch_dowork() function is just called somewhere in the frame
@@ -426,23 +423,22 @@ static bool load_file_unknown_size_fetched_passed;
 static void load_file_unknown_size_callback(sfetch_response_t response) {
     if (response.state == SFETCH_STATE_OPENED) {
         if ((response.content_size == combatsignal_file_size) &&
-            (response.chunk_offset == 0) &&
-            (response.chunk.ptr == 0) &&
-            (response.chunk.size == 0) &&
+            (response.content_offset == 0) &&
+            (response.fetched_size == 0) &&
+            (response.buffer_ptr == 0) &&
+            (response.buffer_size == 0) &&
             !response.finished)
         {
             load_file_unknown_size_opened_passed = true;
-            sfetch_set_buffer(response.handle, &(sfetch_buffer_t){
-                .ptr = load_file_buf,
-                .size = sizeof(load_file_buf)
-            });
+            sfetch_bind_buffer(response.handle, load_file_buf, sizeof(load_file_buf));
         }
     }
     else if (response.state == SFETCH_STATE_FETCHED) {
         if ((response.content_size == combatsignal_file_size) &&
-            (response.chunk_offset == 0) &&
-            (response.chunk.ptr == load_file_buf) &&
-            (response.chunk.size == combatsignal_file_size) &&
+            (response.content_offset == 0) &&
+            (response.fetched_size == combatsignal_file_size) &&
+            (response.buffer_ptr == load_file_buf) &&
+            (response.buffer_size == sizeof(load_file_buf)) &&
             response.finished)
         {
             load_file_unknown_size_fetched_passed = true;
@@ -473,9 +469,10 @@ static bool load_file_no_buffer_failed_passed;
 static void load_file_no_buffer_callback(sfetch_response_t response) {
     if (response.state == SFETCH_STATE_OPENED) {
         if ((response.content_size == combatsignal_file_size) &&
-            (response.chunk_offset == 0) &&
-            (response.chunk.ptr == 0) &&
-            (response.chunk.size == 0) &&
+            (response.content_offset == 0) &&
+            (response.fetched_size == 0) &&
+            (response.buffer_ptr == 0) &&
+            (response.buffer_size == 0) &&
             !response.finished)
         {
             /* DO NOT provide a buffer here, see if that properly fails */
@@ -517,9 +514,9 @@ static uint8_t load_file_chunked_content[500000];
 static void load_file_chunked_callback(sfetch_response_t response) {
     if (response.state == SFETCH_STATE_FETCHED) {
         assert(response.content_size <= sizeof(load_file_chunked_content));
-        const uint8_t* src = response.chunk.ptr;
-        uint8_t* dst = &load_file_chunked_content[response.chunk_offset];
-        size_t num_bytes = response.chunk.size;
+        const uint8_t* src = response.buffer_ptr;
+        uint8_t* dst = &load_file_chunked_content[response.content_offset];
+        size_t num_bytes = response.fetched_size;
         memcpy(dst, src, num_bytes);
         if (response.finished) {
             load_file_chunked_passed = true;
@@ -537,19 +534,15 @@ UTEST(sokol_fetch, load_file_chunked) {
     sfetch_handle_t h0 = sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = load_file_chunked_callback,
-        .buffer = {
-            .ptr = load_chunk_buf,
-            .size = sizeof(load_chunk_buf)
-        }
+        .buffer_ptr = load_chunk_buf,
+        .buffer_size = sizeof(load_chunk_buf)
     });
     // request for all-in-one loading for comparing with the chunked buffer
     sfetch_handle_t h1 = sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = load_file_fixed_buffer_callback,
-        .buffer = {
-            .ptr = load_file_buf,
-            .size = sizeof(load_file_buf)
-        }
+        .buffer_ptr = load_file_buf,
+        .buffer_size = sizeof(load_file_buf)
     });
     int frame_count = 0;
     while ((sfetch_handle_valid(h0) || sfetch_handle_valid(h1)) && (frame_count++ < 1000)) {
@@ -571,9 +564,9 @@ static void load_file_lanes_callback(sfetch_response_t response) {
     assert((response.channel == 0) && (response.lane < LOAD_FILE_LANES_NUM_LANES));
     if (response.state == SFETCH_STATE_FETCHED) {
         assert(response.content_size == combatsignal_file_size);
-        const uint8_t* src = response.chunk.ptr;
-        uint8_t* dst = &load_file_lanes_content[response.lane][response.chunk_offset];
-        size_t num_bytes = response.chunk.size;
+        const uint8_t* src = response.buffer_ptr;
+        uint8_t* dst = &load_file_lanes_content[response.lane][response.content_offset];
+        size_t num_bytes = response.fetched_size;
         memcpy(dst, src, num_bytes);
         if (response.finished) {
             load_file_lanes_passed[response.lane]++;
@@ -594,10 +587,8 @@ UTEST(sokol_fetch, load_file_lanes) {
         h[lane] = sfetch_send(&(sfetch_request_t){
             .path = "comsi.s3m",
             .callback = load_file_lanes_callback,
-            .buffer = {
-                .ptr = load_file_lanes_chunk_buf[lane],
-                .size = sizeof(load_file_lanes_chunk_buf[lane])
-            }
+            .buffer_ptr = load_file_lanes_chunk_buf[lane],
+            .buffer_size = sizeof(load_file_lanes_chunk_buf[lane])
         });
     }
     bool done = false;
@@ -631,9 +622,9 @@ static void load_file_throttle_callback(sfetch_response_t response) {
     if (response.state == SFETCH_STATE_FETCHED) {
         assert(response.content_size == combatsignal_file_size);
         assert(load_file_throttle_passed[response.lane] < LOAD_FILE_THROTTLE_NUM_PASSES);
-        const uint8_t* src = response.chunk.ptr;
-        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response.lane]][response.lane][response.chunk_offset];
-        size_t num_bytes = response.chunk.size;
+        const uint8_t* src = response.buffer_ptr;
+        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response.lane]][response.lane][response.content_offset];
+        size_t num_bytes = response.fetched_size;
         memcpy(dst, src, num_bytes);
         if (response.finished) {
             load_file_throttle_passed[response.lane]++;
@@ -656,10 +647,8 @@ UTEST(sokol_fetch, load_file_throttle) {
         h[i] = sfetch_send(&(sfetch_request_t){
             .path = "comsi.s3m",
             .callback = load_file_throttle_callback,
-            .buffer = {
-                .ptr = load_file_throttle_chunk_buf[i % LOAD_FILE_THROTTLE_NUM_LANES],
-                .size = sizeof(load_file_throttle_chunk_buf[0])
-            }
+            .buffer_ptr = load_file_throttle_chunk_buf[i % LOAD_FILE_THROTTLE_NUM_LANES],
+            .buffer_size = sizeof(load_file_throttle_chunk_buf[0])
         });
         T(sfetch_handle_valid(h[i]));
     }
@@ -692,7 +681,7 @@ void load_channel_callback(sfetch_response_t response) {
     assert(!load_channel_passed[response.channel]);
     if (response.state == SFETCH_STATE_FETCHED) {
         if ((response.content_size == combatsignal_file_size) &&
-            (response.chunk.size == combatsignal_file_size) &&
+            (response.fetched_size == combatsignal_file_size) &&
             response.finished)
         {
             load_channel_passed[response.channel] = true;
@@ -713,10 +702,8 @@ UTEST(sokol_fetch, load_channel) {
             .path = "comsi.s3m",
             .channel = chn,
             .callback = load_channel_callback,
-            .buffer = {
-                .ptr = load_channel_buf[chn],
-                .size = sizeof(load_channel_buf[chn])
-            }
+            .buffer_ptr = load_channel_buf[chn],
+            .buffer_size = sizeof(load_channel_buf[chn])
         });
     }
     bool done = false;
