@@ -11,6 +11,7 @@
 #include "sokol_audio.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_fetch.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 
