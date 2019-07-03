@@ -4,6 +4,11 @@
 //  Video streaming via
 //  https://github.com/phoboslab/pl_mpeg
 //  ...and sokol_fetch.h for streaming the video data.
+//
+//  KNOWN ISSUE:
+//  - If you get bad audio playback artefacts, the reason is most likely
+//    that the audio playback device doesn't support the video's audio
+//    sample rate. This example doesn't contain a sample-rate converter.
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE

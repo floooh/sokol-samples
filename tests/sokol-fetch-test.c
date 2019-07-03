@@ -320,7 +320,7 @@ UTEST(sokol_fetch, setup_shutdown) {
     // check default values
     T(sfetch_desc().max_requests == 128);
     T(sfetch_desc().num_channels == 1);
-    T(sfetch_desc().num_lanes == 16);
+    T(sfetch_desc().num_lanes == 1);
     sfetch_shutdown();
     T(!sfetch_valid());
 }
