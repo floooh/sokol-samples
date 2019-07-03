@@ -72,7 +72,7 @@ static struct {
 } state;
 
 // sokol-fetch callback
-static void fetch_callback(sfetch_response_t response);
+static void fetch_callback(const sfetch_response_t* response);
 // plmpeg's data loading callback
 static void plmpeg_load_callback(plm_buffer_t* buf, void* user);
 // plmpeg's callback when a video frame is ready
@@ -290,30 +290,30 @@ static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
 }
 
 // the sokol-fetch callback
-static void fetch_callback(sfetch_response_t response) {
+static void fetch_callback(const sfetch_response_t* response) {
     // current download buffer has been filled with data...
-    if (response.state == SFETCH_STATE_FETCHED) {
+    if (response->fetched) {
         // put the download buffer into the "full_buffers" quee
         ring_enqueue(&state.full_buffers, state.cur_download_buffer);
         if (ring_full(&state.full_buffers) || ring_empty(&state.free_buffers)) {
             // all buffers in use, need to wait for the video decoding to catch up
-            sfetch_pause(response.handle);
+            sfetch_pause(response->handle);
         }
         else {
             // ...otherwise start streaming into the next free buffer
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
-            sfetch_unbind_buffer(response.handle);
-            sfetch_bind_buffer(response.handle, buf[state.cur_download_buffer], BUFFER_SIZE);
+            sfetch_unbind_buffer(response->handle);
+            sfetch_bind_buffer(response->handle, buf[state.cur_download_buffer], BUFFER_SIZE);
         }
     }
-    else if (response.state == SFETCH_STATE_PAUSED) {
+    else if (response->paused) {
         // this handles a paused download, and continues it once the video
         // decoding has caught up
         if (!ring_empty(&state.free_buffers)) {
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
-            sfetch_unbind_buffer(response.handle);
-            sfetch_bind_buffer(response.handle, buf[state.cur_download_buffer], BUFFER_SIZE);
-            sfetch_continue(response.handle);
+            sfetch_unbind_buffer(response->handle);
+            sfetch_bind_buffer(response->handle, buf[state.cur_download_buffer], BUFFER_SIZE);
+            sfetch_continue(response->handle);
         }
     }
 }

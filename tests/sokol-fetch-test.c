@@ -69,7 +69,7 @@ UTEST(sokol_fetch, item_init_discard) {
     T(item.handle.id == slot_id);
     T(item.channel == 4);
     T(item.lane == _SFETCH_INVALID_LANE);
-    T(item.state == SFETCH_STATE_INITIAL);
+    T(item.state == _SFETCH_STATE_INITIAL);
     TSTR(item.path.buf, request.path);
     T(item.user.user_data_size == sizeof(userdata_t));
     const userdata_t* ud = (const userdata_t*) item.user.user_data;
@@ -78,11 +78,11 @@ UTEST(sokol_fetch, item_init_discard) {
     T(ud->b == 456);
     T(ud->c == 789);
 
-    item.state = SFETCH_STATE_OPENING;
+    item.state = _SFETCH_STATE_OPENING;
     _sfetch_item_discard(&item);
     T(item.handle.id == 0);
     T(item.path.buf[0] == 0);
-    T(item.state == SFETCH_STATE_INITIAL);
+    T(item.state == _SFETCH_STATE_INITIAL);
     T(item.user.user_data_size == 0);
     T(item.user.user_data[0] == 0);
 }
@@ -136,7 +136,7 @@ UTEST(sokol_fetch, pool_alloc_free) {
         .buffer_size = sizeof(buf)
     });
     T(slot_id == 0x00010001);
-    T(pool.items[1].state == SFETCH_STATE_ALLOCATED);
+    T(pool.items[1].state == _SFETCH_STATE_ALLOCATED);
     T(pool.items[1].handle.id == slot_id);
     TSTR(pool.items[1].path.buf, "hello_world.txt");
     T(pool.items[1].user.buffer.ptr == buf);
@@ -144,7 +144,7 @@ UTEST(sokol_fetch, pool_alloc_free) {
     T(pool.free_top == 15);
     _sfetch_pool_item_free(&pool, slot_id);
     T(pool.items[1].handle.id == 0);
-    T(pool.items[1].state == SFETCH_STATE_INITIAL);
+    T(pool.items[1].state == _SFETCH_STATE_INITIAL);
     T(pool.items[1].path.buf[0] == 0);
     T(pool.items[1].user.buffer.ptr == 0);
     T(pool.items[1].user.buffer.size == 0);
@@ -346,9 +346,9 @@ UTEST(sokol_fetch, max_userdata) {
 }
 
 static bool fail_open_passed;
-static void fail_open_callback(sfetch_response_t response) {
+static void fail_open_callback(const sfetch_response_t* response) {
     /* if opening a file fails, it will immediate switch into CLOSED state */
-    if (response.state == SFETCH_STATE_FAILED) {
+    if (response->failed) {
         fail_open_passed = true;
     }
 }
@@ -376,16 +376,16 @@ static bool load_file_fixed_buffer_passed;
 // can call sfetch_setup/shutdown() on multiple threads, each thread will
 // get its own thread-local "sokol-fetch instance" and its own set of
 // IO-channel threads.
-static void load_file_fixed_buffer_callback(sfetch_response_t response) {
+static void load_file_fixed_buffer_callback(const sfetch_response_t* response) {
     // when loading the whole file at once, the COMPLETED state
     // is the best place to grab/process the data
-    if (response.state == SFETCH_STATE_FETCHED) {
-        if ((response.content_size == combatsignal_file_size) &&
-            (response.content_offset == 0) &&
-            (response.fetched_size == combatsignal_file_size) &&
-            (response.buffer_ptr == load_file_buf) &&
-            (response.buffer_size == sizeof(load_file_buf)) &&
-            response.finished)
+    if (response->fetched) {
+        if ((response->content_size == combatsignal_file_size) &&
+            (response->content_offset == 0) &&
+            (response->fetched_size == combatsignal_file_size) &&
+            (response->buffer_ptr == load_file_buf) &&
+            (response->buffer_size == sizeof(load_file_buf)) &&
+            response->finished)
         {
             load_file_fixed_buffer_passed = true;
         }
@@ -420,26 +420,26 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
 /* tests whether files with unknown size are processed correctly */
 static bool load_file_unknown_size_opened_passed;
 static bool load_file_unknown_size_fetched_passed;
-static void load_file_unknown_size_callback(sfetch_response_t response) {
-    if (response.state == SFETCH_STATE_OPENED) {
-        if ((response.content_size == combatsignal_file_size) &&
-            (response.content_offset == 0) &&
-            (response.fetched_size == 0) &&
-            (response.buffer_ptr == 0) &&
-            (response.buffer_size == 0) &&
-            !response.finished)
+static void load_file_unknown_size_callback(const sfetch_response_t* response) {
+    if (response->opened) {
+        if ((response->content_size == combatsignal_file_size) &&
+            (response->content_offset == 0) &&
+            (response->fetched_size == 0) &&
+            (response->buffer_ptr == 0) &&
+            (response->buffer_size == 0) &&
+            !response->finished)
         {
             load_file_unknown_size_opened_passed = true;
-            sfetch_bind_buffer(response.handle, load_file_buf, sizeof(load_file_buf));
+            sfetch_bind_buffer(response->handle, load_file_buf, sizeof(load_file_buf));
         }
     }
-    else if (response.state == SFETCH_STATE_FETCHED) {
-        if ((response.content_size == combatsignal_file_size) &&
-            (response.content_offset == 0) &&
-            (response.fetched_size == combatsignal_file_size) &&
-            (response.buffer_ptr == load_file_buf) &&
-            (response.buffer_size == sizeof(load_file_buf)) &&
-            response.finished)
+    else if (response->fetched) {
+        if ((response->content_size == combatsignal_file_size) &&
+            (response->content_offset == 0) &&
+            (response->fetched_size == combatsignal_file_size) &&
+            (response->buffer_ptr == load_file_buf) &&
+            (response->buffer_size == sizeof(load_file_buf)) &&
+            response->finished)
         {
             load_file_unknown_size_fetched_passed = true;
         }
@@ -466,20 +466,20 @@ UTEST(sokol_fetch, load_file_unknown_size) {
 /* tests whether not providing a buffer in SFETCH_STATE_OPENED properly fails */
 static bool load_file_no_buffer_opened_passed;
 static bool load_file_no_buffer_failed_passed;
-static void load_file_no_buffer_callback(sfetch_response_t response) {
-    if (response.state == SFETCH_STATE_OPENED) {
-        if ((response.content_size == combatsignal_file_size) &&
-            (response.content_offset == 0) &&
-            (response.fetched_size == 0) &&
-            (response.buffer_ptr == 0) &&
-            (response.buffer_size == 0) &&
-            !response.finished)
+static void load_file_no_buffer_callback(const sfetch_response_t* response) {
+    if (response->opened) {
+        if ((response->content_size == combatsignal_file_size) &&
+            (response->content_offset == 0) &&
+            (response->fetched_size == 0) &&
+            (response->buffer_ptr == 0) &&
+            (response->buffer_size == 0) &&
+            !response->finished)
         {
             /* DO NOT provide a buffer here, see if that properly fails */
             load_file_no_buffer_opened_passed = true;
         }
     }
-    else if (response.state == SFETCH_STATE_FAILED) {
+    else if (response->failed) {
         if (load_file_no_buffer_opened_passed) {
             load_file_no_buffer_failed_passed = true;
         }
@@ -511,14 +511,14 @@ UTEST(sokol_fetch, load_file_no_buffer) {
 static bool load_file_chunked_passed;
 static uint8_t load_chunk_buf[8192];
 static uint8_t load_file_chunked_content[500000];
-static void load_file_chunked_callback(sfetch_response_t response) {
-    if (response.state == SFETCH_STATE_FETCHED) {
-        assert(response.content_size <= sizeof(load_file_chunked_content));
-        const uint8_t* src = response.buffer_ptr;
-        uint8_t* dst = &load_file_chunked_content[response.content_offset];
-        size_t num_bytes = response.fetched_size;
+static void load_file_chunked_callback(const sfetch_response_t* response) {
+    if (response->fetched) {
+        assert(response->content_size <= sizeof(load_file_chunked_content));
+        const uint8_t* src = response->buffer_ptr;
+        uint8_t* dst = &load_file_chunked_content[response->content_offset];
+        size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
-        if (response.finished) {
+        if (response->finished) {
             load_file_chunked_passed = true;
         }
     }
@@ -560,16 +560,16 @@ UTEST(sokol_fetch, load_file_chunked) {
 uint8_t load_file_lanes_chunk_buf[LOAD_FILE_LANES_NUM_LANES][8192];
 uint8_t load_file_lanes_content[LOAD_FILE_LANES_NUM_LANES][500000];
 int load_file_lanes_passed[LOAD_FILE_LANES_NUM_LANES];
-static void load_file_lanes_callback(sfetch_response_t response) {
-    assert((response.channel == 0) && (response.lane < LOAD_FILE_LANES_NUM_LANES));
-    if (response.state == SFETCH_STATE_FETCHED) {
-        assert(response.content_size == combatsignal_file_size);
-        const uint8_t* src = response.buffer_ptr;
-        uint8_t* dst = &load_file_lanes_content[response.lane][response.content_offset];
-        size_t num_bytes = response.fetched_size;
+static void load_file_lanes_callback(const sfetch_response_t* response) {
+    assert((response->channel == 0) && (response->lane < LOAD_FILE_LANES_NUM_LANES));
+    if (response->fetched) {
+        assert(response->content_size == combatsignal_file_size);
+        const uint8_t* src = response->buffer_ptr;
+        uint8_t* dst = &load_file_lanes_content[response->lane][response->content_offset];
+        size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
-        if (response.finished) {
-            load_file_lanes_passed[response.lane]++;
+        if (response->finished) {
+            load_file_lanes_passed[response->lane]++;
         }
     }
 }
@@ -617,17 +617,17 @@ uint8_t load_file_throttle_chunk_buf[LOAD_FILE_THROTTLE_NUM_LANES][128000];
 uint8_t load_file_throttle_content[LOAD_FILE_THROTTLE_NUM_PASSES][LOAD_FILE_THROTTLE_NUM_LANES][500000];
 int load_file_throttle_passed[LOAD_FILE_THROTTLE_NUM_LANES];
 
-static void load_file_throttle_callback(sfetch_response_t response) {
-    assert((response.channel == 0) && (response.lane < LOAD_FILE_LANES_NUM_LANES));
-    if (response.state == SFETCH_STATE_FETCHED) {
-        assert(response.content_size == combatsignal_file_size);
-        assert(load_file_throttle_passed[response.lane] < LOAD_FILE_THROTTLE_NUM_PASSES);
-        const uint8_t* src = response.buffer_ptr;
-        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response.lane]][response.lane][response.content_offset];
-        size_t num_bytes = response.fetched_size;
+static void load_file_throttle_callback(const sfetch_response_t* response) {
+    assert((response->channel == 0) && (response->lane < LOAD_FILE_LANES_NUM_LANES));
+    if (response->fetched) {
+        assert(response->content_size == combatsignal_file_size);
+        assert(load_file_throttle_passed[response->lane] < LOAD_FILE_THROTTLE_NUM_PASSES);
+        const uint8_t* src = response->buffer_ptr;
+        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response->lane]][response->lane][response->content_offset];
+        size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
-        if (response.finished) {
-            load_file_throttle_passed[response.lane]++;
+        if (response->finished) {
+            load_file_throttle_passed[response->lane]++;
         }
     }
 }
@@ -676,15 +676,15 @@ UTEST(sokol_fetch, load_file_throttle) {
 uint8_t load_channel_buf[LOAD_CHANNEL_NUM_CHANNELS][500000];
 bool load_channel_passed[LOAD_CHANNEL_NUM_CHANNELS];
 
-void load_channel_callback(sfetch_response_t response) {
-    assert(response.channel < LOAD_CHANNEL_NUM_CHANNELS);
-    assert(!load_channel_passed[response.channel]);
-    if (response.state == SFETCH_STATE_FETCHED) {
-        if ((response.content_size == combatsignal_file_size) &&
-            (response.fetched_size == combatsignal_file_size) &&
-            response.finished)
+void load_channel_callback(const sfetch_response_t* response) {
+    assert(response->channel < LOAD_CHANNEL_NUM_CHANNELS);
+    assert(!load_channel_passed[response->channel]);
+    if (response->fetched) {
+        if ((response->content_size == combatsignal_file_size) &&
+            (response->fetched_size == combatsignal_file_size) &&
+            response->finished)
         {
-            load_channel_passed[response.channel] = true;
+            load_channel_passed[response->channel] = true;
         }
     }
 }
@@ -724,12 +724,12 @@ UTEST(sokol_fetch, load_channel) {
 }
 
 bool load_file_cancel_passed = false;
-void load_file_cancel_callback(sfetch_response_t response) {
-    if (response.state == SFETCH_STATE_OPENED) {
-        sfetch_cancel(response.handle);
+void load_file_cancel_callback(const sfetch_response_t* response) {
+    if (response->opened) {
+        sfetch_cancel(response->handle);
     }
-    if (response.state == SFETCH_STATE_FAILED) {
-        if ((response.cancelled) && (response.finished)) {
+    if (response->failed) {
+        if ((response->cancelled) && (response->finished)) {
             load_file_cancel_passed = true;
         }
     }

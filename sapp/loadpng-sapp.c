@@ -32,7 +32,7 @@ typedef struct {
     int16_t u, v;
 } vertex_t;
 
-static void fetch_callback(sfetch_response_t);
+static void fetch_callback(const sfetch_response_t*);
 
 static void init(void) {
     /* setup sokol-gfx and the optional debug-ui*/
@@ -165,24 +165,24 @@ static void init(void) {
     went wrong, the callback will be called in the FAILED state, we may need
     to release the buffer there.
 */
-static void fetch_callback(sfetch_response_t response) {
-    if (response.state == SFETCH_STATE_OPENED) {
+static void fetch_callback(const sfetch_response_t* response) {
+    if (response->opened) {
         /* allocate a buffer where the data will be streamed into and tell
            sokol-fetch about it (we could also provide an buffer upfront in
            sfetch_send() if we know a maximum file size)
         */
-        void* buf_ptr = malloc(response.content_size);
-        sfetch_bind_buffer(response.handle, buf_ptr, response.content_size);
+        void* buf_ptr = malloc(response->content_size);
+        sfetch_bind_buffer(response->handle, buf_ptr, response->content_size);
     }
-    else if (response.state == SFETCH_STATE_FETCHED) {
+    else if (response->fetched) {
         /* the file data has been fetched, since we provided a big-enough
            buffer we can be sure that all data has been loaded here
         */
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
-            response.buffer_ptr,
-            (int)response.fetched_size,
+            response->buffer_ptr,
+            (int)response->fetched_size,
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
@@ -202,9 +202,9 @@ static void fetch_callback(sfetch_response_t response) {
         }
     }
     /* if everything is done (no matter if success or failure), make sure we don't leak any memory */
-    if (response.finished) {
-        if (response.buffer_ptr) {
-            free(response.buffer_ptr);
+    if (response->finished) {
+        if (response->buffer_ptr) {
+            free(response->buffer_ptr);
         }
     }
 }
