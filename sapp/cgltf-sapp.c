@@ -21,8 +21,13 @@
 #include <assert.h>
 
 #define SAMPLE_COUNT (4)
-#define SCENE_MAX_BUFFERS (64)
-#define SCENE_MAX_IMAGES (64)
+#define SCENE_MAX_BUFFERS (16)
+#define SCENE_MAX_IMAGES (16)
+#define SCENE_MAX_MATERIALS (16)
+#define SCENE_MAX_PIPELINES (16)
+#define SCENE_MAX_SUBMESHES (16)
+#define SCENE_MAX_MESHES (16)
+#define SCENE_MAX_NODES (16)
 
 typedef struct {
     sg_buffer_type type;
@@ -42,20 +47,89 @@ typedef struct {
 } image_t;
 
 typedef struct {
+    // shader uniforms
+    metallic_params_t fs_params;
+    // indices into scene.images[] array
+    int base_color;
+    int metallic_roughness;
+    int normal;
+    int occlusion;
+    int emissive;
+} metallic_material_t;
+
+typedef struct {
+    // shader uniforms
+    specular_params_t fs_params;
+    // indices into scene.images[] array
+    int diffuse;
+    int specular_glossiness;
+    int normal;
+    int occlusion;
+    int emissive;
+} specular_material_t;
+
+typedef struct {
+    bool is_metallic;
+    union {
+        metallic_material_t metallic;
+        specular_material_t specular;
+    };
+} material_t;
+
+// pipelines are created for unique material/primitive combinations
+typedef struct {
+    sg_primitive_type prim_type;
+    bool alpha;
+    sg_layout_desc layout;
+    sg_pipeline pip;
+} pipeline_t;
+
+// map sokol-gfx buffer bind slots to scene.buffers items
+typedef struct {
+    int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
+} vertex_buffer_mapping_t;
+
+typedef struct {
+    int pipeline;           // index into scene.pipelines array
+    int material;           // index into materials array
+    vertex_buffer_mapping_t vertex_buffers; // indices into buffers array by vb bind slot
+    int index_buffer;       // index into buffers array
+    int base_element;
+    int num_elements;
+} mesh_t;
+
+typedef struct {
+    int first_mesh;
+    int num_meshes;
+    hmm_mat4 transform;
+} node_t;
+
+typedef struct {
     int num_buffers;
     int num_images;
+    int num_materials;
+    int num_pipelines;
+    int num_meshes;
+    int num_nodes;
     buffer_t buffers[SCENE_MAX_BUFFERS];
     image_t images[SCENE_MAX_IMAGES];
+    material_t materials[SCENE_MAX_MATERIALS];
+    pipeline_t pipelines[SCENE_MAX_PIPELINES];
+    mesh_t meshes[SCENE_MAX_SUBMESHES];
+    node_t nodes[SCENE_MAX_NODES];
 } scene_t;
 
 static const char* filename = "DamagedHelmet.gltf";
 
-static void gltf_fetch_callback(const sfetch_response_t*);
-static void gltf_buffer_fetch_callback(const sfetch_response_t*);
-static void gltf_image_fetch_callback(const sfetch_response_t*);
 static void gltf_parse(const void* ptr, uint64_t num_bytes);
 static void gltf_parse_buffers(const cgltf_data* gltf);
 static void gltf_parse_images(const cgltf_data* gltf);
+static void gltf_parse_materials(const cgltf_data* gltf);
+
+static void gltf_fetch_callback(const sfetch_response_t*);
+static void gltf_buffer_fetch_callback(const sfetch_response_t*);
+static void gltf_image_fetch_callback(const sfetch_response_t*);
+
 static void create_sgbuffers_for_gltfbuffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes);
 static void create_sgimages_for_gltfimage(int gltf_image_index, const uint8_t* bytes, int num_bytes);
 
@@ -63,6 +137,8 @@ static struct {
     bool failed;
     sg_pass_action pass_action;
     sg_pass_action failed_pass_action;
+    sg_shader metallic_shader;
+    sg_shader specular_shader;
     scene_t scene;
 } state;
 
@@ -96,6 +172,10 @@ static void init(void) {
     state.failed_pass_action = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
     };
+
+    // create shaders
+    state.metallic_shader = sg_make_shader(cgltf_metallic_shader_desc());
+    state.specular_shader = sg_make_shader(cgltf_specular_shader_desc());
 
     // start loading the base gltf file...
     sfetch_send(&(sfetch_request_t){
@@ -200,11 +280,27 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
     if (result == cgltf_result_success) {
         gltf_parse_buffers(data);
         gltf_parse_images(data);
+        gltf_parse_materials(data);
         cgltf_free(data);
     }
 }
 
-// parse GLTF buffers and buffer views
+// compute indices from cgltf element pointers
+static int gltf_buffer_index(const cgltf_data* gltf, const cgltf_buffer* buf) {
+    assert(buf);
+    return buf - gltf->buffers;
+}
+
+static int gltf_image_index(const cgltf_data* gltf, const cgltf_image* img) {
+    assert(img);
+    return img - gltf->images;
+}
+
+static int gltf_texture_index(const cgltf_data* gltf, const cgltf_texture* tex) {
+    assert(tex);
+    return tex - gltf->textures;
+}
+
 static void gltf_parse_buffers(const cgltf_data* gltf) {
     if (gltf->buffer_views_count > SCENE_MAX_BUFFERS) {
         state.failed = true;
@@ -216,7 +312,7 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
     for (int i = 0; i < state.scene.num_buffers; i++) {
         const cgltf_buffer_view* gltf_buf_view = &gltf->buffer_views[i];
         buffer_t* scene_buffer = &state.scene.buffers[i];
-        scene_buffer->gltf_buffer_index = gltf_buf_view->buffer - gltf->buffers;
+        scene_buffer->gltf_buffer_index = gltf_buffer_index(gltf, gltf_buf_view->buffer);
         scene_buffer->offset = gltf_buf_view->offset;
         scene_buffer->size = gltf_buf_view->size;
         if (gltf_buf_view->type == cgltf_buffer_view_type_indices) {
@@ -280,7 +376,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     for (int i = 0; i < state.scene.num_images; i++) {
         const cgltf_texture* gltf_tex = &gltf->textures[i];
         image_t* scene_image = &state.scene.images[i];
-        scene_image->gltf_image_index = gltf_tex->image - gltf->images;
+        scene_image->gltf_image_index = gltf_image_index(gltf, gltf_tex->image);
         scene_image->min_filter = gltf_to_sg_filter(gltf_tex->sampler->min_filter);
         scene_image->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
         scene_image->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
@@ -301,6 +397,55 @@ static void gltf_parse_images(const cgltf_data* gltf) {
             .user_data_ptr = &user_data,
             .user_data_size = sizeof(user_data)
         });
+    }
+}
+
+static void gltf_parse_materials(const cgltf_data* gltf) {
+    if (gltf->materials_count > SCENE_MAX_MATERIALS) {
+        state.failed = true;
+        return;
+    }
+    state.scene.num_materials = gltf->materials_count;
+    for (int i = 0; i < state.scene.num_materials; i++) {
+        const cgltf_material* gltf_mat = &gltf->materials[i];
+        material_t* scene_mat = &state.scene.materials[i];
+        scene_mat->is_metallic = gltf_mat->has_pbr_metallic_roughness;
+        if (scene_mat->is_metallic) {
+            const cgltf_pbr_metallic_roughness* src = &gltf_mat->pbr_metallic_roughness;
+            metallic_material_t* dst = &scene_mat->metallic;
+            for (int d = 0; d < 4; d++) {
+                dst->fs_params.base_color_factor.Elements[d] = src->base_color_factor[d];
+            }
+            for (int d = 0; d < 3; d++) {
+                dst->fs_params.emissive_factor.Elements[d] = gltf_mat->emissive_factor[d];
+            }
+            dst->fs_params.metallic_factor = src->metallic_factor;
+            dst->fs_params.roughness_factor = src->roughness_factor;
+            dst->base_color = gltf_texture_index(gltf, src->base_color_texture.texture);
+            dst->metallic_roughness = gltf_texture_index(gltf, src->metallic_roughness_texture.texture);
+            dst->normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture);
+            dst->occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture);
+            dst->emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture);
+        }
+        else {
+            const cgltf_pbr_specular_glossiness* src = &gltf_mat->pbr_specular_glossiness;
+            specular_material_t* dst = &scene_mat->specular;
+            for (int d = 0; d < 4; d++) {
+                dst->fs_params.diffuse_factor.Elements[d] = src->diffuse_factor[d];
+            }
+            for (int d = 0; d < 3; d++) {
+                dst->fs_params.specular_factor.Elements[d] = src->specular_factor[d];
+            }
+            for (int d = 0; d < 3; d++) {
+                dst->fs_params.emissive_factor.Elements[d] = gltf_mat->emissive_factor[d];
+            }
+            dst->fs_params.glossiness_factor = src->glossiness_factor;
+            dst->diffuse = gltf_texture_index(gltf, src->diffuse_texture.texture);
+            dst->specular_glossiness = gltf_texture_index(gltf, src->specular_glossiness_texture.texture);
+            dst->normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture);
+            dst->occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture);
+            dst->emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture);
+        }
     }
 }
 
