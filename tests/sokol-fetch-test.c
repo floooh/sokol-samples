@@ -139,15 +139,15 @@ UTEST(sokol_fetch, pool_alloc_free) {
     T(pool.items[1].state == _SFETCH_STATE_ALLOCATED);
     T(pool.items[1].handle.id == slot_id);
     TSTR(pool.items[1].path.buf, "hello_world.txt");
-    T(pool.items[1].user.buffer.ptr == buf);
-    T(pool.items[1].user.buffer.size == sizeof(buf));
+    T(pool.items[1].buffer.ptr == buf);
+    T(pool.items[1].buffer.size == sizeof(buf));
     T(pool.free_top == 15);
     _sfetch_pool_item_free(&pool, slot_id);
     T(pool.items[1].handle.id == 0);
     T(pool.items[1].state == _SFETCH_STATE_INITIAL);
     T(pool.items[1].path.buf[0] == 0);
-    T(pool.items[1].user.buffer.ptr == 0);
-    T(pool.items[1].user.buffer.size == 0);
+    T(pool.items[1].buffer.ptr == 0);
+    T(pool.items[1].buffer.size == 0);
     T(pool.free_top == 16);
     _sfetch_pool_discard(&pool);
 }
@@ -463,7 +463,7 @@ UTEST(sokol_fetch, load_file_unknown_size) {
     sfetch_shutdown();
 }
 
-/* tests whether not providing a buffer in SFETCH_STATE_OPENED properly fails */
+/* tests whether not providing a buffer in OPENED properly fails */
 static bool load_file_no_buffer_opened_passed;
 static bool load_file_no_buffer_failed_passed;
 static void load_file_no_buffer_callback(const sfetch_response_t* response) {
