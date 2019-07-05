@@ -25,7 +25,6 @@
 #define SCENE_MAX_IMAGES (16)
 #define SCENE_MAX_MATERIALS (16)
 #define SCENE_MAX_PIPELINES (16)
-#define SCENE_MAX_SUBMESHES (16)
 #define SCENE_MAX_MESHES (16)
 #define SCENE_MAX_NODES (16)
 
@@ -34,8 +33,7 @@ typedef struct {
     int offset;
     int size;
     int gltf_buffer_index;
-    sg_buffer buffer;
-} buffer_t;
+} buffer_creation_params_t;
 
 typedef struct {
     sg_filter min_filter;
@@ -43,8 +41,13 @@ typedef struct {
     sg_wrap wrap_s;
     sg_wrap wrap_t;
     int gltf_image_index;
-    sg_image image;
-} image_t;
+} image_creation_params_t;
+
+typedef struct {
+    sg_layout_desc layout;
+    sg_primitive_type prim_type;
+    bool alpha;
+} pipeline_cache_params_t;
 
 typedef struct {
     // shader uniforms
@@ -76,16 +79,9 @@ typedef struct {
     };
 } material_t;
 
-// pipelines are created for unique material/primitive combinations
-typedef struct {
-    sg_primitive_type prim_type;
-    bool alpha;
-    sg_layout_desc layout;
-    sg_pipeline pip;
-} pipeline_t;
-
 // map sokol-gfx buffer bind slots to scene.buffers items
 typedef struct {
+    int num;
     int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
 } vertex_buffer_mapping_t;
 
@@ -107,16 +103,23 @@ typedef struct {
 typedef struct {
     int num_buffers;
     int num_images;
-    int num_materials;
     int num_pipelines;
+    int num_materials;
     int num_meshes;
     int num_nodes;
-    buffer_t buffers[SCENE_MAX_BUFFERS];
-    image_t images[SCENE_MAX_IMAGES];
+
+    // sokol-gfx resource and scene structure
+    sg_buffer buffers[SCENE_MAX_BUFFERS];
+    sg_image images[SCENE_MAX_IMAGES];
+    sg_pipeline pipelines[SCENE_MAX_PIPELINES];
     material_t materials[SCENE_MAX_MATERIALS];
-    pipeline_t pipelines[SCENE_MAX_PIPELINES];
-    mesh_t meshes[SCENE_MAX_SUBMESHES];
+    mesh_t meshes[SCENE_MAX_MESHES];
     node_t nodes[SCENE_MAX_NODES];
+
+    // helper data for async resource creation and a 'pipeline cash'
+    buffer_creation_params_t buffer_params[SCENE_MAX_BUFFERS];
+    image_creation_params_t image_params[SCENE_MAX_IMAGES];
+    pipeline_cache_params_t pipeline_cache[SCENE_MAX_PIPELINES];
 } scene_t;
 
 static const char* filename = "DamagedHelmet.gltf";
@@ -125,13 +128,16 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes);
 static void gltf_parse_buffers(const cgltf_data* gltf);
 static void gltf_parse_images(const cgltf_data* gltf);
 static void gltf_parse_materials(const cgltf_data* gltf);
+static void gltf_parse_nodes(const cgltf_data* gltf);
 
 static void gltf_fetch_callback(const sfetch_response_t*);
 static void gltf_buffer_fetch_callback(const sfetch_response_t*);
 static void gltf_image_fetch_callback(const sfetch_response_t*);
 
-static void create_sgbuffers_for_gltfbuffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes);
-static void create_sgimages_for_gltfimage(int gltf_image_index, const uint8_t* bytes, int num_bytes);
+static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes);
+static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes);
+static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
+static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
 
 static struct {
     bool failed;
@@ -234,7 +240,7 @@ static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
     else if (response->fetched) {
         const gltf_buffer_fetch_userdata_t* user_data = (const gltf_buffer_fetch_userdata_t*)response->user_data;
         int gltf_buffer_index = (int)user_data->buffer_index;
-        create_sgbuffers_for_gltfbuffer(
+        create_sg_buffers_for_gltf_buffer(
             gltf_buffer_index,
             (const uint8_t*)response->buffer_ptr,
             (int)response->fetched_size);
@@ -259,7 +265,7 @@ static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
         int gltf_image_index = (int)user_data->image_index;
-        create_sgimages_for_gltfimage(
+        create_sg_images_for_gltf_image(
             gltf_image_index,
             (const uint8_t*)response->buffer_ptr,
             (int)response->fetched_size);
@@ -281,6 +287,7 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
         gltf_parse_buffers(data);
         gltf_parse_images(data);
         gltf_parse_materials(data);
+        gltf_parse_nodes(data);
         cgltf_free(data);
     }
 }
@@ -289,6 +296,11 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
 static int gltf_buffer_index(const cgltf_data* gltf, const cgltf_buffer* buf) {
     assert(buf);
     return buf - gltf->buffers;
+}
+
+static int gltf_bufferview_index(const cgltf_data* gltf, const cgltf_buffer_view* buf_view) {
+    assert(buf_view);
+    return buf_view - gltf->buffer_views;
 }
 
 static int gltf_image_index(const cgltf_data* gltf, const cgltf_image* img) {
@@ -311,17 +323,18 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
     state.scene.num_buffers = gltf->buffer_views_count;
     for (int i = 0; i < state.scene.num_buffers; i++) {
         const cgltf_buffer_view* gltf_buf_view = &gltf->buffer_views[i];
-        buffer_t* scene_buffer = &state.scene.buffers[i];
-        scene_buffer->gltf_buffer_index = gltf_buffer_index(gltf, gltf_buf_view->buffer);
-        scene_buffer->offset = gltf_buf_view->offset;
-        scene_buffer->size = gltf_buf_view->size;
+        buffer_creation_params_t* p = &state.scene.buffer_params[i];
+        p->gltf_buffer_index = gltf_buffer_index(gltf, gltf_buf_view->buffer);
+        p->offset = gltf_buf_view->offset;
+        p->size = gltf_buf_view->size;
         if (gltf_buf_view->type == cgltf_buffer_view_type_indices) {
-            scene_buffer->type = SG_BUFFERTYPE_INDEXBUFFER;
+            p->type = SG_BUFFERTYPE_INDEXBUFFER;
         }
         else {
-            scene_buffer->type = SG_BUFFERTYPE_VERTEXBUFFER;
+            p->type = SG_BUFFERTYPE_VERTEXBUFFER;
         }
-        scene_buffer->buffer = sg_alloc_buffer();
+        // allocate a sokol-gfx buffer handle
+        state.scene.buffers[i] = sg_alloc_buffer();
     }
 
     // start loading all buffers
@@ -375,13 +388,14 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     state.scene.num_images = gltf->textures_count;
     for (int i = 0; i < state.scene.num_images; i++) {
         const cgltf_texture* gltf_tex = &gltf->textures[i];
-        image_t* scene_image = &state.scene.images[i];
-        scene_image->gltf_image_index = gltf_image_index(gltf, gltf_tex->image);
-        scene_image->min_filter = gltf_to_sg_filter(gltf_tex->sampler->min_filter);
-        scene_image->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
-        scene_image->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
-        scene_image->wrap_t = gltf_to_sg_wrap(gltf_tex->sampler->wrap_t);
-        scene_image->image = sg_alloc_image();
+        image_creation_params_t* p = &state.scene.image_params[i];
+        p->gltf_image_index = gltf_image_index(gltf, gltf_tex->image);
+        p->min_filter = gltf_to_sg_filter(gltf_tex->sampler->min_filter);
+        p->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
+        p->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
+        p->wrap_t = gltf_to_sg_wrap(gltf_tex->sampler->wrap_t);
+        // allocate a sokol-gfx image handle
+        state.scene.images[i] = sg_alloc_image();
     }
 
     // start loading all images
@@ -449,26 +463,43 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
     }
 }
 
+static void gltf_parse_nodes(const cgltf_data* gltf) {
+    if (gltf->nodes_count > SCENE_MAX_NODES) {
+        state.failed = true;
+        return;
+    }
+    for (cgltf_size node_index = 0; node_index < gltf->nodes_count; node_index++) {
+        const cgltf_node* node = &gltf->nodes[node_index];
+        if (node->mesh) {
+            for (cgltf_size prim_index = 0; prim_index < node->mesh->primitives_count; prim_index++) {
+                const cgltf_primitive* prim = &node->mesh->primitives[prim_index];
+                vertex_buffer_mapping_t vbuf_map = create_vertex_buffer_mapping_for_gltf_primitive(gltf, prim);
+                int pip_index = create_sg_pipeline_for_gltf_primitive(gltf, prim, &vbuf_map);
+            }
+        }
+    }
+}
+
 // create the sokol-gfx buffer objects associated with a GLTF buffer view
-static void create_sgbuffers_for_gltfbuffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes) {
+static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes) {
     for (int i = 0; i < state.scene.num_buffers; i++) {
-        buffer_t* scene_buffer = &state.scene.buffers[i];
-        if (scene_buffer->gltf_buffer_index == gltf_buffer_index) {
-            assert((scene_buffer->offset + scene_buffer->size) <= num_bytes);
-            sg_init_buffer(scene_buffer->buffer, &(sg_buffer_desc){
-                .size = scene_buffer->size,
-                .type = scene_buffer->type,
-                .content = bytes + scene_buffer->offset
+        const buffer_creation_params_t* p = &state.scene.buffer_params[i];
+        if (p->gltf_buffer_index == gltf_buffer_index) {
+            assert((p->offset + p->size) <= num_bytes);
+            sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
+                .type = p->type,
+                .size = p->size,
+                .content = bytes + p->offset
             });
         }
     }
 }
 
 // create the sokol-gfx image objects associated with a GLTF image
-static void create_sgimages_for_gltfimage(int gltf_image_index, const uint8_t* bytes, int num_bytes) {
+static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes) {
     for (int i = 0; i < state.scene.num_images; i++) {
-        image_t* scene_image = &state.scene.images[i];
-        if (scene_image->gltf_image_index == gltf_image_index) {
+        image_creation_params_t* p = &state.scene.image_params[i];
+        if (p->gltf_image_index == gltf_image_index) {
             // assume this is an image which can be decoded by stb_image.h
             int img_width, img_height, num_channels;
             const int desired_channels = 4;
@@ -478,12 +509,12 @@ static void create_sgimages_for_gltfimage(int gltf_image_index, const uint8_t* b
                 &num_channels, desired_channels);
             if (pixels) {
                 /* ok, time to actually initialize the sokol-gfx texture */
-                sg_init_image(scene_image->image, &(sg_image_desc){
+                sg_init_image(state.scene.images[i], &(sg_image_desc){
                     .width = img_width,
                     .height = img_height,
                     .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .min_filter = scene_image->min_filter,
-                    .mag_filter = scene_image->mag_filter,
+                    .min_filter = p->min_filter,
+                    .mag_filter = p->mag_filter,
                     .content.subimage[0][0] = {
                         .ptr = pixels,
                         .size = img_width * img_height * 4,
@@ -493,6 +524,129 @@ static void create_sgimages_for_gltfimage(int gltf_image_index, const uint8_t* b
             }
         }
     }
+}
+
+static sg_vertex_format gltf_to_vertex_format(cgltf_accessor* acc) {
+    switch (acc->component_type) {
+        case cgltf_component_type_r_8:
+            if (acc->type == cgltf_type_vec4) {
+                return acc->normalized ? SG_VERTEXFORMAT_BYTE4N : SG_VERTEXFORMAT_BYTE4;
+            }
+            break;
+        case cgltf_component_type_r_8u:
+            if (acc->type == cgltf_type_vec4) {
+                return acc->normalized ? SG_VERTEXFORMAT_UBYTE4N : SG_VERTEXFORMAT_UBYTE4;
+            }
+            break;
+        case cgltf_component_type_r_16:
+            switch (acc->type) {
+                case cgltf_type_vec2: return acc->normalized ? SG_VERTEXFORMAT_SHORT2N : SG_VERTEXFORMAT_SHORT2;
+                case cgltf_type_vec4: return acc->normalized ? SG_VERTEXFORMAT_SHORT4N : SG_VERTEXFORMAT_SHORT4;
+                default: break;
+            }
+            break;
+        case cgltf_component_type_r_32f:
+            switch (acc->type) {
+                case cgltf_type_scalar: return SG_VERTEXFORMAT_FLOAT;
+                case cgltf_type_vec2: return SG_VERTEXFORMAT_FLOAT2;
+                case cgltf_type_vec3: return SG_VERTEXFORMAT_FLOAT3;
+                case cgltf_type_vec4: return SG_VERTEXFORMAT_FLOAT4;
+                default: break;
+            }
+            break;
+        default: break;
+    }
+    return SG_VERTEXFORMAT_INVALID;
+}
+
+static int gltf_attr_type_to_vs_input_slot(cgltf_attribute_type attr_type) {
+    switch (attr_type) {
+        case cgltf_attribute_type_position: return ATTR_vs_position;
+        case cgltf_attribute_type_normal: return ATTR_vs_normal;
+        case cgltf_attribute_type_texcoord: return ATTR_vs_texcoord;
+        default: return -1;
+    }
+}
+
+static sg_primitive_type gltf_to_prim_type(cgltf_primitive_type prim_type) {
+    switch (prim_type) {
+        case cgltf_primitive_type_points: return SG_PRIMITIVETYPE_POINTS;
+        case cgltf_primitive_type_lines: return SG_PRIMITIVETYPE_LINES;
+        case cgltf_primitive_type_line_strip: return SG_PRIMITIVETYPE_LINE_STRIP;
+        case cgltf_primitive_type_triangles: return SG_PRIMITIVETYPE_TRIANGLES;
+        case cgltf_primitive_type_triangle_strip: return SG_PRIMITIVETYPE_TRIANGLE_STRIP;
+        default: return _SG_PRIMITIVETYPE_DEFAULT;
+    }
+}
+
+// creates a vertex buffer bind slot mapping for a specific GLTF primitive
+static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim) {
+    vertex_buffer_mapping_t map = { 0 };
+    for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
+        const cgltf_attribute* attr = &prim->attributes[attr_index];
+        const cgltf_accessor* acc = attr->data;
+        int buffer_view_index  = gltf_bufferview_index(gltf, acc->buffer_view);
+        int i = 0;
+        for (; i < map.num; i++) {
+            if (map.buffer[i] == buffer_view_index) {
+                break;
+            }
+        }
+        if ((i == map.num) && (map.num < SG_MAX_SHADERSTAGE_BUFFERS)) {
+            map.buffer[map.num++] = buffer_view_index;
+        }
+        assert(map.num <= SG_MAX_SHADERSTAGE_BUFFERS);
+    }
+    return map;
+}
+
+static sg_layout_desc create_sg_layout_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map) {
+    assert(prim->attributes_count <= SG_MAX_VERTEX_ATTRIBUTES);
+    sg_layout_desc layout = { 0 };
+    for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
+        const cgltf_attribute* attr = &prim->attributes[attr_index];
+        int attr_slot = gltf_attr_type_to_vs_input_slot(attr->type);
+        if (attr_slot != -1) {
+            layout.attrs[attr_slot].format = gltf_to_vertex_format(attr->data);
+        }
+        int buffer_view_index = gltf_bufferview_index(gltf, attr->data->buffer_view);
+        for (int vb_slot = 0; vb_slot < vbuf_map->num; vb_slot++) {
+            if (vbuf_map->buffer[vb_slot] == buffer_view_index) {
+                layout.attrs[attr_slot].buffer_index = vb_slot;
+            }
+        }
+    }
+    return layout;
+}
+
+// Create a unique sokol-gfx pipeline object for GLTF primitive (aka submesh),
+// maintains a cache of shared, unique pipeline objects. Returns an index
+// into state.scene.pipelines
+static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map) {
+    pipeline_cache_params_t pip_params = {
+        .layout = create_sg_layout_for_gltf_primitive(gltf, prim, vbuf_map),
+        .prim_type = gltf_to_prim_type(prim->type),
+        .alpha = prim->material->alpha_mode != cgltf_alpha_mode_opaque
+    };
+    int i = 0;
+    for (; i < state.scene.num_pipelines; i++) {
+        if (0 == memcmp(&state.scene.pipeline_cache[i], &pip_params, sizeof(pip_params))) {
+            // an indentical pipeline already exists
+            assert(state.scene.pipelines[i].id != SG_INVALID_ID);
+            return i;
+        }
+    }
+    if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
+        state.scene.pipeline_cache[i] = pip_params;
+
+        // create a new pipeline
+        //state.scene.pipelines[i] = sg_make_pipeline(&(sg_pipeline_desc){
+
+        //});
+        state.scene.num_pipelines++;
+    }
+    assert(state.scene.num_pipelines <= SCENE_MAX_PIPELINES);
+    return i;
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
