@@ -73,6 +73,7 @@ static struct {
     struct {
         int width;
         int height;
+        uint64_t last_upd_frame;
     } image_attrs[3];
     ring_t free_buffers;
     ring_t full_buffers;
@@ -81,6 +82,7 @@ static struct {
     uint32_t cur_read_pos;
     float ry;
     uint64_t prev_time;
+    uint64_t cur_frame;
 } state;
 
 // sokol-fetch callback
@@ -201,6 +203,7 @@ static void init(void) {
 static void frame(void) {
 
     double frame_duration = stm_sec(stm_laptime(&state.prev_time));
+    state.cur_frame++;
 
     // pump the sokol-fetch message queues
     sfetch_dowork();
@@ -287,13 +290,17 @@ static void validate_texture(int slot, plm_plane_t* plane) {
         });
     }
 
-    // copy decoded plane pixels into texture
-    sg_update_image(state.bind.fs_images[slot], &(sg_image_content){
-        .subimage[0][0] = {
-            .ptr = plane->data,
-            .size = plane->width * plane->height * sizeof(uint8_t)
-        }
-    });
+    // copy decoded plane pixels into texture, need to prevent that
+    // sg_update_image() is called more than once per frame
+    if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
+        state.image_attrs[slot].last_upd_frame = state.cur_frame;
+        sg_update_image(state.bind.fs_images[slot], &(sg_image_content){
+            .subimage[0][0] = {
+                .ptr = plane->data,
+                .size = plane->width * plane->height * sizeof(uint8_t)
+            }
+        });
+    }
 }
 
 // the pl_mpeg video callback, copies decoded video data into textures
