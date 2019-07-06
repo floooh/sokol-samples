@@ -630,11 +630,15 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
     };
     int i = 0;
     for (; i < state.scene.num_pipelines; i++) {
+        // FIXME! can't use memcmp here, because padding bytes might contain random values!
+        assert(false);
+        /*
         if (0 == memcmp(&state.scene.pipeline_cache[i], &pip_params, sizeof(pip_params))) {
             // an indentical pipeline already exists
             assert(state.scene.pipelines[i].id != SG_INVALID_ID);
             return i;
         }
+        */
     }
     if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
         state.scene.pipeline_cache[i] = pip_params;
