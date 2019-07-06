@@ -15,7 +15,7 @@
 //  Downloading will be paused if the circular buffer queue is full, and
 //  decoding will be paused if the queue is empty.
 //
-//  KNOWN ISSUE:
+//  KNOWN ISSUES:
 //  - If you get bad audio playback artefacts, the reason is most likely
 //    that the audio playback device doesn't support the video's audio
 //    sample rate (44.1 kHz). This example doesn't contain a sample-rate converter.
@@ -27,7 +27,6 @@
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
-#include "sokol_time.h"
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
@@ -81,7 +80,6 @@ static struct {
     int cur_read_buffer;
     uint32_t cur_read_pos;
     float ry;
-    uint64_t prev_time;
     uint64_t cur_frame;
 } state;
 
@@ -117,9 +115,6 @@ static void init(void) {
         .buffer_ptr = buf[state.cur_download_buffer],
         .buffer_size = BUFFER_SIZE
     });
-
-    // setup sokol-time
-    stm_setup();
 
     // initialize sokol-gfx
     sg_setup(&(sg_desc){
@@ -201,8 +196,6 @@ static void init(void) {
 
 // the sokol-app frame callback (video decoding and rendering)
 static void frame(void) {
-
-    double frame_duration = stm_sec(stm_laptime(&state.prev_time));
     state.cur_frame++;
 
     // pump the sokol-fetch message queues
@@ -212,7 +205,7 @@ static void frame(void) {
     // data ready, to allow slow downloads to catch up
     if (state.plm) {
         if (!ring_empty(&state.full_buffers)) {
-            plm_decode(state.plm, frame_duration);
+            plm_decode(state.plm, 1.0/60.0);
         }
     }
     // initialize plmpeg once two buffers are filled with data
