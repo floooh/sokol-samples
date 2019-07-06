@@ -5,10 +5,20 @@
 //  https://github.com/phoboslab/pl_mpeg
 //  ...and sokol_fetch.h for streaming the video data.
 //
+//  The video file is streamed in fixed-size blocks via sokol_fetch.h, decoded
+//  via plmpeg into 3 per-channel images and audio samples, and rendered via
+//  sokol_gfx.h and sokol_audio.h.
+//
+//  Download buffers are organized in a circular queue, buffers with downloaded
+//  data are enqueued, and the video decoder dequeues buffers as needed.
+//
+//  Downloading will be paused if the circular buffer queue is full, and
+//  decoding will be paused if the queue is empty.
+//
 //  KNOWN ISSUE:
 //  - If you get bad audio playback artefacts, the reason is most likely
 //    that the audio playback device doesn't support the video's audio
-//    sample rate. This example doesn't contain a sample-rate converter.
+//    sample rate (44.1 kHz). This example doesn't contain a sample-rate converter.
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -17,6 +27,7 @@
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_time.h"
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
@@ -28,12 +39,12 @@
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
 // statically allocated streaming buffers
-#define BUFFER_SIZE (131072)
+#define BUFFER_SIZE (128*1024)
 #define NUM_BUFFERS (4)
 static uint8_t buf[NUM_BUFFERS][BUFFER_SIZE];
 
-// a simple ring buffer
-#define RING_NUM_SLOTS (NUM_BUFFERS+1)    /* must be NUM_BUFFERS + 1 */
+// a simple ring buffer for the circular buffer queue
+#define RING_NUM_SLOTS (NUM_BUFFERS+1)
 typedef struct {
     uint32_t head;
     uint32_t tail;
@@ -45,7 +56,7 @@ static uint32_t ring_count(const ring_t* rb);
 static void ring_enqueue(ring_t* rb, int val);
 static int ring_dequeue(ring_t* rb);
 
-// a vertex with position and texcoords
+// a vertex with position, normal and texcoords
 typedef struct {
     float x, y, z;
     float nx, ny, nz;
@@ -69,6 +80,7 @@ static struct {
     int cur_read_buffer;
     uint32_t cur_read_pos;
     float ry;
+    uint64_t prev_time;
 } state;
 
 // sokol-fetch callback
@@ -103,6 +115,9 @@ static void init(void) {
         .buffer_ptr = buf[state.cur_download_buffer],
         .buffer_size = BUFFER_SIZE
     });
+
+    // setup sokol-time
+    stm_setup();
 
     // initialize sokol-gfx
     sg_setup(&(sg_desc){
@@ -185,11 +200,16 @@ static void init(void) {
 // the sokol-app frame callback (video decoding and rendering)
 static void frame(void) {
 
+    double frame_duration = stm_sec(stm_laptime(&state.prev_time));
+
+    // pump the sokol-fetch message queues
+    sfetch_dowork();
+
     // stop decoding if there's not at least one buffer of downloaded
     // data ready, to allow slow downloads to catch up
     if (state.plm) {
         if (!ring_empty(&state.full_buffers)) {
-            plm_decode(state.plm, 1.0/60.0);
+            plm_decode(state.plm, frame_duration);
         }
     }
     // initialize plmpeg once two buffers are filled with data
@@ -233,7 +253,6 @@ static void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-    sfetch_dowork();
 }
 
 // the sokol-sapp cleanup callback
@@ -289,7 +308,7 @@ static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
     saudio_push(samples->interleaved, samples->count);
 }
 
-// the sokol-fetch callback
+// the sokol-fetch response callback
 static void fetch_callback(const sfetch_response_t* response) {
     // current download buffer has been filled with data...
     if (response->fetched) {

@@ -60,7 +60,7 @@ static void init(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.125f, 0.25f, 0.35f, 1.0f } }
     };
 
-    /* Allocate an image handle, but don't actually initialize the image it yet,
+    /* Allocate an image handle, but don't actually initialize the image yet,
        this happens later when the asynchronous file load has finished.
        Any draw calls containing such an "incomplete" image handle
        will be silently dropped.
@@ -203,9 +203,10 @@ static void fetch_callback(const sfetch_response_t* response) {
     }
     /* if everything is done (no matter if success or failure), make sure we don't leak any memory */
     if (response->finished) {
-        if (response->buffer_ptr) {
-            free(response->buffer_ptr);
-        }
+        /* note that it is legal to call free() with a null ptr, this will
+           happen if the file failed to open
+        */
+        free(sfetch_unbind_buffer(response->handle));
     }
 }
 
@@ -215,6 +216,9 @@ static void fetch_callback(const sfetch_response_t* response) {
    frame to pump the sokol-fetch message queues.
 */
 static void frame(void) {
+    /* pump the sokol-fetch message queues, and invoke response callbacks */
+    sfetch_dowork();
+
     /* compute model-view-projection matrix for vertex shader */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -234,7 +238,6 @@ static void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-    sfetch_dowork();
 }
 
 static void cleanup(void) {
