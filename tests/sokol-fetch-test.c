@@ -722,7 +722,7 @@ UTEST(sokol_fetch, load_channel) {
     }
     bool done = false;
     int frame_count = 0;
-    const int max_frames = 10000;
+    const int max_frames = 100000;
     while (!done && (frame_count++ < max_frames)) {
         done = true;
         for (int i = 0; i < LOAD_CHANNEL_NUM_CHANNELS; i++) {
