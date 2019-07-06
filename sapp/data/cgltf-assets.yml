@@ -1,0 +1,10 @@
+---
+root: gltf/DamagedHelmet
+files:
+    - DamagedHelmet.bin
+    - DamagedHelmet.gltf
+    - Default_albedo.jpg
+    - Default_AO.jpg
+    - Default_emissive.jpg
+    - Default_metalRoughness.jpg
+    - Default_normal.jpg
