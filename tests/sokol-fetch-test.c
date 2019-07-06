@@ -361,10 +361,12 @@ UTEST(sokol_fetch, fail_open) {
     });
     fail_open_passed = false;
     int frame_count = 0;
-    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(fail_open_passed);
     sfetch_shutdown();
 }
@@ -409,10 +411,12 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
     // the sfetch_dowork() function is just called somewhere in the frame
     // to pump messages in and out of the IO threads, and invoke user-callbacks
     int frame_count = 0;
-    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(load_file_fixed_buffer_passed);
     sfetch_shutdown();
 }
@@ -454,10 +458,12 @@ UTEST(sokol_fetch, load_file_unknown_size) {
         .callback = load_file_unknown_size_callback
     });
     int frame_count = 0;
-    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(load_file_unknown_size_opened_passed);
     T(load_file_unknown_size_fetched_passed);
     sfetch_shutdown();
@@ -494,10 +500,12 @@ UTEST(sokol_fetch, load_file_no_buffer) {
         .callback = load_file_no_buffer_callback
     });
     int frame_count = 0;
-    while (sfetch_handle_valid(h) && (frame_count++ < 100)) {
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(load_file_no_buffer_opened_passed);
     T(load_file_no_buffer_failed_passed);
     sfetch_shutdown();
@@ -545,10 +553,12 @@ UTEST(sokol_fetch, load_file_chunked) {
         .buffer_size = sizeof(load_file_buf)
     });
     int frame_count = 0;
-    while ((sfetch_handle_valid(h0) || sfetch_handle_valid(h1)) && (frame_count++ < 1000)) {
+    const int max_frames = 10000;
+    while ((sfetch_handle_valid(h0) || sfetch_handle_valid(h1)) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(load_file_chunked_passed);
     T(0 == memcmp(load_file_chunked_content, load_file_buf, combatsignal_file_size));
     sfetch_shutdown();
@@ -593,7 +603,8 @@ UTEST(sokol_fetch, load_file_lanes) {
     }
     bool done = false;
     int frame_count = 0;
-    while (!done && (frame_count++ < 1000)) {
+    const int max_frames = 10000;
+    while (!done && (frame_count++ < max_frames)) {
         done = true;
         for (int i = 0; i < LOAD_FILE_LANES_NUM_LANES; i++) {
             done &= !sfetch_handle_valid(h[i]);
@@ -601,6 +612,7 @@ UTEST(sokol_fetch, load_file_lanes) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     for (int i = 0; i < LOAD_FILE_LANES_NUM_LANES; i++) {
         T(1 == load_file_lanes_passed[i]);
         T(0 == memcmp(load_file_lanes_content[0], load_file_lanes_content[i], combatsignal_file_size));
@@ -654,7 +666,8 @@ UTEST(sokol_fetch, load_file_throttle) {
     }
     bool done = false;
     int frame_count = 0;
-    while (!done && (frame_count++ < 1000)) {
+    const int max_frames = 10000;
+    while (!done && (frame_count++ < max_frames)) {
         done = true;
         for (int i = 0; i < LOAD_FILE_THROTTLE_NUM_REQUESTS; i++) {
             done &= !sfetch_handle_valid(h[i]);
@@ -662,6 +675,7 @@ UTEST(sokol_fetch, load_file_throttle) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     for (int lane = 0; lane < LOAD_FILE_THROTTLE_NUM_LANES; lane++) {
         T(LOAD_FILE_THROTTLE_NUM_PASSES == load_file_throttle_passed[lane]);
         for (int pass = 0; pass < LOAD_FILE_THROTTLE_NUM_PASSES; pass++) {
@@ -708,7 +722,8 @@ UTEST(sokol_fetch, load_channel) {
     }
     bool done = false;
     int frame_count = 0;
-    while (!done && (frame_count++ < 1000)) {
+    const int max_frames = 10000;
+    while (!done && (frame_count++ < max_frames)) {
         done = true;
         for (int i = 0; i < LOAD_CHANNEL_NUM_CHANNELS; i++) {
             done &= !sfetch_handle_valid(h[i]);
@@ -716,6 +731,7 @@ UTEST(sokol_fetch, load_channel) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
         T(load_channel_passed[chn]);
         T(0 == memcmp(load_channel_buf[0], load_channel_buf[chn], combatsignal_file_size));
@@ -744,10 +760,12 @@ UTEST(sokol_fetch, load_file_cancel) {
         .callback = load_file_cancel_callback,
     });
     int frame_count = 0;
-    while (sfetch_handle_valid(h) && (frame_count++ < 1000)) {
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
         sfetch_dowork();
         sleep_ms(1);
     }
+    T(frame_count < max_frames);
     T(load_file_cancel_passed);
     sfetch_shutdown();
 }
