@@ -17,6 +17,10 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## What's New:
 
+- **06-Jul-2019**: Two new samples for the new [sokol_fetch.h header](https://github.com/floooh/sokol/blob/master/sokol_fetch.h):
+    - [loadpng-sapp](https://floooh.github.io/sokol-html5/loadpng-sapp.html): load an image file into a sokol-gfx texture
+    - [plmpeg-sapp](https://floooh.github.io/sokol-html5/plmpeg-sapp.html): MPEG1 streaming via [pl_mpeg](https://github.com/phoboslab/pl_mpeg)
+
 - **04-Jun-2019**: New sample on how to compile and use the sokol headers as
 DLL (currently only on Windows). This demonstrates the new SOKOL_DLL
 configuration define which annotates public function declarations with
