@@ -11,12 +11,20 @@ layout(location=0) in vec4 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec2 texcoord;
 
+out vec3 nrm;
+out vec2 uv;
+
 void main() {
     gl_Position = mvp * position;
+    uv = texcoord;
+    nrm = normal;
 }
 @end
 
 @fs metallic_fs
+in vec3 nrm;
+in vec2 uv;
+
 out vec4 frag_color;
 
 uniform metallic_params {
@@ -33,11 +41,13 @@ uniform sampler2D occlusion_texture;
 uniform sampler2D emissive_texture;
 
 void main() {
-    frag_color = base_color_factor;
+    frag_color = texture(occlusion_texture, uv) * base_color_factor * vec4(nrm * 0.5 + 0.5, 1.0);
 }
 @end
 
 @fs specular_fs
+in vec3 nrm;
+in vec2 uv;
 out vec4 frag_color;
 
 uniform specular_params {
@@ -54,7 +64,7 @@ uniform sampler2D occlusion_texture;
 uniform sampler2D emissive_texture;
 
 void main() {
-    frag_color = diffuse_factor;
+    frag_color = texture(occlusion_texture, uv) * diffuse_factor * vec4(nrm * 0.5 + 0.5, 1.0);
 }
 @end
 

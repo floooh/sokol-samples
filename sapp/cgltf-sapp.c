@@ -26,6 +26,7 @@
 #define SCENE_MAX_MATERIALS (16)
 #define SCENE_MAX_PIPELINES (16)
 #define SCENE_MAX_MESHES (16)
+#define SCENE_MAX_PRIMITIVES_PER_MESH (16)   // aka submesh
 #define SCENE_MAX_NODES (16)
 
 typedef struct {
@@ -46,6 +47,7 @@ typedef struct {
 typedef struct {
     sg_layout_desc layout;
     sg_primitive_type prim_type;
+    sg_index_type index_type;
     bool alpha;
 } pipeline_cache_params_t;
 
@@ -73,10 +75,8 @@ typedef struct {
 
 typedef struct {
     bool is_metallic;
-    union {
-        metallic_material_t metallic;
-        specular_material_t specular;
-    };
+    metallic_material_t metallic;
+    specular_material_t specular;
 } material_t;
 
 // map sokol-gfx buffer bind slots to scene.buffers items
@@ -85,20 +85,34 @@ typedef struct {
     int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
 } vertex_buffer_mapping_t;
 
+// a 'primitive' corresponds to a draw call
 typedef struct {
     int pipeline;           // index into scene.pipelines array
     int material;           // index into materials array
-    vertex_buffer_mapping_t vertex_buffers; // indices into buffers array by vb bind slot
-    int index_buffer;       // index into buffers array
+    vertex_buffer_mapping_t vertex_buffers; // indices into bufferview array by vbuf bind slot
+    int index_buffer;       // index into bufferview array for index buffer
     int base_element;
     int num_elements;
+} primitive_t;
+
+// a mesh is a collection of primitives
+typedef struct {
+    int num_primitives;
+    primitive_t primitives[SCENE_MAX_PRIMITIVES_PER_MESH];
 } mesh_t;
 
+// a node associates a transform with a mesh
 typedef struct {
-    int first_mesh;
-    int num_meshes;
+    int parent_node;    // index into scene.nodes
+    int mesh;           // index into scene.meshes, or -1
     hmm_mat4 transform;
 } node_t;
+
+// camera helper struct
+typedef struct {
+    float rx, ry;
+    hmm_mat4 view_proj;
+} camera_t;
 
 typedef struct {
     int num_buffers;
@@ -128,7 +142,7 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes);
 static void gltf_parse_buffers(const cgltf_data* gltf);
 static void gltf_parse_images(const cgltf_data* gltf);
 static void gltf_parse_materials(const cgltf_data* gltf);
-static void gltf_parse_nodes(const cgltf_data* gltf);
+static void gltf_parse_meshes(const cgltf_data* gltf);
 
 static void gltf_fetch_callback(const sfetch_response_t*);
 static void gltf_buffer_fetch_callback(const sfetch_response_t*);
@@ -139,6 +153,9 @@ static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t*
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
 
+static void update_camera(int framebuffer_width, int framebuffer_height);
+static vs_params_t vs_params_for_node(int node_index);
+
 static struct {
     bool failed;
     sg_pass_action pass_action;
@@ -146,6 +163,7 @@ static struct {
     sg_shader metallic_shader;
     sg_shader specular_shader;
     scene_t scene;
+    camera_t camera;
 } state;
 
 static void init(void) {
@@ -173,7 +191,7 @@ static void init(void) {
 
     // normal background color, and a "load failed" background color
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 1.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.569f, 0.918f, 1.0f} }
     };
     state.failed_pass_action = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
@@ -195,10 +213,55 @@ static void frame(void) {
     // pump the sokol-fetch message queue
     sfetch_dowork();
 
+    const int fb_width = sapp_width();
+    const int fb_height = sapp_height();
+    update_camera(fb_width, fb_height);
+
     // render the scene
-    sg_begin_default_pass(state.failed ? &state.failed_pass_action : &state.pass_action, sapp_width(), sapp_height());
-    __dbgui_draw();
-    sg_end_pass();
+    if (state.failed) {
+        sg_begin_default_pass(&state.failed_pass_action, fb_width, fb_height);
+        __dbgui_draw();
+        sg_end_pass();
+    }
+    else {
+        sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
+        // FIXME: replace with nodes
+        vs_params_t vs_params = vs_params_for_node(0);
+        for (int mesh_index = 0; mesh_index < state.scene.num_meshes; mesh_index++) {
+            const mesh_t* mesh = &state.scene.meshes[mesh_index];
+            for (int prim_index = 0; prim_index < mesh->num_primitives; prim_index++) {
+                const primitive_t* prim = &mesh->primitives[prim_index];
+                const material_t* mat = &state.scene.materials[prim->material];
+                sg_apply_pipeline(state.scene.pipelines[prim->pipeline]);
+                // FIXME: bindings should be part of the primitive_t struct
+                sg_bindings bind = { 0 };
+                for (int vb_slot = 0; vb_slot < prim->vertex_buffers.num; vb_slot++) {
+                    bind.vertex_buffers[vb_slot] = state.scene.buffers[prim->vertex_buffers.buffer[vb_slot]];
+                }
+                if (prim->index_buffer != -1) {
+                    bind.index_buffer = state.scene.buffers[prim->index_buffer];
+                }
+                bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.occlusion];
+                sg_apply_bindings(&bind);
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+                if (mat->is_metallic) {
+                    sg_apply_uniforms(SG_SHADERSTAGE_FS,
+                        SLOT_metallic_params,
+                        &mat->metallic.fs_params,
+                        sizeof(metallic_params_t));
+                }
+                else {
+                    sg_apply_uniforms(SG_SHADERSTAGE_VS,
+                        SLOT_specular_params,
+                        &mat->specular.fs_params,
+                        sizeof(specular_params_t));
+                }
+                sg_draw(prim->base_element, prim->num_elements, 1);
+            }
+        }
+        __dbgui_draw();
+        sg_end_pass();
+    }
     sg_commit();
 }
 
@@ -287,7 +350,7 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
         gltf_parse_buffers(data);
         gltf_parse_images(data);
         gltf_parse_materials(data);
-        gltf_parse_nodes(data);
+        gltf_parse_meshes(data);
         cgltf_free(data);
     }
 }
@@ -313,6 +376,12 @@ static int gltf_texture_index(const cgltf_data* gltf, const cgltf_texture* tex) 
     return tex - gltf->textures;
 }
 
+static int gltf_material_index(const cgltf_data* gltf, const cgltf_material* mat) {
+    assert(mat);
+    return mat - gltf->materials;
+}
+
+// parse the GLTF buffer definitions and start loading buffer blobs
 static void gltf_parse_buffers(const cgltf_data* gltf) {
     if (gltf->buffer_views_count > SCENE_MAX_BUFFERS) {
         state.failed = true;
@@ -414,6 +483,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     }
 }
 
+// parse GLTF materials into our own material definition
 static void gltf_parse_materials(const cgltf_data* gltf) {
     if (gltf->materials_count > SCENE_MAX_MATERIALS) {
         state.failed = true;
@@ -463,18 +533,46 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
     }
 }
 
-static void gltf_parse_nodes(const cgltf_data* gltf) {
-    if (gltf->nodes_count > SCENE_MAX_NODES) {
+// parse GLTF meshes into our own mesh definition
+static void gltf_parse_meshes(const cgltf_data* gltf) {
+    if (gltf->meshes_count > SCENE_MAX_MESHES) {
         state.failed = true;
         return;
     }
-    for (cgltf_size node_index = 0; node_index < gltf->nodes_count; node_index++) {
-        const cgltf_node* node = &gltf->nodes[node_index];
-        if (node->mesh) {
-            for (cgltf_size prim_index = 0; prim_index < node->mesh->primitives_count; prim_index++) {
-                const cgltf_primitive* prim = &node->mesh->primitives[prim_index];
-                vertex_buffer_mapping_t vbuf_map = create_vertex_buffer_mapping_for_gltf_primitive(gltf, prim);
-                int pip_index = create_sg_pipeline_for_gltf_primitive(gltf, prim, &vbuf_map);
+
+    state.scene.num_meshes = gltf->meshes_count;
+    for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
+        const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
+        if (gltf_mesh->primitives_count > SCENE_MAX_PRIMITIVES_PER_MESH) {
+            state.failed = true;
+            return;
+        }
+        mesh_t* mesh = &state.scene.meshes[mesh_index];
+        mesh->num_primitives = gltf_mesh->primitives_count;
+        for (cgltf_size prim_index = 0; prim_index < gltf_mesh->primitives_count; prim_index++) {
+            const cgltf_primitive* gltf_prim = &gltf_mesh->primitives[prim_index];
+            primitive_t* prim = &mesh->primitives[prim_index];
+
+            // a mapping from sokol-gfx vertex buffer bind slots into the scene.buffers array
+            prim->vertex_buffers = create_vertex_buffer_mapping_for_gltf_primitive(gltf, gltf_prim);
+            // create or reuse a matching pipeline state object
+            prim->pipeline = create_sg_pipeline_for_gltf_primitive(gltf, gltf_prim, &prim->vertex_buffers);
+            // the material parameters
+            prim->material = gltf_material_index(gltf, gltf_prim->material);
+            // index buffer, base element, num elements
+            if (gltf_prim->indices) {
+                prim->index_buffer = gltf_bufferview_index(gltf, gltf_prim->indices->buffer_view);
+                assert(state.scene.buffer_params[prim->index_buffer].type == SG_BUFFERTYPE_INDEXBUFFER);
+                assert(gltf_prim->indices->stride != 0);
+                prim->base_element = 0;
+                prim->num_elements = gltf_prim->indices->count;
+            }
+            else {
+                // hmm... looking up the number of elements to render from
+                // a random vertex component accessor looks a bit shady
+                prim->index_buffer = -1;
+                prim->base_element = 0;
+                prim->num_elements = gltf_prim->attributes->data->count;
             }
         }
     }
@@ -579,9 +677,26 @@ static sg_primitive_type gltf_to_prim_type(cgltf_primitive_type prim_type) {
     }
 }
 
+static sg_primitive_type gltf_to_index_type(const cgltf_primitive* prim) {
+    if (prim->indices) {
+        if (prim->indices->component_type == cgltf_component_type_r_16u) {
+            return SG_INDEXTYPE_UINT16;
+        }
+        else {
+            return SG_INDEXTYPE_UINT32;
+        }
+    }
+    else {
+        return SG_INDEXTYPE_NONE;
+    }
+}
+
 // creates a vertex buffer bind slot mapping for a specific GLTF primitive
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim) {
     vertex_buffer_mapping_t map = { 0 };
+    for (int i = 0; i < SG_MAX_SHADERSTAGE_BUFFERS; i++) {
+        map.buffer[i] = -1;
+    }
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
         const cgltf_attribute* attr = &prim->attributes[attr_index];
         const cgltf_accessor* acc = attr->data;
@@ -619,6 +734,30 @@ static sg_layout_desc create_sg_layout_for_gltf_primitive(const cgltf_data* gltf
     return layout;
 }
 
+// helper to compare to pipeline-cache items
+static bool pipelines_equal(const pipeline_cache_params_t* p0, const pipeline_cache_params_t* p1) {
+    if (p0->prim_type != p1->prim_type) {
+        return false;
+    }
+    if (p0->alpha != p1->alpha) {
+        return false;
+    }
+    if (p0->index_type != p1->index_type) {
+        return false;
+    }
+    for (int i = 0; i < SG_MAX_VERTEX_ATTRIBUTES; i++) {
+        const sg_vertex_attr_desc* a0 = &p0->layout.attrs[i];
+        const sg_vertex_attr_desc* a1 = &p1->layout.attrs[i];
+        if ((a0->buffer_index != a1->buffer_index) ||
+            (a0->offset != a1->offset) ||
+            (a0->format != a1->format))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Create a unique sokol-gfx pipeline object for GLTF primitive (aka submesh),
 // maintains a cache of shared, unique pipeline objects. Returns an index
 // into state.scene.pipelines
@@ -626,31 +765,67 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
     pipeline_cache_params_t pip_params = {
         .layout = create_sg_layout_for_gltf_primitive(gltf, prim, vbuf_map),
         .prim_type = gltf_to_prim_type(prim->type),
+        .index_type = gltf_to_index_type(prim),
         .alpha = prim->material->alpha_mode != cgltf_alpha_mode_opaque
     };
     int i = 0;
     for (; i < state.scene.num_pipelines; i++) {
-        // FIXME! can't use memcmp here, because padding bytes might contain random values!
-        assert(false);
-        /*
-        if (0 == memcmp(&state.scene.pipeline_cache[i], &pip_params, sizeof(pip_params))) {
-            // an indentical pipeline already exists
+        if (pipelines_equal(&state.scene.pipeline_cache[i], &pip_params)) {
+            // an indentical pipeline already exists, reuse this
             assert(state.scene.pipelines[i].id != SG_INVALID_ID);
             return i;
         }
-        */
     }
     if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
         state.scene.pipeline_cache[i] = pip_params;
-
-        // create a new pipeline
-        //state.scene.pipelines[i] = sg_make_pipeline(&(sg_pipeline_desc){
-
-        //});
+        const bool is_metallic = prim->material->has_pbr_metallic_roughness;
+        state.scene.pipelines[i] = sg_make_pipeline(&(sg_pipeline_desc){
+            .layout = pip_params.layout,
+            .shader = is_metallic ? state.metallic_shader : state.specular_shader,
+            .primitive_type = pip_params.prim_type,
+            .index_type = pip_params.index_type,
+            .depth_stencil = {
+                .depth_write_enabled = !pip_params.alpha,
+                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            },
+            .blend = {
+                .enabled = pip_params.alpha,
+                .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
+                .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
+                .color_write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
+            },
+            .rasterizer = {
+                .cull_mode = SG_CULLMODE_BACK,
+                .face_winding = SG_FACEWINDING_CCW,
+                .sample_count = SAMPLE_COUNT,
+            }
+        });
         state.scene.num_pipelines++;
     }
     assert(state.scene.num_pipelines <= SCENE_MAX_PIPELINES);
     return i;
+}
+
+static void update_camera(int framebuffer_width, int framebuffer_height) {
+    const float w = (float) framebuffer_width;
+    const float h = (float) framebuffer_height;
+    const float dist = 3.0f;
+    float eye_x = dist * sin(state.camera.ry);
+    float eye_y = dist * cos(state.camera.ry);
+    hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 100.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(eye_x, 1.5f, eye_y), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.camera.view_proj = HMM_MultiplyMat4(proj, view);
+    state.camera.rx += 0.01f;
+    state.camera.ry += 0.02f;
+}
+
+static vs_params_t vs_params_for_node(int node_index) {
+    // FIXME: model matrix
+    hmm_mat4 model = HMM_Mat4d(1.0f);
+    vs_params_t vs_params = {
+        .mvp = HMM_MultiplyMat4(state.camera.view_proj, model)
+    };
+    return vs_params;
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
