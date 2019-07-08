@@ -58,17 +58,19 @@ typedef struct {
 } metallic_material_t;
 
 // fragment-shader-params and textures for specular material
+/*
 typedef struct {
     specular_params_t fs_params;
     specular_images_t images;
 } specular_material_t;
+*/
 
 // ...and everything grouped into a material struct
 typedef struct {
     bool is_metallic;
     union {
         metallic_material_t metallic;
-        specular_material_t specular;
+//        specular_material_t specular;
     };
 } material_t;
 
@@ -147,6 +149,7 @@ typedef struct {
 // camera helper struct
 typedef struct {
     float rx, ry;
+    hmm_vec3 eye_pos;
     hmm_mat4 view_proj;
 } camera_t;
 
@@ -163,6 +166,7 @@ static struct {
     } shaders;
     scene_t scene;
     camera_t camera;
+    light_params_t point_light;     // code-generated from shader
     struct {
         buffer_creation_params_t buffers[SCENE_MAX_BUFFERS];
         image_creation_params_t images[SCENE_MAX_IMAGES];
@@ -226,7 +230,15 @@ static void init(void) {
 
     // create shaders
     state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc());
-    state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
+    //state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
+
+    // setup the point light
+    state.point_light = (light_params_t){
+        .light_pos = HMM_Vec3(10, 10, 10),
+        .light_range = 1000.0,
+        .light_color = HMM_Vec3(1000.0, 1000.0, 1000.0),
+        .light_intensity = 1.0
+    };
 
     // start loading the base gltf file...
     sfetch_send(&(sfetch_request_t){
@@ -270,7 +282,12 @@ static void frame(void) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
                 sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &state.point_light, sizeof(state.point_light));
                 if (mat->is_metallic) {
+                    bind.fs_images[SLOT_normal_texture] = state.scene.images[mat->metallic.images.normal];
+                    bind.fs_images[SLOT_metallic_roughness_texture] = state.scene.images[mat->metallic.images.metallic_roughness];
+                    bind.fs_images[SLOT_emissive_texture] = state.scene.images[mat->metallic.images.emissive];
+                    bind.fs_images[SLOT_base_color_texture] = state.scene.images[mat->metallic.images.base_color];
                     bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.images.occlusion];
                     sg_apply_uniforms(SG_SHADERSTAGE_FS,
                         SLOT_metallic_params,
@@ -278,10 +295,12 @@ static void frame(void) {
                         sizeof(metallic_params_t));
                 }
                 else {
+                /*
                     sg_apply_uniforms(SG_SHADERSTAGE_VS,
                         SLOT_specular_params,
                         &mat->specular.fs_params,
                         sizeof(specular_params_t));
+                */
                 }
                 sg_apply_bindings(&bind);
                 sg_draw(prim->base_element, prim->num_elements, 1);
@@ -549,6 +568,7 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
             };
         }
         else {
+            /*
             const cgltf_pbr_specular_glossiness* src = &gltf_mat->pbr_specular_glossiness;
             specular_material_t* dst = &scene_mat->specular;
             for (int d = 0; d < 4; d++) {
@@ -568,6 +588,7 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
                 .occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture),
                 .emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture)
             };
+            */
         }
     }
 }
@@ -897,9 +918,10 @@ static void update_camera(int framebuffer_width, int framebuffer_height) {
     const float h = (float) framebuffer_height;
     const float dist = 3.0f;
     float eye_x = dist * sin(state.camera.ry);
-    float eye_y = dist * cos(state.camera.ry);
+    float eye_z = dist * cos(state.camera.ry);
+    state.camera.eye_pos = HMM_Vec3(eye_x, 1.5f, eye_z);
     hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(eye_x, 1.5f, eye_y), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(state.camera.eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.camera.view_proj = HMM_MultiplyMat4(proj, view);
     state.camera.rx += 0.01f;
     state.camera.ry += 0.02f;
@@ -907,7 +929,9 @@ static void update_camera(int framebuffer_width, int framebuffer_height) {
 
 static vs_params_t vs_params_for_node(int node_index) {
     vs_params_t vs_params = {
-        .mvp = HMM_MultiplyMat4(state.camera.view_proj, state.scene.nodes[node_index].transform)
+        .model = state.scene.nodes[node_index].transform,
+        .view_proj = state.camera.view_proj,
+        .eye_pos = state.camera.eye_pos
     };
     return vs_params;
 }
