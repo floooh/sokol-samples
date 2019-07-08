@@ -21,6 +21,8 @@
 #include <assert.h>
 
 #define SAMPLE_COUNT (4)
+
+#define SCENE_INVALID_INDEX (-1)
 #define SCENE_MAX_BUFFERS (16)
 #define SCENE_MAX_IMAGES (16)
 #define SCENE_MAX_MATERIALS (16)
@@ -90,7 +92,7 @@ typedef struct {
     int pipeline;           // index into scene.pipelines array
     int material;           // index into materials array
     vertex_buffer_mapping_t vertex_buffers; // indices into bufferview array by vbuf bind slot
-    int index_buffer;       // index into bufferview array for index buffer
+    int index_buffer;       // index into bufferview array for index buffer, or SCENE_INVALID_INDEX
     int base_element;
     int num_elements;
 } primitive_t;
@@ -103,8 +105,7 @@ typedef struct {
 
 // a node associates a transform with a mesh
 typedef struct {
-    int parent_node;    // index into scene.nodes
-    int mesh;           // index into scene.meshes, or -1
+    int mesh;           // index into scene.meshes, or SCENE_INVALID_INDEX
     hmm_mat4 transform;
 } node_t;
 
@@ -143,6 +144,7 @@ static void gltf_parse_buffers(const cgltf_data* gltf);
 static void gltf_parse_images(const cgltf_data* gltf);
 static void gltf_parse_materials(const cgltf_data* gltf);
 static void gltf_parse_meshes(const cgltf_data* gltf);
+static void gltf_parse_nodes(const cgltf_data* gltf);
 
 static void gltf_fetch_callback(const sfetch_response_t*);
 static void gltf_buffer_fetch_callback(const sfetch_response_t*);
@@ -152,6 +154,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
 static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes);
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
+static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
 
 static void update_camera(int framebuffer_width, int framebuffer_height);
 static vs_params_t vs_params_for_node(int node_index);
@@ -225,20 +228,22 @@ static void frame(void) {
     }
     else {
         sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
-        // FIXME: replace with nodes
-        vs_params_t vs_params = vs_params_for_node(0);
-        for (int mesh_index = 0; mesh_index < state.scene.num_meshes; mesh_index++) {
-            const mesh_t* mesh = &state.scene.meshes[mesh_index];
+        for (int node_index = 0; node_index < state.scene.num_nodes; node_index++) {
+            const node_t* node = &state.scene.nodes[node_index];
+            if (node->mesh == SCENE_INVALID_INDEX) {
+                continue;
+            }
+            vs_params_t vs_params = vs_params_for_node(node_index);
+            const mesh_t* mesh = &state.scene.meshes[node->mesh];
             for (int prim_index = 0; prim_index < mesh->num_primitives; prim_index++) {
                 const primitive_t* prim = &mesh->primitives[prim_index];
                 const material_t* mat = &state.scene.materials[prim->material];
                 sg_apply_pipeline(state.scene.pipelines[prim->pipeline]);
-                // FIXME: bindings should be part of the primitive_t struct
                 sg_bindings bind = { 0 };
                 for (int vb_slot = 0; vb_slot < prim->vertex_buffers.num; vb_slot++) {
                     bind.vertex_buffers[vb_slot] = state.scene.buffers[prim->vertex_buffers.buffer[vb_slot]];
                 }
-                if (prim->index_buffer != -1) {
+                if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
                 bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.occlusion];
@@ -351,6 +356,7 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
         gltf_parse_images(data);
         gltf_parse_materials(data);
         gltf_parse_meshes(data);
+        gltf_parse_nodes(data);
         cgltf_free(data);
     }
 }
@@ -379,6 +385,11 @@ static int gltf_texture_index(const cgltf_data* gltf, const cgltf_texture* tex) 
 static int gltf_material_index(const cgltf_data* gltf, const cgltf_material* mat) {
     assert(mat);
     return mat - gltf->materials;
+}
+
+static int gltf_mesh_index(const cgltf_data* gltf, const cgltf_mesh* mesh) {
+    assert(mesh);
+    return mesh - gltf->meshes;
 }
 
 // parse the GLTF buffer definitions and start loading buffer blobs
@@ -539,7 +550,6 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
         state.failed = true;
         return;
     }
-
     state.scene.num_meshes = gltf->meshes_count;
     for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
         const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
@@ -570,11 +580,31 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
             else {
                 // hmm... looking up the number of elements to render from
                 // a random vertex component accessor looks a bit shady
-                prim->index_buffer = -1;
+                prim->index_buffer = SCENE_INVALID_INDEX;
                 prim->base_element = 0;
                 prim->num_elements = gltf_prim->attributes->data->count;
             }
         }
+    }
+}
+
+// parse GLTF nodes into our own node definition
+static void gltf_parse_nodes(const cgltf_data* gltf) {
+    if (gltf->nodes_count > SCENE_MAX_NODES) {
+        state.failed = true;
+        return;
+    }
+    state.scene.num_nodes = gltf->nodes_count;
+    for (cgltf_size node_index = 0; node_index < gltf->nodes_count; node_index++) {
+        const cgltf_node* gltf_node = &gltf->nodes[node_index];
+        node_t* node = &state.scene.nodes[node_index];
+        if (gltf_node->mesh) {
+            node->mesh = gltf_mesh_index(gltf, gltf_node->mesh);
+        }
+        else {
+            node->mesh = SCENE_INVALID_INDEX;
+        }
+        node->transform = build_transform_for_gltf_node(gltf, gltf_node);
     }
 }
 
@@ -662,7 +692,7 @@ static int gltf_attr_type_to_vs_input_slot(cgltf_attribute_type attr_type) {
         case cgltf_attribute_type_position: return ATTR_vs_position;
         case cgltf_attribute_type_normal: return ATTR_vs_normal;
         case cgltf_attribute_type_texcoord: return ATTR_vs_texcoord;
-        default: return -1;
+        default: return SCENE_INVALID_INDEX;
     }
 }
 
@@ -695,7 +725,7 @@ static sg_primitive_type gltf_to_index_type(const cgltf_primitive* prim) {
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim) {
     vertex_buffer_mapping_t map = { 0 };
     for (int i = 0; i < SG_MAX_SHADERSTAGE_BUFFERS; i++) {
-        map.buffer[i] = -1;
+        map.buffer[i] = SCENE_INVALID_INDEX;
     }
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
         const cgltf_attribute* attr = &prim->attributes[attr_index];
@@ -721,7 +751,7 @@ static sg_layout_desc create_sg_layout_for_gltf_primitive(const cgltf_data* gltf
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
         const cgltf_attribute* attr = &prim->attributes[attr_index];
         int attr_slot = gltf_attr_type_to_vs_input_slot(attr->type);
-        if (attr_slot != -1) {
+        if (attr_slot != SCENE_INVALID_INDEX) {
             layout.attrs[attr_slot].format = gltf_to_vertex_format(attr->data);
         }
         int buffer_view_index = gltf_bufferview_index(gltf, attr->data->buffer_view);
@@ -806,6 +836,35 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
     return i;
 }
 
+static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node) {
+    hmm_mat4 parent_tform = HMM_Mat4d(1);
+    if (node->parent) {
+        parent_tform = build_transform_for_gltf_node(gltf, node->parent);
+    }
+    hmm_mat4 tform = HMM_Mat4d(1);
+    if (node->has_matrix) {
+        // needs testing, not sure if the element order is correct
+        tform = *(hmm_mat4*)node->matrix;
+    }
+    else {
+        hmm_mat4 translate = HMM_Mat4d(1);
+        hmm_mat4 rotate = HMM_Mat4d(1);
+        hmm_mat4 scale = HMM_Mat4d(1);
+        if (node->has_translation) {
+            translate = HMM_Translate(HMM_Vec3(node->translation[0], node->translation[1], node->translation[2]));
+        }
+        if (node->has_rotation) {
+            rotate = HMM_QuaternionToMat4(HMM_Quaternion(node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3]));
+        }
+        if (node->has_scale) {
+            scale = HMM_Scale(HMM_Vec3(node->scale[0], node->scale[1], node->scale[2]));
+        }
+        // NOTE: not sure if the multiplication order is correct
+        tform = HMM_MultiplyMat4(HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate), parent_tform);
+    }
+    return tform;
+}
+
 static void update_camera(int framebuffer_width, int framebuffer_height) {
     const float w = (float) framebuffer_width;
     const float h = (float) framebuffer_height;
@@ -820,10 +879,8 @@ static void update_camera(int framebuffer_width, int framebuffer_height) {
 }
 
 static vs_params_t vs_params_for_node(int node_index) {
-    // FIXME: model matrix
-    hmm_mat4 model = HMM_Mat4d(1.0f);
     vs_params_t vs_params = {
-        .mvp = HMM_MultiplyMat4(state.camera.view_proj, model)
+        .mvp = HMM_MultiplyMat4(state.camera.view_proj, state.scene.nodes[node_index].transform)
     };
     return vs_params;
 }
