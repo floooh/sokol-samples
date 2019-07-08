@@ -15,22 +15,112 @@
 #include "sokol_fetch.h"
 #include "dbgui/dbgui.h"
 #include "cgltf-sapp.glsl.h"
-#define CGLTF_IMPLEMENTATION
 #include "stb/stb_image.h"
+#define CGLTF_IMPLEMENTATION
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
-#define SAMPLE_COUNT (4)
+static const char* filename = "DamagedHelmet.gltf";
+
+#define MSAA_SAMPLE_COUNT (4)
 
 #define SCENE_INVALID_INDEX (-1)
 #define SCENE_MAX_BUFFERS (16)
 #define SCENE_MAX_IMAGES (16)
 #define SCENE_MAX_MATERIALS (16)
 #define SCENE_MAX_PIPELINES (16)
+#define SCENE_MAX_PRIMITIVES (16)   // aka submesh
 #define SCENE_MAX_MESHES (16)
-#define SCENE_MAX_PRIMITIVES_PER_MESH (16)   // aka submesh
 #define SCENE_MAX_NODES (16)
 
+// per-material texture indices into scene.images for metallic material
+typedef struct {
+    int base_color;
+    int metallic_roughness;
+    int normal;
+    int occlusion;
+    int emissive;
+} metallic_images_t;
+
+// per-material texture indices into scene.images for specular material
+typedef struct {
+    int diffuse;
+    int specular_glossiness;
+    int normal;
+    int occlusion;
+    int emissive;
+} specular_images_t;
+
+// fragment-shader-params and textures for metallic material
+typedef struct {
+    metallic_params_t fs_params;
+    metallic_images_t images;
+} metallic_material_t;
+
+// fragment-shader-params and textures for specular material
+typedef struct {
+    specular_params_t fs_params;
+    specular_images_t images;
+} specular_material_t;
+
+// ...and everything grouped into a material struct
+typedef struct {
+    bool is_metallic;
+    union {
+        metallic_material_t metallic;
+        specular_material_t specular;
+    };
+} material_t;
+
+// helper struct to map sokol-gfx buffer bindslots to scene.buffers indices
+typedef struct {
+    int num;
+    int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
+} vertex_buffer_mapping_t;
+
+// a 'primitive' (aka submesh) contains everything needed to issue a draw call
+typedef struct {
+    int pipeline;           // index into scene.pipelines array
+    int material;           // index into scene.materials array
+    vertex_buffer_mapping_t vertex_buffers; // indices into bufferview array by vbuf bind slot
+    int index_buffer;       // index into bufferview array for index buffer, or SCENE_INVALID_INDEX
+    int base_element;       // index of first index or vertex to draw
+    int num_elements;       // number of vertices or indices to draw
+} primitive_t;
+
+// a mesh is just a group of primitives (aka submeshes)
+typedef struct {
+    int first_primitive;    // index into scene.primitives
+    int num_primitives;
+} mesh_t;
+
+// a node associates a transform with an mesh,
+// currently, the transform matrices are 'baked' upfront into world space
+typedef struct {
+    int mesh;           // index into scene.meshes
+    hmm_mat4 transform;
+} node_t;
+
+// the complete scene
+typedef struct {
+    int num_buffers;
+    int num_images;
+    int num_pipelines;
+    int num_materials;
+    int num_primitives; // aka 'submeshes'
+    int num_meshes;
+    int num_nodes;
+    sg_buffer buffers[SCENE_MAX_BUFFERS];
+    sg_image images[SCENE_MAX_IMAGES];
+    sg_pipeline pipelines[SCENE_MAX_PIPELINES];
+    material_t materials[SCENE_MAX_MATERIALS];
+    primitive_t primitives[SCENE_MAX_PRIMITIVES];
+    mesh_t meshes[SCENE_MAX_MESHES];
+    node_t nodes[SCENE_MAX_NODES];
+} scene_t;
+
+// resource creation helper params, these are stored until the
+// async-loaded resources (buffers and images) have been loaded
 typedef struct {
     sg_buffer_type type;
     int offset;
@@ -46,6 +136,7 @@ typedef struct {
     int gltf_image_index;
 } image_creation_params_t;
 
+// pipeline cache helper struct to avoid duplicate pipeline-state-objects
 typedef struct {
     sg_layout_desc layout;
     sg_primitive_type prim_type;
@@ -53,91 +144,33 @@ typedef struct {
     bool alpha;
 } pipeline_cache_params_t;
 
-typedef struct {
-    // shader uniforms
-    metallic_params_t fs_params;
-    // indices into scene.images[] array
-    int base_color;
-    int metallic_roughness;
-    int normal;
-    int occlusion;
-    int emissive;
-} metallic_material_t;
-
-typedef struct {
-    // shader uniforms
-    specular_params_t fs_params;
-    // indices into scene.images[] array
-    int diffuse;
-    int specular_glossiness;
-    int normal;
-    int occlusion;
-    int emissive;
-} specular_material_t;
-
-typedef struct {
-    bool is_metallic;
-    metallic_material_t metallic;
-    specular_material_t specular;
-} material_t;
-
-// map sokol-gfx buffer bind slots to scene.buffers items
-typedef struct {
-    int num;
-    int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
-} vertex_buffer_mapping_t;
-
-// a 'primitive' corresponds to a draw call
-typedef struct {
-    int pipeline;           // index into scene.pipelines array
-    int material;           // index into materials array
-    vertex_buffer_mapping_t vertex_buffers; // indices into bufferview array by vbuf bind slot
-    int index_buffer;       // index into bufferview array for index buffer, or SCENE_INVALID_INDEX
-    int base_element;
-    int num_elements;
-} primitive_t;
-
-// a mesh is a collection of primitives
-typedef struct {
-    int num_primitives;
-    primitive_t primitives[SCENE_MAX_PRIMITIVES_PER_MESH];
-} mesh_t;
-
-// a node associates a transform with a mesh
-typedef struct {
-    int mesh;           // index into scene.meshes, or SCENE_INVALID_INDEX
-    hmm_mat4 transform;
-} node_t;
-
 // camera helper struct
 typedef struct {
     float rx, ry;
     hmm_mat4 view_proj;
 } camera_t;
 
-typedef struct {
-    int num_buffers;
-    int num_images;
-    int num_pipelines;
-    int num_materials;
-    int num_meshes;
-    int num_nodes;
-
-    // sokol-gfx resource and scene structure
-    sg_buffer buffers[SCENE_MAX_BUFFERS];
-    sg_image images[SCENE_MAX_IMAGES];
-    sg_pipeline pipelines[SCENE_MAX_PIPELINES];
-    material_t materials[SCENE_MAX_MATERIALS];
-    mesh_t meshes[SCENE_MAX_MESHES];
-    node_t nodes[SCENE_MAX_NODES];
-
-    // helper data for async resource creation and a 'pipeline cash'
-    buffer_creation_params_t buffer_params[SCENE_MAX_BUFFERS];
-    image_creation_params_t image_params[SCENE_MAX_IMAGES];
-    pipeline_cache_params_t pipeline_cache[SCENE_MAX_PIPELINES];
-} scene_t;
-
-static const char* filename = "DamagedHelmet.gltf";
+// the top-level application state struct
+static struct {
+    bool failed;
+    struct {
+        sg_pass_action ok;
+        sg_pass_action failed;
+    } pass_actions;
+    struct {
+        sg_shader metallic;
+        sg_shader specular;
+    } shaders;
+    scene_t scene;
+    camera_t camera;
+    struct {
+        buffer_creation_params_t buffers[SCENE_MAX_BUFFERS];
+        image_creation_params_t images[SCENE_MAX_IMAGES];
+    } creation_params;
+    struct {
+        pipeline_cache_params_t items[SCENE_MAX_PIPELINES];
+    } pip_cache;
+} state;
 
 static void gltf_parse(const void* ptr, uint64_t num_bytes);
 static void gltf_parse_buffers(const cgltf_data* gltf);
@@ -159,16 +192,7 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
 static void update_camera(int framebuffer_width, int framebuffer_height);
 static vs_params_t vs_params_for_node(int node_index);
 
-static struct {
-    bool failed;
-    sg_pass_action pass_action;
-    sg_pass_action failed_pass_action;
-    sg_shader metallic_shader;
-    sg_shader specular_shader;
-    scene_t scene;
-    camera_t camera;
-} state;
-
+// sokol-app init callback, called once at startup
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
@@ -182,7 +206,7 @@ static void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
     // setup the optional debugging UI
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(MSAA_SAMPLE_COUNT);
 
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
@@ -193,16 +217,16 @@ static void init(void) {
     });
 
     // normal background color, and a "load failed" background color
-    state.pass_action = (sg_pass_action) {
+    state.pass_actions.ok = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.569f, 0.918f, 1.0f} }
     };
-    state.failed_pass_action = (sg_pass_action) {
+    state.pass_actions.failed = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     // create shaders
-    state.metallic_shader = sg_make_shader(cgltf_metallic_shader_desc());
-    state.specular_shader = sg_make_shader(cgltf_specular_shader_desc());
+    state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc());
+    state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
 
     // start loading the base gltf file...
     sfetch_send(&(sfetch_request_t){
@@ -212,6 +236,7 @@ static void init(void) {
     });
 }
 
+// sokol-app frame callback
 static void frame(void) {
     // pump the sokol-fetch message queue
     sfetch_dowork();
@@ -222,21 +247,19 @@ static void frame(void) {
 
     // render the scene
     if (state.failed) {
-        sg_begin_default_pass(&state.failed_pass_action, fb_width, fb_height);
+        // if something went wrong during loading, just render a red screen
+        sg_begin_default_pass(&state.pass_actions.failed, fb_width, fb_height);
         __dbgui_draw();
         sg_end_pass();
     }
     else {
-        sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
+        sg_begin_default_pass(&state.pass_actions.ok, fb_width, fb_height);
         for (int node_index = 0; node_index < state.scene.num_nodes; node_index++) {
             const node_t* node = &state.scene.nodes[node_index];
-            if (node->mesh == SCENE_INVALID_INDEX) {
-                continue;
-            }
             vs_params_t vs_params = vs_params_for_node(node_index);
             const mesh_t* mesh = &state.scene.meshes[node->mesh];
-            for (int prim_index = 0; prim_index < mesh->num_primitives; prim_index++) {
-                const primitive_t* prim = &mesh->primitives[prim_index];
+            for (int i = 0; i < mesh->num_primitives; i++) {
+                const primitive_t* prim = &state.scene.primitives[i + mesh->first_primitive];
                 const material_t* mat = &state.scene.materials[prim->material];
                 sg_apply_pipeline(state.scene.pipelines[prim->pipeline]);
                 sg_bindings bind = { 0 };
@@ -246,10 +269,9 @@ static void frame(void) {
                 if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
-                bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.occlusion];
-                sg_apply_bindings(&bind);
                 sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
                 if (mat->is_metallic) {
+                    bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.images.occlusion];
                     sg_apply_uniforms(SG_SHADERSTAGE_FS,
                         SLOT_metallic_params,
                         &mat->metallic.fs_params,
@@ -261,6 +283,7 @@ static void frame(void) {
                         &mat->specular.fs_params,
                         sizeof(specular_params_t));
                 }
+                sg_apply_bindings(&bind);
                 sg_draw(prim->base_element, prim->num_elements, 1);
             }
         }
@@ -270,6 +293,7 @@ static void frame(void) {
     sg_commit();
 }
 
+// sokol-app cleanup callback, called once at shutdown
 static void cleanup(void) {
     sfetch_shutdown();
     __dbgui_shutdown();
@@ -403,7 +427,7 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
     state.scene.num_buffers = gltf->buffer_views_count;
     for (int i = 0; i < state.scene.num_buffers; i++) {
         const cgltf_buffer_view* gltf_buf_view = &gltf->buffer_views[i];
-        buffer_creation_params_t* p = &state.scene.buffer_params[i];
+        buffer_creation_params_t* p = &state.creation_params.buffers[i];
         p->gltf_buffer_index = gltf_buffer_index(gltf, gltf_buf_view->buffer);
         p->offset = gltf_buf_view->offset;
         p->size = gltf_buf_view->size;
@@ -468,7 +492,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     state.scene.num_images = gltf->textures_count;
     for (int i = 0; i < state.scene.num_images; i++) {
         const cgltf_texture* gltf_tex = &gltf->textures[i];
-        image_creation_params_t* p = &state.scene.image_params[i];
+        image_creation_params_t* p = &state.creation_params.images[i];
         p->gltf_image_index = gltf_image_index(gltf, gltf_tex->image);
         p->min_filter = gltf_to_sg_filter(gltf_tex->sampler->min_filter);
         p->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
@@ -516,11 +540,13 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
             }
             dst->fs_params.metallic_factor = src->metallic_factor;
             dst->fs_params.roughness_factor = src->roughness_factor;
-            dst->base_color = gltf_texture_index(gltf, src->base_color_texture.texture);
-            dst->metallic_roughness = gltf_texture_index(gltf, src->metallic_roughness_texture.texture);
-            dst->normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture);
-            dst->occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture);
-            dst->emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture);
+            dst->images = (metallic_images_t) {
+                .base_color = gltf_texture_index(gltf, src->base_color_texture.texture),
+                .metallic_roughness = gltf_texture_index(gltf, src->metallic_roughness_texture.texture),
+                .normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture),
+                .occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture),
+                .emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture)
+            };
         }
         else {
             const cgltf_pbr_specular_glossiness* src = &gltf_mat->pbr_specular_glossiness;
@@ -535,16 +561,18 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
                 dst->fs_params.emissive_factor.Elements[d] = gltf_mat->emissive_factor[d];
             }
             dst->fs_params.glossiness_factor = src->glossiness_factor;
-            dst->diffuse = gltf_texture_index(gltf, src->diffuse_texture.texture);
-            dst->specular_glossiness = gltf_texture_index(gltf, src->specular_glossiness_texture.texture);
-            dst->normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture);
-            dst->occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture);
-            dst->emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture);
+            dst->images = (specular_images_t) {
+                .diffuse = gltf_texture_index(gltf, src->diffuse_texture.texture),
+                .specular_glossiness = gltf_texture_index(gltf, src->specular_glossiness_texture.texture),
+                .normal = gltf_texture_index(gltf, gltf_mat->normal_texture.texture),
+                .occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture),
+                .emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture)
+            };
         }
     }
 }
 
-// parse GLTF meshes into our own mesh definition
+// parse GLTF meshes into our own mesh and submesh definition
 static void gltf_parse_meshes(const cgltf_data* gltf) {
     if (gltf->meshes_count > SCENE_MAX_MESHES) {
         state.failed = true;
@@ -553,15 +581,16 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
     state.scene.num_meshes = gltf->meshes_count;
     for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
         const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
-        if (gltf_mesh->primitives_count > SCENE_MAX_PRIMITIVES_PER_MESH) {
+        if ((gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
             state.failed = true;
             return;
         }
         mesh_t* mesh = &state.scene.meshes[mesh_index];
+        mesh->first_primitive = state.scene.num_primitives;
         mesh->num_primitives = gltf_mesh->primitives_count;
         for (cgltf_size prim_index = 0; prim_index < gltf_mesh->primitives_count; prim_index++) {
             const cgltf_primitive* gltf_prim = &gltf_mesh->primitives[prim_index];
-            primitive_t* prim = &mesh->primitives[prim_index];
+            primitive_t* prim = &state.scene.primitives[state.scene.num_primitives++];
 
             // a mapping from sokol-gfx vertex buffer bind slots into the scene.buffers array
             prim->vertex_buffers = create_vertex_buffer_mapping_for_gltf_primitive(gltf, gltf_prim);
@@ -572,7 +601,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
             // index buffer, base element, num elements
             if (gltf_prim->indices) {
                 prim->index_buffer = gltf_bufferview_index(gltf, gltf_prim->indices->buffer_view);
-                assert(state.scene.buffer_params[prim->index_buffer].type == SG_BUFFERTYPE_INDEXBUFFER);
+                assert(state.creation_params.buffers[prim->index_buffer].type == SG_BUFFERTYPE_INDEXBUFFER);
                 assert(gltf_prim->indices->stride != 0);
                 prim->base_element = 0;
                 prim->num_elements = gltf_prim->indices->count;
@@ -594,24 +623,22 @@ static void gltf_parse_nodes(const cgltf_data* gltf) {
         state.failed = true;
         return;
     }
-    state.scene.num_nodes = gltf->nodes_count;
     for (cgltf_size node_index = 0; node_index < gltf->nodes_count; node_index++) {
         const cgltf_node* gltf_node = &gltf->nodes[node_index];
-        node_t* node = &state.scene.nodes[node_index];
+        // ignore nodes without mesh, those are not relevant since we
+        // bake the transform hierarchy into per-node world space transforms
         if (gltf_node->mesh) {
+            node_t* node = &state.scene.nodes[state.scene.num_nodes++];
             node->mesh = gltf_mesh_index(gltf, gltf_node->mesh);
+            node->transform = build_transform_for_gltf_node(gltf, gltf_node);
         }
-        else {
-            node->mesh = SCENE_INVALID_INDEX;
-        }
-        node->transform = build_transform_for_gltf_node(gltf, gltf_node);
     }
 }
 
 // create the sokol-gfx buffer objects associated with a GLTF buffer view
 static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes) {
     for (int i = 0; i < state.scene.num_buffers; i++) {
-        const buffer_creation_params_t* p = &state.scene.buffer_params[i];
+        const buffer_creation_params_t* p = &state.creation_params.buffers[i];
         if (p->gltf_buffer_index == gltf_buffer_index) {
             assert((p->offset + p->size) <= num_bytes);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
@@ -626,7 +653,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
 // create the sokol-gfx image objects associated with a GLTF image
 static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes) {
     for (int i = 0; i < state.scene.num_images; i++) {
-        image_creation_params_t* p = &state.scene.image_params[i];
+        image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
             // assume this is an image which can be decoded by stb_image.h
             int img_width, img_height, num_channels;
@@ -800,18 +827,18 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
     };
     int i = 0;
     for (; i < state.scene.num_pipelines; i++) {
-        if (pipelines_equal(&state.scene.pipeline_cache[i], &pip_params)) {
+        if (pipelines_equal(&state.pip_cache.items[i], &pip_params)) {
             // an indentical pipeline already exists, reuse this
             assert(state.scene.pipelines[i].id != SG_INVALID_ID);
             return i;
         }
     }
     if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
-        state.scene.pipeline_cache[i] = pip_params;
+        state.pip_cache.items[i] = pip_params;
         const bool is_metallic = prim->material->has_pbr_metallic_roughness;
         state.scene.pipelines[i] = sg_make_pipeline(&(sg_pipeline_desc){
             .layout = pip_params.layout,
-            .shader = is_metallic ? state.metallic_shader : state.specular_shader,
+            .shader = is_metallic ? state.shaders.metallic : state.shaders.specular,
             .primitive_type = pip_params.prim_type,
             .index_type = pip_params.index_type,
             .depth_stencil = {
@@ -827,7 +854,7 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
             .rasterizer = {
                 .cull_mode = SG_CULLMODE_BACK,
                 .face_winding = SG_FACEWINDING_CCW,
-                .sample_count = SAMPLE_COUNT,
+                .sample_count = MSAA_SAMPLE_COUNT,
             }
         });
         state.scene.num_pipelines++;
@@ -893,7 +920,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = MSAA_SAMPLE_COUNT,
         .gl_force_gles2 = true,
         .window_title = "GLTF Viewer",
     };
