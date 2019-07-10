@@ -89,7 +89,8 @@ vec3 get_normal() {
     t = normalize(t - ng * dot(ng, t));
     vec3 b = normalize(cross(ng, t));
     mat3 tbn = mat3(t, b, ng);
-    vec3 n = texture(normal_texture, v_uv).rgb;
+    vec2 xy = texture(normal_texture, v_uv).ra;
+    vec3 n = vec3(xy.x, xy.y, sqrt(1.0 - xy.x*xy.x - xy.y*xy.y));
     n = normalize(tbn * (2.0 * n - 1.0));
     return n;
 }
@@ -228,11 +229,11 @@ vec3 tone_map(vec3 color) {
 void main() {
     const vec3 f0 = vec3(0.04);
 
-    // Roughness is stored in the 'g' channel, metallic is stored in the 'b' channel.
-    // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
+    // Roughness is stored in the 'r' channel, metallic is stored in the 'a' channel.
+    // (same idea as storing normal maps in a DXT5N tetxure)
     vec4 mr_sample = texture(metallic_roughness_texture, v_uv);
-    float perceptual_roughness = clamp(mr_sample.g * roughness_factor, 0.0, 1.0);
-    float metallic = clamp(mr_sample.b * metallic_factor, 0.0, 1.0);
+    float perceptual_roughness = clamp(mr_sample.r * roughness_factor, 0.0, 1.0);
+    float metallic = clamp(mr_sample.a * metallic_factor, 0.0, 1.0);
 
     vec4 base_color = srgb_to_linear(texture(base_color_texture, v_uv)) * base_color_factor;
     vec3 diffuse_color = base_color.rgb * (vec3(1.0)-f0) * (1.0 - metallic);

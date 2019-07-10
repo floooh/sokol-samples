@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  cgltf-sapp.c
 //
-//  A simple(!) GLTF viewer, cgltf + sokol_app.h + sokol_gfx.h + sokol_fetch.h.
+//  A simple(!) GLTF viewer, cgltf + basisu + sokol_app.h + sokol_gfx.h + sokol_fetch.h.
 //  Doesn't support all GLTF features.
 //
 //  https://github.com/jkuhlmann/cgltf
@@ -15,7 +15,7 @@
 #include "sokol_fetch.h"
 #include "dbgui/dbgui.h"
 #include "cgltf-sapp.glsl.h"
-#include "stb/stb_image.h"
+#include "basisu/basisu_sokol.h"
 #define CGLTF_IMPLEMENTATION
 #define _CRT_SECURE_NO_WARNINGS
 #include "cgltf/cgltf.h"
@@ -203,7 +203,7 @@ static vs_params_t vs_params_for_node(int node_index);
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = true,
+        .gl_force_gles2 = sapp_gles2(),
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
@@ -214,6 +214,9 @@ static void init(void) {
     });
     // setup the optional debugging UI
     __dbgui_setup(MSAA_SAMPLE_COUNT);
+
+    // initialize Basis Universal
+    sbasisu_setup();
 
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
@@ -320,6 +323,7 @@ static void frame(void) {
 static void cleanup(void) {
     sfetch_shutdown();
     __dbgui_shutdown();
+    sbasisu_shutdown();
     sg_shutdown();
 }
 
@@ -680,28 +684,9 @@ static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t*
     for (int i = 0; i < state.scene.num_images; i++) {
         image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            // assume this is an image which can be decoded by stb_image.h
-            int img_width, img_height, num_channels;
-            const int desired_channels = 4;
-            stbi_uc* pixels = stbi_load_from_memory(
-                bytes, num_bytes,
-                &img_width, &img_height,
-                &num_channels, desired_channels);
-            if (pixels) {
-                /* ok, time to actually initialize the sokol-gfx texture */
-                sg_init_image(state.scene.images[i], &(sg_image_desc){
-                    .width = img_width,
-                    .height = img_height,
-                    .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .min_filter = p->min_filter,
-                    .mag_filter = p->mag_filter,
-                    .content.subimage[0][0] = {
-                        .ptr = pixels,
-                        .size = img_width * img_height * 4,
-                    }
-                });
-                stbi_image_free(pixels);
-            }
+            sg_image_desc img_desc = sbasisu_transcode(bytes, num_bytes);
+            sg_init_image(state.scene.images[i], &img_desc);
+            sbasisu_free(&img_desc);
         }
     }
 }
@@ -952,7 +937,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = MSAA_SAMPLE_COUNT,
-        .gl_force_gles2 = true,
         .window_title = "GLTF Viewer",
     };
 }
