@@ -37,13 +37,21 @@ samples = [
     [ 'sgl', 'sgl-sapp.c', None ],
     [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
-    [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl']
+    [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
+    [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl']
 ]
 
 # assets that must also be copied
 assets = [
     "baboon.png",
-    "bjork-all-is-full-of-love.mpg"
+    "bjork-all-is-full-of-love.mpg",
+    "DamagedHelmet.gltf",
+    "DamagedHelmet.bin",
+    "Default_AO.basis",
+    "Default_albedo.basis",
+    "Default_emissive.basis",
+    "Default_metalRoughness.basis",
+    "Default_normal.basis"
 ]
 
 # webpage template arguments

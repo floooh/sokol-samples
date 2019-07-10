@@ -176,6 +176,11 @@ static struct {
     struct {
         pipeline_cache_params_t items[SCENE_MAX_PIPELINES];
     } pip_cache;
+    struct {
+        sg_image white;
+        sg_image normal;
+        sg_image black;
+    } placeholders;
 } state;
 
 static void gltf_parse(const void* ptr, uint64_t num_bytes);
@@ -221,7 +226,7 @@ static void init(void) {
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
     sfetch_setup(&(sfetch_desc_t){
-        .max_requests = 32,
+        .max_requests = 64,
         .num_channels = 2,
         .num_lanes = 6
     });
@@ -251,6 +256,45 @@ static void init(void) {
         .channel = 0,
         .path = filename,
         .callback = gltf_fetch_callback,
+    });
+
+    // create placeholder textures
+    uint32_t pixels[64];
+    for (int i = 0; i < 64; i++) {
+        pixels[i] = 0xFFFFFFFF;
+    }
+    state.placeholders.white = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
+    });
+    for (int i = 0; i < 64; i++) {
+        pixels[i] = 0xFF000000;
+    }
+    state.placeholders.black = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
+    });
+    for (int i = 0; i < 64; i++) {
+        pixels[i] = 0xFFFF7FFF;
+    }
+    state.placeholders.normal = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .content.subimage[0][0] = {
+            .ptr = pixels,
+            .size = sizeof(pixels)
+        }
     });
 }
 
@@ -291,11 +335,31 @@ static void frame(void) {
                 sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
                 sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &state.point_light, sizeof(state.point_light));
                 if (mat->is_metallic) {
-                    bind.fs_images[SLOT_normal_texture] = state.scene.images[mat->metallic.images.normal];
-                    bind.fs_images[SLOT_metallic_roughness_texture] = state.scene.images[mat->metallic.images.metallic_roughness];
-                    bind.fs_images[SLOT_emissive_texture] = state.scene.images[mat->metallic.images.emissive];
-                    bind.fs_images[SLOT_base_color_texture] = state.scene.images[mat->metallic.images.base_color];
-                    bind.fs_images[SLOT_occlusion_texture] = state.scene.images[mat->metallic.images.occlusion];
+                    sg_image base_color_tex = state.scene.images[mat->metallic.images.base_color];
+                    sg_image metallic_roughness_tex = state.scene.images[mat->metallic.images.metallic_roughness];
+                    sg_image normal_tex = state.scene.images[mat->metallic.images.normal];
+                    sg_image occlusion_tex = state.scene.images[mat->metallic.images.occlusion];
+                    sg_image emissive_tex = state.scene.images[mat->metallic.images.emissive];
+                    if (!base_color_tex.id) {
+                        base_color_tex = state.placeholders.white;
+                    }
+                    if (!metallic_roughness_tex.id) {
+                        metallic_roughness_tex = state.placeholders.white;
+                    }
+                    if (!normal_tex.id) {
+                        normal_tex = state.placeholders.normal;
+                    }
+                    if (!occlusion_tex.id) {
+                        occlusion_tex = state.placeholders.white;
+                    }
+                    if (!emissive_tex.id) {
+                        emissive_tex = state.placeholders.black;
+                    }
+                    bind.fs_images[SLOT_base_color_texture] = base_color_tex;
+                    bind.fs_images[SLOT_metallic_roughness_texture] = metallic_roughness_tex;
+                    bind.fs_images[SLOT_normal_texture] = normal_tex;
+                    bind.fs_images[SLOT_occlusion_texture] = occlusion_tex;
+                    bind.fs_images[SLOT_emissive_texture] = emissive_tex;
                     sg_apply_uniforms(SG_SHADERSTAGE_FS,
                         SLOT_metallic_params,
                         &mat->metallic.fs_params,
@@ -525,8 +589,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
         p->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
         p->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
         p->wrap_t = gltf_to_sg_wrap(gltf_tex->sampler->wrap_t);
-        // allocate a sokol-gfx image handle
-        state.scene.images[i] = sg_alloc_image();
+        state.scene.images[i].id = SG_INVALID_ID;
     }
 
     // start loading all images
@@ -685,7 +748,7 @@ static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t*
         image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
             sg_image_desc img_desc = sbasisu_transcode(bytes, num_bytes);
-            sg_init_image(state.scene.images[i], &img_desc);
+            state.scene.images[i] = sg_make_image(&img_desc);
             sbasisu_free(&img_desc);
         }
     }
