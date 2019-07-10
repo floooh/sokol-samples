@@ -28,7 +28,6 @@ void main() {
     v_pos = pos.xyz / pos.w;
     v_nrm = (model * vec4(normal, 0.0)).xyz;
     v_uv = texcoord;
-    v_nrm = normal;
     v_eye_pos = eye_pos;
     gl_Position = view_proj * pos;
 }
@@ -202,6 +201,30 @@ vec3 apply_point_light(material_info_t material_info, vec3 normal, vec3 view) {
     return attenuation * light_intensity * light_color * shade;
 }
 
+// Uncharted 2 tone map
+// see: http://filmicworlds.com/blog/filmic-tonemapping-operators/
+vec3 toneMapUncharted2Impl(vec3 color) {
+    const float A = 0.15;
+    const float B = 0.50;
+    const float C = 0.10;
+    const float D = 0.20;
+    const float E = 0.02;
+    const float F = 0.30;
+    return ((color*(A*color+C*B)+D*E)/(color*(A*color+B)+D*F))-E/F;
+}
+
+vec3 toneMapUncharted(vec3 color) {
+    const float W = 11.2;
+    color = toneMapUncharted2Impl(color * 2.0);
+    vec3 whiteScale = 1.0 / toneMapUncharted2Impl(vec3(W));
+    return linear_to_srgb(color * whiteScale);
+}
+
+vec3 tone_map(vec3 color) {
+    // color *= exposure;
+    return toneMapUncharted(color);
+}
+
 void main() {
     const vec3 f0 = vec3(0.04);
 
@@ -239,9 +262,7 @@ void main() {
     vec3 color = apply_point_light(material_info, normal, view);
     color *= texture(occlusion_texture, v_uv).r;
     color += srgb_to_linear(texture(emissive_texture, v_uv)).rgb * emissive_factor;
-
-    //frag_color = vec4(tone_map(color), 1.0);
-    frag_color = vec4(linear_to_srgb(color), 1.0);
+    frag_color = vec4(tone_map(color), 1.0);
 }
 @end
 

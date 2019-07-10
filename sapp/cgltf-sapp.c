@@ -148,7 +148,6 @@ typedef struct {
 
 // camera helper struct
 typedef struct {
-    float rx, ry;
     hmm_vec3 eye_pos;
     hmm_mat4 view_proj;
 } camera_t;
@@ -167,6 +166,8 @@ static struct {
     scene_t scene;
     camera_t camera;
     light_params_t point_light;     // code-generated from shader
+    hmm_mat4 root_transform;
+    float rx, ry;
     struct {
         buffer_creation_params_t buffers[SCENE_MAX_BUFFERS];
         image_creation_params_t images[SCENE_MAX_IMAGES];
@@ -193,6 +194,7 @@ static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(c
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
 static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
 
+static void update_scene(void);
 static void update_camera(int framebuffer_width, int framebuffer_height);
 static vs_params_t vs_params_for_node(int node_index);
 
@@ -234,8 +236,8 @@ static void init(void) {
 
     // setup the point light
     state.point_light = (light_params_t){
-        .light_pos = HMM_Vec3(10, 10, 10),
-        .light_range = 1000.0,
+        .light_pos = HMM_Vec3(10.0, 10.0, 10.0),
+        .light_range = 100.0,
         .light_color = HMM_Vec3(1000.0, 1000.0, 1000.0),
         .light_intensity = 1.0
     };
@@ -253,6 +255,7 @@ static void frame(void) {
     // pump the sokol-fetch message queue
     sfetch_dowork();
 
+    update_scene();
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
     update_camera(fb_width, fb_height);
@@ -755,7 +758,7 @@ static sg_primitive_type gltf_to_prim_type(cgltf_primitive_type prim_type) {
     }
 }
 
-static sg_primitive_type gltf_to_index_type(const cgltf_primitive* prim) {
+static sg_index_type gltf_to_index_type(const cgltf_primitive* prim) {
     if (prim->indices) {
         if (prim->indices->component_type == cgltf_component_type_r_16u) {
             return SG_INDEXTYPE_UINT16;
@@ -908,7 +911,7 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
             scale = HMM_Scale(HMM_Vec3(node->scale[0], node->scale[1], node->scale[2]));
         }
         // NOTE: not sure if the multiplication order is correct
-        tform = HMM_MultiplyMat4(HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate), parent_tform);
+        tform = HMM_MultiplyMat4(parent_tform, HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate));
     }
     return tform;
 }
@@ -917,19 +920,22 @@ static void update_camera(int framebuffer_width, int framebuffer_height) {
     const float w = (float) framebuffer_width;
     const float h = (float) framebuffer_height;
     const float dist = 3.0f;
-    float eye_x = dist * sin(state.camera.ry);
-    float eye_z = dist * cos(state.camera.ry);
-    state.camera.eye_pos = HMM_Vec3(eye_x, 1.5f, eye_z);
+    state.camera.eye_pos = HMM_Vec3(0.0, 1.5f, dist);
     hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(state.camera.eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.camera.view_proj = HMM_MultiplyMat4(proj, view);
-    state.camera.rx += 0.01f;
-    state.camera.ry += 0.02f;
+}
+
+static void update_scene(void) {
+    state.rx += 0.25f;
+    state.ry += 2.0f;
+    state.root_transform = HMM_Rotate(state.rx, HMM_Vec3(0, 1, 0));
 }
 
 static vs_params_t vs_params_for_node(int node_index) {
+    hmm_mat4 model_transform = HMM_MultiplyMat4(state.root_transform, state.scene.nodes[node_index].transform);
     vs_params_t vs_params = {
-        .model = state.scene.nodes[node_index].transform,
+        .model = model_transform,
         .view_proj = state.camera.view_proj,
         .eye_pos = state.camera.eye_pos
     };
