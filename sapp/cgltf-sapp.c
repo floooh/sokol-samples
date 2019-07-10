@@ -21,7 +21,7 @@
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
-static const char* filename = "DamagedHelmet.gltf";
+static const char* filename = "DamagedHelmet.gltfx";
 
 #define MSAA_SAMPLE_COUNT (4)
 
