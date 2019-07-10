@@ -85,6 +85,11 @@
 #pragma clang diagnostic ignored "-Wtypedef-redefinition"
 #endif
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4996) 
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -563,10 +568,12 @@ cgltf_result cgltf_parse(
 		cgltf_size size,
 		cgltf_data** out_data);
 
+#if 0
 cgltf_result cgltf_parse_file(
 		const cgltf_options* options,
 		const char* path,
 		cgltf_data** out_data);
+#endif
 
 cgltf_result cgltf_load_buffers(
 		const cgltf_options* options,
@@ -824,6 +831,7 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	return cgltf_result_success;
 }
 
+#if 0
 cgltf_result cgltf_parse_file(const cgltf_options* options, const char* path, cgltf_data** out_data)
 {
 	if (options == NULL)
@@ -881,6 +889,7 @@ cgltf_result cgltf_parse_file(const cgltf_options* options, const char* path, cg
 
 	return cgltf_result_success;
 }
+#endif
 
 static void cgltf_combine_paths(char* path, const char* base, const char* uri)
 {
@@ -4729,3 +4738,7 @@ static void jsmn_init(jsmn_parser *parser) {
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+

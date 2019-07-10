@@ -17,6 +17,7 @@
 #include "cgltf-sapp.glsl.h"
 #include "stb/stb_image.h"
 #define CGLTF_IMPLEMENTATION
+#define _CRT_SECURE_NO_WARNINGS
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
@@ -410,32 +411,32 @@ static void gltf_parse(const void* ptr, uint64_t num_bytes) {
 // compute indices from cgltf element pointers
 static int gltf_buffer_index(const cgltf_data* gltf, const cgltf_buffer* buf) {
     assert(buf);
-    return buf - gltf->buffers;
+    return (int) (buf - gltf->buffers);
 }
 
 static int gltf_bufferview_index(const cgltf_data* gltf, const cgltf_buffer_view* buf_view) {
     assert(buf_view);
-    return buf_view - gltf->buffer_views;
+    return (int) (buf_view - gltf->buffer_views);
 }
 
 static int gltf_image_index(const cgltf_data* gltf, const cgltf_image* img) {
     assert(img);
-    return img - gltf->images;
+    return (int) (img - gltf->images);
 }
 
 static int gltf_texture_index(const cgltf_data* gltf, const cgltf_texture* tex) {
     assert(tex);
-    return tex - gltf->textures;
+    return (int) (tex - gltf->textures);
 }
 
 static int gltf_material_index(const cgltf_data* gltf, const cgltf_material* mat) {
     assert(mat);
-    return mat - gltf->materials;
+    return (int) (mat - gltf->materials);
 }
 
 static int gltf_mesh_index(const cgltf_data* gltf, const cgltf_mesh* mesh) {
     assert(mesh);
-    return mesh - gltf->meshes;
+    return (int) (mesh - gltf->meshes);
 }
 
 // parse the GLTF buffer definitions and start loading buffer blobs
@@ -446,13 +447,13 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
     }
 
     // parse the buffer-view attributes
-    state.scene.num_buffers = gltf->buffer_views_count;
+    state.scene.num_buffers = (int) gltf->buffer_views_count;
     for (int i = 0; i < state.scene.num_buffers; i++) {
         const cgltf_buffer_view* gltf_buf_view = &gltf->buffer_views[i];
         buffer_creation_params_t* p = &state.creation_params.buffers[i];
         p->gltf_buffer_index = gltf_buffer_index(gltf, gltf_buf_view->buffer);
-        p->offset = gltf_buf_view->offset;
-        p->size = gltf_buf_view->size;
+        p->offset = (int) gltf_buf_view->offset;
+        p->size = (int) gltf_buf_view->size;
         if (gltf_buf_view->type == cgltf_buffer_view_type_indices) {
             p->type = SG_BUFFERTYPE_INDEXBUFFER;
         }
@@ -511,7 +512,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     }
 
     // parse the texture and sampler attributes
-    state.scene.num_images = gltf->textures_count;
+    state.scene.num_images = (int) gltf->textures_count;
     for (int i = 0; i < state.scene.num_images; i++) {
         const cgltf_texture* gltf_tex = &gltf->textures[i];
         image_creation_params_t* p = &state.creation_params.images[i];
@@ -546,7 +547,7 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
         state.failed = true;
         return;
     }
-    state.scene.num_materials = gltf->materials_count;
+    state.scene.num_materials = (int) gltf->materials_count;
     for (int i = 0; i < state.scene.num_materials; i++) {
         const cgltf_material* gltf_mat = &gltf->materials[i];
         material_t* scene_mat = &state.scene.materials[i];
@@ -602,7 +603,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
         state.failed = true;
         return;
     }
-    state.scene.num_meshes = gltf->meshes_count;
+    state.scene.num_meshes = (int) gltf->meshes_count;
     for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
         const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
         if ((gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
@@ -611,7 +612,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
         }
         mesh_t* mesh = &state.scene.meshes[mesh_index];
         mesh->first_primitive = state.scene.num_primitives;
-        mesh->num_primitives = gltf_mesh->primitives_count;
+        mesh->num_primitives = (int) gltf_mesh->primitives_count;
         for (cgltf_size prim_index = 0; prim_index < gltf_mesh->primitives_count; prim_index++) {
             const cgltf_primitive* gltf_prim = &gltf_mesh->primitives[prim_index];
             primitive_t* prim = &state.scene.primitives[state.scene.num_primitives++];
@@ -628,14 +629,14 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
                 assert(state.creation_params.buffers[prim->index_buffer].type == SG_BUFFERTYPE_INDEXBUFFER);
                 assert(gltf_prim->indices->stride != 0);
                 prim->base_element = 0;
-                prim->num_elements = gltf_prim->indices->count;
+                prim->num_elements = (int) gltf_prim->indices->count;
             }
             else {
                 // hmm... looking up the number of elements to render from
                 // a random vertex component accessor looks a bit shady
                 prim->index_buffer = SCENE_INVALID_INDEX;
                 prim->base_element = 0;
-                prim->num_elements = gltf_prim->attributes->data->count;
+                prim->num_elements = (int) gltf_prim->attributes->data->count;
             }
         }
     }
