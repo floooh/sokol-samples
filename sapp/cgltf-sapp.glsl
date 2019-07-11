@@ -90,8 +90,8 @@ vec3 get_normal() {
     vec3 b = normalize(cross(ng, t));
     mat3 tbn = mat3(t, b, ng);
     vec2 xy = texture(normal_texture, v_uv).ra;
-    vec3 n = vec3(xy.x, xy.y, sqrt(1.0 - xy.x*xy.x - xy.y*xy.y));
-    n = normalize(tbn * (2.0 * n - 1.0));
+    vec3 n = normalize(vec3(xy.x, xy.y, sqrt(1.0 - xy.x*xy.x - xy.y*xy.y)) * 2.0 - 1.0);
+    n = normalize(tbn * n);
     return n;
 }
 

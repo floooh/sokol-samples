@@ -34,6 +34,12 @@ static const char* filename = "DamagedHelmet.gltfx";
 #define SCENE_MAX_MESHES (16)
 #define SCENE_MAX_NODES (16)
 
+// statically allocated buffers for file downloads
+#define SFETCH_NUM_CHANNELS (1)
+#define SFETCH_NUM_LANES (4)
+#define MAX_FILE_SIZE (1024*1024)
+uint8_t sfetch_buffers[SFETCH_NUM_CHANNELS][SFETCH_NUM_LANES][MAX_FILE_SIZE];
+
 // per-material texture indices into scene.images for metallic material
 typedef struct {
     int base_color;
@@ -227,8 +233,8 @@ static void init(void) {
     // we'll use one channel for mesh data and the other for textures
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 64,
-        .num_channels = 2,
-        .num_lanes = 6
+        .num_channels = SFETCH_NUM_CHANNELS,
+        .num_lanes = SFETCH_NUM_LANES
     });
 
     // normal background color, and a "load failed" background color
@@ -253,7 +259,6 @@ static void init(void) {
 
     // start loading the base gltf file...
     sfetch_send(&(sfetch_request_t){
-        .channel = 0,
         .path = filename,
         .callback = gltf_fetch_callback,
     });
@@ -394,17 +399,14 @@ static void cleanup(void) {
 // load-callback for the GLTF base file
 static void gltf_fetch_callback(const sfetch_response_t* response) {
     if (response->opened) {
-        // allocate and bind buffer to load file into
-        sfetch_bind_buffer(response->handle, malloc(response->content_size), response->content_size);
+        // bind buffer to load file into
+        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
     else if (response->fetched) {
         // file has been loaded, parse as GLTF
         gltf_parse(response->buffer_ptr, response->fetched_size);
     }
     if (response->finished) {
-        // don't forget to free the buffer (note: it's valid to call free()
-        // with a null pointer
-        free(sfetch_unbind_buffer(response->handle));
         if (response->failed) {
             state.failed = true;
         }
@@ -418,7 +420,7 @@ typedef struct {
 
 static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
     if (response->opened) {
-        sfetch_bind_buffer(response->handle, malloc(response->content_size), response->content_size);
+        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
     else if (response->fetched) {
         const gltf_buffer_fetch_userdata_t* user_data = (const gltf_buffer_fetch_userdata_t*)response->user_data;
@@ -429,7 +431,6 @@ static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
             (int)response->fetched_size);
     }
     if (response->finished) {
-        free(sfetch_unbind_buffer(response->handle));
         if (response->failed) {
             state.failed = true;
         }
@@ -443,7 +444,7 @@ typedef struct {
 
 static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     if (response->opened) {
-        sfetch_bind_buffer(response->handle, malloc(response->content_size), response->content_size);
+        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
     else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
@@ -454,7 +455,6 @@ static void gltf_image_fetch_callback(const sfetch_response_t* response) {
             (int)response->fetched_size);
     }
     if (response->finished) {
-        free(sfetch_unbind_buffer(response->handle));
         if (response->failed) {
             state.failed = true;
         }
@@ -539,7 +539,6 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
             .buffer_index = i
         };
         sfetch_send(&(sfetch_request_t){
-            .channel = 0,
             .path = gltf_buf->uri,
             .callback = gltf_buffer_fetch_callback,
             .user_data_ptr = &user_data,
@@ -599,7 +598,6 @@ static void gltf_parse_images(const cgltf_data* gltf) {
             .image_index = i
         };
         sfetch_send(&(sfetch_request_t){
-            .channel = 1,
             .path = gltf_img->uri,
             .callback = gltf_image_fetch_callback,
             .user_data_ptr = &user_data,
