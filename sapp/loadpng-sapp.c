@@ -20,6 +20,9 @@
 #include "loadpng-sapp.glsl.h"
 
 #define SAMPLE_COUNT (4)
+
+uint8_t file_buffer[256 * 1024];
+
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
@@ -148,13 +151,12 @@ static void init(void) {
        structure.
         - NOTE that we're not using the user_data member, since all required
           state is in a global variable anyway
-        - NOTE also that no buffer is provided, instead we're dynamically
-          allocating and freeing a buffer of just the right size in the
-          fetch callback (the file size will only be known there)
     */
     sfetch_send(&(sfetch_request_t){
         .path = "baboon.png",
-        .callback = fetch_callback
+        .callback = fetch_callback,
+        .buffer_ptr = file_buffer,
+        .buffer_size = sizeof(file_buffer)
     });
 }
 
@@ -166,15 +168,7 @@ static void init(void) {
     to release the buffer there.
 */
 static void fetch_callback(const sfetch_response_t* response) {
-    if (response->opened) {
-        /* allocate a buffer where the data will be streamed into and tell
-           sokol-fetch about it (we could also provide an buffer upfront in
-           sfetch_send() if we know a maximum file size)
-        */
-        void* buf_ptr = malloc(response->content_size);
-        sfetch_bind_buffer(response->handle, buf_ptr, response->content_size);
-    }
-    else if (response->fetched) {
+    if (response->fetched) {
         /* the file data has been fetched, since we provided a big-enough
            buffer we can be sure that all data has been loaded here
         */
@@ -201,12 +195,11 @@ static void fetch_callback(const sfetch_response_t* response) {
             stbi_image_free(pixels);
         }
     }
-    /* if everything is done (no matter if success or failure), make sure we don't leak any memory */
-    if (response->finished) {
-        /* note that it is legal to call free() with a null ptr, this will
-           happen if the file failed to open
-        */
-        free(sfetch_unbind_buffer(response->handle));
+    else if (response->failed) {
+        // if loading the file failed, set clear color to read
+        state.pass_action = (sg_pass_action) {
+            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        };
     }
 }
 
