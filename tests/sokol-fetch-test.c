@@ -80,7 +80,7 @@ UTEST(sokol_fetch, item_init_discard) {
     T(ud->b == 456);
     T(ud->c == 789);
 
-    item.state = _SFETCH_STATE_OPENING;
+    item.state = _SFETCH_STATE_FETCHING;
     _sfetch_item_discard(&item);
     T(item.handle.id == 0);
     T(item.path.buf[0] == 0);
@@ -347,6 +347,7 @@ UTEST(sokol_fetch, max_userdata) {
     T(sfetch_max_userdata_bytes() == (SFETCH_MAX_USERDATA_UINT64 * sizeof(uint64_t)));
 }
 
+static uint8_t fail_open_buffer[128];
 static bool fail_open_passed;
 static void fail_open_callback(const sfetch_response_t* response) {
     /* if opening a file fails, it will immediate switch into CLOSED state */
@@ -360,6 +361,8 @@ UTEST(sokol_fetch, fail_open) {
     sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
         .path = "non_existing_file.txt",
         .callback = fail_open_callback,
+        .buffer_ptr = fail_open_buffer,
+        .buffer_size = sizeof(fail_open_buffer)
     });
     fail_open_passed = false;
     int frame_count = 0;
@@ -381,7 +384,7 @@ static bool load_file_fixed_buffer_passed;
 // get its own thread-local "sokol-fetch instance" and its own set of
 // IO-channel threads.
 static void load_file_fixed_buffer_callback(const sfetch_response_t* response) {
-    // when loading the whole file at once, the COMPLETED state
+    // when loading the whole file at once, the fetched state
     // is the best place to grab/process the data
     if (response->fetched) {
         if ((response->fetched_offset == 0) &&
@@ -426,7 +429,7 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
 static bool load_file_unknown_size_opened_passed;
 static bool load_file_unknown_size_fetched_passed;
 static void load_file_unknown_size_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->enqueued) {
         if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
@@ -472,7 +475,7 @@ UTEST(sokol_fetch, load_file_unknown_size) {
 static bool load_file_no_buffer_opened_passed;
 static bool load_file_no_buffer_failed_passed;
 static void load_file_no_buffer_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->enqueued) {
         if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
@@ -766,7 +769,7 @@ UTEST(sokol_fetch, load_channel) {
 
 bool load_file_cancel_passed = false;
 void load_file_cancel_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->enqueued) {
         sfetch_cancel(response->handle);
     }
     if (response->failed) {
