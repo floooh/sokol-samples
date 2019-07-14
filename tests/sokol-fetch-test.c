@@ -60,6 +60,7 @@ UTEST(sokol_fetch, item_init_discard) {
     sfetch_request_t request = {
         .channel = 4,
         .path = "hello_world.txt",
+        .chunk_size = 128,
         .user_data_ptr = &user_data,
         .user_data_size = sizeof(user_data)
     };
@@ -69,6 +70,7 @@ UTEST(sokol_fetch, item_init_discard) {
     T(item.handle.id == slot_id);
     T(item.channel == 4);
     T(item.lane == _SFETCH_INVALID_LANE);
+    T(item.chunk_size == 128);
     T(item.state == _SFETCH_STATE_INITIAL);
     TSTR(item.path.buf, request.path);
     T(item.user.user_data_size == sizeof(userdata_t));
@@ -348,7 +350,7 @@ UTEST(sokol_fetch, max_userdata) {
 static bool fail_open_passed;
 static void fail_open_callback(const sfetch_response_t* response) {
     /* if opening a file fails, it will immediate switch into CLOSED state */
-    if (response->failed) {
+    if ((response->failed) && (response->error_code == SFETCH_ERROR_FILE_NOT_FOUND)) {
         fail_open_passed = true;
     }
 }
@@ -382,8 +384,7 @@ static void load_file_fixed_buffer_callback(const sfetch_response_t* response) {
     // when loading the whole file at once, the COMPLETED state
     // is the best place to grab/process the data
     if (response->fetched) {
-        if ((response->content_size == combatsignal_file_size) &&
-            (response->content_offset == 0) &&
+        if ((response->fetched_offset == 0) &&
             (response->fetched_size == combatsignal_file_size) &&
             (response->buffer_ptr == load_file_buf) &&
             (response->buffer_size == sizeof(load_file_buf)) &&
@@ -426,8 +427,7 @@ static bool load_file_unknown_size_opened_passed;
 static bool load_file_unknown_size_fetched_passed;
 static void load_file_unknown_size_callback(const sfetch_response_t* response) {
     if (response->opened) {
-        if ((response->content_size == combatsignal_file_size) &&
-            (response->content_offset == 0) &&
+        if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
             (response->buffer_size == 0) &&
@@ -438,8 +438,7 @@ static void load_file_unknown_size_callback(const sfetch_response_t* response) {
         }
     }
     else if (response->fetched) {
-        if ((response->content_size == combatsignal_file_size) &&
-            (response->content_offset == 0) &&
+        if ((response->fetched_offset == 0) &&
             (response->fetched_size == combatsignal_file_size) &&
             (response->buffer_ptr == load_file_buf) &&
             (response->buffer_size == sizeof(load_file_buf)) &&
@@ -474,8 +473,7 @@ static bool load_file_no_buffer_opened_passed;
 static bool load_file_no_buffer_failed_passed;
 static void load_file_no_buffer_callback(const sfetch_response_t* response) {
     if (response->opened) {
-        if ((response->content_size == combatsignal_file_size) &&
-            (response->content_offset == 0) &&
+        if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
             (response->buffer_size == 0) &&
@@ -485,7 +483,7 @@ static void load_file_no_buffer_callback(const sfetch_response_t* response) {
             load_file_no_buffer_opened_passed = true;
         }
     }
-    else if (response->failed) {
+    else if ((response->failed) && (response->error_code == SFETCH_ERROR_NO_BUFFER)) {
         if (load_file_no_buffer_opened_passed) {
             load_file_no_buffer_failed_passed = true;
         }
@@ -511,6 +509,34 @@ UTEST(sokol_fetch, load_file_no_buffer) {
     sfetch_shutdown();
 }
 
+static bool load_file_too_small_passed;
+static uint8_t load_file_too_small_buf[8192];
+static void load_file_too_small_callback(const sfetch_response_t* response) {
+    if (response->failed && (response->error_code == SFETCH_ERROR_BUFFER_TO_SMALL)) {
+        load_file_too_small_passed = true;
+    }
+}
+
+UTEST(sokol_fetch, load_file_too_small_buffer) {
+    memset(load_file_buf, 0, sizeof(load_file_buf));
+    sfetch_setup(&(sfetch_desc_t){0});
+    sfetch_handle_t h = sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = load_file_too_small_callback,
+        .buffer_ptr = load_file_too_small_buf,
+        .buffer_size = sizeof(load_file_too_small_buf)
+    });
+    int frame_count = 0;
+    const int max_frames = 10000;
+    while (sfetch_handle_valid(h) && (frame_count++ < max_frames)) {
+        sfetch_dowork();
+        sleep_ms(1);
+    }
+    T(frame_count < max_frames);
+    T(load_file_too_small_passed);
+    sfetch_shutdown();
+}
+
 
 /* test loading a big file via a small chunk-buffer, the callback will
    be called multiple times with the FETCHED state until the entire file
@@ -521,9 +547,8 @@ static uint8_t load_chunk_buf[8192];
 static uint8_t load_file_chunked_content[500000];
 static void load_file_chunked_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        assert(response->content_size <= sizeof(load_file_chunked_content));
         const uint8_t* src = response->buffer_ptr;
-        uint8_t* dst = &load_file_chunked_content[response->content_offset];
+        uint8_t* dst = &load_file_chunked_content[response->fetched_offset];
         size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
         if (response->finished) {
@@ -543,7 +568,8 @@ UTEST(sokol_fetch, load_file_chunked) {
         .path = "comsi.s3m",
         .callback = load_file_chunked_callback,
         .buffer_ptr = load_chunk_buf,
-        .buffer_size = sizeof(load_chunk_buf)
+        .buffer_size = sizeof(load_chunk_buf),
+        .chunk_size = sizeof(load_chunk_buf)
     });
     // request for all-in-one loading for comparing with the chunked buffer
     sfetch_handle_t h1 = sfetch_send(&(sfetch_request_t){
@@ -573,9 +599,8 @@ int load_file_lanes_passed[LOAD_FILE_LANES_NUM_LANES];
 static void load_file_lanes_callback(const sfetch_response_t* response) {
     assert((response->channel == 0) && (response->lane < LOAD_FILE_LANES_NUM_LANES));
     if (response->fetched) {
-        assert(response->content_size == combatsignal_file_size);
         const uint8_t* src = response->buffer_ptr;
-        uint8_t* dst = &load_file_lanes_content[response->lane][response->content_offset];
+        uint8_t* dst = &load_file_lanes_content[response->lane][response->fetched_offset];
         size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
         if (response->finished) {
@@ -598,7 +623,8 @@ UTEST(sokol_fetch, load_file_lanes) {
             .path = "comsi.s3m",
             .callback = load_file_lanes_callback,
             .buffer_ptr = load_file_lanes_chunk_buf[lane],
-            .buffer_size = sizeof(load_file_lanes_chunk_buf[lane])
+            .buffer_size = sizeof(load_file_lanes_chunk_buf[0]),
+            .chunk_size = sizeof(load_file_lanes_chunk_buf[0])
         });
     }
     bool done = false;
@@ -632,10 +658,9 @@ int load_file_throttle_passed[LOAD_FILE_THROTTLE_NUM_LANES];
 static void load_file_throttle_callback(const sfetch_response_t* response) {
     assert((response->channel == 0) && (response->lane < LOAD_FILE_LANES_NUM_LANES));
     if (response->fetched) {
-        assert(response->content_size == combatsignal_file_size);
         assert(load_file_throttle_passed[response->lane] < LOAD_FILE_THROTTLE_NUM_PASSES);
         const uint8_t* src = response->buffer_ptr;
-        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response->lane]][response->lane][response->content_offset];
+        uint8_t* dst = &load_file_throttle_content[load_file_throttle_passed[response->lane]][response->lane][response->fetched_offset];
         size_t num_bytes = response->fetched_size;
         memcpy(dst, src, num_bytes);
         if (response->finished) {
@@ -660,7 +685,8 @@ UTEST(sokol_fetch, load_file_throttle) {
             .path = "comsi.s3m",
             .callback = load_file_throttle_callback,
             .buffer_ptr = load_file_throttle_chunk_buf[i % LOAD_FILE_THROTTLE_NUM_LANES],
-            .buffer_size = sizeof(load_file_throttle_chunk_buf[0])
+            .buffer_size = sizeof(load_file_throttle_chunk_buf[0]),
+            .chunk_size = sizeof(load_file_throttle_chunk_buf[0])
         });
         T(sfetch_handle_valid(h[i]));
     }
@@ -694,8 +720,7 @@ void load_channel_callback(const sfetch_response_t* response) {
     assert(response->channel < LOAD_CHANNEL_NUM_CHANNELS);
     assert(!load_channel_passed[response->channel]);
     if (response->fetched) {
-        if ((response->content_size == combatsignal_file_size) &&
-            (response->fetched_size == combatsignal_file_size) &&
+        if ((response->fetched_size == combatsignal_file_size) &&
             response->finished)
         {
             load_channel_passed[response->channel] = true;
