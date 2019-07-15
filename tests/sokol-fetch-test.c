@@ -515,7 +515,7 @@ UTEST(sokol_fetch, load_file_no_buffer) {
 static bool load_file_too_small_passed;
 static uint8_t load_file_too_small_buf[8192];
 static void load_file_too_small_callback(const sfetch_response_t* response) {
-    if (response->failed && (response->error_code == SFETCH_ERROR_BUFFER_TO_SMALL)) {
+    if (response->failed && (response->error_code == SFETCH_ERROR_BUFFER_TOO_SMALL)) {
         load_file_too_small_passed = true;
     }
 }
