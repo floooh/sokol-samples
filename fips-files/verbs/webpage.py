@@ -45,7 +45,7 @@ samples = [
 assets = [
     "baboon.png",
     "bjork-all-is-full-of-love.mpg",
-    "DamagedHelmet.gltfx",
+    "DamagedHelmet.gltf",
     "DamagedHelmet.bin",
     "Default_AO.basis",
     "Default_albedo.basis",
