@@ -429,7 +429,7 @@ UTEST(sokol_fetch, load_file_fixed_buffer) {
 static bool load_file_unknown_size_opened_passed;
 static bool load_file_unknown_size_fetched_passed;
 static void load_file_unknown_size_callback(const sfetch_response_t* response) {
-    if (response->enqueued) {
+    if (response->dispatched) {
         if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
@@ -475,7 +475,7 @@ UTEST(sokol_fetch, load_file_unknown_size) {
 static bool load_file_no_buffer_opened_passed;
 static bool load_file_no_buffer_failed_passed;
 static void load_file_no_buffer_callback(const sfetch_response_t* response) {
-    if (response->enqueued) {
+    if (response->dispatched) {
         if ((response->fetched_offset == 0) &&
             (response->fetched_size == 0) &&
             (response->buffer_ptr == 0) &&
@@ -769,11 +769,11 @@ UTEST(sokol_fetch, load_channel) {
 
 bool load_file_cancel_passed = false;
 void load_file_cancel_callback(const sfetch_response_t* response) {
-    if (response->enqueued) {
+    if (response->dispatched) {
         sfetch_cancel(response->handle);
     }
     if (response->failed) {
-        if ((response->cancelled) && (response->finished)) {
+        if (response->cancelled && response->finished && (response->error_code == SFETCH_ERROR_CANCELLED)) {
             load_file_cancel_passed = true;
         }
     }
