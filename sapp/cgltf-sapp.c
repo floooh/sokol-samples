@@ -21,7 +21,7 @@
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
-static const char* filename = "DamagedHelmet.gltfx";
+static const char* filename = "DamagedHelmet.gltf";
 
 #define MSAA_SAMPLE_COUNT (4)
 
@@ -398,7 +398,7 @@ static void cleanup(void) {
 
 // load-callback for the GLTF base file
 static void gltf_fetch_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->dispatched) {
         // bind buffer to load file into
         sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
@@ -419,7 +419,7 @@ typedef struct {
 } gltf_buffer_fetch_userdata_t;
 
 static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->dispatched) {
         sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
     else if (response->fetched) {
@@ -443,7 +443,7 @@ typedef struct {
 } gltf_image_fetch_userdata_t;
 
 static void gltf_image_fetch_callback(const sfetch_response_t* response) {
-    if (response->opened) {
+    if (response->dispatched) {
         sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
     }
     else if (response->fetched) {

@@ -38,7 +38,8 @@
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
 // statically allocated streaming buffers
-#define BUFFER_SIZE (128*1024)
+#define BUFFER_SIZE (512*1024)
+#define CHUNK_SIZE (128*1024)
 #define NUM_BUFFERS (4)
 static uint8_t buf[NUM_BUFFERS][BUFFER_SIZE];
 
@@ -113,7 +114,8 @@ static void init(void) {
         .path = filename,
         .callback = fetch_callback,
         .buffer_ptr = buf[state.cur_download_buffer],
-        .buffer_size = BUFFER_SIZE
+        .buffer_size = BUFFER_SIZE,
+        .chunk_size = CHUNK_SIZE
     });
 
     // initialize sokol-gfx
@@ -170,10 +172,10 @@ static void init(void) {
     });
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout = {
-            .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-            .attrs[ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
-            .attrs[ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
+        .layout.attrs = {
+            [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+            [ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
+            [ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
         },
         .shader = sg_make_shader(plmpeg_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
@@ -312,7 +314,7 @@ static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
 static void fetch_callback(const sfetch_response_t* response) {
     // current download buffer has been filled with data...
     if (response->fetched) {
-        // put the download buffer into the "full_buffers" quee
+        // put the download buffer into the "full_buffers" queue
         ring_enqueue(&state.full_buffers, state.cur_download_buffer);
         if (ring_full(&state.full_buffers) || ring_empty(&state.free_buffers)) {
             // all buffers in use, need to wait for the video decoding to catch up

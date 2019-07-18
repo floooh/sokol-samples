@@ -2,7 +2,7 @@
 root: gltf/DamagedHelmet
 files:
     - DamagedHelmet.bin
-    - DamagedHelmet.gltfx
+    - DamagedHelmet.gltf
     - Default_albedo.basis
     - Default_AO.basis
     - Default_emissive.basis
