@@ -2,6 +2,7 @@
 # project: sokol-samples
 #
 cmake_minimum_required(VERSION 2.8)
+project(sokol-samples)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
 
@@ -9,7 +10,7 @@ set(CMAKE_CXX_STANDARD 11)
 get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
-fips_setup(PROJECT sokol-samples)
+fips_setup()
 fips_ide_group("Imports")
 if (NOT USE_SOKOL_APP AND NOT SOKOL_USE_D3D11 AND NOT SOKOL_USE_METAL)
     fips_import_fips_glfw_glfw3()
