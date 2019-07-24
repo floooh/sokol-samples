@@ -50,7 +50,7 @@ void init(void) {
         .render_target = true,
         .width = 256,
         .height = 256,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .pixel_format = SG_PIXELFORMAT_BGRA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .sample_count = MSAA_SAMPLES,
@@ -139,7 +139,7 @@ void init(void) {
             .depth_write_enabled = true,
         },
         .blend = {
-            .color_format = SG_PIXELFORMAT_RGBA8,
+            .color_format = SG_PIXELFORMAT_BGRA8,
             .depth_format = SG_PIXELFORMAT_DEPTH
         },
         .rasterizer = {
