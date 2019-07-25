@@ -24,10 +24,10 @@ void sbasisu_shutdown(void) {
 }
 
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
-    if (sg_query_caps().format.pvrtc_rgb_4bpp.valid) {
+    if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).valid) {
         return basist::cTFPVRTC1_4_OPAQUE_ONLY;
     }
-    else if (sg_query_caps().format.etc2_rgb8.valid) {
+    else if (sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGB8).valid) {
         return basist::cTFETC2;
     }
     else {
