@@ -160,12 +160,8 @@ static void init(void) {
     });
 }
 
-/* The fetch-callback is called two times by sokol_fetch.h for our request: first
-    in the OPENED state where we look at the file size and allocate a target buffer,
-    and the second time when the data has finished loading into the buffer.
-    This is where the PNG data is decoded and a texture is created. If something
-    went wrong, the callback will be called in the FAILED state, we may need
-    to release the buffer there.
+/* The fetch-callback is called by sokol_fetch.h when the data is loaded,
+   or when an error has occurred.
 */
 static void fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
