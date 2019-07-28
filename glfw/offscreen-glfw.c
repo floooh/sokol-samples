@@ -39,7 +39,7 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-buffer render target image */
-    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4:1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? 4:1;
     sg_image_desc img_desc = {
         .render_target = true,
         .width = 512,
