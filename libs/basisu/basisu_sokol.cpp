@@ -24,13 +24,13 @@ void sbasisu_shutdown(void) {
 }
 
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
-    if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).valid) {
+    if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).sample) {
         return basist::cTFBC3;
     }
-    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).valid) {
+    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
         return basist::cTFBC1;
     }
-    else if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).valid) {
+    else if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).sample) {
         return basist::cTFPVRTC1_4_OPAQUE_ONLY;
     }
     else {
