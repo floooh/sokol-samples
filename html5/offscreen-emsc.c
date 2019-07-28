@@ -23,7 +23,7 @@ static sg_bindings default_bind;
 static sg_pass_action offscreen_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-/* display: clear to blue-ish */ 
+/* display: clear to blue-ish */
 static sg_pass_action default_pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
 };
@@ -46,7 +46,7 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-rendertarget image */
-    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4:1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? 4:1;
     sg_image_desc img_desc = {
         .render_target = true,
         .width = 512,
@@ -74,7 +74,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 1.0f,
@@ -270,7 +270,7 @@ void draw() {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    /* and the default pass, this renders a textured cube, using the 
+    /* and the default pass, this renders a textured cube, using the
         offscreen render target as texture image */
     sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(default_pip);
