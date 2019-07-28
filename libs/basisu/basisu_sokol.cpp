@@ -24,19 +24,17 @@ void sbasisu_shutdown(void) {
 }
 
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
-    if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).valid) {
+    if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).valid) {
+        return basist::cTFBC3;
+    }
+    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).valid) {
+        return basist::cTFBC1;
+    }
+    else if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).valid) {
         return basist::cTFPVRTC1_4_OPAQUE_ONLY;
     }
-    else if (sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGB8).valid) {
-        return basist::cTFETC2;
-    }
     else {
-        if (has_alpha) {
-            return basist::cTFBC3;
-        }
-        else {
-            return basist::cTFBC1;
-        }
+        return basist::cTFETC2;
     }
 }
 
