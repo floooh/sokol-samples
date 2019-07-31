@@ -21,6 +21,7 @@ static struct {
 } state;
 
 static const char* pixelformat_string(sg_pixel_format fmt);
+static void create_disabled_texture(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -36,27 +37,10 @@ static void init(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
-    // create a red-cross-on-white image for disabled features
-    const uint32_t X = 0xFF0000FF;
-    const uint32_t o = 0xFFCCCCCC;
-    uint32_t pixels[8][8] = {
-        { X, o, o, o, o, o, o, X },
-        { o, X, o, o, o, o, X, o },
-        { o, o, X, o, o, X, o, o },
-        { o, o, o, X, X, o, o, o },
-        { o, o, o, X, X, o, o, o },
-        { o, o, X, o, o, X, o, o },
-        { o, X, o, o, o, o, X, o },
-        { X, o, o, o, o, o, o, X }
-    };
-    state.img_invalid = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
-    });
+    create_disabled_texture();
+
+
+    //
 }
 
 static void frame(void) {
@@ -105,6 +89,79 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     };
 }
 
+/* create a texture for "feature disabled) */
+#define X 0xFF0000FF
+#define o 0xFFCCCCCC
+static const uint32_t disabled_texture_pixels[8][8] = {
+    { X, o, o, o, o, o, o, X },
+    { o, X, o, o, o, o, X, o },
+    { o, o, X, o, o, X, o, o },
+    { o, o, o, X, X, o, o, o },
+    { o, o, o, X, X, o, o, o },
+    { o, o, X, o, o, X, o, o },
+    { o, X, o, o, o, o, X, o },
+    { X, o, o, o, o, o, o, X }
+};
+#undef X
+#undef o
+
+static void create_disabled_texture(void) {
+    state.img_invalid = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .content.subimage[0][0] = {
+            .ptr = disabled_texture_pixels,
+            .size = sizeof(disabled_texture_pixels)
+        }
+    });
+}
+
+/* generate checkerboard pixel values */
+static uint8_t pixels[8 * 8 * 16];
+
+typedef struct {
+    void* ptr;
+    int size;
+} ptr_size_t;
+
+static void gen_pixels_8(uint8_t val) {
+    uint8_t* ptr = pixels;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            *ptr++ = ((x ^ y) & 1) ? val : 0;
+        }
+    }
+}
+
+static void gen_pixels_16(uint16_t val) {
+    uint16_t* ptr = (uint16_t*) pixels;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            *ptr++ = ((x ^ y) & 1) ? val : 0;
+        }
+    }
+}
+
+static ptr_size_t gen_pixels(sg_pixel_format fmt, int* out_num_bytes) {
+    switch (fmt) {
+        case SG_PIXELFORMAT_R8:     gen_pixels_8(0xFF);     return (ptr_size_t) {pixels, 8*8};
+        case SG_PIXELFORMAT_R8SN:   gen_pixels_8(0x7F);     return (ptr_size_t) {pixels, 8*8};
+        case SG_PIXELFORMAT_R8UI:   gen_pixels_8(1);        return (ptr_size_t) {pixels, 8*8};
+        case SG_PIXELFORMAT_R8SI:   gen_pixels_8(1);        return (ptr_size_t) {pixels, 8*8};
+        case SG_PIXELFORMAT_R16:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16SN:  gen_pixels_16(0x7FFF);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16UI:  gen_pixels_16(1);       return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16SI:  gen_pixels_16(1);       return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16F:   gen_pixels_16(0x3C00);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8SN:  gen_pixels_16(0x7F7F);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8UI:  gen_pixels_16(0x0101);  return (ptr_size_t) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8SI:  gen_pixels_16(0x0101);  return (ptr_size_t) {pixels, 8*8*2};
+        default: return (ptr_size_t){pixels, 0};
+    }
+}
+
+/* translate pixel format enum to string */
 static const char* pixelformat_string(sg_pixel_format fmt) {
     switch (fmt) {
         case SG_PIXELFORMAT_NONE: return "SG_PIXELFORMAT_NONE";
