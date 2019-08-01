@@ -8,60 +8,288 @@
 #include "cimgui/cimgui.h"
 #define SOKOL_CIMGUI_IMPL
 #include "sokol_cimgui.h"
+#define HANDMADE_MATH_IMPLEMENTATION
+#define HANDMADE_MATH_NO_SSE
+#include "HandmadeMath.h"
+#include "pixelformats-sapp.glsl.h"
 
 static struct {
-    sg_image img_invalid;
     struct {
-        sg_image img_sample;
-        sg_image img_filter;
-        sg_image img_render;
-        sg_image img_msaa;
-    } items[_SG_PIXELFORMAT_NUM];
+        bool valid;
+        sg_image sample;
+        sg_image filter;
+        sg_image render;
+        sg_image msaa;
+        sg_pipeline render_pip;
+        sg_pipeline msaa_pip;
+        sg_pass render_pass;
+        sg_pass msaa_pass;
+    } fmt[_SG_PIXELFORMAT_NUM];
+    sg_bindings cube_bindings;
     sg_pass_action pass_action;
+    float rx, ry;
+    vs_params_t vs_params;
 } state;
 
+typedef struct {
+    void* ptr;
+    int size;
+} ptr_size_t;
+
 static const char* pixelformat_string(sg_pixel_format fmt);
-static void create_disabled_texture(void);
+static ptr_size_t gen_pixels(sg_pixel_format fmt);
+static sg_image create_disabled_texture(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
+        .pass_pool_size = 128,
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
         .d3d11_device = sapp_d3d11_get_device(),
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
     scimgui_setup(&(scimgui_desc_t){0});
     state.pass_action = (sg_pass_action){
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
-    create_disabled_texture();
+    // create all the textures and render targets
+    sg_image render_depth_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 32,
+        .height = 32,
+        .pixel_format = SG_PIXELFORMAT_DEPTH
+    });
+    sg_image msaa_depth_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 32,
+        .height = 32,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = 4,
+    });
+    sg_image disabled_img = create_disabled_texture();
 
+    for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
+        state.fmt[i].sample = disabled_img;
+        state.fmt[i].filter = disabled_img;
+        state.fmt[i].render = disabled_img;
+        state.fmt[i].msaa = disabled_img;
+    }
 
-    //
+    // prepare shader and pipeline descs
+    sg_shader shd = sg_make_shader(shd_shader_desc());
+    sg_pipeline_desc render_pip_desc = {
+        .layout = {
+            .attrs = {
+                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
+            }
+        },
+        .shader = shd,
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth_stencil = {
+            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth_write_enabled = true,
+        },
+        .blend = {
+            .depth_format = SG_PIXELFORMAT_DEPTH
+        },
+        .rasterizer = {
+            .cull_mode = SG_CULLMODE_BACK
+        }
+    };
+    sg_pipeline_desc msaa_pip_desc = render_pip_desc;
+    msaa_pip_desc.rasterizer.sample_count = 4;
+
+    for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
+        sg_pixel_format fmt = (sg_pixel_format)i;
+        ptr_size_t pair = gen_pixels(fmt);
+        if (pair.ptr) {
+            state.fmt[i].valid = true;
+            // create unfiltered texture
+            if (sg_query_pixelformat(fmt).sample) {
+                state.fmt[i].sample = sg_make_image(&(sg_image_desc){
+                    .width = 8,
+                    .height = 8,
+                    .pixel_format = fmt,
+                    .content.subimage[0][0] = {
+                        .ptr = pair.ptr,
+                        .size = pair.size
+                    }
+                });
+            }
+            // create filtered texture
+            if (sg_query_pixelformat(fmt).filter) {
+                state.fmt[i].filter = sg_make_image(&(sg_image_desc){
+                    .width = 8,
+                    .height = 8,
+                    .pixel_format = fmt,
+                    .min_filter = SG_FILTER_LINEAR,
+                    .mag_filter = SG_FILTER_LINEAR,
+                    .content.subimage[0][0] = {
+                        .ptr = pair.ptr,
+                        .size = pair.size
+                    }
+                });
+            }
+            // create non-MSAA render target, pipeline state and pass
+            if (sg_query_pixelformat(fmt).render) {
+                state.fmt[i].render = sg_make_image(&(sg_image_desc){
+                    .render_target = true,
+                    .width = 32,
+                    .height = 32,
+                    .pixel_format = fmt,
+                });
+                render_pip_desc.blend.color_format = fmt;
+                state.fmt[i].render_pip = sg_make_pipeline(&render_pip_desc);
+                assert(state.fmt[i].render_pip.id != 0);
+                state.fmt[i].render_pass = sg_make_pass(&(sg_pass_desc){
+                    .color_attachments[0].image = state.fmt[i].render,
+                    .depth_stencil_attachment.image = render_depth_img,
+                });
+            }
+            // create MSAA render target and matching pipeline state
+            if (sg_query_pixelformat(fmt).msaa) {
+                state.fmt[i].msaa = sg_make_image(&(sg_image_desc){
+                    .render_target = true,
+                    .width = 32,
+                    .height = 32,
+                    .pixel_format = fmt,
+                    .sample_count = 4,
+                });
+                msaa_pip_desc.blend.color_format = fmt;
+                state.fmt[i].msaa_pip = sg_make_pipeline(&msaa_pip_desc);
+                state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){
+                    .color_attachments[0].image = state.fmt[i].msaa,
+                    .depth_stencil_attachment.image = msaa_depth_img,
+                });
+            }
+        }
+    }
+
+    /* cube vertex buffer (for rendering into the render target textures */
+    float vertices[] = {
+        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+
+        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+         1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+
+        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+         1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+         1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+    };
+    state.cube_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .size = sizeof(vertices),
+        .content = vertices,
+        .label = "cube-vertices"
+    });
+
+    /* create an index buffer for the cube */
+    uint16_t indices[] = {
+        0, 1, 2,  0, 2, 3,
+        6, 5, 4,  7, 6, 4,
+        8, 9, 10,  8, 10, 11,
+        14, 13, 12,  15, 14, 12,
+        16, 17, 18,  16, 18, 19,
+        22, 21, 20,  23, 22, 20
+    };
+    state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .size = sizeof(indices),
+        .content = indices,
+        .label = "cube-indices"
+    });
 }
 
 static void frame(void) {
+
     const int w = sapp_width();
     const int h = sapp_height();
-    scimgui_new_frame(w, h, 1.0f/60.0f);
 
-    igSetNextWindowSize((ImVec2){420, 256}, ImGuiCond_Once);
-    if (igBegin("Pixel Formats", 0, 0)) {
+    // compute the model-view-proj matrix for rendering to render targets
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)w/(float)h, 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+
+    // render into all the offscreen render targets
+    for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
+        if (!state.fmt[i].valid) {
+            continue;
+        }
+        sg_pixel_format fmt = (sg_pixel_format)i;
+        sg_pixelformat_info fmt_info = sg_query_pixelformat(fmt);
+        if (fmt_info.render) {
+            sg_begin_pass(state.fmt[i].render_pass, &(sg_pass_action){0});
+            sg_apply_pipeline(state.fmt[i].render_pip);
+            sg_apply_bindings(&state.cube_bindings);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+            sg_draw(0, 36, 1);
+            sg_end_pass();
+        }
+        if (fmt_info.msaa) {
+            sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){0});
+            sg_apply_pipeline(state.fmt[i].msaa_pip);
+            sg_apply_bindings(&state.cube_bindings);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+            sg_draw(0, 36, 1);
+            sg_end_pass();
+        }
+    }
+
+    // ImGui rendering...
+    scimgui_new_frame(w, h, 1.0f/60.0f);
+    igSetNextWindowSize((ImVec2){640, 480}, ImGuiCond_Once);
+    if (igBegin("Pixel Formats (without UINT and SINT formats)", 0, 0)) {
         for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
+            if (!state.fmt[i].valid) {
+                continue;
+            }
             const char* fmt_string = pixelformat_string((sg_pixel_format)i);
-            if (igBeginChild(fmt_string, (ImVec2){0,48}, true, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
+            if (igBeginChild(fmt_string, (ImVec2){0,80}, true, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
-                igSameLine(256.0f, 0.0f);
-                igImage(state.img_invalid.id, (ImVec2){32,32}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLine(256, 0);
+                igImage(state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLine(0,0);
+                igImage(state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLine(0,0);
+                igImage(state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLine(0,0);
+                igImage(state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
     }
     igEnd();
 
+    // sokol-gfx rendering...
     sg_begin_default_pass(&state.pass_action, w, h);
     scimgui_render();
     sg_end_pass();
@@ -105,8 +333,8 @@ static const uint32_t disabled_texture_pixels[8][8] = {
 #undef X
 #undef o
 
-static void create_disabled_texture(void) {
-    state.img_invalid = sg_make_image(&(sg_image_desc){
+static sg_image create_disabled_texture(void) {
+    return sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
         .content.subimage[0][0] = {
@@ -118,11 +346,6 @@ static void create_disabled_texture(void) {
 
 /* generate checkerboard pixel values */
 static uint8_t pixels[8 * 8 * 16];
-
-typedef struct {
-    void* ptr;
-    int size;
-} ptr_size_t;
 
 static void gen_pixels_8(uint8_t val) {
     uint8_t* ptr = pixels;
@@ -142,22 +365,62 @@ static void gen_pixels_16(uint16_t val) {
     }
 }
 
-static ptr_size_t gen_pixels(sg_pixel_format fmt, int* out_num_bytes) {
+static void gen_pixels_32(uint32_t val) {
+    uint32_t* ptr = (uint32_t*) pixels;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            *ptr++ = ((x ^ y) & 1) ? val : 0;
+        }
+    }
+}
+
+static void gen_pixels_64(uint64_t val) {
+    uint64_t* ptr = (uint64_t*) pixels;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            *ptr++ = ((x ^ y) & 1) ? val : 0;
+        }
+    }
+}
+
+static void gen_pixels_128(uint64_t hi, uint64_t lo) {
+    uint64_t* ptr = (uint64_t*) pixels;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            *ptr++ = ((x ^ y) & 1) ? lo : 0;
+            *ptr++ = ((x ^ y) & 1) ? hi : 0;
+        }
+    }
+}
+
+static ptr_size_t gen_pixels(sg_pixel_format fmt) {
+    /* NOTE the UI and SI (unsigned/signed) formats are not renderable
+        with the ImGui shader, since that expects a texture which can be
+        sampled into a float
+    */
     switch (fmt) {
         case SG_PIXELFORMAT_R8:     gen_pixels_8(0xFF);     return (ptr_size_t) {pixels, 8*8};
         case SG_PIXELFORMAT_R8SN:   gen_pixels_8(0x7F);     return (ptr_size_t) {pixels, 8*8};
-        case SG_PIXELFORMAT_R8UI:   gen_pixels_8(1);        return (ptr_size_t) {pixels, 8*8};
-        case SG_PIXELFORMAT_R8SI:   gen_pixels_8(1);        return (ptr_size_t) {pixels, 8*8};
         case SG_PIXELFORMAT_R16:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
         case SG_PIXELFORMAT_R16SN:  gen_pixels_16(0x7FFF);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_R16UI:  gen_pixels_16(1);       return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_R16SI:  gen_pixels_16(1);       return (ptr_size_t) {pixels, 8*8*2};
         case SG_PIXELFORMAT_R16F:   gen_pixels_16(0x3C00);  return (ptr_size_t) {pixels, 8*8*2};
         case SG_PIXELFORMAT_RG8:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
         case SG_PIXELFORMAT_RG8SN:  gen_pixels_16(0x7F7F);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_RG8UI:  gen_pixels_16(0x0101);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_RG8SI:  gen_pixels_16(0x0101);  return (ptr_size_t) {pixels, 8*8*2};
-        default: return (ptr_size_t){pixels, 0};
+        case SG_PIXELFORMAT_R32F:   gen_pixels_32(0x3F800000);  return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16:   gen_pixels_32(0xFFFFFFFF);  return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16SN: gen_pixels_32(0x7FFF7FFF);  return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16F:      gen_pixels_32(0x3C003C00);  return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGBA8:      gen_pixels_32(0xFFFFFFFF);  return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGBA8SN:    gen_pixels_32(0x7F7F7F7F); return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_BGRA8:      gen_pixels_32(0xFFFFFFFF); return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGB10A2:    gen_pixels_32(0x3<<30 | 0x3FF<<20 | 0x3FF<<10 | 0x3FF); return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG11B10F:   gen_pixels_32(0x1E0<<22 | 0x3C0<<11 | 0x3C0); return (ptr_size_t) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG32F:      gen_pixels_64(0x3F8000003F800000); return (ptr_size_t) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16:     gen_pixels_64(0xFFFFFFFFFFFFFFFF); return (ptr_size_t) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16SN:   gen_pixels_64(0x7FFF7FFF7FFF7FFF); return (ptr_size_t) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16F:    gen_pixels_64(0x3C003C003C003C00); return (ptr_size_t) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA32F:    gen_pixels_128(0x3F8000003F800000, 0x3F8000003F800000); return (ptr_size_t) {pixels, 8*8*16};
+        default: return (ptr_size_t){0,0};
     }
 }
 
