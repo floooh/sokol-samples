@@ -19,16 +19,22 @@ static struct {
         sg_image sample;
         sg_image filter;
         sg_image render;
+        sg_image blend;
         sg_image msaa;
-        sg_pipeline render_pip;
-        sg_pipeline msaa_pip;
+        sg_pipeline cube_render_pip;
+        sg_pipeline cube_blend_pip;
+        sg_pipeline cube_msaa_pip;
+        sg_pipeline bg_render_pip;
+        sg_pipeline bg_msaa_pip;
         sg_pass render_pass;
+        sg_pass blend_pass;
         sg_pass msaa_pass;
     } fmt[_SG_PIXELFORMAT_NUM];
     sg_bindings cube_bindings;
-    sg_pass_action pass_action;
+    sg_bindings bg_bindings;
     float rx, ry;
-    vs_params_t vs_params;
+    cube_vs_params_t cube_vs_params;
+    bg_fs_params_t bg_fs_params;
 } state;
 
 typedef struct {
@@ -38,11 +44,14 @@ typedef struct {
 
 static const char* pixelformat_string(sg_pixel_format fmt);
 static ptr_size_t gen_pixels(sg_pixel_format fmt);
-static sg_image create_disabled_texture(void);
+static sg_image setup_invalid_texture(void);
 
 static void init(void) {
+    // setup sokol-gfx
     sg_setup(&(sg_desc){
+        .pipeline_pool_size = 256,
         .pass_pool_size = 128,
+        .gl_force_gles2 = sapp_gles2(),
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
         .mtl_drawable_cb = sapp_metal_get_drawable,
@@ -50,44 +59,42 @@ static void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
     });
+
+    // setup cimgui
     scimgui_setup(&(scimgui_desc_t){0});
-    state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
-    };
 
     // create all the textures and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
-        .width = 32,
-        .height = 32,
+        .width = 64,
+        .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH
     });
     sg_image msaa_depth_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
-        .width = 32,
-        .height = 32,
+        .width = 64,
+        .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 4,
     });
-    sg_image disabled_img = create_disabled_texture();
+    sg_image invalid_img = setup_invalid_texture();
 
     for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
-        state.fmt[i].sample = disabled_img;
-        state.fmt[i].filter = disabled_img;
-        state.fmt[i].render = disabled_img;
-        state.fmt[i].msaa = disabled_img;
+        state.fmt[i].sample = invalid_img;
+        state.fmt[i].filter = invalid_img;
+        state.fmt[i].render = invalid_img;
+        state.fmt[i].blend  = invalid_img;
+        state.fmt[i].msaa = invalid_img;
     }
 
-    // prepare shader and pipeline descs
-    sg_shader shd = sg_make_shader(shd_shader_desc());
-    sg_pipeline_desc render_pip_desc = {
+    sg_pipeline_desc cube_render_pip_desc = {
         .layout = {
             .attrs = {
-                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_vs_cube_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_cube_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
-        .shader = shd,
+        .shader = sg_make_shader(cube_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -100,8 +107,22 @@ static void init(void) {
             .cull_mode = SG_CULLMODE_BACK
         }
     };
-    sg_pipeline_desc msaa_pip_desc = render_pip_desc;
-    msaa_pip_desc.rasterizer.sample_count = 4;
+    sg_pipeline_desc bg_render_pip_desc = {
+        .layout.attrs[ATTR_vs_bg_position].format = SG_VERTEXFORMAT_FLOAT2,
+        .shader = sg_make_shader(bg_shader_desc()),
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .blend = {
+            .depth_format = SG_PIXELFORMAT_DEPTH
+        }
+    };
+    sg_pipeline_desc cube_blend_pip_desc = cube_render_pip_desc;
+    cube_blend_pip_desc.blend.enabled = true;
+    cube_blend_pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
+    cube_blend_pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE;
+    sg_pipeline_desc cube_msaa_pip_desc = cube_render_pip_desc;
+    sg_pipeline_desc bg_msaa_pip_desc = bg_render_pip_desc;
+    cube_msaa_pip_desc.rasterizer.sample_count = 4;
+    bg_msaa_pip_desc.rasterizer.sample_count = 4;
 
     for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
         sg_pixel_format fmt = (sg_pixel_format)i;
@@ -138,15 +159,31 @@ static void init(void) {
             if (sg_query_pixelformat(fmt).render) {
                 state.fmt[i].render = sg_make_image(&(sg_image_desc){
                     .render_target = true,
-                    .width = 32,
-                    .height = 32,
+                    .width = 64,
+                    .height = 64,
                     .pixel_format = fmt,
                 });
-                render_pip_desc.blend.color_format = fmt;
-                state.fmt[i].render_pip = sg_make_pipeline(&render_pip_desc);
-                assert(state.fmt[i].render_pip.id != 0);
+                cube_render_pip_desc.blend.color_format = fmt;
+                bg_render_pip_desc.blend.color_format = fmt;
+                state.fmt[i].cube_render_pip = sg_make_pipeline(&cube_render_pip_desc);
+                state.fmt[i].bg_render_pip = sg_make_pipeline(&bg_render_pip_desc);
                 state.fmt[i].render_pass = sg_make_pass(&(sg_pass_desc){
                     .color_attachments[0].image = state.fmt[i].render,
+                    .depth_stencil_attachment.image = render_depth_img,
+                });
+            }
+            // create non-MSAA blend render target, pipeline states and pass
+            if (sg_query_pixelformat(fmt).blend) {
+                state.fmt[i].blend = sg_make_image(&(sg_image_desc){
+                    .render_target = true,
+                    .width = 64,
+                    .height = 64,
+                    .pixel_format = fmt,
+                });
+                cube_blend_pip_desc.blend.color_format = fmt;
+                state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
+                state.fmt[i].blend_pass = sg_make_pass(&(sg_pass_desc){
+                    .color_attachments[0].image = state.fmt[i].blend,
                     .depth_stencil_attachment.image = render_depth_img,
                 });
             }
@@ -154,13 +191,15 @@ static void init(void) {
             if (sg_query_pixelformat(fmt).msaa) {
                 state.fmt[i].msaa = sg_make_image(&(sg_image_desc){
                     .render_target = true,
-                    .width = 32,
-                    .height = 32,
+                    .width = 64,
+                    .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
                 });
-                msaa_pip_desc.blend.color_format = fmt;
-                state.fmt[i].msaa_pip = sg_make_pipeline(&msaa_pip_desc);
+                cube_msaa_pip_desc.blend.color_format = fmt;
+                bg_msaa_pip_desc.blend.color_format = fmt;
+                state.fmt[i].cube_msaa_pip = sg_make_pipeline(&cube_msaa_pip_desc);
+                state.fmt[i].bg_msaa_pip = sg_make_pipeline(&bg_msaa_pip_desc);
                 state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){
                     .color_attachments[0].image = state.fmt[i].msaa,
                     .depth_stencil_attachment.image = msaa_depth_img,
@@ -169,46 +208,44 @@ static void init(void) {
         }
     }
 
-    /* cube vertex buffer (for rendering into the render target textures */
-    float vertices[] = {
-        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+    // cube vertex and index buffer
+    float cube_vertices[] = {
+        -1.0, -1.0, -1.0,   0.7, 0.3, 0.3, 1.0,
+         1.0, -1.0, -1.0,   0.7, 0.3, 0.3, 1.0,
+         1.0,  1.0, -1.0,   0.7, 0.3, 0.3, 1.0,
+        -1.0,  1.0, -1.0,   0.7, 0.3, 0.3, 1.0,
 
-        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        -1.0, -1.0,  1.0,   0.3, 0.7, 0.3, 1.0,
+         1.0, -1.0,  1.0,   0.3, 0.7, 0.3, 1.0,
+         1.0,  1.0,  1.0,   0.3, 0.7, 0.3, 1.0,
+        -1.0,  1.0,  1.0,   0.3, 0.7, 0.3, 1.0,
 
-        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0, -1.0, -1.0,   0.3, 0.3, 0.7, 1.0,
+        -1.0,  1.0, -1.0,   0.3, 0.3, 0.7, 1.0,
+        -1.0,  1.0,  1.0,   0.3, 0.3, 0.7, 1.0,
+        -1.0, -1.0,  1.0,   0.3, 0.3, 0.7, 1.0,
 
-        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0, -1.0, -1.0,    0.7, 0.5, 0.3, 1.0,
+        1.0,  1.0, -1.0,    0.7, 0.5, 0.3, 1.0,
+        1.0,  1.0,  1.0,    0.7, 0.5, 0.3, 1.0,
+        1.0, -1.0,  1.0,    0.7, 0.5, 0.3, 1.0,
 
-        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-         1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0, -1.0,   0.3, 0.5, 0.7, 1.0,
+        -1.0, -1.0,  1.0,   0.3, 0.5, 0.7, 1.0,
+         1.0, -1.0,  1.0,   0.3, 0.5, 0.7, 1.0,
+         1.0, -1.0, -1.0,   0.3, 0.5, 0.7, 1.0,
 
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-         1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+        -1.0,  1.0, -1.0,   0.7, 0.3, 0.5, 1.0,
+        -1.0,  1.0,  1.0,   0.7, 0.3, 0.5, 1.0,
+         1.0,  1.0,  1.0,   0.7, 0.3, 0.5, 1.0,
+         1.0,  1.0, -1.0,   0.7, 0.3, 0.5, 1.0
     };
     state.cube_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
-        .label = "cube-vertices"
+        .size = sizeof(cube_vertices),
+        .content = cube_vertices,
     });
 
-    /* create an index buffer for the cube */
-    uint16_t indices[] = {
+    uint16_t cube_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -218,9 +255,15 @@ static void init(void) {
     };
     state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
-        .label = "cube-indices"
+        .size = sizeof(cube_indices),
+        .content = cube_indices,
+    });
+
+    // background quad vertices
+    float vertices[] = { -1.0f, -1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, +1.0f, };
+    state.bg_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .size = sizeof(vertices),
+        .content = vertices
     });
 }
 
@@ -237,7 +280,8 @@ static void frame(void) {
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    state.cube_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    state.bg_fs_params.tick += 1.0f;
 
     // render into all the offscreen render targets
     for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
@@ -248,17 +292,37 @@ static void frame(void) {
         sg_pixelformat_info fmt_info = sg_query_pixelformat(fmt);
         if (fmt_info.render) {
             sg_begin_pass(state.fmt[i].render_pass, &(sg_pass_action){0});
-            sg_apply_pipeline(state.fmt[i].render_pip);
+            sg_apply_pipeline(state.fmt[i].bg_render_pip);
+            sg_apply_bindings(&state.bg_bindings);
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &state.bg_fs_params, sizeof(state.bg_fs_params));
+            sg_draw(0, 4, 1);
+            sg_apply_pipeline(state.fmt[i].cube_render_pip);
             sg_apply_bindings(&state.cube_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &state.cube_vs_params, sizeof(state.cube_vs_params));
+            sg_draw(0, 36, 1);
+            sg_end_pass();
+        }
+        if (fmt_info.blend) {
+            sg_begin_pass(state.fmt[i].blend_pass, &(sg_pass_action){0});
+            sg_apply_pipeline(state.fmt[i].bg_render_pip);  // not a bug
+            sg_apply_bindings(&state.bg_bindings); // not a bug
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &state.bg_fs_params, sizeof(state.bg_fs_params));
+            sg_draw(0, 4, 1);
+            sg_apply_pipeline(state.fmt[i].cube_blend_pip);
+            sg_apply_bindings(&state.cube_bindings);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &state.cube_vs_params, sizeof(state.cube_vs_params));
             sg_draw(0, 36, 1);
             sg_end_pass();
         }
         if (fmt_info.msaa) {
             sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){0});
-            sg_apply_pipeline(state.fmt[i].msaa_pip);
+            sg_apply_pipeline(state.fmt[i].bg_msaa_pip);
+            sg_apply_bindings(&state.bg_bindings);
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &state.bg_fs_params, sizeof(state.bg_fs_params));
+            sg_draw(0, 4, 1);
+            sg_apply_pipeline(state.fmt[i].cube_msaa_pip);
             sg_apply_bindings(&state.cube_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &state.cube_vs_params, sizeof(state.cube_vs_params));
             sg_draw(0, 36, 1);
             sg_end_pass();
         }
@@ -268,29 +332,43 @@ static void frame(void) {
     scimgui_new_frame(w, h, 1.0f/60.0f);
     igSetNextWindowSize((ImVec2){640, 480}, ImGuiCond_Once);
     if (igBegin("Pixel Formats (without UINT and SINT formats)", 0, 0)) {
+        igText("format"); igSameLine(264, 0);
+        igText("sample"); igSameLine(264 + 1*66, 0);
+        igText("filter"); igSameLine(264 + 2*66, 0);
+        igText("render"); igSameLine(264 + 3*66, 0);
+        igText("blend");  igSameLine(264 + 4*66, 0);
+        igText("msaa");
+        igSeparator();
+        igBeginChild("#scrollregion", (ImVec2){0,0}, false, ImGuiWindowFlags_None);
         for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
             if (!state.fmt[i].valid) {
                 continue;
             }
             const char* fmt_string = pixelformat_string((sg_pixel_format)i);
-            if (igBeginChild(fmt_string, (ImVec2){0,80}, true, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
+            if (igBeginChild(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLine(256, 0);
-                igImage(state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage(state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage(state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage(state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)state.fmt[i].blend.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLine(0,0);
+                igImage((ImTextureID)state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
+        igEndChild();
     }
     igEnd();
 
     // sokol-gfx rendering...
-    sg_begin_default_pass(&state.pass_action, w, h);
+    sg_pass_action pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
+    };
+    sg_begin_default_pass(&pass_action, w, h);
     scimgui_render();
     sg_end_pass();
     sg_commit();
@@ -307,13 +385,18 @@ static void cleanup(void) {
 
 sapp_desc sokol_main(int argc, char* argv[]) {
     return (sapp_desc){
+        #if defined(USE_GLES2)
+        .gl_force_gles2 = true,
+        #endif
         .init_cb = init,
         .frame_cb = frame,
         .event_cb = input,
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .window_title = "Pixelformat Test",
+        #if defined(USE_GLES2)
+        .window_title = "Pixelformat Test (GLES2)",
+        #endif
     };
 }
 
@@ -333,7 +416,7 @@ static const uint32_t disabled_texture_pixels[8][8] = {
 #undef X
 #undef o
 
-static sg_image create_disabled_texture(void) {
+static sg_image setup_invalid_texture(void) {
     return sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
