@@ -1,5 +1,6 @@
 sokol_config()
 
+if (NOT FIPS_ANDROID)
 fips_begin_app(sokol-test cmdline)
     fips_vs_warning_level(3)
     fips_files(
@@ -16,6 +17,7 @@ fips_begin_app(sokol-test cmdline)
         fips_libs(m)
     endif()
 fips_end_app()
+endif()
 
 if (FIPS_OSX)
     # on Apple with Metal, must compile as Objective-C++
