@@ -348,15 +348,15 @@ static void frame(void) {
             if (igBeginChild(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLine(256, 0);
-                igImage((ImTextureID)state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)state.fmt[i].blend.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].blend.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
