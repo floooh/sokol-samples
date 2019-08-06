@@ -37,7 +37,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
-    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? 4 : 1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = width,
