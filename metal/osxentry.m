@@ -17,9 +17,11 @@
 @end
 @interface SokolWindowDelegate : NSObject<NSWindowDelegate>
 @end
+static NSWindow* window;
 #else
 @interface SokolAppDelegate : NSObject<UIApplicationDelegate>
 @end
+static UIWindow* window;
 #endif
 @interface SokolViewDelegate : NSObject<MTKViewDelegate>
 @end
@@ -41,7 +43,6 @@ static osx_mouse_btn_func mouse_btn_up_func;
 static osx_mouse_pos_func mouse_pos_func;
 static osx_mouse_wheel_func mouse_wheel_func;
 static id window_delegate;
-static NSWindow* window;
 static id<MTLDevice> mtl_device;
 static id mtk_view_delegate;
 static MTKView* mtk_view;
