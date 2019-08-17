@@ -21,6 +21,10 @@
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+#endif
+
 static const char* filename = "DamagedHelmet.gltf";
 
 #define MSAA_SAMPLE_COUNT (4)
