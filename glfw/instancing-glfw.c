@@ -48,7 +48,7 @@ int main() {
     sg_desc desc = {0}; 
     sg_setup(&desc);
     assert(sg_isvalid());
-    assert(sg_query_feature(SG_FEATURE_INSTANCING));
+    assert(sg_query_features().instancing);
 
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;

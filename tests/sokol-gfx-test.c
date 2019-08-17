@@ -395,7 +395,7 @@ UTEST(sokol_gfx, make_destroy_pipelines) {
         T(pipptr->shader_id.id == desc.shader.id);
         T(pipptr->color_attachment_count == 1);
         T(pipptr->color_format == SG_PIXELFORMAT_RGBA8);
-        T(pipptr->depth_format == SG_PIXELFORMAT_DEPTHSTENCIL);
+        T(pipptr->depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
         T(pipptr->sample_count == 1);
         T(pipptr->index_type == SG_INDEXTYPE_NONE);
         T(pipptr->vertex_layout_valid[0]);

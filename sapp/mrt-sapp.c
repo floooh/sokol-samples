@@ -59,7 +59,7 @@ void create_offscreen_pass(int width, int height) {
     sg_destroy_image(offscreen_pass_desc.depth_stencil_attachment.image);
 
     /* create offscreen rendertarget images and pass */
-    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? MSAA_SAMPLES : 1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? MSAA_SAMPLES : 1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = width,
@@ -194,7 +194,6 @@ void init(void) {
         },
         .blend = {
             .color_attachment_count = 3,
-            .color_format = SG_PIXELFORMAT_RGBA8,
             .depth_format = SG_PIXELFORMAT_DEPTH
         },
         .rasterizer = {

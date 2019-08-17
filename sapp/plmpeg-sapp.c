@@ -276,7 +276,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
         state.bind.fs_images[slot] = sg_make_image(&(sg_image_desc){
             .width = plane->width,
             .height = plane->height,
-            .pixel_format = SG_PIXELFORMAT_L8,
+            .pixel_format = SG_PIXELFORMAT_R8,
             .usage = SG_USAGE_STREAM,
             .min_filter = SG_FILTER_LINEAR,
             .mag_filter = SG_FILTER_LINEAR,

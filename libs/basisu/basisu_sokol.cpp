@@ -24,28 +24,26 @@ void sbasisu_shutdown(void) {
 }
 
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
-    if (sg_query_feature(SG_FEATURE_TEXTURE_COMPRESSION_PVRTC)) {
+    if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).sample) {
+        return basist::cTFBC3;
+    }
+    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
+        return basist::cTFBC1;
+    }
+    else if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).sample) {
         return basist::cTFPVRTC1_4_OPAQUE_ONLY;
     }
-    else if (sg_query_feature(SG_FEATURE_TEXTURE_COMPRESSION_ETC2)) {
-        return basist::cTFETC2;
-    }
     else {
-        if (has_alpha) {
-            return basist::cTFBC3;
-        }
-        else {
-            return basist::cTFBC1;
-        }
+        return basist::cTFETC2;
     }
 }
 
 static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format fmt) {
     switch (fmt) {
-        case basist::cTFBC1: return SG_PIXELFORMAT_DXT1;
-        case basist::cTFPVRTC1_4_OPAQUE_ONLY: return SG_PIXELFORMAT_PVRTC4_RGB;
+        case basist::cTFBC1: return SG_PIXELFORMAT_BC1_RGBA;
+        case basist::cTFPVRTC1_4_OPAQUE_ONLY: return SG_PIXELFORMAT_PVRTC_RGB_4BPP;
         case basist::cTFETC2: return SG_PIXELFORMAT_ETC2_RGB8;
-        case basist::cTFBC3: return SG_PIXELFORMAT_DXT5;
+        case basist::cTFBC3: return SG_PIXELFORMAT_BC3_RGBA;
         default: return _SG_PIXELFORMAT_DEFAULT;
     }
 }

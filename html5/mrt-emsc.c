@@ -11,7 +11,7 @@
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
 #include "emsc.h"
-    
+
 static sg_pass_desc offscreen_pass_desc;
 static sg_pass offscreen_pass;
 static sg_pass_action offscreen_pass_action;
@@ -62,7 +62,7 @@ int main() {
     }
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
-    const int offscreen_sample_count = sg_query_feature(SG_FEATURE_MSAA_RENDER_TARGETS) ? 4 : 1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? 4 : 1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = emsc_width(),
@@ -146,7 +146,7 @@ int main() {
         .size = sizeof(cube_indices),
         .content = cube_indices,
     });
-    
+
     /* resource bindings for offscreen rendering */
     offscreen_bind = (sg_bindings){
         .vertex_buffers[0] = cube_vbuf,
@@ -277,7 +277,7 @@ int main() {
             "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
             "}\n"
     });
-    
+
     /* the pipeline object for the fullscreen rectangle */
     fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
@@ -323,7 +323,7 @@ int main() {
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     default_pass_action = (sg_pass_action){
-        .colors = { 
+        .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
             [2].action = SG_ACTION_DONTCARE
@@ -351,7 +351,7 @@ void draw() {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     offscreen_params.mvp = HMM_MultiplyMat4(view_proj, model);
     params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
-        
+
     /* render cube into MRT offscreen render targets */
     sg_begin_pass(offscreen_pass, &offscreen_pass_action);
     sg_apply_pipeline(offscreen_pip);

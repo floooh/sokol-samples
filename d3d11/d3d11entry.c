@@ -79,7 +79,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         .BufferDesc = {
             .Width = w,
             .Height = h,
-            .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+            .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
             .RefreshRate = {
                 .Numerator = 60,
                 .Denominator = 1
@@ -167,7 +167,7 @@ void d3d11_destroy_default_render_target() {
 void d3d11_update_default_render_target() {
     if (swap_chain) {
         d3d11_destroy_default_render_target();
-        IDXGISwapChain_ResizeBuffers(swap_chain, 1, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+        IDXGISwapChain_ResizeBuffers(swap_chain, 1, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         d3d11_create_default_render_target();
     }
 }

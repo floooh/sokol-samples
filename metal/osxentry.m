@@ -193,7 +193,7 @@ static id mtk_view_controller;
     return YES;
 }
 
-#if !TARGET_OS_IPHONE 
+#if !TARGET_OS_IPHONE
 - (BOOL)canBecomeKey {
     return YES;
 }
