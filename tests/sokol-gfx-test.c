@@ -174,7 +174,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_pipelines) {
         T((2-i) == _sg.pools.pipeline_pool.queue_top);
         T(sg_query_pipeline_state(pip[i]) == SG_RESOURCESTATE_ALLOC);
     }
-    
+
     /* the next alloc will fail because the pool is exhausted */
     sg_pipeline p3 = sg_alloc_pipeline();
     T(p3.id == SG_INVALID_ID);
@@ -477,5 +477,114 @@ UTEST(sokol_gfx, generation_counter) {
         sg_destroy_buffer(buf);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_INVALID);
     }
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_buffer_defaults) {
+    sg_setup(&(sg_desc){0});
+    sg_buffer_desc desc;
+    desc = sg_query_buffer_defaults(&(sg_buffer_desc){0});
+    T(desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
+    T(desc.usage == SG_USAGE_IMMUTABLE);
+    desc = sg_query_buffer_defaults(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+    });
+    T(desc.type == SG_BUFFERTYPE_INDEXBUFFER);
+    T(desc.usage == SG_USAGE_IMMUTABLE);
+    desc = sg_query_buffer_defaults(&(sg_buffer_desc){
+        .usage = SG_USAGE_DYNAMIC
+    });
+    T(desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
+    T(desc.usage == SG_USAGE_DYNAMIC);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_image_defaults) {
+    sg_setup(&(sg_desc){0});
+    const sg_image_desc desc = sg_query_image_defaults(&(sg_image_desc){0});
+    T(desc.type == SG_IMAGETYPE_2D);
+    T(!desc.render_target);
+    T(desc.num_mipmaps == 1);
+    T(desc.usage == SG_USAGE_IMMUTABLE);
+    T(desc.pixel_format == SG_PIXELFORMAT_RGBA8);
+    T(desc.sample_count == 1);
+    T(desc.min_filter == SG_FILTER_NEAREST);
+    T(desc.mag_filter == SG_FILTER_NEAREST);
+    T(desc.wrap_u == SG_WRAP_REPEAT);
+    T(desc.wrap_v == SG_WRAP_REPEAT);
+    T(desc.wrap_w == SG_WRAP_REPEAT);
+    T(desc.max_anisotropy == 1);
+    T(desc.max_lod >= FLT_MAX);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_shader_defaults) {
+    sg_setup(&(sg_desc){0});
+    const sg_shader_desc desc = sg_query_shader_defaults(&(sg_shader_desc){0});
+    T(0 == strcmp(desc.vs.entry, "main"));
+    T(0 == strcmp(desc.fs.entry, "main"));
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_pipeline_defaults) {
+    sg_setup(&(sg_desc){0});
+    const sg_pipeline_desc desc = sg_query_pipeline_defaults(&(sg_pipeline_desc){
+        .layout.attrs = {
+            [0].format = SG_VERTEXFORMAT_FLOAT3,
+            [1].format = SG_VERTEXFORMAT_FLOAT4
+        }
+    });
+    T(desc.layout.buffers[0].stride == 28);
+    T(desc.layout.buffers[0].step_rate == 1);
+    T(desc.layout.buffers[0].step_func == SG_VERTEXSTEP_PER_VERTEX);
+    T(desc.layout.attrs[0].offset == 0);
+    T(desc.layout.attrs[0].buffer_index == 0);
+    T(desc.layout.attrs[0].format == SG_VERTEXFORMAT_FLOAT3);
+    T(desc.layout.attrs[1].offset == 12);
+    T(desc.layout.attrs[1].buffer_index == 0);
+    T(desc.layout.attrs[1].format == SG_VERTEXFORMAT_FLOAT4);
+    T(desc.primitive_type == SG_PRIMITIVETYPE_TRIANGLES);
+    T(desc.index_type == SG_INDEXTYPE_NONE);
+    T(desc.depth_stencil.stencil_front.fail_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_front.depth_fail_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_front.pass_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_front.compare_func == SG_COMPAREFUNC_ALWAYS);
+    T(desc.depth_stencil.stencil_back.fail_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_back.depth_fail_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_back.pass_op == SG_STENCILOP_KEEP);
+    T(desc.depth_stencil.stencil_back.compare_func == SG_COMPAREFUNC_ALWAYS);
+    T(desc.depth_stencil.depth_compare_func == SG_COMPAREFUNC_ALWAYS);
+    T(desc.depth_stencil.depth_write_enabled == false);
+    T(desc.depth_stencil.stencil_enabled == false);
+    T(desc.depth_stencil.stencil_read_mask == 0);
+    T(desc.depth_stencil.stencil_write_mask == 0);
+    T(desc.depth_stencil.stencil_ref == 0);
+    T(desc.blend.enabled == false);
+    T(desc.blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+    T(desc.blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+    T(desc.blend.op_rgb == SG_BLENDOP_ADD);
+    T(desc.blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+    T(desc.blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+    T(desc.blend.op_alpha == SG_BLENDOP_ADD);
+    T(desc.blend.color_write_mask == 0xF);
+    T(desc.blend.color_attachment_count == 1);
+    T(desc.blend.color_format == SG_PIXELFORMAT_RGBA8);
+    T(desc.blend.depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
+    T(desc.rasterizer.alpha_to_coverage_enabled == false);
+    T(desc.rasterizer.cull_mode == SG_CULLMODE_NONE);
+    T(desc.rasterizer.face_winding == SG_FACEWINDING_CW);
+    T(desc.rasterizer.sample_count == 1);
+    T(desc.rasterizer.depth_bias == 0);
+    T(desc.rasterizer.depth_bias_slope_scale == 0);
+    T(desc.rasterizer.depth_bias_clamp == 0);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_pass_defaults) {
+    sg_setup(&(sg_desc){0});
+    /* sg_pass_desc doesn't actually have any meaningful default values */
+    const sg_pass_desc desc = sg_query_pass_defaults(&(sg_pass_desc){0});
+    T(desc.color_attachments[0].image.id == SG_INVALID_ID);
+    T(desc.color_attachments[0].mip_level == 0);
     sg_shutdown();
 }
