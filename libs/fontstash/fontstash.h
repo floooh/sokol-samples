@@ -1,4 +1,6 @@
 //
+//  NOTE sokol: all IO functions have been removed
+//
 // Copyright (c) 2009-2013 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied
@@ -101,14 +103,12 @@ FONS_DEF void fonsDeleteInternal(FONScontext* s);
 FONS_DEF void fonsSetErrorCallback(FONScontext* s, void (*callback)(void* uptr, int error, int val), void* uptr);
 // Returns current atlas size.
 FONS_DEF void fonsGetAtlasSize(FONScontext* s, int* width, int* height);
-// Expands the atlas size. 
+// Expands the atlas size.
 FONS_DEF int fonsExpandAtlas(FONScontext* s, int width, int height);
 // Resets the whole stash.
 FONS_DEF int fonsResetAtlas(FONScontext* stash, int width, int height);
 
 // Add fonts
-FONS_DEF int fonsAddFont(FONScontext* s, const char* name, const char* path);
-FONS_DEF int fonsAddFontMem(FONScontext* s, const char* name, unsigned char* data, int ndata, int freeData);
 FONS_DEF int fonsGetFontByName(FONScontext* s, const char* name);
 FONS_DEF int fonsAddFallbackFont(FONScontext* stash, int base, int fallback);
 
@@ -887,62 +887,6 @@ error:
 	return FONS_INVALID;
 }
 
-static FILE* fons__fopen(const char* filename, const char* mode)
-{
-#ifdef _WIN32
-	int len = 0;
-	int fileLen = strlen(filename);
-	int modeLen = strlen(mode);
-	wchar_t wpath[MAX_PATH];
-	wchar_t wmode[MAX_PATH];
-	FILE* f;
-
-	if (fileLen == 0)
-		return NULL;
-	if (modeLen == 0)
-		return NULL;
-	len = MultiByteToWideChar(CP_UTF8, 0, filename, fileLen, wpath, fileLen);
-	if (len >= MAX_PATH)
-		return NULL;
-	wpath[len] = L'\0';
-	len = MultiByteToWideChar(CP_UTF8, 0, mode, modeLen, wmode, modeLen);
-	if (len >= MAX_PATH)
-		return NULL;
-	wmode[len] = L'\0';
-	f = _wfopen(wpath, wmode);
-	return f;
-#else
-	return fopen(filename, mode);
-#endif
-}
-
-int fonsAddFont(FONScontext* stash, const char* name, const char* path)
-{
-	FILE* fp = 0;
-	int dataSize = 0, readed;
-	unsigned char* data = NULL;
-
-	// Read in the font data.
-	fp = fons__fopen(path, "rb");
-	if (fp == NULL) goto error;
-	fseek(fp,0,SEEK_END);
-	dataSize = (int)ftell(fp);
-	fseek(fp,0,SEEK_SET);
-	data = (unsigned char*)malloc(dataSize);
-	if (data == NULL) goto error;
-	readed = fread(data, 1, dataSize, fp);
-	fclose(fp);
-	fp = 0;
-	if (readed != dataSize) goto error;
-
-	return fonsAddFontMem(stash, name, data, dataSize, 1);
-
-error:
-	if (data) free(data);
-	if (fp) fclose(fp);
-	return FONS_INVALID;
-}
-
 int fonsAddFontMem(FONScontext* stash, const char* name, unsigned char* data, int dataSize, int freeData)
 {
 	int i, ascent, descent, fh, lineGap;
@@ -1486,7 +1430,7 @@ FONS_DEF void fonsDrawDebug(FONScontext* stash, float x, float y)
 }
 
 FONS_DEF float fonsTextBounds(FONScontext* stash,
-					 float x, float y, 
+					 float x, float y,
 					 const char* str, const char* end,
 					 float* bounds)
 {
