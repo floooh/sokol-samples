@@ -110,6 +110,15 @@ static void init(void) {
     });
 }
 
+static void line(float sx, float sy, float ex, float ey)
+{
+    sgl_begin_lines();
+    sgl_c4b(255, 255, 0, 128);
+    sgl_v2f(sx, sy);
+    sgl_v2f(ex, ey);
+    sgl_end();
+}
+
 static void frame(void) {
     const float dpis = sapp_dpi_scale();
 
@@ -124,12 +133,12 @@ static void frame(void) {
     uint32_t blue  = sfons_rgba(0, 192, 255, 255);
     fonsClearState(state.fons);
 
-    sx = 50*dpis; sy = 50*dpis;
-    dx = sx; dy = sy;
-
     sgl_defaults();
     sgl_matrix_mode_projection();
     sgl_ortho(0.0f, (float)sapp_width(), (float)sapp_height(), 0.0f, -1.0f, +1.0f);
+
+    sx = 50*dpis; sy = 50*dpis;
+    dx = sx; dy = sy;
 
     FONScontext* fs = state.fons;
     if (state.font_normal != FONS_INVALID) {
@@ -195,7 +204,7 @@ static void frame(void) {
         fonsSetFont(fs, state.font_normal);
         fonsSetColor(fs, white);
         dx = 50*dpis; dy = 350*dpis;
-        //line(dx-10,dy,dx+250,dy);
+        line(dx-10*dpis,dy,dx+250*dpis,dy);
         fonsSetAlign(fs, FONS_ALIGN_LEFT | FONS_ALIGN_TOP);
         dx = fonsDrawText(fs, dx,dy,"Top",NULL);
         dx += 10*dpis;
@@ -208,7 +217,7 @@ static void frame(void) {
         fonsSetAlign(fs, FONS_ALIGN_LEFT | FONS_ALIGN_BOTTOM);
         fonsDrawText(fs, dx,dy,"Bottom",NULL);
         dx = 150*dpis; dy = 400*dpis;
-        //line(dx,dy-30,dx,dy+80.0f);
+        line(dx,dy-30*dpis,dx,dy+80.0f*dpis);
         fonsSetAlign(fs, FONS_ALIGN_LEFT | FONS_ALIGN_BASELINE);
         fonsDrawText(fs, dx,dy,"Left",NULL);
         dy += 30*dpis;
