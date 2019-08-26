@@ -30,6 +30,7 @@ samples = [
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
     [ 'sgl-microui', 'sgl-microui-sapp.c', None],
+    [ 'fontstash', 'fontstash-sapp.c', None],
     [ 'events', 'events-sapp.cc', None],
     [ 'pixelformats', 'pixelformats-sapp.cc', None],
     [ 'pixelformats-gles2', 'pixelformats-gles2-sapp.c', None],
@@ -53,7 +54,11 @@ assets = [
     "Default_albedo.basis",
     "Default_emissive.basis",
     "Default_metalRoughness.basis",
-    "Default_normal.basis"
+    "Default_normal.basis",
+    "DroidSerif-Regular.ttf",
+    "DroidSerif-Italic.ttf",
+    "DroidSerif-Bold.ttf",
+    "DroidSansJapanese.ttf"
 ]
 
 # webpage template arguments
