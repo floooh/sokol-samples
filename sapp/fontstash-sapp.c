@@ -10,6 +10,9 @@
 #include "sokol_gl.h"
 #include <stdio.h>  // needed by fontstash's IO functions even though they are not used
 #define FONTSTASH_IMPLEMENTATION
+#if defined(_MSC_VER )
+#pragma warning(disable:4996)   // strncpy use in fontstash.h
+#endif
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
@@ -69,7 +72,7 @@ static void init(void) {
     });
     __dbgui_setup(1);
     sgl_setup(&(sgl_desc_t){0});
-    FONScontext* fons_context = sfons_create(512*sapp_dpi_scale(), 512*sapp_dpi_scale(), FONS_ZERO_TOPLEFT);
+    FONScontext* fons_context = sfons_create((int)(512*sapp_dpi_scale()), (int)(512*sapp_dpi_scale()), FONS_ZERO_TOPLEFT);
 
     state = (state_t){
         .fons = fons_context,
