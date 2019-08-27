@@ -23,6 +23,7 @@
 
 typedef struct {
     FONScontext* fons;
+    float dpi_scale;
     int font_normal;
     int font_italic;
     int font_bold;
@@ -59,7 +60,17 @@ static void font_japanese_loaded(const sfetch_response_t* response) {
     }
 }
 
+/* round to next power of 2 (see bit-twiddling-hacks) */
+static int round_pow2(float v) {
+    uint32_t vi = ((uint32_t) v) - 1;
+    for (uint32_t i = 0; i < 5; i++) {
+        vi |= (vi >> (1<<i));
+    }
+    return (int) (vi + 1);
+}
+
 static void init(void) {
+    state.dpi_scale = sapp_dpi_scale();
     sg_setup(&(sg_desc){
         .gl_force_gles2 = sapp_gles2(),
         .mtl_device = sapp_metal_get_device(),
@@ -72,15 +83,15 @@ static void init(void) {
     });
     __dbgui_setup(1);
     sgl_setup(&(sgl_desc_t){0});
-    FONScontext* fons_context = sfons_create((int)(512*sapp_dpi_scale()), (int)(512*sapp_dpi_scale()), FONS_ZERO_TOPLEFT);
 
-    state = (state_t){
-        .fons = fons_context,
-        .font_normal = FONS_INVALID,
-        .font_italic = FONS_INVALID,
-        .font_bold = FONS_INVALID,
-        .font_japanese = FONS_INVALID
-    };
+    /* make sure the fontstash atlas width/height is pow-2 */
+    const int atlas_dim = round_pow2(512.0f * state.dpi_scale);
+    FONScontext* fons_context = sfons_create(atlas_dim, atlas_dim, FONS_ZERO_TOPLEFT);
+    state.fons = fons_context;
+    state.font_normal = FONS_INVALID;
+    state.font_italic = FONS_INVALID;
+    state.font_bold = FONS_INVALID;
+    state.font_japanese = FONS_INVALID;
 
     /* use sokol_fetch for loading the TTF font files */
     sfetch_setup(&(sfetch_desc_t){
@@ -123,7 +134,7 @@ static void line(float sx, float sy, float ex, float ey)
 }
 
 static void frame(void) {
-    const float dpis = sapp_dpi_scale();
+    const float dpis = state.dpi_scale;
 
     /* pump sokol_fetch message queues */
     sfetch_dowork();
