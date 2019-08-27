@@ -23,6 +23,7 @@ void __dbgui_setup(int sample_count) {
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
     simgui_desc.sample_count = sample_count;
+    simgui_desc.dpi_scale = sapp_dpi_scale();
     simgui_setup(&simgui_desc);
 }
 
