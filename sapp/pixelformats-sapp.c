@@ -6,8 +6,8 @@
 #include "sokol_app.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
-#define SOKOL_CIMGUI_IMPL
-#include "sokol_cimgui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol_imgui.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -62,7 +62,7 @@ static void init(void) {
     });
 
     // setup cimgui
-    scimgui_setup(&(scimgui_desc_t){0});
+    simgui_setup(&(simgui_desc_t){0});
 
     // create all the textures and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
@@ -330,7 +330,7 @@ static void frame(void) {
     }
 
     // ImGui rendering...
-    scimgui_new_frame(w, h, 1.0f/60.0f);
+    simgui_new_frame(w, h, 1.0f/60.0f);
     igSetNextWindowSize((ImVec2){640, 480}, ImGuiCond_Once);
     if (igBegin("Pixel Formats (without UINT and SINT formats)", 0, 0)) {
         igText("format"); igSameLine(264, 0);
@@ -370,17 +370,17 @@ static void frame(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, w, h);
-    scimgui_render();
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 static void input(const sapp_event* e) {
-    scimgui_handle_event(e);
+    simgui_handle_event(e);
 }
 
 static void cleanup(void) {
-    scimgui_shutdown();
+    simgui_shutdown();
     sg_shutdown();
 }
 
