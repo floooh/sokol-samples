@@ -2,15 +2,15 @@
 //  cimgui-sapp.c
 //
 //  Demonstrates Dear ImGui UI rendering in C via
-//  sokol_gfx.h + sokol_cimgui.h + cimgui.h
+//  sokol_gfx.h + sokol_imgui.h + cimgui.h
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
-#define SOKOL_CIMGUI_IMPL
-#include "sokol_cimgui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol_imgui.h"
 
 static uint64_t last_time = 0;
 static bool show_test_window = true;
@@ -36,14 +36,14 @@ void init(void) {
 
     // use sokol-imgui with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
-    scimgui_setup(&(scimgui_desc_t){ 0 });
+    simgui_setup(&(simgui_desc_t){ 0 });
 }
 
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
     const double delta_time = stm_sec(stm_laptime(&last_time));
-    scimgui_new_frame(width, height, delta_time);
+    simgui_new_frame(width, height, delta_time);
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -71,18 +71,18 @@ void frame(void) {
 
     // the sokol_gfx draw pass
     sg_begin_default_pass(&pass_action, width, height);
-    scimgui_render();
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
-    scimgui_shutdown();
+    simgui_shutdown();
     sg_shutdown();
 }
 
 void input(const sapp_event* event) {
-    scimgui_handle_event(event);
+    simgui_handle_event(event);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
