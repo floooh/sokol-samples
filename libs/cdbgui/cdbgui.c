@@ -10,14 +10,14 @@
 #include "cimgui/cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
-#define SOKOL_GFX_CIMGUI_IMPL
-#include "sokol_gfx_cimgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 
-static sg_cimgui_t sg_imgui;
+static sg_imgui_t sg_imgui;
 
 void __cdbgui_setup(int sample_count) {
     // setup debug inspection header(s)
-    sg_cimgui_init(&sg_imgui);
+    sg_imgui_init(&sg_imgui);
 
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
@@ -27,7 +27,7 @@ void __cdbgui_setup(int sample_count) {
 
 void __cdbgui_shutdown(void) {
     simgui_shutdown();
-    sg_cimgui_discard(&sg_imgui);
+    sg_imgui_discard(&sg_imgui);
 }
 
 void __cdbgui_draw(void) {
@@ -44,7 +44,7 @@ void __cdbgui_draw(void) {
         }
         igEndMainMenuBar();
     }
-    sg_cimgui_draw(&sg_imgui);
+    sg_imgui_draw(&sg_imgui);
     simgui_render();
 }
 
