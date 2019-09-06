@@ -8,3 +8,5 @@ add_subdirectory(microui)
 add_subdirectory(sokol)
 add_subdirectory(stb)
 add_subdirectory(basisu)
+add_subdirectory(emu)
+
