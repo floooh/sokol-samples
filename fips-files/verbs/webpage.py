@@ -23,6 +23,7 @@ samples = [
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
+    [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
     [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],
