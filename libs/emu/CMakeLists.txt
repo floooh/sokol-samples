@@ -1,5 +1,0 @@
-fips_begin_lib(emu)
-    fips_vs_warning_level(3)
-    fips_files(emu.h emu.c z80.h clk.h mem.h namco.h)
-    fips_deps(sokol)
-fips_end_lib()
