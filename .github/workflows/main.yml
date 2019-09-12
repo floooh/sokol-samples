@@ -1,0 +1,19 @@
+name: build_and_test
+
+on: [push, pull_request]
+
+jobs:
+    windows:
+        runs-on: windows-latest
+        steps:
+            - name: Windows
+              uses: actions/checkout@v1
+              run: |
+                python fips build
+    mac:
+        runs-on: macos-latest
+        steps:
+            - name: macOS
+              uses: actions/checkout@v1
+              run: |
+                python fips build
