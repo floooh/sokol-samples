@@ -6,12 +6,14 @@ jobs:
     windows:
         runs-on: windows-latest
         steps:
-            - name: Windows
-              uses: actions/checkout@v1
-              run: python fips build
+        - uses: actions/checkout@v1
+        - name: Windows
+          run: |
+            python fips build
     mac:
         runs-on: macos-latest
         steps:
-            - name: macOS
-              uses: actions/checkout@v1
-              run: python fips build
+        - uses: actions/checkout@v1
+        - name: macOS
+          run: |
+            python fips build
