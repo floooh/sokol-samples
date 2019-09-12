@@ -43,3 +43,15 @@ jobs:
             python fips build sapp-linux-make-debug
             python fips build sapp-linux-make-release
             python fips run sokol-test sapp-linux-make-debug
+    emscripten:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v1
+        - name: Emscripten
+          run: |
+            sudo apt-get install ninja-build
+            python fips emsdk install latest
+            python fips build sapp-webgl2-wasm-ninja-debug
+            python fips build sapp-webgl2-wasm-ninja-release
+
+
