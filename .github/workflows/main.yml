@@ -17,7 +17,7 @@ jobs:
             python fips build sapp-win64-vstudio-release
             python fips build sapp-d3d11-win64-vstudio-debug
             python fips build sapp-d3d11-win64-vstudio-release
-            python fips run sokol-test win64-vstudio-debug
+            python fips run sokol-test sapp-win64-vstudio-debug
     mac:
         runs-on: macos-latest
         steps:
@@ -30,7 +30,7 @@ jobs:
             python fips build metal-osx-make-release
             python fips build sapp-metal-osx-make-debug
             python fips build sapp-metal-osx-make-release
-            python fips run sokol-test osx-make-debug
+            python fips run sokol-test sapp-metal-osx-make-debug
     linux:
         runs-on: ubuntu-latest
         steps:
@@ -42,4 +42,4 @@ jobs:
             python fips build linux-make-release
             python fips build sapp-linux-make-debug
             python fips build sapp-linux-make-release
-            python fips run sokol-test linux-make-debug
+            python fips run sokol-test sapp-linux-make-debug
