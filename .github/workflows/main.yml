@@ -10,6 +10,7 @@ jobs:
         - name: Windows
           run: |
             python fips build
+            python fips run sokol-test
     mac:
         runs-on: macos-latest
         steps:
@@ -17,6 +18,7 @@ jobs:
         - name: macOS
           run: |
             python fips build
+            python fips run sokol-test
     linux:
         runs-on: ubuntu-latest
         steps:
@@ -25,3 +27,4 @@ jobs:
           run: |
             sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
             python fips build
+            python fips run sokol-test
