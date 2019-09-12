@@ -23,5 +23,5 @@ jobs:
         - uses: actions/checkout@v1
         - name: Linux
           run: |
-            apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
+            sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
             python fips build
