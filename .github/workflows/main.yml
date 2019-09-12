@@ -17,3 +17,10 @@ jobs:
         - name: macOS
           run: |
             python fips build
+    linux:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v1
+        - name: Linux
+          run: |
+            python fips build
