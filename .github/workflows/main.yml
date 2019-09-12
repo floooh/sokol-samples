@@ -9,7 +9,14 @@ jobs:
         - uses: actions/checkout@v1
         - name: Windows
           run: |
-            python fips build
+            python fips build win64-vstudio-debug
+            python fips build win64-vstudio-release
+            python fips build d3d11-win64-vstudio-debug
+            python fips build d3d11-win64-vstudio-release
+            python fips build sapp-win64-vstudio-debug
+            python fips build sapp-win64-vstudio-release
+            python fips build sapp-d3d11-win64-vstudio-debug
+            python fips build sapp-d3d11-win64-vstudio-release
             python fips run sokol-test
     mac:
         runs-on: macos-latest
@@ -17,7 +24,12 @@ jobs:
         - uses: actions/checkout@v1
         - name: macOS
           run: |
-            python fips build
+            python fips build osx-make-debug
+            python fips build osx-make-release
+            python fips build metal-osx-make-debug
+            python fips build metal-osx-make-release
+            python fips build sapp-metal-osx-make-debug
+            python fips build sapp-metal-osx-make-release
             python fips run sokol-test
     linux:
         runs-on: ubuntu-latest
@@ -26,5 +38,8 @@ jobs:
         - name: Linux
           run: |
             sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
-            python fips build
+            python fips build linux-make-debug
+            python fips build linux-make-release
+            python fips build sapp-linux-make-debug
+            python fips build sapp-linux-make-release
             python fips run sokol-test
