@@ -8,12 +8,10 @@ jobs:
         steps:
             - name: Windows
               uses: actions/checkout@v1
-              run: |
-                python fips build
+              run: python fips build
     mac:
         runs-on: macos-latest
         steps:
             - name: macOS
               uses: actions/checkout@v1
-              run: |
-                python fips build
+              run: python fips build
