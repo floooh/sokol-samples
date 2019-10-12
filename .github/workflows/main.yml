@@ -48,7 +48,9 @@ jobs:
         steps:
         - uses: actions/checkout@v1
         - name: prepare
-          run:  sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
+          run:  |
+            sudo apt-get update
+            sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
         - name: linux-make-debug
           run:  python fips build linux-make-debug
         - name: linux-make-release
