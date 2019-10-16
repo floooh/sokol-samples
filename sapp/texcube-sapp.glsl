@@ -1,9 +1,12 @@
 //------------------------------------------------------------------------------
 //  Shader code for texcube-sapp sample.
+//
+//  NOTE: This source file also uses the '#pragma sokol' form of the
+//  custom tags.
 //------------------------------------------------------------------------------
-@ctype mat4 hmm_mat4
+#pragma sokol @ctype mat4 hmm_mat4
 
-@vs vs
+#pragma sokol @vs vs
 uniform vs_params {
     mat4 mvp;
 };
@@ -20,9 +23,9 @@ void main() {
     color = color0;
     uv = texcoord0 * 5.0;
 }
-@end
+#pragma sokol @end
 
-@fs fs
+#pragma sokol @fs fs
 uniform sampler2D tex;
 
 in vec4 color;
@@ -32,7 +35,6 @@ out vec4 frag_color;
 void main() {
     frag_color = texture(tex, uv) * color;
 }
-@end
+#pragma sokol @end
 
-@program texcube vs fs
-
+#pragma sokol @program texcube vs fs
