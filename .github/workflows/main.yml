@@ -58,7 +58,7 @@ jobs:
         - name: sapp-ios-xcode-debug
           run:  python fips build sapp-ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         - name: sapp-metal-ios-xcode-release
-          run:  python fips build sapp-metal-ios-xcode-release -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          run:  python fips build sapp-metal-ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
     linux:
         runs-on: ubuntu-latest
         steps:
