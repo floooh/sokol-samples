@@ -89,7 +89,7 @@ UTEST(saudio, api_test) {
     });
     T(saudio_isvalid());
     T(saudio_query_desc().sample_rate == 22050);
-    T((int)saudio_userdata() == 12345);
+    T(saudio_userdata() == (void*)12345);
     T(saudio_sample_rate() == 22050);
     T(saudio_channels() == 2);
     T(saudio_expect() == 8192);
