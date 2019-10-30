@@ -77,3 +77,21 @@ UTEST(sokol_audio, ring_buffer) {
     T(3 == rb.head);
     T(3 == rb.tail);
 }
+
+UTEST(saudio, api_test) {
+    saudio_setup(&(saudio_desc){
+        .sample_rate = 22050,
+        .num_channels = 2,
+        .buffer_frames = 8192,
+        .num_packets = 128,
+        .packet_frames = 8192 / 128,
+        .user_data = (void*)12345
+    });
+    T(saudio_isvalid());
+    T(saudio_query_desc().sample_rate == 22050);
+    T((int)saudio_userdata() == 12345);
+    T(saudio_sample_rate() == 22050);
+    T(saudio_channels() == 2);
+    T(saudio_expect() == 8192);
+    T(saudio_buffer_frames() == 8192);
+}
