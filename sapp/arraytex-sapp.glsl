@@ -34,7 +34,7 @@ in vec3 uv0;
 in vec3 uv1;
 in vec3 uv2;
 
-out vec4 frag_color;\
+out vec4 frag_color;
 
 void main() {
     vec4 c0 = texture(tex, uv0);
