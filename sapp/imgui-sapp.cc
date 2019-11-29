@@ -101,6 +101,5 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui (sokol-app)";
     desc.ios_keyboard_resizes_canvas = false;
-    desc.enable_clipboard = true;
     return desc;
 }
