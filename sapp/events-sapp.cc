@@ -31,6 +31,7 @@ static const char* eventtype_to_str(sapp_event_type t) {
         case SAPP_EVENTTYPE_RESUMED: return "RESUMED";
         case SAPP_EVENTTYPE_UPDATE_CURSOR: return "UPDATE_CURSOR";
         case SAPP_EVENTTYPE_QUIT_REQUESTED: return "QUIT_REQUESTED";
+        case SAPP_EVENTTYPE_CLIPBOARD_PASTED: return "CLIPBOARD_PASTED";
         default: return "???";
     }
 }
@@ -297,6 +298,9 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
             ImGui::Text(" %d changed: %s", i, ev.touches[i].changed ? "true":"false");
         }
     }
+    if (type == SAPP_EVENTTYPE_CLIPBOARD_PASTED) {
+        ImGui::Text("clipboard:    %s", sapp_get_clipboard_string());
+    }
     ImGui::Text("window size:  %d %d", ev.window_width, ev.window_height);
     ImGui::Text("fb size:      %d %d", ev.framebuffer_width, ev.framebuffer_height);
     ImGui::EndChild();
@@ -354,5 +358,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.window_title = "Events (sokol app)";
     desc.user_cursor = true;
     desc.gl_force_gles2 = true;
+    desc.enable_clipboard = true;
     return desc;
 }
