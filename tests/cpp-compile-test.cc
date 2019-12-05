@@ -4,6 +4,10 @@
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
 #define SOKOL_WIN32_FORCE_MAIN
+/* don't complain about unused variables in MSVC at /W4 when assert() is a NOP */
+#if defined(NDEBUG)
+#define SOKOL_ASSERT(x) ((void)(x))
+#endif
 #include "sokol_app.h"
 #include "sokol_args.h"
 #include "sokol_audio.h"
