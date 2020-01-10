@@ -100,7 +100,7 @@ void init(void* user_data) {
     mps.mFlags = MODPLUG_ENABLE_OVERSAMPLING;
     ModPlug_SetSettings(&mps);
 
-    state->mpf = ModPlug_Load(dump_disco_feva_baby, sizeof(dump_disco_feva_baby));
+    state->mpf = ModPlug_Load(embed_disco_feva_baby_s3m, sizeof(embed_disco_feva_baby_s3m));
     if (state->mpf) {
         state->mpf_valid = true;
     }

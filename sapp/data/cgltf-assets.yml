@@ -1,5 +1,6 @@
 ---
-root: gltf/DamagedHelmet
+options:
+    src_dir: gltf/DamagedHelmet
 files:
     - DamagedHelmet.bin
     - DamagedHelmet.gltf

@@ -17,3 +17,5 @@ imports:
     git: https://github.com/fips-libs/fips-imgui.git
   fips-libmodplug:
     git: https://github.com/fips-libs/fips-libmodplug
+  fips-utils:
+    git: https://github.com/fips-libs/fips-utils
