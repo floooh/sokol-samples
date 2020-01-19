@@ -95,7 +95,7 @@ jobs:
         - uses: actions/checkout@v1
         - name: prepare
           run: |
-            python fips setup android
+            yes | python fips setup android
         - name: sapp-android-make-debug
           run: python fips build sapp-android-make-debug
         - name: sapp-android-make-release
