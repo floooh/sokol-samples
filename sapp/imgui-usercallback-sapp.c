@@ -275,8 +275,8 @@ void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
 
 void frame(void) {
 
-    // create the ImGui UI: two windows which render their
-    // interior with a user callback
+    // create the ImGui UI, a single window with two child views, each
+    // rendering its own custom 3D scene via a user draw callback
     const int w = sapp_width();
     const int h = sapp_height();
     simgui_new_frame(w, h, 1.0f / 60.0f);
@@ -298,8 +298,7 @@ void frame(void) {
     }
     igEnd();
 
-    // actual UI rendering, and the invokation of the
-    // user callbacks happens here
+    // actual UI rendering, the user draw callbacks are called from inside simgui_render()
     sg_begin_default_pass(&state.default_pass_action, w, h);
     simgui_render();
     sg_end_pass();
