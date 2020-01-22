@@ -30,6 +30,7 @@ samples = [
     [ 'imgui', 'imgui-sapp.cc', None ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
+    [ 'imgui-usercallback', 'imgui-usercallback-sapp.c', 'imgui-usercallback-sapp.glsl'],
     [ 'sgl-microui', 'sgl-microui-sapp.c', None],
     [ 'fontstash', 'fontstash-sapp.c', None],
     [ 'events', 'events-sapp.cc', None],
