@@ -117,7 +117,6 @@ void init(void) {
 
         state.scene1.pip = sg_make_pipeline(&(sg_pipeline_desc){
             .layout = {
-                /* test to provide buffer stride, but no attr offsets */
                 .attrs = {
                     [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
                     [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
