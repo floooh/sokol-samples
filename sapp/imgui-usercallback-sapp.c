@@ -78,7 +78,7 @@ static uint16_t cube_indices[] = {
 };
 
 void init(void) {
-    // setup sokol-gfx, sokol-time and sokol-imgui
+    // setup sokol-gfx, sokol-imgui and sokol-gl
     sg_setup(&(sg_desc){
         .mtl_device = sapp_metal_get_device(),
         .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
@@ -89,8 +89,6 @@ void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
         .gl_force_gles2 = sapp_gles2()
     });
-
-    // setup sokol-imgui and sokol-gl with default options
     simgui_setup(&(simgui_desc_t){ 0 });
     sgl_setup(&(sgl_desc_t){ 0 });
 
