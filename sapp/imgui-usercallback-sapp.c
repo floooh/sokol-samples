@@ -172,7 +172,7 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     /*
-        NOTE: we cannot start a separate draw call here since draw calls cannot
+        NOTE: we cannot start a separate render pass here since draw calls cannot
         be nested, so if we'd need to clear the color- or z-buffer we'd need to
         render a quad instead
 
