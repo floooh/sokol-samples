@@ -157,8 +157,8 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     // the ImGui draw command's clip rect
     const int cx = (int) cmd->ClipRect.x;
     const int cy = (int) cmd->ClipRect.y;
-    const int cw = (int) cmd->ClipRect.z - cmd->ClipRect.x;
-    const int ch = (int) cmd->ClipRect.w - cmd->ClipRect.y;
+    const int cw = (int) (cmd->ClipRect.z - cmd->ClipRect.x);
+    const int ch = (int) (cmd->ClipRect.w - cmd->ClipRect.y);
     sg_apply_scissor_rect(cx, cy, cw, ch, true);
     sg_apply_viewport(cx, cy, 360, 360, true);
 
@@ -230,8 +230,8 @@ void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
 
     const int cx = (int) cmd->ClipRect.x;
     const int cy = (int) cmd->ClipRect.y;
-    const int cw = (int) cmd->ClipRect.z - cmd->ClipRect.x;
-    const int ch = (int) cmd->ClipRect.w - cmd->ClipRect.y;
+    const int cw = (int) (cmd->ClipRect.z - cmd->ClipRect.x);
+    const int ch = (int) (cmd->ClipRect.w - cmd->ClipRect.y);
     sgl_scissor_rect(cx, cy, cw, ch, true);
     sgl_viewport(cx, cy, 360, 360, true);
 
