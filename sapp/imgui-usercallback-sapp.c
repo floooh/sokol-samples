@@ -177,8 +177,8 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
 
         Another option is to render into a texture render target outside the
         ImGui user callback, and render this texture as quad inside the
-        callback. This allows to perform rendering inside an (offscreen)
-        render pass, and clear the background as usual.
+        callback (or as a standard Image widget). This allows to perform rendering
+        inside an (offscreen) render pass, and clear the background as usual.
     */
     sg_apply_pipeline(state.scene1.pip);
     sg_apply_bindings(&state.scene1.bind);
