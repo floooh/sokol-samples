@@ -21,13 +21,12 @@
 
 #define SAMPLE_COUNT (4)
 
-uint8_t file_buffer[256 * 1024];
-
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_bindings bind;
+    uint8_t file_buffer[256 * 1024];
 } state;
 
 typedef struct {
@@ -155,8 +154,8 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = "baboon.png",
         .callback = fetch_callback,
-        .buffer_ptr = file_buffer,
-        .buffer_size = sizeof(file_buffer)
+        .buffer_ptr = state.file_buffer,
+        .buffer_size = sizeof(state.file_buffer)
     });
 }
 

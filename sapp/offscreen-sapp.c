@@ -11,26 +11,22 @@
 #include "dbgui/dbgui.h"
 #include "offscreen-sapp.glsl.h"
 
-static const int MSAA_SAMPLES = 4;
+#define MSAA_SAMPLES (4)
 
-static sg_pass offscreen_pass;
-static sg_pipeline offscreen_pip;
-static sg_bindings offscreen_bind;
-static sg_pipeline default_pip;
-static sg_bindings default_bind;
-
-/* offscreen: clear to black */
-static sg_pass_action offscreen_pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
-};
-
-/* display: clear to blue-ish */
-static sg_pass_action default_pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
-};
-
-/* rotation angles */
-static float rx, ry;
+static struct {
+    struct {
+        sg_pass_action pass_action;
+        sg_pass pass;
+        sg_pipeline pip;
+        sg_bindings bind;
+    } offscreen;
+    struct {
+        sg_pass_action pass_action;
+        sg_pipeline pip;
+        sg_bindings bind;
+    } deflt;
+    float rx, ry;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -44,6 +40,16 @@ void init(void) {
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
     __dbgui_setup(MSAA_SAMPLES);
+
+    /* default pass action: clear to blue-ish */
+    state.deflt.pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+    };
+
+    /* offscreen pass action: clear to black */
+    state.offscreen.pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+    };
 
     /* a render pass with one color- and one depth-attachment image */
     sg_image_desc img_desc = {
@@ -60,7 +66,7 @@ void init(void) {
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
-    offscreen_pass = sg_make_pass(&(sg_pass_desc){
+    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img,
         .label = "offscreen-pass"
@@ -122,7 +128,7 @@ void init(void) {
     });
 
     /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
-    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to provide stride, because the buffer's texcoord is skipped */
             .buffers[0].stride = 36,
@@ -150,7 +156,7 @@ void init(void) {
     });
 
     /* and another pipeline-state-object for the default pass */
-    default_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.deflt.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* don't need to provide buffer stride or attr offsets, no gaps here */
             .attrs = {
@@ -173,13 +179,13 @@ void init(void) {
     });
 
     /* the resource bindings for rendering a non-textured cube into offscreen render target */
-    offscreen_bind = (sg_bindings){
+    state.offscreen.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
     /* resource bindings to render a textured cube, using the offscreen render target as texture */
-    default_bind = (sg_bindings){
+    state.deflt.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[SLOT_tex] = color_img
@@ -193,25 +199,25 @@ void frame(void) {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
-    rx += 1.0f; ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     /* the offscreen pass, rendering an rotating, untextured cube into a render target image */
-    sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_pipeline(offscreen_pip);
-    sg_apply_bindings(&offscreen_bind);
+    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_apply_pipeline(state.offscreen.pip);
+    sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* and the display-pass, rendering a rotating, textured cube, using the
        previously rendered offscreen render-target as texture */
-    sg_begin_default_pass(&default_pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(default_pip);
-    sg_apply_bindings(&default_bind);
+    sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.deflt.pip);
+    sg_apply_bindings(&state.deflt.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();

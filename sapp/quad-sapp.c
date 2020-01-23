@@ -7,11 +7,11 @@
 #include "dbgui/dbgui.h"
 #include "quad-sapp.glsl.h"
 
-static sg_pass_action pass_action = {
-    .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f } }
-};
-static sg_pipeline pip;
-static sg_bindings bind;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -34,7 +34,7 @@ void init(void) {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
         .label = "quad-vertices"
@@ -42,7 +42,7 @@ void init(void) {
 
     /* an index buffer with 2 triangles */
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
@@ -53,7 +53,7 @@ void init(void) {
     sg_shader shd = sg_make_shader(quad_shader_desc());
 
     /* a pipeline state object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -64,12 +64,17 @@ void init(void) {
         },
         .label = "quad-pipeline"
     });
+
+    /* default pass action */
+    state.pass_action = (sg_pass_action) {
+        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f } }
+    };
 }
 
 void frame(void) {
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);
     __dbgui_draw();
     sg_end_pass();

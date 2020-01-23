@@ -12,21 +12,17 @@
 #include "blend-sapp.glsl.h"
 
 #define MSAA_SAMPLES (4)
-
-static sg_bindings bind;
 #define NUM_BLEND_FACTORS (15)
-static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
-static sg_pipeline bg_pip;
-static float r;
-static quad_vs_params_t quad_vs_params;
-static bg_fs_params_t bg_fs_params;
 
-/* a pass action which does not clear, since the entire screen is overwritten anyway */
-static sg_pass_action pass_action = {
-    .colors[0].action = SG_ACTION_DONTCARE ,
-    .depth.action = SG_ACTION_DONTCARE,
-    .stencil.action = SG_ACTION_DONTCARE
-};
+static struct {
+    sg_pass_action pass_action;
+    sg_bindings bind;
+    sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
+    sg_pipeline bg_pip;
+    float r;
+    quad_vs_params_t quad_vs_params;
+    bg_fs_params_t bg_fs_params;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -42,6 +38,13 @@ void init(void) {
     });
     __dbgui_setup(MSAA_SAMPLES);
 
+    /* a default pass action which does not clear, since the entire screen is overwritten anyway */
+    state.pass_action = (sg_pass_action) {
+        .colors[0].action = SG_ACTION_DONTCARE ,
+        .depth.action = SG_ACTION_DONTCARE,
+        .stencil.action = SG_ACTION_DONTCARE
+    };
+
     /* a quad vertex buffer */
     float vertices[] = {
         /* pos               color */
@@ -50,7 +53,7 @@ void init(void) {
         -1.0f, +1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f,
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -59,7 +62,7 @@ void init(void) {
     sg_shader bg_shd = sg_make_shader(bg_shader_desc());
 
     /* a pipeline state object for rendering the background quad */
-    bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* we use the same vertex buffer as for the colored 3D quads,
            but only the first two floats from the position, need to
            provide a stride to skip the gap to the next vertex
@@ -122,11 +125,11 @@ void init(void) {
                 pip_desc.blend.dst_factor_rgb = dst_blend;
                 pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
                 pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
-                pips[src][dst] = sg_make_pipeline(&pip_desc);
-                assert(pips[src][dst].id != SG_INVALID_ID);
+                state.pips[src][dst] = sg_make_pipeline(&pip_desc);
+                assert(state.pips[src][dst].id != SG_INVALID_ID);
             }
             else {
-                pips[src][dst].id = SG_INVALID_ID;
+                state.pips[src][dst].id = SG_INVALID_ID;
             }
         }
     }
@@ -139,29 +142,29 @@ void frame(void) {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     /* start rendering */
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
 
     /* draw a background quad */
-    sg_apply_pipeline(bg_pip);
-    sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &bg_fs_params, sizeof(bg_fs_params));
+    sg_apply_pipeline(state.bg_pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &state.bg_fs_params, sizeof(state.bg_fs_params));
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
-    float r0 = r;
+    float r0 = state.r;
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
-            if (pips[src][dst].id != SG_INVALID_ID) {
+            if (state.pips[src][dst].id != SG_INVALID_ID) {
                 /* compute new model-view-proj matrix */
                 hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
                 const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
                 const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;
                 hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-                quad_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+                state.quad_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-                sg_apply_pipeline(pips[src][dst]);
-                sg_apply_bindings(&bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_quad_vs_params, &quad_vs_params, sizeof(quad_vs_params));
+                sg_apply_pipeline(state.pips[src][dst]);
+                sg_apply_bindings(&state.bind);
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_quad_vs_params, &state.quad_vs_params, sizeof(state.quad_vs_params));
                 sg_draw(0, 4, 1);
             }
         }
@@ -169,8 +172,8 @@ void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-    r += 0.6f;
-    bg_fs_params.tick += 1.0f;
+    state.r += 0.6f;
+    state.bg_fs_params.tick += 1.0f;
 }
 
 void cleanup(void) {

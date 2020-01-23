@@ -10,14 +10,10 @@
 
 #define SAMPLE_COUNT (4)
 
-static const sg_pass_action pass_action = {
-    .colors[0] = {
-        .action = SG_ACTION_CLEAR,
-        .val = { 0.0f, 0.0f, 0.0f, 1.0f }
-    }
-};
-
-static sgl_pipeline depth_test_pip;
+static struct {
+    sg_pass_action pass_action;
+    sgl_pipeline depth_test_pip;
+} state;
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -38,12 +34,20 @@ static void init(void) {
     });
 
     /* a pipeline object with less-equal depth-testing */
-    depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
+    state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .depth_stencil = {
             .depth_write_enabled = true,
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
         }
     });
+
+    /* a default pass action */
+    state.pass_action = (sg_pass_action) {
+        .colors[0] = {
+            .action = SG_ACTION_CLEAR,
+            .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+        }
+    };
 }
 
 static void grid(float y, uint32_t frame_count) {
@@ -145,7 +149,7 @@ static void frame(void) {
 
     sgl_defaults();
     sgl_push_pipeline();
-    sgl_load_pipeline(depth_test_pip);
+    sgl_load_pipeline(state.depth_test_pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), aspect, 0.1f, 1000.0f);
     sgl_matrix_mode_modelview();
@@ -174,7 +178,7 @@ static void frame(void) {
     sgl_pop_pipeline();
 
     /* sokol-gfx default pass with the actual sokol-gl drawing */
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

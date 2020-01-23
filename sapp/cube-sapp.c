@@ -9,10 +9,12 @@
 #include "dbgui/dbgui.h"
 #include "cube-sapp.glsl.h"
 
-static const int SAMPLE_COUNT = 4;
-static float rx, ry;
-static sg_pipeline pip;
-static sg_bindings bind;
+#define SAMPLE_COUNT (4)
+static struct {
+    float rx, ry;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -85,7 +87,7 @@ void init(void) {
     sg_shader shd = sg_make_shader(cube_shader_desc());
 
     /* create pipeline object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
@@ -106,7 +108,7 @@ void init(void) {
     });
 
     /* setup resource bindings */
-    bind = (sg_bindings) {
+    state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
@@ -120,9 +122,9 @@ void frame(void) {
     hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    rx += 1.0f; ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
@@ -130,8 +132,8 @@ void frame(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();

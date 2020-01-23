@@ -8,17 +8,22 @@
 #include "dbgui/dbgui.h"
 #include "bufferoffsets-sapp.glsl.h"
 
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state = {
+    .pass_action = {
+        .colors[0] = {
+            .action = SG_ACTION_CLEAR,
+            .val = { 0.5f, 0.5f, 1.0f, 1.0f }
+        }
+    }
+};
+
 typedef struct {
     float x, y, r, g, b;
 } vertex_t;
-
-static sg_pass_action pass_action = {
-    .colors = {
-        [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
-    }
-};
-static sg_pipeline pip;
-static sg_bindings bind;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -50,18 +55,18 @@ void init(void) {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
     });
 
     /* a shader and pipeline to render 2D shapes */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(bufferoffsets_shader_desc()),
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -74,17 +79,17 @@ void init(void) {
 }
 
 void frame(void) {
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(pip);
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.pip);
     /* render the triangle */
-    bind.vertex_buffer_offsets[0] = 0;
-    bind.index_buffer_offset = 0;
-    sg_apply_bindings(&bind);
+    state.bind.vertex_buffer_offsets[0] = 0;
+    state.bind.index_buffer_offset = 0;
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
     /* render the quad */
-    bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    bind.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_bindings(&bind);
+    state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+    state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);
     __dbgui_draw();
     sg_end_pass();

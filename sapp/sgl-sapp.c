@@ -10,15 +10,11 @@
 
 #define SAMPLE_COUNT (4)
 
-static const sg_pass_action pass_action = {
-    .colors[0] = {
-        .action = SG_ACTION_CLEAR,
-        .val = { 0.0f, 0.0f, 0.0f, 1.0f }
-    }
-};
-static sg_image img;
-/* a sokol_gl pipeline object for 3d rendering */
-static sgl_pipeline pip_3d;
+static struct {
+    sg_pass_action pass_action;
+    sg_image img;
+    sgl_pipeline pip_3d;
+} state;
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -45,7 +41,7 @@ static void init(void) {
             pixels[y][x] = ((y ^ x) & 1) ? 0xFFFFFFFF : 0xFF000000;
         }
     }
-    img = sg_make_image(&(sg_image_desc){
+    state.img = sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
         .content.subimage[0][0] = {
@@ -59,7 +55,7 @@ static void init(void) {
        a shader, vertex-layout, pixel formats and sample count here,
        these are all filled in by sokol-gl
     */
-    pip_3d = sgl_make_pipeline(&(sg_pipeline_desc){
+    state.pip_3d = sgl_make_pipeline(&(sg_pipeline_desc){
         .depth_stencil = {
             .depth_write_enabled = true,
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -68,6 +64,14 @@ static void init(void) {
             .cull_mode = SG_CULLMODE_BACK
         }
     });
+
+    /* default pass action */
+    state.pass_action = (sg_pass_action) {
+        .colors[0] = {
+            .action = SG_ACTION_CLEAR,
+            .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+        }
+    };
 }
 
 static void draw_triangle(void) {
@@ -136,7 +140,7 @@ static void draw_cubes(void) {
     rot[1] += 2.0f;
 
     sgl_defaults();
-    sgl_load_pipeline(pip_3d);
+    sgl_load_pipeline(state.pip_3d);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
@@ -177,10 +181,10 @@ static void draw_tex_cube(void) {
     float eye_y = sinf(a) * 3.0f;
 
     sgl_defaults();
-    sgl_load_pipeline(pip_3d);
+    sgl_load_pipeline(state.pip_3d);
 
     sgl_enable_texture();
-    sgl_texture(img);
+    sgl_texture(state.img);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
@@ -221,7 +225,7 @@ static void frame(void) {
        a sokol-gfx begin/end pass pair.
        sgl_draw() also 'rewinds' sokol-gl for the next frame.
     */
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

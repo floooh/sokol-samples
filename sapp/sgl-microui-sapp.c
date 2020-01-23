@@ -19,11 +19,18 @@
 #include "cdbgui/cdbgui.h"
 #include <stdio.h> /* sprintf */
 
-static mu_Context mu_ctx;
+typedef struct {
+    float r, g, b;
+} color_t;
 
-static char logbuf[64000];
-static int logbuf_updated = 0;
-static float bg[3] = { 90.0f, 95.0f, 100.0f };
+static struct {
+    mu_Context mu_ctx;
+    char logbuf[64000];
+    int logbuf_updated;
+    color_t bg;
+} state = {
+    .bg = { 90.0f, 95.0f, 100.0f }
+};
 
 /* UI functions */
 static void test_window(mu_Context* ctx);
@@ -57,11 +64,11 @@ static int text_height_cb(mu_Font font) {
 
 static void write_log(const char* text) {
     /* FIXME: THIS IS UNSAFE! */
-    if (logbuf[0]) {
-        strcat(logbuf, "\n");
+    if (state.logbuf[0]) {
+        strcat(state.logbuf, "\n");
     }
-    strcat(logbuf, text);
-    logbuf_updated = 1;
+    strcat(state.logbuf, text);
+    state.logbuf_updated = 1;
 }
 
 /* initialization */
@@ -86,9 +93,9 @@ static void init(void) {
     r_init();
 
     /* setup microui */
-    mu_init(&mu_ctx);
-    mu_ctx.text_width = text_width_cb;
-    mu_ctx.text_height = text_height_cb;
+    mu_init(&state.mu_ctx);
+    state.mu_ctx.text_width = text_width_cb;
+    state.mu_ctx.text_height = text_height_cb;
 }
 
 static const char key_map[512] = {
@@ -107,27 +114,27 @@ static void event(const sapp_event* ev) {
     __cdbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
-            mu_input_mousedown(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
+            mu_input_mousedown(&state.mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
             break;
         case SAPP_EVENTTYPE_MOUSE_UP:
-            mu_input_mouseup(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
+            mu_input_mouseup(&state.mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
             break;
         case SAPP_EVENTTYPE_MOUSE_MOVE:
-            mu_input_mousemove(&mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y);
+            mu_input_mousemove(&state.mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y);
             break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            mu_input_mousewheel(&mu_ctx, (int)ev->scroll_y);
+            mu_input_mousewheel(&state.mu_ctx, (int)ev->scroll_y);
             break;
         case SAPP_EVENTTYPE_KEY_DOWN:
-            mu_input_keydown(&mu_ctx, key_map[ev->key_code & 511]);
+            mu_input_keydown(&state.mu_ctx, key_map[ev->key_code & 511]);
             break;
         case SAPP_EVENTTYPE_KEY_UP:
-            mu_input_keyup(&mu_ctx, key_map[ev->key_code & 511]);
+            mu_input_keyup(&state.mu_ctx, key_map[ev->key_code & 511]);
             break;
         case SAPP_EVENTTYPE_CHAR:
             {
                 char txt[2] = { ev->char_code & 255, 0 };
-                mu_input_text(&mu_ctx, txt);
+                mu_input_text(&state.mu_ctx, txt);
             }
             break;
         default:
@@ -139,16 +146,16 @@ static void event(const sapp_event* ev) {
 void frame(void) {
 
     /* UI definition */
-    mu_begin(&mu_ctx);
-    test_window(&mu_ctx);
-    log_window(&mu_ctx);
-    style_window(&mu_ctx);
-    mu_end(&mu_ctx);
+    mu_begin(&state.mu_ctx);
+    test_window(&state.mu_ctx);
+    log_window(&state.mu_ctx);
+    style_window(&state.mu_ctx);
+    mu_end(&state.mu_ctx);
 
     /* micro-ui rendering */
     r_begin(sapp_width(), sapp_height());
     mu_Command* cmd = 0;
-    while(mu_next_command(&mu_ctx, &cmd)) {
+    while(mu_next_command(&state.mu_ctx, &cmd)) {
         switch (cmd->type) {
             case MU_COMMAND_TEXT: r_draw_text(cmd->text.str, cmd->text.pos, cmd->text.color); break;
             case MU_COMMAND_RECT: r_draw_rect(cmd->rect.rect, cmd->rect.color); break;
@@ -162,7 +169,7 @@ void frame(void) {
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
-                .val = { bg[0] / 255.0f, bg[1] / 255.0f, bg[2] / 255.0f, 1.0f }
+                .val = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         }, sapp_width(), sapp_height());
     r_draw();
@@ -267,15 +274,15 @@ static void test_window(mu_Context* ctx) {
             /* sliders */
             mu_layout_begin_column(ctx);
             mu_layout_row(ctx, 2, (int[]) { 46, -1 }, 0);
-            mu_label(ctx, "Red:");   mu_slider(ctx, &bg[0], 0, 255);
-            mu_label(ctx, "Green:"); mu_slider(ctx, &bg[1], 0, 255);
-            mu_label(ctx, "Blue:");  mu_slider(ctx, &bg[2], 0, 255);
+            mu_label(ctx, "Red:");   mu_slider(ctx, &state.bg.r, 0, 255);
+            mu_label(ctx, "Green:"); mu_slider(ctx, &state.bg.g, 0, 255);
+            mu_label(ctx, "Blue:");  mu_slider(ctx, &state.bg.b, 0, 255);
             mu_layout_end_column(ctx);
             /* color preview */
             mu_Rect r = mu_layout_next(ctx);
-            mu_draw_rect(ctx, r, mu_color((int)bg[0], (int)bg[1], (int)bg[2], 255));
+            mu_draw_rect(ctx, r, mu_color((int)state.bg.r, (int)state.bg.g, (int)state.bg.b, 255));
             char buf[32];
-            sprintf(buf, "#%02X%02X%02X", (int) bg[0], (int) bg[1], (int) bg[2]);
+            sprintf(buf, "#%02X%02X%02X", (int)state.bg.r, (int)state.bg.g, (int)state.bg.b);
             mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
         }
 
@@ -299,11 +306,11 @@ static void log_window(mu_Context *ctx) {
         mu_layout_row(ctx, 1, (int[]) { -1 }, -28);
         mu_begin_panel(ctx, &panel);
         mu_layout_row(ctx, 1, (int[]) { -1 }, -1);
-        mu_text(ctx, logbuf);
+        mu_text(ctx, state.logbuf);
         mu_end_panel(ctx);
-        if (logbuf_updated) {
+        if (state.logbuf_updated) {
             panel.scroll.y = panel.content_size.y;
-            logbuf_updated = 0;
+            state.logbuf_updated = 0;
         }
 
         /* input textbox + submit button */

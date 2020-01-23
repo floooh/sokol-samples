@@ -14,12 +14,14 @@
 #include "dbgui/dbgui.h"
 #include "noninterleaved-sapp.glsl.h"
 
-static const int SAMPLE_COUNT = 4;
+#define SAMPLE_COUNT (4)
 
-static sg_pass_action pass_action;
-static sg_pipeline pip;
-static sg_bindings bind;
-static float rx, ry;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+    float rx, ry;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -76,7 +78,7 @@ void init(void) {
         a pipeline object, note that we need to provide the
         MSAA sample count of the default framebuffer
     */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(noninterleaved_shader_desc()),
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
@@ -100,7 +102,7 @@ void init(void) {
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
-    bind = (sg_bindings){
+    state.bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
@@ -121,15 +123,15 @@ void frame(void) {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
-    rx += 1.0f; ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();

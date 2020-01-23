@@ -5,7 +5,9 @@
 #include "sokol_app.h"
 #include "dbgui/dbgui.h"
 
-static sg_pass_action pass_action;
+static struct {
+    sg_pass_action pass_action;
+} state;
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -18,16 +20,16 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
     });
-    pass_action = (sg_pass_action) {
+    state.pass_action = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
     };
     __dbgui_setup(1);
 }
 
 void frame(void) {
-    float g = pass_action.colors[0].val[1] + 0.01f;
-    pass_action.colors[0].val[1] = (g > 1.0f) ? 0.0f : g;
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    float g = state.pass_action.colors[0].val[1] + 0.01f;
+    state.pass_action.colors[0].val[1] = (g > 1.0f) ? 0.0f : g;
+    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
