@@ -348,11 +348,11 @@ UTEST(sokol_gfx, make_destroy_shaders) {
         T(shdptr->slot.id == shd[i].id);
         T(shdptr->slot.ctx_id == _sg.active_context.id);
         T(shdptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].num_uniform_blocks == 1);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].num_images == 0);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].uniform_blocks[0].size == 16);
-        T(shdptr->stage[SG_SHADERSTAGE_FS].num_uniform_blocks == 0);
-        T(shdptr->stage[SG_SHADERSTAGE_FS].num_images == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].num_uniform_blocks == 1);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].num_images == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].uniform_blocks[0].size == 16);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_FS].num_uniform_blocks == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_FS].num_images == 0);
     }
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_shader(&desc).id == SG_INVALID_ID);
@@ -442,10 +442,11 @@ UTEST(sokol_gfx, make_destroy_passes) {
         T(passptr->slot.id == pass[i].id);
         T(passptr->slot.ctx_id == _sg.active_context.id);
         T(passptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(passptr->num_color_atts == 3);
+        T(passptr->cmn.num_color_atts == 3);
         for (int ai = 0; ai < 3; ai++) {
-            T(passptr->color_atts[ai].image == _sg_lookup_image(&_sg.pools, pass_desc.color_attachments[ai].image.id));
-            T(passptr->color_atts[ai].image_id.id == pass_desc.color_attachments[ai].image.id);
+            const _sg_image_t* img = _sg_pass_color_image(passptr, ai);
+            T(img == _sg_lookup_image(&_sg.pools, pass_desc.color_attachments[ai].image.id));
+            T(passptr->cmn.color_atts[ai].image_id.id == pass_desc.color_attachments[ai].image.id);
         }
     }
     /* trying to create another one fails because buffer is exhausted */
