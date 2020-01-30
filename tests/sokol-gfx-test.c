@@ -247,15 +247,15 @@ UTEST(sokol_gfx, make_destroy_buffers) {
         T(bufptr->slot.id == buf[i].id);
         T(bufptr->slot.ctx_id == _sg.active_context.id);
         T(bufptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(bufptr->size == sizeof(data));
-        T(bufptr->append_pos == 0);
-        T(!bufptr->append_overflow);
-        T(bufptr->type == SG_BUFFERTYPE_VERTEXBUFFER);
-        T(bufptr->usage == SG_USAGE_IMMUTABLE);
-        T(bufptr->update_frame_index == 0);
-        T(bufptr->append_frame_index == 0);
-        T(bufptr->num_slots == 1);
-        T(bufptr->active_slot == 0);
+        T(bufptr->cmn.size == sizeof(data));
+        T(bufptr->cmn.append_pos == 0);
+        T(!bufptr->cmn.append_overflow);
+        T(bufptr->cmn.type == SG_BUFFERTYPE_VERTEXBUFFER);
+        T(bufptr->cmn.usage == SG_USAGE_IMMUTABLE);
+        T(bufptr->cmn.update_frame_index == 0);
+        T(bufptr->cmn.append_frame_index == 0);
+        T(bufptr->cmn.num_slots == 1);
+        T(bufptr->cmn.active_slot == 0);
     }
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_buffer(&desc).id == SG_INVALID_ID);
@@ -296,24 +296,24 @@ UTEST(sokol_gfx, make_destroy_images) {
         T(imgptr->slot.id == img[i].id);
         T(imgptr->slot.ctx_id == _sg.active_context.id);
         T(imgptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(imgptr->type == SG_IMAGETYPE_2D);
-        T(!imgptr->render_target);
-        T(imgptr->width == 8);
-        T(imgptr->height == 8);
-        T(imgptr->depth == 1);
-        T(imgptr->num_mipmaps == 1);
-        T(imgptr->usage == SG_USAGE_IMMUTABLE);
-        T(imgptr->pixel_format == SG_PIXELFORMAT_RGBA8);
-        T(imgptr->sample_count == 1);
-        T(imgptr->min_filter == SG_FILTER_NEAREST);
-        T(imgptr->mag_filter == SG_FILTER_NEAREST);
-        T(imgptr->wrap_u == SG_WRAP_REPEAT);
-        T(imgptr->wrap_v == SG_WRAP_REPEAT);
-        T(imgptr->wrap_w == SG_WRAP_REPEAT);
-        T(imgptr->max_anisotropy == 1);
-        T(imgptr->upd_frame_index == 0);
-        T(imgptr->num_slots == 1);
-        T(imgptr->active_slot == 0);
+        T(imgptr->cmn.type == SG_IMAGETYPE_2D);
+        T(!imgptr->cmn.render_target);
+        T(imgptr->cmn.width == 8);
+        T(imgptr->cmn.height == 8);
+        T(imgptr->cmn.depth == 1);
+        T(imgptr->cmn.num_mipmaps == 1);
+        T(imgptr->cmn.usage == SG_USAGE_IMMUTABLE);
+        T(imgptr->cmn.pixel_format == SG_PIXELFORMAT_RGBA8);
+        T(imgptr->cmn.sample_count == 1);
+        T(imgptr->cmn.min_filter == SG_FILTER_NEAREST);
+        T(imgptr->cmn.mag_filter == SG_FILTER_NEAREST);
+        T(imgptr->cmn.wrap_u == SG_WRAP_REPEAT);
+        T(imgptr->cmn.wrap_v == SG_WRAP_REPEAT);
+        T(imgptr->cmn.wrap_w == SG_WRAP_REPEAT);
+        T(imgptr->cmn.max_anisotropy == 1);
+        T(imgptr->cmn.upd_frame_index == 0);
+        T(imgptr->cmn.num_slots == 1);
+        T(imgptr->cmn.active_slot == 0);
     }
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_image(&desc).id == SG_INVALID_ID);
@@ -348,11 +348,11 @@ UTEST(sokol_gfx, make_destroy_shaders) {
         T(shdptr->slot.id == shd[i].id);
         T(shdptr->slot.ctx_id == _sg.active_context.id);
         T(shdptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].num_uniform_blocks == 1);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].num_images == 0);
-        T(shdptr->stage[SG_SHADERSTAGE_VS].uniform_blocks[0].size == 16);
-        T(shdptr->stage[SG_SHADERSTAGE_FS].num_uniform_blocks == 0);
-        T(shdptr->stage[SG_SHADERSTAGE_FS].num_images == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].num_uniform_blocks == 1);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].num_images == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_VS].uniform_blocks[0].size == 16);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_FS].num_uniform_blocks == 0);
+        T(shdptr->cmn.stage[SG_SHADERSTAGE_FS].num_images == 0);
     }
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_shader(&desc).id == SG_INVALID_ID);
@@ -392,14 +392,14 @@ UTEST(sokol_gfx, make_destroy_pipelines) {
         T(pipptr->slot.ctx_id == _sg.active_context.id);
         T(pipptr->slot.state == SG_RESOURCESTATE_VALID);
         T(pipptr->shader == _sg_lookup_shader(&_sg.pools, desc.shader.id));
-        T(pipptr->shader_id.id == desc.shader.id);
-        T(pipptr->color_attachment_count == 1);
-        T(pipptr->color_format == SG_PIXELFORMAT_RGBA8);
-        T(pipptr->depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
-        T(pipptr->sample_count == 1);
-        T(pipptr->index_type == SG_INDEXTYPE_NONE);
-        T(pipptr->vertex_layout_valid[0]);
-        T(!pipptr->vertex_layout_valid[1]);
+        T(pipptr->cmn.shader_id.id == desc.shader.id);
+        T(pipptr->cmn.color_attachment_count == 1);
+        T(pipptr->cmn.color_format == SG_PIXELFORMAT_RGBA8);
+        T(pipptr->cmn.depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
+        T(pipptr->cmn.sample_count == 1);
+        T(pipptr->cmn.index_type == SG_INDEXTYPE_NONE);
+        T(pipptr->cmn.vertex_layout_valid[0]);
+        T(!pipptr->cmn.vertex_layout_valid[1]);
     }
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_pipeline(&desc).id == SG_INVALID_ID);
@@ -442,10 +442,11 @@ UTEST(sokol_gfx, make_destroy_passes) {
         T(passptr->slot.id == pass[i].id);
         T(passptr->slot.ctx_id == _sg.active_context.id);
         T(passptr->slot.state == SG_RESOURCESTATE_VALID);
-        T(passptr->num_color_atts == 3);
+        T(passptr->cmn.num_color_atts == 3);
         for (int ai = 0; ai < 3; ai++) {
-            T(passptr->color_atts[ai].image == _sg_lookup_image(&_sg.pools, pass_desc.color_attachments[ai].image.id));
-            T(passptr->color_atts[ai].image_id.id == pass_desc.color_attachments[ai].image.id);
+            const _sg_image_t* img = _sg_pass_color_image(passptr, ai);
+            T(img == _sg_lookup_image(&_sg.pools, pass_desc.color_attachments[ai].image.id));
+            T(passptr->cmn.color_atts[ai].image_id.id == pass_desc.color_attachments[ai].image.id);
         }
     }
     /* trying to create another one fails because buffer is exhausted */
