@@ -26,11 +26,6 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
     return true;
 }
 
-static void error(const char* mesg) {
-    puts(mesg);
-    exit(10);
-}
-
 EMSCRIPTEN_KEEPALIVE void emsc_wgpu_device_ready(int device_id, int swapchain_id) {
     state.device = (WGPUDevice) device_id;
     state.swap_chain = (WGPUSwapChain) swapchain_id;
@@ -73,7 +68,8 @@ static void emsc_frame(void) {
             }
             break;
         case 2:
-            //state.frame_cb();
+            state.desc.frame_cb();
+            wgpuSwapChainPresent(state.swap_chain);
             break;
     }
 }
