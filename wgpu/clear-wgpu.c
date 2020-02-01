@@ -11,26 +11,22 @@ static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
 };
 
-void draw();
-
-int main() {
-    emsc_init("#canvas", EMSC_NONE);
-
-    sg_setup(&(sg_desc){0});
-    assert(sg_isvalid());
-
-    emscripten_set_main_loop(draw, 0, 1);
-    return 0;
+void init(const void* wgpu_device, const void* wgpu_swap_chain) {
+    sg_setup(&(sg_desc){
+        .wgpu_device = wgpu_device,
+        .wgpu_swap_chain = wgpu_swap_chain,
+    });
+    printf("sg_setup() called\n");
 }
 
-void draw() {
-    /* animate clear colors */
-    float g = pass_action.colors[0].val[1] + 0.01f;
-    if (g > 1.0f) g = 0.0f;
-    pass_action.colors[0].val[1] = g;
+void frame(void) {
 
-    /* draw one frame */
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_end_pass();
-    sg_commit();
+}
+
+int main() {
+    emsc_init(&(emsc_desc_t){
+        .init_cb = init,
+        .frame_cb = frame
+    });
+    return 0;
 }
