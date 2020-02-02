@@ -35,7 +35,8 @@ EM_JS(void, js_wgpu_start, (), {
     WebGPU.initManagers();
     navigator.gpu.requestAdapter().then(function(adapter) {
         adapter.requestDevice().then(function(device) {
-            const gpuContext = document.getElementById("canvas").getContext("gpu");
+            const gpuContext = document.getElementById("canvas").getContext("gpupresent");
+            // FIXME: getSwapChainPreferredFormat
             const swapChainDescriptor = { device: device, format: "bgra8unorm" };
             const swapChain = gpuContext.configureSwapChain(swapChainDescriptor);
             console.log("device: " + device);
@@ -52,7 +53,7 @@ void wgpu_init() {
     wgpuSwapChainReference(state.swap_chain);
 }
 
-static void emsc_frame(void) {
+static EM_BOOL emsc_frame(double time, void* user_data) {
     switch (state.state) {
         case 0:
             puts("setup WGPU device...");
@@ -69,9 +70,9 @@ static void emsc_frame(void) {
             break;
         case 2:
             state.desc.frame_cb();
-            wgpuSwapChainPresent(state.swap_chain);
             break;
     }
+    return EM_TRUE;
 }
 
 /* initialize WebGPU and canvas */
@@ -84,7 +85,7 @@ static void emsc_init(const emsc_desc_t* desc) {
     emscripten_set_resize_callback("canvas", 0, false, emsc_size_changed);
     printf("canvas size: %d %d\n", (int)state.canvas_width, (int)state.canvas_height);
 
-    emscripten_set_main_loop(emsc_frame, 0, 1);
+    emscripten_request_animation_frame_loop(emsc_frame, 0);
 }
 
 static int emsc_width() {

@@ -16,7 +16,6 @@ void init(const void* wgpu_device, const void* wgpu_swap_chain) {
         .wgpu_device = wgpu_device,
         .wgpu_swap_chain = wgpu_swap_chain,
     });
-    printf("sg_setup() called\n");
 }
 
 void frame(void) {
