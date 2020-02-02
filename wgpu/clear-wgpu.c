@@ -11,14 +11,14 @@ static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
 };
 
-void init(const void* wgpu_device, const void* wgpu_swap_chain) {
+static void init(const void* wgpu_device, const void* wgpu_swap_chain) {
     sg_setup(&(sg_desc){
         .wgpu_device = wgpu_device,
         .wgpu_swap_chain = wgpu_swap_chain,
     });
 }
 
-void frame(void) {
+static void frame(void) {
     /* animate clear colors */
     float g = pass_action.colors[0].val[1] + 0.01f;
     if (g > 1.0f) g = 0.0f;

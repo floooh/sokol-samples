@@ -11,24 +11,24 @@ typedef struct {
 
 static struct {
     emsc_desc_t desc;
-    int state;
+    int state_count;
     double canvas_width;
     double canvas_height;
     WGPUDevice device;
     WGPUSwapChain swap_chain;
-} state;
+} emsc_state;
 
 /* track CSS element size changes and update the WebGL canvas size */
 static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
-    emscripten_get_element_css_size("canvas", &state.canvas_width, &state.canvas_height);
-    emscripten_set_canvas_element_size("canvas", state.canvas_width, state.canvas_height);
-    printf("canvas size changed: %d %d\n", (int)state.canvas_width, (int)state.canvas_height);
+    emscripten_get_element_css_size("canvas", &emsc_state.canvas_width, &emsc_state.canvas_height);
+    emscripten_set_canvas_element_size("canvas", emsc_state.canvas_width, emsc_state.canvas_height);
+    printf("canvas size changed: %d %d\n", (int)emsc_state.canvas_width, (int)emsc_state.canvas_height);
     return true;
 }
 
 EMSCRIPTEN_KEEPALIVE void emsc_wgpu_device_ready(int device_id, int swapchain_id) {
-    state.device = (WGPUDevice) device_id;
-    state.swap_chain = (WGPUSwapChain) swapchain_id;
+    emsc_state.device = (WGPUDevice) device_id;
+    emsc_state.swap_chain = (WGPUSwapChain) swapchain_id;
 }
 
 EM_JS(void, js_wgpu_start, (), {
@@ -49,27 +49,27 @@ EM_JS(void, js_wgpu_start, (), {
 });
 
 void wgpu_init() {
-    wgpuDeviceReference(state.device);
-    wgpuSwapChainReference(state.swap_chain);
+    wgpuDeviceReference(emsc_state.device);
+    wgpuSwapChainReference(emsc_state.swap_chain);
 }
 
 static EM_BOOL emsc_frame(double time, void* user_data) {
-    switch (state.state) {
+    switch (emsc_state.state_count) {
         case 0:
             puts("setup WGPU device...");
             js_wgpu_start();
-            state.state = 1;
+            emsc_state.state_count = 1;
             break;
         case 1:
-            if (state.device) {
-                printf("WGPU device ready: %d\nWGPU swap chain: %d\n", (int)state.device, (int)state.swap_chain);
+            if (emsc_state.device) {
+                printf("WGPU device ready: %d\nWGPU swap chain: %d\n", (int)emsc_state.device, (int)emsc_state.swap_chain);
                 wgpu_init();
-                state.desc.init_cb((const void*) state.device, (const void*) state.swap_chain);
-                state.state = 2;
+                emsc_state.desc.init_cb((const void*)emsc_state.device, (const void*)emsc_state.swap_chain);
+                emsc_state.state_count = 2;
             }
             break;
         case 2:
-            state.desc.frame_cb();
+            emsc_state.desc.frame_cb();
             break;
     }
     return EM_TRUE;
@@ -79,19 +79,19 @@ static EM_BOOL emsc_frame(double time, void* user_data) {
 static void emsc_init(const emsc_desc_t* desc) {
     assert(desc && desc->init_cb && desc->frame_cb);
 
-    state.desc = *desc;
-    emscripten_get_element_css_size("canvas", &state.canvas_width, &state.canvas_height);
-    emscripten_set_canvas_element_size("canvas", state.canvas_width, state.canvas_height);
+    emsc_state.desc = *desc;
+    emscripten_get_element_css_size("canvas", &emsc_state.canvas_width, &emsc_state.canvas_height);
+    emscripten_set_canvas_element_size("canvas", emsc_state.canvas_width, emsc_state.canvas_height);
     emscripten_set_resize_callback("canvas", 0, false, emsc_size_changed);
-    printf("canvas size: %d %d\n", (int)state.canvas_width, (int)state.canvas_height);
+    printf("canvas size: %d %d\n", (int)emsc_state.canvas_width, (int)emsc_state.canvas_height);
 
     emscripten_request_animation_frame_loop(emsc_frame, 0);
 }
 
 static int emsc_width() {
-    return (int) state.canvas_width;
+    return (int) emsc_state.canvas_width;
 }
 
 static int emsc_height() {
-    return (int) state.canvas_height;
+    return (int) emsc_state.canvas_height;
 }
