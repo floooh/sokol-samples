@@ -6,6 +6,7 @@
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "emsc.h"
+#include "triangle-wgpu.glsl.h"
 
 static struct {
     sg_pipeline pip;
@@ -35,15 +36,8 @@ static void init(const void* wgpu_device, const void* wgpu_swap_chain) {
         .content = vertices,
     });
 
-    /* create a shader */
-    sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.source = "FIXME",
-        .fs.source = "FIXME"
-    });
+    /* create a shader from precompiled SPIRV bytecode */
+    sg_shader shd = sg_make_shader(triangle_shader_desc());
 
     /* create a pipeline object (default render states are fine for triangle) */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -73,3 +67,4 @@ int main() {
     });
     return 0;
 }
+
