@@ -5,7 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
-#include "emsc.h"
+#include "wgpu_entry.h"
 
 static sg_pass_action pass_action = {
     .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
@@ -25,13 +25,13 @@ static void frame(void) {
     pass_action.colors[0].val[1] = g;
 
     /* draw one frame */
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
+    sg_begin_default_pass(&pass_action, wgpu_width(), wgpu_height());
     sg_end_pass();
     sg_commit();
 }
 
 int main() {
-    emsc_init(&(emsc_desc_t){
+    wgpu_start(&(wgpu_desc_t){
         .init_cb = init,
         .frame_cb = frame
     });

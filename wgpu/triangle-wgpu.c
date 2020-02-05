@@ -5,7 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
-#include "emsc.h"
+#include "wgpu_entry.h"
 #include "triangle-wgpu.glsl.h"
 
 static struct {
@@ -52,7 +52,7 @@ static void init(const void* wgpu_device, const void* wgpu_swap_chain) {
 }
 
 static void frame(void) {
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
@@ -61,7 +61,7 @@ static void frame(void) {
 }
 
 int main() {
-    emsc_init(&(emsc_desc_t){
+    wgpu_start(&(wgpu_desc_t){
         .init_cb = init,
         .frame_cb = frame
     });
