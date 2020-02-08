@@ -60,10 +60,16 @@ static void frame(void) {
     sg_commit();
 }
 
+static void shutdown(void) {
+    sg_shutdown();
+}
+
 int main() {
     wgpu_start(&(wgpu_desc_t){
         .init_cb = init,
-        .frame_cb = frame
+        .frame_cb = frame,
+        .shutdown_cb = shutdown,
+        .title = "triangle-wgpu"
     });
     return 0;
 }
