@@ -16,9 +16,9 @@ static void emsc_update_canvas_size(void) {
     double w, h;
     emscripten_get_element_css_size("canvas", &w, &h);
     emscripten_set_canvas_element_size("canvas", w, h);
-    wgpu.width = (int) w;
-    wgpu.height = (int) h;
-    printf("canvas size updated: %d %d\n", wgpu.width, wgpu.height);
+    wgpu_state.width = (int) w;
+    wgpu_state.height = (int) h;
+    printf("canvas size updated: %d %d\n", wgpu_state.width, wgpu_state.height);
 }
 
 static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
@@ -27,8 +27,8 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
 }
 
 EMSCRIPTEN_KEEPALIVE void emsc_device_ready(int device_id, int swapchain_id) {
-    wgpu.dev = (WGPUDevice) device_id;
-    wgpu.swap = (WGPUSwapChain) swapchain_id;
+    wgpu_state.dev = (WGPUDevice) device_id;
+    wgpu_state.swap = (WGPUSwapChain) swapchain_id;
 }
 
 EM_JS(void, emsc_js_setup, (), {
@@ -49,8 +49,8 @@ EM_JS(void, emsc_js_setup, (), {
 });
 
 static void emsc_post_setup(void) {
-    wgpuDeviceReference(wgpu.dev);
-    wgpuSwapChainReference(wgpu.swap);
+    wgpuDeviceReference(wgpu_state.dev);
+    wgpuSwapChainReference(wgpu_state.swap);
 }
 
 static EM_BOOL emsc_frame(double time, void* user_data) {
@@ -60,14 +60,14 @@ static EM_BOOL emsc_frame(double time, void* user_data) {
             emsc.state_count = 1;
             break;
         case 1:
-            if (wgpu.dev) {
+            if (wgpu_state.dev) {
                 emsc_post_setup();
-                wgpu.desc.init_cb((const void*)wgpu.dev, (const void*)wgpu.swap);
+                wgpu_state.desc.init_cb((const void*)wgpu_state.dev, (const void*)wgpu_state.swap);
                 emsc.state_count = 2;
             }
             break;
         case 2:
-            wgpu.desc.frame_cb();
+            wgpu_state.desc.frame_cb();
             break;
     }
     return EM_TRUE;

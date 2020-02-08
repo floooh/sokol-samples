@@ -7,6 +7,12 @@
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+
+#include <dawn_native/DawnNative.h>
+#include <dawn/dawn_proc.h>
+#include <dawn/dawn_wsi.h>
+#include <dawn/webgpu_cpp.h>
+
 #include "wgpu_entry.h"
 
 @interface WGPUApp : NSApplication
@@ -25,6 +31,8 @@ static id window_delegate;
 static id<MTLDevice> mtl_device;
 static id mtk_view_delegate;
 static MTKView* mtk_view;
+
+static dawn_native::Instance* dawn_instance;
 
 //------------------------------------------------------------------------------
 @implementation WGPUApp
@@ -52,17 +60,18 @@ static MTKView* mtk_view;
         NSWindowStyleMaskMiniaturizable |
         NSWindowStyleMaskResizable;
     window = [[NSWindow alloc]
-        initWithContentRect:NSMakeRect(0, 0, width, height)
+        initWithContentRect:NSMakeRect(0, 0, wgpu_state.width, wgpu_state.height)
         styleMask:style
         backing:NSBackingStoreBuffered
         defer:NO];
-    [window setTitle:[NSString stringWithUTF8String:window_title]];
+    [window setTitle:[NSString stringWithUTF8String:wgpu_state.desc.title]];
     [window setAcceptsMouseMovedEvents:YES];
     [window center];
     [window setRestorable:YES];
     [window setDelegate:window_delegate];
 
     // view delegate, MTKView and Metal device
+/*
     mtk_view_delegate = [[WGPUViewDelegate alloc] init];
     mtl_device = MTLCreateSystemDefaultDevice();
     mtk_view = [[WGPUMTKView alloc] init];
@@ -71,15 +80,42 @@ static MTKView* mtk_view;
     [mtk_view setDevice: mtl_device];
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    [mtk_view setSampleCount:sample_count];
+    [mtk_view setSampleCount:wgpu_state.desc.sample_count];
     [window setContentView:mtk_view];
-    CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
+    CGSize drawable_size = { (CGFloat)wgpu_state.width, (CGFloat)wgpu_state.height };
     [mtk_view setDrawableSize:drawable_size];
     [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
     [window makeKeyAndOrderFront:nil];
+*/
 
     // FIXME: setup WGPU device and swap chain
-    // FIXME: call init callback
+    DawnProcTable procs = dawn_native::GetProcs();
+    dawnProcSetProcs(&procs);
+    dawn_instance = new dawn_native::Instance();
+    dawn_instance->DiscoverDefaultAdapters();
+    dawn_native::Adapter backendAdapter;
+    std::vector<dawn_native::Adapter> adapters = dawn_instance->GetAdapters();
+    for (const auto& a: adapters) {
+        wgpu::AdapterProperties props;
+        a.GetProperties(&props);
+        if (props.backendType == wgpu::BackendType::Metal) {
+            backendAdapter = a;
+            break;
+        }
+    }
+    assert(backendAdapter);
+    wgpu_state.dev = backendAdapter.CreateDevice();
+
+    // setup swap chain
+    DawnSwapChainImplementation swapchain_impl = {
+        .Init = swapchain_init,
+        .Destroy = swapchain_destroy,
+        .Configure = swapchain_configure,
+        .GetNextTexture = swapchain_get_next_texture,
+        .Present = swapchain_present
+    };
+
+    wgpu_state.desc.init_cb(wgpu_state.dev, wgpu_state.swap);
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
@@ -128,7 +164,7 @@ static MTKView* mtk_view;
 
 - (void)drawInMTKView:(nonnull MTKView*)view {
     @autoreleasepool {
-        frame_func();
+        wgpu_state.desc.frame_cb();
     }
 }
 @end
@@ -149,8 +185,8 @@ static MTKView* mtk_view;
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    if (mouse_btn_down_func) {
-        mouse_btn_down_func(0);
+    if (wgpu_state.desc.mouse_btn_down_cb) {
+        wgpu_state.desc.mouse_btn_down_cb(0);
     }
 }
 
@@ -159,22 +195,22 @@ static MTKView* mtk_view;
 }
 
 - (void)mouseUp:(NSEvent*)event {
-    if (mouse_btn_up_func) {
-        mouse_btn_up_func(0);
+    if (wgpu_state.desc.mouse_btn_up_cb) {
+        wgpu_state.desc.mouse_btn_up_cb(0);
     }
 }
 
 - (void)mouseMoved:(NSEvent*)event {
-    if (mouse_pos_func) {
+    if (wgpu_state.desc.mouse_pos_cb) {
         const NSRect content_rect = [mtk_view frame];
         const NSPoint pos = [event locationInWindow];
-        mouse_pos_func(pos.x, content_rect.size.height - pos.y);
+        wgpu_state.desc.mouse_pos_cb(pos.x, content_rect.size.height - pos.y);
     }
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
-    if (mouse_btn_down_func) {
-        mouse_btn_down_func(1);
+    if (wgpu_state.desc.mouse_btn_down_cb) {
+        wgpu_state.desc.mouse_btn_down_cb(1);
     }
 }
 
@@ -183,16 +219,16 @@ static MTKView* mtk_view;
 }
 
 - (void)rightMouseUp:(NSEvent*)event {
-    if (mouse_btn_up_func) {
-        mouse_btn_up_func(1);
+    if (wgpu_state.desc.mouse_btn_up_cb) {
+        wgpu_state.desc.mouse_btn_up_cb(1);
     }
 }
 
 - (void)keyDown:(NSEvent*)event {
-    if (key_down_func) {
-        key_down_func([event keyCode]);
+    if (wgpu_state.desc.key_down_cb) {
+        wgpu_state.desc.key_down_cb([event keyCode]);
     }
-    if (char_func) {
+    if (wgpu_state.desc.char_cb) {
         const NSString* characters = [event characters];
         const NSUInteger length = [characters length];
         for (NSUInteger i = 0; i < length; i++) {
@@ -200,30 +236,30 @@ static MTKView* mtk_view;
             if ((codepoint & 0xFF00) == 0xF700) {
                 continue;
             }
-            char_func(codepoint);
+            wgpu_state.desc.char_cb(codepoint);
         }
     }
 }
 
 - (void)flagsChanged:(NSEvent*)event {
-    if (key_up_func) {
-        key_up_func([event keyCode]);
+    if (wgpu_state.desc.key_up_cb) {
+        wgpu_state.desc.key_up_cb([event keyCode]);
     }
 }
 
 - (void)keyUp:(NSEvent*)event {
-    if (key_up_func) {
-        key_up_func([event keyCode]);
+    if (wgpu_state.desc.key_up_cb) {
+        wgpu_state.desc.key_up_cb([event keyCode]);
     }
 }
 
 - (void)scrollWheel:(NSEvent*)event {
-    if (mouse_wheel_func) {
+    if (wgpu_state.desc.mouse_wheel_cb) {
         double dy = [event scrollingDeltaY];
         if ([event hasPreciseScrollingDeltas]) {
             dy *= 0.1;
         }
-        mouse_wheel_func(dy);
+        wgpu_state.desc.mouse_wheel_cb(dy);
     }
 }
 @end
