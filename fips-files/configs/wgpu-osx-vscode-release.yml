@@ -5,6 +5,5 @@ build_tool: xcodebuild
 build_type: Release
 defines:
     SOKOL_USE_WGPU_DAWN: ON
-    FIPS_OSX_USE_ARC: ON
 
 
