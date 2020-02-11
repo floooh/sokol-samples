@@ -44,6 +44,7 @@ typedef struct {
     int height;
     WGPUDevice dev;
     WGPUSwapChain swap;
+    WGPUTextureFormat swap_fmt;
 } wgpu_state_t;
 
 void wgpu_start(const wgpu_desc_t* desc);

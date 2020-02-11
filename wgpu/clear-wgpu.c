@@ -39,7 +39,9 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
-        .title = "clear-wgpu"
+        .width = 640,
+        .height = 480,
+        .title = "clear-wgpu (WebGPU)"
     });
     return 0;
 }

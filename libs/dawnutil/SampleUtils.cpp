@@ -50,7 +50,7 @@ void PrintDeviceError(WGPUErrorType errorType, const char* message, void*) {
             UNREACHABLE();
             return;
     }
-    dawn::ErrorLog() << errorTypeName << " error: " << message;
+    printf("%s error: %s\n", errorTypeName, message);
 }
 
 void PrintGLFWError(int code, const char* message) {
@@ -88,7 +88,12 @@ static dawn_wire::WireClient* wireClient = nullptr;
 static utils::TerribleCommandBuffer* c2sBuf = nullptr;
 static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 
-wgpu::Device CreateCppDawnDevice() {
+static int width, height;
+
+wgpu::Device CreateCppDawnDevice(const char* title, int w, int h) {
+    assert((w > 0) && (h > 0));
+    width = w;
+    height = h;
     glfwSetErrorCallback(PrintGLFWError);
     if (!glfwInit()) {
         return wgpu::Device();
@@ -96,7 +101,7 @@ wgpu::Device CreateCppDawnDevice() {
 
     // Create the test window and discover adapters using it (esp. for OpenGL)
     utils::SetupGLFWWindowHintsForBackend(backendType);
-    window = glfwCreateWindow(640, 480, "Dawn window", nullptr, nullptr);
+    window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (!window) {
         return wgpu::Device();
     }
@@ -186,8 +191,8 @@ wgpu::SwapChain GetSwapChain(const wgpu::Device& device) {
 wgpu::TextureView CreateDefaultDepthStencilView(const wgpu::Device& device) {
     wgpu::TextureDescriptor descriptor;
     descriptor.dimension = wgpu::TextureDimension::e2D;
-    descriptor.size.width = 640;
-    descriptor.size.height = 480;
+    descriptor.size.width = width;
+    descriptor.size.height = height;
     descriptor.size.depth = 1;
     descriptor.arrayLayerCount = 1;
     descriptor.sampleCount = 1;

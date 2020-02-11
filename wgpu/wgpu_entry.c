@@ -8,6 +8,7 @@ wgpu_state_t wgpu_state;
 void wgpu_start(const wgpu_desc_t* desc) {
     assert(desc);
     assert(desc->title);
+    assert((desc->width > 0) && (desc->height > 0));
     assert(desc->init_cb && desc->frame_cb && desc->shutdown_cb);
     wgpu_state.desc = *desc;
     wgpu_platform_start(desc);
