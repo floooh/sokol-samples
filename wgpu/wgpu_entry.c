@@ -21,3 +21,19 @@ int wgpu_width(void) {
 int wgpu_height(void) {
     return wgpu_state.height;
 }
+
+const void* wgpu_device(void) {
+    return (const void*) wgpu_state.dev;
+}
+
+const void* wgpu_swapchain(void) {
+    return (const void*) wgpu_state.swapchain;
+}
+
+const void* wgpu_depth_stencil_view(void) {
+    return (const void*) wgpu_state.ds_view;
+}
+
+uint32_t wgpu_swapchain_format(void) {
+    return (uint32_t) wgpu_state.swapchain_format;
+}

@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-typedef void (*wgpu_init_func)(const void* wgpu_device, const void* wgpu_swapchain);
+typedef void (*wgpu_init_func)(void);
 typedef void (*wgpu_frame_func)(void);
 typedef void (*wgpu_shutdown_func)(void);
 typedef void (*wgpu_key_func)(int key);
@@ -43,13 +43,20 @@ typedef struct {
     int width;
     int height;
     WGPUDevice dev;
-    WGPUSwapChain swap;
-    WGPUTextureFormat swap_fmt;
+    WGPUSwapChain swapchain;
+    WGPUTextureFormat swapchain_format;
+    WGPUTexture ds_tex;
+    WGPUTextureView ds_view;
 } wgpu_state_t;
 
 void wgpu_start(const wgpu_desc_t* desc);
 int wgpu_width(void);
 int wgpu_height(void);
+
+const void* wgpu_device(void);
+const void* wgpu_swapchain(void);
+const void* wgpu_depth_stencil_view(void);
+uint32_t wgpu_swapchain_format(void);
 
 /* internals, don't use */
 extern wgpu_state_t wgpu_state;

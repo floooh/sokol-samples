@@ -18,10 +18,12 @@ static struct {
     }
 };
 
-static void init(const void* wgpu_device, const void* wgpu_swap_chain) {
+static void init(void) {
     sg_setup(&(sg_desc){
-        .wgpu_device = wgpu_device,
-        .wgpu_swap_chain = wgpu_swap_chain,
+        .wgpu_device = wgpu_device(),
+        .wgpu_swapchain_format = wgpu_swapchain_format(),
+        .wgpu_swapchain_cb = wgpu_swapchain,
+        .wgpu_depth_stencil_view_cb = wgpu_depth_stencil_view
     });
 
     /* a vertex buffer with 3 vertices */
@@ -69,6 +71,8 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
+        .width = 640,
+        .height = 480,
         .title = "triangle-wgpu"
     });
     return 0;
