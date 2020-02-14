@@ -37,10 +37,10 @@ EM_JS(void, emsc_async_js_setup, (), {
     WebGPU.initManagers();
     navigator.gpu.requestAdapter().then(function(adapter) {
         adapter.requestDevice().then(function(device) {
-            const gpuContext = document.getElementById("canvas").getContext("gpupresent");
+            var gpuContext = document.getElementById("canvas").getContext("gpupresent");
             gpuContext.getSwapChainPreferredFormat(device).then(function(fmt) {
-                const swapChainDescriptor = { device: device, format: fmt };
-                const swapChain = gpuContext.configureSwapChain(swapChainDescriptor);
+                var swapChainDescriptor = { device: device, format: fmt };
+                var swapChain = gpuContext.configureSwapChain(swapChainDescriptor);
                 var deviceId = WebGPU.mgrDevice.create(device);
                 var swapChainId = WebGPU.mgrSwapChain.create(swapChain);
                 var fmtId = WebGPU.TextureFormat.findIndex(function(elm) { return elm==fmt; });
