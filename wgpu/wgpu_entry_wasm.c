@@ -9,7 +9,7 @@
 #include "wgpu_entry.h"
 
 static struct {
-    int state_count;
+    int frame_state;
 } emsc;
 
 static void emsc_update_canvas_size(void) {
@@ -26,44 +26,44 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
     return true;
 }
 
-EMSCRIPTEN_KEEPALIVE void emsc_device_ready(int device_id, int swapchain_id) {
+EMSCRIPTEN_KEEPALIVE void emsc_device_ready(int device_id, int swapchain_id, int swapchain_fmt) {
     wgpu_state.dev = (WGPUDevice) device_id;
-    wgpu_state.swap = (WGPUSwapChain) swapchain_id;
+    wgpu_state.swapchain = (WGPUSwapChain) swapchain_id;
+    wgpu_state.swapchain_format = (WGPUTextureFormat) swapchain_fmt;
 }
 
-EM_JS(void, emsc_js_setup, (), {
+/* Javascript function to wrap asynchronous device and swapchain setup */
+EM_JS(void, emsc_async_js_setup, (), {
     WebGPU.initManagers();
     navigator.gpu.requestAdapter().then(function(adapter) {
         adapter.requestDevice().then(function(device) {
             const gpuContext = document.getElementById("canvas").getContext("gpupresent");
-            // FIXME: getSwapChainPreferredFormat
-            const swapChainDescriptor = { device: device, format: "bgra8unorm" };
-            const swapChain = gpuContext.configureSwapChain(swapChainDescriptor);
-            console.log("device: " + device);
-            console.log("swap chain: " + swapChain);
-            var deviceId = WebGPU.mgrDevice.create(device);
-            var swapChainId = WebGPU.mgrSwapChain.create(swapChain);
-            _emsc_device_ready(deviceId, swapChainId);
+            gpuContext.getSwapChainPreferredFormat(device).then(function(fmt) {
+                const swapChainDescriptor = { device: device, format: fmt };
+                const swapChain = gpuContext.configureSwapChain(swapChainDescriptor);
+                var deviceId = WebGPU.mgrDevice.create(device);
+                var swapChainId = WebGPU.mgrSwapChain.create(swapChain);
+                var fmtId = WebGPU.TextureFormat.findIndex(function(elm) { return elm==fmt; });
+                console.log("device: " + device);
+                console.log("swap chain: " + swapChain);
+                console.log("preferred format: " + fmt + " (" + fmtId + ")");
+                _emsc_device_ready(deviceId, swapChainId, fmtId);
+            });
         });
     });
 });
 
-static void emsc_post_setup(void) {
-    wgpuDeviceReference(wgpu_state.dev);
-    wgpuSwapChainReference(wgpu_state.swap);
-}
-
 static EM_BOOL emsc_frame(double time, void* user_data) {
-    switch (emsc.state_count) {
+    switch (emsc.frame_state) {
         case 0:
-            emsc_js_setup();
-            emsc.state_count = 1;
+            emsc_async_js_setup();
+            emsc.frame_state = 1;
             break;
         case 1:
             if (wgpu_state.dev) {
-                emsc_post_setup();
-                wgpu_state.desc.init_cb((const void*)wgpu_state.dev, (const void*)wgpu_state.swap);
-                emsc.state_count = 2;
+                wgpu_create_default_depth_stencil_surface();
+                wgpu_state.desc.init_cb();
+                emsc.frame_state++;
             }
             break;
         case 2:
@@ -76,6 +76,5 @@ static EM_BOOL emsc_frame(double time, void* user_data) {
 void wgpu_platform_start(const wgpu_desc_t* desc) {
     emsc_update_canvas_size();
     emscripten_set_resize_callback("canvas", 0, false, emsc_size_changed);
-    emsc_js_setup();
     emscripten_request_animation_frame_loop(emsc_frame, 0);
 }

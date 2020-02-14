@@ -37,3 +37,29 @@ const void* wgpu_depth_stencil_view(void) {
 uint32_t wgpu_swapchain_format(void) {
     return (uint32_t) wgpu_state.swapchain_format;
 }
+
+void wgpu_create_default_depth_stencil_surface(void) {
+    assert((wgpu_state.width > 0) && (wgpu_state.height > 0));
+    WGPUTextureDescriptor ds_desc = {
+        .usage = WGPUTextureUsage_OutputAttachment,
+        .dimension = WGPUTextureDimension_2D,
+        .size = {
+            .width = (uint32_t) wgpu_state.width,
+            .height = (uint32_t) wgpu_state.height,
+            .depth = 1,
+        },
+        .arrayLayerCount = 1,
+        .format = WGPUTextureFormat_Depth24PlusStencil8,
+        .mipLevelCount = 1,
+        .sampleCount = 1
+    };
+    wgpu_state.ds_tex = wgpuDeviceCreateTexture(wgpu_state.dev, &ds_desc);
+    wgpu_state.ds_view = wgpuTextureCreateView(wgpu_state.ds_tex, 0);
+}
+
+void wgpu_discard_default_depth_stencil_surface(void) {
+    wgpuTextureViewRelease(wgpu_state.ds_view);
+    wgpu_state.ds_view = 0;
+    wgpuTextureRelease(wgpu_state.ds_tex);
+    wgpu_state.ds_tex = 0;
+}

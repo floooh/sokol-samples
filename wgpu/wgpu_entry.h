@@ -61,6 +61,8 @@ uint32_t wgpu_swapchain_format(void);
 /* internals, don't use */
 extern wgpu_state_t wgpu_state;
 void wgpu_platform_start(const wgpu_desc_t* desc);
+void wgpu_create_default_depth_stencil_surface(void);
+void wgpu_discard_default_depth_stencil_surface(void);
 
 #ifdef __cplusplus
 } /* extern "C" */
