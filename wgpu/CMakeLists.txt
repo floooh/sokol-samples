@@ -25,3 +25,10 @@ fips_begin_app(quad-wgpu windowed)
     sokol_shader(quad-wgpu.glsl wgpu)
     fips_deps(wgpu_entry)
 fips_end_app()
+
+fips_begin_app(cube-wgpu windowed)
+    fips_files(cube-wgpu.c)
+    sokol_shader(cube-wgpu.glsl wgpu)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
