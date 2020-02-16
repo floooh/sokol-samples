@@ -11,7 +11,7 @@
 #include "wgpu_entry.h"
 #include "cube-wgpu.glsl.h"
 
-#define SAMPLE_COUNT (4)
+#define SAMPLE_COUNT (1)
 static struct {
     float rx, ry;
     sg_pass_action pass_action;

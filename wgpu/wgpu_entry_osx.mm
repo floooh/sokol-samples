@@ -32,10 +32,12 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
     /* application init and frame loop */
     desc->init_cb();
     while (!ShouldQuit()) {
-        desc->frame_cb();
-        DoFlush();
-        wgpuSwapChainPresent(wgpu_state.swapchain);
-        utils::USleep(16000);   // AARGH
+        @autoreleasepool {
+            desc->frame_cb();
+            DoFlush();
+            wgpuSwapChainPresent(wgpu_state.swapchain);
+            utils::USleep(16000);   // AARGH
+        }
     }
 
     /* shutdown everythind */
