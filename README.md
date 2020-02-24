@@ -234,8 +234,8 @@ without a build system, and the following examples of that might
 be helpful for integrating sokol and/or the sokol sample code
 into your own project with the build system of your choice.
 
-The expected directory structure (for finding the sokol-headers) is (e.g.
-those directories must be cloned out somewhere side-by-side):
+The expected directory structure for building the sokol-samples manually
+is as follows (e.g. those directory must be cloned side-by-side):
 
 ```
 sokol-samples
@@ -243,9 +243,9 @@ sokol
 sokol-tools-bin
 ```
 
-Of course, in your own project, you can put the sokol headers whereever
-you want (I recommend copying them directly into your source directory),
-and you don't have to use the prebuilt sokol-shdc shader compiler.
+Of course, in your own project you can put the sokol headers wherever
+you want (I recommend copying them somewhere into your source directory),
+and you don't have to use the prebuilt sokol-shdc shader compiler either.
 
 NOTE: for Release builds, you should also add the respective optimization
 flags, and provide an ```NDEBUG``` define so that assert() checks are removed.
