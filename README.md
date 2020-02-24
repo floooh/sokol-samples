@@ -243,6 +243,16 @@ sokol
 sokol-tools-bin
 ```
 
+For instance:
+
+```
+> mkdir scratch
+> cd scratch
+> git clone https://github.com/sokol-samples
+> git clone https://github.com/sokol
+> git clone https://github.com/sokol-tools-bin
+```
+
 Of course, in your own project you can put the sokol headers wherever
 you want (I recommend copying them somewhere into your source directory),
 and you don't have to use the prebuilt sokol-shdc shader compiler either.
