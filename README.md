@@ -325,7 +325,24 @@ To build one of the sokol-app samples for GL on Windows:
 
 ### Building manually on Linux with gcc
 
-FIXME
+On Linux you need the "usual" development-packages for OpenGL development, and
+for the GLFW samples, also the GLFW development package (on Ubuntu it's called
+libglfw3-dev).
+
+To build one of the GLFW samples on Linux:
+
+```sh
+> cd sokol-samples/glfw
+> cc cube-glfw.c flextgl/flextGL.c -o cube-glfw -I../../sokol -lGL -ldl -lm -lglfw3
+```
+
+To build one of the sokol-app samples on Linux:
+
+```sh
+> cd sokol-samples/sapp
+> ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -I../../sokol -I../libs -lGL -ldl -lm -lpthread -lX11 -lasound
+```
 
 ## Many Thanks to:
 
