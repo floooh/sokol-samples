@@ -248,9 +248,9 @@ For instance:
 ```
 > mkdir scratch
 > cd scratch
-> git clone https://github.com/sokol-samples
-> git clone https://github.com/sokol
-> git clone https://github.com/sokol-tools-bin
+> git clone https://github.com/floooh/sokol-samples
+> git clone https://github.com/floooh/sokol
+> git clone https://github.com/floooh/sokol-tools-bin
 ```
 
 Of course, in your own project you can put the sokol headers wherever
