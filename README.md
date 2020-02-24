@@ -247,8 +247,11 @@ Of course, in your own project you can put the sokol headers wherever
 you want (I recommend copying them somewhere into your source directory),
 and you don't have to use the prebuilt sokol-shdc shader compiler either.
 
-NOTE: for Release builds, you should also add the respective optimization
-flags, and provide an ```NDEBUG``` define so that assert() checks are removed.
+NOTE: for Release builds, you might want to add the compiler's respective
+optimization flags, and provide an ```NDEBUG``` define so that assert() checks
+and the sokol-gfx validation layer are removed (**BUT** please don't do
+this for the Debug/Dev builds because asserts() and the validation
+layer give useful feedback if something goes wrong).
 
 ### Building manually on macOS with clang
 
