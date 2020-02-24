@@ -239,7 +239,7 @@ be helpful for integrating sokol and/or the sokol sample code
 into your own project with the build system of your choice.
 
 The expected directory structure for building the sokol-samples manually
-is as follows (e.g. those directory must be cloned side-by-side):
+is as follows (e.g. those directories must be cloned side-by-side):
 
 ```
 sokol-samples
