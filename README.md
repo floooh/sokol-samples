@@ -243,6 +243,10 @@ sokol
 sokol-tools-bin
 ```
 
+Of course, in your own project, you can put the sokol headers whereever
+you want (I recommend copying them directly into your source directory),
+and you don't have to use the prebuilt sokol-shdc shader compiler.
+
 NOTE: for Release builds, you should also add the respective optimization
 flags, and provide an ```NDEBUG``` define so that assert() checks are removed.
 
