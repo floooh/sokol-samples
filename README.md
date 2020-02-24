@@ -18,7 +18,7 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 - **24-Jan-2020**: I have added a [section to the readme](https://github.com/floooh/sokol-samples#how-to-build-without-a-build-system) with examples of how to build (most of) the examples without a build system by invoking the C compiler directly on the command line.
 This might be useful for integration of the sokol headers into your own projects using your
-own preferred build system. 
+own preferred build system.
 
 - **22-Jan-2020**: New sample to demonstrate how to render from inside a Dear ImGui user draw callback: [imgui-usercallback-sapp](https://floooh.github.io/sokol-html5/imgui-usercallback-sapp.html)
 
@@ -235,7 +235,7 @@ friends are broken on the MacOS Mojave beta, instead use the
 
 Many samples are simple enough to be built directly on the command line
 without a build system, and the following examples of that might
-be helpful for integrating sokol and/or the sokol sample code
+be helpful for integrating the sokol headers and/or the sokol sample code
 into your own project with the build system of your choice.
 
 The expected directory structure for building the sokol-samples manually
