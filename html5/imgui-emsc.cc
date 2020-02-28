@@ -15,6 +15,10 @@
 #include "sokol_time.h"
 #include "emsc.h"
 
+/* these are fairly recent warnings in clang */
+#pragma clang diagnostic ignored "-Wc99-designator"
+#pragma clang diagnostic ignored "-Wreorder-init-list"
+
 static const int MaxVertices = (1<<16);
 static const int MaxIndices = MaxVertices * 3;
 
