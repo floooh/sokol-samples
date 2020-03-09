@@ -121,9 +121,9 @@ static void frame(void) {
         if (state.cur_num_particles < MAX_PARTICLES) {
             state.pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
             state.vel[state.cur_num_particles] = HMM_Vec3(
-                ((float)(xorshift32() & 0x7FFFFFFF) / 0x7FFFFFFF) - 0.5f,
-                ((float)(xorshift32() & 0x7FFFFFFF) / 0x7FFFFFFF) * 0.5f + 2.0f,
-                ((float)(xorshift32() & 0x7FFFFFFF) / 0x7FFFFFFF) - 0.5f);
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f);
             state.cur_num_particles++;
         }
         else {
