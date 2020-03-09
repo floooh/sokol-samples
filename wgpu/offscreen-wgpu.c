@@ -12,7 +12,8 @@
 #include "wgpu_entry.h"
 #include "offscreen-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (1)
+#define OFFSCREEN_MSAA_SAMPLES (4)
+#define DISPLAY_MSAA_SAMPLES (1)
 #define OFFSCREEN_DEPTH_FORMAT SG_PIXELFORMAT_DEPTH_STENCIL
 
 static struct {
@@ -59,11 +60,11 @@ void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = OFFSCREEN_MSAA_SAMPLES,
         .label = "color-image"
     };
     sg_image color_img = sg_make_image(&img_desc);
-    // FIXME: Dawn currently doesn't handle depth-only or stencil-only surfaces
+    // FIXME: Dawn currently doesn't handle depth-only surfaces
     img_desc.pixel_format = OFFSCREEN_DEPTH_FORMAT;
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
@@ -151,7 +152,7 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
+            .sample_count = OFFSCREEN_MSAA_SAMPLES
         },
         .label = "offscreen-pipeline"
     });
@@ -174,7 +175,7 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
+            .sample_count = DISPLAY_MSAA_SAMPLES
         },
         .label = "default-pipeline"
     });
@@ -237,9 +238,8 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = DISPLAY_MSAA_SAMPLES,
         .title = "offscreen-wgpu"
     });
     return 0;
-
 }
