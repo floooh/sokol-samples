@@ -44,7 +44,7 @@ static struct {
     }
 };
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .wgpu_device = wgpu_device(),
         .wgpu_swapchain_format = wgpu_swapchain_format(),
@@ -194,7 +194,7 @@ void init(void) {
     };
 }
 
-void frame(void) {
+static void frame(void) {
     /* compute model-view-projection matrix for vertex shader, this will be
        used both for the offscreen-pass, and the display-pass */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)wgpu_width()/(float)wgpu_height(), 0.01f, 10.0f);
@@ -227,7 +227,7 @@ void frame(void) {
     sg_commit();
 }
 
-void shutdown(void) {
+static void shutdown(void) {
     sg_shutdown();
 }
 
