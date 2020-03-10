@@ -27,8 +27,9 @@ void init(void) {
     sg_setup(&(sg_desc){
         .wgpu_device = wgpu_device(),
         .wgpu_swapchain_format = wgpu_swapchain_format(),
-        .wgpu_swapchain_cb = wgpu_swapchain,
-        .wgpu_depth_stencil_view_cb = wgpu_depth_stencil_view
+        .wgpu_swapchain_render_view_cb = wgpu_swapchain_render_view,
+        .wgpu_swapchain_resolve_view_cb = wgpu_swapchain_resolve_view,
+        .wgpu_swapchain_depth_stencil_view_cb = wgpu_swapchain_depth_stencil_view,
     });
 
     /* cube vertex buffer */
@@ -150,6 +151,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
+        .sample_count = SAMPLE_COUNT,
         .title = "cube-wgpu"
     });
     return 0;

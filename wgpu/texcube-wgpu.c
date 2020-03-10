@@ -11,7 +11,7 @@
 #include "wgpu_entry.h"
 #include "texcube-wgpu.glsl.h"
 
-#define SAMPLE_COUNT (1)
+#define SAMPLE_COUNT (4)
 
 static struct {
     float rx, ry;
@@ -30,8 +30,9 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .wgpu_device = wgpu_device(),
         .wgpu_swapchain_format = wgpu_swapchain_format(),
-        .wgpu_swapchain_cb = wgpu_swapchain,
-        .wgpu_depth_stencil_view_cb = wgpu_depth_stencil_view
+        .wgpu_swapchain_render_view_cb = wgpu_swapchain_render_view,
+        .wgpu_swapchain_resolve_view_cb = wgpu_swapchain_resolve_view,
+        .wgpu_swapchain_depth_stencil_view_cb = wgpu_swapchain_depth_stencil_view
     });
 
     /*
@@ -178,6 +179,7 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
+        .sample_count = SAMPLE_COUNT,
         .width = 640,
         .height = 480,
         .title = "texcube-wgpu"

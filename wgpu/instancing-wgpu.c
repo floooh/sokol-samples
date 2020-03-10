@@ -44,8 +44,9 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .wgpu_device = wgpu_device(),
         .wgpu_swapchain_format = wgpu_swapchain_format(),
-        .wgpu_swapchain_cb = wgpu_swapchain,
-        .wgpu_depth_stencil_view_cb = wgpu_depth_stencil_view,
+        .wgpu_swapchain_render_view_cb = wgpu_swapchain_render_view,
+        .wgpu_swapchain_resolve_view_cb = wgpu_swapchain_resolve_view,
+        .wgpu_swapchain_depth_stencil_view_cb = wgpu_swapchain_depth_stencil_view,
         .wgpu_global_staging_buffer_size = MAX_PARTICLES * sizeof(hmm_vec3),
     });
 

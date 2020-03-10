@@ -20,14 +20,15 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
 
     /* setup swap chain */
     WGPUSwapChainDescriptor swap_desc = {
-        .implementation = GetSwapChainImplementation()
+        .implementation = GetSwapChainImplementation(),
+        .presentMode = WGPUPresentMode_VSync
     };
     wgpu_state.swapchain = wgpuDeviceCreateSwapChain(wgpu_state.dev, nullptr, &swap_desc);
     wgpu_state.swapchain_format = (WGPUTextureFormat) GetPreferredSwapChainTextureFormat();
     wgpuSwapChainConfigure(wgpu_state.swapchain, wgpu_state.swapchain_format, WGPUTextureUsage_OutputAttachment, desc->width, desc->height);
 
-    /* setup the default depth-stencil surface */
-    wgpu_create_default_depth_stencil_surface();
+    /* setup the swapchain surfaces */
+    wgpu_swapchain_init();
 
     /* application init and frame loop */
     desc->init_cb();
@@ -36,13 +37,13 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
             desc->frame_cb();
             DoFlush();
             wgpuSwapChainPresent(wgpu_state.swapchain);
-            utils::USleep(16000);   // AARGH
+            wgpu_swapchain_next_frame();
         }
     }
 
     /* shutdown everythind */
     desc->shutdown_cb();
-    wgpu_discard_default_depth_stencil_surface();
+    wgpu_swapchain_discard();
     wgpuSwapChainRelease(wgpu_state.swapchain);
     wgpu_state.swapchain = 0;
     // FIXME: this currently asserts
