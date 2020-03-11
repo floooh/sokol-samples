@@ -34,14 +34,14 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
     desc->init_cb();
     while (!ShouldQuit()) {
         @autoreleasepool {
+            wgpu_swapchain_next_frame();
             desc->frame_cb();
             DoFlush();
             wgpuSwapChainPresent(wgpu_state.swapchain);
-            wgpu_swapchain_next_frame();
         }
     }
 
-    /* shutdown everythind */
+    /* shutdown everything */
     desc->shutdown_cb();
     wgpu_swapchain_discard();
     wgpuSwapChainRelease(wgpu_state.swapchain);

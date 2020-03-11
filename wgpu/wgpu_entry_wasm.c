@@ -61,12 +61,13 @@ static EM_BOOL emsc_frame(double time, void* user_data) {
             break;
         case 1:
             if (wgpu_state.dev) {
-                wgpu_create_default_depth_stencil_surface();
+                wgpu_swapchain_init();
                 wgpu_state.desc.init_cb();
-                emsc.frame_state++;
+                emsc.frame_state = 2;
             }
             break;
         case 2:
+            wgpu_swapchain_next_frame();
             wgpu_state.desc.frame_cb();
             break;
     }

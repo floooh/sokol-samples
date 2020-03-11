@@ -97,13 +97,12 @@ void wgpu_swapchain_init(void) {
         wgpu_state.msaa_tex = wgpuDeviceCreateTexture(wgpu_state.dev, &msaa_desc);
         wgpu_state.msaa_view = wgpuTextureCreateView(wgpu_state.msaa_tex, 0);
     }
-
-    /* obtain the first swapchain color attachment view */
-    wgpu_state.swapchain_view = wgpuSwapChainGetCurrentTextureView(wgpu_state.swapchain);
 }
 
 void wgpu_swapchain_next_frame(void) {
-    wgpuTextureViewRelease(wgpu_state.swapchain_view);
+    if (wgpu_state.swapchain_view) {
+        wgpuTextureViewRelease(wgpu_state.swapchain_view);
+    }
     wgpu_state.swapchain_view = wgpuSwapChainGetCurrentTextureView(wgpu_state.swapchain);
 }
 
