@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  shaders for arraytex-sapp sample
+//  shaders for arraytex-wgpu sample
 //------------------------------------------------------------------------------
 @ctype mat4 hmm_mat4
 @ctype vec2 hmm_vec2

@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  Shader code for texcube-sapp sample.
+//  Shader code for texcube-wgpu sample.
 //
 //  NOTE: This source file also uses the '#pragma sokol' form of the
 //  custom tags.

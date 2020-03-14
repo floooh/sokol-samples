@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  Shader code for noninterleaved-sapp sample.
+//  Shader code for noninterleaved-wgpu sample.
 //------------------------------------------------------------------------------
 @ctype mat4 hmm_mat4
 
