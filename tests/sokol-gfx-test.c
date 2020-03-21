@@ -32,7 +32,7 @@ UTEST(sokol_gfx, query_desc) {
     T(desc.pass_pool_size == 64);
     T(desc.context_pool_size == _SG_DEFAULT_CONTEXT_POOL_SIZE);
     T(desc.mtl_global_uniform_buffer_size == _SG_MTL_DEFAULT_UB_SIZE);
-    T(desc.mtl_sampler_cache_size == _SG_MTL_DEFAULT_SAMPLER_CACHE_CAPACITY);
+    T(desc.mtl_sampler_cache_size == _SG_DEFAULT_SAMPLER_CACHE_CAPACITY);
     sg_shutdown();
 }
 
