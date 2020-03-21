@@ -63,7 +63,7 @@ static void frame(void) {
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
     if (state.show_another_window) {
-        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_Once);
         ImGui::Begin("Another Window", &state.show_another_window);
         ImGui::Text("Hello");
         ImGui::End();
@@ -71,7 +71,6 @@ static void frame(void) {
 
     // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
     if (state.show_test_window) {
-        ImGui::SetNextWindowPos(ImVec2(460, 20), ImGuiCond_FirstUseEver);
         ImGui::ShowTestWindow();
     }
 
