@@ -184,4 +184,5 @@ int main() {
         .height = 480,
         .title = "texcube-wgpu"
     });
+    return 0;
 }

@@ -127,4 +127,5 @@ int main() {
         .height = 480,
         .title = "uvwrap-wgpu"
     });
+    return 0;
 }

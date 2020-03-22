@@ -77,4 +77,5 @@ int main() {
         .height = 512,
         .title = "sdf-wgpu"
     });
+    return 0;
 }

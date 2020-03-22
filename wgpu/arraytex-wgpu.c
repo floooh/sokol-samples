@@ -198,4 +198,5 @@ int main() {
         .height = 480,
         .title = "arraytex-wgpu"
     });
+    return 0;
 }

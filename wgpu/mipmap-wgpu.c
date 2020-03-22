@@ -169,4 +169,5 @@ int main() {
         .height = 480,
         .title = "mipmap-wgpu"
     });
+    return 0;
 }
