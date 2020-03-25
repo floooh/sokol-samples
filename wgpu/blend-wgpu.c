@@ -185,5 +185,5 @@ int main() {
         .height = 480,
         .title = "blend-wgpu"
     });
-    return 
+    return 0;
 }

@@ -32,7 +32,7 @@ const void* wgpu_device(void) {
 const void* wgpu_swapchain_render_view(void) {
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.msaa_view);
-        return wgpu_state.msaa_view;
+        return (const void*) wgpu_state.msaa_view;
     }
     else {
         assert(wgpu_state.swapchain_view);
@@ -43,7 +43,7 @@ const void* wgpu_swapchain_render_view(void) {
 const void* wgpu_swapchain_resolve_view(void) {
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.swapchain_view);
-        return wgpu_state.swapchain_view;
+        return (const void*) wgpu_state.swapchain_view;
     }
     else {
         return 0;
