@@ -28,6 +28,11 @@ void init(void) {
     desc.d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view;
     desc.d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
     desc.gl_force_gles2 = sapp_gles2();
+    desc.wgpu_device = sapp_wgpu_get_device();
+    desc.wgpu_swapchain_format = sapp_wgpu_get_swapchain_format();
+    desc.wgpu_render_view_cb = sapp_wgpu_get_render_view;
+    desc.wgpu_resolve_view_cb = sapp_wgpu_get_resolve_view;
+    desc.wgpu_depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view;
     sg_setup(&desc);
     stm_setup();
 
