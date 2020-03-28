@@ -34,7 +34,12 @@ void init(void) {
         .d3d11_device = sapp_d3d11_get_device(),
         .d3d11_device_context = sapp_d3d11_get_device_context(),
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
+        .wgpu_device = sapp_wgpu_get_device(),
+        .wgpu_render_format = sapp_wgpu_get_render_format(),
+        .wgpu_render_view_cb = sapp_wgpu_get_render_view,
+        .wgpu_resolve_view_cb = sapp_wgpu_get_resolve_view,
+        .wgpu_depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
     });
     __dbgui_setup(MSAA_SAMPLES);
 
@@ -101,9 +106,9 @@ void init(void) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
             const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            /* WebGL exceptions: 
+            /* WebGL exceptions:
                 - "GL_SRC_ALPHA_SATURATE as a destination blend function is disallowed in WebGL 1"
-                - "constant color and constant alpha cannot be used together as source and 
+                - "constant color and constant alpha cannot be used together as source and
                    destination factors in the blend function"
             */
             bool valid = true;

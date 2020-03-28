@@ -27,7 +27,7 @@ void init(void) {
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
         .wgpu_device = sapp_wgpu_get_device(),
-        .wgpu_swapchain_format = sapp_wgpu_get_swapchain_format(),
+        .wgpu_render_format = sapp_wgpu_get_render_format(),
         .wgpu_render_view_cb = sapp_wgpu_get_render_view,
         .wgpu_resolve_view_cb = sapp_wgpu_get_resolve_view,
         .wgpu_depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view

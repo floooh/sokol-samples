@@ -83,6 +83,11 @@ static void init(void) {
         .d3d11_device_context = sapp_d3d11_get_device_context(),
         .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
         .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
+        .wgpu_device = sapp_wgpu_get_device(),
+        .wgpu_render_format = sapp_wgpu_get_render_format(),
+        .wgpu_render_view_cb = sapp_wgpu_get_render_view,
+        .wgpu_resolve_view_cb = sapp_wgpu_get_resolve_view,
+        .wgpu_depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
     });
     __cdbgui_setup(1);
 
@@ -164,7 +169,7 @@ void frame(void) {
         }
     }
     r_end();
-    
+
     /* render the sokol-gfx default pass */
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
@@ -401,7 +406,7 @@ static sgl_pipeline pip;
 
 static void r_init(void) {
 
-    /* atlas image data is in atlas.inl file, this only contains alpha 
+    /* atlas image data is in atlas.inl file, this only contains alpha
        values, need to expand this to RGBA8
     */
     uint32_t rgba8_size = ATLAS_WIDTH * ATLAS_HEIGHT * 4;
