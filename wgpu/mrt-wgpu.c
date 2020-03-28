@@ -85,11 +85,11 @@ static void create_offscreen_pass(int width, int height) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .wgpu_device = wgpu_device(),
-        .wgpu_swapchain_format = wgpu_swapchain_format(),
-        .wgpu_swapchain_render_view_cb = wgpu_swapchain_render_view,
-        .wgpu_swapchain_resolve_view_cb = wgpu_swapchain_resolve_view,
-        .wgpu_swapchain_depth_stencil_view_cb = wgpu_swapchain_depth_stencil_view
+        .wgpu_device = wgpu_get_device(),
+        .wgpu_render_format = wgpu_get_render_format(),
+        .wgpu_render_view_cb = wgpu_get_render_view,
+        .wgpu_resolve_view_cb = wgpu_get_resolve_view,
+        .wgpu_depth_stencil_view_cb = wgpu_get_depth_stencil_view
     });
 
     /* a pass action for the default render pass */

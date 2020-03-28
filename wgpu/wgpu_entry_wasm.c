@@ -29,7 +29,7 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
 EMSCRIPTEN_KEEPALIVE void emsc_device_ready(int device_id, int swapchain_id, int swapchain_fmt) {
     wgpu_state.dev = (WGPUDevice) device_id;
     wgpu_state.swapchain = (WGPUSwapChain) swapchain_id;
-    wgpu_state.swapchain_format = (WGPUTextureFormat) swapchain_fmt;
+    wgpu_state.render_format = (WGPUTextureFormat) swapchain_fmt;
 }
 
 /* Javascript function to wrap asynchronous device and swapchain setup */

@@ -40,13 +40,13 @@ static struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .wgpu_device = wgpu_device(),
-        .wgpu_swapchain_format = wgpu_swapchain_format(),
-        .wgpu_swapchain_render_view_cb = wgpu_swapchain_render_view,
-        .wgpu_swapchain_resolve_view_cb = wgpu_swapchain_resolve_view,
-        .wgpu_swapchain_depth_stencil_view_cb = wgpu_swapchain_depth_stencil_view
+        .wgpu_device = wgpu_get_device(),
+        .wgpu_render_format = wgpu_get_render_format(),
+        .wgpu_render_view_cb = wgpu_get_render_view,
+        .wgpu_resolve_view_cb = wgpu_get_resolve_view,
+        .wgpu_depth_stencil_view_cb = wgpu_get_depth_stencil_view
     });
-    WGPUDevice wgpu_dev = (WGPUDevice) wgpu_device();
+    WGPUDevice wgpu_dev = (WGPUDevice) wgpu_get_device();
 
     /* create native WebGPU vertex- and index-buffer */
     float vertices[] = {

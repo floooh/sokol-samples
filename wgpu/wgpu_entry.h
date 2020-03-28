@@ -44,7 +44,7 @@ typedef struct {
     int height;
     WGPUDevice dev;
     WGPUSwapChain swapchain;
-    WGPUTextureFormat swapchain_format;
+    WGPUTextureFormat render_format;
     WGPUTexture msaa_tex;
     WGPUTexture depth_stencil_tex;
     WGPUTextureView swapchain_view;
@@ -56,11 +56,11 @@ void wgpu_start(const wgpu_desc_t* desc);
 int wgpu_width(void);
 int wgpu_height(void);
 
-const void* wgpu_device(void);
-const void* wgpu_swapchain_render_view(void);
-const void* wgpu_swapchain_resolve_view(void);
-const void* wgpu_swapchain_depth_stencil_view(void);
-uint32_t wgpu_swapchain_format(void);
+const void* wgpu_get_device(void);
+const void* wgpu_get_render_view(void);
+const void* wgpu_get_resolve_view(void);
+const void* wgpu_get_depth_stencil_view(void);
+uint32_t wgpu_get_render_format(void);
 
 /* internals, don't use */
 extern wgpu_state_t wgpu_state;

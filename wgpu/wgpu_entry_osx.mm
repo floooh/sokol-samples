@@ -24,8 +24,8 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
         .presentMode = WGPUPresentMode_VSync
     };
     wgpu_state.swapchain = wgpuDeviceCreateSwapChain(wgpu_state.dev, nullptr, &swap_desc);
-    wgpu_state.swapchain_format = (WGPUTextureFormat) GetPreferredSwapChainTextureFormat();
-    wgpuSwapChainConfigure(wgpu_state.swapchain, wgpu_state.swapchain_format, WGPUTextureUsage_OutputAttachment, desc->width, desc->height);
+    wgpu_state.render_format = (WGPUTextureFormat) GetPreferredSwapChainTextureFormat();
+    wgpuSwapChainConfigure(wgpu_state.swapchain, wgpu_state.render_format, WGPUTextureUsage_OutputAttachment, desc->width, desc->height);
 
     /* setup the swapchain surfaces */
     wgpu_swapchain_init();
