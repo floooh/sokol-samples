@@ -56,14 +56,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 void init(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .gl = {
+            .force_gles2 = sapp_gles2()
+        },
+        .mtl = {
+            .device = sapp_metal_get_device(),
+            .renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
+            .drawable_cb = sapp_metal_get_drawable
+        },
+        .d3d11 = {
+            .device = sapp_d3d11_get_device(),
+            .device_context = sapp_d3d11_get_device_context(),
+            .render_target_view_cb = sapp_d3d11_get_render_target_view,
+            .depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        }
     });
 
     /* cube vertex buffer */
