@@ -187,19 +187,19 @@ static state_t state;
 
 static void init(void) {
     sg_desc desc = { };
-    desc.gl.force_gles2 = sapp_gles2();
-    desc.mtl.device = sapp_metal_get_device();
-    desc.mtl.renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor;
-    desc.mtl.drawable_cb = sapp_metal_get_drawable;
-    desc.d3d11.device = sapp_d3d11_get_device();
-    desc.d3d11.device_context = sapp_d3d11_get_device_context();
-    desc.d3d11.render_target_view_cb = sapp_d3d11_get_render_target_view;
-    desc.d3d11.depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
-    desc.wgpu.device = sapp_wgpu_get_device();
-    desc.wgpu.render_format = sapp_wgpu_get_render_format();
-    desc.wgpu.render_view_cb = sapp_wgpu_get_render_view;
-    desc.wgpu.resolve_view_cb = sapp_wgpu_get_resolve_view;
-    desc.wgpu.depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view;
+    desc.context.gl.force_gles2 = sapp_gles2();
+    desc.context.metal.device = sapp_metal_get_device();
+    desc.context.metal.renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor;
+    desc.context.metal.drawable_cb = sapp_metal_get_drawable;
+    desc.context.d3d11.device = sapp_d3d11_get_device();
+    desc.context.d3d11.device_context = sapp_d3d11_get_device_context();
+    desc.context.d3d11.render_target_view_cb = sapp_d3d11_get_render_target_view;
+    desc.context.d3d11.depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
+    desc.context.wgpu.device = sapp_wgpu_get_device();
+    desc.context.wgpu.render_format = sapp_wgpu_get_render_format();
+    desc.context.wgpu.render_view_cb = sapp_wgpu_get_render_view;
+    desc.context.wgpu.resolve_view_cb = sapp_wgpu_get_resolve_view;
+    desc.context.wgpu.depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view;
     sg_setup(&desc);
 
     simgui_desc_t simgui_desc = { };

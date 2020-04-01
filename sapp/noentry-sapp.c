@@ -58,26 +58,26 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 void init(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     sg_setup(&(sg_desc){
-        .gl = {
-            .force_gles2 = sapp_gles2()
-        },
-        .mtl = {
-            .device = sapp_metal_get_device(),
-            .renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-            .drawable_cb = sapp_metal_get_drawable
-        },
-        .d3d11 = {
-            .device = sapp_d3d11_get_device(),
-            .device_context = sapp_d3d11_get_device_context(),
-            .render_target_view_cb = sapp_d3d11_get_render_target_view,
-            .depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
-        },
-        .wgpu = {
-            .device = sapp_wgpu_get_device(),
-            .render_format = sapp_wgpu_get_render_format(),
-            .render_view_cb = sapp_wgpu_get_render_view,
-            .resolve_view_cb = sapp_wgpu_get_resolve_view,
-            .depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
+        .context = {
+            .gl.force_gles2 = sapp_gles2(),
+            .metal = {
+                .device = sapp_metal_get_device(),
+                .renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
+                .drawable_cb = sapp_metal_get_drawable
+            },
+            .d3d11 = {
+                .device = sapp_d3d11_get_device(),
+                .device_context = sapp_d3d11_get_device_context(),
+                .render_target_view_cb = sapp_d3d11_get_render_target_view,
+                .depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+            },
+            .wgpu = {
+                .device = sapp_wgpu_get_device(),
+                .render_format = sapp_wgpu_get_render_format(),
+                .render_view_cb = sapp_wgpu_get_render_view,
+                .resolve_view_cb = sapp_wgpu_get_resolve_view,
+                .depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
+            }
         }
     });
 
