@@ -30,9 +30,11 @@ static void draw_imgui(ImDrawData*);
 void init(const void* mtl_device) {
     // setup sokol_gfx and sokol_time
     sg_desc desc = {
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context.metal = {
+            .device = mtl_device,
+            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+            .drawable_cb = osx_mtk_get_drawable
+        }
     };
     sg_setup(&desc);
     stm_setup();

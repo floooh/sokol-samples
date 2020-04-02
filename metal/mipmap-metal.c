@@ -52,9 +52,11 @@ uint32_t mip_colors[9] = {
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context.metal = {
+            .device = mtl_device,
+            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+            .drawable_cb = osx_mtk_get_drawable
+        }
     });
 
     /* a plane vertex buffer */
