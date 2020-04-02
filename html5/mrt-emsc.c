@@ -46,14 +46,14 @@ int main() {
 
     /* setup sokol_gfx */
     sg_desc desc = {
-        .gl_force_gles2 = emsc_webgl_fallback()
+        .context.gl.force_gles2 = emsc_webgl_fallback()
     };
     sg_setup(&desc);
     assert(sg_isvalid());
 
     /* not much useful things to do in this demo if WebGL2 is not supported,
        so just drop out and later render a dark red screen */
-    if (desc.gl_force_gles2) {
+    if (desc.context.gl.force_gles2) {
         default_pass_action = (sg_pass_action){
             .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
         };
