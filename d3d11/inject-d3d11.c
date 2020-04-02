@@ -39,10 +39,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int height = 480;
     d3d11_init(width, height, msaa_samples, L"Sokol Injected Resources D3D11");
     sg_setup(&(sg_desc){
-        .d3d11_device = d3d11_device(),
-        .d3d11_device_context = d3d11_device_context(),
-        .d3d11_render_target_view_cb = d3d11_render_target_view,
-        .d3d11_depth_stencil_view_cb = d3d11_depth_stencil_view
+        .context.d3d11 = {
+            .device = d3d11_device(),
+            .device_context = d3d11_device_context(),
+            .render_target_view_cb = d3d11_render_target_view,
+            .depth_stencil_view_cb = d3d11_depth_stencil_view
+        }
     });
 
     /* create native D3D11 vertex and index buffers */
