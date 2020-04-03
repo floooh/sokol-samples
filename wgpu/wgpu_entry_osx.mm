@@ -21,7 +21,7 @@ void wgpu_platform_start(const wgpu_desc_t* desc) {
     /* setup swap chain */
     WGPUSwapChainDescriptor swap_desc = {
         .implementation = GetSwapChainImplementation(),
-        .presentMode = WGPUPresentMode_VSync
+        .presentMode = WGPUPresentMode_Fifo
     };
     wgpu_state.swapchain = wgpuDeviceCreateSwapChain(wgpu_state.dev, nullptr, &swap_desc);
     wgpu_state.render_format = (WGPUTextureFormat) GetPreferredSwapChainTextureFormat();
