@@ -42,12 +42,14 @@ static uint32_t xorshift32(void) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .wgpu_device = wgpu_get_device(),
-        .wgpu_render_format = wgpu_get_render_format(),
-        .wgpu_render_view_cb = wgpu_get_render_view,
-        .wgpu_resolve_view_cb = wgpu_get_resolve_view,
-        .wgpu_depth_stencil_view_cb = wgpu_get_depth_stencil_view,
-        .wgpu_global_staging_buffer_size = MAX_PARTICLES * sizeof(hmm_vec3),
+        .context.wgpu = {
+            .device = wgpu_get_device(),
+            .render_format = wgpu_get_render_format(),
+            .render_view_cb = wgpu_get_render_view,
+            .resolve_view_cb = wgpu_get_resolve_view,
+            .depth_stencil_view_cb = wgpu_get_depth_stencil_view,
+            .global_staging_buffer_size = MAX_PARTICLES * sizeof(hmm_vec3),
+        }
     });
 
     /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */

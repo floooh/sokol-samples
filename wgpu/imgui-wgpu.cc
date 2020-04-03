@@ -24,11 +24,11 @@ static struct {
 static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
-    desc.wgpu_device = wgpu_get_device(),
-    desc.wgpu_render_format = wgpu_get_render_format(),
-    desc.wgpu_render_view_cb = wgpu_get_render_view,
-    desc.wgpu_resolve_view_cb = wgpu_get_resolve_view,
-    desc.wgpu_depth_stencil_view_cb = wgpu_get_depth_stencil_view,
+    desc.context.wgpu.device = wgpu_get_device(),
+    desc.context.wgpu.render_format = wgpu_get_render_format(),
+    desc.context.wgpu.render_view_cb = wgpu_get_render_view,
+    desc.context.wgpu.resolve_view_cb = wgpu_get_resolve_view,
+    desc.context.wgpu.depth_stencil_view_cb = wgpu_get_depth_stencil_view,
     sg_setup(&desc);
     stm_setup();
 

@@ -23,11 +23,13 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .wgpu_device = wgpu_get_device(),
-        .wgpu_render_format = wgpu_get_render_format(),
-        .wgpu_render_view_cb = wgpu_get_render_view,
-        .wgpu_resolve_view_cb = wgpu_get_resolve_view,
-        .wgpu_depth_stencil_view_cb = wgpu_get_depth_stencil_view
+        .context.wgpu = {
+            .device = wgpu_get_device(),
+            .render_format = wgpu_get_render_format(),
+            .render_view_cb = wgpu_get_render_view,
+            .resolve_view_cb = wgpu_get_resolve_view,
+            .depth_stencil_view_cb = wgpu_get_depth_stencil_view
+        }
     });
 
     /* a quad vertex buffer with "oversized" texture coords */
