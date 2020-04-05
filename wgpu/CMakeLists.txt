@@ -114,3 +114,8 @@ fips_begin_app(inject-wgpu windowed)
     sokol_shader(inject-wgpu.glsl wgpu)
     fips_deps(wgpu_entry)
 fips_end_app()
+
+fips_begin_app(sgl-lines-wgpu windowed)
+    fips_files(sgl-lines-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
