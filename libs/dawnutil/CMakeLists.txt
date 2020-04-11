@@ -1,11 +1,21 @@
 fips_begin_lib(dawnutil)
     fips_files(SampleUtils.cpp SampleUtils.h)
     # hack to include dawncpp impl
-    fips_dir(${DAWN_BUILD_DIR}/gen/src/dawn)
-    fips_files(webgpu_cpp.cpp)
-    fips_libs(dawn_proc dawn_bindings dawn_utils dawn_native dawn_wire glfw)
-    # HACK HACK HACK
-    fips_libs(/Users/floh/projects/fips-sdks/dawn/dawn/out/Debug/libshaderc_spvc.dylib)
+    #fips_dir(${DAWN_BUILD_DIR}/gen/src/dawn)
+    #fips_files(webgpu_cpp.cpp)
+    fips_libs(
+        shaderc_spvc_combined
+        dawn_platform
+        dawncpp_headers
+        dawn_headers
+        dawncpp
+        dawn_proc
+        dawn_common
+        dawn_native
+        dawn_wire
+        dawn_utils
+        glfw3
+    )
 fips_end_lib(dawnutil)
 if (FIPS_OSX)
     target_compile_definitions(dawnutil PRIVATE DAWN_ENABLE_BACKEND_METAL)
