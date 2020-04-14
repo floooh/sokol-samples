@@ -1,5 +1,6 @@
 /* platform-agnostic WGPU demo scaffold functions */
 
+#include "sokol_gfx.h"
 #include "wgpu_entry.h"
 #include <assert.h>
 
@@ -54,8 +55,13 @@ const void* wgpu_get_depth_stencil_view(void) {
     return (const void*) wgpu_state.depth_stencil_view;
 }
 
-uint32_t wgpu_get_render_format(void) {
-    return (uint32_t) wgpu_state.render_format;
+sg_pixel_format wgpu_get_color_format(void) {
+    switch (wgpu_state.render_format) {
+            case WGPUTextureFormat_RGBA8Unorm:  return SG_PIXELFORMAT_RGBA8;
+            case WGPUTextureFormat_BGRA8Unorm:  return SG_PIXELFORMAT_BGRA8;
+            /* this shouldn't happen */
+            default: return SG_PIXELFORMAT_NONE;
+    }
 }
 
 void wgpu_swapchain_init(void) {

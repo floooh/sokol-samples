@@ -60,7 +60,7 @@ const void* wgpu_get_device(void);
 const void* wgpu_get_render_view(void);
 const void* wgpu_get_resolve_view(void);
 const void* wgpu_get_depth_stencil_view(void);
-uint32_t wgpu_get_render_format(void);
+sg_pixel_format wgpu_get_color_format(void);
 
 /* internals, don't use */
 extern wgpu_state_t wgpu_state;

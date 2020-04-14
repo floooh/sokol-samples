@@ -105,9 +105,9 @@ static void init(void) {
     // initialize sokol-gfx
     sg_setup(&(sg_desc){
         .context = {
+            .color_format = wgpu_get_color_format(),
             .wgpu = {
                 .device = wgpu_get_device(),
-                .render_format = wgpu_get_render_format(),
                 .render_view_cb = wgpu_get_render_view,
                 .resolve_view_cb = wgpu_get_resolve_view,
                 .depth_stencil_view_cb = wgpu_get_depth_stencil_view

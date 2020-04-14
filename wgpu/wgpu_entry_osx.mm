@@ -8,6 +8,7 @@
 #include "utils/SystemUtils.h"
 #include "third_party/glfw/include/GLFW/glfw3.h"
 
+#include "sokol_gfx.h"
 #include "wgpu_entry.h"
 
 void wgpu_platform_start(const wgpu_desc_t* desc) {
