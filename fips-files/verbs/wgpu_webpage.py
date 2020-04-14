@@ -43,7 +43,8 @@ samples = [
     [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
     [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
-    [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl']
+    [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
+    [ 'cubemaprt', 'cubemaprt-sapp.c', 'cubemaprt-sapp.glsl']
 ]
 
 # assets that must also be copied
