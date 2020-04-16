@@ -31,8 +31,8 @@ UTEST(sokol_gfx, query_desc) {
     T(desc.pipeline_pool_size == _SG_DEFAULT_PIPELINE_POOL_SIZE);
     T(desc.pass_pool_size == 64);
     T(desc.context_pool_size == _SG_DEFAULT_CONTEXT_POOL_SIZE);
-    T(desc.context.metal.global_uniform_buffer_size == _SG_MTL_DEFAULT_UB_SIZE);
-    T(desc.context.metal.sampler_cache_size == _SG_DEFAULT_SAMPLER_CACHE_CAPACITY);
+    T(desc.uniform_buffer_size == _SG_DEFAULT_UB_SIZE);
+    T(desc.sampler_cache_size == _SG_DEFAULT_SAMPLER_CACHE_CAPACITY);
     sg_shutdown();
 }
 

@@ -7,6 +7,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_glue.h"
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -20,19 +21,7 @@ static sg_pass_action pass_action;
 void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
-    desc.context.gl.force_gles2 = sapp_gles2();
-    desc.context.metal.device = sapp_metal_get_device();
-    desc.context.metal.renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor;
-    desc.context.metal.drawable_cb = sapp_metal_get_drawable;
-    desc.context.d3d11.device = sapp_d3d11_get_device();
-    desc.context.d3d11.device_context = sapp_d3d11_get_device_context();
-    desc.context.d3d11.render_target_view_cb = sapp_d3d11_get_render_target_view;
-    desc.context.d3d11.depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view;
-    desc.context.wgpu.device = sapp_wgpu_get_device();
-    desc.context.wgpu.render_format = sapp_wgpu_get_render_format();
-    desc.context.wgpu.render_view_cb = sapp_wgpu_get_render_view;
-    desc.context.wgpu.resolve_view_cb = sapp_wgpu_get_resolve_view;
-    desc.context.wgpu.depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view;
+    desc.context = sapp_sgcontext();
     sg_setup(&desc);
     stm_setup();
 

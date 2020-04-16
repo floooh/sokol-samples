@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_glue.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
 #define SOKOL_IMGUI_IMPL
@@ -51,27 +52,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 256,
         .pass_pool_size = 128,
-        .context = {
-            .gl.force_gles2 = sapp_gles2(),
-            .metal = {
-                .device = sapp_metal_get_device(),
-                .renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-                .drawable_cb = sapp_metal_get_drawable
-            },
-            .d3d11 = {
-                .device = sapp_d3d11_get_device(),
-                .device_context = sapp_d3d11_get_device_context(),
-                .render_target_view_cb = sapp_d3d11_get_render_target_view,
-                .depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
-            },
-            .wgpu = {
-                .device = sapp_wgpu_get_device(),
-                .render_format = sapp_wgpu_get_render_format(),
-                .render_view_cb = sapp_wgpu_get_render_view,
-                .resolve_view_cb = sapp_wgpu_get_resolve_view,
-                .depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
-            }
-        }
+        .context = sapp_sgcontext()
     });
 
     // setup cimgui

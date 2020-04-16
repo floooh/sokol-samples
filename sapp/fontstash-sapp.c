@@ -6,6 +6,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include <stdio.h>  // needed by fontstash's IO functions even though they are not used
@@ -72,27 +73,7 @@ static int round_pow2(float v) {
 static void init(void) {
     state.dpi_scale = sapp_dpi_scale();
     sg_setup(&(sg_desc){
-        .context = {
-            .gl.force_gles2 = sapp_gles2(),
-            .metal = {
-                .device = sapp_metal_get_device(),
-                .renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-                .drawable_cb = sapp_metal_get_drawable
-            },
-            .d3d11 = {
-                .device = sapp_d3d11_get_device(),
-                .device_context = sapp_d3d11_get_device_context(),
-                .render_target_view_cb = sapp_d3d11_get_render_target_view,
-                .depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
-            },
-            .wgpu = {
-                .device = sapp_wgpu_get_device(),
-                .render_format = sapp_wgpu_get_render_format(),
-                .render_view_cb = sapp_wgpu_get_render_view,
-                .resolve_view_cb = sapp_wgpu_get_resolve_view,
-                .depth_stencil_view_cb = sapp_wgpu_get_depth_stencil_view
-            }
-        }
+        .context = sapp_sgcontext()
     });
     __dbgui_setup(1);
     sgl_setup(&(sgl_desc_t){0});
