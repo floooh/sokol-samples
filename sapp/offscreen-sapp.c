@@ -12,7 +12,7 @@
 #include "dbgui/dbgui.h"
 #include "offscreen-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define OFFSCREEN_SAMPLE_COUNT (4)
 
 static struct {
     struct {
@@ -33,7 +33,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* default pass action: clear to blue-ish */
     state.deflt.pass_action = (sg_pass_action) {
@@ -53,7 +53,7 @@ void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "color-image"
     };
     sg_image color_img = sg_make_image(&img_desc);
@@ -144,7 +144,7 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
+            .sample_count = OFFSCREEN_SAMPLE_COUNT
         },
         .label = "offscreen-pipeline"
     });
@@ -167,7 +167,6 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         },
         .label = "default-pipeline"
     });
@@ -233,7 +232,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .window_title = "Offscreen Rendering (sokol-app)",
     };
 }

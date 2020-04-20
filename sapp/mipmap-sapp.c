@@ -11,8 +11,6 @@
 #include "dbgui/dbgui.h"
 #include "mipmap-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
-
 static struct {
     sg_pipeline pip;
     sg_buffer vbuf;
@@ -47,7 +45,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a plane vertex buffer */
     float vertices[] = {
@@ -120,7 +118,6 @@ void init(void) {
         },
         .shader = sg_make_shader(mipmap_shader_desc()),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES,
     });
 }
 
@@ -166,7 +163,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = " (sokol-app)",
     };

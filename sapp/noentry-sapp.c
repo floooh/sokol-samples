@@ -21,8 +21,6 @@
 #include <stdlib.h>     /* calloc, free */
 #include "noentry-sapp.glsl.h"
 
-#define SAMPLE_COUNT (4)
-
 typedef struct {
     float rx, ry;
     sg_pipeline pip;
@@ -48,7 +46,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cleanup_cb = cleanup,          /* cleanup doesn't need access to the state struct */
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Noentry (sokol-app)",
     });
@@ -134,7 +132,6 @@ void init(void* user_data) {
             .depth_write_enabled = true,
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = SAMPLE_COUNT,
     });
 
     /* setup resource bindings */

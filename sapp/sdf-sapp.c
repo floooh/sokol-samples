@@ -24,7 +24,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(1);
+    __dbgui_setup(sapp_sample_count());
 
     // a vertex buffer to render a 'fullscreen triangle'
     float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };

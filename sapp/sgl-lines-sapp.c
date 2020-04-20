@@ -9,8 +9,6 @@
 #include "sokol_gl.h"
 #include "dbgui/dbgui.h"
 
-#define SAMPLE_COUNT (4)
-
 static struct {
     sg_pass_action pass_action;
     sgl_pipeline depth_test_pip;
@@ -20,11 +18,11 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
-        .sample_count = SAMPLE_COUNT
+        .sample_count = sapp_sample_count()
     });
 
     /* a pipeline object with less-equal depth-testing */
@@ -193,7 +191,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "sokol_gl.h lines (sokol-app)",
     };

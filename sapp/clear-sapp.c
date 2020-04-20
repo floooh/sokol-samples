@@ -17,7 +17,7 @@ void init(void) {
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
     };
-    __dbgui_setup(1);
+    __dbgui_setup(sapp_sample_count());
 }
 
 void frame(void) {

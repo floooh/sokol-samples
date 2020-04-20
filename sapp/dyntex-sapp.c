@@ -12,7 +12,6 @@
 #include "dbgui/dbgui.h"
 #include "dyntex-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
 #define IMAGE_WIDTH (64)
 #define IMAGE_HEIGHT (64)
 #define LIVING (0xFFFFFFFF)
@@ -34,7 +33,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a 128x128 image with streaming update strategy */
     sg_image img = sg_make_image(&(sg_image_desc){
@@ -121,7 +120,6 @@ void init(void) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = MSAA_SAMPLES,
         .label = "cube-pipelin"
     });
 
@@ -233,7 +231,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Dynamic Texture (sokol-app)",
     };

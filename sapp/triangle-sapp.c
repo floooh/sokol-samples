@@ -19,7 +19,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(1);
+    __dbgui_setup(sapp_sample_count());
 
     /* a vertex buffer with 3 vertices */
     float vertices[] = {

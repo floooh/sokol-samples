@@ -12,7 +12,6 @@
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
 #define NUM_BLEND_FACTORS (15)
 
 static struct {
@@ -30,7 +29,7 @@ void init(void) {
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a default pass action which does not clear, since the entire screen is overwritten anyway */
     state.pass_action = (sg_pass_action) {
@@ -69,7 +68,6 @@ void init(void) {
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* a shader for the blended quads */
@@ -89,7 +87,6 @@ void init(void) {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer.sample_count = MSAA_SAMPLES
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
@@ -183,7 +180,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Blend Modes (sokol-app)",
     };

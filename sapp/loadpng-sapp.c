@@ -20,8 +20,6 @@
 #include "dbgui/dbgui.h"
 #include "loadpng-sapp.glsl.h"
 
-#define SAMPLE_COUNT (4)
-
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
@@ -42,7 +40,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-fetch with the minimal "resource limits" */
     sfetch_setup(&(sfetch_desc_t){
@@ -134,7 +132,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = SAMPLE_COUNT
         },
         .label = "cube-pipeline"
     });
@@ -236,7 +233,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Async PNG Loading (sokol-app)",
     };

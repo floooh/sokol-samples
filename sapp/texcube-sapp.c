@@ -11,8 +11,6 @@
 #include "dbgui/dbgui.h"
 #include "texcube-sapp.glsl.h"
 
-#define SAMPLE_COUNT (4)
-
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
@@ -30,7 +28,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /*
         Cube vertex buffer with packed vertex formats for color and texture coords.
@@ -135,7 +133,6 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = SAMPLE_COUNT
         },
         .label = "cube-pipeline"
     });
@@ -181,7 +178,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Textured Cube (sokol-app)",
     };

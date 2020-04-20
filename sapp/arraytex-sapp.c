@@ -11,7 +11,6 @@
 #include "dbgui/dbgui.h"
 #include "arraytex-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
 #define IMG_LAYERS (3)
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
@@ -28,7 +27,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
     if (sapp_gles2()) {
         /* this demo needs GLES3/WebGL */
         return;
@@ -143,7 +142,6 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_NONE,
-            .sample_count = MSAA_SAMPLES
         },
         .label = "cube-pipeline"
     });
@@ -217,7 +215,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .window_title = "Array Texture (sokol-app)",
     };
 }

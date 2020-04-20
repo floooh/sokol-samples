@@ -75,7 +75,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(1);
+    __dbgui_setup(sapp_sample_count());
     sgl_setup(&(sgl_desc_t){0});
 
     /* make sure the fontstash atlas width/height is pow-2 */

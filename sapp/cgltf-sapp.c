@@ -28,8 +28,6 @@
 
 static const char* filename = "DamagedHelmet.gltf";
 
-#define MSAA_SAMPLE_COUNT (4)
-
 #define SCENE_INVALID_INDEX (-1)
 #define SCENE_MAX_BUFFERS (16)
 #define SCENE_MAX_IMAGES (16)
@@ -222,7 +220,7 @@ static void init(void) {
         .context = sapp_sgcontext()
     });
     // setup the optional debugging UI
-    __dbgui_setup(MSAA_SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     // initialize Basis Universal
     sbasisu_setup();
@@ -923,7 +921,6 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
             .rasterizer = {
                 .cull_mode = SG_CULLMODE_BACK,
                 .face_winding = SG_FACEWINDING_CCW,
-                .sample_count = MSAA_SAMPLE_COUNT,
             }
         });
         state.scene.num_pipelines++;
@@ -995,7 +992,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLE_COUNT,
+        .sample_count = 4,
         .window_title = "GLTF Viewer",
     };
 }

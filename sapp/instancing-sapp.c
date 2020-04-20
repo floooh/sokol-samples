@@ -13,7 +13,6 @@
 #include "dbgui/dbgui.h"
 #include "instancing-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
@@ -31,7 +30,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a pass action for the default render pass */
     state.pass_action = (sg_pass_action) {
@@ -96,7 +95,6 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         },
         .label = "instancing-pipeline"
     });
@@ -169,7 +167,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Instancing (sokol-app)",
     };

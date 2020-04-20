@@ -34,8 +34,6 @@
 #include "pl_mpeg/pl_mpeg.h"
 #include <assert.h>
 
-#define SAMPLE_COUNT (4)
-
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
 // statically allocated streaming buffers
@@ -123,7 +121,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     // vertex-, index-buffer, shader and pipeline
     const vertex_t vertices[] = {
@@ -179,7 +177,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_NONE,
-            .sample_count = SAMPLE_COUNT
         }
     });
 
@@ -365,7 +362,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 960,
         .height = 540,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "pl_mpeg demo"
     };

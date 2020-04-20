@@ -15,8 +15,6 @@
 #include "dbgui/dbgui.h"
 #include "noninterleaved-sapp.glsl.h"
 
-#define SAMPLE_COUNT (4)
-
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
@@ -28,7 +26,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /* cube vertex buffer */
     float vertices[] = {
@@ -89,7 +87,6 @@ void init(void) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = SAMPLE_COUNT
     });
 
     /* fill the resource bindings, note how the same vertex
@@ -146,7 +143,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Noninterleaved (sokol-app)",
     };
