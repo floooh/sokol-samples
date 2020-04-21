@@ -11,7 +11,7 @@
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -41,10 +41,13 @@ void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -110,7 +113,6 @@ void init(const void* mtl_device) {
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* a shader for the blended quads */
@@ -167,7 +169,6 @@ void init(const void* mtl_device) {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer.sample_count = MSAA_SAMPLES
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
@@ -223,6 +224,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Blend (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Blend (Metal)", init, frame, shutdown);
 }
 

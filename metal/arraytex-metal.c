@@ -9,7 +9,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pass_action pass_action;
 sg_pipeline pip;
@@ -32,10 +32,13 @@ const int IMG_HEIGHT = 16;
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -187,7 +190,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_NONE,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -234,6 +236,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Array Texture (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Array Texture (Metal)", init, frame, shutdown);
     return 0;
 }

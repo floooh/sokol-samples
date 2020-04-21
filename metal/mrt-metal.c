@@ -10,7 +10,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pass_desc offscreen_pass_desc;
 sg_pass_action offscreen_pass_action;
@@ -42,10 +42,13 @@ typedef struct {
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -58,7 +61,6 @@ void init(const void* mtl_device) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = MSAA_SAMPLES
     };
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
@@ -195,7 +197,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -274,7 +275,6 @@ void init(const void* mtl_device) {
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* and a pipeline and resources to render debug-visualization quads with the content
@@ -310,7 +310,6 @@ void init(const void* mtl_device) {
                     "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
                     "}\n"
             }),
-            .rasterizer.sample_count = MSAA_SAMPLES
         });
     dbg_bind.vertex_buffers[0] = quad_vbuf;
 
@@ -373,6 +372,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol MRT (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol MRT (Metal)", init, frame, shutdown);
     return 0;
 }

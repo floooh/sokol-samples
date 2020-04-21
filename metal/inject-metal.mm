@@ -13,7 +13,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 const int IMG_WIDTH = 32;
 const int IMG_HEIGHT = 32;
 
@@ -33,10 +33,13 @@ typedef struct {
 void init(const void* mtl_device) {
     /* setup sokol_gfx */
     sg_desc desc = {
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     };
     sg_setup(&desc);
@@ -196,7 +199,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     };
     pip = sg_make_pipeline(&pip_desc);
@@ -246,7 +248,7 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Resource Injection (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Resource Injection (Metal)", init, frame, shutdown);
     return 0;
 }
 

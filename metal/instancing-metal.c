@@ -10,7 +10,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 const int MAX_PARTICLES = 512 * 1024;
 const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
 
@@ -35,10 +35,13 @@ hmm_vec3 vel[MAX_PARTICLES];
 void init(const void* mtl_device) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -127,7 +130,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -192,6 +194,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Instancing (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Instancing (Metal)", init, frame, shutdown);
     return 0;
 }

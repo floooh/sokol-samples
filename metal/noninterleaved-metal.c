@@ -14,7 +14,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pass_action pass_action;
 sg_pipeline pip;
@@ -29,10 +29,13 @@ typedef struct {
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_desc desc = {
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     };
     sg_setup(&desc);
@@ -129,7 +132,6 @@ void init(const void* mtl_device) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* fill the resource bindings, note how the same vertex 
@@ -179,7 +181,7 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Non-Interleaved Vertex Data (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Non-Interleaved Vertex Data (Metal)", init, frame, shutdown);
     return 0;
 }
 

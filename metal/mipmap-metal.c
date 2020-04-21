@@ -13,7 +13,7 @@
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pipeline pip;
 sg_buffer vbuf;
@@ -52,10 +52,13 @@ uint32_t mip_colors[9] = {
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -174,7 +177,6 @@ void init(const void* mtl_device) {
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* view-projection matrix */
@@ -212,5 +214,5 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Mipmapping (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Mipmapping (Metal)", init, frame, shutdown);
 }

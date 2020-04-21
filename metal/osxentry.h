@@ -30,6 +30,7 @@ extern const void* osx_mtk_get_drawable();
 /* get width and height of drawable */
 extern int osx_width();
 extern int osx_height();
+extern int osx_sample_count();
 /* register key-down callback */
 extern void osx_key_down(osx_key_func);
 /* register key-up callback */

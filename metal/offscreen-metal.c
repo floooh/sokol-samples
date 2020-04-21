@@ -9,7 +9,7 @@
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pass offscreen_pass;
 sg_pipeline offscreen_pip;
@@ -41,10 +41,13 @@ typedef struct {
 void init(const void* mtl_device) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
 
@@ -56,7 +59,6 @@ void init(const void* mtl_device) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .sample_count = MSAA_SAMPLES
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
@@ -225,7 +227,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -246,7 +247,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -291,6 +291,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Offscreen (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Offscreen (Metal)", init, frame, shutdown);
     return 0;
 }

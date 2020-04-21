@@ -335,6 +335,11 @@ int osx_height() {
     return (int) [mtk_view drawableSize].height;
 }
 
+/* return the MSAA sample count */
+int osx_sample_count() {
+    return sample_count;
+}
+
 /* register input callbacks */
 void osx_key_down(osx_key_func fn) {
     key_down_func = fn;

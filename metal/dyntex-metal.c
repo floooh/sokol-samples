@@ -10,7 +10,7 @@
 
 const int DISPLAY_WIDTH = 640;
 const int DISPLAY_HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+const int SAMPLE_COUNT = 4;
 
 sg_pass_action pass_action;
 sg_pipeline pip;
@@ -35,10 +35,13 @@ void game_of_life_update();
 void init(const void* mtl_device) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
+        .context = {
+            .sample_count = osx_sample_count(),
+            .metal = {
+                .device = mtl_device,
+                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+                .drawable_cb = osx_mtk_get_drawable
+            }
         }
     });
     
@@ -160,7 +163,6 @@ void init(const void* mtl_device) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* initialize the game-of-life state */
@@ -207,7 +209,7 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(DISPLAY_WIDTH, DISPLAY_HEIGHT, MSAA_SAMPLES, "Dynamic Texture (Metal)", init, frame, shutdown);
+    osx_start(DISPLAY_WIDTH, DISPLAY_HEIGHT, SAMPLE_COUNT, "Dynamic Texture (Metal)", init, frame, shutdown);
     return 0;
 }
 
