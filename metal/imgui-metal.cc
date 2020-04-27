@@ -25,16 +25,12 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-static void draw_imgui(ImDrawData*);
+void draw_imgui(ImDrawData*);
 
-void init(const void* mtl_device) {
+void init() {
     // setup sokol_gfx and sokol_time
     sg_desc desc = {
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
-        }
+        .context = osx_get_context()
     };
     sg_setup(&desc);
     stm_setup();
@@ -212,7 +208,7 @@ void frame() {
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown() {
     ImGui::DestroyContext();
     sg_shutdown();
 }

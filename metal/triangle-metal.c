@@ -4,20 +4,17 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state;
 
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol */
-    sg_desc desc = {
-        .context.metal = {
-            .device = mtl_device,
-            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_cb = osx_mtk_get_drawable
-        }
-    };
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){
+        .context = osx_get_context()
+    });
 
     /* a vertex buffer with 3 vertices */
     float vertices[] = {
@@ -26,7 +23,7 @@ void init(const void* mtl_device) {
          0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -65,7 +62,7 @@ void init(const void* mtl_device) {
     });
 
     /* create a pipeline object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* Metal has explicit attribute locations, and the vertex layout
            has no gaps, so we don't need to provide stride, offsets
            or attribute names
@@ -80,16 +77,16 @@ void init(const void* mtl_device) {
     });
 }
 
-void frame() {
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+static void frame(void) {
+    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 

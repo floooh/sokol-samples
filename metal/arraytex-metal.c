@@ -7,16 +7,22 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
-const int SAMPLE_COUNT = 4;
+#define WIDTH (640)
+#define HEIGHT (480)
+#define SAMPLE_COUNT (4)
+#define IMG_LAYERS  (3)
+#define IMG_WIDTH   (16)
+#define IMG_HEIGHT  (16)
 
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
-hmm_mat4 view_proj;
-float rx, ry;
-int frame_index;
+
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+    hmm_mat4 view_proj;
+    float rx, ry;
+    int frame_index;
+} state;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -25,21 +31,10 @@ typedef struct {
     hmm_vec2 offset2;
 } vs_params_t;
 
-const int IMG_LAYERS = 3;
-const int IMG_WIDTH = 16;
-const int IMG_HEIGHT = 16;
-
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = {
-            .sample_count = osx_sample_count(),
-            .metal = {
-                .device = mtl_device,
-                .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-                .drawable_cb = osx_mtk_get_drawable
-            }
-        }
+        .context = osx_get_context()
     });
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
@@ -60,7 +55,7 @@ void init(const void* mtl_device) {
             }
         }
     }
-    bind.fs_images[0] = sg_make_image(&(sg_image_desc) {
+    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc) {
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
@@ -107,7 +102,7 @@ void init(const void* mtl_device) {
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices,
     });
@@ -121,7 +116,7 @@ void init(const void* mtl_device) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices,
@@ -175,7 +170,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },
@@ -194,44 +189,44 @@ void init(const void* mtl_device) {
     });
 
     /* default pass action (clear to black) */
-    pass_action = (sg_pass_action) {
+    state.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
+    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
-void frame() {
+static void frame() {
     /* rotated model matrix */
-    rx += 0.25f; ry += 0.5f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 0.25f; state.ry += 0.5f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
     /* model-view-projection matrix for vertex shader */
     vs_params_t vs_params;
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
     /* uv offsets */
-    float offset = (float)frame_index * 0.0001f;
+    float offset = (float)state.frame_index * 0.0001f;
     vs_params.offset0 = HMM_Vec2(-offset, offset);
     vs_params.offset1 = HMM_Vec2(offset, -offset);
     vs_params.offset2 = HMM_Vec2(0.0f, 0.0f);
-    frame_index++;
+    state.frame_index++;
 
     /* render the frame */
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown() {
     sg_shutdown();
 }
 
