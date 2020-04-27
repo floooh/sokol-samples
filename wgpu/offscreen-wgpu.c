@@ -13,7 +13,7 @@
 #include "offscreen-wgpu.glsl.h"
 
 #define OFFSCREEN_MSAA_SAMPLES (4)
-#define DISPLAY_MSAA_SAMPLES (1)
+#define DISPLAY_MSAA_SAMPLES (4)
 #define OFFSCREEN_DEPTH_FORMAT SG_PIXELFORMAT_DEPTH_STENCIL
 
 static struct {
@@ -46,15 +46,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a render pass with one color- and one depth-attachment image */
@@ -180,7 +172,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = DISPLAY_MSAA_SAMPLES
         },
         .label = "default-pipeline"
     });

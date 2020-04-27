@@ -55,12 +55,7 @@ typedef struct {
 void wgpu_start(const wgpu_desc_t* desc);
 int wgpu_width(void);
 int wgpu_height(void);
-
-const void* wgpu_get_device(void);
-const void* wgpu_get_render_view(void);
-const void* wgpu_get_resolve_view(void);
-const void* wgpu_get_depth_stencil_view(void);
-sg_pixel_format wgpu_get_color_format(void);
+sg_context_desc wgpu_get_context(void);
 
 /* internals, don't use */
 extern wgpu_state_t wgpu_state;

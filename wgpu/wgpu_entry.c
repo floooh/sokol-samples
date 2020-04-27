@@ -26,11 +26,7 @@ int wgpu_height(void) {
     return wgpu_state.height;
 }
 
-const void* wgpu_get_device(void) {
-    return (const void*) wgpu_state.dev;
-}
-
-const void* wgpu_get_render_view(void) {
+static const void* wgpu_get_render_view(void) {
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.msaa_view);
         return (const void*) wgpu_state.msaa_view;
@@ -41,7 +37,7 @@ const void* wgpu_get_render_view(void) {
     }
 }
 
-const void* wgpu_get_resolve_view(void) {
+static const void* wgpu_get_resolve_view(void) {
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.swapchain_view);
         return (const void*) wgpu_state.swapchain_view;
@@ -51,17 +47,30 @@ const void* wgpu_get_resolve_view(void) {
     }
 }
 
-const void* wgpu_get_depth_stencil_view(void) {
+static const void* wgpu_get_depth_stencil_view(void) {
     return (const void*) wgpu_state.depth_stencil_view;
 }
 
-sg_pixel_format wgpu_get_color_format(void) {
+static sg_pixel_format wgpu_get_color_format(void) {
     switch (wgpu_state.render_format) {
             case WGPUTextureFormat_RGBA8Unorm:  return SG_PIXELFORMAT_RGBA8;
             case WGPUTextureFormat_BGRA8Unorm:  return SG_PIXELFORMAT_BGRA8;
             /* this shouldn't happen */
             default: return SG_PIXELFORMAT_NONE;
     }
+}
+
+sg_context_desc wgpu_get_context(void) {
+    return (sg_context_desc) {
+        .color_format = wgpu_get_color_format(),
+        .sample_count = wgpu_state.desc.sample_count,
+        .wgpu = {
+            .device = (const void*) wgpu_state.dev,
+            .render_view_cb = wgpu_get_render_view,
+            .resolve_view_cb = wgpu_get_resolve_view,
+            .depth_stencil_view_cb = wgpu_get_depth_stencil_view
+        }
+    };
 }
 
 void wgpu_swapchain_init(void) {

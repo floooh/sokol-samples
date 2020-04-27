@@ -16,7 +16,7 @@
 
 #define WIDTH (640)
 #define HEIGHT (480)
-#define MSAA_SAMPLES (4)
+#define SAMPLE_COUNT (4)
 #define IMG_WIDTH (32)
 #define IMG_HEIGHT (32)
 
@@ -40,17 +40,9 @@ static struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
-    WGPUDevice wgpu_dev = (WGPUDevice) wgpu_get_device();
+    WGPUDevice wgpu_dev = (WGPUDevice) wgpu_get_context().wgpu.device;
 
     /* create native WebGPU vertex- and index-buffer */
     float vertices[] = {
@@ -173,7 +165,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     };
     state.pip = sg_make_pipeline(&pip_desc);
@@ -230,7 +221,7 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .width = 640,
         .height = 480,
         .title = "inject-wgpu"

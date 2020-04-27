@@ -11,7 +11,8 @@
 #include "wgpu_entry.h"
 #include "cube-wgpu.glsl.h"
 
-#define SAMPLE_COUNT (1)
+#define SAMPLE_COUNT (4)
+
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
@@ -25,15 +26,7 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* cube vertex buffer */
@@ -110,7 +103,6 @@ void init(void) {
             .depth_write_enabled = true,
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = SAMPLE_COUNT,
         .label = "cube-pipeline"
     });
 

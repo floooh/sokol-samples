@@ -11,7 +11,7 @@
 #include "wgpu_entry.h"
 #include "arraytex-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define SAMPLE_COUNT (4)
 #define IMG_LAYERS (3)
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
@@ -30,15 +30,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
@@ -145,7 +137,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_NONE,
-            .sample_count = MSAA_SAMPLES
         },
         .label = "cube-pipeline"
     });
@@ -197,7 +188,7 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .width = 640,
         .height = 480,
         .title = "arraytex-wgpu"

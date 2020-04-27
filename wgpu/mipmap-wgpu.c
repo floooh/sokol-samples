@@ -11,7 +11,7 @@
 #include "wgpu_entry.h"
 #include "mipmap-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define SAMPLE_COUNT (4)
 
 static struct {
     sg_pipeline pip;
@@ -45,15 +45,7 @@ static const uint32_t mip_colors[9] = {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a plane vertex buffer */
@@ -127,7 +119,6 @@ static void init(void) {
         },
         .shader = sg_make_shader(mipmap_shader_desc()),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES,
     });
 }
 
@@ -168,7 +159,7 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .width = 640,
         .height = 480,
         .title = "mipmap-wgpu"

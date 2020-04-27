@@ -23,15 +23,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a quad vertex buffer with "oversized" texture coords */
@@ -87,7 +79,6 @@ static void init(void) {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
-        .rasterizer.sample_count = SAMPLE_COUNT
     });
 }
 

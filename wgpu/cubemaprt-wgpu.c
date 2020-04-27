@@ -76,15 +76,7 @@ static inline float rnd(float min_val, float max_val) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* create a cubemap as render target, and a matching depth-buffer texture */
@@ -160,7 +152,6 @@ static void init(void) {
         .label = "offscreen-shapes-pipeline"
     };
     app.offscreen_shapes_pip = sg_make_pipeline(&pip_desc);
-    pip_desc.rasterizer.sample_count = DISPLAY_SAMPLE_COUNT;
     pip_desc.blend.depth_format = 0;
     pip_desc.label = "display-shapes-pipeline";
     app.display_shapes_pip = sg_make_pipeline(&pip_desc);
@@ -176,7 +167,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = DISPLAY_SAMPLE_COUNT
         }
     });
 

@@ -12,7 +12,7 @@
 #include "wgpu_entry.h"
 #include "blend-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define SAMPLE_COUNT (4)
 #define NUM_BLEND_FACTORS (15)
 
 static struct {
@@ -34,15 +34,7 @@ static struct {
 static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a quad vertex buffer */
@@ -75,7 +67,6 @@ static void init(void) {
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* a shader for the blended quads */
@@ -95,7 +86,6 @@ static void init(void) {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer.sample_count = MSAA_SAMPLES
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
@@ -184,7 +174,7 @@ int main() {
         .init_cb = init,
         .frame_cb = frame,
         .shutdown_cb = shutdown,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .width = 640,
         .height = 480,
         .title = "blend-wgpu"

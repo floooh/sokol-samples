@@ -11,7 +11,7 @@
 #include "wgpu_entry.h"
 #include "dyntex-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define SAMPLE_COUNT (4)
 #define IMAGE_WIDTH (64)
 #define IMAGE_HEIGHT (64)
 #define LIVING (0xFFFFFFFF)
@@ -42,15 +42,7 @@ static uint32_t xorshift32(void) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a 128x128 image with streaming update strategy */
@@ -138,7 +130,6 @@ static void init(void) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = MSAA_SAMPLES,
         .label = "cube-pipelin"
     });
 
@@ -247,7 +238,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .title = "dyntex-wgpu"
     });
     return 0;

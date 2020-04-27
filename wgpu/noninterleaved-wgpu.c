@@ -15,7 +15,7 @@
 #include "wgpu_entry.h"
 #include "noninterleaved-wgpu.glsl.h"
 
-#define SAMPLE_COUNT (1)
+#define SAMPLE_COUNT (4)
 
 static struct {
     sg_pass_action pass_action;
@@ -26,15 +26,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* cube vertex buffer */
@@ -96,7 +88,6 @@ static void init(void) {
             .depth_write_enabled = true
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = SAMPLE_COUNT
     });
 
     /* fill the resource bindings, note how the same vertex
@@ -150,6 +141,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
+        .sample_count = SAMPLE_COUNT,
         .title = "noninterleaved-wgpu"
     });
     return 0;

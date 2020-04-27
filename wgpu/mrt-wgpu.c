@@ -85,15 +85,7 @@ static void create_offscreen_pass(int width, int height) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* a pass action for the default render pass */
@@ -229,7 +221,6 @@ static void init(void) {
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = DISPLAY_MSAA_SAMPLES,
         .label = "fullscreen quad pipeline"
     });
 
@@ -250,7 +241,6 @@ static void init(void) {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(dbg_shader_desc()),
-        .rasterizer.sample_count = DISPLAY_MSAA_SAMPLES,
         .label = "dbgvis quad pipeline"
     }),
     state.dbg.bind = (sg_bindings){
@@ -322,6 +312,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
+        .sample_count = DISPLAY_MSAA_SAMPLES,
         .title = "mrt-wgpu"
     });
     return 0;

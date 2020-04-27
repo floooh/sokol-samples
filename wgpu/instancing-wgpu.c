@@ -12,7 +12,7 @@
 #include "wgpu_entry.h"
 #include "instancing-wgpu.glsl.h"
 
-#define MSAA_SAMPLES (1)
+#define SAMPLE_COUNT (4)
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
@@ -43,15 +43,7 @@ static uint32_t xorshift32(void) {
 static void init(void) {
     sg_setup(&(sg_desc){
         .staging_buffer_size = MAX_PARTICLES * sizeof(hmm_vec3),
-        .context = {
-            .color_format = wgpu_get_color_format(),
-            .wgpu = {
-                .device = wgpu_get_device(),
-                .render_view_cb = wgpu_get_render_view,
-                .resolve_view_cb = wgpu_get_resolve_view,
-                .depth_stencil_view_cb = wgpu_get_depth_stencil_view
-            }
-        }
+        .context = wgpu_get_context()
     });
 
     /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */
@@ -112,7 +104,6 @@ static void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         },
         .label = "instancing-pipeline"
     });
@@ -182,7 +173,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = SAMPLE_COUNT,
         .title = "instancing-wgpu"
     });
     return 0;
