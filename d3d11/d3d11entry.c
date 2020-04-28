@@ -7,40 +7,46 @@
 #include <dxgi.h>
 
 static LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static void d3d11_create_default_render_target();
-static void d3d11_destroy_default_render_target();
-static void d3d11_update_default_render_target();
+static void d3d11_create_default_render_target(void);
+static void d3d11_destroy_default_render_target(void);
+static void d3d11_update_default_render_target(void);
 
-static bool quit_requested = false;
-static bool in_create_window = false;
-static HWND hwnd = NULL;
-static DWORD win_style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX; 
-static DWORD win_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-static DXGI_SWAP_CHAIN_DESC swap_chain_desc = { 0 };
-static int width = 0;
-static int height = 0;
-static ID3D11Device* device = 0;
-static ID3D11DeviceContext* device_context = 0;
-static IDXGISwapChain* swap_chain = 0;
-static ID3D11Texture2D* render_target = 0;
-static ID3D11RenderTargetView* render_target_view = 0;
-static ID3D11Texture2D* depth_stencil_buffer = 0;
-static ID3D11DepthStencilView* depth_stencil_view = 0;
-
-static d3d11_key_func key_down_func = 0;
-static d3d11_key_func key_up_func = 0;
-static d3d11_char_func char_func = 0;
-static d3d11_mouse_btn_func mouse_btn_down_func = 0;
-static d3d11_mouse_btn_func mouse_btn_up_func = 0;
-static d3d11_mouse_pos_func mouse_pos_func = 0;
-static d3d11_mouse_wheel_func mouse_wheel_func = 0;
+static struct {
+    bool quit_requested;
+    bool in_create_window;
+    HWND hwnd;
+    DWORD win_style;
+    DWORD win_ex_style;
+    DXGI_SWAP_CHAIN_DESC swap_chain_desc;
+    int width;
+    int height;
+    int sample_count;
+    ID3D11Device* device;
+    ID3D11DeviceContext* device_context;
+    IDXGISwapChain* swap_chain;
+    ID3D11Texture2D* render_target;
+    ID3D11RenderTargetView* render_target_view;
+    ID3D11Texture2D* depth_stencil_buffer;
+    ID3D11DepthStencilView* depth_stencil_view;
+    d3d11_key_func key_down_func;
+    d3d11_key_func key_up_func;
+    d3d11_char_func char_func;
+    d3d11_mouse_btn_func mouse_btn_down_func;
+    d3d11_mouse_btn_func mouse_btn_up_func;
+    d3d11_mouse_pos_func mouse_pos_func;
+    d3d11_mouse_wheel_func mouse_wheel_func;
+} state = {
+    .win_style = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SIZEBOX,
+    .win_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE
+};
 
 #define SAFE_RELEASE(class, obj) if (obj) { class##_Release(obj); obj=0; }
 
 void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
 
-    width = w;
-    height = h;
+    state.width = w;
+    state.height = h;
+    state.sample_count = sample_count;
 
     /* register window class */
     RegisterClassW(&(WNDCLASSW){
@@ -53,16 +59,16 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     });
 
     /* create window */
-    in_create_window = true;
+    state.in_create_window = true;
     RECT rect = { .left = 0, .top = 0, .right = w, .bottom = h };
-    AdjustWindowRectEx(&rect, win_style, FALSE, win_ex_style);
+    AdjustWindowRectEx(&rect, state.win_style, FALSE, state.win_ex_style);
     const int win_width = rect.right - rect.left;
     const int win_height = rect.bottom - rect.top;
-    hwnd = CreateWindowExW(
-        win_ex_style,       // dwExStyle
+    state.hwnd = CreateWindowExW(
+        state.win_ex_style, // dwExStyle
         L"SOKOLD3D11",      // lpClassName
         title,              // lpWindowName
-        win_style,          // dwStyle
+        state.win_style,    // dwStyle
         CW_USEDEFAULT,      // X
         CW_USEDEFAULT,      // Y
         win_width,          // nWidth
@@ -71,11 +77,11 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         NULL,               // hMenu
         GetModuleHandle(NULL),  //hInstance
         NULL);              // lpParam
-    ShowWindow(hwnd, SW_SHOW);
-    in_create_window = false;
+    ShowWindow(state.hwnd, SW_SHOW);
+    state.in_create_window = false;
 
     /* create device and swap chain */
-    swap_chain_desc = (DXGI_SWAP_CHAIN_DESC) {
+    state.swap_chain_desc = (DXGI_SWAP_CHAIN_DESC) {
         .BufferDesc = {
             .Width = w,
             .Height = h,
@@ -85,13 +91,13 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
                 .Denominator = 1
             }
         },
-        .OutputWindow = hwnd,
+        .OutputWindow = state.hwnd,
         .Windowed = true,
         .SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
         .BufferCount = 1,
         .SampleDesc = {
-            .Count = sample_count,
-            .Quality = sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0
+            .Count = state.sample_count,
+            .Quality = state.sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0
         },
         .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT
     };
@@ -108,97 +114,96 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         NULL,                       /* pFeatureLevels */
         0,                          /* FeatureLevels */
         D3D11_SDK_VERSION,          /* SDKVersion */
-        &swap_chain_desc,           /* pSwapChainDesc */
-        &swap_chain,                /* ppSwapChain */
-        &device,                    /* ppDevice */
+        &state.swap_chain_desc,     /* pSwapChainDesc */
+        &state.swap_chain,          /* ppSwapChain */
+        &state.device,              /* ppDevice */
         &feature_level,             /* pFeatureLevel */
-        &device_context);           /* ppImmediateContext */
-    assert(SUCCEEDED(hr) && swap_chain && device && device_context);
+        &state.device_context);     /* ppImmediateContext */
+    assert(SUCCEEDED(hr) && state.swap_chain && state.device && state.device_context);
 
     /* default render target and depth-stencil-buffer */
     d3d11_create_default_render_target();
 }
 
-void d3d11_shutdown() {
+void d3d11_shutdown(void) {
     d3d11_destroy_default_render_target();
-    SAFE_RELEASE(IDXGISwapChain, swap_chain);
-    SAFE_RELEASE(ID3D11DeviceContext, device_context);
-    SAFE_RELEASE(ID3D11Device, device);
-    DestroyWindow(hwnd); hwnd = 0;
+    SAFE_RELEASE(IDXGISwapChain, state.swap_chain);
+    SAFE_RELEASE(ID3D11DeviceContext, state.device_context);
+    SAFE_RELEASE(ID3D11Device, state.device);
+    DestroyWindow(state.hwnd); state.hwnd = 0;
     UnregisterClassW(L"SOKOLD3D11", GetModuleHandleW(NULL));
 }
 
-void d3d11_create_default_render_target() {
+void d3d11_create_default_render_target(void) {
     HRESULT hr;
-    hr = IDXGISwapChain_GetBuffer(swap_chain, 0, &IID_ID3D11Texture2D, (void**)&render_target);
-    assert(SUCCEEDED(hr) && render_target);
-    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource*)render_target, NULL, &render_target_view);
-    assert(SUCCEEDED(hr) && render_target_view);
+    hr = IDXGISwapChain_GetBuffer(state.swap_chain, 0, &IID_ID3D11Texture2D, (void**)&state.render_target);
+    assert(SUCCEEDED(hr) && state.render_target);
+    hr = ID3D11Device_CreateRenderTargetView(state.device, (ID3D11Resource*)state.render_target, NULL, &state.render_target_view);
+    assert(SUCCEEDED(hr) && state.render_target_view);
 
     D3D11_TEXTURE2D_DESC ds_desc = {
-        .Width = width,
-        .Height = height,
+        .Width = state.width,
+        .Height = state.height,
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-        .SampleDesc = swap_chain_desc.SampleDesc,
+        .SampleDesc = state.swap_chain_desc.SampleDesc,
         .Usage = D3D11_USAGE_DEFAULT,
         .BindFlags = D3D11_BIND_DEPTH_STENCIL,
     };
-    hr = ID3D11Device_CreateTexture2D(device, &ds_desc, NULL, &depth_stencil_buffer);
-    assert(SUCCEEDED(hr) && depth_stencil_buffer);
+    hr = ID3D11Device_CreateTexture2D(state.device, &ds_desc, NULL, &state.depth_stencil_buffer);
+    assert(SUCCEEDED(hr) && state.depth_stencil_buffer);
 
-    const int sample_count = swap_chain_desc.SampleDesc.Count;
     D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc = {
         .Format = ds_desc.Format,
-        .ViewDimension = sample_count > 1 ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D
+        .ViewDimension = state.sample_count > 1 ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D
     };
-    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource*)depth_stencil_buffer, &dsv_desc, &depth_stencil_view);
-    assert(SUCCEEDED(hr) && depth_stencil_view);
+    hr = ID3D11Device_CreateDepthStencilView(state.device, (ID3D11Resource*)state.depth_stencil_buffer, &dsv_desc, &state.depth_stencil_view);
+    assert(SUCCEEDED(hr) && state.depth_stencil_view);
 }
 
-void d3d11_destroy_default_render_target() {
-    SAFE_RELEASE(ID3D11Texture2D, render_target);
-    SAFE_RELEASE(ID3D11RenderTargetView, render_target_view);
-    SAFE_RELEASE(ID3D11Texture2D, depth_stencil_buffer);
-    SAFE_RELEASE(ID3D11DepthStencilView, depth_stencil_view);
+void d3d11_destroy_default_render_target(void) {
+    SAFE_RELEASE(ID3D11Texture2D, state.render_target);
+    SAFE_RELEASE(ID3D11RenderTargetView, state.render_target_view);
+    SAFE_RELEASE(ID3D11Texture2D, state.depth_stencil_buffer);
+    SAFE_RELEASE(ID3D11DepthStencilView, state.depth_stencil_view);
 }
 
-void d3d11_update_default_render_target() {
-    if (swap_chain) {
+void d3d11_update_default_render_target(void) {
+    if (state.swap_chain) {
         d3d11_destroy_default_render_target();
-        IDXGISwapChain_ResizeBuffers(swap_chain, 1, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        IDXGISwapChain_ResizeBuffers(state.swap_chain, 1, state.width, state.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         d3d11_create_default_render_target();
     }
 }
 
-bool d3d11_process_events() {
+bool d3d11_process_events(void) {
     MSG msg;
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
         if (WM_QUIT == msg.message) {
-            quit_requested = true;
+            state.quit_requested = true;
         }
         else {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
     } 
-    return !quit_requested;
+    return !state.quit_requested;
 }
 
-void d3d11_present() {
-    IDXGISwapChain_Present(swap_chain, 1, 0);
+void d3d11_present(void) {
+    IDXGISwapChain_Present(state.swap_chain, 1, 0);
     /* handle window resizing */
     RECT r;
-    if (GetClientRect(hwnd, &r)) {
+    if (GetClientRect(state.hwnd, &r)) {
         const int cur_width = r.right - r.left;
         const int cur_height = r.bottom - r.top;
-        if (((cur_width > 0) && (cur_width != width)) ||
-            ((cur_height > 0) && (cur_height != height))) 
+        if (((cur_width > 0) && (cur_width != state.width)) ||
+            ((cur_height > 0) && (cur_height != state.height))) 
         {
             /* need to reallocate the default render target */
-            width = cur_width;
-            height = cur_height;
+            state.width = cur_width;
+            state.height = cur_height;
             d3d11_update_default_render_target();
         }
     }
@@ -207,55 +212,55 @@ void d3d11_present() {
 LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_CLOSE:
-            quit_requested = true;
+            state.quit_requested = true;
             return 0;
         case WM_ERASEBKGND:
             return TRUE;
         case WM_LBUTTONDOWN:
-            if (mouse_btn_down_func) {
-                mouse_btn_down_func(0);
+            if (state.mouse_btn_down_func) {
+                state.mouse_btn_down_func(0);
             }
             break;
         case WM_RBUTTONDOWN:
-            if (mouse_btn_down_func) {
-                mouse_btn_down_func(1);
+            if (state.mouse_btn_down_func) {
+                state.mouse_btn_down_func(1);
             }
             break;
         case WM_LBUTTONUP:
-            if (mouse_btn_up_func) {
-                mouse_btn_up_func(0);
+            if (state.mouse_btn_up_func) {
+                state.mouse_btn_up_func(0);
             }
             break;
         case WM_RBUTTONUP:
-            if (mouse_btn_up_func) {
-                mouse_btn_up_func(1);
+            if (state.mouse_btn_up_func) {
+                state.mouse_btn_up_func(1);
             }
             break;
         case WM_MOUSEMOVE:
-            if (mouse_pos_func) {
+            if (state.mouse_pos_func) {
                 const int x = GET_X_LPARAM(lParam);
                 const int y = GET_Y_LPARAM(lParam);
-                mouse_pos_func((float)x, (float)y);
+                state.mouse_pos_func((float)x, (float)y);
             }
             break;
         case WM_MOUSEWHEEL:
-            if (mouse_wheel_func) {
-                mouse_wheel_func((float)((SHORT)HIWORD(wParam) / 30.0f));
+            if (state.mouse_wheel_func) {
+                state.mouse_wheel_func((float)((SHORT)HIWORD(wParam) / 30.0f));
             }
             break;
         case WM_CHAR:
-            if (char_func) {
-                char_func((wchar_t)wParam);
+            if (state.char_func) {
+                state.char_func((wchar_t)wParam);
             }
             break;
         case WM_KEYDOWN:
-            if (key_down_func) {
-                key_down_func((int)wParam);
+            if (state.key_down_func) {
+                state.key_down_func((int)wParam);
             }
             break;
         case WM_KEYUP:
-            if (key_up_func) {
-                key_up_func((int)wParam);
+            if (state.key_up_func) {
+                state.key_up_func((int)wParam);
             }
             break;
         default:
@@ -264,55 +269,67 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
-const void* d3d11_device() { 
-    return (const void*) device;
+static const void* d3d11_device(void) { 
+    return (const void*) state.device;
 }
 
-const void* d3d11_device_context() {
-    return (const void*) device_context;
+static const void* d3d11_device_context(void) {
+    return (const void*) state.device_context;
 }
 
-const void* d3d11_render_target_view() {
-    return (const void*) render_target_view;
+static const void* d3d11_render_target_view(void) {
+    return (const void*) state.render_target_view;
 }
 
-const void* d3d11_depth_stencil_view() {
-    return (const void*) depth_stencil_view;
+static const void* d3d11_depth_stencil_view(void) {
+    return (const void*) state.depth_stencil_view;
 }
 
-int d3d11_width() {
-    return width;
+sg_context_desc d3d11_get_context(void) {
+    return (sg_context_desc) {
+        .sample_count = state.sample_count,
+        .d3d11 = {
+            .device = d3d11_device(),
+            .device_context = d3d11_device_context(),
+            .render_target_view_cb = d3d11_render_target_view,
+            .depth_stencil_view_cb = d3d11_depth_stencil_view
+        }
+    };
+}
+
+int d3d11_width(void) {
+    return state.width;
 }
 
 int d3d11_height() {
-    return height;
+    return state.height;
 }
 
 /* register input callbacks */
 void d3d11_key_down(d3d11_key_func f) {
-    key_down_func = f;
+    state.key_down_func = f;
 }
 
 void d3d11_key_up(d3d11_key_func f) {
-    key_up_func = f;
+    state.key_up_func = f;
 }
 
 void d3d11_char(d3d11_char_func f) {
-    char_func = f;
+    state.char_func = f;
 }
 
 void d3d11_mouse_btn_down(d3d11_mouse_btn_func f) {
-    mouse_btn_down_func = f;
+    state.mouse_btn_down_func = f;
 }
 
 void d3d11_mouse_btn_up(d3d11_mouse_btn_func f) {
-    mouse_btn_up_func = f;
+    state.mouse_btn_up_func = f;
 }
 
 void d3d11_mouse_pos(d3d11_mouse_pos_func f) {
-    mouse_pos_func = f;
+    state.mouse_pos_func = f;
 }
 
 void d3d11_mouse_wheel(d3d11_mouse_wheel_func f) {
-    mouse_wheel_func = f;
+    state.mouse_wheel_func = f;
 }

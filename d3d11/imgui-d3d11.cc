@@ -33,10 +33,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // setup d3d11 app wrapper, sokol_gfx, sokol_time
     d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
     sg_desc desc = { };
-    desc.context.d3d11.device = d3d11_device();
-    desc.context.d3d11.device_context = d3d11_device_context();
-    desc.context.d3d11.render_target_view_cb = d3d11_render_target_view;
-    desc.context.d3d11.depth_stencil_view_cb = d3d11_depth_stencil_view;
+    desc.context = d3d11_get_context();
     sg_setup(&desc);
     stm_setup();
 

@@ -13,12 +13,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context.d3d11 = {
-            .device = d3d11_device(),
-            .device_context = d3d11_device_context(),
-            .render_target_view_cb = d3d11_render_target_view,
-            .depth_stencil_view_cb = d3d11_depth_stencil_view
-        }
+        .context = d3d11_get_context()
     });
 
     /* initial pass action: clear to red */

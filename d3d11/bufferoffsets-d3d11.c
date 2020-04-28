@@ -15,17 +15,12 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
-    const int msaa_samples = 4;
+    const int sample_count = 4;
     const int width = 800;
     const int height = 600;
-    d3d11_init(width, height, msaa_samples, L"Sokol Buffer Offsets D3D11");
+    d3d11_init(width, height, sample_count, L"Sokol Buffer Offsets D3D11");
     sg_setup(&(sg_desc){
-        .context.d3d11 = {
-            .device = d3d11_device(),
-            .device_context = d3d11_device_context(),
-            .render_target_view_cb = d3d11_render_target_view,
-            .depth_stencil_view_cb = d3d11_depth_stencil_view
-        }
+        .context = d3d11_get_context()
     });
 
     /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */

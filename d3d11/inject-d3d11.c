@@ -34,17 +34,12 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     /* setup d3d11 app wrapper and sokol_gfx */
-    const int msaa_samples = 4;
+    const int sample_count = 4;
     const int width = 640;
     const int height = 480;
-    d3d11_init(width, height, msaa_samples, L"Sokol Injected Resources D3D11");
+    d3d11_init(width, height, sample_count, L"Sokol Injected Resources D3D11");
     sg_setup(&(sg_desc){
-        .context.d3d11 = {
-            .device = d3d11_device(),
-            .device_context = d3d11_device_context(),
-            .render_target_view_cb = d3d11_render_target_view,
-            .depth_stencil_view_cb = d3d11_depth_stencil_view
-        }
+        .context = d3d11_get_context()
     });
 
     /* create native D3D11 vertex and index buffers */
@@ -88,7 +83,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    ID3D11Device* d3d11_dev = (ID3D11Device*) d3d11_device();
+    ID3D11Device* d3d11_dev = (ID3D11Device*) d3d11_get_context().d3d11.device;
     D3D11_BUFFER_DESC d3d11_vbuf_desc = {
         .ByteWidth = sizeof(vertices),
         .Usage = D3D11_USAGE_IMMUTABLE,
@@ -212,7 +207,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = msaa_samples
         }
     });
 
