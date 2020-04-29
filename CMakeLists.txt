@@ -6,6 +6,10 @@ project(sokol-samples)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 14)
 
+if (SOKOL_USE_WGPU_DAWN)
+    set(USE_DAWN_SDK ON)
+endif()
+
 # include the fips main cmake file
 get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
