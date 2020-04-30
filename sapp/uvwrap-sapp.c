@@ -4,10 +4,9 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "uvwrap-sapp.glsl.h"
-
-#define SAMPLE_COUNT (4)
 
 static struct {
     sg_buffer vbuf;
@@ -18,15 +17,9 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /* a quad vertex buffer with "oversized" texture coords */
     const float quad_vertices[] = {
@@ -81,7 +74,6 @@ static void init(void) {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .depth_write_enabled = true
         },
-        .rasterizer.sample_count = SAMPLE_COUNT
     });
 
     /* pass action to clear to a background color */
@@ -130,7 +122,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
         .window_title = "UV Wrap Modes"
     };
 }

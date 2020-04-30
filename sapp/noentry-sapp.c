@@ -4,7 +4,7 @@
 //  This demonstrates the SOKOL_NO_ENTRY mode of sokol_app.h, in this mode
 //  sokol_app.h doesn't "hijack" the platform's main() function instead the
 //  application must provide this. The sokol_app.h implementation must be
-//  compiled with the SOKOL_NO_ENTRY define (see sokol-noentry.c/.m, 
+//  compiled with the SOKOL_NO_ENTRY define (see sokol-noentry.c/.m,
 //  which is compiled into a static link lib sokol-noentry)
 //
 //  This sample also demonstrates the optional user-data callbacks.
@@ -14,13 +14,12 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_glue.h"
 #if defined(_WIN32)
 #include <Windows.h>    /* WinMain */
 #endif
 #include <stdlib.h>     /* calloc, free */
 #include "noentry-sapp.glsl.h"
-
-#define SAMPLE_COUNT (4)
 
 typedef struct {
     float rx, ry;
@@ -47,7 +46,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cleanup_cb = cleanup,          /* cleanup doesn't need access to the state struct */
         .width = 800,
         .height = 600,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Noentry (sokol-app)",
     });
@@ -58,14 +57,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 void init(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
 
     /* cube vertex buffer */
@@ -140,7 +132,6 @@ void init(void* user_data) {
             .depth_write_enabled = true,
         },
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
-        .rasterizer.sample_count = SAMPLE_COUNT,
     });
 
     /* setup resource bindings */

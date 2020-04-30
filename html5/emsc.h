@@ -27,7 +27,7 @@ void emsc_init(const char* canvas_name, int flags) {
     _emsc_is_webgl2 = false;
     emscripten_get_element_css_size(canvas_name, &_emsc_width, &_emsc_height);
     emscripten_set_canvas_element_size(canvas_name, _emsc_width, _emsc_height);
-    emscripten_set_resize_callback(0, 0, false, _emsc_size_changed);
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, 0, false, _emsc_size_changed);
     EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx;
     EmscriptenWebGLContextAttributes attrs;
     emscripten_webgl_init_context_attributes(&attrs);
@@ -35,14 +35,14 @@ void emsc_init(const char* canvas_name, int flags) {
     if (flags & EMSC_TRY_WEBGL2) {
         attrs.majorVersion = 2;
     }
-    ctx = emscripten_webgl_create_context(0, &attrs);
+    ctx = emscripten_webgl_create_context(canvas_name, &attrs);
     if ((flags & EMSC_TRY_WEBGL2) && ctx) {
         _emsc_is_webgl2 = true;
     }
     if (!ctx) {
         /* WebGL2 not supported, fall back to WebGL */
         attrs.majorVersion = 1;
-        ctx = emscripten_webgl_create_context(0, &attrs);
+        ctx = emscripten_webgl_create_context(canvas_name, &attrs);
     }
     emscripten_webgl_make_context_current(ctx);
 }

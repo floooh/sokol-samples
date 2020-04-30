@@ -1,0 +1,9 @@
+---
+platform: osx
+generator: Xcode
+build_tool: xcodebuild
+build_type: Release
+defines:
+    SOKOL_USE_WGPU_DAWN: ON
+
+

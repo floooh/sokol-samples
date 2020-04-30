@@ -7,6 +7,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include <stddef.h> /* offsetof */
 #include "cubemaprt-sapp.glsl.h"
@@ -77,14 +78,7 @@ static inline float rnd(float min_val, float max_val) {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
     __dbgui_setup(DISPLAY_SAMPLE_COUNT);
 
@@ -180,7 +174,7 @@ void init(void) {
             .sample_count = DISPLAY_SAMPLE_COUNT
         }
     });
-    
+
     /* 1:1 aspect ration projection matrix for offscreen rendering */
     app.offscreen_proj = HMM_Perspective(90.0f, 1.0f, 0.01f, 100.0f);
     app.light_dir = HMM_Vec4v(HMM_NormalizeVec3(HMM_Vec3(-0.75f, 1.0f, 0.0f)), 0.0f);

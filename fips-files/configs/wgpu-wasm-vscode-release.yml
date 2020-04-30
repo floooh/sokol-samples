@@ -1,0 +1,16 @@
+---
+platform: emscripten
+generator: Ninja
+build_tool: vscode_cmake
+build_type: Release
+cmake-toolchain: emscripten.toolchain.cmake
+vscode_additional_defines: [ '__EMSCRIPTEN__', 'SOKOL_IMPL', 'SOKOL_D3D11', 'SOKOL_METAL', 'SOKOL_GLCORE33', 'SOKOL_GLES3', 'SOKOL_GLES2' ]
+defines:
+    FIPS_EMSCRIPTEN_USE_WEBGPU: ON
+    FIPS_NO_ASSERTS_IN_RELEASE: ON
+    FIPS_EMSCRIPTEN_USE_WASM: ON
+    FIPS_EMSCRIPTEN_MEM_INIT_METHOD: 0
+#    FIPS_EMSCRIPTEN_USE_CLOSURE: ON
+    FIPS_EMSCRIPTEN_USE_EMMALLOC: ON
+    FIPS_EMSCRIPTEN_RELATIVE_SHELL_HTML: "webpage/shell.html"
+

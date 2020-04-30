@@ -4,18 +4,17 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state;
 
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol */
-    sg_desc desc = {
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
-    };
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){
+        .context = osx_get_context()
+    });
 
     /* a vertex buffer */
     float vertices[] = {
@@ -25,14 +24,14 @@ void init(const void* mtl_device) {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
 
     /* an index buffer with 2 triangles */
-    uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    const uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .content = indices
@@ -70,7 +69,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline state object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -83,16 +82,16 @@ void init(const void* mtl_device) {
     });
 }
 
-void frame() {
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+static void frame(void) {
+    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 

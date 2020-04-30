@@ -13,5 +13,8 @@
 #if defined(SOKOL_D3D11)
 #undef SOKOL_D3D11
 #endif
+#if defined(SOKOL_WGPU)
+#undef SOKOL_WGPU
+#endif
 #define SOKOL_DUMMY_BACKEND
 

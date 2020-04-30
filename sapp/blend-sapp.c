@@ -5,13 +5,13 @@
 #include <assert.h>
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
 #define NUM_BLEND_FACTORS (15)
 
 static struct {
@@ -27,16 +27,9 @@ static struct {
 void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a default pass action which does not clear, since the entire screen is overwritten anyway */
     state.pass_action = (sg_pass_action) {
@@ -75,7 +68,6 @@ void init(void) {
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* a shader for the blended quads */
@@ -95,15 +87,14 @@ void init(void) {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer.sample_count = MSAA_SAMPLES
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
             const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            /* WebGL exceptions: 
+            /* WebGL exceptions:
                 - "GL_SRC_ALPHA_SATURATE as a destination blend function is disallowed in WebGL 1"
-                - "constant color and constant alpha cannot be used together as source and 
+                - "constant color and constant alpha cannot be used together as source and
                    destination factors in the blend function"
             */
             bool valid = true;
@@ -189,7 +180,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Blend Modes (sokol-app)",
     };

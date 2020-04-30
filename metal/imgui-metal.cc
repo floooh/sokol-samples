@@ -24,12 +24,10 @@ static bool show_test_window = true;
 static bool show_another_window = false;
 static sg_pass_action pass_action;
 
-void init(const void* mtl_device) {
+void init() {
     // setup sokol_gfx and sokol_time
     sg_desc desc = {
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context = osx_get_context()
     };
     sg_setup(&desc);
     stm_setup();
@@ -74,7 +72,7 @@ void init(const void* mtl_device) {
 void frame() {
     const int width = osx_width();
     const int height = osx_height();
-    simgui_new_frame(width, height, stm_laptime(&last_time));
+    simgui_new_frame(width, height, stm_sec(stm_laptime(&last_time)));
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"

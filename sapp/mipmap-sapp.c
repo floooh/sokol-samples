@@ -4,13 +4,12 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "mipmap-sapp.glsl.h"
-
-#define MSAA_SAMPLES (4)
 
 static struct {
     sg_pipeline pip;
@@ -44,16 +43,9 @@ static const uint32_t mip_colors[9] = {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
 
     /* a plane vertex buffer */
     float vertices[] = {
@@ -122,11 +114,10 @@ void init(void) {
             .attrs = {
                 [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
                 [ATTR_vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = sg_make_shader(mipmap_shader_desc()),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES,
     });
 }
 
@@ -148,7 +139,7 @@ void frame(void) {
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        
+
         bind.fs_images[SLOT_tex] = state.img[i];
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
@@ -172,7 +163,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = " (sokol-app)",
     };

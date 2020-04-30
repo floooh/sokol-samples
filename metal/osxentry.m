@@ -125,7 +125,7 @@ static id mtk_view_controller;
     #endif
 
     // call the init function
-    init_func((__bridge const void*)mtl_device);
+    init_func();
     #if TARGET_OS_IPHONE
         return YES;
     #endif
@@ -315,14 +315,23 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     #endif
 }
 
-/* get an MTLRenderPassDescriptor from the MTKView */
-const void* osx_mtk_get_render_pass_descriptor() {
+static const void* osx_mtk_get_render_pass_descriptor() {
     return (__bridge const void*) [mtk_view currentRenderPassDescriptor];
 }
 
-/* get the current CAMetalDrawable from MTKView */
-const void* osx_mtk_get_drawable() {
+static const void* osx_mtk_get_drawable() {
     return (__bridge const void*) [mtk_view currentDrawable];
+}
+
+sg_context_desc osx_get_context(void) {
+    return (sg_context_desc) {
+        .sample_count = sample_count,
+        .metal = {
+            .device = (__bridge const void*) mtl_device,
+            .renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
+            .drawable_cb = osx_mtk_get_drawable
+        }
+    };
 }
 
 /* return current MTKView drawable width */

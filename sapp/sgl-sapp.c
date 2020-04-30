@@ -4,11 +4,10 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include "dbgui/dbgui.h"
-
-#define SAMPLE_COUNT (4)
 
 static struct {
     sg_pass_action pass_action;
@@ -18,20 +17,13 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(SAMPLE_COUNT);
+    __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
-        .sample_count = SAMPLE_COUNT
+        .sample_count = sapp_sample_count()
     });
 
     /* a checkerboard texture */
@@ -246,7 +238,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
-        .sample_count = SAMPLE_COUNT,
+        .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "sokol_gl.h (sokol-app)",
     };

@@ -8,26 +8,25 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+} state;
 
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol, keep pool size small so the bug would trigger earlier */
-    sg_desc desc = {
+    sg_setup(&(sg_desc){
         .buffer_pool_size = 4,
         .image_pool_size = 2,
         .shader_pool_size = 4,
         .pipeline_pool_size = 4,
         .pass_pool_size = 2,
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
-    };
-    sg_setup(&desc);
+        .context = osx_get_context()
+    });
 }
 
-void frame() {
+static void frame(void) {
     /* create and destroy resource each frame, don't do this in real-world code! */
 
     /* a vertex buffer with 3 vertices */
@@ -37,7 +36,7 @@ void frame() {
          0.5f, -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1.0f, 1.0f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -76,7 +75,7 @@ void frame() {
     });
 
     /* create a pipeline object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -87,20 +86,20 @@ void frame() {
     });
 
     /* draw one frame */
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();
 
     /* release the resource we created above */
-    sg_destroy_buffer(bind.vertex_buffers[0]);
-    sg_destroy_pipeline(pip);
+    sg_destroy_buffer(state.bind.vertex_buffers[0]);
+    sg_destroy_pipeline(state.pip);
     sg_destroy_shader(shd);
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 

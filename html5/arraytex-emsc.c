@@ -23,7 +23,7 @@ typedef struct {
     hmm_vec2 offset1;
     hmm_vec2 offset2;
 } params_t;
-    
+
 #define IMG_LAYERS (3)
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
@@ -36,14 +36,14 @@ int main() {
     emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
     /* setup sokol_gfx */
     sg_desc desc = {
-        .gl_force_gles2 = emsc_webgl_fallback()
+        .context.gl.force_gles2 = emsc_webgl_fallback()
     };
     sg_setup(&desc);
     assert(sg_isvalid());
 
     /* not much useful things to do in this demo if WebGL2 is not supported,
        so just drop out and later render a dark red screen */
-    if (desc.gl_force_gles2) {
+    if (desc.context.gl.force_gles2) {
         pass_action = (sg_pass_action){
             .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
         };
@@ -91,7 +91,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -199,7 +199,7 @@ int main() {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
@@ -214,7 +214,7 @@ int main() {
     pass_action = (sg_pass_action){
         .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
     };
-    
+
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
 }

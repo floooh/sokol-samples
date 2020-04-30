@@ -6,13 +6,14 @@
 #include <stddef.h> /* offsetof */
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "mrt-sapp.glsl.h"
 
-#define MSAA_SAMPLES (4)
+#define OFFSCREEN_SAMPLE_COUNT (4)
 
 static struct {
     struct {
@@ -48,7 +49,7 @@ void create_offscreen_pass(int width, int height) {
     sg_destroy_image(state.offscreen.pass_desc.depth_stencil_attachment.image);
 
     /* create offscreen rendertarget images and pass */
-    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? MSAA_SAMPLES : 1;
+    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = width,
@@ -90,16 +91,9 @@ void event(const sapp_event* e) {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(MSAA_SAMPLES);
+    __dbgui_setup(sapp_sample_count());
     if (sapp_gles2()) {
         /* this demo needs GLES3/WebGL */
         return;
@@ -207,7 +201,7 @@ void init(void) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
+            .sample_count = OFFSCREEN_SAMPLE_COUNT
         },
         .label = "offscreen pipeline"
     });
@@ -236,7 +230,6 @@ void init(void) {
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES,
         .label = "fullscreen quad pipeline"
     });
 
@@ -257,7 +250,6 @@ void init(void) {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(dbg_shader_desc()),
-        .rasterizer.sample_count = MSAA_SAMPLES,
         .label = "dbgvis quad pipeline"
     }),
     state.dbg.bind = (sg_bindings){
@@ -340,7 +332,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = event,
         .width = 800,
         .height = 600,
-        .sample_count = MSAA_SAMPLES,
+        .sample_count = 4,
         .window_title = "MRT Rendering (sokol-app)",
     };
 }

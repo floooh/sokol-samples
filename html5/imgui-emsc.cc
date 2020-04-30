@@ -75,7 +75,7 @@ int main() {
     io.KeyMap[ImGuiKey_Z] = 90;
 
     // emscripten to ImGui input forwarding
-    emscripten_set_keydown_callback(0, nullptr, true,
+    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, true,
         [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             if (e->keyCode < 512) {
                 ImGui::GetIO().KeysDown[e->keyCode] = true;
@@ -83,7 +83,7 @@ int main() {
             // only forward alpha-numeric keys to browser
             return e->keyCode < 32;
         });
-    emscripten_set_keyup_callback(0, nullptr, true,
+    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, true,
         [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             if (e->keyCode < 512) {
                 ImGui::GetIO().KeysDown[e->keyCode] = false;
@@ -91,7 +91,7 @@ int main() {
             // only forward alpha-numeric keys to browser
             return e->keyCode < 32;
         });
-    emscripten_set_keypress_callback(0, nullptr, true,
+    emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, true,
         [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             ImGui::GetIO().AddInputCharacter((ImWchar)e->charCode);
             return true;

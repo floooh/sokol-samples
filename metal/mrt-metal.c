@@ -8,24 +8,25 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
+#define WIDTH (640)
+#define HEIGHT (480)
+#define SAMPLE_COUNT (4)
 
-sg_pass_desc offscreen_pass_desc;
-sg_pass_action offscreen_pass_action;
-sg_pass_action default_pass_action;
-sg_pass offscreen_pass;
-sg_pipeline offscreen_pip;
-sg_bindings offscreen_bind;
-sg_pipeline fsq_pip;
-sg_bindings fsq_bind;
-sg_pipeline dbg_pip;
-sg_bindings dbg_bind;
-
-hmm_mat4 view_proj;
-float rx = 0.0f;
-float ry = 0.0f;
+static struct {
+    sg_pass_desc offscreen_pass_desc;
+    sg_pass_action offscreen_pass_action;
+    sg_pass_action default_pass_action;
+    sg_pass offscreen_pass;
+    sg_pipeline offscreen_pip;
+    sg_bindings offscreen_bind;
+    sg_pipeline fsq_pip;
+    sg_bindings fsq_bind;
+    sg_pipeline dbg_pip;
+    sg_bindings dbg_bind;
+    hmm_mat4 view_proj;
+    float rx;
+    float ry;
+} state;
 
 typedef struct {
     float x, y, z, b;
@@ -39,12 +40,10 @@ typedef struct {
     hmm_vec2 offset;
 } params_t;
 
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context = osx_get_context()
     });
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
@@ -56,11 +55,10 @@ void init(const void* mtl_device) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = MSAA_SAMPLES
     };
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    offscreen_pass_desc = (sg_pass_desc){
+    state.offscreen_pass_desc = (sg_pass_desc){
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
@@ -68,10 +66,10 @@ void init(const void* mtl_device) {
         },
         .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
     };
-    offscreen_pass = sg_make_pass(&offscreen_pass_desc);
+    state.offscreen_pass = sg_make_pass(&state.offscreen_pass_desc);
 
     /* a matching pass action with clear colors */
-    offscreen_pass_action = (sg_pass_action){
+    state.offscreen_pass_action = (sg_pass_action){
         .colors = {
             [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
             [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
@@ -112,7 +110,7 @@ void init(const void* mtl_device) {
         {  1.0f,  1.0f,  1.0f,   0.7f },
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
-    offscreen_bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.offscreen_bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(cube_vertices),
         .content = cube_vertices,
     });
@@ -126,7 +124,7 @@ void init(const void* mtl_device) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(cube_indices),
         .content = cube_indices,
@@ -173,7 +171,7 @@ void init(const void* mtl_device) {
     });
 
     /* pipeline object for the offscreen-rendered cube */
-    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
@@ -193,7 +191,6 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     });
 
@@ -260,25 +257,24 @@ void init(const void* mtl_device) {
     });
 
     /* setup resource binding struct for rendering fullscreen quad */
-    fsq_bind.vertex_buffers[0] = quad_vbuf;
+    state.fsq_bind.vertex_buffers[0] = quad_vbuf;
     for (int i = 0; i < 3; i++) {
-        fsq_bind.fs_images[i] = offscreen_pass_desc.color_attachments[i].image;
+        state.fsq_bind.fs_images[i] = state.offscreen_pass_desc.color_attachments[i].image;
     }
 
     /* the pipeline object to render the fullscreen quad */
-    fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* and a pipeline and resources to render debug-visualization quads with the content
        of the offscreen render targets (images will be filled right before rendering
     */
-    dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
             .layout = {
                 .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
             },
@@ -308,12 +304,11 @@ void init(const void* mtl_device) {
                     "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
                     "}\n"
             }),
-            .rasterizer.sample_count = MSAA_SAMPLES
         });
-    dbg_bind.vertex_buffers[0] = quad_vbuf;
+    state.dbg_bind.vertex_buffers[0] = quad_vbuf;
 
     /* default pass action, no clear needed, since whole screen is overwritten */
-    default_pass_action = (sg_pass_action){
+    state.default_pass_action = (sg_pass_action){
         .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
@@ -326,51 +321,51 @@ void init(const void* mtl_device) {
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
+    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
-void frame() {
+static void frame(void) {
     offscreen_params_t offscreen_params;
     params_t params;
-    rx += 1.0f; ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    offscreen_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
+    offscreen_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+    params.offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f);
 
     /* render cube into MRT offscreen render targets */
-    sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_pipeline(offscreen_pip);
-    sg_apply_bindings(&offscreen_bind);
+    sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
+    sg_apply_pipeline(state.offscreen_pip);
+    sg_apply_bindings(&state.offscreen_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* render fullscreen quad with the 'composed image' */
-    sg_begin_default_pass(&default_pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(fsq_pip);
-    sg_apply_bindings(&fsq_bind);
+    sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.fsq_pip);
+    sg_apply_bindings(&state.fsq_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
     sg_draw(0, 4, 1);
 
     /* render the small debug quads */
-    sg_apply_pipeline(dbg_pip);
+    sg_apply_pipeline(state.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
-        sg_apply_bindings(&dbg_bind);
+        state.dbg_bind.fs_images[0] = state.offscreen_pass_desc.color_attachments[i].image;
+        sg_apply_bindings(&state.dbg_bind);
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol MRT (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol MRT (Metal)", init, frame, shutdown);
     return 0;
 }

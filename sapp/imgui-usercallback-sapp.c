@@ -9,6 +9,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -80,14 +81,7 @@ static uint16_t cube_indices[] = {
 void init(void) {
     // setup sokol-gfx, sokol-imgui and sokol-gl
     sg_setup(&(sg_desc){
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view,
-        .gl_force_gles2 = sapp_gles2()
+        .context = sapp_sgcontext()
     });
     simgui_setup(&(simgui_desc_t){ 0 });
     sgl_setup(&(sgl_desc_t){ 0 });

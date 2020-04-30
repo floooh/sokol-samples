@@ -54,10 +54,10 @@ int main() {
 
     /* setup sokol_gfx */
     sg_desc desc = {
-        .gl_force_gles2 = emsc_webgl_fallback()
+        .context.gl.force_gles2 = emsc_webgl_fallback()
     };
     sg_setup(&desc);
-    
+
     /* a plane vertex buffer */
     float vertices[] = {
         -1.0, -1.0, 0.0,  0.0, 0.0,
@@ -160,7 +160,7 @@ int main() {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -176,7 +176,7 @@ void draw() {
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    
+
     vs_params_t vs_params;
     r += 0.1f;
     hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -188,7 +188,7 @@ void draw() {
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        
+
         bind.fs_images[0] = img[i];
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));

@@ -11,31 +11,30 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 
-const int WIDTH = 640;
-const int HEIGHT = 480;
-const int MSAA_SAMPLES = 4;
-const int IMG_WIDTH = 32;
-const int IMG_HEIGHT = 32;
+#define WIDTH (640)
+#define HEIGHT (480)
+#define SAMPLE_COUNT (4)
+#define IMG_WIDTH (32)
+#define IMG_HEIGHT (32)
 
-uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
-
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
-float rx, ry;
-uint32_t counter;
-hmm_mat4 view_proj;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+    float rx, ry;
+    uint32_t counter;
+    hmm_mat4 view_proj;
+    uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
+} state;
 
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-void init(const void* mtl_device) {
+static void init(void) {
     /* setup sokol_gfx */
     sg_desc desc = {
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context = osx_get_context()
     };
     sg_setup(&desc);
 
@@ -95,13 +94,13 @@ void init(const void* mtl_device) {
         .size = sizeof(vertices),
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
     };
-    bind.index_buffer = sg_make_buffer(&ibuf_desc);
+    state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
     /* create dynamically updated Metal texture objects, these will
        be rotated through by sokol_gfx as they are updated, so we need
@@ -131,7 +130,7 @@ void init(const void* mtl_device) {
         img_desc.mtl_textures[i] = (__bridge const void*) mtl_tex[i];
     }
     sg_reset_state_cache();
-    bind.fs_images[0] = sg_make_image(&img_desc);
+    state.bind.fs_images[0] = sg_make_image(&img_desc);
 
     /* a shader */
     sg_shader_desc shader_desc = {
@@ -194,57 +193,56 @@ void init(const void* mtl_device) {
         },
         .rasterizer = {
             .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = MSAA_SAMPLES
         }
     };
-    pip = sg_make_pipeline(&pip_desc);
+    state.pip = sg_make_pipeline(&pip_desc);
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
+    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
-void frame() {
+static void frame(void) {
     /* compute model-view-projection matrix for vertex shader */
     vs_params_t vs_params;
-    rx += 1.0f; ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 1.0f; state.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
     /* update texture image with some generated pixel data */
     for (int y = 0; y < IMG_WIDTH; y++) {
         for (int x = 0; x < IMG_HEIGHT; x++) {
-            pixels[y * IMG_WIDTH + x] = 0xFF000000 |
-                         (counter & 0xFF)<<16 |
-                         ((counter*3) & 0xFF)<<8 |
-                         ((counter*23) & 0xFF);
-            counter++;
+            state.pixels[y * IMG_WIDTH + x] = 0xFF000000 |
+                         (state.counter & 0xFF)<<16 |
+                         ((state.counter*3) & 0xFF)<<8 |
+                         ((state.counter*23) & 0xFF);
+            state.counter++;
         }
     }
-    counter++;
+    state.counter++;
     sg_image_content content = {
-        .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
+        .subimage[0][0] = { .ptr = state.pixels, .size = sizeof(state.pixels) }
     };
-    sg_update_image(bind.fs_images[0], &content);
+    sg_update_image(state.bind.fs_images[0], &content);
 
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Resource Injection (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Resource Injection (Metal)", init, frame, shutdown);
     return 0;
 }
 

@@ -9,9 +9,10 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
-const int MSAA_SAMPLES = 4;
+#define WIDTH (800)
+#define HEIGHT (600)
+#define SAMPLE_COUNT (4)
+#define NUM_BLEND_FACTORS (15)
 
 typedef struct {
     hmm_mat4 mvp;
@@ -21,29 +22,28 @@ typedef struct {
     float tick;
 } fs_params_t;
 
-sg_bindings bind;
-#define NUM_BLEND_FACTORS (15)
-sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
-sg_pipeline bg_pip;
-float r = 0.0f;
-hmm_mat4 view_proj;
-vs_params_t vs_params;
-fs_params_t fs_params;
-
-/* a pass action which does not clear, since the entire screen is overwritten anyway */
-sg_pass_action pass_action = {
-    .colors[0].action = SG_ACTION_DONTCARE ,
-    .depth.action = SG_ACTION_DONTCARE,
-    .stencil.action = SG_ACTION_DONTCARE
+struct {
+    sg_pass_action pass_action;
+    sg_bindings bind;
+    sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
+    sg_pipeline bg_pip;
+    float r;
+    hmm_mat4 view_proj;
+    vs_params_t vs_params;
+    fs_params_t fs_params;
+} state = {
+    /* a pass action which does not clear, since the entire screen is overwritten anyway */
+    .pass_action = {
+        .colors[0].action = SG_ACTION_DONTCARE ,
+        .depth.action = SG_ACTION_DONTCARE,
+        .stencil.action = SG_ACTION_DONTCARE
+    }
 };
 
-void init(const void* mtl_device) {
-    /* setup sokol */
+static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .mtl_device = mtl_device,
-        .mtl_renderpass_descriptor_cb = osx_mtk_get_render_pass_descriptor,
-        .mtl_drawable_cb = osx_mtk_get_drawable
+        .context = osx_get_context()
     });
 
     /* a quad vertex buffer */
@@ -54,7 +54,7 @@ void init(const void* mtl_device) {
         -1.0f, +1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f,
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
         .content = vertices
     });
@@ -95,7 +95,7 @@ void init(const void* mtl_device) {
     });
 
     /* a pipeline state object for rendering the background quad */
-    bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* we use the same vertex buffer as for the colored 3D quads,
            but only the first two floats from the position, need to
            provide a stride to skip the gap to the next vertex
@@ -108,7 +108,6 @@ void init(const void* mtl_device) {
         },
         .shader = bg_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* a shader for the blended quads */
@@ -165,7 +164,6 @@ void init(const void* mtl_device) {
             .enabled = true,
             .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
         },
-        .rasterizer.sample_count = MSAA_SAMPLES
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
@@ -173,28 +171,28 @@ void init(const void* mtl_device) {
             pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
             pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
             pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
-            pips[src][dst] = sg_make_pipeline(&pip_desc);
-            assert(pips[src][dst].id != SG_INVALID_ID);
+            state.pips[src][dst] = sg_make_pipeline(&pip_desc);
+            assert(state.pips[src][dst].id != SG_INVALID_ID);
         }
     }
 
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    view_proj = HMM_MultiplyMat4(proj, view);
+    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
-void frame() {
+static void frame(void) {
     sg_begin_default_pass(&(sg_pass_action){0}, osx_width(), osx_height());
 
     /* draw a background quad */
-    sg_apply_pipeline(bg_pip);
-    sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
+    sg_apply_pipeline(state.bg_pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &state.fs_params, sizeof(state.fs_params));
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
-    float r0 = r;
+    float r0 = state.r;
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
             /* compute new model-view-proj matrix */
@@ -202,25 +200,25 @@ void frame() {
             const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
             const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-            vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+            state.vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
-            sg_apply_pipeline(pips[src][dst]);
-            sg_apply_bindings(&bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+            sg_apply_pipeline(state.pips[src][dst]);
+            sg_apply_bindings(&state.bind);
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &state.vs_params, sizeof(state.vs_params));
             sg_draw(0, 4, 1);
         }
     }
     sg_end_pass();
     sg_commit();
-    r += 0.6f;
-    fs_params.tick += 1.0f;
+    state.r += 0.6f;
+    state.fs_params.tick += 1.0f;
 }
 
-void shutdown() {
+static void shutdown(void) {
     sg_shutdown();
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, MSAA_SAMPLES, "Sokol Blend (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Blend (Metal)", init, frame, shutdown);
 }
 

@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "bufferoffsets-sapp.glsl.h"
 
@@ -27,16 +28,9 @@ typedef struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .gl_force_gles2 = sapp_gles2(),
-        .mtl_device = sapp_metal_get_device(),
-        .mtl_renderpass_descriptor_cb = sapp_metal_get_renderpass_descriptor,
-        .mtl_drawable_cb = sapp_metal_get_drawable,
-        .d3d11_device = sapp_d3d11_get_device(),
-        .d3d11_device_context = sapp_d3d11_get_device_context(),
-        .d3d11_render_target_view_cb = sapp_d3d11_get_render_target_view,
-        .d3d11_depth_stencil_view_cb = sapp_d3d11_get_depth_stencil_view
+        .context = sapp_sgcontext()
     });
-    __dbgui_setup(1);
+    __dbgui_setup(sapp_sample_count());
 
     /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
     vertex_t vertices[7] = {
@@ -49,7 +43,7 @@ void init(void) {
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
-        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }        
+        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }
     };
     uint16_t indices[9] = {
         0, 1, 2,
