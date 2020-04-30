@@ -1,31 +1,28 @@
 //------------------------------------------------------------------------------
 //  imgui-metal.c
-//  Since this will only need to compile with clang we can use
-//  mix designated initializers and C++ code.
+//  Since this will only need to compile with clang we can
+//  mix C99 designated initializers and C++ code.
+//
+//  NOTE: this demo is using the sokol_imgui.h utility header which
+//  implements a renderer for Dear ImGui on top of sokol_gfx.h, but without
+//  sokol_app.h (via the config define SOKOL_IMGUI_NO_SOKOL_APP).
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #include "imgui.h"
+#define SOKOL_METAL
+#define SOKOL_IMGUI_IMPL
+#define SOKOL_IMGUI_NO_SOKOL_APP
+#include "sokol_imgui.h"
 
-const int WIDTH = 1024;
-const int HEIGHT = 768;
-const int MaxVertices = (1<<16);
-const int MaxIndices = MaxVertices * 3;
+static const int WIDTH = 1024;
+static const int HEIGHT = 768;
 
-uint64_t last_time = 0;
-bool show_test_window = true;
-bool show_another_window = false;
-
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
-
-typedef struct {
-    ImVec2 disp_size;
-} vs_params_t;
-
-void draw_imgui(ImDrawData*);
+static uint64_t last_time = 0;
+static bool show_test_window = true;
+static bool show_another_window = false;
+static sg_pass_action pass_action;
 
 void init() {
     // setup sokol_gfx and sokol_time
@@ -34,13 +31,11 @@ void init() {
     };
     sg_setup(&desc);
     stm_setup();
+    simgui_desc_t simgui_desc = { };
+    simgui_setup(&simgui_desc);
 
     // setup the imgui environment
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr;
-    io.Fonts->AddFontDefault();
     io.KeyMap[ImGuiKey_Tab] = 0x30;
     io.KeyMap[ImGuiKey_LeftArrow] = 0x7B;
     io.KeyMap[ImGuiKey_RightArrow] = 0x7C;
@@ -68,99 +63,6 @@ void init() {
     osx_key_up([] (int key)             { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
     osx_char([] (wchar_t c)             { ImGui::GetIO().AddInputCharacter(c); });
 
-    // dynamic vertex- and index-buffers for ImGui-generated geometry
-    sg_buffer_desc vbuf_desc = {
-        .usage = SG_USAGE_STREAM,
-        .size = MaxVertices * sizeof(ImDrawVert)
-    };
-    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
-    sg_buffer_desc ibuf_desc = {
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .usage = SG_USAGE_STREAM,
-        .size = MaxIndices * sizeof(ImDrawIdx)
-    };
-    bind.index_buffer = sg_make_buffer(&ibuf_desc);
-
-    // font texture for ImGui's default font
-    unsigned char* font_pixels;
-    int font_width, font_height;
-    io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    sg_image_desc img_desc = {
-        .width = font_width,
-        .height = font_height,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = font_pixels,
-            .size = font_width * font_height * 4
-        }
-    };
-    bind.fs_images[0] = sg_make_image(&img_desc);
-
-    // shader object for imgui renering
-    sg_shader_desc shd_desc = {
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float2 disp_size;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float2 pos [[attribute(0)]];\n"
-            "  float2 uv [[attribute(1)]];\n"
-            "  float4 color [[attribute(2)]];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float2 uv;\n"
-            "  float4 color;\n"
-            "};\n"
-            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = float4(((in.pos / params.disp_size)-0.5)*float2(2.0,-2.0), 0.5, 1.0);\n"
-            "  out.uv = in.uv;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
-            "}\n",
-        .fs.images[0].type = SG_IMAGETYPE_2D,
-        .fs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct fs_in {\n"
-            "  float2 uv;\n"
-            "  float4 color;\n"
-            "};\n"
-            "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-            "  return tex.sample(smp, in.uv) * in.color;\n"
-            "}\n"
-    };
-    sg_shader shd = sg_make_shader(&shd_desc);
-
-    // pipeline object for imgui rendering
-    sg_pipeline_desc pip_desc = {
-        .layout = {
-            .buffers[0].stride = sizeof(ImDrawVert),
-            .attrs = {
-                [0] = { .offset=offsetof(ImDrawVert,pos), .format=SG_VERTEXFORMAT_FLOAT2 },
-                [1] = { .offset=offsetof(ImDrawVert,uv), .format=SG_VERTEXFORMAT_FLOAT2 },
-                [2] = { .offset=offsetof(ImDrawVert,col), .format=SG_VERTEXFORMAT_UBYTE4N }
-            }
-        },
-        .shader = shd,
-        .index_type = SG_INDEXTYPE_UINT16,
-        .blend = {
-            .enabled = true,
-            .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
-            .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .color_write_mask = SG_COLORMASK_RGB
-        }
-    };
-    pip = sg_make_pipeline(&pip_desc);
-
     // initial clear color
     pass_action = (sg_pass_action){
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
@@ -170,11 +72,7 @@ void init() {
 void frame() {
     const int width = osx_width();
     const int height = osx_height();
-
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(width, height);
-    io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
-    ImGui::NewFrame();
+    simgui_new_frame(width, height, stm_laptime(&last_time));
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -202,69 +100,17 @@ void frame() {
 
     // the sokol draw pass
     sg_begin_default_pass(&pass_action, width, height);
-    ImGui::Render();
-    draw_imgui(ImGui::GetDrawData());
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
-static void shutdown() {
-    ImGui::DestroyContext();
+void shutdown() {
+    simgui_shutdown();
     sg_shutdown();
 }
 
 int main() {
     osx_start(WIDTH, HEIGHT, 1, "Sokol Dear ImGui (Metal)", init, frame, shutdown);
     return 0;
-}
-
-void draw_imgui(ImDrawData* draw_data) {
-    assert(draw_data);
-    if (draw_data->CmdListsCount == 0) {
-        return;
-    }
-
-    // render the command list
-    sg_apply_pipeline(pip);
-    vs_params_t vs_params;
-    vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
-    vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-    for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
-        const ImDrawList* cl = draw_data->CmdLists[cl_index];
-
-        // append vertices and indices to buffers, record start offsets in bindings
-        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
-        /* don't render anything if the buffer is in overflow state (this is also
-            checked internally in sokol_gfx, draw calls that attempt from
-            overflowed buffers will be silently dropped)
-        */
-        if (sg_query_buffer_overflow(bind.vertex_buffers[0]) ||
-            sg_query_buffer_overflow(bind.index_buffer))
-        {
-            continue;
-        }
-        bind.vertex_buffer_offsets[0] = vb_offset;
-        bind.index_buffer_offset = ib_offset;
-        sg_apply_bindings(&bind);
-
-        int base_element = 0;
-        for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
-            if (pcmd.UserCallback) {
-                pcmd.UserCallback(cl, &pcmd);
-            }
-            else {
-                const int scissor_x = (int) (pcmd.ClipRect.x);
-                const int scissor_y = (int) (pcmd.ClipRect.y);
-                const int scissor_w = (int) (pcmd.ClipRect.z - pcmd.ClipRect.x);
-                const int scissor_h = (int) (pcmd.ClipRect.w - pcmd.ClipRect.y);
-                sg_apply_scissor_rect(scissor_x, scissor_y, scissor_w, scissor_h, true);
-                sg_draw(base_element, pcmd.ElemCount, 1);
-            }
-            base_element += pcmd.ElemCount;
-        }
-    }
 }

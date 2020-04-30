@@ -6,19 +6,21 @@ asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
 
 Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8bit
 
-*Work In Progress*
-
 ### Build Status:
 
 |Platform|Build Status|
 |--------|------|
-|GH Actions (OSX/Linux/Win+VS2019/iOS/WASM)|[![Build Status](https://github.com/floooh/sokol-samples/workflows/build_and_test/badge.svg)](https://github.com/floooh/sokol-samples/actions)|
-|Travis: (OSX/Linux/Win,VS2017)|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
+|GH Actions (OSX/Linux/Win+VS2019/iOS/WASM/Android)|[![Build Status](https://github.com/floooh/sokol-samples/workflows/build_and_test/badge.svg)](https://github.com/floooh/sokol-samples/actions)|
+|Travis (OSX/Linux/Win,VS2017)|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
 |AppVeyor (Windows,VS2015)|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)|
 
 ## What's New:
 
 - **30-Apr-2020**: New sokol\_gfx.h WebGPU backend samples, and updated all other samples for the breaking changes in sokol\_gfx.h initialization, see the [Updates](https://github.com/floooh/sokol#updates) section in the sokol\_gfx.h README for details!
+
+- **24-Feb-2020**: I have added a [section to the readme](https://github.com/floooh/sokol-samples#how-to-build-without-a-build-system) with examples of how to build (most of) the examples without a build system by invoking the C compiler directly on the command line.
+This might be useful for integration of the sokol headers into your own projects using your
+own preferred build system.
 
 - **22-Jan-2020**: New sample to demonstrate how to render from inside a Dear ImGui user draw callback: [imgui-usercallback-sapp](https://floooh.github.io/sokol-html5/imgui-usercallback-sapp.html)
 
@@ -73,13 +75,15 @@ steps to udpate:
 
 ## How to build
 
+(for examples of how to build without a specific build system, scroll to the end)
+
 Make sure that the following tools are in the path. Exact versions shouldn't
 matter:
 ```
 > python --version
-Python 2.7.10
+Python 2.7.10 (3.x works too)
 > cmake --version
-cmake version 3.8.2
+cmake version 3.8.2 (or later)
 # make is only needed for building through emscripten
 > make --version
 GNU Make 3.81
@@ -229,7 +233,124 @@ native HTML5 sample section
 friends are broken on the MacOS Mojave beta, instead use the
 ```sapp-metal-*``` build configs (GLES on iOS is supported though)
 
-## Thanks to:
+## How to build without a build system
+
+Many samples are simple enough to be built directly on the command line
+without a build system, and the following examples of that might
+be helpful for integrating the sokol headers and/or the sokol sample code
+into your own project with the build system of your choice.
+
+The expected directory structure for building the sokol-samples manually
+is as follows (e.g. those directories must be cloned side-by-side):
+
+```
+sokol-samples
+sokol
+sokol-tools-bin
+```
+
+For instance:
+
+```
+> mkdir scratch
+> cd scratch
+> git clone https://github.com/floooh/sokol-samples
+> git clone https://github.com/floooh/sokol
+> git clone https://github.com/floooh/sokol-tools-bin
+```
+
+Of course, in your own project you can put the sokol headers wherever
+you want (I recommend copying them somewhere into your source directory),
+and you don't have to use the prebuilt sokol-shdc shader compiler either.
+
+> NOTE: for Release builds, you might want to add the compiler's respective
+optimization flags, and provide an ```NDEBUG``` define so that assert() checks
+and the sokol-gfx validation layer are removed (**BUT** please don't do
+this for the Debug/Dev builds because asserts() and the validation
+layer give useful feedback if something goes wrong).
+
+### Building manually on macOS with clang
+
+To build one of the Metal samples:
+
+```sh
+> cd sokol-samples/metal
+> cc cube-metal.c osxentry.m sokol_gfx.m -o cube-metal -fobjc-arc -I../../sokol -framework Metal -framework Cocoa -framework MetalKit -framework Quartz
+```
+
+To build one of the GLFW samples (requires a system-wide glfw install, e.g. ```brew install glfw```):
+
+```sh
+> cd sokol-samples/glfw
+> cc cube-glfw.c flextgl/flextGL.c -o cube-glfw -I../../sokol -lglfw -framework OpenGL -framework Cocoa
+```
+
+To build one of the sokol-app samples for Metal:
+
+```sh
+> cd sokol-samples/sapp
+> ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l metal_macos
+> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -DSOKOL_METAL -fobjc-arc -I../../sokol -I ../libs -framework Metal -framework Cocoa -framework MetalKit -framework Quartz -framework AudioToolbox
+```
+
+To build one of the sokol-app samples for GL on macOS:
+
+```sh
+> cd sokol-samples/sapp
+> ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -fobjc-arc -DSOKOL_GLCORE33 -I../../sokol -I../libs -framework OpenGL -framework Cocoa -framework AudioToolbox
+```
+
+### Building manually on Windows with MSVC
+
+From the ```VSxxxx x64 Native Tools Command Prompt``` (for 64-bit builds)
+or ```Developer Command Prompt for VSxxxx``` (for 32-bit builds):
+
+To build one of the D3D11 samples:
+
+```sh
+> cd sokol-samples\d3d11
+> cl cube-d3d11.c d3d11entry.c /I..\..\sokol
+```
+
+To build one of the sokol-app samples for D3D11:
+
+```sh
+> cd sokol-samples\sapp
+> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5
+> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_D3D11 /I..\..\sokol /I..\libs
+```
+
+To build one of the sokol-app samples for GL on Windows:
+
+```sh
+> cd sokol-samples\sapp
+> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE33 /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
+```
+
+### Building manually on Linux with gcc
+
+On Linux you need the "usual" development-packages for OpenGL development, and
+for the GLFW samples, also the GLFW development package (on Ubuntu it's called
+libglfw3-dev).
+
+To build one of the GLFW samples on Linux:
+
+```sh
+> cd sokol-samples/glfw
+> cc cube-glfw.c flextgl/flextGL.c -o cube-glfw -I../../sokol -lGL -ldl -lm -lglfw3
+```
+
+To build one of the sokol-app samples on Linux:
+
+```sh
+> cd sokol-samples/sapp
+> ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -I../../sokol -I../libs -lGL -ldl -lm -lpthread -lX11 -lasound
+```
+
+## Many Thanks to:
 
 - GLFW: https://github.com/glfw/glfw
 - flextGL: https://github.com/ginkgo/flextGL
