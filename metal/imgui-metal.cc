@@ -72,7 +72,7 @@ void init() {
 void frame() {
     const int width = osx_width();
     const int height = osx_height();
-    simgui_new_frame(width, height, stm_laptime(&last_time));
+    simgui_new_frame(width, height, stm_sec(stm_laptime(&last_time)));
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
