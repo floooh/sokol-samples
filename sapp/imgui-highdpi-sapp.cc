@@ -78,7 +78,7 @@ void frame(void) {
     ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
-    ImGui::Text("NOTE: programmatic quit isn't supported on web and mobile");
+    ImGui::Text("NOTE: programmatic quit isn't supported on mobile");
     if (ImGui::Button("Soft Quit")) {
         sapp_request_quit();
     }
@@ -157,6 +157,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.fullscreen = true;
     desc.high_dpi = true;
     desc.html5_ask_leave_site = html5_ask_leave_site;
+    desc.html5_enable_shutdown = true;
     desc.ios_keyboard_resizes_canvas = false;
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
