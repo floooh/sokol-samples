@@ -18,20 +18,32 @@ static struct {
 };
 
 static void init(void) {
+    // setup sokol-gfx
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
     __dbgui_setup(sapp_sample_count());
+
+    // setup sokol-debugtext
+    sdtx_setup(&(sdtx_desc_t){
+        .context = {
+            .color_format = sapp_color_format(),
+            .depth_format = sapp_depth_format(),
+            .sample_count = sapp_sample_count()
+        }
+    });
 }
 
 static void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sdtx_draw();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
+    sdtx_shutdown();
     __dbgui_shutdown();
     sg_shutdown();
 }

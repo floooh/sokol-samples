@@ -15,6 +15,8 @@
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
+#define SOKOL_DEBUGTEXT_IMPL
+#include "sokol_debugtext.h"
 
 static sapp_desc desc;
 
