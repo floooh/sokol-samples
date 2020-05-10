@@ -6,6 +6,7 @@
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
+#define SOKOL_DEBUGTEXT_ALL_FONTS
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
 
