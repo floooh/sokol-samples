@@ -36,6 +36,16 @@ static void init(void) {
 }
 
 static void frame(void) {
+
+    // set virtual canvas size to half display size so that
+    // glyphs are 16x16 display pixels
+    sdtx_canvas(sapp_width()/2, sapp_height()/2);
+    sdtx_home();
+    sdtx_color3f(1.0f, 1.0f, 0.0f);
+    sdtx_puts("Hello World!\n");
+    sdtx_color3b(0, 255, 255);
+    sdtx_puts("1234567890!");
+
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sdtx_draw();
     __dbgui_draw();
