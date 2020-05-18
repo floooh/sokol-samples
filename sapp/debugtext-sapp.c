@@ -28,8 +28,9 @@ static void init(void) {
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
         .context = {
-            .color_format = sapp_color_format(),
-            .depth_format = sapp_depth_format(),
+            // FIXME: the need for a cast here sucks... (latest clang)
+            .color_format = (sg_pixel_format) sapp_color_format(),
+            .depth_format = (sg_pixel_format) sapp_depth_format(),
             .sample_count = sapp_sample_count()
         }
     });
