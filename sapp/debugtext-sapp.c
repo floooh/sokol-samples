@@ -14,7 +14,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 0.5f, 1.0f } }
     }
 };
 
@@ -39,12 +39,17 @@ static void frame(void) {
 
     // set virtual canvas size to half display size so that
     // glyphs are 16x16 display pixels
-    sdtx_canvas(sapp_width()/2, sapp_height()/2);
+    sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
+    sdtx_origin(4.0f, 4.0f);
     sdtx_home();
-    sdtx_color3f(1.0f, 1.0f, 0.0f);
-    sdtx_puts("Hello World!\n");
-    sdtx_color3b(0, 255, 255);
-    sdtx_puts("1234567890!");
+    sdtx_puts("KC85/3 Font: Hello World!\n");
+    sdtx_puts("             1234567890!@#$%^&*()\n\n");
+    sdtx_font(SDTX_FONT_KC854);
+    sdtx_puts("KC85/4 Font: Hello World!\n");
+    sdtx_puts("             1234567890!@#$%^&*()\n\n");
+    sdtx_font(SDTX_FONT_Z1013);
+    sdtx_puts("Z1013 Font:  Hello World!\n");
+    sdtx_puts("             1234567890!@#$%^&*()\n\n");
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sdtx_draw();
