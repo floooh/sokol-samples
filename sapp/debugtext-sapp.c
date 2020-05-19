@@ -14,7 +14,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.125f, 0.25f, 1.0f } }
     }
 };
 
@@ -36,21 +36,41 @@ static void init(void) {
     });
 }
 
+static void print_all_chars(void) {
+    for (int c = 32; c < 256; c++) {
+        sdtx_putc(c);
+        if (((c + 1) & 63) == 0) {
+            sdtx_crlf();
+        }
+    }
+}
+
 static void frame(void) {
 
     // set virtual canvas size to half display size so that
     // glyphs are 16x16 display pixels
     sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
-    sdtx_origin(4.0f, 4.0f);
+    sdtx_origin(0.0f, 16.0f);
     sdtx_home();
-    sdtx_puts("KC85/3 Font: Hello World!\n");
-    sdtx_puts("             1234567890!@#$%^&*()\n\n");
+    sdtx_color3b(0xf4, 0x43, 0x36);
+    sdtx_puts("KC85/3 Font:\n\n");
+    print_all_chars();
+    sdtx_color3b(0x21, 0x96, 0xf3);
     sdtx_font(SDTX_FONT_KC854);
-    sdtx_puts("KC85/4 Font: Hello World!\n");
-    sdtx_puts("             1234567890!@#$%^&*()\n\n");
+    sdtx_puts("\nKC85/4 Font:\n\n");
+    print_all_chars();
+    sdtx_color3b(0x4c, 0xaf, 0x50);
     sdtx_font(SDTX_FONT_Z1013);
-    sdtx_puts("Z1013 Font:  Hello World!\n");
-    sdtx_puts("             1234567890!@#$%^&*()\n\n");
+    sdtx_puts("\nZ1013 Font:\n\n");
+    print_all_chars();
+    sdtx_color3b(0xff, 0xeb, 0x3b);
+    sdtx_font(SDTX_FONT_CPC);
+    sdtx_puts("\nCPC Font:\n\n");
+    print_all_chars();
+    sdtx_font(SDTX_FONT_C64);
+    sdtx_color3b(0x79, 0x86, 0xcb);
+    sdtx_puts("\nC64 Font:\n\n");
+    print_all_chars();
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sdtx_draw();
@@ -71,8 +91,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = __dbgui_event,
-        .width = 640,
-        .height = 480,
+        .width = 1024,
+        .height = 600,
         .gl_force_gles2 = true,
         .window_title = "debugtext-sapp",
     };
