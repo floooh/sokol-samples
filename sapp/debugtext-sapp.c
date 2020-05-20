@@ -36,13 +36,17 @@ static void init(void) {
     });
 }
 
-static void print_all_chars(void) {
+static void print_font(sdtx_font_t font, const char* title, uint8_t r, uint8_t g, uint8_t b) {
+    sdtx_font(font);
+    sdtx_color3b(r, g, b);
+    sdtx_puts(title);
     for (int c = 32; c < 256; c++) {
         sdtx_putc(c);
         if (((c + 1) & 63) == 0) {
             sdtx_crlf();
         }
     }
+    sdtx_crlf();
 }
 
 static void frame(void) {
@@ -52,25 +56,12 @@ static void frame(void) {
     sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
     sdtx_origin(0.0f, 16.0f);
     sdtx_home();
-    sdtx_color3b(0xf4, 0x43, 0x36);
-    sdtx_puts("KC85/3 Font:\n\n");
-    print_all_chars();
-    sdtx_color3b(0x21, 0x96, 0xf3);
-    sdtx_font(SDTX_FONT_KC854);
-    sdtx_puts("\nKC85/4 Font:\n\n");
-    print_all_chars();
-    sdtx_color3b(0x4c, 0xaf, 0x50);
-    sdtx_font(SDTX_FONT_Z1013);
-    sdtx_puts("\nZ1013 Font:\n\n");
-    print_all_chars();
-    sdtx_color3b(0xff, 0xeb, 0x3b);
-    sdtx_font(SDTX_FONT_CPC);
-    sdtx_puts("\nCPC Font:\n\n");
-    print_all_chars();
-    sdtx_font(SDTX_FONT_C64);
-    sdtx_color3b(0x79, 0x86, 0xcb);
-    sdtx_puts("\nC64 Font:\n\n");
-    print_all_chars();
+    print_font(SDTX_FONT_KC853, "KC85/3:\n",      0xf4, 0x43, 0x36);
+    print_font(SDTX_FONT_KC853, "KC85/4:\n",      0x21, 0x96, 0xf3);
+    print_font(SDTX_FONT_Z1013, "Z1013:\n",       0x4c, 0xaf, 0x50);
+    print_font(SDTX_FONT_CPC,   "Amstrad CPC:\n", 0xff, 0xeb, 0x3b);
+    print_font(SDTX_FONT_C64,   "C64:\n",         0x79, 0x86, 0xcb);
+    print_font(SDTX_FONT_ORIC,  "Oric Atmos:\n",  0xff, 0x98, 0x00);
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sdtx_draw();
