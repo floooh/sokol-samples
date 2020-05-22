@@ -82,11 +82,11 @@ static void frame(void) {
             sdtx_puts("\n\t");
             line++;
         }
+        // color scrolling effect:
         const rgb_t rgb = state.color_palette[(c + line + (state.frame_count / 2)) & 15];
         sdtx_color3b(rgb.r, rgb.g, rgb.b);
         sdtx_putc(c);
     }
-    sdtx_crlf();
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sdtx_draw();
