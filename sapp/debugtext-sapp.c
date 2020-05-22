@@ -6,7 +6,6 @@
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
-#define SOKOL_DEBUGTEXT_ALL_FONTS
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
 
@@ -42,11 +41,6 @@ static void init(void) {
             [FONT_C64]   = sdtx_font_c64(),
             [FONT_ORIC]  = sdtx_font_oric()
         },
-        .context = {
-            .color_format = sapp_color_format(),
-            .depth_format = sapp_depth_format(),
-            .sample_count = sapp_sample_count()
-        }
     });
 }
 

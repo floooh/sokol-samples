@@ -8,7 +8,6 @@
 #include "sokol_time.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
-#define SOKOL_DEBUGTEXT_ALL_FONTS
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
 
@@ -50,11 +49,6 @@ static void init(void) {
             [FONT_C64]   = sdtx_font_c64(),
             [FONT_ORIC]  = sdtx_font_oric()
         },
-        .context = {
-            .color_format = sapp_color_format(),
-            .depth_format = sapp_depth_format(),
-            .sample_count = sapp_sample_count()
-        }
     });
 }
 
@@ -103,6 +97,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 640,
         .height = 480,
         .gl_force_gles2 = true,
-        .window_title = "debugtext-printfsapp",
+        .window_title = "debugtext-printf-sapp",
     };
 }
