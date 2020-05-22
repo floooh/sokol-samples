@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
 //  sokol-debugtext-test.c
+//  For best results, run with ASAN and UBSAN.
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #define SOKOL_DEBUGTEXT_IMPL
@@ -162,7 +163,6 @@ UTEST(sokol_debugtext, get_default_context) {
     // getting the default context must always return SDTX_DEFAULT_CONTEXT
     init();
     T(sdtx_get_context().id == SDTX_DEFAULT_CONTEXT.id);
-    T(sdtx_get_context().id == 0);
     shutdown();
 }
 
@@ -325,3 +325,60 @@ UTEST(sokol_debugtext, set_color) {
     shutdown();
 }
 
+UTEST(sokol_debugtext, vertex_overflow) {
+    // overflowing the vertex buffer must not crash
+    init_with(&(sdtx_desc_t){
+        .context.char_buf_size = 8,
+    });
+    for (int i = 0; i < 32; i++) {
+        sdtx_putc('A');
+    }
+    sdtx_puts("1234567890");
+    sdtx_putr("1234567890", 5);
+    sdtx_printf("Hello World %d!\n", 12);
+    T(_sdtx.cur_ctx->cur_vertex_ptr == _sdtx.cur_ctx->max_vertex_ptr);
+    shutdown();
+}
+
+UTEST(sokol_debugtext, context_overflow) {
+    // creating too many contexts should not crash
+    init_with(&(sdtx_desc_t){
+        .context_pool_size = 4,
+    });
+    T(_sdtx.context_pool.pool.size == 5);
+    // one slot is taken by the default context
+    sdtx_context ctx[4];
+    for (int i = 0; i < 4; i++) {
+        ctx[i] = sdtx_make_context(&(sdtx_context_desc_t){ 0 });
+        if (i < 3) {
+            T(ctx[i].id != 0);
+        }
+        else {
+            T(ctx[i].id == 0);
+        }
+    }
+    // destroying an invalid context should not crash
+    for (int i = 0; i < 4; i++) {
+        sdtx_destroy_context(ctx[i]);
+    }
+    shutdown();
+}
+
+UTEST(sokol_debugtext, printf_overflow) {
+    // overflowing the printf formatting buffer should not crash
+    init_with(&(sdtx_desc_t){
+        .printf_buf_size = 8
+    });
+    T(9 == _sdtx.fmt_buf_size);
+    T(16 == sdtx_printf("Hello %d\n", 123456789));
+    T('H' == _sdtx.fmt_buf[0])
+    T('e' == _sdtx.fmt_buf[1])
+    T('l' == _sdtx.fmt_buf[2])
+    T('l' == _sdtx.fmt_buf[3])
+    T('o' == _sdtx.fmt_buf[4])
+    T(' ' == _sdtx.fmt_buf[5])
+    T('1' == _sdtx.fmt_buf[6])
+    T('2' == _sdtx.fmt_buf[7])
+    T(0   == _sdtx.fmt_buf[8])
+    shutdown();
+}
