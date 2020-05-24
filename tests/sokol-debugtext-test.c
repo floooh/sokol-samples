@@ -382,3 +382,35 @@ UTEST(sokol_debugtext, printf_overflow) {
     T(0   == _sdtx.fmt_buf[8])
     shutdown();
 }
+
+UTEST(sokol_debugtext, rewind_after_draw) {
+    // calling sdtx_draw() must rewind the cursor position, font and
+    // vertex pointer, to keep canvas size and origin as is
+    init();
+    sdtx_canvas(256, 128);
+    TFLT(_sdtx.cur_ctx->canvas_size.x, 256);
+    TFLT(_sdtx.cur_ctx->canvas_size.y, 128);
+    sdtx_origin(5, 5);
+    TFLT(_sdtx.cur_ctx->origin.x, 5);
+    TFLT(_sdtx.cur_ctx->origin.y, 5);
+    sdtx_pos(10, 20);
+    TFLT(_sdtx.cur_ctx->pos.x, 10);
+    TFLT(_sdtx.cur_ctx->pos.y, 20);
+    sdtx_font(3);
+    T(_sdtx.cur_ctx->cur_font == 3);
+    sdtx_printf("Hello World!\n");
+    T(_sdtx.cur_ctx->cur_vertex_ptr != _sdtx.cur_ctx->vertices);
+    sg_begin_default_pass(&(sg_pass_action){ 0 }, 256, 256);
+    sdtx_draw();
+    sg_end_pass();
+    sg_commit();
+    TFLT(_sdtx.cur_ctx->canvas_size.x, 256);
+    TFLT(_sdtx.cur_ctx->canvas_size.y, 128);
+    TFLT(_sdtx.cur_ctx->origin.x, 5);
+    TFLT(_sdtx.cur_ctx->origin.y, 5);
+    TFLT(_sdtx.cur_ctx->pos.x, 0);
+    TFLT(_sdtx.cur_ctx->pos.x, 0);
+    T(_sdtx.cur_ctx->cur_font == 0);
+    T(_sdtx.cur_ctx->cur_vertex_ptr == _sdtx.cur_ctx->vertices);
+    shutdown();
+}
