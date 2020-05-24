@@ -7,8 +7,8 @@
 //  Renders a cube with a different render target texture on each side,
 //  and each render target containing debug text. Text rendering into
 //  render targets uses different framebuffer attributes than the default
-//  framebuffer (no depth buffer, no MSAA), so it needs its own sokol-debugtext
-//  context.
+//  framebuffer (no depth buffer, no MSAA), so this needs to happen
+//  with separate sokol-debugtext contexts.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -72,7 +72,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // setup sokol-debugtext
+    // setup sokol-debugtext using all builtin fonts
     sdtx_setup(&(sdtx_desc_t){
         .fonts = {
             [FONT_KC853] = sdtx_font_kc853(),
@@ -84,7 +84,8 @@ static void init(void) {
         },
     });
 
-    // create resources to render a textured cube
+    // create resources to render a textured cube (vertex buffer, index buffer
+    // shader and pipeline state object)
     vertex_t vertices[] = {
         /* pos                  uvs */
         { -1.0f, -1.0f, -1.0f,      0,     0 },
@@ -154,7 +155,7 @@ static void init(void) {
     for (int i = 0; i < NUM_FACES; i++) {
         // each face gets its separate text context
         state.passes[i].text_context = sdtx_make_context(&(sdtx_context_desc_t) {
-            .char_buf_size = 256,
+            .char_buf_size = 64,
             .canvas_width = OFFSCREEN_WIDTH,
             .canvas_height = OFFSCREEN_HEIGHT,
             .color_format = OFFSCREEN_PIXELFORMAT,
@@ -162,7 +163,7 @@ static void init(void) {
             .sample_count = OFFSCREEN_SAMPLE_COUNT
         });
 
-        // the render target texture and render pass
+        // the render target texture, render pass
         state.passes[i].img = sg_make_image(&(sg_image_desc){
             .render_target = true,
             .width = OFFSCREEN_WIDTH,
@@ -175,6 +176,8 @@ static void init(void) {
         state.passes[i].render_pass = sg_make_pass(&(sg_pass_desc){
             .color_attachments[0].image = state.passes[i].img
         });
+
+        // each render target is cleared to a different background color
         state.passes[i].pass_action = (sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
@@ -184,6 +187,7 @@ static void init(void) {
     }
 }
 
+// compute the model-view-proj matrix for rendering the rotating cube
 vs_params_t compute_vs_params(int w, int h) {
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)w/(float)h, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -204,14 +208,14 @@ static void frame(void) {
     state.ry += 0.5f;
     vs_params_t vs_params = compute_vs_params(disp_width, disp_height);
 
-    // show text in the main display
+    // text in the main display
     sdtx_set_context(SDTX_DEFAULT_CONTEXT);
     sdtx_canvas(disp_width * 0.5f, disp_height * 0.5f);
     sdtx_origin(3, 3);
     sdtx_puts("Hello from main context!\n");
     sdtx_printf("Frame count: %d\n", state.frame_count);
 
-    // show text in each offscreen render target
+    // text in each offscreen render target
     for (int i = 0; i < NUM_FACES; i++) {
         sdtx_set_context(state.passes[i].text_context);
         sdtx_canvas(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT / 2); // scale text vertically * 2
@@ -221,7 +225,7 @@ static void frame(void) {
     }
 
     // rasterize text into offscreen render targets, we could also put this
-    // right into the above loop, but this shows that the "text definition"
+    // right into the loop above, but this shows that the "text definition"
     // can be decoupled from the actual rendering
     for (int i = 0; i < NUM_FACES; i++) {
         sg_begin_pass(state.passes[i].render_pass, &state.passes[i].pass_action);
@@ -230,7 +234,7 @@ static void frame(void) {
         sg_end_pass();
     }
 
-    // finally perform perform the actual rendering
+    // finally render to the default framebuffer
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
 
     // draw the cube as 6 separate draw calls (because each has its own texture)
@@ -249,6 +253,7 @@ static void frame(void) {
     sdtx_set_context(SDTX_DEFAULT_CONTEXT);
     sdtx_draw();
 
+    // conclude the default pass and frame
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
