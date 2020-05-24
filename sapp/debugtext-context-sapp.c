@@ -153,11 +153,13 @@ static void init(void) {
 
     // create resources for each offscreen-rendered cube face
     for (int i = 0; i < NUM_FACES; i++) {
-        // each face gets its separate text context
+        // each face gets its separate text context, the text canvas size
+        // will remain fixed, so we can just provide the default canvas
+        // size here and don't need to call sdtx_canvas() later
         state.passes[i].text_context = sdtx_make_context(&(sdtx_context_desc_t) {
             .char_buf_size = 64,
             .canvas_width = OFFSCREEN_WIDTH,
-            .canvas_height = OFFSCREEN_HEIGHT,
+            .canvas_height = OFFSCREEN_HEIGHT / 2,
             .color_format = OFFSCREEN_PIXELFORMAT,
             .depth_format = SG_PIXELFORMAT_NONE,
             .sample_count = OFFSCREEN_SAMPLE_COUNT
@@ -218,7 +220,6 @@ static void frame(void) {
     // text in each offscreen render target
     for (int i = 0; i < NUM_FACES; i++) {
         sdtx_set_context(state.passes[i].text_context);
-        sdtx_canvas(OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT / 2); // scale text vertically * 2
         sdtx_origin(0.5f, 0.25f);
         sdtx_font(i);
         sdtx_printf("%02X", ((state.frame_count / 16) + i )& 0xFF);
