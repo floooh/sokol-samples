@@ -56,7 +56,7 @@ typedef struct {
 } vertex_t;
 
 // face background colors
-static float bg[NUM_FACES][3] = {
+static const float bg[NUM_FACES][3] = {
     { 0.0f, 0.0f, 0.5f },
     { 0.0f, 0.5f, 0.0f },
     { 0.5f, 0.0f, 0.0f },
