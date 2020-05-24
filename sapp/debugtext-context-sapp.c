@@ -5,9 +5,10 @@
 //  with contexts.
 //
 //  Renders a cube with a different render target texture on each side,
-//  and each render target containing debug text. Offscreen rendering
-//  uses different framebuffer attributes (no MSAA, no depth buffer) and
-//  thus must text rendering needs to happen with its own context.
+//  and each render target containing debug text. Text rendering into
+//  render targets uses different framebuffer attributes than the default
+//  framebuffer (no depth buffer, no MSAA), so it needs its own sokol-debugtext
+//  context.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
