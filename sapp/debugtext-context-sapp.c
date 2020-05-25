@@ -31,8 +31,8 @@
 #define NUM_FACES (6)
 #define OFFSCREEN_PIXELFORMAT   (SG_PIXELFORMAT_RGBA8)
 #define OFFSCREEN_SAMPLE_COUNT  (1)
-#define OFFSCREEN_WIDTH         (24)
-#define OFFSCREEN_HEIGHT        (24)
+#define OFFSCREEN_WIDTH         (32)
+#define OFFSCREEN_HEIGHT        (32)
 #define DISPLAY_SAMPLE_COUNT    (4)
 
 static struct {
@@ -220,7 +220,7 @@ static void frame(void) {
     // text in each offscreen render target
     for (int i = 0; i < NUM_FACES; i++) {
         sdtx_set_context(state.passes[i].text_context);
-        sdtx_origin(0.5f, 0.25f);
+        sdtx_origin(1.0f, 0.5f);
         sdtx_font(i);
         sdtx_printf("%02X", ((state.frame_count / 16) + i )& 0xFF);
     }
