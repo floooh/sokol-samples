@@ -6,6 +6,7 @@
 #define SOKOL_WIN32_FORCE_MAIN
 #ifdef _MSC_VER
 #pragma warning(disable:4702)   /* unreachable code */
+#pragma warning(disable:4505)   /* unreferenced local function has been removed */
 /* don't complain about unused variables in MSVC at /W4 when assert() is a NOP */
 #if defined(NDEBUG)
 #define SOKOL_ASSERT(x) ((void)(x))
