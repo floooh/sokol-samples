@@ -14,7 +14,12 @@ out vec2 uv;
 
 void main() {
     gl_Position = mvp * pos;
+    // hmm...
+    #if SOKOL_GLSL
+    uv = vec2(texcoord0.x, 1.0f - texcoord0.y);
+    #else
     uv = texcoord0;
+    #endif
 }
 @end
 
