@@ -45,8 +45,7 @@ int main() {
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
-    sg_desc desc = { };
-    sg_setup(&desc);
+    sg_setup({ });
     assert(sg_isvalid());
 
     // setup the ImGui environment
@@ -96,7 +95,7 @@ int main() {
             ImGui::GetIO().AddInputCharacter((ImWchar)e->charCode);
             return true;
         });
-    emscripten_set_mousedown_callback("#canvas", nullptr, true,
+    emscripten_set_mousedown_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             switch (e->button) {
                 case 0: btn_down[0] = true; break;
@@ -104,7 +103,7 @@ int main() {
             }
             return true;
         });
-    emscripten_set_mouseup_callback("#canvas", nullptr, true,
+    emscripten_set_mouseup_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             switch (e->button) {
                 case 0: btn_up[0] = true; break;
@@ -112,7 +111,7 @@ int main() {
             }
             return true;
         });
-    emscripten_set_mouseenter_callback("#canvas", nullptr, true,
+    emscripten_set_mouseenter_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             auto& io = ImGui::GetIO();
             for (int i = 0; i < 3; i++) {
@@ -121,7 +120,7 @@ int main() {
             }
             return true;
         });
-    emscripten_set_mouseleave_callback("#canvas", nullptr, true,
+    emscripten_set_mouseleave_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
             auto& io = ImGui::GetIO();
             for (int i = 0; i < 3; i++) {
@@ -130,13 +129,13 @@ int main() {
             }
             return true;
         });
-    emscripten_set_mousemove_callback("#canvas", nullptr, true,
+    emscripten_set_mousemove_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            ImGui::GetIO().MousePos.x = (float) e->canvasX;
-            ImGui::GetIO().MousePos.y = (float) e->canvasY;
+            ImGui::GetIO().MousePos.x = (float) e->targetX;
+            ImGui::GetIO().MousePos.y = (float) e->targetY;
             return true;
         });
-    emscripten_set_wheel_callback("#canvas", nullptr, true,
+    emscripten_set_wheel_callback("canvas", nullptr, true,
         [](int, const EmscriptenWheelEvent* e, void*)->EM_BOOL {
             ImGui::GetIO().MouseWheelH = -0.1f * (float)e->deltaX;
             ImGui::GetIO().MouseWheel = -0.1f * (float)e->deltaY;
@@ -144,23 +143,21 @@ int main() {
         });
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
-    sg_buffer_desc vbuf_desc = {
+    bind.vertex_buffers[0] = sg_make_buffer({
         .usage = SG_USAGE_STREAM,
         .size = MaxVertices * sizeof(ImDrawVert)
-    };
-    sg_buffer_desc ibuf_desc = {
+    });
+    bind.index_buffer = sg_make_buffer({
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .usage = SG_USAGE_STREAM,
         .size = MaxIndices * sizeof(ImDrawIdx)
-    };
-    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
-    bind.index_buffer = sg_make_buffer(&ibuf_desc);
+    });
 
     // font texture for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    sg_image_desc img_desc = {
+    bind.fs_images[0] = sg_make_image({
         .width = font_width,
         .height = font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -170,11 +167,10 @@ int main() {
             .ptr = font_pixels,
             .size = font_width * font_height * 4
         }
-    };
-    bind.fs_images[0] = sg_make_image(&img_desc);
+    });
 
     // shader object for imgui rendering
-    sg_shader_desc shd_desc = {
+    sg_shader shd = sg_make_shader({
         .attrs = {
             [0].name = "position",
             [1].name = "texcoord0",
@@ -207,11 +203,10 @@ int main() {
             "void main() {\n"
             "    gl_FragColor = texture2D(tex, uv) * color;\n"
             "}\n"
-    };
-    sg_shader shd = sg_make_shader(&shd_desc);
+    });
 
     // pipeline object for imgui rendering
-    sg_pipeline_desc pip_desc = {
+    pip = sg_make_pipeline({
         .layout = {
             .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
@@ -228,11 +223,10 @@ int main() {
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
             .color_write_mask = SG_COLORMASK_RGB
         }
-    };
-    pip = sg_make_pipeline(&pip_desc);
+    });
 
     // initial clear color
-    pass_action = (sg_pass_action){
+    pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
