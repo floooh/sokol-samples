@@ -65,7 +65,7 @@ static void frame(void) {
     sdtx_origin(0.0f, 2.0f);
     sdtx_home();
     print_font(FONT_KC853, "KC85/3:\n",      0xf4, 0x43, 0x36);
-    print_font(FONT_KC853, "KC85/4:\n",      0x21, 0x96, 0xf3);
+    print_font(FONT_KC854, "KC85/4:\n",      0x21, 0x96, 0xf3);
     print_font(FONT_Z1013, "Z1013:\n",       0x4c, 0xaf, 0x50);
     print_font(FONT_CPC,   "Amstrad CPC:\n", 0xff, 0xeb, 0x3b);
     print_font(FONT_C64,   "C64:\n",         0x79, 0x86, 0xcb);
