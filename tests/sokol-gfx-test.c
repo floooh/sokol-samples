@@ -589,3 +589,84 @@ UTEST(sokol_gfx, query_pass_defaults) {
     T(desc.color_attachments[0].mip_level == 0);
     sg_shutdown();
 }
+
+UTEST(sokol_gfx, query_buffer_info) {
+    sg_setup(&(sg_desc){0});
+    sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
+        .size = 256,
+        .type = SG_BUFFERTYPE_VERTEXBUFFER,
+        .usage = SG_USAGE_STREAM
+    });
+    T(buf.id != SG_INVALID_ID);
+    const sg_buffer_info info = sg_query_buffer_info(buf);
+    T(info.slot.state == SG_RESOURCESTATE_VALID);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_image_info) {
+    sg_setup(&(sg_desc){0});
+    sg_image img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 256,
+        .height = 128
+    });
+    T(img.id != SG_INVALID_ID);
+    const sg_image_info info = sg_query_image_info(img);
+    T(info.slot.state == SG_RESOURCESTATE_VALID);
+    T(info.num_slots == 1);
+    T(info.width == 256);
+    T(info.height == 128);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_shader_info) {
+    sg_setup(&(sg_desc){0});
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0] = { .name = "pos" }
+        },
+        .vs.source = "bla",
+        .fs.source = "blub"
+    });
+    const sg_shader_info info = sg_query_shader_info(shd);
+    T(info.slot.state == SG_RESOURCESTATE_VALID);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_pipeline_info) {
+    sg_setup(&(sg_desc){0});
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[0].format = SG_VERTEXFORMAT_FLOAT3
+        },
+        .shader = sg_make_shader(&(sg_shader_desc){
+            .attrs = {
+                [0] = { .name = "pos" }
+            },
+            .vs.source = "bla",
+            .fs.source = "blub"
+        })
+    });
+    const sg_pipeline_info info = sg_query_pipeline_info(pip);
+    T(info.slot.state == SG_RESOURCESTATE_VALID);
+    sg_shutdown();
+}
+
+UTEST(sokol_gfx, query_pass_info) {
+    sg_setup(&(sg_desc){0});
+    sg_image_desc img_desc = {
+        .render_target = true,
+        .width = 128,
+        .height = 128,
+    };
+    sg_pass pass = sg_make_pass(&(sg_pass_desc){
+        .color_attachments = {
+            [0].image = sg_make_image(&img_desc),
+            [1].image = sg_make_image(&img_desc),
+            [2].image = sg_make_image(&img_desc)
+        },
+    });
+    const sg_pass_info info = sg_query_pass_info(pass);
+    T(info.slot.state == SG_RESOURCESTATE_VALID);
+    sg_shutdown();
+}
