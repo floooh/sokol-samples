@@ -19,6 +19,9 @@
 #include "basisu/basisu_sokol.h"
 #define CGLTF_IMPLEMENTATION
 #define _CRT_SECURE_NO_WARNINGS
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "cgltf/cgltf.h"
 #include <assert.h>
 
@@ -985,6 +988,8 @@ static vs_params_t vs_params_for_node(int node_index) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc;
+    (void)argv;
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,

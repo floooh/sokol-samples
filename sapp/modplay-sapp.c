@@ -118,6 +118,8 @@ void frame(void* user_data) {
             read_samples(state, state->flt_buf, num_samples);
             saudio_push(state->flt_buf, num_frames);
         }
+    #else
+        (void)user_data;
     #endif
     sg_pass_action pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.4f, 0.7f, 1.0f, 1.0f } }
@@ -137,6 +139,7 @@ void cleanup(void* user_data) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     static state_t state;   /* static structs are implicitely zero-initialized */
     return (sapp_desc){
         .init_userdata_cb = init,

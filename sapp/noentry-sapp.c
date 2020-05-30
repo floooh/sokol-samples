@@ -35,6 +35,7 @@ void cleanup(void);
 /* don't provide a sokol_main() callback, instead the platform's standard main() function */
 #if !defined(_WIN32)
 int main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
 #else
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
 #endif

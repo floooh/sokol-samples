@@ -105,7 +105,7 @@ static inline float rnd(void) {
 
 #define RING_NUM (1024)
 #define RING_MASK (RING_NUM-1)
-static void hairball(uint32_t frame_count) {
+static void hairball(void) {
     static float ring[RING_NUM][6];
     static uint32_t head = 0;
 
@@ -165,7 +165,7 @@ static void frame(void) {
         sgl_translate(-sinf(frame_count * 0.02f) * 16.0f, 0.0f, -30.0f);
         sgl_rotate(frame_count * 0.01f, sinf(frame_count * 0.005f), 0.0f, 1.0f);
         sgl_c3f(0.5f, 1.0f, 0.0f);
-        hairball(frame_count);
+        hairball();
     sgl_pop_matrix();
     sgl_pop_pipeline();
 
@@ -184,6 +184,7 @@ static void cleanup(void) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,

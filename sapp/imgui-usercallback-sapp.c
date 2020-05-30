@@ -143,6 +143,7 @@ void init(void) {
 
 // an ImGui draw callback to render directly with sokol-gfx
 void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
+    (void)dl;
 
     // first set the viewport rectangle to render in, same as
     // the ImGui draw command's clip rect
@@ -218,6 +219,7 @@ static void cube_sgl(void) {
 
 // another ImGui draw callback to render via sokol-gl
 void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
+    (void)dl;
 
     const int cx = (int) cmd->ClipRect.x;
     const int cy = (int) cmd->ClipRect.y;
@@ -307,6 +309,7 @@ void input(const sapp_event * ev) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     return (sapp_desc) {
         .init_cb = init,
         .frame_cb = frame,

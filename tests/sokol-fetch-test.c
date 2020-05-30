@@ -293,6 +293,8 @@ UTEST(sokol_fetch, ring_wrap_count) {
 /* NOTE: channel_worker is called from a thread */
 static int num_processed_items = 0;
 static void channel_worker(_sfetch_t* ctx, uint32_t slot_id) {
+    (void)ctx;
+    (void)slot_id;
     num_processed_items++;
 }
 

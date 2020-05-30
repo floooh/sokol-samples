@@ -41,6 +41,7 @@
 static sapp_desc desc;
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     /* just interested whether the compilation worked, so force-exit here */
     exit(0);
     return desc;

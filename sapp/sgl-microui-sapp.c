@@ -53,6 +53,7 @@ static void r_set_clip_rect(mu_Rect rect);
 
 /* callbacks */
 static int text_width_cb(mu_Font font, const char* text, int len) {
+    (void)font;
     if (len == -1) {
         len = (int) strlen(text);
     }
@@ -60,6 +61,7 @@ static int text_width_cb(mu_Font font, const char* text, int len) {
 }
 
 static int text_height_cb(mu_Font font) {
+    (void)font;
     return r_get_text_height();
 }
 
@@ -377,6 +379,7 @@ static void style_window(mu_Context *ctx) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,

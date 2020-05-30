@@ -31,7 +31,14 @@
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "pl_mpeg/pl_mpeg.h"
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 #include <assert.h>
 
 static const char* filename = "bjork-all-is-full-of-love.mpg";
@@ -291,6 +298,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
 
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
+    (void)mpeg; (void)user;
     validate_texture(SLOT_tex_y, &frame->y);
     validate_texture(SLOT_tex_cb, &frame->cb);
     validate_texture(SLOT_tex_cr, &frame->cr);
@@ -298,6 +306,7 @@ static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
 
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
 static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
+    (void)mpeg; (void)user;
     saudio_push(samples->interleaved, samples->count);
 }
 
@@ -334,6 +343,7 @@ static void fetch_callback(const sfetch_response_t* response) {
 // this takes buffers loaded with video data from the "full-queue"
 // as needed
 static void plmpeg_load_callback(plm_buffer_t* self, void* user) {
+    (void)user;
     if (state.cur_read_buffer == -1) {
         state.cur_read_buffer = ring_dequeue(&state.full_buffers);
         state.cur_read_pos = 0;
@@ -355,6 +365,7 @@ static void plmpeg_load_callback(plm_buffer_t* self, void* user) {
 
 // sokol-app entry function
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
     return (sapp_desc) {
         .init_cb = init,
         .frame_cb = frame,
@@ -369,12 +380,12 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 //=== a simple ring buffer implementation ====================================*/
-static uint32_t ring_wrap(const ring_t* rb, uint32_t i) {
+static uint32_t ring_wrap(uint32_t i) {
     return i % RING_NUM_SLOTS;
 }
 
 static bool ring_full(const ring_t* rb) {
-    return ring_wrap(rb, rb->head + 1) == rb->tail;
+    return ring_wrap(rb->head + 1) == rb->tail;
 }
 
 static bool ring_empty(const ring_t* rb) {
@@ -395,12 +406,12 @@ static uint32_t ring_count(const ring_t* rb) {
 static void ring_enqueue(ring_t* rb, int val) {
     assert(!ring_full(rb));
     rb->buf[rb->head] = val;
-    rb->head = ring_wrap(rb, rb->head + 1);
+    rb->head = ring_wrap(rb->head + 1);
 }
 
 static int ring_dequeue(ring_t* rb) {
     assert(!ring_empty(rb));
     uint32_t slot_id = rb->buf[rb->tail];
-    rb->tail = ring_wrap(rb, rb->tail + 1);
+    rb->tail = ring_wrap(rb->tail + 1);
     return slot_id;
 }

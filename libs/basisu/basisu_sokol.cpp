@@ -3,7 +3,14 @@
 //-----------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "basisu_sokol.h"
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include "basisu_transcoder.h"
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
 static basist::etc1_global_selector_codebook *g_pGlobal_codebook;
 

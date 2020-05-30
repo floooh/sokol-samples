@@ -342,6 +342,8 @@ static void cleanup(void) {
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc;
+    (void)argv;
     sapp_desc desc = { };
     desc.init_cb = init;
     desc.frame_cb = frame;
