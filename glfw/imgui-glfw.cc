@@ -46,19 +46,19 @@ int main() {
     flextInit();
     
     // GLFW to ImGui input forwarding
-    glfwSetMouseButtonCallback(w, [](GLFWwindow* w, int btn, int action, int mods) {
+    glfwSetMouseButtonCallback(w, [](GLFWwindow*, int btn, int action, int /*mods*/) {
         if ((btn >= 0) && (btn < 3)) {
             ImGui::GetIO().MouseDown[btn] = (action == GLFW_PRESS);
         }
     });
-    glfwSetCursorPosCallback(w, [](GLFWwindow* w, double pos_x, double pos_y) {
+    glfwSetCursorPosCallback(w, [](GLFWwindow*, double pos_x, double pos_y) {
         ImGui::GetIO().MousePos.x = float(pos_x);
         ImGui::GetIO().MousePos.y = float(pos_y);
     });
-    glfwSetScrollCallback(w, [](GLFWwindow* w, double pos_x, double pos_y){
+    glfwSetScrollCallback(w, [](GLFWwindow*, double /*pos_x*/, double pos_y){
         ImGui::GetIO().MouseWheel = float(pos_y);
     });
-    glfwSetKeyCallback(w, [](GLFWwindow* w, int key, int scancode, int action, int mods){
+    glfwSetKeyCallback(w, [](GLFWwindow*, int key, int /*scancode*/, int action, int mods){
         ImGuiIO& io = ImGui::GetIO();
         if ((key >= 0) && (key < 512)) {
             io.KeysDown[key] = (action==GLFW_PRESS)||(action==GLFW_REPEAT);
@@ -67,7 +67,7 @@ int main() {
         io.KeyAlt = (0 != (mods & GLFW_MOD_ALT));
         io.KeyShift = (0 != (mods & GLFW_MOD_SHIFT));
     });
-    glfwSetCharCallback(w, [](GLFWwindow* w, unsigned int codepoint){
+    glfwSetCharCallback(w, [](GLFWwindow*, unsigned int codepoint){
         ImGui::GetIO().AddInputCharacter((ImWchar)codepoint);
     });
 

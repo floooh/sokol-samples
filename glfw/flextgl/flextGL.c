@@ -408,6 +408,7 @@ GLPF glpf = { {
 
 static void add_extension(const char* extension)
 {
+    (void)extension;
 }
 
 

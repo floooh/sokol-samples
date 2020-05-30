@@ -112,7 +112,7 @@ int main() {
             return true;
         });
     emscripten_set_mouseenter_callback("canvas", nullptr, true,
-        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
+        [](int, const EmscriptenMouseEvent*, void*)->EM_BOOL {
             auto& io = ImGui::GetIO();
             for (int i = 0; i < 3; i++) {
                 btn_down[i] = btn_up[i] = false;
@@ -121,7 +121,7 @@ int main() {
             return true;
         });
     emscripten_set_mouseleave_callback("canvas", nullptr, true,
-        [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
+        [](int, const EmscriptenMouseEvent*, void*)->EM_BOOL {
             auto& io = ImGui::GetIO();
             for (int i = 0; i < 3; i++) {
                 btn_down[i] = btn_up[i] = false;

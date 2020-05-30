@@ -71,8 +71,11 @@ static id mtk_view_controller;
 @implementation SokolAppDelegate
 #if !TARGET_OS_IPHONE
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
+    (void)aNotification;
 #else
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    (void)application;
+    (void)launchOptions;
 #endif
     // window delegate and main window
     #if TARGET_OS_IPHONE
@@ -133,6 +136,7 @@ static id mtk_view_controller;
 
 #if !TARGET_OS_IPHONE
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)sender {
+    (void)sender;
     return YES;
 }
 #endif
@@ -142,31 +146,38 @@ static id mtk_view_controller;
 #if !TARGET_OS_IPHONE
 @implementation SokolWindowDelegate
 - (BOOL)windowShouldClose:(id)sender {
+    (void)sender;
     shutdown_func();
     return YES;
 }
 
 - (void)windowDidResize:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 
 - (void)windowDidMove:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 
 - (void)windowDidMiniaturize:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 
 - (void)windowDidDeminiaturize:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 
 - (void)windowDidBecomeKey:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 
 - (void)windowDidResignKey:(NSNotification*)notification {
+    (void)notification;
     // FIXME
 }
 @end
@@ -176,10 +187,13 @@ static id mtk_view_controller;
 @implementation SokolViewDelegate
 
 - (void)mtkView:(nonnull MTKView*)view drawableSizeWillChange:(CGSize)size {
+    (void)view;
+    (void)size;
     // FIXME
 }
 
 - (void)drawInMTKView:(nonnull MTKView*)view {
+    (void)view;
     @autoreleasepool {
         frame_func();
     }
@@ -203,6 +217,7 @@ static id mtk_view_controller;
 }
 
 - (void)mouseDown:(NSEvent*)event {
+    (void)event;
     if (mouse_btn_down_func) {
         mouse_btn_down_func(0);
     }
@@ -213,6 +228,7 @@ static id mtk_view_controller;
 }
 
 - (void)mouseUp:(NSEvent*)event {
+    (void)event;
     if (mouse_btn_up_func) {
         mouse_btn_up_func(0);
     }
@@ -227,6 +243,7 @@ static id mtk_view_controller;
 }
 
 - (void)rightMouseDown:(NSEvent*)event {
+    (void)event;
     if (mouse_btn_down_func) {
         mouse_btn_down_func(1);
     }
@@ -237,6 +254,7 @@ static id mtk_view_controller;
 }
 
 - (void)rightMouseUp:(NSEvent*)event {
+    (void)event;
     if (mouse_btn_up_func) {
         mouse_btn_up_func(1);
     }

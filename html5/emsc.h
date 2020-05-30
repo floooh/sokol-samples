@@ -16,6 +16,9 @@ enum {
 
 /* track CSS element size changes and update the WebGL canvas size */
 static EM_BOOL _emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_event, void* user_data) {
+    (void)event_type;
+    (void)ui_event;
+    (void)user_data;
     emscripten_get_element_css_size(_emsc_canvas_name, &_emsc_width, &_emsc_height);
     emscripten_set_canvas_element_size(_emsc_canvas_name, _emsc_width, _emsc_height);
     return true;
