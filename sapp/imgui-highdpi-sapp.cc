@@ -88,6 +88,9 @@ void frame(void) {
     if (ImGui::Checkbox("HTML5 Ask Leave Site", &html5_ask_leave_site)) {
         sapp_html5_ask_leave_site(html5_ask_leave_site);
     }
+    if (ImGui::Button(sapp_is_fullscreen() ? "Switch to windowed" : "Switch to fullscreen")) {
+        sapp_toggle_fullscreen();
+    }
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
