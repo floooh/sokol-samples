@@ -1,0 +1,9 @@
+---
+platform: win64 
+generator: Ninja
+build_tool: ninja
+build_type: Debug
+cmake-toolchain: windows-clang.cmake
+defines:
+    USE_SOKOL_APP: ON
+    SOKOL_USE_D3D11: ON
