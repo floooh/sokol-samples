@@ -1,10 +1,14 @@
 fips_begin_lib(flextgl)
     fips_src(flextgl)
 fips_end_lib()
-
 fips_begin_lib(flextgl12)
     fips_src(flextgl12)
 fips_end_lib()
+if (FIPS_CLANG)
+    target_compile_options(flextgl PRIVATE -Wno-incompatible-function-pointer-types)
+    target_compile_options(flextgl12 PRIVATE -Wno-incompatible-function-pointer-types)
+endif()
+
 
 fips_begin_app(clear-glfw cmdline)
     fips_vs_warning_level(3)
