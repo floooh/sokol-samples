@@ -15,18 +15,17 @@ typedef struct {
 } vs_params_t;
 
 /* width/height must be 2^N */
-enum {
-    IMAGE_WIDTH = 64,
-    IMAGE_HEIGHT = 64,
-    LIVING  = 0xFFFFFFFF,
-    DEAD = 0xFF000000
-};
+#define IMAGE_WIDTH (64)
+#define IMAGE_HEIGHT (64)
+#define LIVING (0xFFFFFFFF)
+#define DEAD (0xFF000000)
 static uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
 static void game_of_life_init();
 static void game_of_life_update();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+    (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     /* setup d3d11 app wrapper and sokol_gfx */
     const int width = 800;
     const int height = 600;

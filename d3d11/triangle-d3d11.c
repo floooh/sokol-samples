@@ -9,6 +9,7 @@
 #include "sokol_gfx.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+    (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     /* setup d3d11 app wrapper */
     d3d11_init(640, 480, 1, L"Sokol Triangle D3D11");
 

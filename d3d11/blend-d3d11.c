@@ -23,6 +23,7 @@ enum { NUM_BLEND_FACTORS = 15 };
 static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+    (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     /* setup d3d11 app wrapper and sokol_gfx */
     const int WIDTH = 800;
     const int HEIGHT = 600;
@@ -133,8 +134,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
-            const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
-            const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
             pip_desc.blend.src_factor_rgb = (sg_blend_factor) (src + 1);
             pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
             pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;

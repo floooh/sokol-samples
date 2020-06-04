@@ -119,6 +119,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         &state.device,              /* ppDevice */
         &feature_level,             /* pFeatureLevel */
         &state.device_context);     /* ppImmediateContext */
+    (void)hr;
     assert(SUCCEEDED(hr) && state.swap_chain && state.device && state.device_context);
 
     /* default render target and depth-stencil-buffer */

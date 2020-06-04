@@ -15,6 +15,7 @@ typedef struct {
 } vs_params_t;
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+    (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     /* setup d3d11 app wrapper and sokol_gfx */
     const int width = 800;
     const int height = 600;
