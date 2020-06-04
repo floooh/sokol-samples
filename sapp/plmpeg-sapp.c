@@ -31,12 +31,12 @@
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #include "pl_mpeg/pl_mpeg.h"
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 #include <assert.h>

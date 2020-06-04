@@ -37,7 +37,7 @@
 #if defined(_MSC_VER )
 #pragma warning(disable:4996)   // strncpy use in fontstash.h
 #endif
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 #include "fontstash/fontstash.h"

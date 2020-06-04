@@ -287,7 +287,7 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
     if (is_touch_event(type)) {
         ImGui::Text("num touches:  %d", ev.num_touches);
         for (int i = 0; i < ev.num_touches; i++) {
-            ImGui::Text(" %d id:      0x%lX", i, ev.touches[i].identifier);
+            ImGui::Text(" %d id:      0x%X", i, (uint32_t) ev.touches[i].identifier);
             ImGui::Text(" %d pos:     %4.2f %4.2f", i, ev.touches[i].pos_x, ev.touches[i].pos_y);
             ImGui::Text(" %d changed: %s", i, ev.touches[i].changed ? "true":"false");
         }

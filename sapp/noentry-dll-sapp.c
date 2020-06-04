@@ -36,6 +36,7 @@ void cleanup(void);
 
 /* don't provide a sokol_main() callback, instead the platform's standard main() function */
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
+    (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     app_state_t* state = calloc(1, sizeof(app_state_t));
     int exit_code = sapp_run(&(sapp_desc){
         .user_data = state,
