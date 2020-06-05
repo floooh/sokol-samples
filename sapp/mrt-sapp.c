@@ -103,8 +103,6 @@ void init(void) {
     state.pass_action = (sg_pass_action) {
         .colors = {
             [0].action = SG_ACTION_DONTCARE,
-            [1].action = SG_ACTION_DONTCARE,
-            [2].action = SG_ACTION_DONTCARE
         },
         .depth.action = SG_ACTION_DONTCARE,
         .stencil.action = SG_ACTION_DONTCARE
