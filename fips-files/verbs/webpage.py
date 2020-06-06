@@ -95,11 +95,11 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         if not os.path.exists(img_path):
             img_name = 'dummy.jpg'
             img_path = proj_dir + 'webpage/dummy.jpg'
-        content += '<div class="thumb">\n'
-        content += '  <div class="thumb-title">{}</div>\n'.format(name)
+        content += '<div class="thumb">'
+        content += '  <div class="thumb-title">{}</div>'.format(name)
         if os.path.exists(wasm_deploy_dir + '/' + name + '-sapp-ui.js'):
             content += '<a class="img-btn-link" href="{}"><div class="img-btn">UI</div></a>'.format(ui_url)
-        content += '  <div class="img-frame"><a href="{}"><img class="image" src="{}"></img></a></div>\n'.format(url,img_name)
+        content += '  <div class="img-frame"><a href="{}"><img class="image" src="{}"></img></a></div>'.format(url,img_name)
         content += '</div>\n'
 
     # populate the html template, and write to the build directory
