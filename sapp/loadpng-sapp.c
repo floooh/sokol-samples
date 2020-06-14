@@ -182,7 +182,7 @@ static void fetch_callback(const sfetch_response_t* response) {
         }
     }
     else if (response->failed) {
-        // if loading the file failed, set clear color to read
+        // if loading the file failed, set clear color to red
         state.pass_action = (sg_pass_action) {
             .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
