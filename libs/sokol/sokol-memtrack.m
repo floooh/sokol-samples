@@ -11,3 +11,5 @@
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"

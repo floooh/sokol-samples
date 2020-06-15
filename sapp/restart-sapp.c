@@ -15,7 +15,6 @@
 #include "sokol_fetch.h"
 #include "sokol_gl.h"
 #include "sokol_debugtext.h"
-#include "sokol_imgui.h"
 #include "sokol_memtrack.h"
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
@@ -32,11 +31,7 @@ static struct {
     sg_bindings bind;
     uint8_t file_buffer[256 * 1024];
     smemtrack_info_t init_mem_info;
-} state = {
-    .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.125f, 0.25f, 0.35f, 1.0f } }
-    }
-};
+} state;
 
 typedef struct {
     float x, y, z;
@@ -87,6 +82,14 @@ static const uint16_t cube_indices[] = {
 
 static void fetch_callback(const sfetch_response_t*);
 
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
 static void init(void) {
 
     // capture initial allocation values for leak detection
@@ -96,9 +99,8 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-
     sfetch_setup(&(sfetch_desc_t){ 0 });
-
+    sgl_setup(&(sgl_desc_t){ 0 });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
         .printf_buf_size = 256,
@@ -150,6 +152,14 @@ static void init(void) {
         .buffer_ptr = state.file_buffer,
         .buffer_size = sizeof(state.file_buffer)
     });
+
+    // choose a pseudo-random background color
+    float r = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
+    float g = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
+    float b = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
+    state.pass_action = (sg_pass_action){
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { r, g, b, 1.0f } }
+    };
 }
 
 /* the texture loading callback */
@@ -186,18 +196,46 @@ static void fetch_callback(const sfetch_response_t* response) {
 }
 
 static void frame(void) {
+    const int w = sapp_width();
+    const int h = sapp_height();
+    const float aspect = (float)w / (float)h;
+
     // pump the sokol-fetch message queues, and invoke response callbacks
     sfetch_dowork();
 
     // print current memtracker state
-    sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
-    sdtx_origin(1, 1);
-    sdtx_printf("Sokol Header Allocations:\n\n");
-    sdtx_printf("  Num:  %d\n", smemtrack_info().num_allocs);
-    sdtx_printf("  Size: %d\n", smemtrack_info().num_bytes);
+    {
+        sdtx_canvas(w * 0.5f, h * 0.5f);
+        sdtx_origin(1, 1);
+        sdtx_puts("PRESS 'SPACE' TO RESTART!\n\n");
+        sdtx_puts("Sokol Header Allocations:\n\n");
+        sdtx_printf("  Num:  %d\n", smemtrack_info().num_allocs);
+        sdtx_printf("  Size: %d\n", smemtrack_info().num_bytes);
+    }
+
+    // do some sokol-gl rendering
+    {
+        /* compute viewport rectangles so that the views are horizontally
+           centered and keep a 1:1 aspect ratio
+        */
+        const int x0 = (w - h)/2;
+        const int y0 = 0;
+
+        sgl_viewport(x0, y0, h, h, true);
+        sgl_defaults();
+        sgl_begin_triangles();
+        sgl_matrix_mode_modelview();
+        sgl_translate(sinf(state.rx * 0.05f) * 0.5f, cosf(state.rx * 0.1f) * 0.5f, 0.0f);
+        sgl_scale(0.5f, 0.5f, 1.0f);
+        sgl_v2f_c3b( 0.0f,  0.5f, 255, 0, 0);
+        sgl_v2f_c3b(-0.5f, -0.5f, 0, 0, 255);
+        sgl_v2f_c3b( 0.5f, -0.5f, 0, 255, 0);
+        sgl_end();
+        sgl_viewport(0, 0, w, h, true);
+    }
 
     // compute model-view-projection matrix for vertex shader
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, aspect, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
@@ -212,6 +250,7 @@ static void frame(void) {
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
+    sgl_draw();
     sdtx_draw();
     sg_end_pass();
     sg_commit();
@@ -219,8 +258,18 @@ static void frame(void) {
 
 static void cleanup(void) {
     sdtx_shutdown();
+    sgl_shutdown();
     sfetch_shutdown();
     sg_shutdown();
+}
+
+static void input(const sapp_event* ev) {
+    if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
+        if (ev->key_code == SAPP_KEYCODE_SPACE) {
+            cleanup();
+            init();
+        }
+    }
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
@@ -229,6 +278,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        .event_cb = input,
         .width = 800,
         .height = 600,
         .sample_count = 4,
