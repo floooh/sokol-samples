@@ -21,18 +21,26 @@
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
 
+#include "modplug.h"
+
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "restart-sapp.glsl.h"
+
+#define MOD_NUM_CHANNELS (2)
+#define MOD_SRCBUF_SAMPLES (16*1024)
 
 static struct {
     float rx, ry;
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_bindings bind;
-    uint8_t file_buffer[256 * 1024];
-    smemtrack_info_t init_mem_info;
+    ModPlugFile* mod_mpf;
+    int mod_int_buf[MOD_SRCBUF_SAMPLES];
+    float mod_flt_buf[MOD_SRCBUF_SAMPLES];
+    uint8_t img_buffer[256 * 1024];
+    uint8_t mod_buffer[512 * 1024];
 } state;
 
 typedef struct {
@@ -82,7 +90,8 @@ static const uint16_t cube_indices[] = {
     22, 21, 20,  23, 22, 20
 };
 
-static void fetch_callback(const sfetch_response_t*);
+static void fetch_img_callback(const sfetch_response_t*);
+static void fetch_mod_callback(const sfetch_response_t*);
 
 static inline uint32_t xorshift32(void) {
     static uint32_t x = 0x12345678;
@@ -93,9 +102,6 @@ static inline uint32_t xorshift32(void) {
 }
 
 static void init(void) {
-
-    // capture initial allocation values for leak detection
-    state.init_mem_info = smemtrack_info();
 
     // setup sokol libraries (use tweak init params to reduce memory usage)
     sg_setup(&(sg_desc){
@@ -109,8 +115,8 @@ static void init(void) {
         .context = sapp_sgcontext()
     });
     sfetch_setup(&(sfetch_desc_t){
-        .max_requests = 1,
-        .num_channels = 1,
+        .max_requests = 2,
+        .num_channels = 2,
         .num_lanes = 1
     });
     sgl_setup(&(sgl_desc_t){
@@ -125,6 +131,10 @@ static void init(void) {
         .context = {
             .char_buf_size = 128,
         }
+    });
+    /* setup sokol_audio (default sample rate is 44100Hz) */
+    saudio_setup(&(saudio_desc){
+        .num_channels = MOD_NUM_CHANNELS,
     });
 
     // setup rendering resources
@@ -165,9 +175,17 @@ static void init(void) {
     // start loading the texture
     sfetch_send(&(sfetch_request_t){
         .path = "baboon.png",
-        .callback = fetch_callback,
-        .buffer_ptr = state.file_buffer,
-        .buffer_size = sizeof(state.file_buffer)
+        .callback = fetch_img_callback,
+        .buffer_ptr = state.img_buffer,
+        .buffer_size = sizeof(state.img_buffer)
+    });
+
+    // start loading the MOD file
+    sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = fetch_mod_callback,
+        .buffer_ptr = state.mod_buffer,
+        .buffer_size = sizeof(state.mod_buffer)
     });
 
     // choose a pseudo-random background color
@@ -177,10 +195,22 @@ static void init(void) {
     state.pass_action = (sg_pass_action){
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { r, g, b, 1.0f } }
     };
+
+    // initialize libmodplug
+    ModPlug_Settings mps;
+    ModPlug_GetSettings(&mps);
+    mps.mChannels = saudio_channels();
+    mps.mBits = 32;
+    mps.mFrequency = saudio_sample_rate();
+    mps.mResamplingMode = MODPLUG_RESAMPLE_LINEAR;
+    mps.mMaxMixChannels = 64;
+    mps.mLoopCount = -1;
+    mps.mFlags = MODPLUG_ENABLE_OVERSAMPLING;
+    ModPlug_SetSettings(&mps);
 }
 
-/* the texture loading callback */
-static void fetch_callback(const sfetch_response_t* response) {
+// the texture loading callback
+static void fetch_img_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
@@ -212,6 +242,18 @@ static void fetch_callback(const sfetch_response_t* response) {
     }
 }
 
+static void fetch_mod_callback(const sfetch_response_t* response) {
+    if (response->fetched) {
+        state.mod_mpf = ModPlug_Load(response->buffer_ptr, response->fetched_size);
+    }
+    else if (response->failed) {
+        // if loading the file failed, set clear color to red
+        state.pass_action = (sg_pass_action) {
+            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        };
+    }
+}
+
 static void frame(void) {
     const int w = sapp_width();
     const int h = sapp_height();
@@ -220,6 +262,36 @@ static void frame(void) {
     // pump the sokol-fetch message queues, and invoke response callbacks
     sfetch_dowork();
 
+    // play audio
+    const int num_frames = saudio_expect();
+    if (num_frames > 0) {
+        int num_samples = num_frames * saudio_channels();
+        if (num_samples > MOD_SRCBUF_SAMPLES) {
+            num_samples = MOD_SRCBUF_SAMPLES;
+        }
+        if (state.mod_mpf) {
+            /* NOTE: for multi-channel playback, the samples are interleaved
+               (e.g. left/right/left/right/...)
+            */
+            int res = ModPlug_Read(state.mod_mpf, (void*)state.mod_int_buf, sizeof(int)*num_samples);
+            int samples_in_buffer = res / sizeof(int);
+            int i;
+            for (i = 0; i < samples_in_buffer; i++) {
+                state.mod_flt_buf[i] = state.mod_int_buf[i] / (float)0x7fffffff;
+            }
+            for (; i < num_samples; i++) {
+                state.mod_flt_buf[i] = 0.0f;
+            }
+        }
+        else {
+            /* if file wasn't loaded, fill the output buffer with silence */
+            for (int i = 0; i < num_samples; i++) {
+                state.mod_flt_buf[i] = 0.0f;
+            }
+        }
+        saudio_push(state.mod_flt_buf, num_frames);
+    }
+
     // print current memtracker state
     {
         sdtx_canvas(w * 0.5f, h * 0.5f);
@@ -227,7 +299,8 @@ static void frame(void) {
         sdtx_puts("PRESS 'SPACE' TO RESTART!\n\n");
         sdtx_puts("Sokol Header Allocations:\n\n");
         sdtx_printf("  Num:  %d\n", smemtrack_info().num_allocs);
-        sdtx_printf("  Size: %d bytes\n", smemtrack_info().num_bytes);
+        sdtx_printf("  Size: %d bytes\n\n", smemtrack_info().num_bytes);
+        sdtx_printf("MOD: Combat Signal by ???");
     }
 
     // do some sokol-gl rendering
@@ -274,6 +347,10 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
+    if (state.mod_mpf) {
+        ModPlug_Unload(state.mod_mpf);
+    }
+    saudio_shutdown();
     sdtx_shutdown();
     sgl_shutdown();
     sfetch_shutdown();

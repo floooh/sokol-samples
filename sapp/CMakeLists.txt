@@ -515,7 +515,7 @@ fips_begin_app(restart-sapp windowed)
     sokol_shader(restart-sapp.glsl ${slang})
     fips_dir(data)
     fipsutil_copy(restart-assets.yml)
-    fips_deps(sokol-memtrack stb)
+    fips_deps(sokol-memtrack stb libmodplug)
 fips_end_app()
 
 if (NOT FIPS_ANDROID)
