@@ -9,6 +9,8 @@
 //  which uses the sokol_memtrack.h utility header to track memory allocations
 //  in the sokol headers.
 //------------------------------------------------------------------------------
+#include <string.h> // memset
+
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
@@ -95,18 +97,33 @@ static void init(void) {
     // capture initial allocation values for leak detection
     state.init_mem_info = smemtrack_info();
 
-    // setup sokol libraries...
+    // setup sokol libraries (use tweak init params to reduce memory usage)
     sg_setup(&(sg_desc){
+        .buffer_pool_size = 8,
+        .image_pool_size = 4,
+        .shader_pool_size = 4,
+        .pipeline_pool_size = 8,
+        .pass_pool_size = 1,
+        .context_pool_size = 1,
+        .sampler_cache_size = 4,
         .context = sapp_sgcontext()
     });
-    sfetch_setup(&(sfetch_desc_t){ 0 });
-    sgl_setup(&(sgl_desc_t){ 0 });
+    sfetch_setup(&(sfetch_desc_t){
+        .max_requests = 1,
+        .num_channels = 1,
+        .num_lanes = 1
+    });
+    sgl_setup(&(sgl_desc_t){
+        .max_vertices = 16,
+        .max_commands = 16,
+        .pipeline_pool_size = 1,
+    });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
-        .printf_buf_size = 256,
+        .printf_buf_size = 128,
         .fonts[0] = sdtx_font_cpc(),
         .context = {
-            .char_buf_size = 256,
+            .char_buf_size = 128,
         }
     });
 
@@ -210,7 +227,7 @@ static void frame(void) {
         sdtx_puts("PRESS 'SPACE' TO RESTART!\n\n");
         sdtx_puts("Sokol Header Allocations:\n\n");
         sdtx_printf("  Num:  %d\n", smemtrack_info().num_allocs);
-        sdtx_printf("  Size: %d\n", smemtrack_info().num_bytes);
+        sdtx_printf("  Size: %d bytes\n", smemtrack_info().num_bytes);
     }
 
     // do some sokol-gl rendering
@@ -261,6 +278,7 @@ static void cleanup(void) {
     sgl_shutdown();
     sfetch_shutdown();
     sg_shutdown();
+    memset(&state, 0, sizeof(state));
 }
 
 static void input(const sapp_event* ev) {
