@@ -53,6 +53,7 @@ samples = [
 
 # assets that must also be copied
 assets = [
+    "comsi.s3m",
     "baboon.png",
     "bjork-all-is-full-of-love.mpg",
     "DamagedHelmet.gltf",
