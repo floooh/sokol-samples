@@ -43,6 +43,7 @@ samples = [
     [ 'saudio', 'saudio-sapp.c', None],
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
+    [ 'restart', 'restart-sapp.c', 'restart-sapp.glsl' ],
     [ 'sgl', 'sgl-sapp.c', None ],
     [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
