@@ -32,15 +32,21 @@
 #define MOD_SRCBUF_SAMPLES (16*1024)
 
 static struct {
-    float rx, ry;
-    sg_pass_action pass_action;
-    sg_pipeline pip;
-    sg_bindings bind;
-    ModPlugFile* mod_mpf;
-    int mod_int_buf[MOD_SRCBUF_SAMPLES];
-    float mod_flt_buf[MOD_SRCBUF_SAMPLES];
-    uint8_t img_buffer[256 * 1024];
-    uint8_t mod_buffer[512 * 1024];
+    struct {
+        float rx, ry;
+        sg_pass_action pass_action;
+        sg_pipeline pip;
+        sg_bindings bind;
+    } scene;
+    struct {
+        ModPlugFile* mpf;
+        int int_buf[MOD_SRCBUF_SAMPLES];
+        float flt_buf[MOD_SRCBUF_SAMPLES];
+    } mod;
+    struct {
+        uint8_t img_buffer[256 * 1024];
+        uint8_t mod_buffer[512 * 1024];
+    } io;
 } state;
 
 typedef struct {
@@ -101,9 +107,10 @@ static inline uint32_t xorshift32(void) {
     return x;
 }
 
+// the sokol-app init callback is also called when restarting
 static void init(void) {
 
-    // setup sokol libraries (use tweak init params to reduce memory usage)
+    // setup sokol libraries (tweak setup params to reduce memory usage)
     sg_setup(&(sg_desc){
         .buffer_pool_size = 8,
         .image_pool_size = 4,
@@ -132,28 +139,27 @@ static void init(void) {
             .char_buf_size = 128,
         }
     });
-    /* setup sokol_audio (default sample rate is 44100Hz) */
     saudio_setup(&(saudio_desc){
         .num_channels = MOD_NUM_CHANNELS,
     });
 
     // setup rendering resources
-    state.bind.fs_images[0] = sg_alloc_image();
+    state.scene.bind.fs_images[0] = sg_alloc_image();
 
-    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(cube_vertices),
         .content = cube_vertices,
         .label = "cube-vertices"
     });
 
-    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.scene.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(cube_indices),
         .content = cube_indices,
         .label = "cube-indices"
     });
 
-    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.scene.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(restart_shader_desc()),
         .layout = {
             .attrs = {
@@ -172,28 +178,12 @@ static void init(void) {
         .label = "cube-pipeline"
     });
 
-    // start loading the texture
-    sfetch_send(&(sfetch_request_t){
-        .path = "baboon.png",
-        .callback = fetch_img_callback,
-        .buffer_ptr = state.img_buffer,
-        .buffer_size = sizeof(state.img_buffer)
-    });
-
-    // start loading the MOD file
-    sfetch_send(&(sfetch_request_t){
-        .path = "comsi.s3m",
-        .callback = fetch_mod_callback,
-        .buffer_ptr = state.mod_buffer,
-        .buffer_size = sizeof(state.mod_buffer)
-    });
-
-    // choose a pseudo-random background color
+    // set a pseudo-random background color on each restart
     float r = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     float g = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     float b = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
-    state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { r, g, b, 1.0f } }
+    state.scene.pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR,.val = { r, g, b, 1.0f } }
     };
 
     // initialize libmodplug
@@ -207,9 +197,23 @@ static void init(void) {
     mps.mLoopCount = -1;
     mps.mFlags = MODPLUG_ENABLE_OVERSAMPLING;
     ModPlug_SetSettings(&mps);
+
+    // start loading files
+    sfetch_send(&(sfetch_request_t){
+        .path = "baboon.png",
+        .callback = fetch_img_callback,
+        .buffer_ptr = state.io.img_buffer,
+        .buffer_size = sizeof(state.io.img_buffer)
+    });
+    sfetch_send(&(sfetch_request_t){
+        .path = "comsi.s3m",
+        .callback = fetch_mod_callback,
+        .buffer_ptr = state.io.mod_buffer,
+        .buffer_size = sizeof(state.io.mod_buffer)
+    });
 }
 
-// the texture loading callback
+// file sokol-fetch loading callbacks
 static void fetch_img_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         int png_width, png_height, num_channels;
@@ -220,7 +224,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            sg_init_image(state.bind.fs_images[SLOT_tex], &(sg_image_desc){
+            sg_init_image(state.scene.bind.fs_images[SLOT_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -236,7 +240,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
     }
     else if (response->failed) {
         // if loading the file failed, set clear color to red
-        state.pass_action = (sg_pass_action) {
+        state.scene.pass_action = (sg_pass_action) {
             .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
@@ -244,16 +248,17 @@ static void fetch_img_callback(const sfetch_response_t* response) {
 
 static void fetch_mod_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.mod_mpf = ModPlug_Load(response->buffer_ptr, response->fetched_size);
+        state.mod.mpf = ModPlug_Load(response->buffer_ptr, response->fetched_size);
     }
     else if (response->failed) {
         // if loading the file failed, set clear color to red
-        state.pass_action = (sg_pass_action) {
+        state.scene.pass_action = (sg_pass_action) {
             .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
 
+// the sokol-app frame callback
 static void frame(void) {
     const int w = sapp_width();
     const int h = sapp_height();
@@ -261,36 +266,6 @@ static void frame(void) {
 
     // pump the sokol-fetch message queues, and invoke response callbacks
     sfetch_dowork();
-
-    // play audio
-    const int num_frames = saudio_expect();
-    if (num_frames > 0) {
-        int num_samples = num_frames * saudio_channels();
-        if (num_samples > MOD_SRCBUF_SAMPLES) {
-            num_samples = MOD_SRCBUF_SAMPLES;
-        }
-        if (state.mod_mpf) {
-            /* NOTE: for multi-channel playback, the samples are interleaved
-               (e.g. left/right/left/right/...)
-            */
-            int res = ModPlug_Read(state.mod_mpf, (void*)state.mod_int_buf, sizeof(int)*num_samples);
-            int samples_in_buffer = res / sizeof(int);
-            int i;
-            for (i = 0; i < samples_in_buffer; i++) {
-                state.mod_flt_buf[i] = state.mod_int_buf[i] / (float)0x7fffffff;
-            }
-            for (; i < num_samples; i++) {
-                state.mod_flt_buf[i] = 0.0f;
-            }
-        }
-        else {
-            /* if file wasn't loaded, fill the output buffer with silence */
-            for (int i = 0; i < num_samples; i++) {
-                state.mod_flt_buf[i] = 0.0f;
-            }
-        }
-        saudio_push(state.mod_flt_buf, num_frames);
-    }
 
     // print current memtracker state
     {
@@ -303,20 +278,47 @@ static void frame(void) {
         sdtx_printf("MOD: Combat Signal by ???");
     }
 
+    // play audio
+    const int num_frames = saudio_expect();
+    if (num_frames > 0) {
+        int num_samples = num_frames * saudio_channels();
+        if (num_samples > MOD_SRCBUF_SAMPLES) {
+            num_samples = MOD_SRCBUF_SAMPLES;
+        }
+        if (state.mod.mpf) {
+            /* NOTE: for multi-channel playback, the samples are interleaved
+               (e.g. left/right/left/right/...)
+            */
+            int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, sizeof(int)*num_samples);
+            int samples_in_buffer = res / sizeof(int);
+            int i;
+            for (i = 0; i < samples_in_buffer; i++) {
+                state.mod.flt_buf[i] = state.mod.int_buf[i] / (float)0x7fffffff;
+            }
+            for (; i < num_samples; i++) {
+                state.mod.flt_buf[i] = 0.0f;
+            }
+        }
+        else {
+            /* if file wasn't loaded, fill the output buffer with silence */
+            for (int i = 0; i < num_samples; i++) {
+                state.mod.flt_buf[i] = 0.0f;
+            }
+        }
+        saudio_push(state.mod.flt_buf, num_frames);
+    }
+
     // do some sokol-gl rendering
     {
-        /* compute viewport rectangles so that the views are horizontally
-           centered and keep a 1:1 aspect ratio
-        */
         const int x0 = (w - h)/2;
         const int y0 = 0;
 
-        sgl_viewport(x0, y0, h, h, true);
         sgl_defaults();
-        sgl_begin_triangles();
+        sgl_viewport(x0, y0, h, h, true);
         sgl_matrix_mode_modelview();
-        sgl_translate(sinf(state.rx * 0.05f) * 0.5f, cosf(state.rx * 0.1f) * 0.5f, 0.0f);
+        sgl_translate(sinf(state.scene.rx * 0.05f) * 0.5f, cosf(state.scene.rx * 0.1f) * 0.5f, 0.0f);
         sgl_scale(0.5f, 0.5f, 1.0f);
+        sgl_begin_triangles();
         sgl_v2f_c3b( 0.0f,  0.5f, 255, 0, 0);
         sgl_v2f_c3b(-0.5f, -0.5f, 0, 0, 255);
         sgl_v2f_c3b( 0.5f, -0.5f, 0, 255, 0);
@@ -324,20 +326,21 @@ static void frame(void) {
         sgl_viewport(0, 0, w, h, true);
     }
 
-    // compute model-view-projection matrix for vertex shader
+    // compute model-view-projection matrix for the 3D scene
     hmm_mat4 proj = HMM_Perspective(60.0f, aspect, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
-    state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.scene.rx += 1.0f; state.scene.ry += 2.0f;
+    hmm_mat4 rxm = HMM_Rotate(state.scene.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.scene.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(state.pip);
-    sg_apply_bindings(&state.bind);
+    // and finally the actual sokol-gfx render pass
+    sg_begin_default_pass(&state.scene.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.scene.pip);
+    sg_apply_bindings(&state.scene.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
     sg_draw(0, 36, 1);
     sgl_draw();
@@ -346,9 +349,10 @@ static void frame(void) {
     sg_commit();
 }
 
-static void cleanup(void) {
-    if (state.mod_mpf) {
-        ModPlug_Unload(state.mod_mpf);
+// the sokol-app cleanup callback is also called on restart
+static void shutdown(void) {
+    if (state.mod.mpf) {
+        ModPlug_Unload(state.mod.mpf);
     }
     saudio_shutdown();
     sdtx_shutdown();
@@ -358,10 +362,11 @@ static void cleanup(void) {
     memset(&state, 0, sizeof(state));
 }
 
+// the sokol-app event callback, performs a "restart" when the SPACE key is pressed
 static void input(const sapp_event* ev) {
     if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
         if (ev->key_code == SAPP_KEYCODE_SPACE) {
-            cleanup();
+            shutdown();
             init();
         }
     }
@@ -372,7 +377,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,
-        .cleanup_cb = cleanup,
+        .cleanup_cb = shutdown,
         .event_cb = input,
         .width = 800,
         .height = 600,
