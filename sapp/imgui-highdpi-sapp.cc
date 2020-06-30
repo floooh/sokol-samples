@@ -104,7 +104,7 @@ void frame(void) {
     // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
     if (show_test_window) {
         ImGui::SetNextWindowPos(ImVec2(460, 20), ImGuiCond_FirstUseEver);
-        ImGui::ShowTestWindow();
+        ImGui::ShowDemoWindow();
     }
 
     // 4. Prepare and conditionally open the "Really Quit?" popup
