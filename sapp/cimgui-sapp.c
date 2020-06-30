@@ -67,7 +67,7 @@ void frame(void) {
         igEnd();
     }
 
-    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowDemoWindow()
     if (state.show_test_window) {
         igSetNextWindowPos((ImVec2){460,20}, ImGuiCond_FirstUseEver, (ImVec2){0,0});
         igShowDemoWindow(0);

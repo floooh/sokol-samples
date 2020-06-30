@@ -44,7 +44,7 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
     flextInit();
-    
+
     // GLFW to ImGui input forwarding
     glfwSetMouseButtonCallback(w, [](GLFWwindow*, int btn, int action, int /*mods*/) {
         if ((btn >= 0) && (btn < 3)) {
@@ -73,17 +73,17 @@ int main() {
 
     // setup sokol_gfx and sokol_time
     stm_setup();
-    sg_desc desc = { }; 
+    sg_desc desc = { };
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    // setup Dear Imgui 
+    // setup Dear Imgui
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.Fonts->AddFontDefault();
-    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB; 
+    io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
     io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
     io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
     io.KeyMap[ImGuiKey_UpArrow] = GLFW_KEY_UP;
@@ -210,10 +210,10 @@ int main() {
             ImGui::End();
         }
 
-        // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+        // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowDemoWindow()
         if (show_test_window) {
             ImGui::SetNextWindowPos(ImVec2(460, 20), ImGuiCond_FirstUseEver);
-            ImGui::ShowTestWindow();
+            ImGui::ShowDemoWindow();
         }
 
         // the sokol_gfx draw pass

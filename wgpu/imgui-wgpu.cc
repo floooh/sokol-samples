@@ -65,9 +65,9 @@ static void frame(void) {
         ImGui::End();
     }
 
-    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
+    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowDemoWindow()
     if (state.show_test_window) {
-        ImGui::ShowTestWindow();
+        ImGui::ShowDemoWindow();
     }
 
     // the sokol_gfx draw pass
