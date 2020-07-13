@@ -1,10 +1,9 @@
 ---
-platform: osx 
+platform: osx
 generator: Ninja
 build_tool: ninja
 build_type: Release
 defines:
     SOKOL_USE_METAL: ON
-    FIPS_OSX_USE_ARC: ON
 
 
