@@ -206,6 +206,14 @@ static void event(const sapp_event* e) {
     state.items[e->type].frame_count = state.frame_count;
     state.items[e->type].event = *e;
     simgui_handle_event(e);
+
+    /* special case: show/hide mouse cursor when pressing SPACE */
+    if (e->type == SAPP_EVENTTYPE_KEY_DOWN) {
+        sapp_show_mouse(false);
+    }
+    else if (e->type == SAPP_EVENTTYPE_KEY_UP) {
+        sapp_show_mouse(true);
+    }
 }
 
 static bool is_key_event(sapp_event_type t) {
@@ -318,6 +326,7 @@ static void frame(void) {
     ImGui::SetNextWindowPos(ImVec2(pad, pad), ImGuiCond_Always);
     ImGui::SetNextWindowSize(padded_size, ImGuiCond_Always);
     if (ImGui::Begin("Event Inspector", nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse)) {
+        ImGui::Text("Press any key to show/hide the mouse cursor (current status: %s)!", sapp_mouse_shown() ? "SHOWN":"HIDDEN");
         for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
             draw_event_info_panel((sapp_event_type)i, panel_width, panel_height);
             pos_x += panel_width_with_padding;
