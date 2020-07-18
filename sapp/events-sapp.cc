@@ -290,6 +290,7 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
     if (is_mouse_event(type)) {
         ImGui::Text("mouse btn:    %s", button_to_str(ev.mouse_button));
         ImGui::Text("mouse pos:    %4.2f %4.2f", ev.mouse_x, ev.mouse_y);
+        ImGui::Text("mouse delta:  %4.2f %4.2f", ev.mouse_dx, ev.mouse_dy);
         ImGui::Text("scrolling:    %4.2f %4.2f", ev.scroll_x, ev.scroll_y);
     }
     if (is_touch_event(type)) {
