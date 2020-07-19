@@ -209,10 +209,28 @@ static void event(const sapp_event* e) {
 
     /* special case: show/hide mouse cursor when pressing SPACE */
     if (e->type == SAPP_EVENTTYPE_KEY_DOWN) {
-        sapp_show_mouse(false);
+        switch (e->key_code) {
+            case SAPP_KEYCODE_SPACE:
+                sapp_show_mouse(false);
+                break;
+            case SAPP_KEYCODE_M:
+                sapp_lock_mouse(true);
+                break;
+            default:
+                break;
+        }
     }
     else if (e->type == SAPP_EVENTTYPE_KEY_UP) {
-        sapp_show_mouse(true);
+        switch (e->key_code) {
+            case SAPP_KEYCODE_SPACE:
+                sapp_show_mouse(true);
+                break;
+            case SAPP_KEYCODE_M:
+                sapp_lock_mouse(false);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -327,7 +345,8 @@ static void frame(void) {
     ImGui::SetNextWindowPos(ImVec2(pad, pad), ImGuiCond_Always);
     ImGui::SetNextWindowSize(padded_size, ImGuiCond_Always);
     if (ImGui::Begin("Event Inspector", nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse)) {
-        ImGui::Text("Press any key to show/hide the mouse cursor (current status: %s)!", sapp_mouse_shown() ? "SHOWN":"HIDDEN");
+        ImGui::Text("Press SPACE key to show/hide the mouse cursor (current status: %s)!", sapp_mouse_shown() ? "SHOWN":"HIDDEN");
+        ImGui::Text("Press M key to lock/unlock the mouse cursor (current status: %s)!", sapp_mouse_locked() ? "LOCKED":"UNLOCKED");
         for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
             draw_event_info_panel((sapp_event_type)i, panel_width, panel_height);
             pos_x += panel_width_with_padding;
