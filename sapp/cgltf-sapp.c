@@ -405,19 +405,18 @@ static void input(const sapp_event* ev) {
             break;
 
         case SAPP_EVENTTYPE_MOUSE_UP:
-            if ((ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) && sapp_mouse_locked()) {
+            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
                 sapp_lock_mouse(false);
             }
             break;
 
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            cam_zoom(&state.camera, ev->scroll_y);
+            cam_zoom(&state.camera, ev->scroll_y * 0.5f);
             break;
 
         case SAPP_EVENTTYPE_MOUSE_MOVE:
             if (sapp_mouse_locked()) {
-                __builtin_printf("%f,%f\n", ev->mouse_dx, ev->mouse_dy);
-                cam_orbit(&state.camera, ev->mouse_dx, ev->mouse_dy);
+                cam_orbit(&state.camera, ev->mouse_dx * 0.25f, ev->mouse_dy * 0.25f);
             }
             break;
 

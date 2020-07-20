@@ -34,8 +34,8 @@ static void cam_init(camera_t* cam) {
 
 /* feed mouse movement */
 static void cam_orbit(camera_t* cam, float dx, float dy) {
-    cam->polar.Y -= dx * 0.1f;
-    cam->polar.X = HMM_Clamp(cam->min_lat, cam->polar.X + dy * 0.1f, cam->max_lat);
+    cam->polar.Y -= dx;
+    cam->polar.X = HMM_Clamp(cam->min_lat, cam->polar.X + dy, cam->max_lat);
 }
 
 /* feed zoom (mouse wheel) input */
