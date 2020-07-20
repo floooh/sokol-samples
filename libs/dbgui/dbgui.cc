@@ -51,8 +51,8 @@ void __dbgui_draw(void) {
     simgui_render();
 }
 
-void __dbgui_event(const sapp_event* e) {
-    simgui_handle_event(e);
+bool __dbgui_event(const sapp_event* e) {
+    return simgui_handle_event(e);
 }
 
 } // extern "C"

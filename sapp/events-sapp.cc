@@ -208,7 +208,7 @@ static void event(const sapp_event* e) {
     simgui_handle_event(e);
 
     /* special case: show/hide mouse cursor when pressing SPACE */
-    if (e->type == SAPP_EVENTTYPE_KEY_DOWN) {
+    if ((e->type == SAPP_EVENTTYPE_KEY_DOWN) && !e->key_repeat) {
         switch (e->key_code) {
             case SAPP_KEYCODE_SPACE:
                 sapp_show_mouse(false);

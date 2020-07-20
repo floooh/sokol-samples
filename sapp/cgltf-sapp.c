@@ -23,6 +23,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #include "cgltf/cgltf.h"
+#include "util/camera.h"
 #include <assert.h>
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -159,12 +160,6 @@ typedef struct {
     bool alpha;
 } pipeline_cache_params_t;
 
-// camera helper struct
-typedef struct {
-    hmm_vec3 eye_pos;
-    hmm_mat4 view_proj;
-} camera_t;
-
 // the top-level application state struct
 static struct {
     bool failed;
@@ -213,7 +208,6 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
 static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
 
 static void update_scene(void);
-static void update_camera(int framebuffer_width, int framebuffer_height);
 static vs_params_t vs_params_for_node(int node_index);
 
 // sokol-app init callback, called once at startup
@@ -224,6 +218,9 @@ static void init(void) {
     });
     // setup the optional debugging UI
     __dbgui_setup(sapp_sample_count());
+
+    // initialize camera helper
+    cam_init(&state.camera);
 
     // initialize Basis Universal
     sbasisu_setup();
@@ -310,7 +307,7 @@ static void frame(void) {
     update_scene();
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
-    update_camera(fb_width, fb_height);
+    cam_update(&state.camera, fb_width, fb_height);
 
     // render the scene
     if (state.failed) {
@@ -393,6 +390,40 @@ static void cleanup(void) {
     __dbgui_shutdown();
     sbasisu_shutdown();
     sg_shutdown();
+}
+
+// input event handler for camera manipulation
+static void input(const sapp_event* ev) {
+    if (__dbgui_event(ev)) {
+        return;
+    }
+    switch (ev->type) {
+        case SAPP_EVENTTYPE_MOUSE_DOWN:
+            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
+                sapp_lock_mouse(true);
+            }
+            break;
+
+        case SAPP_EVENTTYPE_MOUSE_UP:
+            if ((ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) && sapp_mouse_locked()) {
+                sapp_lock_mouse(false);
+            }
+            break;
+
+        case SAPP_EVENTTYPE_MOUSE_SCROLL:
+            cam_zoom(&state.camera, ev->scroll_y);
+            break;
+
+        case SAPP_EVENTTYPE_MOUSE_MOVE:
+            if (sapp_mouse_locked()) {
+                __builtin_printf("%f,%f\n", ev->mouse_dx, ev->mouse_dy);
+                cam_orbit(&state.camera, ev->mouse_dx, ev->mouse_dy);
+            }
+            break;
+
+        default:
+            break;
+    }
 }
 
 // load-callback for the GLTF base file
@@ -961,19 +992,11 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
     return tform;
 }
 
-static void update_camera(int framebuffer_width, int framebuffer_height) {
-    const float w = (float) framebuffer_width;
-    const float h = (float) framebuffer_height;
-    const float dist = 3.0f;
-    state.camera.eye_pos = HMM_Vec3(0.0, 1.5f, dist);
-    hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(state.camera.eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.camera.view_proj = HMM_MultiplyMat4(proj, view);
-}
-
 static void update_scene(void) {
+    /*
     state.rx += 0.25f;
     state.ry += 2.0f;
+    */
     state.root_transform = HMM_Rotate(state.rx, HMM_Vec3(0, 1, 0));
 }
 
@@ -993,8 +1016,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     return (sapp_desc){
         .init_cb = init,
         .frame_cb = frame,
+        .event_cb = input,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,
