@@ -12,7 +12,7 @@
 #include "dbgui/dbgui.h"
 #include "shadows-sapp.glsl.h"
 
-#define OFFSCREEN_SAMPLE_COUNT (4)
+#define SCREEN_SAMPLE_COUNT (4)
 
 static struct {
     struct {
@@ -20,7 +20,7 @@ static struct {
         sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
-    } offscreen;
+    } shadows;
     struct {
         sg_pass_action pass_action;
         sg_pipeline pip;
@@ -40,8 +40,8 @@ void init(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
-    /* offscreen pass action: clear to black */
-    state.offscreen.pass_action = (sg_pass_action) {
+    /* shadow pass action: clear to white */
+    state.shadows.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 1.0f, 1.0f, 1.0f } }
     };
 
@@ -54,19 +54,19 @@ void init(void) {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .sample_count = 1,
-        .label = "color-image"
+        .label = "shadow-map-color-image"
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    img_desc.label = "depth-image";
+    img_desc.label = "shadow-map-depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
+    state.shadows.pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img,
-        .label = "shadow-pass"
+        .label = "shadow-map-pass"
     });
 
-    /* cube vertex buffer with positions, normals, colors and tex coords */
+    /* cube vertex buffer with positions & normals */
     float vertices[] = {
         /* pos                  normals             */
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,  //CUBE BACK FACE
@@ -127,12 +127,12 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
-    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    /* pipeline-state-object for shadows-rendered cube, don't need texture coord here */
+    state.shadows.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to provide stride, because the buffer's normal vector is skipped */
             .buffers[0].stride = 6 * sizeof(float),
-            /* but don't need to provide attr offsets, because pos and color are continuous */
+            /* but don't need to provide attr offsets, because pos and normal are continuous */
             .attrs = {
                 [ATTR_shadowVS_position].format = SG_VERTEXFORMAT_FLOAT3
             }
@@ -148,10 +148,11 @@ void init(void) {
             .depth_format = SG_PIXELFORMAT_DEPTH
         },
         .rasterizer = {
+            /* Cull front faces in the shadow map pass */
             .cull_mode = SG_CULLMODE_FRONT,
             .sample_count = 1
         },
-        .label = "offscreen-pipeline"
+        .label = "shadow-map-pipeline"
     });
 
     /* and another pipeline-state-object for the default pass */
@@ -170,18 +171,19 @@ void init(void) {
             .depth_write_enabled = true
         },
         .rasterizer = {
+            /* Cull back faces when rendering to the screen */
             .cull_mode = SG_CULLMODE_BACK,
         },
         .label = "default-pipeline"
     });
 
-    /* the resource bindings for rendering a non-textured cube into offscreen render target */
-    state.offscreen.bind = (sg_bindings){
+    /* the resource bindings for rendering the cube into the shadow map render target */
+    state.shadows.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* resource bindings to render a textured cube, using the offscreen render target as texture */
+    /* resource bindings to render the cube, using the shadow map render target as texture */
     state.deflt.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
@@ -225,10 +227,10 @@ void frame(void) {
     fs_light_params.shadowMapSize = HMM_Vec2(2048,2048);
     fs_light_params.eyePos = HMM_Vec3(5.0f,5.0f,5.0f);
 
-    /* the offscreen pass, render the vertices into the depth image */
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
-    sg_apply_pipeline(state.offscreen.pip);
-    sg_apply_bindings(&state.offscreen.bind);
+    /* the shadow map pass, render the vertices into the depth image */
+    sg_begin_pass(state.shadows.pass, &state.shadows.pass_action);
+    sg_apply_pipeline(state.shadows.pip);
+    sg_apply_bindings(&state.shadows.bind);
     {
         /* Render the cube into the shadow map */
         vs_shadow_params_t vs_shadow_params;
@@ -286,7 +288,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
-        .sample_count = 4,
+        .sample_count = SCREEN_SAMPLE_COUNT,
         .window_title = "Shadow Rendering (sokol-app)",
     };
 }
