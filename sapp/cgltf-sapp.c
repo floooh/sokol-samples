@@ -394,7 +394,7 @@ static void cleanup(void) {
 
 // input event handler for camera manipulation
 static void input(const sapp_event* ev) {
-    if (__dbgui_event(ev)) {
+    if (__dbgui_event_with_retval(ev)) {
         return;
     }
     switch (ev->type) {
