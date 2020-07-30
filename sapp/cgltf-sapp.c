@@ -13,6 +13,8 @@
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#define SOKOL_DEBUGTEXT_IMPL
+#include "sokol_debugtext.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "cgltf-sapp.glsl.h"
@@ -225,6 +227,13 @@ static void init(void) {
     // initialize Basis Universal
     sbasisu_setup();
 
+    // setup sokol-debugtext
+    sdtx_setup(&(sdtx_desc_t){
+        .fonts = {
+            [0] = sdtx_font_oric()
+        }
+    });
+
     // setup sokol-fetch with 2 channels and 6 lanes per channel,
     // we'll use one channel for mesh data and the other for textures
     sfetch_setup(&(sfetch_desc_t){
@@ -304,6 +313,12 @@ static void frame(void) {
     // pump the sokol-fetch message queue
     sfetch_dowork();
 
+    // print help text
+    sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
+    sdtx_origin(1.0f, 1.0f);
+    sdtx_puts("LMB + drag:  rotate\n");
+    sdtx_puts("mouse wheel: zoom");
+
     update_scene();
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
@@ -378,6 +393,7 @@ static void frame(void) {
                 sg_draw(prim->base_element, prim->num_elements, 1);
             }
         }
+        sdtx_draw();
         __dbgui_draw();
         sg_end_pass();
     }
