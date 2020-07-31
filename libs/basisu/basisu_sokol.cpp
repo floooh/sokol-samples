@@ -32,25 +32,25 @@ void sbasisu_shutdown(void) {
 
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
     if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).sample) {
-        return basist::cTFBC3;
+        return basist::transcoder_texture_format::cTFBC3_RGBA;
     }
     else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
-        return basist::cTFBC1;
+        return basist::transcoder_texture_format::cTFBC1_RGB;
     }
     else if (sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).sample) {
-        return basist::cTFPVRTC1_4_OPAQUE_ONLY;
+        return basist::transcoder_texture_format::cTFPVRTC1_4_RGB;
     }
     else {
-        return basist::cTFETC2;
+        return basist::transcoder_texture_format::cTFETC2_RGBA;
     }
 }
 
 static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format fmt) {
     switch (fmt) {
-        case basist::cTFBC1: return SG_PIXELFORMAT_BC1_RGBA;
-        case basist::cTFPVRTC1_4_OPAQUE_ONLY: return SG_PIXELFORMAT_PVRTC_RGB_4BPP;
-        case basist::cTFETC2: return SG_PIXELFORMAT_ETC2_RGB8;
-        case basist::cTFBC3: return SG_PIXELFORMAT_BC3_RGBA;
+        case basist::transcoder_texture_format::cTFBC1_RGB: return SG_PIXELFORMAT_BC1_RGBA;
+        case basist::transcoder_texture_format::cTFPVRTC1_4_RGB: return SG_PIXELFORMAT_PVRTC_RGB_4BPP;
+        case basist::transcoder_texture_format::cTFETC2_RGBA: return SG_PIXELFORMAT_ETC2_RGB8;
+        case basist::transcoder_texture_format::cTFBC3_RGBA: return SG_PIXELFORMAT_BC3_RGBA;
         default: return _SG_PIXELFORMAT_DEFAULT;
     }
 }
@@ -76,11 +76,11 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
     desc.max_anisotropy = 8;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
     for (int i = 0; i < desc.num_mipmaps; i++) {
-        uint32_t bytes_per_block = basist::basis_get_bytes_per_block(fmt);
+        uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
         uint32_t orig_width, orig_height, total_blocks;
         transcoder.get_image_level_desc(data, num_bytes, 0, i, orig_width, orig_height, total_blocks);
         uint32_t required_size = total_blocks * bytes_per_block;
-        if (fmt == basist::cTFPVRTC1_4_OPAQUE_ONLY) {
+        if (fmt == basist::transcoder_texture_format::cTFPVRTC1_4_RGB) {
             // For PVRTC1, Basis only writes (or requires) total_blocks * bytes_per_block. But GL requires extra padding for very small textures:
             // https://www.khronos.org/registry/OpenGL/extensions/IMG/IMG_texture_compression_pvrtc.txt
             const uint32_t width = (orig_width + 3) & ~3;

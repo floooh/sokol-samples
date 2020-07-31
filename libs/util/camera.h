@@ -23,13 +23,13 @@ typedef struct {
 /* initialize to default parameters */
 static void cam_init(camera_t* cam) {
     memset(cam, 0, sizeof(camera_t));
-    cam->min_dist = 1.0f;
-    cam->max_dist = 20.0f;
+    cam->min_dist = 2.0f;
+    cam->max_dist = 30.0f;
     cam->min_lat = -85.0f;
     cam->max_lat = 85.0f;
-    cam->dist = 3.0f;
+    cam->dist = 5.0f;
     cam->aspect = 60.0f;
-    cam->polar = HMM_Vec2(25.0f, 0.0f);
+    cam->polar = HMM_Vec2(-10.0f, 45.0f);
 }
 
 /* feed mouse movement */

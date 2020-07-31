@@ -1,5 +1,5 @@
 // basisu_transcoder_internal.h - Universal texture format transcoder library.
-// Copyright (C) 2019 Binomial LLC. All Rights Reserved.
+// Copyright (C) 2019-2020 Binomial LLC. All Rights Reserved.
 //
 // Important: If compiling with gcc, be sure strict aliasing is disabled: -fno-strict-aliasing
 //
@@ -20,8 +20,8 @@
 #pragma warning (disable: 4127) //  conditional expression is constant
 #endif
 
-#define BASISD_LIB_VERSION 107
-#define BASISD_VERSION_STRING "01.11"
+#define BASISD_LIB_VERSION 112
+#define BASISD_VERSION_STRING "01.12"
 
 #ifdef _DEBUG
 #define BASISD_BUILD_DEBUG
@@ -40,6 +40,52 @@ namespace basisu
 
 namespace basist
 {
+	// Low-level formats directly supported by the transcoder (other supported texture formats are combinations of these low-level block formats).
+	// You probably don't care about these enum's unless you are going pretty low-level and calling the transcoder to decode individual slices.
+	enum class block_format
+	{
+		cETC1,								// ETC1S RGB 
+		cETC2_RGBA,							// full ETC2 EAC RGBA8 block
+		cBC1,									// DXT1 RGB 
+		cBC3,									// BC4 block followed by a four color BC1 block
+		cBC4,									// DXT5A (alpha block only)
+		cBC5,									// two BC4 blocks
+		cPVRTC1_4_RGB,						// opaque-only PVRTC1 4bpp
+		cPVRTC1_4_RGBA,					// PVRTC1 4bpp RGBA
+		cBC7,									// Full BC7 block, any mode
+		cBC7_M5_COLOR,						// RGB BC7 mode 5 color (writes an opaque mode 5 block)
+		cBC7_M5_ALPHA,						// alpha portion of BC7 mode 5 (cBC7_M5_COLOR output data must have been written to the output buffer first to set the mode/rot fields etc.)
+		cETC2_EAC_A8,						// alpha block of ETC2 EAC (first 8 bytes of the 16-bit ETC2 EAC RGBA format)
+		cASTC_4x4,							// ASTC 4x4 (either color-only or color+alpha). Note that the transcoder always currently assumes sRGB is not enabled when outputting ASTC 
+												// data. If you use a sRGB ASTC format you'll get ~1 LSB of additional error, because of the different way ASTC decoders scale 8-bit endpoints to 16-bits during unpacking.
+		
+		cATC_RGB,
+		cATC_RGBA_INTERPOLATED_ALPHA,
+		cFXT1_RGB,							// Opaque-only, has oddball 8x4 pixel block size
+
+		cPVRTC2_4_RGB,
+		cPVRTC2_4_RGBA,
+
+		cETC2_EAC_R11,
+		cETC2_EAC_RG11,
+												
+		cIndices,							// Used internally: Write 16-bit endpoint and selector indices directly to output (output block must be at least 32-bits)
+
+		cRGB32,								// Writes RGB components to 32bpp output pixels
+		cRGBA32,								// Writes RGB255 components to 32bpp output pixels
+		cA32,									// Writes alpha component to 32bpp output pixels
+				
+		cRGB565,
+		cBGR565,
+		
+		cRGBA4444_COLOR,
+		cRGBA4444_ALPHA,
+		cRGBA4444_COLOR_OPAQUE,
+		cRGBA4444,
+						
+		cTotalBlockFormats
+	};
+
 	const int COLOR5_PAL0_PREV_HI = 9, COLOR5_PAL0_DELTA_LO = -9, COLOR5_PAL0_DELTA_HI = 31;
 	const int COLOR5_PAL1_PREV_HI = 21, COLOR5_PAL1_DELTA_LO = -21, COLOR5_PAL1_DELTA_HI = 21;
 	const int COLOR5_PAL2_PREV_HI = 31, COLOR5_PAL2_DELTA_LO = -31, COLOR5_PAL2_DELTA_HI = 9;
@@ -76,7 +122,7 @@ namespace basist
 			basisu::clear_vector(m_tree);
 		}
 
-		bool init(uint32_t total_syms, const uint8_t *pCode_sizes)
+		bool init(uint32_t total_syms, const uint8_t *pCode_sizes, uint32_t fast_lookup_bits = basisu::cHuffmanFastLookupBits)
 		{
 			if (!total_syms)
 			{
@@ -87,8 +133,10 @@ namespace basist
 			m_code_sizes.resize(total_syms);
 			memcpy(&m_code_sizes[0], pCode_sizes, total_syms);
 
+			const uint32_t huffman_fast_lookup_size = 1 << fast_lookup_bits;
+
 			m_lookup.resize(0);
-			m_lookup.resize(basisu::cHuffmanFastLookupSize);
+			m_lookup.resize(huffman_fast_lookup_size);
 
 			m_tree.resize(0);
 			m_tree.resize(total_syms * 2);
@@ -126,10 +174,10 @@ namespace basist
 				for (l = code_size; l > 0; l--, cur_code >>= 1)
 					rev_code = (rev_code << 1) | (cur_code & 1);
 
-				if (code_size <= basisu::cHuffmanFastLookupBits)
+				if (code_size <= fast_lookup_bits)
 				{
 					uint32_t k = (code_size << 16) | sym_index;
-					while (rev_code < basisu::cHuffmanFastLookupSize)
+					while (rev_code < huffman_fast_lookup_size)
 					{
 						if (m_lookup[rev_code] != 0)
 						{
@@ -144,9 +192,9 @@ namespace basist
 				}
 
 				int tree_cur;
-				if (0 == (tree_cur = m_lookup[rev_code & (basisu::cHuffmanFastLookupSize - 1)]))
+				if (0 == (tree_cur = m_lookup[rev_code & (huffman_fast_lookup_size - 1)]))
 				{
-					const uint32_t idx = rev_code & (basisu::cHuffmanFastLookupSize - 1);
+					const uint32_t idx = rev_code & (huffman_fast_lookup_size - 1);
 					if (m_lookup[idx] != 0)
 					{
 						// Supplied codesizes can't create a valid prefix code.
@@ -164,9 +212,9 @@ namespace basist
 					return false;
 				}
 
-				rev_code >>= (basisu::cHuffmanFastLookupBits - 1);
+				rev_code >>= (fast_lookup_bits - 1);
 
-				for (int j = code_size; j > (basisu::cHuffmanFastLookupBits + 1); j--)
+				for (int j = code_size; j > ((int)fast_lookup_bits + 1); j--)
 				{
 					tree_cur -= ((rev_code >>= 1) & 1);
 
@@ -214,6 +262,8 @@ namespace basist
 		}
 
 		const basisu::uint8_vec &get_code_sizes() const { return m_code_sizes; }
+		const basisu::int_vec get_lookup() const { return m_lookup; }
+		const basisu::int16_vec get_tree() const { return m_tree; }
 
 		bool is_valid() const { return m_code_sizes.size() > 0; }
 
@@ -390,9 +440,11 @@ namespace basist
 			return v;
 		}
 
-		inline uint32_t decode_huffman(const huffman_decoding_table &ct)
+		inline uint32_t decode_huffman(const huffman_decoding_table &ct, int fast_lookup_bits = basisu::cHuffmanFastLookupBits)
 		{
 			assert(ct.m_code_sizes.size());
+
+			const uint32_t huffman_fast_lookup_size = 1 << fast_lookup_bits;
 						
 			while (m_bit_buf_size < 16)
 			{
@@ -408,14 +460,14 @@ namespace basist
 			int code_len;
 
 			int sym;
-			if ((sym = ct.m_lookup[m_bit_buf & (basisu::cHuffmanFastLookupSize - 1)]) >= 0)
+			if ((sym = ct.m_lookup[m_bit_buf & (huffman_fast_lookup_size - 1)]) >= 0)
 			{
 				code_len = sym >> 16;
 				sym &= 0xFFFF;
 			}
 			else
 			{
-				code_len = basisu::cHuffmanFastLookupBits;
+				code_len = fast_lookup_bits;
 				do
 				{
 					sym = ct.m_tree[~sym + ((m_bit_buf >> code_len++) & 1)]; // ~sym = -sym - 1
@@ -590,6 +642,16 @@ namespace basist
 
 	struct decoder_etc_block;
 	
+	inline uint8_t clamp255(int32_t i)
+	{
+		return (uint8_t)((i & 0xFFFFFF00U) ? (~(i >> 31)) : i);
+	}
+
+	enum eNoClamp
+	{
+		cNoClamp = 0
+	};
+
 	struct color32
 	{
 		union
@@ -610,21 +672,37 @@ namespace basist
 		color32() { }
 
 		color32(uint32_t vr, uint32_t vg, uint32_t vb, uint32_t va) { set(vr, vg, vb, va); }
+		color32(eNoClamp unused, uint32_t vr, uint32_t vg, uint32_t vb, uint32_t va) { (void)unused; set_noclamp_rgba(vr, vg, vb, va); }
 
 		void set(uint32_t vr, uint32_t vg, uint32_t vb, uint32_t va) { c[0] = static_cast<uint8_t>(vr); c[1] = static_cast<uint8_t>(vg); c[2] = static_cast<uint8_t>(vb); c[3] = static_cast<uint8_t>(va); }
+
+		void set_noclamp_rgb(uint32_t vr, uint32_t vg, uint32_t vb) { c[0] = static_cast<uint8_t>(vr); c[1] = static_cast<uint8_t>(vg); c[2] = static_cast<uint8_t>(vb); }
+		void set_noclamp_rgba(uint32_t vr, uint32_t vg, uint32_t vb, uint32_t va) { set(vr, vg, vb, va); }
+
+		void set_clamped(int vr, int vg, int vb, int va) { c[0] = clamp255(vr); c[1] = clamp255(vg);	c[2] = clamp255(vb); c[3] = clamp255(va); }
 
 		uint8_t operator[] (uint32_t idx) const { assert(idx < 4); return c[idx]; }
 		uint8_t &operator[] (uint32_t idx) { assert(idx < 4); return c[idx]; }
 
 		bool operator== (const color32&rhs) const { return m == rhs.m; }
+
+		static color32 comp_min(const color32& a, const color32& b) { return color32(cNoClamp, std::min(a[0], b[0]), std::min(a[1], b[1]), std::min(a[2], b[2]), std::min(a[3], b[3])); }
+		static color32 comp_max(const color32& a, const color32& b) { return color32(cNoClamp, std::max(a[0], b[0]), std::max(a[1], b[1]), std::max(a[2], b[2]), std::max(a[3], b[3])); }
+	};
+
+	struct endpoint
+	{
+		color32 m_color5;
+		uint8_t m_inten5;
 	};
 
 	struct selector
 	{
-		union
-		{
-			uint8_t m_bytes[4];
-		};
+		// Plain selectors (2-bits per value)
+		uint8_t m_selectors[4];
+
+		// ETC1 selectors
+		uint8_t m_bytes[4];
 
 		uint8_t m_lo_selector, m_hi_selector;
 		uint8_t m_num_unique_selectors;
@@ -656,25 +734,11 @@ namespace basist
 			}
 		}
 
-		inline uint32_t get_raw_selector(uint32_t x, uint32_t y) const
-		{
-			assert((x | y) < 4);
-
-			const uint32_t bit_index = x * 4 + y;
-			const uint32_t byte_bit_ofs = bit_index & 7;
-			const uint8_t *p = &m_bytes[3 - (bit_index >> 3)];
-			const uint32_t lsb = (p[0] >> byte_bit_ofs) & 1;
-			const uint32_t msb = (p[-2] >> byte_bit_ofs) & 1;
-			const uint32_t val = lsb | (msb << 1);
-
-			return val;
-		}
-
 		// Returned selector value ranges from 0-3 and is a direct index into g_etc1_inten_tables.
 		inline uint32_t get_selector(uint32_t x, uint32_t y) const
 		{
-			static const uint8_t s_etc1_to_selector_index[4] = { 2, 3, 1, 0 };
-			return s_etc1_to_selector_index[get_raw_selector(x, y)];
+			assert((x < 4) && (y < 4));
+			return (m_selectors[y] >> (x * 2)) & 3;
 		}
 
 		void set_selector(uint32_t x, uint32_t y, uint32_t val)
@@ -682,11 +746,15 @@ namespace basist
 			static const uint8_t s_selector_index_to_etc1[4] = { 3, 2, 0, 1 };
 
 			assert((x | y | val) < 4);
-			const uint32_t bit_index = x * 4 + y;
 
-			uint8_t *p = &m_bytes[3 - (bit_index >> 3)];
+			m_selectors[y] &= ~(3 << (x * 2));
+			m_selectors[y] |= (val << (x * 2));
 
-			const uint32_t byte_bit_ofs = bit_index & 7;
+			const uint32_t etc1_bit_index = x * 4 + y;
+
+			uint8_t *p = &m_bytes[3 - (etc1_bit_index >> 3)];
+
+			const uint32_t byte_bit_ofs = etc1_bit_index & 7;
 			const uint32_t mask = 1 << byte_bit_ofs;
 
 			const uint32_t etc1_val = s_selector_index_to_etc1[val];
@@ -702,6 +770,8 @@ namespace basist
 		}
 	};
 
+	bool basis_block_format_is_uncompressed(block_format tex_type);
+	
 } // namespace basist
 
 

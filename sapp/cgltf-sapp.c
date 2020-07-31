@@ -257,9 +257,9 @@ static void init(void) {
     // setup the point light
     state.point_light = (light_params_t){
         .light_pos = HMM_Vec3(10.0, 10.0, 10.0),
-        .light_range = 100.0,
-        .light_color = HMM_Vec3(1000.0, 1000.0, 1000.0),
-        .light_intensity = 1.0
+        .light_range = 200.0,
+        .light_color = HMM_Vec3(1.0, 1.5, 2.0),
+        .light_intensity = 700.0
     };
 
     // start loading the base gltf file...
@@ -295,7 +295,7 @@ static void init(void) {
         }
     });
     for (int i = 0; i < 64; i++) {
-        pixels[i] = 0xFFFF7FFF;
+        pixels[i] = 0xFF0000FF;
     }
     state.placeholders.normal = sg_make_image(&(sg_image_desc){
         .width = 8,
@@ -315,7 +315,8 @@ static void frame(void) {
 
     // print help text
     sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
-    sdtx_origin(1.0f, 1.0f);
+    sdtx_color1i(0xFFFFFFFF);
+    sdtx_origin(1.0f, 2.0f);
     sdtx_puts("LMB + drag:  rotate\n");
     sdtx_puts("mouse wheel: zoom");
 
