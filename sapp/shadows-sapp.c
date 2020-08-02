@@ -222,10 +222,11 @@ void frame(void) {
     const hmm_mat4 translate = HMM_Translate(HMM_Vec3(0,1.5f,0));
 
     /* Initialise fragment uniforms for light shader */
-    fs_light_params_t fs_light_params;
-    fs_light_params.lightDir = HMM_NormalizeVec3(light_dir.XYZ);
-    fs_light_params.shadowMapSize = HMM_Vec2(2048,2048);
-    fs_light_params.eyePos = HMM_Vec3(5.0f,5.0f,5.0f);
+    const fs_light_params_t fs_light_params = {
+        .lightDir = HMM_NormalizeVec3(light_dir.XYZ),
+        .shadowMapSize = HMM_Vec2(2048,2048),
+        .eyePos = HMM_Vec3(5.0f,5.0f,5.0f)
+    };
 
     /* the shadow map pass, render the vertices into the depth image */
     sg_begin_pass(state.shadows.pass, &state.shadows.pass_action);
@@ -233,37 +234,38 @@ void frame(void) {
     sg_apply_bindings(&state.shadows.bind);
     {
         /* Render the cube into the shadow map */
-        vs_shadow_params_t vs_shadow_params;
-        vs_shadow_params.mvp = HMM_MultiplyMat4(light_view_proj,translate);
+        const vs_shadow_params_t vs_shadow_params = {
+            .mvp = HMM_MultiplyMat4(light_view_proj,translate)
+        };
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &vs_shadow_params, sizeof(vs_shadow_params));
         sg_draw(0, 36, 1);
     }
     sg_end_pass();
 
-    /* and the display-pass, rendering the scene, using the
-       previously rendered shadow map as a texture */
+    /* and the display-pass, rendering the scene, using the previously rendered shadow map as a texture */
     sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
-    
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_light_params, &fs_light_params, sizeof(fs_light_params));
     {
         /* Render the plane in the light pass */
-        vs_light_params_t vs_light_params;
-        vs_light_params.mvp = HMM_MultiplyMat4(view_proj,scale);
-        vs_light_params.lightMVP = HMM_MultiplyMat4(light_view_proj,scale);
-        vs_light_params.model = HMM_Mat4d(1.0f);
-        vs_light_params.diffColor = HMM_Vec3(0.5f,0.5f,0.5f);
+        const vs_light_params_t vs_light_params = {
+            .mvp = HMM_MultiplyMat4(view_proj,scale),
+            .lightMVP = HMM_MultiplyMat4(light_view_proj,scale),
+            .model = HMM_Mat4d(1.0f),
+            .diffColor = HMM_Vec3(0.5f,0.5f,0.5f)
+        };
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &vs_light_params, sizeof(vs_light_params));
         sg_draw(36, 6, 1);
     }
     {
         /* Render the cube in the light pass */
-        vs_light_params_t vs_light_params;
-        vs_light_params.lightMVP = HMM_MultiplyMat4(light_view_proj,translate);
-        vs_light_params.model = translate;
-        vs_light_params.mvp = HMM_MultiplyMat4(view_proj,translate);
-        vs_light_params.diffColor = HMM_Vec3(1.0f,1.0f,1.0f);
+        const vs_light_params_t vs_light_params = {
+            .lightMVP = HMM_MultiplyMat4(light_view_proj,translate),
+            .model = translate,
+            .mvp = HMM_MultiplyMat4(view_proj,translate),
+            .diffColor = HMM_Vec3(1.0f,1.0f,1.0f)
+        };
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &vs_light_params, sizeof(vs_light_params));
         sg_draw(0, 36, 1);
     }
