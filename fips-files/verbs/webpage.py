@@ -27,6 +27,7 @@ samples = [
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
     [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],
+    [ 'shadows', 'shadows-sapp.c', 'shadows-sapp.glsl'],
     [ 'imgui', 'imgui-sapp.cc', None ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
