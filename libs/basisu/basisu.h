@@ -49,6 +49,7 @@
 
 #endif // _MSC_VER
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
