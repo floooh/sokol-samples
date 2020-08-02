@@ -203,12 +203,12 @@ void frame(void) {
     const hmm_mat4 light_view = HMM_LookAt(light_dir.XYZ, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
 
     /* Configure a bias matrix for converting view-space coordinates into uv coordinates */
-    hmm_mat4 light_proj = {
-            0.5f, 0.0f, 0.0f, 0,
-            0.0f, 0.5f, 0.0f, 0,
-            0.0f, 0.0f, 0.5f, 0,
-            0.5f, 0.5f, 0.5f, 1
-    };
+    hmm_mat4 light_proj = { {
+        { 0.5f, 0.0f, 0.0f, 0 },
+        { 0.0f, 0.5f, 0.0f, 0 },
+        { 0.0f, 0.0f, 0.5f, 0 },
+        { 0.5f, 0.5f, 0.5f, 1 }
+    } };
     light_proj = HMM_MultiplyMat4(light_proj, HMM_Orthographic(-4.0f, 4.0f, -4.0f, 4.0f, 0, 200.0f));
     const hmm_mat4 light_view_proj = HMM_MultiplyMat4(light_proj, light_view);
 
@@ -286,8 +286,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = __dbgui_event,
-        .width = 1024,
-        .height = 768,
+        .width = 800,
+        .height = 600,
         .sample_count = SCREEN_SAMPLE_COUNT,
         .window_title = "Shadow Rendering (sokol-app)",
     };
