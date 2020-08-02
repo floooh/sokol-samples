@@ -55,4 +55,8 @@ void __dbgui_event(const sapp_event* e) {
     simgui_handle_event(e);
 }
 
+bool __dbgui_event_with_retval(const sapp_event* e) {
+    return simgui_handle_event(e);
+}
+
 } // extern "C"
