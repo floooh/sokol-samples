@@ -26,7 +26,8 @@ int wgpu_height(void) {
     return wgpu_state.height;
 }
 
-static const void* wgpu_get_render_view(void) {
+static const void* wgpu_get_render_view(void* user_data) {
+    assert((void*)0xABADF00D == user_data);
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.msaa_view);
         return (const void*) wgpu_state.msaa_view;
@@ -37,7 +38,8 @@ static const void* wgpu_get_render_view(void) {
     }
 }
 
-static const void* wgpu_get_resolve_view(void) {
+static const void* wgpu_get_resolve_view(void* user_data) {
+    assert((void*)0xABADF00D == user_data);
     if (wgpu_state.desc.sample_count > 1) {
         assert(wgpu_state.swapchain_view);
         return (const void*) wgpu_state.swapchain_view;
@@ -47,7 +49,8 @@ static const void* wgpu_get_resolve_view(void) {
     }
 }
 
-static const void* wgpu_get_depth_stencil_view(void) {
+static const void* wgpu_get_depth_stencil_view(void* user_data) {
+    assert((void*)0xABADF00D == user_data);
     return (const void*) wgpu_state.depth_stencil_view;
 }
 
@@ -66,9 +69,10 @@ sg_context_desc wgpu_get_context(void) {
         .sample_count = wgpu_state.desc.sample_count,
         .wgpu = {
             .device = (const void*) wgpu_state.dev,
-            .render_view_cb = wgpu_get_render_view,
-            .resolve_view_cb = wgpu_get_resolve_view,
-            .depth_stencil_view_cb = wgpu_get_depth_stencil_view
+            .render_view_userdata_cb = wgpu_get_render_view,
+            .resolve_view_userdata_cb = wgpu_get_resolve_view,
+            .depth_stencil_view_userdata_cb = wgpu_get_depth_stencil_view,
+            .user_data = 0xABADF00D
         }
     };
 }

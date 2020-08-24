@@ -91,7 +91,7 @@ static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 static int width, height;
 
 wgpu::Device CreateCppDawnDevice(const char* title, int w, int h) {
-    assert((w > 0) && (h > 0));
+    ASSERT((w > 0) && (h > 0));
     width = w;
     height = h;
     glfwSetErrorCallback(PrintGLFWError);
