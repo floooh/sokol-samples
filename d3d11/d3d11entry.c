@@ -188,7 +188,7 @@ bool d3d11_process_events(void) {
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
         }
-    } 
+    }
     return !state.quit_requested;
 }
 
@@ -200,7 +200,7 @@ void d3d11_present(void) {
         const int cur_width = r.right - r.left;
         const int cur_height = r.bottom - r.top;
         if (((cur_width > 0) && (cur_width != state.width)) ||
-            ((cur_height > 0) && (cur_height != state.height))) 
+            ((cur_height > 0) && (cur_height != state.height)))
         {
             /* need to reallocate the default render target */
             state.width = cur_width;
@@ -270,7 +270,7 @@ LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 }
 
-static const void* d3d11_device(void) { 
+static const void* d3d11_device(void) {
     return (const void*) state.device;
 }
 
@@ -278,11 +278,13 @@ static const void* d3d11_device_context(void) {
     return (const void*) state.device_context;
 }
 
-static const void* d3d11_render_target_view(void) {
+static const void* d3d11_render_target_view(void* user_data) {
+    assert(0xDEADBEEF == (uintptr_t) user_data);
     return (const void*) state.render_target_view;
 }
 
-static const void* d3d11_depth_stencil_view(void) {
+static const void* d3d11_depth_stencil_view(void* user_data) {
+    assert(0xDEADBEEF == (uintptr_t) user_data);
     return (const void*) state.depth_stencil_view;
 }
 
@@ -292,8 +294,9 @@ sg_context_desc d3d11_get_context(void) {
         .d3d11 = {
             .device = d3d11_device(),
             .device_context = d3d11_device_context(),
-            .render_target_view_cb = d3d11_render_target_view,
-            .depth_stencil_view_cb = d3d11_depth_stencil_view
+            .render_target_view_userdata_cb = d3d11_render_target_view,
+            .depth_stencil_view_userdata_cb = d3d11_depth_stencil_view,
+            .user_data = (void*)(uintptr_t)0xDEADBEEF
         }
     };
 }
