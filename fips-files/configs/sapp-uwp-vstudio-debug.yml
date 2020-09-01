@@ -1,0 +1,10 @@
+---
+platform: win64
+generator-platform: x64
+build_tool: cmake
+build_type: Debug
+defines:
+    CMAKE_SYSTEM_NAME: WindowsStore
+    CMAKE_SYSTEM_VERSION: 10.0
+    USE_SOKOL_APP: ON
+    SOKOL_USE_D3D11: ON
