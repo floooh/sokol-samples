@@ -984,10 +984,10 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
     if (node->parent) {
         parent_tform = build_transform_for_gltf_node(gltf, node->parent);
     }
-    hmm_mat4 tform = HMM_Mat4d(1);
     if (node->has_matrix) {
         // needs testing, not sure if the element order is correct
-        tform = *(hmm_mat4*)node->matrix;
+        hmm_mat4 tform = *(hmm_mat4*)node->matrix;
+        return tform;
     }
     else {
         hmm_mat4 translate = HMM_Mat4d(1);
@@ -1003,9 +1003,8 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
             scale = HMM_Scale(HMM_Vec3(node->scale[0], node->scale[1], node->scale[2]));
         }
         // NOTE: not sure if the multiplication order is correct
-        tform = HMM_MultiplyMat4(parent_tform, HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate));
+        return HMM_MultiplyMat4(parent_tform, HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate));
     }
-    return tform;
 }
 
 static void update_scene(void) {
