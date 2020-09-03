@@ -4,7 +4,11 @@
 cmake_minimum_required(VERSION 2.8)
 project(sokol-samples)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 14)
+if (CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_STANDARD 14)
+endif()
 
 if (SOKOL_USE_WGPU_DAWN)
     set(USE_DAWN_SDK ON)
