@@ -48,7 +48,7 @@ fips_begin_lib(sokol-cpp)
 fips_end_lib()
 
 # the sokol implementations library with SOKOL_NO_ENTRY support
-if (NOT FIPS_ANDROID)
+if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
 fips_begin_lib(sokol-noentry)
     fips_vs_warning_level(4)
     if (FIPS_OSX)
@@ -65,6 +65,8 @@ fips_begin_lib(sokol-memtrack)
     fips_vs_warning_level(4)
     if (FIPS_OSX)
         fips_files(sokol-memtrack.m)
+    elseif (FIPS_UWP)
+        fips_files(sokol-memtrack.cc)
     else()
         fips_files(sokol-memtrack.c)
     endif()
@@ -73,7 +75,7 @@ fips_end_lib()
 
 # the sokol implementations library as DLL
 # FIXME: implement this also for other platforms
-if (FIPS_WINDOWS)
+if (FIPS_WINDOWS AND NOT FIPS_UWP)
 fips_begin_sharedlib(sokol-dll)
     fips_vs_warning_level(4)
     fips_files(sokol-dll.c)
