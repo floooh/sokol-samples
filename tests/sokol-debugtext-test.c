@@ -420,8 +420,11 @@ UTEST(sokol_debugtext, putr) {
     init();
     _sdtx_vertex_t* start_ptr = _sdtx.cur_ctx->cur_vertex_ptr;
     sdtx_putr("Hello World!", 5);
-    T(5 == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
-    sdtx_putr("Hello World!", 128);
-    T(12 == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
+    T((5 * 6) == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
+
+    start_ptr = _sdtx.cur_ctx->cur_vertex_ptr;
+    sdtx_putr("Hello!\n\n\n\n\n\n\n\n\n\n\n", 10);
+    // NOTE: the \n's don't result in rendered vertices
+    T((6 * 6) == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
     shutdown();
 }
