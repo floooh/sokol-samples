@@ -414,3 +414,14 @@ UTEST(sokol_debugtext, rewind_after_draw) {
     T(_sdtx.cur_ctx->cur_vertex_ptr == _sdtx.cur_ctx->vertices);
     shutdown();
 }
+
+UTEST(sokol_debugtext, putr) {
+    // test if sdtx_putr() draws the right amount of characters
+    init();
+    _sdtx_vertex_t* start_ptr = _sdtx.cur_ctx->cur_vertex_ptr;
+    sdtx_putr("Hello World!", 5);
+    T(5 == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
+    sdtx_putr("Hello World!", 128);
+    T(12 == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
+    shutdown();
+}

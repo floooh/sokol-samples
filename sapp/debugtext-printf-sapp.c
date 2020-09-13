@@ -72,6 +72,8 @@ static void frame(void) {
         sdtx_printf("Hello '%s'!\n", (state.frame_count & (1<<7)) ? "Welt" : "World");
         sdtx_printf("\tFrame Time:\t\t%.3f\n", frame_time);
         my_printf_wrapper("\tFrame Count:\t%d\t0x%04X\n", state.frame_count, state.frame_count);
+        sdtx_putr("Range Test 1(xyzbla)", 12);
+        sdtx_putr("\nRange Test 2\n", 32);
         sdtx_move_y(2);
     }
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
