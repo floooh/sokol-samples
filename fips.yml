@@ -7,6 +7,7 @@ policies:
 imports:
   sokol:
     git: https://github.com/floooh/sokol
+    branch: Aftnet-sapp_uwp # FIXME
   sokol-tools-bin:
     git: https://github.com/floooh/sokol-tools-bin
   fips-glfw:
