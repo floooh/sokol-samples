@@ -238,6 +238,10 @@ Note the following caveats:
   ```sapp-metal-*``` build configs (GLES on iOS is supported though)
 - for UWP you need a bleeding edge Visual Studio and Windows SDK version
   (at least VS2019 and SDK 10.0.19041.0)
+- fips build support for UWP is incomplete, you only get "raw" UWP
+  executables out of the build process, but not packaged and signed application
+  bundles. This is enough for running and debugging the samples inside
+  Visual Studio, but not for much else.
 
 ## How to build without a build system
 
