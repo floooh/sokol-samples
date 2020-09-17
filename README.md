@@ -83,7 +83,7 @@ Make sure that the following tools are in the path. Exact versions shouldn't
 matter:
 ```
 > python --version
-Python 2.7.10 (3.x works too)
+Python 3.x (2.x should still work too)
 > cmake --version
 cmake version 3.8.2 (or later)
 # make is only needed for building through emscripten
@@ -91,7 +91,7 @@ cmake version 3.8.2 (or later)
 GNU Make 3.81
 # on OSX (on Windows you just need a recent VS)
 > xcodebuild -version
-Xcode 9.0
+Xcode 10.x (or later)
 ```
 
 ### Building the platform-specific samples
@@ -221,6 +221,8 @@ which matches your platform and build system:
   ...
   sapp-win64-vstudio-debug
   sapp-win64-vstudio-release
+  sapp-win64-uwp-vstudio-debug
+  sapp-win64-uwp-vstudio-release
 > ./fips set config sapp-...
 > ./fips build
 > ./fips list targets
@@ -229,11 +231,13 @@ which matches your platform and build system:
 
 Note the following caveats:
 - for HTML5, first install the emscripten SDK as described above in the
-native HTML5 sample section
+  native HTML5 sample section
 - for iOS, set the developer team id, as described above in the iOS section
 - OpenGL is currently not supported on MacOS because NSOpenGLView and
-friends are broken on the MacOS Mojave beta, instead use the
-```sapp-metal-*``` build configs (GLES on iOS is supported though)
+  friends are broken on the MacOS Mojave beta, instead use the
+  ```sapp-metal-*``` build configs (GLES on iOS is supported though)
+- for UWP you need a bleeding edge Visual Studio and Windows SDK version
+  (at least VS2019 and SDK 10.0.19041.0)
 
 ## How to build without a build system
 
