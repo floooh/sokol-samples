@@ -16,6 +16,8 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 
 ## What's New:
 
+- **23-Sep-2020**: samples can now be built for UWP using the ```sapp-uwp-vstudio-debug``` and ```sapp-uwp-vstudio-release``` build configs
+
 - **27-May-2020**: four new test and demonstration samples for the new sokol_debugtext.h header
 
 - **30-Apr-2020**: New sokol\_gfx.h WebGPU backend samples, and updated all other samples for the breaking changes in sokol\_gfx.h initialization, see the [Updates](https://github.com/floooh/sokol#updates) section in the sokol\_gfx.h README for details!
@@ -221,8 +223,8 @@ which matches your platform and build system:
   ...
   sapp-win64-vstudio-debug
   sapp-win64-vstudio-release
-  sapp-win64-uwp-vstudio-debug
-  sapp-win64-uwp-vstudio-release
+  sapp-uwp-vstudio-debug
+  sapp-uwp-vstudio-release
 > ./fips set config sapp-...
 > ./fips build
 > ./fips list targets
