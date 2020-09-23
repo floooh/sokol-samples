@@ -17,6 +17,7 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 ## What's New:
 
 - **23-Sep-2020**: samples can now be built for UWP using the ```sapp-uwp-vstudio-debug``` and ```sapp-uwp-vstudio-release``` build configs
+  NOTE that fips support for UWP built apps is incomplete (e.g. ```fips run``` doesn't work, and UWP app bundle creation is also not supported)
 
 - **27-May-2020**: four new test and demonstration samples for the new sokol_debugtext.h header
 
