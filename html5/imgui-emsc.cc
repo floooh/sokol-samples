@@ -45,7 +45,7 @@ int main() {
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
-    sg_setup({ });
+    sg_setup((sg_desc){ });
     assert(sg_isvalid());
 
     // setup the ImGui environment
