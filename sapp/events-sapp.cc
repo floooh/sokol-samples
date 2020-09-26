@@ -9,6 +9,8 @@
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
+#include <stdio.h> // snprintf
+
 static const char* eventtype_to_str(sapp_event_type t) {
     switch (t) {
         case SAPP_EVENTTYPE_INVALID: return "INVALID";
@@ -175,12 +177,10 @@ static const char* button_to_str(sapp_mousebutton btn) {
 }
 
 struct item_t {
-    int frame_count = 0;
     sapp_event event = { };
 };
 
 struct state_t {
-    int frame_count = 0;
     item_t items[_SAPP_EVENTTYPE_NUM];
     sg_pass_action pass_action;
 };
@@ -203,7 +203,6 @@ static void init(void) {
 
 static void event(const sapp_event* e) {
     assert((e->type >= 0) && (e->type < _SAPP_EVENTTYPE_NUM));
-    state.items[e->type].frame_count = state.frame_count;
     state.items[e->type].event = *e;
     simgui_handle_event(e);
 
@@ -330,6 +329,12 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
 }
 
 static void frame(void) {
+
+    // test sapp_set_window_title()
+    char window_title[64];
+    snprintf(window_title, sizeof(window_title), "Events (frame_count=%d)", (int) sapp_frame_count());
+    sapp_set_window_title(window_title);
+
     const int w = sapp_width();
     const int h = sapp_height();
     simgui_new_frame(w, h, 1.0f/60.0f);
@@ -380,7 +385,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.cleanup_cb = cleanup;
     desc.width = 832;
     desc.height = 600;
-    desc.window_title = "Events (sokol app)";
+    desc.window_title = "Events";
     desc.user_cursor = true;
     desc.gl_force_gles2 = true;
     desc.enable_clipboard = true;
