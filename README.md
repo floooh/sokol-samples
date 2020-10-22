@@ -85,6 +85,8 @@ steps to udpate:
 Make sure that the following tools are in the path. Exact versions shouldn't
 matter:
 ```
+> git --version
+2.x.x (any version should do)
 > python --version
 Python 3.x (2.x should still work too)
 > cmake --version
@@ -109,7 +111,7 @@ header in the folder ```sapp```.
 ```
 > mkdir ~/scratch
 > cd ~/scratch
-> git clone git@github.com:floooh/sokol-samples
+> git clone https://github.com/floooh/sokol-samples
 > cd sokol-samples
 > ./fips build
 ...
