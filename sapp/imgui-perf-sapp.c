@@ -99,7 +99,7 @@ static void frame(void) {
         const float t = state.counter + i * 2.0f;
         const float r = (float)i / (float)max_windows;
         const float x = fwidth * (0.5f + (r * 0.5f * 0.75f * sinf(t * 0.05f)));
-        const float y = fheight * (0.5f + (r * 0.5f * 0.75 * cosf(t * 0.05f)));
+        const float y = fheight * (0.5f + (r * 0.5f * 0.75f * cosf(t * 0.05f)));
         char name[64];
         snprintf(name, sizeof(name), "Hello ImGui %d", i);
         igSetNextWindowPos((ImVec2){x,y}, ImGuiCond_Always, (ImVec2){0,0});
