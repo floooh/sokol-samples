@@ -11,6 +11,8 @@
 
 #include <stdio.h> // snprintf
 
+static const int max_dropped_files = 4;
+
 static const char* eventtype_to_str(sapp_event_type t) {
     switch (t) {
         case SAPP_EVENTTYPE_INVALID: return "INVALID";
@@ -35,6 +37,7 @@ static const char* eventtype_to_str(sapp_event_type t) {
         case SAPP_EVENTTYPE_UPDATE_CURSOR: return "UPDATE_CURSOR";
         case SAPP_EVENTTYPE_QUIT_REQUESTED: return "QUIT_REQUESTED";
         case SAPP_EVENTTYPE_CLIPBOARD_PASTED: return "CLIPBOARD_PASTED";
+        case SAPP_EVENTTYPE_FILES_DROPPED: return "FILES_DROPPED";
         default: return "???";
     }
 }
@@ -244,7 +247,7 @@ static bool is_key_event(sapp_event_type t) {
     }
 }
 
-static bool is_mouse_event(sapp_event_type t) {
+static bool is_mouse_or_drop_event(sapp_event_type t) {
     switch (t) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
         case SAPP_EVENTTYPE_MOUSE_UP:
@@ -252,6 +255,7 @@ static bool is_mouse_event(sapp_event_type t) {
         case SAPP_EVENTTYPE_MOUSE_MOVE:
         case SAPP_EVENTTYPE_MOUSE_ENTER:
         case SAPP_EVENTTYPE_MOUSE_LEAVE:
+        case SAPP_EVENTTYPE_FILES_DROPPED:
             return true;
         default:
             return false;
@@ -304,7 +308,7 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
             }
         }
     }
-    if (is_mouse_event(type)) {
+    if (is_mouse_or_drop_event(type)) {
         ImGui::Text("mouse btn:    %s", button_to_str(ev.mouse_button));
         ImGui::Text("mouse pos:    %4.2f %4.2f", ev.mouse_x, ev.mouse_y);
         ImGui::Text("mouse delta:  %4.2f %4.2f", ev.mouse_dx, ev.mouse_dy);
@@ -352,6 +356,10 @@ static void frame(void) {
     if (ImGui::Begin("Event Inspector", nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("Press SPACE key to show/hide the mouse cursor (current status: %s)!", sapp_mouse_shown() ? "SHOWN":"HIDDEN");
         ImGui::Text("Press M key to lock/unlock the mouse cursor (current status: %s)!", sapp_mouse_locked() ? "LOCKED":"UNLOCKED");
+        ImGui::Text("dropped files (%d/%d):", sapp_get_num_dropped_files(), max_dropped_files);
+        for (int i = 0; i < sapp_get_num_dropped_files(); i++) {
+            ImGui::Text("    %d: %s\n", i, sapp_get_dropped_file_path(i));
+        }
         for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
             draw_event_info_panel((sapp_event_type)i, panel_width, panel_height);
             pos_x += panel_width_with_padding;
@@ -389,5 +397,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.user_cursor = true;
     desc.gl_force_gles2 = true;
     desc.enable_clipboard = true;
+    desc.enable_dragndrop = true;
+    desc.max_dropped_files = max_dropped_files;
     return desc;
 }
