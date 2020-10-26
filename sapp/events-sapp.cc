@@ -358,7 +358,11 @@ static void frame(void) {
         ImGui::Text("Press M key to lock/unlock the mouse cursor (current status: %s)!", sapp_mouse_locked() ? "LOCKED":"UNLOCKED");
         ImGui::Text("dropped files (%d/%d):", sapp_get_num_dropped_files(), max_dropped_files);
         for (int i = 0; i < sapp_get_num_dropped_files(); i++) {
-            ImGui::Text("    %d: %s\n", i, sapp_get_dropped_file_path(i));
+            #if defined(__EMSCRIPTEN__)
+            ImGui::Text("    %d: %s (bytes: %d)\n", i, sapp_get_dropped_file_path(i), sapp_html5_get_dropped_file_size(i));
+            #else
+            ImGui::Text("    %d: %s (\n", i, sapp_get_dropped_file_path(i));
+            #endif
         }
         for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
             draw_event_info_panel((sapp_event_type)i, panel_width, panel_height);
