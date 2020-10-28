@@ -361,7 +361,7 @@ static void frame(void) {
             #if defined(__EMSCRIPTEN__)
             ImGui::Text("    %d: %s (bytes: %d)\n", i, sapp_get_dropped_file_path(i), sapp_html5_get_dropped_file_size(i));
             #else
-            ImGui::Text("    %d: %s (\n", i, sapp_get_dropped_file_path(i));
+            ImGui::Text("    %d: %s\n", i, sapp_get_dropped_file_path(i));
             #endif
         }
         for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
