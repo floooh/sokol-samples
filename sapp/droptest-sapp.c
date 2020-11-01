@@ -121,14 +121,11 @@ static void cleanup(void) {
 }
 
 #if defined(__EMSCRIPTEN__)
-// the async-loading callback for sapp_html5_load_dropped_file
-static void emsc_load_callback(const sapp_html5_dropped_file_content* result) {
-    if (result->succeeded) {
-        assert(result->size <= (int)sizeof(state.buffer));
-        assert(result->content);
-        memcpy(state.buffer, result->content, result->size);
-        state.size = result->size;
+// the async-loading callback for sapp_html5_fetch_dropped_file
+static void emsc_load_callback(const sapp_html5_fetch_response* response) {
+    if (response->succeeded) {
         state.load_state = LOADSTATE_SUCCESS;
+        state.size = response->fetched_size;
     }
     else {
         state.load_state = LOADSTATE_FAILED;
@@ -166,7 +163,11 @@ static void input(const sapp_event* ev) {
                 state.load_state = LOADSTATE_TOOBIG;
             }
             else {
-                sapp_html5_load_dropped_file(0, emsc_load_callback, 0);
+                sapp_html5_fetch_dropped_file(0, &(sapp_html5_fetch_request){
+                    .callback = emsc_load_callback,
+                    .buffer_ptr = state.buffer,
+                    .buffer_size = sizeof(state.buffer),
+                });
             }
         #else
             // native platform: use sokol-fetch to load file content
