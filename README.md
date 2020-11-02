@@ -11,7 +11,6 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 |Platform|Build Status|
 |--------|------|
 |GH Actions (OSX/Linux/Win+VS2019/iOS/WASM/Android)|[![Build Status](https://github.com/floooh/sokol-samples/workflows/build_and_test/badge.svg)](https://github.com/floooh/sokol-samples/actions)|
-|Travis (OSX/Linux/Win,VS2017)|[![Build Status](https://travis-ci.org/floooh/sokol-samples.svg?branch=master)](https://travis-ci.org/floooh/sokol-samples)|
 |AppVeyor (Windows,VS2015)|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)|
 
 ## What's New:
