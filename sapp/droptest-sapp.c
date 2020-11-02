@@ -17,7 +17,7 @@ typedef enum {
     LOADSTATE_UNKNOWN = 0,
     LOADSTATE_SUCCESS,
     LOADSTATE_FAILED,
-    LOADSTATE_TOOBIG,
+    LOADSTATE_FILE_TOO_BIG,
 } loadstate_t;
 
 static struct {
@@ -92,10 +92,10 @@ static void frame(void) {
     }
     switch (state.load_state) {
         case LOADSTATE_FAILED:
-            igText("LOAD FAILED!\n", sapp_get_dropped_file_path(0));
+            igText("LOAD FAILED!");
             break;
-        case LOADSTATE_TOOBIG:
-            igText("%s:", sapp_get_dropped_file_path(0));
+        case LOADSTATE_FILE_TOO_BIG:
+            igText("FILE TOO BIG!");
             break;
         case LOADSTATE_SUCCESS:
             igSeparator();
@@ -127,6 +127,9 @@ static void emsc_load_callback(const sapp_html5_fetch_response* response) {
         state.load_state = LOADSTATE_SUCCESS;
         state.size = response->fetched_size;
     }
+    else if (SAPP_HTML5_FETCH_ERROR_BUFFER_TOO_SMALL == response->error_code) {
+        state.load_state = LOADSTATE_FILE_TOO_BIG;
+    }
     else {
         state.load_state = LOADSTATE_FAILED;
     }
@@ -138,15 +141,11 @@ static void native_load_callback(const sfetch_response_t* response) {
         state.load_state = LOADSTATE_SUCCESS;
         state.size = response->fetched_size;
     }
-    else if (response->failed) {
-        switch (response->error_code) {
-            case SFETCH_ERROR_BUFFER_TOO_SMALL:
-                state.load_state = LOADSTATE_TOOBIG;
-                break;
-            default:
-                state.load_state = LOADSTATE_FAILED;
-                break;
-        }
+    else if (response->error_code == SFETCH_ERROR_BUFFER_TOO_SMALL) {
+        state.load_state = LOADSTATE_FILE_TOO_BIG;
+    }
+    else {
+        state.load_state = LOADSTATE_FAILED;
     }
 }
 #endif
@@ -155,20 +154,13 @@ static void input(const sapp_event* ev) {
     simgui_handle_event(ev);
     if (ev->type == SAPP_EVENTTYPE_FILES_DROPPED) {
         #if __EMSCRIPTEN__
-            /* on emscripten we need to use sokol_app.h to load the file data,
-                we also know the file size upfront and can check against
-                the maximum allowed file size
-            */
-            if (sapp_html5_get_dropped_file_size(0) > MAX_FILE_SIZE) {
-                state.load_state = LOADSTATE_TOOBIG;
-            }
-            else {
-                sapp_html5_fetch_dropped_file(0, &(sapp_html5_fetch_request){
-                    .callback = emsc_load_callback,
-                    .buffer_ptr = state.buffer,
-                    .buffer_size = sizeof(state.buffer),
-                });
-            }
+            // on emscripten need to use the sokol-app helper function to load the file data
+            sapp_html5_fetch_dropped_file(&(sapp_html5_fetch_request){
+                .dropped_file_index = 0,
+                .callback = emsc_load_callback,
+                .buffer_ptr = state.buffer,
+                .buffer_size = sizeof(state.buffer),
+            });
         #else
             // native platform: use sokol-fetch to load file content
             sfetch_send(&(sfetch_request_t){
