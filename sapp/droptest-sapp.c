@@ -44,7 +44,7 @@ static void init(void) {
 static void render_file_content(void) {
     const int bytes_per_line = 16;
     const int num_lines = state.size / bytes_per_line;
-    
+
     igBeginChildStr("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
     ImGuiListClipper clipper = { 0 };
     ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
@@ -187,6 +187,5 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "droptest-sapp",
         .enable_dragndrop = true,
         .max_dropped_files = 1,
-        .html5_max_dropped_file_size = MAX_FILE_SIZE
     };
 }
