@@ -32,6 +32,8 @@ static void init(void) {
     });
     simgui_setup(&(simgui_desc_t){ 0 });
 
+    // on native platforms, use sokol_fetch.h to load the dropped-file content,
+    // on web, sokol_app.h has a builtin helper function for this
     #if !defined(__EMSCRIPTEN__)
     sfetch_setup(&(sfetch_desc_t){
         .num_channels = 1,
@@ -42,8 +44,8 @@ static void init(void) {
 
 // render the loaded file content as hex view
 static void render_file_content(void) {
-    const int bytes_per_line = 16;
-    const int num_lines = state.size / bytes_per_line;
+    const int bytes_per_line = 16;  // keep this 2^N
+    const int num_lines = (state.size + (bytes_per_line - 1)) / bytes_per_line;
 
     igBeginChildStr("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
     ImGuiListClipper clipper = { 0 };
@@ -60,9 +62,11 @@ static void render_file_content(void) {
             igSameLine(0.0f, 0.0f);
             igText("%02X ", state.buffer[i]);
         }
-        igSameLine(0.0f, 0.0f); igText("    ");
+        igSameLine((6 * 7.0f) + (bytes_per_line * 3 * 7.0f) + (2 * 7.0f), 0.0f);
         for (uint32_t i = start_offset; i < end_offset; i++) {
-            igSameLine(0.0f, 0.0f);
+            if (i != start_offset) {
+                igSameLine(0.0f, 0.0f);
+            }
             uint8_t c = state.buffer[i];
             if ((c < 32) || (c > 127)) {
                 c = '.';
