@@ -123,6 +123,8 @@ int main() {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
+        // testing gl_texture_target, not strictly needed in this case though:
+        .gl_texture_target = GL_TEXTURE_2D
     };
     glGenTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
     glActiveTexture(GL_TEXTURE0);
