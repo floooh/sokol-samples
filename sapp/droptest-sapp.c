@@ -157,7 +157,7 @@ static void native_load_callback(const sfetch_response_t* response) {
 static void input(const sapp_event* ev) {
     simgui_handle_event(ev);
     if (ev->type == SAPP_EVENTTYPE_FILES_DROPPED) {
-        #if __EMSCRIPTEN__
+        #if defined(__EMSCRIPTEN__)
             // on emscripten need to use the sokol-app helper function to load the file data
             sapp_html5_fetch_dropped_file(&(sapp_html5_fetch_request){
                 .dropped_file_index = 0,
