@@ -122,11 +122,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* can release the native D3D11 buffers now, sokol_gfx is holding on to them */
     d3d11_vbuf->lpVtbl->Release(d3d11_vbuf); d3d11_vbuf = 0;
-    d3d11_vbuf->lpVtbl->Release(d3d11_ibuf); d3d11_ibuf = 0;
+    d3d11_ibuf->lpVtbl->Release(d3d11_ibuf); d3d11_ibuf = 0;
 
-    /* create a dynamically updated D3D11 texture, unlike the Metal and
-       GL backends, we only need a single D3D11 texture
-    */
+    /* we can inject either a D3D11 texture, or a shader-resource-view, or both */
     D3D11_TEXTURE2D_DESC d3d11_tex_desc = {
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
         .Width = IMG_WIDTH,
@@ -142,6 +140,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hr = d3d11_dev->lpVtbl->CreateTexture2D(d3d11_dev, &d3d11_tex_desc, 0, &d3d11_tex);
     assert(SUCCEEDED(hr) && d3d11_tex);
 
+    D3D11_SHADER_RESOURCE_VIEW_DESC d3d11_srv_desc = {
+        .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+        .ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D,
+        .Texture2D.MipLevels = 1
+    };
+    ID3D11ShaderResourceView* d3d11_srv = 0;
+    hr = d3d11_dev->lpVtbl->CreateShaderResourceView(d3d11_dev, (ID3D11Resource*)d3d11_tex, &d3d11_srv_desc, &d3d11_srv);
+    assert(SUCCEEDED(hr) && d3d11_srv);
+
     /* and create a sokol_gfx texture with injected D3D11 texture */
     sg_reset_state_cache();
     sg_image_desc img_desc = {
@@ -153,10 +160,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
-        .d3d11_texture = d3d11_tex
+        // out-comment either of the next lines for testing:
+        .d3d11_texture = d3d11_tex,
+        .d3d11_shader_resource_view = d3d11_srv
     };
     sg_image img = sg_make_image(&img_desc);
-    d3d11_tex->lpVtbl->Release(d3d11_tex);
+    if (d3d11_tex) {
+        d3d11_tex->lpVtbl->Release(d3d11_tex);
+        d3d11_tex = 0;
+    }
+    if (d3d11_srv) {
+        d3d11_srv->lpVtbl->Release(d3d11_srv);
+        d3d11_srv = 0;
+    }
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
