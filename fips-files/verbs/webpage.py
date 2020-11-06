@@ -22,6 +22,7 @@ samples = [
     [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
+    [ 'tex3d', 'tex3d-sapp.c', 'tex3d-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
