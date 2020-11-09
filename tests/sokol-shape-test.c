@@ -167,4 +167,94 @@ UTEST(sokol_shape, torus_buffer_sizes) {
     T(res.indices.num * sizeof(uint16_t) == res.indices.size);
 }
 
+UTEST(sokol_shape, build_plane_defaults) {
+    sshape_vertex_t vx[64] = { 0 };
+    uint16_t ix[64] = { 0 };
+
+    sshape_build_t state = {
+        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
+        .indices  = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+    };
+    state = sshape_build_plane(&state, &(sshape_plane_t) { 0 });
+
+    T(state.valid);
+    T(0 == state.vertices.data_offset);
+    T(4 * sizeof(sshape_vertex_t) == state.vertices.data_size);
+    T(0 == state.indices.data_offset);
+    T(6 * sizeof(uint16_t) == state.indices.data_size);
+    for (int i = 0; i < 4; i++) {
+        T(vx[i].color = 0xFFFFFFFF);
+    }
+    T(ix[0] == 0);
+    T(ix[1] == 1);
+    T(ix[2] == 2);
+    T(ix[3] == 0);
+    T(ix[4] == 3);
+    T(ix[5] == 2);
+}
+
+UTEST(sokol_shape, build_plane_validate) {
+    sshape_vertex_t vx[64] = { 0 };
+    uint16_t ix[64] = { 0 };
+    const sshape_plane_t params = { 0 };
+
+    // vertex buffer too small
+    {
+        sshape_build_t state = {
+            .vertices = { .buf_ptr = vx, .buf_size = 3 * sizeof(sshape_vertex_t) },
+            .indices  = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+        };
+        T(!sshape_build_plane(&state, &params).valid);
+    }
+
+    // index buffer too small
+    {
+        sshape_build_t state = {
+            .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
+            .indices  = { .buf_ptr = ix, .buf_size = 5 * sizeof(uint16_t) }
+        };
+        T(!sshape_build_plane(&state, &params).valid);
+    }
+    // just the right size
+    {
+        sshape_build_t state = {
+            .vertices = { .buf_ptr = vx, .buf_size = 4 * sizeof(sshape_vertex_t) },
+            .indices  = { .buf_ptr = ix, .buf_size = 6 * sizeof(uint16_t) }
+        };
+        T(sshape_build_plane(&state, &params).valid);
+    }
+
+    // too small for two planes
+    {
+        sshape_build_t state = {
+            .vertices = { .buf_ptr = vx, .buf_size = 5 * sizeof(sshape_vertex_t) },
+            .indices  = { .buf_ptr = ix, .buf_size = 7 * sizeof(uint16_t) }
+        };
+        state = sshape_build_plane(&state, &params);
+        T(state.valid);
+        state = sshape_build_plane(&state, &params);
+        T(!state.valid);
+    }
+
+    // just the right size for two planes
+    {
+        sshape_build_t state = {
+            .vertices = { .buf_ptr = vx, .buf_size = 8 * sizeof(sshape_vertex_t) },
+            .indices  = { .buf_ptr = ix, .buf_size = 12 * sizeof(uint16_t) }
+        };
+        state = sshape_build_plane(&state, &params);
+        T(state.valid);
+        T(state.vertices.data_offset == 0);
+        T(state.vertices.data_size == 4 * sizeof(sshape_vertex_t));
+        T(state.indices.data_offset == 0);
+        T(state.indices.data_size == 6 * sizeof(uint16_t));
+        state = sshape_build_plane(&state, &params);
+        T(state.valid);
+        T(state.vertices.data_offset == 4 * sizeof(sshape_vertex_t));
+        T(state.vertices.data_size == 4 * sizeof(sshape_vertex_t));
+        T(state.indices.data_offset == 6 * sizeof(uint16_t));
+        T(state.indices.data_size == 6 * sizeof(uint16_t));
+    }
+}
+
 

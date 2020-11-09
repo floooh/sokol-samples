@@ -33,6 +33,9 @@
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
 
+#define SOKOL_SHAPE_IMPL
+#include "sokol_shape.h"
+
 #define FONTSTASH_IMPLEMENTATION
 #if defined(_MSC_VER )
 #pragma warning(disable:4996)   // strncpy use in fontstash.h
