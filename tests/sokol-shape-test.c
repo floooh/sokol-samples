@@ -257,4 +257,20 @@ UTEST(sokol_shape, build_plane_validate) {
     }
 }
 
+UTEST(sokol_shape, build_box_defaults) {
+    sshape_vertex_t vx[128] = { 0 };
+    uint16_t ix[128] = { 0 };
+
+    sshape_build_t state = {
+        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
+        .indices = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+    };
+    state = sshape_build_box(&state, &(sshape_box_t) { .color = 0xFF0000FF });
+    T(state.valid);
+    T(state.vertices.data_offset == 0);
+    T(state.vertices.data_size == 24 * sizeof(sshape_vertex_t));
+    T(state.indices.data_offset == 0);
+    T(state.indices.data_size == 36 * sizeof(uint16_t));
+}
+
 
