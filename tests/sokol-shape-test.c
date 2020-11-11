@@ -167,6 +167,89 @@ UTEST(sokol_shape, torus_buffer_sizes) {
     T(res.indices.num * sizeof(uint16_t) == res.indices.size);
 }
 
+UTEST(sokol_shape, buffer_layout_desc) {
+    const sg_buffer_layout_desc desc = sshape_buffer_layout_desc();
+    T(sizeof(sshape_vertex_t) == desc.stride);
+    T(0 == desc.step_func);
+    T(0 == desc.step_rate);
+}
+
+UTEST(sokol_shape, attr_descs) {
+    {
+        const sg_vertex_attr_desc desc = sshape_position_attr_desc();
+        T(offsetof(sshape_vertex_t, position) == desc.offset);
+        T(SG_VERTEXFORMAT_FLOAT3 == desc.format);
+        T(0 == desc.buffer_index);
+    }
+    {
+        const sg_vertex_attr_desc desc = sshape_normal_attr_desc();
+        T(offsetof(sshape_vertex_t, normal) == desc.offset);
+        T(SG_VERTEXFORMAT_FLOAT3 == desc.format);
+        T(0 == desc.buffer_index);
+    }
+    {
+        const sg_vertex_attr_desc desc = sshape_texcoord_attr_desc();
+        T(offsetof(sshape_vertex_t, texcoord) == desc.offset);
+        T(SG_VERTEXFORMAT_FLOAT2 == desc.format);
+        T(0 == desc.buffer_index);
+    }
+    {
+        const sg_vertex_attr_desc desc = sshape_color_attr_desc();
+        T(offsetof(sshape_vertex_t, color) == desc.offset);
+        T(SG_VERTEXFORMAT_UBYTE4N == desc.format);
+        T(0 == desc.buffer_index);
+    }
+}
+
+UTEST(sokol_shape, buffer_descs_elm_range) {
+    sshape_vertex_t vx[128] = { 0 };
+    uint16_t ix[128] = { 0 };
+    sshape_build_t state = {
+        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
+        .indices = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+    };
+
+    // build a box...
+    {
+        state = sshape_build_box(&state, &(sshape_box_t) {0});
+        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&state);
+        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&state);
+        const sshape_element_range_t elm_range = sshape_element_range(&state);
+        T(vbuf_desc.size == 24 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
+        T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
+        T(vbuf_desc.content == vx);
+        T(ibuf_desc.size == 36 * sizeof(sshape_index_t));
+        T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
+        T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
+        T(ibuf_desc.content == ix);
+        T(elm_range.base_element == 0);
+        T(elm_range.num_elements == 36);
+    }
+
+    // append a plane...
+    {
+        state = sshape_build_plane(&state, &(sshape_plane_t) {0});
+        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&state);
+        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&state);
+        const sshape_element_range_t elm_range = sshape_element_range(&state);
+        T(vbuf_desc.size == 28 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
+        T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
+        T(vbuf_desc.content == vx);
+        T(ibuf_desc.size == 42 * sizeof(sshape_index_t));
+        T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
+        T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
+        T(ibuf_desc.content == ix);
+        T(elm_range.base_element == 36);
+        T(elm_range.num_elements == 6);
+    }
+}
+
+SOKOL_API_DECL sg_buffer_desc sshape_vertex_buffer_desc(const sshape_build_t* state);
+SOKOL_API_DECL sg_buffer_desc sshape_index_buffer_desc(const sshape_build_t* state);
+SOKOL_API_DECL sshape_element_range_t sshape_element_range(const sshape_build_t* state);
+
 UTEST(sokol_shape, build_plane_defaults) {
     sshape_vertex_t vx[64] = { 0 };
     uint16_t ix[64] = { 0 };
@@ -178,16 +261,16 @@ UTEST(sokol_shape, build_plane_defaults) {
     state = sshape_build_plane(&state, &(sshape_plane_t) { 0 });
 
     T(state.valid);
-    T(0 == state.vertices.data_offset);
+    T(0 == state.vertices.shape_offset);
     T(4 * sizeof(sshape_vertex_t) == state.vertices.data_size);
-    T(0 == state.indices.data_offset);
+    T(0 == state.indices.shape_offset);
     T(6 * sizeof(uint16_t) == state.indices.data_size);
     for (int i = 0; i < 4; i++) {
         T(vx[i].color = 0xFFFFFFFF);
     }
     T(ix[0] == 0);
     T(ix[1] == 1);
-    T(ix[2] == 2);
+    T(ix[2] == 3);
     T(ix[3] == 0);
     T(ix[4] == 3);
     T(ix[5] == 2);
@@ -244,16 +327,16 @@ UTEST(sokol_shape, build_plane_validate) {
         };
         state = sshape_build_plane(&state, &params);
         T(state.valid);
-        T(state.vertices.data_offset == 0);
+        T(state.vertices.shape_offset == 0);
         T(state.vertices.data_size == 4 * sizeof(sshape_vertex_t));
-        T(state.indices.data_offset == 0);
+        T(state.indices.shape_offset == 0);
         T(state.indices.data_size == 6 * sizeof(uint16_t));
         state = sshape_build_plane(&state, &params);
         T(state.valid);
-        T(state.vertices.data_offset == 4 * sizeof(sshape_vertex_t));
-        T(state.vertices.data_size == 4 * sizeof(sshape_vertex_t));
-        T(state.indices.data_offset == 6 * sizeof(uint16_t));
-        T(state.indices.data_size == 6 * sizeof(uint16_t));
+        T(state.vertices.shape_offset == 4 * sizeof(sshape_vertex_t));
+        T(state.vertices.data_size == 8 * sizeof(sshape_vertex_t));
+        T(state.indices.shape_offset == 6 * sizeof(uint16_t));
+        T(state.indices.data_size == 12 * sizeof(uint16_t));
     }
 }
 
@@ -267,9 +350,9 @@ UTEST(sokol_shape, build_box_defaults) {
     };
     state = sshape_build_box(&state, &(sshape_box_t) { .color = 0xFF0000FF });
     T(state.valid);
-    T(state.vertices.data_offset == 0);
+    T(state.vertices.shape_offset == 0);
     T(state.vertices.data_size == 24 * sizeof(sshape_vertex_t));
-    T(state.indices.data_offset == 0);
+    T(state.indices.shape_offset == 0);
     T(state.indices.data_size == 36 * sizeof(uint16_t));
 }
 
