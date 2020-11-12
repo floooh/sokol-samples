@@ -205,8 +205,8 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
     sshape_vertex_t vx[128] = { 0 };
     uint16_t ix[128] = { 0 };
     sshape_build_t state = {
-        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
-        .indices = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
 
     // build a box...
@@ -255,8 +255,8 @@ UTEST(sokol_shape, build_plane_defaults) {
     uint16_t ix[64] = { 0 };
 
     sshape_build_t state = {
-        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
-        .indices  = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices  = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
     state = sshape_build_plane(&state, &(sshape_plane_t) { 0 });
 
@@ -284,8 +284,8 @@ UTEST(sokol_shape, build_plane_validate) {
     // vertex buffer too small
     {
         sshape_build_t state = {
-            .vertices = { .buf_ptr = vx, .buf_size = 3 * sizeof(sshape_vertex_t) },
-            .indices  = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+            .vertices = { .buffer_ptr = vx, .buffer_size = 3 * sizeof(sshape_vertex_t) },
+            .indices  = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
         };
         T(!sshape_build_plane(&state, &params).valid);
     }
@@ -293,16 +293,16 @@ UTEST(sokol_shape, build_plane_validate) {
     // index buffer too small
     {
         sshape_build_t state = {
-            .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
-            .indices  = { .buf_ptr = ix, .buf_size = 5 * sizeof(uint16_t) }
+            .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+            .indices  = { .buffer_ptr = ix, .buffer_size = 5 * sizeof(uint16_t) }
         };
         T(!sshape_build_plane(&state, &params).valid);
     }
     // just the right size
     {
         sshape_build_t state = {
-            .vertices = { .buf_ptr = vx, .buf_size = 4 * sizeof(sshape_vertex_t) },
-            .indices  = { .buf_ptr = ix, .buf_size = 6 * sizeof(uint16_t) }
+            .vertices = { .buffer_ptr = vx, .buffer_size = 4 * sizeof(sshape_vertex_t) },
+            .indices  = { .buffer_ptr = ix, .buffer_size = 6 * sizeof(uint16_t) }
         };
         T(sshape_build_plane(&state, &params).valid);
     }
@@ -310,8 +310,8 @@ UTEST(sokol_shape, build_plane_validate) {
     // too small for two planes
     {
         sshape_build_t state = {
-            .vertices = { .buf_ptr = vx, .buf_size = 5 * sizeof(sshape_vertex_t) },
-            .indices  = { .buf_ptr = ix, .buf_size = 7 * sizeof(uint16_t) }
+            .vertices = { .buffer_ptr = vx, .buffer_size = 5 * sizeof(sshape_vertex_t) },
+            .indices  = { .buffer_ptr = ix, .buffer_size = 7 * sizeof(uint16_t) }
         };
         state = sshape_build_plane(&state, &params);
         T(state.valid);
@@ -322,8 +322,8 @@ UTEST(sokol_shape, build_plane_validate) {
     // just the right size for two planes
     {
         sshape_build_t state = {
-            .vertices = { .buf_ptr = vx, .buf_size = 8 * sizeof(sshape_vertex_t) },
-            .indices  = { .buf_ptr = ix, .buf_size = 12 * sizeof(uint16_t) }
+            .vertices = { .buffer_ptr = vx, .buffer_size = 8 * sizeof(sshape_vertex_t) },
+            .indices  = { .buffer_ptr = ix, .buffer_size = 12 * sizeof(uint16_t) }
         };
         state = sshape_build_plane(&state, &params);
         T(state.valid);
@@ -345,8 +345,8 @@ UTEST(sokol_shape, build_box_defaults) {
     uint16_t ix[128] = { 0 };
 
     sshape_build_t state = {
-        .vertices = { .buf_ptr = vx, .buf_size = sizeof(vx) },
-        .indices = { .buf_ptr = ix, .buf_size = sizeof(ix) }
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
     state = sshape_build_box(&state, &(sshape_box_t) { .color = 0xFF0000FF });
     T(state.valid);
@@ -356,4 +356,18 @@ UTEST(sokol_shape, build_box_defaults) {
     T(state.indices.data_size == 36 * sizeof(uint16_t));
 }
 
+UTEST(sokol_shape, build_sphere_defaults) {
+    sshape_vertex_t vx[128] = { 0 };
+    uint16_t ix[128] = { 0 };
 
+    sshape_build_t state = {
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices = { .buffer_ptr = vx, .buffer_size = sizeof(ix) }
+    };
+    state = sshape_build_sphere(&state, &(sshape_sphere_t) { .color = 0xFF0000FF });
+    T(state.valid);
+    T(state.vertices.shape_offset == 0);
+    T(state.vertices.data_size == 30 * sizeof(sshape_vertex_t));
+    T(state.indices.shape_offset == 0);
+    T(state.indices.data_size == 90 * sizeof(uint16_t));
+}

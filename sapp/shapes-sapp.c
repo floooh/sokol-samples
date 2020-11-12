@@ -21,6 +21,7 @@ typedef struct {
 enum {
     BOX = 0,
     PLANE,
+    SPHERE,
     NUM_SHAPES
 };
 
@@ -65,18 +66,22 @@ static void init(void) {
     // shape positions
     state.shapes[BOX].pos = HMM_Vec3(-1.0f, 1.0f, 0.0f);
     state.shapes[PLANE].pos = HMM_Vec3(1.0f, 1.0f, 0.0f);
+    state.shapes[SPHERE].pos = HMM_Vec3(-2.0f, -1.0f, 0.0f);
 
     // generate shape geometries
-    sshape_vertex_t vertices[128];
-    uint16_t indices[256];
+    sshape_vertex_t vertices[2048];
+    uint16_t indices[8192];
     sshape_build_t build = {
-        .vertices = { .buf_ptr = vertices, .buf_size = sizeof(vertices) },
-        .indices = { .buf_ptr = indices, .buf_size = sizeof(indices) }
+        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
+        .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
     build = sshape_build_box(&build, &(sshape_box_t){ .width=1.0f, .height=1.0f, .depth=1.0f });
     state.shapes[BOX].draw = sshape_element_range(&build);
     build = sshape_build_plane(&build, &(sshape_plane_t){ .width=1.0f, .depth=1.0f });
     state.shapes[PLANE].draw = sshape_element_range(&build);
+    build = sshape_build_sphere(&build, &(sshape_sphere_t) { .radius = 0.75f, .slices = 36, .stacks = 20 });
+    state.shapes[SPHERE].draw = sshape_element_range(&build);
+    assert(build.valid);
 
     // one vertex/index-buffer-pair for all shapes
     const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&build);
