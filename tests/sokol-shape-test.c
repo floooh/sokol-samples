@@ -350,6 +350,10 @@ UTEST(sokol_shape, build_box_defaults) {
     };
     state = sshape_build_box(&state, &(sshape_box_t) { .color = 0xFF0000FF });
     T(state.valid);
+    T(state.vertices.buffer_ptr == vx);
+    T(state.vertices.buffer_size == sizeof(vx));
+    T(state.indices.buffer_ptr == ix);
+    T(state.indices.buffer_size == sizeof(ix));
     T(state.vertices.shape_offset == 0);
     T(state.vertices.data_size == 24 * sizeof(sshape_vertex_t));
     T(state.indices.shape_offset == 0);
@@ -362,12 +366,36 @@ UTEST(sokol_shape, build_sphere_defaults) {
 
     sshape_build_t state = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
-        .indices = { .buffer_ptr = vx, .buffer_size = sizeof(ix) }
+        .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
     state = sshape_build_sphere(&state, &(sshape_sphere_t) { .color = 0xFF0000FF });
     T(state.valid);
+    T(state.vertices.buffer_ptr == vx);
+    T(state.vertices.buffer_size == sizeof(vx));
+    T(state.indices.buffer_ptr == ix);
+    T(state.indices.buffer_size == sizeof(ix));
     T(state.vertices.shape_offset == 0);
     T(state.vertices.data_size == 30 * sizeof(sshape_vertex_t));
     T(state.indices.shape_offset == 0);
     T(state.indices.data_size == 90 * sizeof(uint16_t));
+}
+
+UTEST(sokol_shape, build_cylinder_defaults) {
+    sshape_vertex_t vx[128] = { 0 };
+    uint16_t ix[128] = { 0 };
+
+    sshape_build_t state = {
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
+    };
+    state = sshape_build_cylinder(&state, &(sshape_cylinder_t) { .color = 0xFF0000FF });
+    T(state.valid);
+    T(state.vertices.buffer_ptr == vx);
+    T(state.vertices.buffer_size == sizeof(vx));
+    T(state.indices.buffer_ptr == ix);
+    T(state.indices.buffer_size == sizeof(ix));
+    T(state.vertices.shape_offset == 0);
+    T(state.vertices.data_size == 36 * sizeof(sshape_vertex_t));
+    T(state.indices.shape_offset == 0);
+    T(state.indices.data_size == 60 * sizeof(uint16_t));
 }

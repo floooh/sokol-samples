@@ -22,6 +22,7 @@ enum {
     BOX = 0,
     PLANE,
     SPHERE,
+    CYLINDER,
     NUM_SHAPES
 };
 
@@ -32,6 +33,7 @@ static struct {
     sg_buffer ibuf;
     shape_t shapes[NUM_SHAPES];
     float rx, ry;
+    uint32_t frame_count;
 } state;
 
 static void init(void) {
@@ -51,8 +53,9 @@ static void init(void) {
         .layout = {
             .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {
-                [ATTR_vs_position] = sshape_position_attr_desc(),
-                [ATTR_vs_normal] = sshape_normal_attr_desc()
+                [0] = sshape_position_attr_desc(),
+                [1] = sshape_normal_attr_desc(),
+                [2] = sshape_texcoord_attr_desc(),
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -67,6 +70,7 @@ static void init(void) {
     state.shapes[BOX].pos = HMM_Vec3(-1.0f, 1.0f, 0.0f);
     state.shapes[PLANE].pos = HMM_Vec3(1.0f, 1.0f, 0.0f);
     state.shapes[SPHERE].pos = HMM_Vec3(-2.0f, -1.0f, 0.0f);
+    state.shapes[CYLINDER].pos = HMM_Vec3(2.0f, -1.0f, 0.0f);
 
     // generate shape geometries
     sshape_vertex_t vertices[2048];
@@ -75,12 +79,30 @@ static void init(void) {
         .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
         .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
-    build = sshape_build_box(&build, &(sshape_box_t){ .width=1.0f, .height=1.0f, .depth=1.0f });
+    build = sshape_build_box(&build, &(sshape_box_t){
+        .width=1.0f,
+        .height=1.0f,
+        .depth=1.0f
+    });
     state.shapes[BOX].draw = sshape_element_range(&build);
-    build = sshape_build_plane(&build, &(sshape_plane_t){ .width=1.0f, .depth=1.0f });
+    build = sshape_build_plane(&build, &(sshape_plane_t){
+        .width=1.0f,
+        .depth=1.0f
+    });
     state.shapes[PLANE].draw = sshape_element_range(&build);
-    build = sshape_build_sphere(&build, &(sshape_sphere_t) { .radius = 0.75f, .slices = 36, .stacks = 20 });
+    build = sshape_build_sphere(&build, &(sshape_sphere_t) {
+        .radius = 0.75f,
+        .slices = 36,
+        .stacks = 20
+    });
     state.shapes[SPHERE].draw = sshape_element_range(&build);
+    build = sshape_build_cylinder(&build, &(sshape_cylinder_t) {
+        .radius = 0.5f,
+        .height = 1.5f,
+        .slices = 36,
+        .stacks = 10,
+    });
+    state.shapes[CYLINDER].draw = sshape_element_range(&build);
     assert(build.valid);
 
     // one vertex/index-buffer-pair for all shapes
@@ -91,6 +113,8 @@ static void init(void) {
 }
 
 static void frame(void) {
+    state.frame_count++;
+
     // view-projection matrix...
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -114,7 +138,8 @@ static void frame(void) {
         // per shape model-view-projection matrix
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(state.shapes[i].pos), rm);
         vs_params_t vs_params = {
-            .mvp = HMM_MultiplyMat4(view_proj, model)
+            .mvp = HMM_MultiplyMat4(view_proj, model),
+            .draw_normals = state.frame_count & 0x40 ? 0.0f : 1.0f,
         };
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
         sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
