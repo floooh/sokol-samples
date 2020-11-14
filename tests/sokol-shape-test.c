@@ -204,17 +204,17 @@ UTEST(sokol_shape, attr_descs) {
 UTEST(sokol_shape, buffer_descs_elm_range) {
     sshape_vertex_t vx[128] = { 0 };
     uint16_t ix[128] = { 0 };
-    sshape_build_t state = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
         .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
 
     // build a box...
     {
-        state = sshape_build_box(&state, &(sshape_box_t) {0});
-        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&state);
-        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&state);
-        const sshape_element_range_t elm_range = sshape_element_range(&state);
+        buf = sshape_build_box(&buf, &(sshape_box_t) {0});
+        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+        const sshape_element_range_t elm_range = sshape_element_range(&buf);
         T(vbuf_desc.size == 24 * sizeof(sshape_vertex_t));
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
@@ -229,10 +229,10 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
 
     // append a plane...
     {
-        state = sshape_build_plane(&state, &(sshape_plane_t) {0});
-        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&state);
-        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&state);
-        const sshape_element_range_t elm_range = sshape_element_range(&state);
+        buf = sshape_build_plane(&buf, &(sshape_plane_t) {0});
+        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+        const sshape_element_range_t elm_range = sshape_element_range(&buf);
         T(vbuf_desc.size == 28 * sizeof(sshape_vertex_t));
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
@@ -246,25 +246,21 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
     }
 }
 
-SOKOL_API_DECL sg_buffer_desc sshape_vertex_buffer_desc(const sshape_build_t* state);
-SOKOL_API_DECL sg_buffer_desc sshape_index_buffer_desc(const sshape_build_t* state);
-SOKOL_API_DECL sshape_element_range_t sshape_element_range(const sshape_build_t* state);
-
 UTEST(sokol_shape, build_plane_defaults) {
     sshape_vertex_t vx[64] = { 0 };
     uint16_t ix[64] = { 0 };
 
-    sshape_build_t state = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
         .indices  = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
-    state = sshape_build_plane(&state, &(sshape_plane_t) { 0 });
+    buf = sshape_build_plane(&buf, &(sshape_plane_t) { 0 });
 
-    T(state.valid);
-    T(0 == state.vertices.shape_offset);
-    T(4 * sizeof(sshape_vertex_t) == state.vertices.data_size);
-    T(0 == state.indices.shape_offset);
-    T(6 * sizeof(uint16_t) == state.indices.data_size);
+    T(buf.valid);
+    T(0 == buf.vertices.shape_offset);
+    T(4 * sizeof(sshape_vertex_t) == buf.vertices.data_size);
+    T(0 == buf.indices.shape_offset);
+    T(6 * sizeof(uint16_t) == buf.indices.data_size);
     for (int i = 0; i < 4; i++) {
         T(vx[i].color = 0xFFFFFFFF);
     }
@@ -283,60 +279,60 @@ UTEST(sokol_shape, build_plane_validate) {
 
     // vertex buffer too small
     {
-        sshape_build_t state = {
+        sshape_buffer_t buf = {
             .vertices = { .buffer_ptr = vx, .buffer_size = 3 * sizeof(sshape_vertex_t) },
             .indices  = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
         };
-        T(!sshape_build_plane(&state, &params).valid);
+        T(!sshape_build_plane(&buf, &params).valid);
     }
 
     // index buffer too small
     {
-        sshape_build_t state = {
+        sshape_buffer_t buf = {
             .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
             .indices  = { .buffer_ptr = ix, .buffer_size = 5 * sizeof(uint16_t) }
         };
-        T(!sshape_build_plane(&state, &params).valid);
+        T(!sshape_build_plane(&buf, &params).valid);
     }
     // just the right size
     {
-        sshape_build_t state = {
+        sshape_buffer_t buf = {
             .vertices = { .buffer_ptr = vx, .buffer_size = 4 * sizeof(sshape_vertex_t) },
             .indices  = { .buffer_ptr = ix, .buffer_size = 6 * sizeof(uint16_t) }
         };
-        T(sshape_build_plane(&state, &params).valid);
+        T(sshape_build_plane(&buf, &params).valid);
     }
 
     // too small for two planes
     {
-        sshape_build_t state = {
+        sshape_buffer_t buf = {
             .vertices = { .buffer_ptr = vx, .buffer_size = 5 * sizeof(sshape_vertex_t) },
             .indices  = { .buffer_ptr = ix, .buffer_size = 7 * sizeof(uint16_t) }
         };
-        state = sshape_build_plane(&state, &params);
-        T(state.valid);
-        state = sshape_build_plane(&state, &params);
-        T(!state.valid);
+        buf = sshape_build_plane(&buf, &params);
+        T(buf.valid);
+        buf = sshape_build_plane(&buf, &params);
+        T(!buf.valid);
     }
 
     // just the right size for two planes
     {
-        sshape_build_t state = {
+        sshape_buffer_t buf = {
             .vertices = { .buffer_ptr = vx, .buffer_size = 8 * sizeof(sshape_vertex_t) },
             .indices  = { .buffer_ptr = ix, .buffer_size = 12 * sizeof(uint16_t) }
         };
-        state = sshape_build_plane(&state, &params);
-        T(state.valid);
-        T(state.vertices.shape_offset == 0);
-        T(state.vertices.data_size == 4 * sizeof(sshape_vertex_t));
-        T(state.indices.shape_offset == 0);
-        T(state.indices.data_size == 6 * sizeof(uint16_t));
-        state = sshape_build_plane(&state, &params);
-        T(state.valid);
-        T(state.vertices.shape_offset == 4 * sizeof(sshape_vertex_t));
-        T(state.vertices.data_size == 8 * sizeof(sshape_vertex_t));
-        T(state.indices.shape_offset == 6 * sizeof(uint16_t));
-        T(state.indices.data_size == 12 * sizeof(uint16_t));
+        buf = sshape_build_plane(&buf, &params);
+        T(buf.valid);
+        T(buf.vertices.shape_offset == 0);
+        T(buf.vertices.data_size == 4 * sizeof(sshape_vertex_t));
+        T(buf.indices.shape_offset == 0);
+        T(buf.indices.data_size == 6 * sizeof(uint16_t));
+        buf = sshape_build_plane(&buf, &params);
+        T(buf.valid);
+        T(buf.vertices.shape_offset == 4 * sizeof(sshape_vertex_t));
+        T(buf.vertices.data_size == 8 * sizeof(sshape_vertex_t));
+        T(buf.indices.shape_offset == 6 * sizeof(uint16_t));
+        T(buf.indices.data_size == 12 * sizeof(uint16_t));
     }
 }
 
@@ -344,58 +340,58 @@ UTEST(sokol_shape, build_box_defaults) {
     sshape_vertex_t vx[128] = { 0 };
     uint16_t ix[128] = { 0 };
 
-    sshape_build_t state = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
         .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
-    state = sshape_build_box(&state, &(sshape_box_t) { .color = 0xFF0000FF });
-    T(state.valid);
-    T(state.vertices.buffer_ptr == vx);
-    T(state.vertices.buffer_size == sizeof(vx));
-    T(state.indices.buffer_ptr == ix);
-    T(state.indices.buffer_size == sizeof(ix));
-    T(state.vertices.shape_offset == 0);
-    T(state.vertices.data_size == 24 * sizeof(sshape_vertex_t));
-    T(state.indices.shape_offset == 0);
-    T(state.indices.data_size == 36 * sizeof(uint16_t));
+    buf = sshape_build_box(&buf, &(sshape_box_t) { .color = 0xFF0000FF });
+    T(buf.valid);
+    T(buf.vertices.buffer_ptr == vx);
+    T(buf.vertices.buffer_size == sizeof(vx));
+    T(buf.indices.buffer_ptr == ix);
+    T(buf.indices.buffer_size == sizeof(ix));
+    T(buf.vertices.shape_offset == 0);
+    T(buf.vertices.data_size == 24 * sizeof(sshape_vertex_t));
+    T(buf.indices.shape_offset == 0);
+    T(buf.indices.data_size == 36 * sizeof(uint16_t));
 }
 
 UTEST(sokol_shape, build_sphere_defaults) {
     sshape_vertex_t vx[128] = { 0 };
     uint16_t ix[128] = { 0 };
 
-    sshape_build_t state = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
         .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
-    state = sshape_build_sphere(&state, &(sshape_sphere_t) { .color = 0xFF0000FF });
-    T(state.valid);
-    T(state.vertices.buffer_ptr == vx);
-    T(state.vertices.buffer_size == sizeof(vx));
-    T(state.indices.buffer_ptr == ix);
-    T(state.indices.buffer_size == sizeof(ix));
-    T(state.vertices.shape_offset == 0);
-    T(state.vertices.data_size == 30 * sizeof(sshape_vertex_t));
-    T(state.indices.shape_offset == 0);
-    T(state.indices.data_size == 90 * sizeof(uint16_t));
+    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) { .color = 0xFF0000FF });
+    T(buf.valid);
+    T(buf.vertices.buffer_ptr == vx);
+    T(buf.vertices.buffer_size == sizeof(vx));
+    T(buf.indices.buffer_ptr == ix);
+    T(buf.indices.buffer_size == sizeof(ix));
+    T(buf.vertices.shape_offset == 0);
+    T(buf.vertices.data_size == 30 * sizeof(sshape_vertex_t));
+    T(buf.indices.shape_offset == 0);
+    T(buf.indices.data_size == 90 * sizeof(uint16_t));
 }
 
 UTEST(sokol_shape, build_cylinder_defaults) {
     sshape_vertex_t vx[128] = { 0 };
     uint16_t ix[128] = { 0 };
 
-    sshape_build_t state = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
         .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
     };
-    state = sshape_build_cylinder(&state, &(sshape_cylinder_t) { .color = 0xFF0000FF });
-    T(state.valid);
-    T(state.vertices.buffer_ptr == vx);
-    T(state.vertices.buffer_size == sizeof(vx));
-    T(state.indices.buffer_ptr == ix);
-    T(state.indices.buffer_size == sizeof(ix));
-    T(state.vertices.shape_offset == 0);
-    T(state.vertices.data_size == 36 * sizeof(sshape_vertex_t));
-    T(state.indices.shape_offset == 0);
-    T(state.indices.data_size == 60 * sizeof(uint16_t));
+    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) { .color = 0xFF0000FF });
+    T(buf.valid);
+    T(buf.vertices.buffer_ptr == vx);
+    T(buf.vertices.buffer_size == sizeof(vx));
+    T(buf.indices.buffer_ptr == ix);
+    T(buf.indices.buffer_size == sizeof(ix));
+    T(buf.vertices.shape_offset == 0);
+    T(buf.vertices.data_size == 36 * sizeof(sshape_vertex_t));
+    T(buf.indices.shape_offset == 0);
+    T(buf.indices.data_size == 60 * sizeof(uint16_t));
 }

@@ -75,39 +75,39 @@ static void init(void) {
     // generate shape geometries
     sshape_vertex_t vertices[2048];
     uint16_t indices[8192];
-    sshape_build_t build = {
+    sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
         .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
-    build = sshape_build_box(&build, &(sshape_box_t){
+    buf = sshape_build_box(&buf, &(sshape_box_t){
         .width=1.0f,
         .height=1.0f,
         .depth=1.0f
     });
-    state.shapes[BOX].draw = sshape_element_range(&build);
-    build = sshape_build_plane(&build, &(sshape_plane_t){
+    state.shapes[BOX].draw = sshape_element_range(&buf);
+    buf = sshape_build_plane(&buf, &(sshape_plane_t){
         .width=1.0f,
         .depth=1.0f
     });
-    state.shapes[PLANE].draw = sshape_element_range(&build);
-    build = sshape_build_sphere(&build, &(sshape_sphere_t) {
+    state.shapes[PLANE].draw = sshape_element_range(&buf);
+    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
         .radius = 0.75f,
         .slices = 36,
         .stacks = 20
     });
-    state.shapes[SPHERE].draw = sshape_element_range(&build);
-    build = sshape_build_cylinder(&build, &(sshape_cylinder_t) {
+    state.shapes[SPHERE].draw = sshape_element_range(&buf);
+    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
         .radius = 0.5f,
         .height = 1.5f,
         .slices = 36,
         .stacks = 10,
     });
-    state.shapes[CYLINDER].draw = sshape_element_range(&build);
-    assert(build.valid);
+    state.shapes[CYLINDER].draw = sshape_element_range(&buf);
+    assert(buf.valid);
 
     // one vertex/index-buffer-pair for all shapes
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&build);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&build);
+    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
 }
