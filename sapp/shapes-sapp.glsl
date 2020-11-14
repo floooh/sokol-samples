@@ -2,23 +2,27 @@
 
 @vs vs
 uniform vs_params {
-    float draw_normals;
+    float draw_mode;
     mat4 mvp;
 };
 
 layout(location=0) in vec4 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec2 texcoord;
+layout(location=3) in vec4 color0;
 
 out vec4 color;
 
 void main() {
     gl_Position = mvp * position;
-    if (draw_normals != 0) {
+    if (draw_mode == 0.0) {
         color = vec4((normal + 1.0) * 0.5, 1.0);
     }
-    else {
+    else if (draw_mode == 1.0) {
         color = vec4(texcoord, 0.0f, 1.0f);
+    }
+    else {
+        color = color0;
     }
 }
 @end

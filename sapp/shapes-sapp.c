@@ -7,6 +7,8 @@
 #include "sokol_glue.h"
 #define SOKOL_SHAPE_IMPL
 #include "sokol_shape.h"
+#define SOKOL_DEBUGTEXT_IMPL
+#include "sokol_debugtext.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -23,6 +25,7 @@ enum {
     PLANE,
     SPHERE,
     CYLINDER,
+    TORUS,
     NUM_SHAPES
 };
 
@@ -32,13 +35,16 @@ static struct {
     sg_buffer vbuf;
     sg_buffer ibuf;
     shape_t shapes[NUM_SHAPES];
+    vs_params_t vs_params;
     float rx, ry;
-    uint32_t frame_count;
 } state;
 
 static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
+    });
+    sdtx_setup(&(sdtx_desc_t) {
+        .fonts[0] = sdtx_font_oric()
     });
     __dbgui_setup(sapp_sample_count());
 
@@ -56,6 +62,7 @@ static void init(void) {
                 [0] = sshape_position_attr_desc(),
                 [1] = sshape_normal_attr_desc(),
                 [2] = sshape_texcoord_attr_desc(),
+                [3] = sshape_color_attr_desc()
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -71,29 +78,35 @@ static void init(void) {
     state.shapes[PLANE].pos = HMM_Vec3(1.0f, 1.0f, 0.0f);
     state.shapes[SPHERE].pos = HMM_Vec3(-2.0f, -1.0f, 0.0f);
     state.shapes[CYLINDER].pos = HMM_Vec3(2.0f, -1.0f, 0.0f);
+    state.shapes[TORUS].pos = HMM_Vec3(0.0f, -1.0f, 0.0f);
 
     // generate shape geometries
-    sshape_vertex_t vertices[2048];
-    uint16_t indices[8192];
+    sshape_vertex_t vertices[6 * 1024];
+    uint16_t indices[16 * 1024];
     sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
+        .indices  = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
     buf = sshape_build_box(&buf, &(sshape_box_t){
-        .width=1.0f,
-        .height=1.0f,
-        .depth=1.0f
+        .width  = 1.0f,
+        .height = 1.0f,
+        .depth  = 1.0f,
+        .tiles  = 10,
+        .random_colors = true,
     });
     state.shapes[BOX].draw = sshape_element_range(&buf);
     buf = sshape_build_plane(&buf, &(sshape_plane_t){
-        .width=1.0f,
-        .depth=1.0f
+        .width = 1.0f,
+        .depth = 1.0f,
+        .tiles = 10,
+        .random_colors = true,
     });
     state.shapes[PLANE].draw = sshape_element_range(&buf);
     buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
         .radius = 0.75f,
         .slices = 36,
-        .stacks = 20
+        .stacks = 20,
+        .random_colors = true,
     });
     state.shapes[SPHERE].draw = sshape_element_range(&buf);
     buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
@@ -101,8 +114,17 @@ static void init(void) {
         .height = 1.5f,
         .slices = 36,
         .stacks = 10,
+        .random_colors = true,
     });
     state.shapes[CYLINDER].draw = sshape_element_range(&buf);
+    buf = sshape_build_torus(&buf, &(sshape_torus_t) {
+        .radius = 0.5f,
+        .ring_radius = 0.3f,
+        .rings = 36,
+        .sides = 18,
+        .random_colors = true,
+    });
+    state.shapes[TORUS].draw = sshape_element_range(&buf);
     assert(buf.valid);
 
     // one vertex/index-buffer-pair for all shapes
@@ -113,7 +135,13 @@ static void init(void) {
 }
 
 static void frame(void) {
-    state.frame_count++;
+    // help text
+    sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
+    sdtx_pos(0.5f, 0.5f);
+    sdtx_puts("press key to switch draw mode:\n"
+              "  1: vertex normals\n"
+              "  2: texture coords\n"
+              "  3: vertex color");
 
     // view-projection matrix...
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
@@ -137,21 +165,31 @@ static void frame(void) {
     for (int i = 0; i < NUM_SHAPES; i++) {
         // per shape model-view-projection matrix
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(state.shapes[i].pos), rm);
-        vs_params_t vs_params = {
-            .mvp = HMM_MultiplyMat4(view_proj, model),
-            .draw_normals = state.frame_count & 0x40 ? 0.0f : 1.0f,
-        };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
         sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
     }
+    sdtx_draw();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
+static void input(const sapp_event* ev) {
+    if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
+        switch (ev->key_code) {
+            case SAPP_KEYCODE_1: state.vs_params.draw_mode = 0.0f; break;
+            case SAPP_KEYCODE_2: state.vs_params.draw_mode = 1.0f; break;
+            case SAPP_KEYCODE_3: state.vs_params.draw_mode = 2.0f; break;
+            default: break;
+        }
+    }
+    __dbgui_event(ev);
+}
 
 static void cleanup(void) {
     __dbgui_shutdown();
+    sdtx_shutdown();
     sg_shutdown();
 }
 
@@ -161,7 +199,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = input,
         .width = 800,
         .height = 600,
         .sample_count = 4,

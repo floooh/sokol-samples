@@ -395,3 +395,23 @@ UTEST(sokol_shape, build_cylinder_defaults) {
     T(buf.indices.shape_offset == 0);
     T(buf.indices.data_size == 60 * sizeof(uint16_t));
 }
+
+UTEST(sokol_shape, build_torus_defaults) {
+    sshape_vertex_t vx[128] = { 0 };
+    uint16_t ix[256] = { 0 };
+
+    sshape_buffer_t buf = {
+        .vertices = { .buffer_ptr = vx, .buffer_size = sizeof(vx) },
+        .indices = { .buffer_ptr = ix, .buffer_size = sizeof(ix) }
+    };
+    buf = sshape_build_torus(&buf, &(sshape_torus_t) { .color = 0xFF0000FF });
+    T(buf.valid);
+    T(buf.vertices.buffer_ptr == vx);
+    T(buf.vertices.buffer_size == sizeof(vx));
+    T(buf.indices.buffer_ptr == ix);
+    T(buf.indices.buffer_size == sizeof(ix));
+    T(buf.vertices.shape_offset == 0);
+    T(buf.vertices.data_size == 36 * sizeof(sshape_vertex_t));
+    T(buf.indices.shape_offset == 0);
+    T(buf.indices.data_size == 150 * sizeof(uint16_t));
+}
