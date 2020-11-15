@@ -138,7 +138,7 @@ static void frame(void) {
     // help text
     sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
     sdtx_pos(0.5f, 0.5f);
-    sdtx_puts("press key to switch draw mode:\n"
+    sdtx_puts("press key to switch draw mode:\n\n"
               "  1: vertex normals\n"
               "  2: texture coords\n"
               "  3: vertex color");

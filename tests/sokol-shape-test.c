@@ -177,20 +177,20 @@ UTEST(sokol_shape, buffer_layout_desc) {
 UTEST(sokol_shape, attr_descs) {
     {
         const sg_vertex_attr_desc desc = sshape_position_attr_desc();
-        T(offsetof(sshape_vertex_t, position) == desc.offset);
+        T(offsetof(sshape_vertex_t, x) == desc.offset);
         T(SG_VERTEXFORMAT_FLOAT3 == desc.format);
         T(0 == desc.buffer_index);
     }
     {
         const sg_vertex_attr_desc desc = sshape_normal_attr_desc();
         T(offsetof(sshape_vertex_t, normal) == desc.offset);
-        T(SG_VERTEXFORMAT_FLOAT3 == desc.format);
+        T(SG_VERTEXFORMAT_BYTE4N == desc.format);
         T(0 == desc.buffer_index);
     }
     {
         const sg_vertex_attr_desc desc = sshape_texcoord_attr_desc();
-        T(offsetof(sshape_vertex_t, texcoord) == desc.offset);
-        T(SG_VERTEXFORMAT_FLOAT2 == desc.format);
+        T(offsetof(sshape_vertex_t, u) == desc.offset);
+        T(SG_VERTEXFORMAT_USHORT2N == desc.format);
         T(0 == desc.buffer_index);
     }
     {
@@ -219,7 +219,7 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
         T(vbuf_desc.content == vx);
-        T(ibuf_desc.size == 36 * sizeof(sshape_index_t));
+        T(ibuf_desc.size == 36 * sizeof(uint16_t));
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
         T(ibuf_desc.content == ix);
@@ -237,7 +237,7 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
         T(vbuf_desc.content == vx);
-        T(ibuf_desc.size == 42 * sizeof(sshape_index_t));
+        T(ibuf_desc.size == 42 * sizeof(uint16_t));
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
         T(ibuf_desc.content == ix);

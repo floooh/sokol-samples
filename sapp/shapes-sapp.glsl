@@ -19,7 +19,7 @@ void main() {
         color = vec4((normal + 1.0) * 0.5, 1.0);
     }
     else if (draw_mode == 1.0) {
-        color = vec4(texcoord, 0.0f, 1.0f);
+        color = vec4(texcoord, 0.0, 1.0);
     }
     else {
         color = color0;
