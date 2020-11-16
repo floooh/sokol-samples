@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
-//  shapes-sapp.c
-//  Simple sokol_shape.h demo.
+//  shapes-transform-sapp.c
+//
+//  Demonstrates merging multiple transformed shapes into a single draw-shape
+//  with sokol_shape.h
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -13,28 +15,13 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
-#include "shapes-sapp.glsl.h"
+#include "shapes-transform-sapp.glsl.h"
 
-typedef struct {
-    hmm_vec3 pos;
-    sshape_element_range_t draw;
-} shape_t;
-
-enum {
-    BOX = 0,
-    PLANE,
-    SPHERE,
-    CYLINDER,
-    TORUS,
-    NUM_SHAPES
-};
-
-static struct {
+struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
-    sg_buffer vbuf;
-    sg_buffer ibuf;
-    shape_t shapes[NUM_SHAPES];
+    sg_bindings bind;
+    sshape_element_range_t elms;
     vs_params_t vs_params;
     float rx, ry;
 } state;
@@ -43,7 +30,7 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    sdtx_setup(&(sdtx_desc_t) {
+    sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric()
     });
     __dbgui_setup(sapp_sample_count());
@@ -73,65 +60,65 @@ static void init(void) {
         .rasterizer.cull_mode = SG_CULLMODE_NONE,
     });
 
-    // shape positions
-    state.shapes[BOX].pos = HMM_Vec3(-1.0f, 1.0f, 0.0f);
-    state.shapes[PLANE].pos = HMM_Vec3(1.0f, 1.0f, 0.0f);
-    state.shapes[SPHERE].pos = HMM_Vec3(-2.0f, -1.0f, 0.0f);
-    state.shapes[CYLINDER].pos = HMM_Vec3(2.0f, -1.0f, 0.0f);
-    state.shapes[TORUS].pos = HMM_Vec3(0.0f, -1.0f, 0.0f);
-
-    // generate shape geometries
+    // generate merged shape geometries
     sshape_vertex_t vertices[6 * 1024];
     uint16_t indices[16 * 1024];
     sshape_buffer_t buf = {
         .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
         .indices  = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
+
+    // transform matrices for the shapes
+    const hmm_mat4 box_transform = HMM_Translate(HMM_Vec3(-1.0f, 0.0f, +1.0f));
+    const hmm_mat4 sphere_transform = HMM_Translate(HMM_Vec3(+1.0f, 0.0f, +1.0f));
+    const hmm_mat4 cylinder_transform = HMM_Translate(HMM_Vec3(-1.0f, 0.0f, -1.0f));
+    const hmm_mat4 torus_transform = HMM_Translate(HMM_Vec3(+1.0f, 0.0f, -1.0f));
+
+    // build the shapes...
     buf = sshape_build_box(&buf, &(sshape_box_t){
         .width  = 1.0f,
         .height = 1.0f,
         .depth  = 1.0f,
         .tiles  = 10,
         .random_colors = true,
+        .transform = sshape_mat4(&box_transform.Elements[0][0])
     });
-    state.shapes[BOX].draw = sshape_element_range(&buf);
-    buf = sshape_build_plane(&buf, &(sshape_plane_t){
-        .width = 1.0f,
-        .depth = 1.0f,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[PLANE].draw = sshape_element_range(&buf);
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
+    buf = sshape_build_sphere(&buf, &(sshape_sphere_t){
+        .merge = true,
         .radius = 0.75f,
         .slices = 36,
         .stacks = 20,
         .random_colors = true,
+        .transform = sshape_mat4(&sphere_transform.Elements[0][0])
     });
-    state.shapes[SPHERE].draw = sshape_element_range(&buf);
     buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
+        .merge = true,
         .radius = 0.5f,
-        .height = 1.5f,
+        .height = 1.0f,
         .slices = 36,
         .stacks = 10,
         .random_colors = true,
+        .transform = sshape_mat4(&cylinder_transform.Elements[0][0])
     });
-    state.shapes[CYLINDER].draw = sshape_element_range(&buf);
     buf = sshape_build_torus(&buf, &(sshape_torus_t) {
+        .merge = true,
         .radius = 0.5f,
         .ring_radius = 0.3f,
         .rings = 36,
         .sides = 18,
         .random_colors = true,
+        .transform = sshape_mat4(&torus_transform.Elements[0][0])
     });
-    state.shapes[TORUS].draw = sshape_element_range(&buf);
     assert(buf.valid);
 
-    // one vertex/index-buffer-pair for all shapes
+    // extract element range for sg_draw()
+    state.elms = sshape_element_range(&buf);
+
+    // and finally create the vertex- and index-buffer
     const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
     const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
-    state.vbuf = sg_make_buffer(&vbuf_desc);
-    state.ibuf = sg_make_buffer(&ibuf_desc);
+    state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
 }
 
 static void frame(void) {
@@ -143,32 +130,25 @@ static void frame(void) {
               "  2: texture coords\n"
               "  3: vertex color");
 
-    // view-projection matrix...
+    // build model-view-projection matrix
+    state.rx += 1.0f;
+    state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
-    // model-rotation matrix
-    state.rx += 1.0f;
-    state.ry += 2.0f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 rm = HMM_MultiplyMat4(rxm, rym);
+    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    // render shapes...
+    // render the single shape
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
-    sg_apply_bindings(&(sg_bindings) {
-        .vertex_buffers[0] = state.vbuf,
-        .index_buffer = state.ibuf
-    });
-    for (int i = 0; i < NUM_SHAPES; i++) {
-        // per shape model-view-projection matrix
-        hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(state.shapes[i].pos), rm);
-        state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
-        sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
-    }
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+    sg_draw(state.elms.base_element, state.elms.num_elements, 1);
+
+    // render help text and finish frame
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();
@@ -189,7 +169,6 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
-    sdtx_shutdown();
     sg_shutdown();
 }
 
@@ -203,6 +182,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "shapes-sapp.c"
+        .window_title = "shapes-transform-sapp.c"
     };
 }
