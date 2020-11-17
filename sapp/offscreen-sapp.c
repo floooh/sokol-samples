@@ -169,7 +169,7 @@ static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    hmm_mat4 model = HMM_MultiplyMat4(rym, rxm);
     hmm_mat4 mvp = HMM_MultiplyMat4(view_proj, model);
     return mvp;
 }
