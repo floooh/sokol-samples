@@ -6,6 +6,8 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
+#define SOKOL_SHAPE_IMPL
+#include "sokol_shape.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -26,10 +28,12 @@ static struct {
         sg_pipeline pip;
         sg_bindings bind;
     } deflt;
+    sshape_element_range_t donut;
+    sshape_element_range_t sphere;
     float rx, ry;
 } state;
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
@@ -37,12 +41,12 @@ void init(void) {
 
     /* default pass action: clear to blue-ish */
     state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.45f, 0.65f, 1.0f } }
     };
 
-    /* offscreen pass action: clear to black */
+    /* offscreen pass action */
     state.offscreen.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.25f, 0.25f, 1.0f } }
     };
 
     /* a render pass with one color- and one depth-attachment image */
@@ -53,6 +57,8 @@ void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "color-image"
     };
@@ -66,70 +72,41 @@ void init(void) {
         .label = "offscreen-pass"
     });
 
-    /* cube vertex buffer with positions, colors and tex coords */
-    float vertices[] = {
-        /* pos                  color                       uvs */
-        -1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f,
-         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 1.0f,
-
-        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 1.0f,
-        -1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 1.0f,
-
-        -1.0f, -1.0f, -1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
-        -1.0f,  1.0f, -1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
-        -1.0f, -1.0f,  1.0f,    0.5f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
-
-         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
-
-        -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
-         1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
-         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
-
-        -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
-        -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
-         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
+    /* a donut shape which is rendered into the offscreen render target, and
+       a sphere shape which is rendered into the default framebuffer
+    */
+    sshape_vertex_t vertices[4000] = { 0 };
+    uint16_t indices[24000] = { 0 };
+    sshape_buffer_t buf = {
+        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
+        .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
-        .label = "cube-vertices"
+    buf = sshape_build_torus(&buf, &(sshape_torus_t){
+        .radius = 0.5f,
+        .ring_radius = 0.3f,
+        .sides = 20,
+        .rings = 36,
     });
-
-    /* an index buffer for the cube */
-    uint16_t indices[] = {
-        0, 1, 2,  0, 2, 3,
-        6, 5, 4,  7, 6, 4,
-        8, 9, 10,  8, 10, 11,
-        14, 13, 12,  15, 14, 12,
-        16, 17, 18,  16, 18, 19,
-        22, 21, 20,  23, 22, 20
-    };
-    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
-        .label = "cube-indices"
+    state.donut = sshape_element_range(&buf);
+    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
+        .radius = 0.5f,
+        .slices = 72,
+        .stacks = 40
     });
+    state.sphere = sshape_element_range(&buf);
 
-    /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
+    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
+    sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
+
+    /* pipeline-state-object for offscreen-rendered donut, don't need texture coord here */
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* need to provide stride, because the buffer's texcoord is skipped */
-            .buffers[0].stride = 36,
-            /* but don't need to provide attr offsets, because pos and color are continuous */
+            .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {
-                [ATTR_vs_offscreen_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_vs_offscreen_position] = sshape_position_attr_desc(),
+                [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc()
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc()),
@@ -152,11 +129,11 @@ void init(void) {
     /* and another pipeline-state-object for the default pass */
     state.deflt.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* don't need to provide buffer stride or attr offsets, no gaps here */
+            .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {
-                [ATTR_vs_default_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_default_color0].format = SG_VERTEXFORMAT_FLOAT4,
-                [ATTR_vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_vs_default_position] = sshape_position_attr_desc(),
+                [ATTR_vs_default_normal] = sshape_normal_attr_desc(),
+                [ATTR_vs_default_texcoord0] = sshape_texcoord_attr_desc()
             }
         },
         .shader = sg_make_shader(default_shader_desc()),
@@ -185,41 +162,54 @@ void init(void) {
     };
 }
 
-void frame(void) {
-    /* compute model-view-projection matrix for vertex shader, this will be
-       used both for the offscreen-pass, and the display-pass */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+/* helper function to compute model-view-projection matrix */
+static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
+    hmm_mat4 proj = HMM_Perspective(45.0f, aspect, 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, -eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    vs_params_t vs_params;
-    state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    hmm_mat4 mvp = HMM_MultiplyMat4(view_proj, model);
+    return mvp;
+}
 
-    /* the offscreen pass, rendering an rotating, untextured cube into a render target image */
+static void frame(void) {
+    state.rx += 1.0f;
+    state.ry += 2.0f;
+    vs_params_t vs_params;
+
+    /* the offscreen pass, rendering an rotating, untextured donut into a render target image */
+    vs_params = (vs_params_t) {
+        .mvp = compute_mvp(state.rx, state.ry, 1.0f, -2.5f)
+    };
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
-    sg_draw(0, 36, 1);
+    sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     sg_end_pass();
 
-    /* and the display-pass, rendering a rotating, textured cube, using the
-       previously rendered offscreen render-target as texture */
-    sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
+    /* and the display-pass, rendering a rotating textured sphere
+       previously rendered offscreen render-target as texture
+    */
+    int w = sapp_width();
+    int h = sapp_height();
+    vs_params = (vs_params_t) {
+        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, -2.0f)
+    };
+    sg_begin_default_pass(&state.deflt.pass_action, w, h);
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
-    sg_draw(0, 36, 1);
+    sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();
 
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }
