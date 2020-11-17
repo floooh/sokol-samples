@@ -18,6 +18,8 @@ samples = [
     [ 'cube', 'cube-sapp.c', 'cube-sapp.glsl'],
     [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
     [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
+    [ 'shapes', 'shapes-sapp.c', 'shapes-sapp.glsl'],
+    [ 'shapes-transform', 'shapes-transform-sapp.c', 'shapes-transform-sapp.glsl'],
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
     [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
