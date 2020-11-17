@@ -190,7 +190,7 @@ static void frame(void) {
     sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     sg_end_pass();
 
-    /* and the display-pass, rendering a rotating textured sphere
+    /* and the display-pass, rendering a rotating textured sphere which uses the
        previously rendered offscreen render-target as texture
     */
     int w = sapp_width();
