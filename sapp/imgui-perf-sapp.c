@@ -79,7 +79,7 @@ static void frame(void) {
     igSetNextWindowPos((ImVec2){ 10, 10 }, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){ 500, 0 }, ImGuiCond_Once);
     igBegin("Controls", 0, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoScrollbar);
-    igSliderInt("Num Windows", &state.num_windows, 1, max_windows, "%d");
+    igSliderInt("Num Windows", &state.num_windows, 1, max_windows, "%d", ImGuiSliderFlags_None);
     igText("raw frame time:     %.3fms (min: %.3f, max: %.3f)",
         stm_ms(raw_frame_time),
         stm_ms(state.min_raw_frame_time),
