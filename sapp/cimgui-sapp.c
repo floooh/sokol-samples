@@ -53,7 +53,7 @@ void frame(void) {
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
     static float f = 0.0f;
     igText("Hello, world!");
-    igSliderFloat("float", &f, 0.0f, 1.0f, "%.3f", 1.0f);
+    igSliderFloat("float", &f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
     igColorEdit3("clear color", &state.pass_action.colors[0].val[0], 0);
     if (igButton("Test Window", (ImVec2) { 0.0f, 0.0f})) state.show_test_window ^= 1;
     if (igButton("Another Window", (ImVec2) { 0.0f, 0.0f })) state.show_another_window ^= 1;
