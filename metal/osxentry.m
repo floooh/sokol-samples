@@ -335,11 +335,13 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
 
 static const void* osx_mtk_get_render_pass_descriptor(void* user_data) {
     assert(user_data == (void*)0xABCDABCD);
+    (void)user_data;
     return (__bridge const void*) [mtk_view currentRenderPassDescriptor];
 }
 
 static const void* osx_mtk_get_drawable(void* user_data) {
     assert(user_data == (void*)0xABCDABCD);
+    (void)user_data;
     return (__bridge const void*) [mtk_view currentDrawable];
 }
 
@@ -350,7 +352,7 @@ sg_context_desc osx_get_context(void) {
             .device = (__bridge const void*) mtl_device,
             .renderpass_descriptor_userdata_cb = osx_mtk_get_render_pass_descriptor,
             .drawable_userdata_cb = osx_mtk_get_drawable,
-            .user_data = 0xABCDABCD
+            .user_data = (void*)0xABCDABCD
         }
     };
 }
