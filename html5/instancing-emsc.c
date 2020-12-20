@@ -13,8 +13,8 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static const int MAX_PARTICLES = 512 * 1024;
-static const int NUM_PARTICLES_EMITTED_PER_FRAME = 10;
+#define MAX_PARTICLES (512 * 1024)
+#define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
 /* clear to black */
 static sg_pass_action pass_action = {
@@ -44,7 +44,7 @@ int main() {
     sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
-    
+
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
     const float r = 0.05f;
     const float vertices[] = {
@@ -71,7 +71,7 @@ int main() {
         .size = sizeof(indices),
         .content = indices,
     });
-    
+
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
     sg_buffer inst_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
@@ -143,7 +143,7 @@ int main() {
     return 0;
 }
 
-/* draw one frame */ 
+/* draw one frame */
 void draw() {
     const float frame_time = 1.0f / 60.0f;
 

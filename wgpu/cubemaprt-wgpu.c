@@ -106,7 +106,7 @@ static void init(void) {
         app.offscreen_pass[i] = sg_make_pass(&(sg_pass_desc){
             .color_attachments[0] = {
                 .image = app.cubemap,
-                .face = i
+                .slice = i
             },
             .depth_stencil_attachment.image = depth_img,
             .label = "offscreen-pass"

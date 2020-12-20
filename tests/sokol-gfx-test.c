@@ -300,7 +300,7 @@ UTEST(sokol_gfx, make_destroy_images) {
         T(!imgptr->cmn.render_target);
         T(imgptr->cmn.width == 8);
         T(imgptr->cmn.height == 8);
-        T(imgptr->cmn.depth == 1);
+        T(imgptr->cmn.num_slices == 1);
         T(imgptr->cmn.num_mipmaps == 1);
         T(imgptr->cmn.usage == SG_USAGE_IMMUTABLE);
         T(imgptr->cmn.pixel_format == SG_PIXELFORMAT_RGBA8);

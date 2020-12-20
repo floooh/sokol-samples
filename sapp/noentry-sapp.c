@@ -41,7 +41,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
 #endif
     app_state_t* state = calloc(1, sizeof(app_state_t));
-    int exit_code = sapp_run(&(sapp_desc){
+    sapp_run(&(sapp_desc){
         .user_data = state,
         .init_userdata_cb = init,
         .frame_userdata_cb = frame,
@@ -53,7 +53,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .window_title = "Noentry (sokol-app)",
     });
     free(state);    /* NOTE: on some platforms, this isn't reached on exit */
-    return exit_code;
+    return 0;
 }
 
 void init(void* user_data) {
