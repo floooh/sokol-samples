@@ -13,8 +13,8 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static const int IMG_WIDTH = 32;
-static const int IMG_HEIGHT = 32;
+#define IMG_WIDTH (32)
+#define IMG_HEIGHT (32)
 static uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
 static sg_pass_action pass_action = {
@@ -46,7 +46,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -138,7 +138,7 @@ int main() {
             [0].name = "position",
             [1].name = "texcoord0"
         },
-        .vs.uniform_blocks[0] = { 
+        .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }

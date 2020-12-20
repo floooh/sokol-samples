@@ -110,7 +110,7 @@ static void init(void) {
         .type = SG_IMAGETYPE_3D,
         .width = TEX3D_DIM,
         .height = TEX3D_DIM,
-        .depth = TEX3D_DIM,
+        .num_slices = TEX3D_DIM,
         .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
