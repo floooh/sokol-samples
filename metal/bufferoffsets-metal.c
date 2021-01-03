@@ -45,13 +45,17 @@ static void init(void) {
         0, 1, 2, 0, 2, 3
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* a shader and pipeline to render 2D shapes */

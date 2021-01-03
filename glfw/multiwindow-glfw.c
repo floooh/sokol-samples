@@ -106,13 +106,17 @@ int main() {
         ctx[i] = sg_setup_context();
         /* create the usual resources per context (buffers, shader, pipeline) */
         bind[i].vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-            .size = sizeof(vertices),
-            .content = vertices
+            .content = {
+                .ptr = vertices,
+                .size = sizeof(vertices),
+            }
         });
         bind[i].index_buffer = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .size = sizeof(indices),
-            .content = indices
+            .content = {
+                .ptr = indices,
+                .size = sizeof(indices),
+            }
         });
         sg_shader shd = sg_make_shader(&(sg_shader_desc){
             .vs.uniform_blocks[0] = {

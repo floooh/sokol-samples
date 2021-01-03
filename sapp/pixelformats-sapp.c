@@ -236,8 +236,10 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,   0.7f, 0.3f, 0.5f, 1.0f
     };
     state.cube_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .content = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        }
     });
 
     uint16_t cube_indices[] = {
@@ -250,15 +252,19 @@ static void init(void) {
     };
     state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .content = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        }
     });
 
     // background quad vertices
     float vertices[] = { -1.0f, -1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, +1.0f, };
     state.bg_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 }
 

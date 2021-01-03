@@ -779,8 +779,10 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
             assert((p->offset + p->size) <= num_bytes);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
                 .type = p->type,
-                .size = p->size,
-                .content = bytes + p->offset
+                .content = {
+                    .ptr = bytes + p->offset,
+                    .size = p->size,
+                }
             });
         }
     }

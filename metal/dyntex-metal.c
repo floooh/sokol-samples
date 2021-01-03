@@ -93,13 +93,17 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* a shader to render a textured cube */

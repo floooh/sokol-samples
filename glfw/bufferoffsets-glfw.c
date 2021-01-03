@@ -53,13 +53,17 @@ int main() {
         0, 1, 2, 0, 2, 3
     };
     sg_buffer vb = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     sg_buffer ib = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* setup resource bindings struct */

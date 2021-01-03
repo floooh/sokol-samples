@@ -110,8 +110,10 @@ int main() {
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* create an index buffer for the cube */
@@ -125,8 +127,10 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* resource bindings */

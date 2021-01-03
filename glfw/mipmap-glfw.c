@@ -71,8 +71,10 @@ int main() {
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* initialize mipmap content, different colors and checkboard pattern */
@@ -168,7 +170,6 @@ int main() {
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .rasterizer.sample_count = MSAA_SAMPLES
     });
 
     /* view-projection matrix */

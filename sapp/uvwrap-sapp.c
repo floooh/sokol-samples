@@ -29,8 +29,10 @@ static void init(void) {
         +1.0f, -1.0f,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = quad_vertices,
-        .size = sizeof(quad_vertices)
+        .content = {
+            .ptr = quad_vertices,
+            .size = sizeof(quad_vertices)
+        }
     });
 
     /* one test image per UV-wrap mode */

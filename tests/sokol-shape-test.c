@@ -215,14 +215,16 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
         const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
         const sshape_element_range_t elm_range = sshape_element_range(&buf);
-        T(vbuf_desc.size == 24 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.size == 0);
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(vbuf_desc.content == vx);
-        T(ibuf_desc.size == 36 * sizeof(uint16_t));
+        T(vbuf_desc.content.ptr == vx);
+        T(vbuf_desc.content.size == 24 * sizeof(sshape_vertex_t));
+        T(ibuf_desc.size == 0);
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(ibuf_desc.content == ix);
+        T(ibuf_desc.content.ptr == ix);
+        T(ibuf_desc.content.size == 36 * sizeof(uint16_t));
         T(elm_range.base_element == 0);
         T(elm_range.num_elements == 36);
     }
@@ -233,14 +235,16 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
         const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
         const sshape_element_range_t elm_range = sshape_element_range(&buf);
-        T(vbuf_desc.size == 28 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.size == 0);
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(vbuf_desc.content == vx);
-        T(ibuf_desc.size == 42 * sizeof(uint16_t));
+        T(vbuf_desc.content.ptr == vx);
+        T(vbuf_desc.content.size == 28 * sizeof(sshape_vertex_t));
+        T(ibuf_desc.size == 0);
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(ibuf_desc.content == ix);
+        T(ibuf_desc.content.ptr == ix);
+        T(ibuf_desc.content.size == 42 * sizeof(uint16_t));
         T(elm_range.base_element == 36);
         T(elm_range.num_elements == 6);
     }

@@ -62,8 +62,10 @@ int main() {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     sg_buffer vbuf_geom = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* index buffer for static geometry */
@@ -73,8 +75,10 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
     
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */

@@ -99,13 +99,17 @@ int main() {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* define the resource bindings */

@@ -66,8 +66,10 @@ static void init(void) {
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* initialize mipmap content, different colors and checkboard pattern */

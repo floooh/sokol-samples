@@ -111,8 +111,10 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     state.offscreen_bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .content = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        }
     });
 
     /* index buffer for the cube */
@@ -126,8 +128,10 @@ static void init(void) {
     };
     state.offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .content = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        }
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
@@ -197,8 +201,10 @@ static void init(void) {
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices
+        .content = {
+            .ptr = quad_vertices,
+            .size = sizeof(quad_vertices),
+        }
     });
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */

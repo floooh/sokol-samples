@@ -114,8 +114,10 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,  32767, 32767 },
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        },
         .label = "cube-vertices"
     });
     uint16_t indices[] = {
@@ -128,8 +130,10 @@ static void init(void) {
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        },
         .label = "cube-indices"
     });
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){

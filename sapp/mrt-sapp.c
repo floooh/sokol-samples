@@ -145,8 +145,10 @@ void init(void) {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .content = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        },
         .label = "cube vertices"
     });
 
@@ -161,8 +163,10 @@ void init(void) {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .content = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        },
         .label = "cube indices"
     });
 
@@ -213,8 +217,10 @@ void init(void) {
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .content = {
+            .ptr = quad_vertices,
+            .size = sizeof(quad_vertices),
+        },
         .label = "quad vertices"
     });
 

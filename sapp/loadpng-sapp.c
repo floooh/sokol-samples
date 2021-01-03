@@ -95,8 +95,10 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,      0, 32767 },
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        },
         .label = "cube-vertices"
     });
 
@@ -111,8 +113,10 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .content = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        },
         .label = "cube-indices"
     });
 

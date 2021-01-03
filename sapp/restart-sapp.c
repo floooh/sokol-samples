@@ -147,15 +147,19 @@ static void init(void) {
     state.scene.bind.fs_images[0] = sg_alloc_image();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .content = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        },
         .label = "cube-vertices"
     });
 
     state.scene.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .content = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        },
         .label = "cube-indices"
     });
 

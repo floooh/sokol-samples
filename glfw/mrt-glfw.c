@@ -112,8 +112,10 @@ int main() {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .content = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        }
     });
 
     /* index buffer for the cube */
@@ -127,8 +129,10 @@ int main() {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .content = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        }
     });
 
     /* a shader to render the cube into offscreen MRT render targets */
@@ -199,8 +203,10 @@ int main() {
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .content = {
+            .ptr = quad_vertices,
+            .size = sizeof(quad_vertices),
+        }
     });
 
     /* resource bindings to render the fullscreen quad */

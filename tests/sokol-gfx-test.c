@@ -234,8 +234,10 @@ UTEST(sokol_gfx, make_destroy_buffers) {
 
     sg_buffer buf[3] = { {0} };
     sg_buffer_desc desc = {
-        .size = sizeof(data),
-        .content = data
+        .content = {
+            .ptr = data,
+            .size = sizeof(data),
+        }
     };
     for (int i = 0; i < 3; i++) {
         buf[i] = sg_make_buffer(&desc);
@@ -468,8 +470,10 @@ UTEST(sokol_gfx, generation_counter) {
     static float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
     for (int i = 0; i < 64; i++) {
         sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
-            .size = sizeof(data),
-            .content = data
+            .content = {
+                .ptr = data,
+                .size = sizeof(data),
+            }
         });
         T(buf.id != SG_INVALID_ID);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_VALID);

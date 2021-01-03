@@ -33,8 +33,10 @@ int main() {
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices, 
+        .content = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* prepare a resource binding struct, only the vertex buffer is needed here */
