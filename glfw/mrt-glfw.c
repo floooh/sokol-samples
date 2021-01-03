@@ -112,7 +112,7 @@ int main() {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = cube_vertices,
             .size = sizeof(cube_vertices),
         }
@@ -129,7 +129,7 @@ int main() {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = cube_indices,
             .size = sizeof(cube_indices),
         }
@@ -203,7 +203,7 @@ int main() {
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = quad_vertices,
             .size = sizeof(quad_vertices),
         }

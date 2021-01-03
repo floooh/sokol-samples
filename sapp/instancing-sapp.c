@@ -49,7 +49,7 @@ void init(void) {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         },
@@ -63,7 +63,7 @@ void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         },

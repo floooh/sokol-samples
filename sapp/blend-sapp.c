@@ -47,7 +47,7 @@ void init(void) {
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }

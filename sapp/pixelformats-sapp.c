@@ -130,7 +130,7 @@ static void init(void) {
                     .width = 8,
                     .height = 8,
                     .pixel_format = fmt,
-                    .content.subimage[0][0] = {
+                    .data.subimage[0][0] = {
                         .ptr = pair.ptr,
                         .size = pair.size
                     }
@@ -144,7 +144,7 @@ static void init(void) {
                     .pixel_format = fmt,
                     .min_filter = SG_FILTER_LINEAR,
                     .mag_filter = SG_FILTER_LINEAR,
-                    .content.subimage[0][0] = {
+                    .data.subimage[0][0] = {
                         .ptr = pair.ptr,
                         .size = pair.size
                     }
@@ -236,7 +236,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,   0.7f, 0.3f, 0.5f, 1.0f
     };
     state.cube_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = cube_vertices,
             .size = sizeof(cube_vertices),
         }
@@ -252,7 +252,7 @@ static void init(void) {
     };
     state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = cube_indices,
             .size = sizeof(cube_indices),
         }
@@ -261,7 +261,7 @@ static void init(void) {
     // background quad vertices
     float vertices[] = { -1.0f, -1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, +1.0f, };
     state.bg_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
@@ -422,7 +422,7 @@ static sg_image setup_invalid_texture(void) {
     return sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = disabled_texture_pixels,
             .size = sizeof(disabled_texture_pixels)
         }

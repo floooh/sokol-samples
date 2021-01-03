@@ -50,14 +50,14 @@ void init(void) {
         0, 1, 2, 0, 2, 3
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }

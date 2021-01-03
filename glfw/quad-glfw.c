@@ -39,7 +39,7 @@ int main() {
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     sg_buffer_desc vbuf_desc = {
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
@@ -53,7 +53,7 @@ int main() {
     };
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }

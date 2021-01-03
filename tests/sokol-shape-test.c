@@ -218,13 +218,13 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         T(vbuf_desc.size == 0);
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(vbuf_desc.content.ptr == vx);
-        T(vbuf_desc.content.size == 24 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.data.ptr == vx);
+        T(vbuf_desc.data.size == 24 * sizeof(sshape_vertex_t));
         T(ibuf_desc.size == 0);
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(ibuf_desc.content.ptr == ix);
-        T(ibuf_desc.content.size == 36 * sizeof(uint16_t));
+        T(ibuf_desc.data.ptr == ix);
+        T(ibuf_desc.data.size == 36 * sizeof(uint16_t));
         T(elm_range.base_element == 0);
         T(elm_range.num_elements == 36);
     }
@@ -238,13 +238,13 @@ UTEST(sokol_shape, buffer_descs_elm_range) {
         T(vbuf_desc.size == 0);
         T(vbuf_desc.type == SG_BUFFERTYPE_VERTEXBUFFER);
         T(vbuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(vbuf_desc.content.ptr == vx);
-        T(vbuf_desc.content.size == 28 * sizeof(sshape_vertex_t));
+        T(vbuf_desc.data.ptr == vx);
+        T(vbuf_desc.data.size == 28 * sizeof(sshape_vertex_t));
         T(ibuf_desc.size == 0);
         T(ibuf_desc.type == SG_BUFFERTYPE_INDEXBUFFER);
         T(ibuf_desc.usage == SG_USAGE_IMMUTABLE);
-        T(ibuf_desc.content.ptr == ix);
-        T(ibuf_desc.content.size == 42 * sizeof(uint16_t));
+        T(ibuf_desc.data.ptr == ix);
+        T(ibuf_desc.data.size == 42 * sizeof(uint16_t));
         T(elm_range.base_element == 36);
         T(elm_range.num_elements == 6);
     }

@@ -224,7 +224,7 @@ int main() {
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_content){
+        sg_update_image(img, &(sg_image_data){
             .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
         });
 

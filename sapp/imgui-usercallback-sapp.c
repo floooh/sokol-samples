@@ -97,7 +97,7 @@ void init(void) {
     // setup the sokol-gfx resources needed for the first user draw callback
     {
         state.scene1.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-            .content = {
+            .data = {
                 .ptr = cube_vertices,
                 .size = sizeof(cube_vertices),
             },
@@ -106,7 +106,7 @@ void init(void) {
 
         state.scene1.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .content = {
+            .data = {
                 .ptr = cube_indices,
                 .size = sizeof(cube_indices),
             },

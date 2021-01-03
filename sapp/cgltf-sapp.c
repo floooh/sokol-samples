@@ -277,7 +277,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         }
@@ -289,7 +289,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         }
@@ -301,7 +301,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         }
@@ -779,7 +779,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
             assert((p->offset + p->size) <= num_bytes);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
                 .type = p->type,
-                .content = {
+                .data = {
                     .ptr = bytes + p->offset,
                     .size = p->size,
                 }

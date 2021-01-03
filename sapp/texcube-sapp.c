@@ -74,7 +74,7 @@ void init(void) {
         {  1.0f,  1.0f, -1.0f,  0xFF007FFF,     0, 32767 },
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         },
@@ -92,7 +92,7 @@ void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         },
@@ -110,7 +110,7 @@ void init(void) {
     state.bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         },

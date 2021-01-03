@@ -69,7 +69,7 @@ static void init(void) {
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_VERTEXBUFFER,
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         },
@@ -77,7 +77,7 @@ static void init(void) {
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         },
@@ -120,7 +120,7 @@ static void init(void) {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .label = "3d texture",
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         }

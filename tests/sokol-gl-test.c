@@ -93,7 +93,7 @@ UTEST(sokol_gl, texture) {
         .type = SG_IMAGETYPE_2D,
         .width = 8,
         .height = 8,
-        .content = {
+        .data = {
             .subimage[0][0] = {
                 .ptr = pixels,
                 .size = sizeof(pixels)

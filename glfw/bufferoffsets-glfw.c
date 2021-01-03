@@ -53,14 +53,14 @@ int main() {
         0, 1, 2, 0, 2, 3
     };
     sg_buffer vb = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
     });
     sg_buffer ib = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }

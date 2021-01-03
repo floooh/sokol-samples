@@ -417,7 +417,7 @@ static void r_init(void) {
         */
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
-        .content = {
+        .data = {
             .subimage[0][0] = {
                 .ptr = rgba8_pixels,
                 .size = rgba8_size

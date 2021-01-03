@@ -36,7 +36,7 @@ static void init(void) {
     state.img = sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = pixels,
             .size = sizeof(pixels)
         }

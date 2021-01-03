@@ -90,7 +90,7 @@ void init(void) {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         },
@@ -98,7 +98,7 @@ void init(void) {
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         },
@@ -154,7 +154,7 @@ void frame(void) {
     game_of_life_update();
 
     /* update the texture */
-    sg_update_image(state.bind.fs_images[0], &(sg_image_content){
+    sg_update_image(state.bind.fs_images[0], &(sg_image_data){
         .subimage[0][0] = {
             .ptr = state.pixels,
             .size = sizeof(state.pixels)

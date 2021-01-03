@@ -154,7 +154,7 @@ static void init(void) {
         {  1, -1,  1,  1, 0, 0,  0, 1 },
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
@@ -168,7 +168,7 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }
@@ -291,7 +291,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     // sg_update_image() is called more than once per frame
     if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
         state.image_attrs[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.bind.fs_images[slot], &(sg_image_content){
+        sg_update_image(state.bind.fs_images[slot], &(sg_image_data){
             .subimage[0][0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)

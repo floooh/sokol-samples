@@ -352,7 +352,7 @@ static mesh_t make_cube_mesh(void) {
     };
     mesh_t mesh = {
         .vbuf = sg_make_buffer(&(sg_buffer_desc){
-            .content = {
+            .data = {
                 .ptr = vertices,
                 .size = sizeof(vertices)
             },
@@ -360,7 +360,7 @@ static mesh_t make_cube_mesh(void) {
         }),
         .ibuf = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .content = {
+            .data = {
                 .ptr = indices,
                 .size = sizeof(indices),
             },

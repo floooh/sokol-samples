@@ -99,14 +99,14 @@ int main() {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }
@@ -195,7 +195,7 @@ int main() {
         game_of_life_update();
 
         /* update the dynamic image */
-        sg_update_image(img, &(sg_image_content){ 
+        sg_update_image(img, &(sg_image_data){ 
             .subimage[0][0] = { 
                 .ptr=pixels, 
                 .size=sizeof(pixels)

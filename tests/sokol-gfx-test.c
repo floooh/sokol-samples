@@ -234,7 +234,7 @@ UTEST(sokol_gfx, make_destroy_buffers) {
 
     sg_buffer buf[3] = { {0} };
     sg_buffer_desc desc = {
-        .content = {
+        .data = {
             .ptr = data,
             .size = sizeof(data),
         }
@@ -282,7 +282,7 @@ UTEST(sokol_gfx, make_destroy_images) {
     sg_image_desc desc = {
         .width = 8,
         .height = 8,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = data,
             .size = sizeof(data)
         }
@@ -470,7 +470,7 @@ UTEST(sokol_gfx, generation_counter) {
     static float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
     for (int i = 0; i < 64; i++) {
         sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
-            .content = {
+            .data = {
                 .ptr = data,
                 .size = sizeof(data),
             }

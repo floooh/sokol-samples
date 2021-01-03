@@ -29,7 +29,7 @@ void init(void) {
     // a vertex buffer to render a 'fullscreen triangle'
     float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = fsq_verts,
             .size = sizeof(fsq_verts),
         },

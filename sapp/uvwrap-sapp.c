@@ -29,7 +29,7 @@ static void init(void) {
         +1.0f, -1.0f,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = quad_vertices,
             .size = sizeof(quad_vertices)
         }
@@ -58,7 +58,7 @@ static void init(void) {
             .wrap_u = (sg_wrap) i,
             .wrap_v = (sg_wrap) i,
             .border_color = SG_BORDERCOLOR_OPAQUE_BLACK,
-            .content.subimage[0][0] = {
+            .data.subimage[0][0] = {
                 .ptr = test_pixels,
                 .size = sizeof(test_pixels)
             }

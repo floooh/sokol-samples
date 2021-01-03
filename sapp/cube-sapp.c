@@ -55,7 +55,7 @@ void init(void) {
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices)
         },
@@ -73,7 +73,7 @@ void init(void) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices)
         },
