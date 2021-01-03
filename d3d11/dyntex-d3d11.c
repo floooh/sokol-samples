@@ -89,13 +89,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* resource bindings */
@@ -188,7 +192,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         game_of_life_update();
 
         /* update the dynamic image */
-        sg_update_image(img, &(sg_image_content){
+        sg_update_image(img, &(sg_image_data){
             .subimage[0][0] = {
                 .ptr=pixels,
                 .size=sizeof(pixels)

@@ -42,13 +42,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         0, 1, 2, 0, 2, 3
     };
     sg_buffer vb = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
     sg_buffer ib = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .data = {
+            .ptr = indices,
+            .size = sizeof(indices),
+        }
     });
 
     /* a shader to render the 2D shapes */

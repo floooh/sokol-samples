@@ -49,8 +49,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     sg_buffer vbuf_geom = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = {
+            .ptr = vertices,
+            .size = sizeof(vertices),
+        }
     });
 
     /* index buffer for static geometry */
@@ -60,8 +62,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     };
     sg_buffer ibuf_geom = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = {
+            .ptr = indices,    
+            .size = sizeof(indices),
+        }
     });
 
     /* dynamic per-instance data, goes into vb slot 1 */

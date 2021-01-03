@@ -101,8 +101,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = {
+            .ptr = cube_vertices,
+            .size = sizeof(cube_vertices),
+        }
     });
 
     /* index buffer for the cube */
@@ -116,8 +118,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = {
+            .ptr = cube_indices,
+            .size = sizeof(cube_indices),
+        }
     });
 
     /* a shader to render a cube into MRT offscreen render targets */
@@ -194,8 +198,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .data = {
+            .ptr = quad_vertices,
+            .size = sizeof(quad_vertices),
+        }
     });
 
     /* a shader to render a fullscreen rectangle, which 'composes'

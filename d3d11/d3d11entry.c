@@ -1,4 +1,5 @@
 #include "d3d11entry.h"
+#pragma warning(disable:4201)   // needed for /W4 and including d3d11.h
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

@@ -93,8 +93,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.content.subimage[0][0].ptr = font_pixels;
-    img_desc.content.subimage[0][0].size = font_width * font_height * 4;
+    img_desc.data.subimage[0][0].ptr = font_pixels;
+    img_desc.data.subimage[0][0].size = font_width * font_height * 4;
     bind.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering
