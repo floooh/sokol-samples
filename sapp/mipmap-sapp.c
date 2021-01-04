@@ -144,7 +144,7 @@ void frame(void) {
 
         bind.fs_images[SLOT_tex] = state.img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

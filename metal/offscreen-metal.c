@@ -266,7 +266,7 @@ static void frame(void) {
     sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -275,7 +275,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.default_pip);
     sg_apply_bindings(&state.default_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
     sg_draw(0, 36, 1);
     sg_end_pass();
 

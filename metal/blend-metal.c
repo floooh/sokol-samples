@@ -190,7 +190,10 @@ static void frame(void) {
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &state.fs_params, sizeof(state.fs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){
+        .ptr = &state.fs_params,
+        .size = sizeof(state.fs_params)
+    });
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
@@ -206,7 +209,10 @@ static void frame(void) {
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &state.vs_params, sizeof(state.vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
+                .ptr = &state.vs_params,
+                .size = sizeof(state.vs_params)
+            });
             sg_draw(0, 4, 1);
         }
     }

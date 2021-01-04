@@ -344,7 +344,10 @@ static void frame(void) {
     sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
+        .ptr = &offscreen_params,
+        .size = sizeof(offscreen_params)
+    });
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -352,7 +355,10 @@ static void frame(void) {
     sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.fsq_pip);
     sg_apply_bindings(&state.fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
+        .ptr = &params,
+        .size = sizeof(params)
+    });
     sg_draw(0, 4, 1);
 
     /* render the small debug quads */

@@ -58,7 +58,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, w, h);
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &state.vs_params, sizeof(state.vs_params) });
     sg_draw(0, 3, 1);
     __dbgui_draw();
     sg_end_pass();

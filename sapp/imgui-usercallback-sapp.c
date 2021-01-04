@@ -181,7 +181,7 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     */
     sg_apply_pipeline(state.scene1.pip);
     sg_apply_bindings(&state.scene1.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
     sg_draw(0, 36, 1);
 }
 

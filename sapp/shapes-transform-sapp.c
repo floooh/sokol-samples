@@ -145,7 +145,10 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){
+        .ptr = &state.vs_params,
+        .size = sizeof(state.vs_params)
+    });
     sg_draw(state.elms.base_element, state.elms.num_elements, 1);
 
     // render help text and finish frame

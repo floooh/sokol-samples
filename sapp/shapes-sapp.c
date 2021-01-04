@@ -166,7 +166,10 @@ static void frame(void) {
         // per shape model-view-projection matrix
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(state.shapes[i].pos), rm);
         state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){
+            .ptr = &state.vs_params,
+            .size = sizeof(state.vs_params)
+        });
         sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
     }
     sdtx_draw();

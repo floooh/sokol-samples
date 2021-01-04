@@ -200,7 +200,7 @@ static void frame(void) {
         vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
         bind.fs_images[0] = state.img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
