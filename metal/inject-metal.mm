@@ -223,10 +223,10 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_image_content content = {
+    sg_image_data data = {
         .subimage[0][0] = { .ptr = state.pixels, .size = sizeof(state.pixels) }
     };
-    sg_update_image(state.bind.fs_images[0], &content);
+    sg_update_image(state.bind.fs_images[0], &data);
 
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);

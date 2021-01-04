@@ -53,7 +53,7 @@ static void init(void) {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .content = {
+        .data = {
             .ptr = vertices,
             .size = sizeof(vertices),
         }
@@ -66,7 +66,7 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = {
+        .data = {
             .ptr = indices,
             .size = sizeof(indices),
         }
@@ -172,7 +172,10 @@ static void frame(void) {
     }
 
     /* update instance data */
-    sg_update_buffer(state.bind.vertex_buffers[1], state.pos, state.cur_num_particles*sizeof(hmm_vec3));
+    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range) {
+        .ptr = state.pos,
+        .size = state.cur_num_particles*sizeof(hmm_vec3)
+    });
 
     /* model-view-projection matrix */
     state.ry += 1.0f;
