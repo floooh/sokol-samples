@@ -34,6 +34,7 @@
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wshift-negative-value"
 #endif
 #include "pl_mpeg/pl_mpeg.h"
 #if defined(__GNUC__) || defined(__clang__)
