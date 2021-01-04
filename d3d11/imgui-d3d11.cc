@@ -221,10 +221,10 @@ void draw_imgui(ImDrawData* draw_data) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
         // append vertices and indices to buffers, record start offsets in bindings struct
-        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const uint32_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const uint32_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const uint32_t vb_offset = sg_append_buffer(bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
+        const uint32_t ib_offset = sg_append_buffer(bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)
