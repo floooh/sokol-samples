@@ -92,8 +92,10 @@ void init(void* user_data) {
          1.0,  1.0, -1.0,   0.5, 1.0, 0.5, 1.0
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = {
+            .size = sizeof(vertices),
+            .ptr = vertices,
+        }
     });
 
     /* create an index buffer for the cube */
@@ -107,8 +109,10 @@ void init(void* user_data) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = {
+            .size = sizeof(indices),
+            .ptr = indices,
+        }
     });
 
     /* create shader */
