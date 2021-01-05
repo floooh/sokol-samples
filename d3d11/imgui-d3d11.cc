@@ -216,7 +216,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, { &vs_params, sizeof(vs_params) });
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

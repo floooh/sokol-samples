@@ -190,7 +190,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
             bind.fs_images[0] = img[i];
             sg_apply_bindings(&bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
             sg_draw(0, 4, 1);
         }
         sg_end_pass();
