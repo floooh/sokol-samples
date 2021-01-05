@@ -100,12 +100,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
-            .byte_code = vs_bin,
-            .byte_code_size = sizeof(vs_bin),
+            .bytecode = {
+                .ptr = vs_bin,
+                .size = sizeof(vs_bin)
+            }
         },
         .fs = {
-            .byte_code = fs_bin,
-            .byte_code_size = sizeof(fs_bin)
+            .bytecode = {
+                .ptr = fs_bin,
+                .size = sizeof(fs_bin)
+            }
         }
     });
 
