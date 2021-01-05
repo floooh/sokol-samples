@@ -94,12 +94,16 @@ static void init(void) {
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
-            .byte_code = vs_bytecode,
-            .byte_code_size = sizeof(vs_bytecode)
+            .bytecode = {
+                .ptr = vs_bytecode,
+                .size = sizeof(vs_bytecode)
+            }
         },
         .fs = {
-            .byte_code = fs_bytecode,
-            .byte_code_size = sizeof(fs_bytecode)
+            .bytecode = {
+                .ptr = fs_bytecode,
+                .size = sizeof(fs_bytecode)
+            }
         }
     });
 
