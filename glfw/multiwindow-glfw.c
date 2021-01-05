@@ -190,7 +190,7 @@ int main() {
                 sg_begin_default_pass(&pass_actions[i], cur_width, cur_height);
                 sg_apply_pipeline(pip[i]);
                 sg_apply_bindings(&bind[i]);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
                 sg_draw(0, 36, 1);
                 sg_end_pass();
                 sg_commit();
