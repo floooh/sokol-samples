@@ -100,7 +100,7 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
             required_size / bytes_per_block,
             fmt,
             0);          // decode_flags
-        assert(res);
+        assert(res); (void)res;
     }
     return desc;
 }
