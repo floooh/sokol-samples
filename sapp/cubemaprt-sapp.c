@@ -262,7 +262,7 @@ void frame(void) {
         .light_dir = app.light_dir,
         .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
     };
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &(sg_range){ &uniforms, sizeof(uniforms) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, SG_RANGE_REF(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
     __dbgui_draw();
@@ -305,7 +305,7 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
             .light_dir = app.light_dir,
             .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &(sg_range){ &uniforms, sizeof(uniforms) });
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, SG_RANGE_REF(uniforms));
         sg_draw(0, app.cube.num_elements, 1);
     }
 }
@@ -352,18 +352,12 @@ static mesh_t make_cube_mesh(void) {
     };
     mesh_t mesh = {
         .vbuf = sg_make_buffer(&(sg_buffer_desc){
-            .data = {
-                .ptr = vertices,
-                .size = sizeof(vertices)
-            },
+            .data = SG_RANGE(vertices),
             .label = "cube-vertices"
         }),
         .ibuf = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .data = {
-                .ptr = indices,
-                .size = sizeof(indices),
-            },
+            .data = SG_RANGE(indices),
             .label = "cube-indices"
         }),
         .num_elements = sizeof(indices) / sizeof(uint16_t)

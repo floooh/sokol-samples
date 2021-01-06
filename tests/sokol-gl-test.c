@@ -93,12 +93,7 @@ UTEST(sokol_gl, texture) {
         .type = SG_IMAGETYPE_2D,
         .width = 8,
         .height = 8,
-        .data = {
-            .subimage[0][0] = {
-                .ptr = pixels,
-                .size = sizeof(pixels)
-            }
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     sgl_texture(img);
     T(_sgl.cur_img.id == img.id);

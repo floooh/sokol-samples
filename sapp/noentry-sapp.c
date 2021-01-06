@@ -95,10 +95,7 @@ void init(void* user_data) {
          1.0,  1.0, -1.0,   0.5, 1.0, 0.5, 1.0
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     });
 
     /* create an index buffer for the cube */
@@ -112,10 +109,7 @@ void init(void* user_data) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        }
+        .data = SG_RANGE(indices)
     });
 
     /* create shader */
@@ -167,7 +161,7 @@ void frame(void* user_data) {
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

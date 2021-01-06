@@ -90,18 +90,12 @@ void init(void) {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        },
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        },
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -155,20 +149,14 @@ void frame(void) {
 
     /* update the texture */
     sg_update_image(state.bind.fs_images[0], &(sg_image_data){
-        .subimage[0][0] = {
-            .ptr = state.pixels,
-            .size = sizeof(state.pixels)
-        }
+        .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
     /* render the frame */
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){
-        .ptr = &vs_params,
-        .size = sizeof(vs_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

@@ -29,10 +29,7 @@ static void init(void) {
         +1.0f, -1.0f,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = quad_vertices,
-            .size = sizeof(quad_vertices)
-        }
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* one test image per UV-wrap mode */
@@ -58,10 +55,7 @@ static void init(void) {
             .wrap_u = (sg_wrap) i,
             .wrap_v = (sg_wrap) i,
             .border_color = SG_BORDERCOLOR_OPAQUE_BLACK,
-            .data.subimage[0][0] = {
-                .ptr = test_pixels,
-                .size = sizeof(test_pixels)
-            }
+            .data.subimage[0][0] = SG_RANGE(test_pixels)
         });
     }
 
@@ -103,7 +97,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

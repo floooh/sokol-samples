@@ -69,18 +69,12 @@ static void init(void) {
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_VERTEXBUFFER,
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        },
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        },
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -120,10 +114,7 @@ static void init(void) {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .label = "3d texture",
-        .data.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 }
 
@@ -163,7 +154,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

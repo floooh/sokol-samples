@@ -38,13 +38,8 @@ static struct {
     bg_fs_params_t bg_fs_params;
 } state;
 
-typedef struct {
-    void* ptr;
-    int size;
-} ptr_size_t;
-
 static const char* pixelformat_string(sg_pixel_format fmt);
-static ptr_size_t gen_pixels(sg_pixel_format fmt);
+static sg_range gen_pixels(sg_pixel_format fmt);
 static sg_image setup_invalid_texture(void);
 
 static void init(void) {
@@ -121,8 +116,8 @@ static void init(void) {
 
     for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
         sg_pixel_format fmt = (sg_pixel_format)i;
-        ptr_size_t pair = gen_pixels(fmt);
-        if (pair.ptr) {
+        sg_range img_data = gen_pixels(fmt);
+        if (img_data.ptr) {
             state.fmt[i].valid = true;
             // create unfiltered texture
             if (sg_query_pixelformat(fmt).sample) {
@@ -130,10 +125,7 @@ static void init(void) {
                     .width = 8,
                     .height = 8,
                     .pixel_format = fmt,
-                    .data.subimage[0][0] = {
-                        .ptr = pair.ptr,
-                        .size = pair.size
-                    }
+                    .data.subimage[0][0] = img_data,
                 });
             }
             // create filtered texture
@@ -144,10 +136,7 @@ static void init(void) {
                     .pixel_format = fmt,
                     .min_filter = SG_FILTER_LINEAR,
                     .mag_filter = SG_FILTER_LINEAR,
-                    .data.subimage[0][0] = {
-                        .ptr = pair.ptr,
-                        .size = pair.size
-                    }
+                    .data.subimage[0][0] = img_data,
                 });
             }
             // create non-MSAA render target, pipeline state and pass
@@ -236,10 +225,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,   0.7f, 0.3f, 0.5f, 1.0f
     };
     state.cube_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = cube_vertices,
-            .size = sizeof(cube_vertices),
-        }
+        .data = SG_RANGE(cube_vertices)
     });
 
     uint16_t cube_indices[] = {
@@ -252,19 +238,13 @@ static void init(void) {
     };
     state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = cube_indices,
-            .size = sizeof(cube_indices),
-        }
+        .data = SG_RANGE(cube_indices)
     });
 
     // background quad vertices
     float vertices[] = { -1.0f, -1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, +1.0f, };
     state.bg_bindings.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     });
 }
 
@@ -424,10 +404,7 @@ static sg_image setup_invalid_texture(void) {
     return sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
-        .data.subimage[0][0] = {
-            .ptr = disabled_texture_pixels,
-            .size = sizeof(disabled_texture_pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
     });
 }
 
@@ -480,34 +457,34 @@ static void gen_pixels_128(uint64_t hi, uint64_t lo) {
     }
 }
 
-static ptr_size_t gen_pixels(sg_pixel_format fmt) {
+static sg_range gen_pixels(sg_pixel_format fmt) {
     /* NOTE the UI and SI (unsigned/signed) formats are not renderable
         with the ImGui shader, since that expects a texture which can be
         sampled into a float
     */
     switch (fmt) {
-        case SG_PIXELFORMAT_R8:     gen_pixels_8(0xFF);     return (ptr_size_t) {pixels, 8*8};
-        case SG_PIXELFORMAT_R8SN:   gen_pixels_8(0x7F);     return (ptr_size_t) {pixels, 8*8};
-        case SG_PIXELFORMAT_R16:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_R16SN:  gen_pixels_16(0x7FFF);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_R16F:   gen_pixels_16(0x3C00);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_RG8:    gen_pixels_16(0xFFFF);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_RG8SN:  gen_pixels_16(0x7F7F);  return (ptr_size_t) {pixels, 8*8*2};
-        case SG_PIXELFORMAT_R32F:   gen_pixels_32(0x3F800000);  return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RG16:   gen_pixels_32(0xFFFFFFFF);  return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RG16SN: gen_pixels_32(0x7FFF7FFF);  return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RG16F:      gen_pixels_32(0x3C003C00);  return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RGBA8:      gen_pixels_32(0xFFFFFFFF);  return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RGBA8SN:    gen_pixels_32(0x7F7F7F7F); return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_BGRA8:      gen_pixels_32(0xFFFFFFFF); return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RGB10A2:    gen_pixels_32(0x3<<30 | 0x3FF<<20 | 0x3FF<<10 | 0x3FF); return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RG11B10F:   gen_pixels_32(0x1E0<<22 | 0x3C0<<11 | 0x3C0); return (ptr_size_t) {pixels, 8*8*4};
-        case SG_PIXELFORMAT_RG32F:      gen_pixels_64(0x3F8000003F800000); return (ptr_size_t) {pixels, 8*8*8};
-        case SG_PIXELFORMAT_RGBA16:     gen_pixels_64(0xFFFFFFFFFFFFFFFF); return (ptr_size_t) {pixels, 8*8*8};
-        case SG_PIXELFORMAT_RGBA16SN:   gen_pixels_64(0x7FFF7FFF7FFF7FFF); return (ptr_size_t) {pixels, 8*8*8};
-        case SG_PIXELFORMAT_RGBA16F:    gen_pixels_64(0x3C003C003C003C00); return (ptr_size_t) {pixels, 8*8*8};
-        case SG_PIXELFORMAT_RGBA32F:    gen_pixels_128(0x3F8000003F800000, 0x3F8000003F800000); return (ptr_size_t) {pixels, 8*8*16};
-        default: return (ptr_size_t){0,0};
+        case SG_PIXELFORMAT_R8:     gen_pixels_8(0xFF);     return (sg_range) {pixels, 8*8};
+        case SG_PIXELFORMAT_R8SN:   gen_pixels_8(0x7F);     return (sg_range) {pixels, 8*8};
+        case SG_PIXELFORMAT_R16:    gen_pixels_16(0xFFFF);  return (sg_range) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16SN:  gen_pixels_16(0x7FFF);  return (sg_range) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R16F:   gen_pixels_16(0x3C00);  return (sg_range) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8:    gen_pixels_16(0xFFFF);  return (sg_range) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_RG8SN:  gen_pixels_16(0x7F7F);  return (sg_range) {pixels, 8*8*2};
+        case SG_PIXELFORMAT_R32F:   gen_pixels_32(0x3F800000);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16:   gen_pixels_32(0xFFFFFFFF);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16SN: gen_pixels_32(0x7FFF7FFF);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG16F:      gen_pixels_32(0x3C003C00);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGBA8:      gen_pixels_32(0xFFFFFFFF);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGBA8SN:    gen_pixels_32(0x7F7F7F7F); return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_BGRA8:      gen_pixels_32(0xFFFFFFFF); return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RGB10A2:    gen_pixels_32(0x3<<30 | 0x3FF<<20 | 0x3FF<<10 | 0x3FF); return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG11B10F:   gen_pixels_32(0x1E0<<22 | 0x3C0<<11 | 0x3C0); return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_RG32F:      gen_pixels_64(0x3F8000003F800000); return (sg_range) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16:     gen_pixels_64(0xFFFFFFFFFFFFFFFF); return (sg_range) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16SN:   gen_pixels_64(0x7FFF7FFF7FFF7FFF); return (sg_range) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA16F:    gen_pixels_64(0x3C003C003C003C00); return (sg_range) {pixels, 8*8*8};
+        case SG_PIXELFORMAT_RGBA32F:    gen_pixels_128(0x3F8000003F800000, 0x3F8000003F800000); return (sg_range) {pixels, 8*8*16};
+        default: return (sg_range){0,0};
     }
 }
 

@@ -233,12 +233,7 @@ UTEST(sokol_gfx, make_destroy_buffers) {
     float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
 
     sg_buffer buf[3] = { {0} };
-    sg_buffer_desc desc = {
-        .data = {
-            .ptr = data,
-            .size = sizeof(data),
-        }
-    };
+    sg_buffer_desc desc = { .data = SG_RANGE(data) };
     for (int i = 0; i < 3; i++) {
         buf[i] = sg_make_buffer(&desc);
         T(buf[i].id != SG_INVALID_ID);
@@ -282,11 +277,7 @@ UTEST(sokol_gfx, make_destroy_images) {
     sg_image_desc desc = {
         .width = 8,
         .height = 8,
-        .data.subimage[0][0] = {
-            .ptr = data,
-            .size = sizeof(data)
-        }
-
+        .data.subimage[0][0] = SG_RANGE(data)
     };
     for (int i = 0; i < 3; i++) {
         img[i] = sg_make_image(&desc);
@@ -469,12 +460,7 @@ UTEST(sokol_gfx, generation_counter) {
 
     static float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
     for (int i = 0; i < 64; i++) {
-        sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
-            .data = {
-                .ptr = data,
-                .size = sizeof(data),
-            }
-        });
+        sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){ .data = SG_RANGE(data) });
         T(buf.id != SG_INVALID_ID);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_VALID);
         T((buf.id >> 16) == (uint32_t)(i + 1));   /* this is the generation counter */

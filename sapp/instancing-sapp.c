@@ -49,10 +49,7 @@ void init(void) {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        },
+        .data = SG_RANGE(vertices),
         .label = "geometry-vertices"
     });
 
@@ -63,10 +60,7 @@ void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        },
+        .data = SG_RANGE(indices),
         .label = "geometry-indices"
     });
 
@@ -154,7 +148,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 24, state.cur_num_particles);
     __dbgui_draw();
     sg_end_pass();

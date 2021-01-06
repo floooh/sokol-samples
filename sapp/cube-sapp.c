@@ -55,10 +55,7 @@ void init(void) {
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices)
-        },
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
 
@@ -73,10 +70,7 @@ void init(void) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices)
-        },
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -130,7 +124,7 @@ void frame(void) {
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ .ptr=&vs_params, .size=sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

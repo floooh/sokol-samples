@@ -186,7 +186,7 @@ static void frame(void) {
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     sg_end_pass();
 
@@ -201,7 +201,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.deflt.pass_action, w, h);
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range) {&vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();

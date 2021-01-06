@@ -145,10 +145,7 @@ void init(void) {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = cube_vertices,
-            .size = sizeof(cube_vertices),
-        },
+        .data = SG_RANGE(cube_vertices),
         .label = "cube vertices"
     });
 
@@ -163,10 +160,7 @@ void init(void) {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = cube_indices,
-            .size = sizeof(cube_indices),
-        },
+        .data = SG_RANGE(cube_indices),
         .label = "cube indices"
     });
 
@@ -217,10 +211,7 @@ void init(void) {
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = quad_vertices,
-            .size = sizeof(quad_vertices),
-        },
+        .data = SG_RANGE(quad_vertices),
         .label = "quad vertices"
     });
 
@@ -299,10 +290,7 @@ void frame(void) {
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &(sg_range){
-        .ptr = &offscreen_params,
-        .size = sizeof(offscreen_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, SG_RANGE_REF(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -311,10 +299,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, &(sg_range){
-        .ptr = &fsq_params,
-        .size = sizeof(fsq_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, SG_RANGE_REF(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {

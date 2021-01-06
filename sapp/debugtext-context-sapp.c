@@ -114,10 +114,7 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,  32767, 32767 },
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        },
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     uint16_t indices[] = {
@@ -130,10 +127,7 @@ static void init(void) {
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        },
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -244,10 +238,7 @@ static void frame(void) {
 
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range) {
-        .ptr = &vs_params,
-        .size = sizeof(vs_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     for (int i = 0; i < NUM_FACES; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,

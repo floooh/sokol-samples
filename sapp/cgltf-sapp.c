@@ -277,10 +277,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF000000;
@@ -289,10 +286,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF0000FF;
@@ -301,10 +295,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
 }
 
@@ -349,14 +340,8 @@ static void frame(void) {
                 if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range) {
-                    .ptr = &vs_params,
-                    .size = sizeof(vs_params)
-                });
-                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &(sg_range) {
-                    .ptr = &state.point_light,
-                    .size = sizeof(state.point_light)
-                });
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, SG_RANGE_REF(state.point_light));
                 if (mat->is_metallic) {
                     sg_image base_color_tex = state.scene.images[mat->metallic.images.base_color];
                     sg_image metallic_roughness_tex = state.scene.images[mat->metallic.images.metallic_roughness];
@@ -383,10 +368,7 @@ static void frame(void) {
                     bind.fs_images[SLOT_normal_texture] = normal_tex;
                     bind.fs_images[SLOT_occlusion_texture] = occlusion_tex;
                     bind.fs_images[SLOT_emissive_texture] = emissive_tex;
-                    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &(sg_range){
-                        .ptr = &mat->metallic.fs_params,
-                        .size = sizeof(metallic_params_t)
-                    });
+                    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, SG_RANGE_REF(mat->metallic.fs_params));
                 }
                 else {
                 /*

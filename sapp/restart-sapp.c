@@ -147,19 +147,13 @@ static void init(void) {
     state.scene.bind.fs_images[0] = sg_alloc_image();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = cube_vertices,
-            .size = sizeof(cube_vertices),
-        },
+        .data = SG_RANGE(cube_vertices),
         .label = "cube-vertices"
     });
 
     state.scene.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = cube_indices,
-            .size = sizeof(cube_indices),
-        },
+        .data = SG_RANGE(cube_indices),
         .label = "cube-indices"
     });
 
@@ -345,7 +339,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.scene.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.scene.pip);
     sg_apply_bindings(&state.scene.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     sgl_draw();
     sdtx_draw();
