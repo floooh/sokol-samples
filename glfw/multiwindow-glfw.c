@@ -106,17 +106,11 @@ int main() {
         ctx[i] = sg_setup_context();
         /* create the usual resources per context (buffers, shader, pipeline) */
         bind[i].vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-            .data = {
-                .ptr = vertices,
-                .size = sizeof(vertices),
-            }
+            .data = SG_RANGE(vertices)
         });
         bind[i].index_buffer = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .data = {
-                .ptr = indices,
-                .size = sizeof(indices),
-            }
+            .data = SG_RANGE(indices)
         });
         sg_shader shd = sg_make_shader(&(sg_shader_desc){
             .vs.uniform_blocks[0] = {
@@ -190,7 +184,7 @@ int main() {
                 sg_begin_default_pass(&pass_actions[i], cur_width, cur_height);
                 sg_apply_pipeline(pip[i]);
                 sg_apply_bindings(&bind[i]);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
                 sg_draw(0, 36, 1);
                 sg_end_pass();
                 sg_commit();

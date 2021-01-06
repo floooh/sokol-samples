@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  inject-metal.m
+//  inject-metal.mm
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #define SOKOL_IMPL
@@ -223,15 +223,12 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_image_data data = {
-        .subimage[0][0] = { .ptr = state.pixels, .size = sizeof(state.pixels) }
-    };
-    sg_update_image(state.bind.fs_images[0], &data);
+    sg_update_image(state.bind.fs_images[0], { .subimage[0][0] = SG_RANGE(state.pixels) });
 
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, { &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -39,10 +39,7 @@ int main() {
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     sg_buffer_desc vbuf_desc = {
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
@@ -53,10 +50,7 @@ int main() {
     };
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        }
+        .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 

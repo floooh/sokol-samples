@@ -123,8 +123,7 @@ int main() {
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.data.subimage[0][0].ptr = font_pixels;
-    img_desc.data.subimage[0][0].size = font_width * font_height * 4;
+    img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
     bind.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering
@@ -245,7 +244,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, { &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

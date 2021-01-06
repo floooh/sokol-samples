@@ -224,16 +224,14 @@ int main() {
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_data){
-            .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
-        });
+        sg_update_image(img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

@@ -111,10 +111,7 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     state.offscreen_bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = cube_vertices,
-            .size = sizeof(cube_vertices),
-        }
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -128,10 +125,7 @@ static void init(void) {
     };
     state.offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = cube_indices,
-            .size = sizeof(cube_indices),
-        }
+        .data = SG_RANGE(cube_indices)
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
@@ -201,10 +195,7 @@ static void init(void) {
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = quad_vertices,
-            .size = sizeof(quad_vertices),
-        }
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
@@ -344,10 +335,7 @@ static void frame(void) {
     sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
-        .ptr = &offscreen_params,
-        .size = sizeof(offscreen_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -355,10 +343,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.fsq_pip);
     sg_apply_bindings(&state.fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
-        .ptr = &params,
-        .size = sizeof(params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(params));
     sg_draw(0, 4, 1);
 
     /* render the small debug quads */

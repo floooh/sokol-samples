@@ -62,10 +62,7 @@ static void init(void) {
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     });
 
     /* create an index buffer for the cube */
@@ -79,10 +76,7 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        }
+        .data = SG_RANGE(indices)
     });
 
     /*
@@ -158,7 +152,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

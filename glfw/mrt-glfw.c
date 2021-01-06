@@ -112,10 +112,7 @@ int main() {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = cube_vertices,
-            .size = sizeof(cube_vertices),
-        }
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -129,10 +126,7 @@ int main() {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = cube_indices,
-            .size = sizeof(cube_indices),
-        }
+        .data = SG_RANGE(cube_indices)
     });
 
     /* a shader to render the cube into offscreen MRT render targets */
@@ -203,10 +197,7 @@ int main() {
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = quad_vertices,
-            .size = sizeof(quad_vertices),
-        }
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* resource bindings to render the fullscreen quad */
@@ -336,10 +327,7 @@ int main() {
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
-            .ptr = &offscreen_params,
-            .size = sizeof(offscreen_params)
-        });
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -350,10 +338,7 @@ int main() {
         sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
-            .ptr = &params,
-            .size = sizeof(params)
-        });
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(params));
         sg_draw(0, 4, 1);
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {

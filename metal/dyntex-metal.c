@@ -93,17 +93,11 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = {
-            .ptr = indices,
-            .size = sizeof(indices),
-        }
+        .data = SG_RANGE(indices)
     });
 
     /* a shader to render a textured cube */
@@ -186,17 +180,14 @@ static void frame(void) {
     
     /* update the texture */
     sg_update_image(state.bind.fs_images[0], &(sg_image_data){
-        .subimage[0][0] = {
-            .ptr = state.pixels,
-            .size = sizeof(state.pixels)
-        }
+        .subimage[0][0] = SG_RANGE(state.pixels)
     });
     
     /* render the frame */
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){ &vs_params, sizeof(vs_params) });
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

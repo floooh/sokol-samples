@@ -55,10 +55,7 @@ static void init(void) {
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .data = {
-            .ptr = vertices,
-            .size = sizeof(vertices),
-        }
+        .data = SG_RANGE(vertices)
     });
 
     /* a shader for the fullscreen background quad */
@@ -190,10 +187,7 @@ static void frame(void) {
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &(sg_range){
-        .ptr = &state.fs_params,
-        .size = sizeof(state.fs_params)
-    });
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, SG_RANGE_REF(state.fs_params));
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
@@ -209,10 +203,7 @@ static void frame(void) {
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &(sg_range){
-                .ptr = &state.vs_params,
-                .size = sizeof(state.vs_params)
-            });
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(state.vs_params));
             sg_draw(0, 4, 1);
         }
     }
