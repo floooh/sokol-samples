@@ -16,23 +16,24 @@
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
-/* clear to black */
-static sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+static struct {
+    float roty;
+    int cur_num_particles;
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_pass_action pass_action;
+} state = {
+    /* clear to black */
+    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 
-static sg_pipeline pip;
-static sg_bindings bind;
-static float roty;
+/* particle positions and velocity */
+static hmm_vec3 pos[MAX_PARTICLES];
+static hmm_vec3 vel[MAX_PARTICLES];
 
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
-
-/* particle positions and velocity */
-static int cur_num_particles = 0;
-static hmm_vec3 pos[MAX_PARTICLES];
-static hmm_vec3 vel[MAX_PARTICLES];
 
 static void draw();
 
@@ -41,8 +42,7 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){0});
     assert(sg_isvalid());
 
     /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
@@ -57,8 +57,7 @@ int main() {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     sg_buffer geom_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     /* index buffer for static geometry */
@@ -68,8 +67,7 @@ int main() {
     };
     sg_buffer ibuf= sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
@@ -79,7 +77,7 @@ int main() {
     });
 
     /* the resource bindings */
-    bind = (sg_bindings){
+    state.bind = (sg_bindings){
         .vertex_buffers = {
             [0] = geom_vbuf,
             [1] = inst_vbuf
@@ -120,7 +118,7 @@ int main() {
     });
 
     /* pipeline state object, note the vertex attribute definition */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
@@ -149,13 +147,13 @@ void draw() {
 
     /* emit new particles */
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
-        if (cur_num_particles < MAX_PARTICLES) {
-            pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
-            vel[cur_num_particles] = HMM_Vec3(
+        if (state.cur_num_particles < MAX_PARTICLES) {
+            pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
+            vel[state.cur_num_particles] = HMM_Vec3(
                 ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
                 ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
                 ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
-            cur_num_particles++;
+            state.cur_num_particles++;
         }
         else {
             break;
@@ -163,7 +161,7 @@ void draw() {
     }
 
     /* update particle positions */
-    for (int i = 0; i < cur_num_particles; i++) {
+    for (int i = 0; i < state.cur_num_particles; i++) {
         vel[i].Y -= 1.0f * frame_time;
         pos[i].X += vel[i].X * frame_time;
         pos[i].Y += vel[i].Y * frame_time;
@@ -177,22 +175,23 @@ void draw() {
     }
 
     /* update instance data */
-    sg_update_buffer(bind.vertex_buffers[1], pos, cur_num_particles*sizeof(hmm_vec3));
+    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, state.cur_num_particles*sizeof(hmm_vec3) });
 
     /* model-view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    roty += 1.0f;
-    vs_params_t vs_params;
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
+    state.roty += 1.0f;
+    const vs_params_t vs_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.roty, HMM_Vec3(0.0f, 1.0f, 0.0f)))
+    };
 
     /* and the actual draw pass... */
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
-    sg_draw(0, 24, cur_num_particles);
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+    sg_draw(0, 24, state.cur_num_particles);
     sg_end_pass();
     sg_commit();
 }

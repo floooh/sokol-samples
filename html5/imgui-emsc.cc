@@ -45,7 +45,7 @@ int main() {
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
-    sg_setup((sg_desc){ });
+    sg_setup(sg_desc{});
     assert(sg_isvalid());
 
     // setup the ImGui environment
@@ -163,9 +163,9 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = font_pixels,
-            .size = font_width * font_height * 4
+            .size = size_t(font_width * font_height * 4)
         }
     });
 
@@ -301,15 +301,15 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
         // append vertices and indices to buffers, record start offsets in binding struct
-        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const size_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const size_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
+        const int ib_offset = sg_append_buffer(bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)
