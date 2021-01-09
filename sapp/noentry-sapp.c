@@ -144,8 +144,8 @@ void init(void* user_data) {
 void frame(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     vs_params_t vs_params;
-    const float w = (float) sapp_width();
-    const float h = (float) sapp_height();
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
     hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -158,7 +158,7 @@ void frame(void* user_data) {
     sg_pass_action pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 0.25f, 0.75f, 1.0f } }
     };
-    sg_begin_default_pass(&pass_action, (int)w, (int)h);
+    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));

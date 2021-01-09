@@ -121,7 +121,7 @@ void init(void) {
 }
 
 void frame(void) {
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(90.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;

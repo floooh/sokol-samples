@@ -135,7 +135,7 @@ static void hairball(void) {
 }
 
 static void frame(void) {
-    const float aspect = (float)sapp_width() / (float) sapp_height();
+    const float aspect = sapp_widthf() / sapp_heightf();
     static uint32_t frame_count = 0;
     frame_count++;
 

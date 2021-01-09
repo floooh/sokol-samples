@@ -211,7 +211,7 @@ void frame(void) {
     const hmm_mat4 light_view_proj = HMM_MultiplyMat4(light_proj, light_view);
 
     /* Calculate matrices for camera pass */
-    const hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 100.0f);
+    const hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
     const hmm_mat4 view = HMM_LookAt(HMM_Vec3(5.0f, 5.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 

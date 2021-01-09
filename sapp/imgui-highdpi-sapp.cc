@@ -159,7 +159,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
-    desc.fullscreen = false;
+    desc.fullscreen = true;
     desc.high_dpi = true;
     desc.html5_ask_leave_site = html5_ask_leave_site;
     desc.ios_keyboard_resizes_canvas = false;
