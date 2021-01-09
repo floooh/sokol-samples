@@ -239,7 +239,7 @@ static void frame(void) {
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
-    for (int i = 0; i < NUM_FACES; i++) {
+    for (uint32_t i = 0; i < NUM_FACES; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,
