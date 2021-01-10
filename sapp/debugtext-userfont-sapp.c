@@ -60,8 +60,7 @@ static void init(void) {
     */
     sdtx_setup(&(sdtx_desc_t){
         .fonts[USER_FONT] = {
-            .ptr = user_font,
-            .size = sizeof(user_font),
+            .data = SDTX_RANGE(user_font),
             .first_char = 0x20,
             .last_char  = 0x9F
         }

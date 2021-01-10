@@ -38,8 +38,8 @@ UTEST(sokol_debugtext, default_init_shutdown) {
     T(_sdtx.desc.context.depth_format == 0);
     T(_sdtx.desc.context.sample_count == 0);
     for (int i = 0; i < SDTX_MAX_FONTS; i++) {
-        T(_sdtx.desc.fonts[i].ptr == 0);
-        T(_sdtx.desc.fonts[i].size == 0);
+        T(_sdtx.desc.fonts[i].data.ptr == 0);
+        T(_sdtx.desc.fonts[i].data.size == 0);
         T(_sdtx.desc.fonts[i].first_char == 0);
         T(_sdtx.desc.fonts[i].last_char == 0);
     }
