@@ -78,8 +78,8 @@ static void init(void) {
     sshape_vertex_t vertices[4000] = { 0 };
     uint16_t indices[24000] = { 0 };
     sshape_buffer_t buf = {
-        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer  = SSHAPE_RANGE(indices),
     };
     buf = sshape_build_torus(&buf, &(sshape_torus_t){
         .radius = 0.5f,

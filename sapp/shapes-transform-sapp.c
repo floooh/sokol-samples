@@ -64,8 +64,8 @@ static void init(void) {
     sshape_vertex_t vertices[6 * 1024];
     uint16_t indices[16 * 1024];
     sshape_buffer_t buf = {
-        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices  = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer  = SSHAPE_RANGE(indices),
     };
 
     // transform matrices for the shapes
