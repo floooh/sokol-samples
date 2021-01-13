@@ -115,7 +115,7 @@ void init(void) {
                 [ATTR_vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(mipmap_shader_desc()),
+        .shader = sg_make_shader(mipmap_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 }

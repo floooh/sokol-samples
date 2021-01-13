@@ -69,7 +69,7 @@ void init(void) {
         MSAA sample count of the default framebuffer
     */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(noninterleaved_shader_desc()),
+        .shader = sg_make_shader(noninterleaved_shader_desc(sg_query_backend())),
         .layout = {
             /* note how the vertex components are pulled from different buffer bind slots */
             .attrs = {

@@ -158,7 +158,7 @@ static void init(void) {
     });
 
     state.scene.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(restart_shader_desc()),
+        .shader = sg_make_shader(restart_shader_desc(sg_query_backend())),
         .layout = {
             .attrs = {
                 [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,

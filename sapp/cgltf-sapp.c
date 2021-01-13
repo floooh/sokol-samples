@@ -251,7 +251,7 @@ static void init(void) {
     };
 
     // create shaders
-    state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc());
+    state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc(sg_query_backend()));
     //state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
 
     // setup the point light

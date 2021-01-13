@@ -175,7 +175,7 @@ static void init(void) {
             [ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
             [ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
         },
-        .shader = sg_make_shader(plmpeg_shader_desc()),
+        .shader = sg_make_shader(plmpeg_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,

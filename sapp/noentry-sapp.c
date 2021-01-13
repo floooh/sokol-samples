@@ -113,7 +113,7 @@ void init(void* user_data) {
     });
 
     /* create shader */
-    sg_shader shd = sg_make_shader(noentry_shader_desc());
+    sg_shader shd = sg_make_shader(noentry_shader_desc(sg_query_backend()));
 
     /* create pipeline object */
     state->pip = sg_make_pipeline(&(sg_pipeline_desc){

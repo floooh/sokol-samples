@@ -100,7 +100,7 @@ void init(void) {
     });
 
     /* a shader to render a textured cube */
-    sg_shader shd = sg_make_shader(dyntex_shader_desc());
+    sg_shader shd = sg_make_shader(dyntex_shader_desc(sg_query_backend()));
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){

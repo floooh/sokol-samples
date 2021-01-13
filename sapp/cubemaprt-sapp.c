@@ -138,7 +138,7 @@ void init(void) {
 
     /* shader and pipeline objects for offscreen-rendering */
     sg_pipeline_desc pip_desc = {
-        .shader = sg_make_shader(shapes_shader_desc()),
+        .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
@@ -162,7 +162,7 @@ void init(void) {
 
     /* shader and pipeline objects for display-rendering */
     app.display_cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(cube_shader_desc()),
+        .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {

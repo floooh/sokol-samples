@@ -59,7 +59,7 @@ void init(void) {
 
     /* a shader and pipeline to render 2D shapes */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(bufferoffsets_shader_desc()),
+        .shader = sg_make_shader(bufferoffsets_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {

@@ -116,7 +116,7 @@ static void init(void) {
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(loadpng_shader_desc()),
+        .shader = sg_make_shader(loadpng_shader_desc(sg_query_backend())),
         .layout = {
             .attrs = {
                 [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,

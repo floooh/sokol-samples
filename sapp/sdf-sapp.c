@@ -38,7 +38,7 @@ void init(void) {
         .layout = {
             .attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT2
         },
-        .shader = sg_make_shader(sdf_shader_desc()),
+        .shader = sg_make_shader(sdf_shader_desc(sg_query_backend())),
     });
 
     // don't need to clear since the whole framebuffer is overwritten

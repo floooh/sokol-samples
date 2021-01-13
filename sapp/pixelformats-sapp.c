@@ -84,7 +84,7 @@ static void init(void) {
                 [ATTR_vs_cube_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
-        .shader = sg_make_shader(cube_shader_desc()),
+        .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth_stencil = {
             .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
@@ -99,7 +99,7 @@ static void init(void) {
     };
     sg_pipeline_desc bg_render_pip_desc = {
         .layout.attrs[ATTR_vs_bg_position].format = SG_VERTEXFORMAT_FLOAT2,
-        .shader = sg_make_shader(bg_shader_desc()),
+        .shader = sg_make_shader(bg_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .blend = {
             .depth_format = SG_PIXELFORMAT_DEPTH

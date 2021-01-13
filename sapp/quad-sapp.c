@@ -42,7 +42,7 @@ void init(void) {
     });
 
     /* a shader (use separate shader sources here */
-    sg_shader shd = sg_make_shader(quad_shader_desc());
+    sg_shader shd = sg_make_shader(quad_shader_desc(sg_query_backend()));
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){

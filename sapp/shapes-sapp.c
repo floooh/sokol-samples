@@ -55,7 +55,7 @@ static void init(void) {
 
     // shader and pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(shapes_shader_desc()),
+        .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = {
             .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {

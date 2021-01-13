@@ -72,7 +72,7 @@ void init(void) {
     });
 
     /* a shader */
-    sg_shader shd = sg_make_shader(instancing_shader_desc());
+    sg_shader shd = sg_make_shader(instancing_shader_desc(sg_query_backend()));
 
     /* a pipeline object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){

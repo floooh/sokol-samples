@@ -165,7 +165,7 @@ void init(void) {
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
-    sg_shader offscreen_shd = sg_make_shader(offscreen_shader_desc());
+    sg_shader offscreen_shd = sg_make_shader(offscreen_shader_desc(sg_query_backend()));
 
     /* pass action for offscreen pass */
     state.offscreen.pass_action = (sg_pass_action) {
@@ -216,7 +216,7 @@ void init(void) {
     });
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
-    sg_shader fsq_shd = sg_make_shader(fsq_shader_desc());
+    sg_shader fsq_shd = sg_make_shader(fsq_shader_desc(sg_query_backend()));
 
     /* the pipeline object to render the fullscreen quad */
     state.fsq.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -244,7 +244,7 @@ void init(void) {
             .attrs[ATTR_vs_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .shader = sg_make_shader(dbg_shader_desc()),
+        .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
         .label = "dbgvis quad pipeline"
     }),
     state.dbg.bind = (sg_bindings){
