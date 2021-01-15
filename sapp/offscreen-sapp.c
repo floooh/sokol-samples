@@ -165,7 +165,7 @@ static void init(void) {
 /* helper function to compute model-view-projection matrix */
 static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
     hmm_mat4 proj = HMM_Perspective(45.0f, aspect, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, -eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -181,7 +181,7 @@ static void frame(void) {
 
     /* the offscreen pass, rendering an rotating, untextured donut into a render target image */
     vs_params = (vs_params_t) {
-        .mvp = compute_mvp(state.rx, state.ry, 1.0f, -2.5f)
+        .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
     };
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
@@ -196,7 +196,7 @@ static void frame(void) {
     int w = sapp_width();
     int h = sapp_height();
     vs_params = (vs_params_t) {
-        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, -2.0f)
+        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 2.0f)
     };
     sg_begin_default_pass(&state.deflt.pass_action, w, h);
     sg_apply_pipeline(state.deflt.pip);
