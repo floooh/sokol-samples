@@ -161,7 +161,7 @@ void frame(void* user_data) {
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

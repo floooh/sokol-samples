@@ -74,7 +74,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -215,7 +215,7 @@ static void frame() {
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

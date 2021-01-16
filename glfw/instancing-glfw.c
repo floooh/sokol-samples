@@ -45,7 +45,7 @@ int main() {
     flextInit();
 
     /* setup sokol_gfx */
-    sg_desc desc = {0}; 
+    sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
     assert(sg_query_features().instancing);
@@ -74,7 +74,7 @@ int main() {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .data = SG_RANGE(indices)
     });
-    
+
     /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
@@ -89,7 +89,7 @@ int main() {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .vs.source = 
+        .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
             "layout(location=0) in vec3 position;\n"
@@ -198,7 +198,7 @@ int main() {
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();

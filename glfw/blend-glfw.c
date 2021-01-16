@@ -178,7 +178,7 @@ int main() {
         /* draw a background quad */
         sg_apply_pipeline(bg_pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, SG_RANGE_REF(fs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_params));
         sg_draw(0, 4, 1);
 
         /* draw the blended quads */
@@ -194,7 +194,7 @@ int main() {
 
                 sg_apply_pipeline(pips[src][dst]);
                 sg_apply_bindings(&bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

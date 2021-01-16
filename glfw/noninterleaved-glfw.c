@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  noninterleaved-glfw.c
-//  How to use non-interleaved vertex data (vertex components in 
+//  How to use non-interleaved vertex data (vertex components in
 //  separate non-interleaved chunks in the same vertex buffers). Note
-//  that only 4 separate chunks are currently possible because there 
+//  that only 4 separate chunks are currently possible because there
 //  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ int main() {
         -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
         -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
-         1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0, 
+         1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
         -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
@@ -82,7 +82,7 @@ int main() {
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
         .vs.uniform_blocks[0] = {
             .size = sizeof(params_t),
-            .uniforms = { 
+            .uniforms = {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             }
         },
@@ -96,7 +96,7 @@ int main() {
             "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source = 
+        .fs.source =
             "#version 330\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
@@ -145,7 +145,7 @@ int main() {
 
     /* default pass action */
     sg_pass_action pass_action = { 0 };
-    
+
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -168,7 +168,7 @@ int main() {
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

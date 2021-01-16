@@ -170,7 +170,7 @@ int main() {
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                /* offsets are not strictly needed here because the vertex layout 
+                /* offsets are not strictly needed here because the vertex layout
                    is gapless, but this demonstrates that offsetof() can be used
                 */
                 [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -253,7 +253,7 @@ int main() {
             "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
             "}\n"
     });
-    
+
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
@@ -298,7 +298,7 @@ int main() {
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
-        .colors = { 
+        .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
             [2].action = SG_ACTION_DONTCARE
@@ -311,7 +311,7 @@ int main() {
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    
+
     offscreen_params_t offscreen_params;
     params_t params;
     float rx = 0.0f, ry = 0.0f;
@@ -327,7 +327,7 @@ int main() {
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(offscreen_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -338,7 +338,7 @@ int main() {
         sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
         sg_draw(0, 4, 1);
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {

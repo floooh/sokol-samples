@@ -193,7 +193,7 @@ void draw() {
 
         state.bind.fs_images[0] = state.img[i];
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

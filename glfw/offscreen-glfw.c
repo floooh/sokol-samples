@@ -34,7 +34,7 @@ int main() {
     flextInit();
 
     /* setup sokol_gfx */
-    sg_desc desc = {0}; 
+    sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
 
@@ -58,9 +58,9 @@ int main() {
         .depth_stencil_attachment.image = depth_img
     });
 
-    /* pass action for offscreen pass, clearing to black */ 
+    /* pass action for offscreen pass, clearing to black */
     sg_pass_action offscreen_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }   
+        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* pass action for default pass, clearing to blue-ish */
@@ -76,7 +76,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 1.0f,
@@ -262,18 +262,18 @@ int main() {
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
-        /* and the default pass, this renders a textured cube, using the 
+        /* and the default pass, this renders a textured cube, using the
            offscreen render target as texture image */
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

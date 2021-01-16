@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  noninterleaved-glfw.c
-//  How to use non-interleaved vertex data (vertex components in 
+//  How to use non-interleaved vertex data (vertex components in
 //  separate non-interleaved chunks in the same vertex buffers). Note
-//  that only 4 separate chunks are currently possible because there 
+//  that only 4 separate chunks are currently possible because there
 //  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ static void init(void) {
         -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
         -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
-         1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0, 
+         1.0, -1.0, -1.0,   1.0,  1.0, -1.0,   1.0,  1.0,  1.0,   1.0, -1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
         -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
@@ -104,7 +104,7 @@ static void init(void) {
             "}\n"
     });
 
-    /* 
+    /*
         a pipeline object, note that we need to provide the
         MSAA sample count of the default framebuffer
     */
@@ -126,7 +126,7 @@ static void init(void) {
         .rasterizer.cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* fill the resource bindings, note how the same vertex 
+    /* fill the resource bindings, note how the same vertex
        buffer is bound to the first two slots, and the vertex-buffer-offsets
        are used to point to the position- and color-components.
     */
@@ -162,7 +162,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

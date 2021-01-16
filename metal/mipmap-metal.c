@@ -168,7 +168,7 @@ static void init(void) {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT2 }
-            } 
+            }
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -197,7 +197,7 @@ static void frame(void) {
         vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
         bind.fs_images[0] = state.img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

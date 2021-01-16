@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //  dyntex-glfw.c
-//  update texture per-frame with CPU generated data 
+//  update texture per-frame with CPU generated data
 //------------------------------------------------------------------------------
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -65,7 +65,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 1.0f,
@@ -189,11 +189,11 @@ int main() {
         game_of_life_update();
 
         /* update the dynamic image */
-        sg_update_image(img, &(sg_image_data){ 
-            .subimage[0][0] = { 
-                .ptr=pixels, 
+        sg_update_image(img, &(sg_image_data){
+            .subimage[0][0] = {
+                .ptr=pixels,
                 .size=sizeof(pixels)
-            } 
+            }
         });
 
         /* get current window canvas size for the default pass */
@@ -203,7 +203,7 @@ int main() {
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

@@ -275,11 +275,11 @@ static void frame(void) {
             sg_begin_pass(state.fmt[i].render_pass, &(sg_pass_action){0});
             sg_apply_pipeline(state.fmt[i].bg_render_pip);
             sg_apply_bindings(&state.bg_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, SG_RANGE_REF(state.bg_fs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
             sg_draw(0, 4, 1);
             sg_apply_pipeline(state.fmt[i].cube_render_pip);
             sg_apply_bindings(&state.cube_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, SG_RANGE_REF(state.cube_vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &SG_RANGE(state.cube_vs_params));
             sg_draw(0, 36, 1);
             sg_end_pass();
         }
@@ -287,11 +287,11 @@ static void frame(void) {
             sg_begin_pass(state.fmt[i].blend_pass, &(sg_pass_action){0});
             sg_apply_pipeline(state.fmt[i].bg_render_pip);  // not a bug
             sg_apply_bindings(&state.bg_bindings); // not a bug
-            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, SG_RANGE_REF(state.bg_fs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
             sg_draw(0, 4, 1);
             sg_apply_pipeline(state.fmt[i].cube_blend_pip);
             sg_apply_bindings(&state.cube_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, SG_RANGE_REF(state.cube_vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &SG_RANGE(state.cube_vs_params));
             sg_draw(0, 36, 1);
             sg_end_pass();
         }
@@ -299,11 +299,11 @@ static void frame(void) {
             sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){0});
             sg_apply_pipeline(state.fmt[i].bg_msaa_pip);
             sg_apply_bindings(&state.bg_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, SG_RANGE_REF(state.bg_fs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
             sg_draw(0, 4, 1);
             sg_apply_pipeline(state.fmt[i].cube_msaa_pip);
             sg_apply_bindings(&state.cube_bindings);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, SG_RANGE_REF(state.cube_vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_cube_vs_params, &SG_RANGE(state.cube_vs_params));
             sg_draw(0, 36, 1);
             sg_end_pass();
         }

@@ -266,7 +266,7 @@ void draw() {
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -275,7 +275,7 @@ void draw() {
     sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

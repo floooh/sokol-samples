@@ -235,7 +235,7 @@ void frame(void) {
         const vs_shadow_params_t vs_shadow_params = {
             .mvp = HMM_MultiplyMat4(light_view_proj,translate)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, SG_RANGE_REF(vs_shadow_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(vs_shadow_params));
         sg_draw(0, 36, 1);
     }
     sg_end_pass();
@@ -244,7 +244,7 @@ void frame(void) {
     sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_light_params, SG_RANGE_REF(fs_light_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_light_params, &SG_RANGE(fs_light_params));
     {
         /* Render the plane in the light pass */
         const vs_light_params_t vs_light_params = {
@@ -253,7 +253,7 @@ void frame(void) {
             .model = HMM_Mat4d(1.0f),
             .diffColor = HMM_Vec3(0.5f,0.5f,0.5f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, SG_RANGE_REF(vs_light_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &SG_RANGE(vs_light_params));
         sg_draw(36, 6, 1);
     }
     {
@@ -264,7 +264,7 @@ void frame(void) {
             .mvp = HMM_MultiplyMat4(view_proj,translate),
             .diffColor = HMM_Vec3(1.0f,1.0f,1.0f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, SG_RANGE_REF(vs_light_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &SG_RANGE(vs_light_params));
         sg_draw(0, 36, 1);
     }
 

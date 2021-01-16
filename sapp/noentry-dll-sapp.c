@@ -4,7 +4,7 @@
 //  This demonstrates the SOKOL_NO_ENTRY mode of sokol_app.h, in this mode
 //  sokol_app.h doesn't "hijack" the platform's main() function instead the
 //  application must provide this. The sokol_app.h implementation must be
-//  compiled with the SOKOL_NO_ENTRY define (see sokol-noentry.c/.m, 
+//  compiled with the SOKOL_NO_ENTRY define (see sokol-noentry.c/.m,
 //  which is compiled into a static link lib sokol-noentry)
 //
 //  This sample also demonstrates the optional user-data callbacks.
@@ -158,7 +158,7 @@ void frame(void* user_data) {
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -97,7 +97,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

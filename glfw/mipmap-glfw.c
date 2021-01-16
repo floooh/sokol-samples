@@ -62,7 +62,7 @@ int main() {
 
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){0});
-    
+
     /* a plane vertex buffer */
     float vertices[] = {
         -1.0, -1.0, 0.0,  0.0, 0.0,
@@ -163,7 +163,7 @@ int main() {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -173,7 +173,7 @@ int main() {
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    
+
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
@@ -192,10 +192,10 @@ int main() {
             const float y = ((float)(i / 4) - 1.0f) * -2.0f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-            
+
             bind.fs_images[0] = img[i];
             sg_apply_bindings(&bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
             sg_draw(0, 4, 1);
         }
         sg_end_pass();

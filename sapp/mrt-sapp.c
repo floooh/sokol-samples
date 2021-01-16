@@ -290,7 +290,7 @@ void frame(void) {
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, SG_RANGE_REF(offscreen_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -299,7 +299,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, SG_RANGE_REF(fsq_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {

@@ -242,7 +242,7 @@ static void frame(void) {
     if (state.bind.fs_images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 24, 1);
     }
     __dbgui_draw();

@@ -254,7 +254,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -262,7 +262,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 

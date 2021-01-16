@@ -28,38 +28,38 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_setup(&(sg_desc){
         .context = d3d11_get_context()
     });
-    
+
     /* cube vertex buffer */
     float vertices[] = {
         /* positions        colors */
-        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0, 
+        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
         -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
 
         -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0, 
+         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
          1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
         -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
 
-        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0, 
-        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0, 
-        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0, 
+        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
         -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
 
-        1.0, -1.0, -1.0,   1.0, 0.5, 0.0, 1.0, 
-        1.0,  1.0, -1.0,   1.0, 0.5, 0.0, 1.0, 
-        1.0,  1.0,  1.0,   1.0, 0.5, 0.0, 1.0, 
+        1.0, -1.0, -1.0,   1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0, -1.0,   1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0,  1.0,   1.0, 0.5, 0.0, 1.0,
         1.0, -1.0,  1.0,   1.0, 0.5, 0.0, 1.0,
 
-        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0, 
-        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0, 
-         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0, 
+        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
          1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
 
-        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0, 
-        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
-         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0, 
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
          1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
@@ -105,7 +105,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0].format = SG_VERTEXFORMAT_FLOAT3, 
+                [0].format = SG_VERTEXFORMAT_FLOAT3,
                 [1].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
@@ -141,7 +141,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
