@@ -425,7 +425,7 @@ static void r_init(void) {
         }
     });
     pip = sgl_make_pipeline(&(sg_pipeline_desc){
-        .blend = {
+        .colors[0].blend = {
             .enabled = true,
             .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA

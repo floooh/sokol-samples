@@ -141,22 +141,18 @@ void init(void) {
         .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
-        },
-        .blend = {
-            .depth_format = SG_PIXELFORMAT_DEPTH,
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
         .label = "offscreen-shapes-pipeline"
     };
     app.offscreen_shapes_pip = sg_make_pipeline(&pip_desc);
-    pip_desc.rasterizer.sample_count = DISPLAY_SAMPLE_COUNT;
-    pip_desc.blend.depth_format = 0;
+    pip_desc.sample_count = DISPLAY_SAMPLE_COUNT;
+    pip_desc.depth.pixel_format = 0;
     pip_desc.label = "display-shapes-pipeline";
     app.display_shapes_pip = sg_make_pipeline(&pip_desc);
 
@@ -165,14 +161,12 @@ void init(void) {
         .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = DISPLAY_SAMPLE_COUNT,
+        .depth = {
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = DISPLAY_SAMPLE_COUNT
-        }
     });
 
     /* 1:1 aspect ration projection matrix for offscreen rendering */

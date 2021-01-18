@@ -948,19 +948,19 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
             .shader = is_metallic ? state.shaders.metallic : state.shaders.specular,
             .primitive_type = pip_params.prim_type,
             .index_type = pip_params.index_type,
-            .depth_stencil = {
-                .depth_write_enabled = !pip_params.alpha,
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .cull_mode = SG_CULLMODE_BACK,
+            .face_winding = SG_FACEWINDING_CCW,
+            .depth = {
+                .write_enabled = !pip_params.alpha,
+                .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             },
-            .blend = {
-                .enabled = pip_params.alpha,
-                .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
-                .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
-                .color_write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
-            },
-            .rasterizer = {
-                .cull_mode = SG_CULLMODE_BACK,
-                .face_winding = SG_FACEWINDING_CCW,
+            .colors[0] = {
+                .write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
+                .blend = {
+                    .enabled = pip_params.alpha,
+                    .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
+                    .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
+                },
             }
         });
         state.scene.num_pipelines++;

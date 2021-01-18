@@ -86,33 +86,29 @@ static void init(void) {
         },
         .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK
-        }
     };
     sg_pipeline_desc bg_render_pip_desc = {
         .layout.attrs[ATTR_vs_bg_position].format = SG_VERTEXFORMAT_FLOAT2,
         .shader = sg_make_shader(bg_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .blend = {
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        }
+        .depth.pixel_format = SG_PIXELFORMAT_DEPTH,
     };
     sg_pipeline_desc cube_blend_pip_desc = cube_render_pip_desc;
-    cube_blend_pip_desc.blend.enabled = true;
-    cube_blend_pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
-    cube_blend_pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE;
+    cube_blend_pip_desc.colors[0].blend = (sg_pipeline_blend_desc) {
+        .enabled = true,
+        .src_factor_rgb = SG_BLENDFACTOR_ONE,
+        .dst_factor_rgb = SG_BLENDFACTOR_ONE,
+    };
     sg_pipeline_desc cube_msaa_pip_desc = cube_render_pip_desc;
     sg_pipeline_desc bg_msaa_pip_desc = bg_render_pip_desc;
-    cube_msaa_pip_desc.rasterizer.sample_count = 4;
-    bg_msaa_pip_desc.rasterizer.sample_count = 4;
+    cube_msaa_pip_desc.sample_count = 4;
+    bg_msaa_pip_desc.sample_count = 4;
 
     for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
         sg_pixel_format fmt = (sg_pixel_format)i;
@@ -147,8 +143,8 @@ static void init(void) {
                     .height = 64,
                     .pixel_format = fmt,
                 });
-                cube_render_pip_desc.blend.color_format = fmt;
-                bg_render_pip_desc.blend.color_format = fmt;
+                cube_render_pip_desc.colors[0].pixel_format = fmt;
+                bg_render_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_render_pip = sg_make_pipeline(&cube_render_pip_desc);
                 state.fmt[i].bg_render_pip = sg_make_pipeline(&bg_render_pip_desc);
                 state.fmt[i].render_pass = sg_make_pass(&(sg_pass_desc){
@@ -164,7 +160,7 @@ static void init(void) {
                     .height = 64,
                     .pixel_format = fmt,
                 });
-                cube_blend_pip_desc.blend.color_format = fmt;
+                cube_blend_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
                 state.fmt[i].blend_pass = sg_make_pass(&(sg_pass_desc){
                     .color_attachments[0].image = state.fmt[i].blend,
@@ -180,8 +176,8 @@ static void init(void) {
                     .pixel_format = fmt,
                     .sample_count = 4,
                 });
-                cube_msaa_pip_desc.blend.color_format = fmt;
-                bg_msaa_pip_desc.blend.color_format = fmt;
+                cube_msaa_pip_desc.colors[0].pixel_format = fmt;
+                bg_msaa_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_msaa_pip = sg_make_pipeline(&cube_msaa_pip_desc);
                 state.fmt[i].bg_msaa_pip = sg_make_pipeline(&bg_msaa_pip_desc);
                 state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){

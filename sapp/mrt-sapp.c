@@ -187,18 +187,14 @@ void init(void) {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT
-        },
+        .color_attachment_count = 3,
         .label = "offscreen pipeline"
     });
 

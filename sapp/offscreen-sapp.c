@@ -111,18 +111,14 @@ static void init(void) {
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .color_format = SG_PIXELFORMAT_RGBA8,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT
-        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "offscreen-pipeline"
     });
 
@@ -138,12 +134,10 @@ static void init(void) {
         },
         .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "default-pipeline"
     });

@@ -66,9 +66,9 @@ static void init(void) {
             .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
     });
 

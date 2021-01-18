@@ -131,12 +131,10 @@ void init(void) {
         },
         .shader = sg_make_shader(arraytex_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_NONE,
+        .cull_mode = SG_CULLMODE_NONE,
+        .depth = {
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "cube-pipeline"
     });

@@ -45,13 +45,11 @@ static void init(void) {
        these are all filled in by sokol-gl
     */
     state.pip_3d = sgl_make_pipeline(&(sg_pipeline_desc){
-        .depth_stencil = {
-            .depth_write_enabled = true,
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .write_enabled = true,
+            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK
-        }
     });
 
     /* default pass action */
