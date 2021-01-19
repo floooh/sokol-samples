@@ -571,6 +571,96 @@ UTEST(sokol_gfx, query_pipeline_defaults) {
     sg_shutdown();
 }
 
+// test that color attachment defaults are set in all attachments
+UTEST(sokol_gfx, query_mrt_pipeline_defaults) {
+    sg_setup(&(sg_desc){0});
+    const sg_pipeline_desc desc = sg_query_pipeline_defaults(&(sg_pipeline_desc){
+        .color_count = 3,
+    });
+    T(desc.color_count == 3);
+    for (uint32_t i = 0; i < desc.color_count; i++) {
+        T(desc.colors[i].pixel_format == SG_PIXELFORMAT_RGBA8);
+        T(desc.colors[i].write_mask == 0xF);
+        T(desc.colors[i].blend.enabled == false);
+        T(desc.colors[i].blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+        T(desc.colors[i].blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+        T(desc.colors[i].blend.op_rgb == SG_BLENDOP_ADD);
+        T(desc.colors[i].blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+        T(desc.colors[i].blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+        T(desc.colors[i].blend.op_alpha == SG_BLENDOP_ADD);
+    };
+    sg_shutdown();
+}
+
+// test that first color attachment values are duplicated to other attachments
+UTEST(sokol_gfx, multiple_color_state) {
+    sg_setup(&(sg_desc){0});
+    const sg_pipeline_desc desc = sg_query_pipeline_defaults(&(sg_pipeline_desc){
+        .color_count = 3,
+        .colors = {
+            [0] = {
+                .pixel_format = SG_PIXELFORMAT_R8,
+                .write_mask = SG_COLORMASK_BA,
+                .blend = {
+                    .enabled = true,
+                    .src_factor_rgb = SG_BLENDFACTOR_SRC_COLOR,
+                    .dst_factor_rgb = SG_BLENDFACTOR_DST_COLOR,
+                    .op_rgb = SG_BLENDOP_SUBTRACT,
+                    .src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                    .dst_factor_alpha = SG_BLENDFACTOR_DST_ALPHA,
+                    .op_alpha = SG_BLENDOP_REVERSE_SUBTRACT
+                }
+            },
+            [2] = {
+                .pixel_format = SG_PIXELFORMAT_RG8,
+                .write_mask = SG_COLORMASK_GA,
+                .blend = {
+                    .enabled = true,
+                    .src_factor_rgb = SG_BLENDFACTOR_DST_COLOR,
+                    .dst_factor_rgb = SG_BLENDFACTOR_SRC_COLOR,
+                    .op_rgb = SG_BLENDOP_REVERSE_SUBTRACT,
+                    .src_factor_alpha = SG_BLENDFACTOR_DST_ALPHA,
+                    .dst_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                    .op_alpha = SG_BLENDOP_SUBTRACT
+                }
+            },
+        }
+    });
+    T(desc.color_count == 3);
+
+    T(desc.colors[0].pixel_format == SG_PIXELFORMAT_R8);
+    T(desc.colors[0].write_mask == SG_COLORMASK_BA);
+    T(desc.colors[0].blend.enabled == true);
+    T(desc.colors[0].blend.src_factor_rgb == SG_BLENDFACTOR_SRC_COLOR);
+    T(desc.colors[0].blend.dst_factor_rgb == SG_BLENDFACTOR_DST_COLOR);
+    T(desc.colors[0].blend.op_rgb == SG_BLENDOP_SUBTRACT);
+    T(desc.colors[0].blend.src_factor_alpha == SG_BLENDFACTOR_SRC_ALPHA);
+    T(desc.colors[0].blend.dst_factor_alpha == SG_BLENDFACTOR_DST_ALPHA);
+    T(desc.colors[0].blend.op_alpha == SG_BLENDOP_REVERSE_SUBTRACT);
+
+    T(desc.colors[1].pixel_format == SG_PIXELFORMAT_RGBA8);
+    T(desc.colors[1].write_mask == SG_COLORMASK_RGBA);
+    T(desc.colors[1].blend.enabled == false);
+    T(desc.colors[1].blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+    T(desc.colors[1].blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[1].blend.op_rgb == SG_BLENDOP_ADD);
+    T(desc.colors[1].blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+    T(desc.colors[1].blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[1].blend.op_alpha == SG_BLENDOP_ADD);
+
+    T(desc.colors[2].pixel_format == SG_PIXELFORMAT_RG8);
+    T(desc.colors[2].write_mask == SG_COLORMASK_GA);
+    T(desc.colors[2].blend.enabled == true);
+    T(desc.colors[2].blend.src_factor_rgb == SG_BLENDFACTOR_DST_COLOR);
+    T(desc.colors[2].blend.dst_factor_rgb == SG_BLENDFACTOR_SRC_COLOR);
+    T(desc.colors[2].blend.op_rgb == SG_BLENDOP_REVERSE_SUBTRACT);
+    T(desc.colors[2].blend.src_factor_alpha == SG_BLENDFACTOR_DST_ALPHA);
+    T(desc.colors[2].blend.dst_factor_alpha == SG_BLENDFACTOR_SRC_ALPHA);
+    T(desc.colors[2].blend.op_alpha == SG_BLENDOP_SUBTRACT);
+
+    sg_shutdown();
+}
+
 UTEST(sokol_gfx, query_pass_defaults) {
     sg_setup(&(sg_desc){0});
     /* sg_pass_desc doesn't actually have any meaningful default values */
