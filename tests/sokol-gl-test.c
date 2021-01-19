@@ -176,9 +176,9 @@ UTEST(sokol_gl, make_destroy_pipelines) {
 
     sgl_pipeline pip[3] = { {0} };
     sg_pipeline_desc desc = {
-        .depth_stencil = {
-            .depth_write_enabled = true,
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        .depth = {
+            .write_enabled = true,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL
         }
     };
     for (int i = 0; i < 3; i++) {
