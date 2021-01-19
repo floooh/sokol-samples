@@ -165,7 +165,7 @@ void frame(void) {
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
-                .val = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
+                .value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         }, sapp_width(), sapp_height());
     r_draw();

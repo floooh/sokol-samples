@@ -22,7 +22,7 @@ void init(void) {
     });
     saudio_setup(&(saudio_desc){0});
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.5f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.5f, 0.0f, 1.0f } }
     };
 }
 

@@ -168,7 +168,7 @@ static void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
         .label = "cube-pipeline"
@@ -179,7 +179,7 @@ static void init(void) {
     float g = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     float b = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     state.scene.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR,.val = { r, g, b, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR,.value = { r, g, b, 1.0f } }
     };
 
     // initialize libmodplug
@@ -237,7 +237,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
     else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
@@ -249,7 +249,7 @@ static void fetch_mod_callback(const sfetch_response_t* response) {
     else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }

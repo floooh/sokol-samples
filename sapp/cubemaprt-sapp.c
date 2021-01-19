@@ -118,11 +118,11 @@ void init(void) {
 
     /* pass action for offscreen pass (clear to black) */
     app.offscreen_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 0.5f, 1.0f } }
     };
     /* pass action for default pass (clear to grey) */
     app.display_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.75f, 0.75f, 0.75f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.75f, 0.75f, 0.75f, 1.0f } }
     };
 
     /* vertex- and index-buffers for cube  */
@@ -145,7 +145,7 @@ void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
         .label = "offscreen-shapes-pipeline"
@@ -164,7 +164,7 @@ void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
         .sample_count = DISPLAY_SAMPLE_COUNT,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
     });

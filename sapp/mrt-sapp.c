@@ -170,9 +170,9 @@ void init(void) {
     /* pass action for offscreen pass */
     state.offscreen.pass_action = (sg_pass_action) {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -191,10 +191,10 @@ void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
-        .color_attachment_count = 3,
+        .color_count = 3,
         .label = "offscreen pipeline"
     });
 
@@ -252,7 +252,7 @@ void init(void) {
 /* this is called when GLES3/WebGL2 is not available */
 void draw_gles2_fallback(void) {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } },
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } },
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();

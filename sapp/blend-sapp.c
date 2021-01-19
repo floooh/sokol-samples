@@ -108,7 +108,7 @@ void init(void) {
                 }
             }
             if (valid) {
-                pip_desc.colors[0].blend = (sg_pipeline_blend_desc){
+                pip_desc.colors[0].blend = (sg_blend_state){
                     .enabled = true,
                     .src_factor_rgb = src_blend,
                     .dst_factor_rgb = dst_blend,

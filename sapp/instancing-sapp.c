@@ -34,7 +34,7 @@ void init(void) {
 
     /* a pass action for the default render pass */
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */
@@ -89,7 +89,7 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
         .label = "instancing-pipeline"

@@ -67,14 +67,14 @@ static void init(void) {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
     });
 
     /* pass action to clear to a background color */
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.5f, 0.7f, 1.0f } }
     };
 }
 

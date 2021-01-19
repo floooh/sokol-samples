@@ -35,7 +35,7 @@ void init(void) {
 
     /* a default pass action to clear to black */
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
@@ -133,7 +133,7 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_NONE,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
         .label = "cube-pipeline"
@@ -150,7 +150,7 @@ void init(void) {
 /* this is called when GLES3/WebGL2 is not available */
 void draw_gles2_fallback(void) {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } },
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } },
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();

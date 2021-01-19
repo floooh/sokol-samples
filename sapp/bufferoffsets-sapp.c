@@ -17,7 +17,7 @@ static struct {
     .pass_action = {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.5f, 0.5f, 1.0f, 1.0f }
+            .value = { 0.5f, 0.5f, 1.0f, 1.0f }
         }
     }
 };

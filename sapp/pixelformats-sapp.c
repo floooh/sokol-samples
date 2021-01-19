@@ -88,9 +88,9 @@ static void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
         },
     };
     sg_pipeline_desc bg_render_pip_desc = {
@@ -100,7 +100,7 @@ static void init(void) {
         .depth.pixel_format = SG_PIXELFORMAT_DEPTH,
     };
     sg_pipeline_desc cube_blend_pip_desc = cube_render_pip_desc;
-    cube_blend_pip_desc.colors[0].blend = (sg_pipeline_blend_desc) {
+    cube_blend_pip_desc.colors[0].blend = (sg_blend_state) {
         .enabled = true,
         .src_factor_rgb = SG_BLENDFACTOR_ONE,
         .dst_factor_rgb = SG_BLENDFACTOR_ONE,
@@ -343,7 +343,7 @@ static void frame(void) {
 
     // sokol-gfx rendering...
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, w, h);
     simgui_render();

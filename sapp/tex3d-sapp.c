@@ -14,7 +14,6 @@
 #define TEX3D_DIM (32)
 
 static struct {
-    bool tex3d_supported;
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_bindings bind;
@@ -35,20 +34,14 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // check for 3D texture support
-    state.tex3d_supported = sg_query_features().imagetype_3d;
-    if (state.tex3d_supported) {
-        state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
-        };
-    }
-    else {
-        // just clear to red if 3d textures are not supported
-        state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
-        };
+    // can't do anything without 3D texture support (this will render a red screen in the frame callback)
+    if (!sg_query_features().imagetype_3d) {
         return;
     }
+
+    state.pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
+    };
 
     // build cube vertex- and index-buffer
     const float vertices[] = {
@@ -89,7 +82,7 @@ static void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
         .label = "cube-pipeline"
@@ -120,7 +113,7 @@ static void init(void) {
 
 static void draw_fallback(void) {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();

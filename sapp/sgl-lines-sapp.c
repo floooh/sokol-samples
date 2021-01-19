@@ -29,7 +29,7 @@ static void init(void) {
     state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .depth = {
             .write_enabled = true,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL
+            .compare = SG_COMPAREFUNC_LESS_EQUAL
         }
     });
 
@@ -37,7 +37,7 @@ static void init(void) {
     state.pass_action = (sg_pass_action) {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+            .value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
 }

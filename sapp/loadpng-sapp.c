@@ -51,7 +51,7 @@ static void init(void) {
 
     /* pass action for clearing the framebuffer to some color */
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.125f, 0.25f, 0.35f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.125f, 0.25f, 0.35f, 1.0f } }
     };
 
     /* Allocate an image handle, but don't actually initialize the image yet,
@@ -126,7 +126,7 @@ static void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
         .label = "cube-pipeline"
@@ -180,7 +180,7 @@ static void fetch_callback(const sfetch_response_t* response) {
     else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }

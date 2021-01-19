@@ -92,7 +92,7 @@ void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .write_enabled = true,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
         },
         .label = "cube-pipeline"
     });
@@ -119,7 +119,7 @@ void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state.pip);

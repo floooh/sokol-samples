@@ -37,12 +37,12 @@ void init(void) {
 
     /* default pass action: clear to blue-ish */
     state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
     /* shadow pass action: clear to white */
     state.shadows.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 1.0f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 1.0f, 1.0f, 1.0f } }
     };
 
     /* a render pass with one color- and one depth-attachment image */
@@ -142,7 +142,7 @@ void init(void) {
         .sample_count = 1,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
         .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -163,7 +163,7 @@ void init(void) {
         /* Cull back faces when rendering to the screen */
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
-            .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
         .label = "default-pipeline"

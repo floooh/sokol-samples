@@ -244,10 +244,10 @@ static void init(void) {
 
     // normal background color, and a "load failed" background color
     state.pass_actions.ok = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.569f, 0.918f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.569f, 0.918f, 1.0f} }
     };
     state.pass_actions.failed = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={1.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     // create shaders
@@ -952,7 +952,7 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
             .face_winding = SG_FACEWINDING_CCW,
             .depth = {
                 .write_enabled = !pip_params.alpha,
-                .compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
             },
             .colors[0] = {
                 .write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
