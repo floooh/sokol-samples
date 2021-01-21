@@ -126,17 +126,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .shader = quad_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .blend = {
-            .enabled = true,
-            .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
-        },
+        .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
-            pip_desc.blend.src_factor_rgb = (sg_blend_factor) (src + 1);
-            pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
-            pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-            pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
+            pip_desc.colors[0].blend = (sg_blend_state) {
+                .enabled = true,
+                .src_factor_rgb = (sg_blend_factor) (src + 1),
+                .dst_factor_rgb = (sg_blend_factor) (dst + 1),
+                .src_factor_alpha = SG_BLENDFACTOR_ONE,
+                .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+            };
             pips[src][dst] = sg_make_pipeline(&pip_desc);
             assert(pips[src][dst].id != SG_INVALID_ID);
         }
