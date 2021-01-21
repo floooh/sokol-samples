@@ -17,13 +17,13 @@
 /* different clear colors for 3 windows */
 sg_pass_action pass_actions[3] = {
     [0] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={ 0.5f, 0.5f, 1.0f, 1.0f } }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 0.5f, 0.5f, 1.0f, 1.0f } }
     },
     [1] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={ 1.0f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 1.0f, 0.5f, 0.5f, 1.0f } }
     },
     [2] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={ 0.5f, 1.0f, 0.5f, 1.0f } }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 0.5f, 1.0f, 0.5f, 1.0f } }
     }
 };
 
@@ -148,11 +148,11 @@ int main() {
             },
             .shader = shd,
             .index_type = SG_INDEXTYPE_UINT16,
-            .depth_stencil = {
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-                .depth_write_enabled = true,
+            .depth = {
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
+                .write_enabled = true,
             },
-            .rasterizer.cull_mode = SG_CULLMODE_BACK,
+            .cull_mode = SG_CULLMODE_BACK,
         });
     }
 
