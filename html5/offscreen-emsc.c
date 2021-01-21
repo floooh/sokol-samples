@@ -29,9 +29,9 @@ static struct{
     } display;
 } state = {
     /* offscreen: clear to black */
-    .offscreen.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } },
+    .offscreen.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     /* display: clear to blue-ish */
-    .display.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } },
+    .display.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } },
 };
 
 typedef struct {
@@ -198,15 +198,13 @@ int main() {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend.depth_format = SG_PIXELFORMAT_DEPTH,
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = offscreen_sample_count
     });
 
     /* and another pipeline object for the default pass */
@@ -221,11 +219,11 @@ int main() {
         },
         .shader = default_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* the resource bindings for offscreen rendering */

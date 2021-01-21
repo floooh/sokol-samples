@@ -46,7 +46,7 @@ int main() {
        so just drop out and later render a dark red screen */
     if (emsc_webgl_fallback()) {
         state.pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
         };
         emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
         return 0;
@@ -199,16 +199,16 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* default pass action */
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     emscripten_set_main_loop(draw, 0, 1);
@@ -247,9 +247,9 @@ void draw() {
 
 /* this is used as draw callback if webgl2 is not supported */
 void draw_webgl_fallback() {
-    float g = state.pass_action.colors[0].val[1] + 0.01f;
+    float g = state.pass_action.colors[0].value.g + 0.01f;
     if (g > 0.5f) g = 0.0f;
-    state.pass_action.colors[0].val[1] = g;
+    state.pass_action.colors[0].value.g = g;
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();
