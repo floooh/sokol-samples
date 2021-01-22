@@ -56,13 +56,13 @@ typedef struct {
 } vertex_t;
 
 // face background colors
-static const float bg[NUM_FACES][3] = {
-    { 0.0f, 0.0f, 0.5f },
-    { 0.0f, 0.5f, 0.0f },
-    { 0.5f, 0.0f, 0.0f },
-    { 0.5f, 0.0f, 0.25f },
-    { 0.5f, 0.25f, 0.0f },
-    { 0.0f, 0.25f, 0.5f }
+static const sg_color bg[NUM_FACES] = {
+    { 0.0f, 0.0f, 0.5f, 1.0f },
+    { 0.0f, 0.5f, 0.0f, 1.0f },
+    { 0.5f, 0.0f, 0.0f, 1.0f },
+    { 0.5f, 0.0f, 0.25f, 1.0f },
+    { 0.5f, 0.25f, 0.0f, 1.0f },
+    { 0.0f, 0.25f, 0.5f, 1.0f }
 };
 
 static void init(void) {
@@ -139,12 +139,10 @@ static void init(void) {
         },
         .shader = sg_make_shader(debugtext_context_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "cube-pipeline"
     });
@@ -181,7 +179,7 @@ static void init(void) {
         state.passes[i].pass_action = (sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
-                .val = { bg[i][0], bg[i][1], bg[i][2], 1.0f }
+                .value = bg[i],
             }
         };
     }

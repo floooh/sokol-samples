@@ -90,7 +90,7 @@ void init(void) {
     state.default_pass_action = (sg_pass_action) {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.5f, 0.7f, 1.0f }
+            .value = { 0.0f, 0.5f, 0.7f, 1.0f }
         }
     };
 
@@ -116,11 +116,11 @@ void init(void) {
             },
             .shader = sg_make_shader(scene_shader_desc(sg_query_backend())),
             .index_type = SG_INDEXTYPE_UINT16,
-            .depth_stencil = {
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-                .depth_write_enabled = true,
+            .depth = {
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
+                .write_enabled = true,
             },
-            .rasterizer.cull_mode = SG_CULLMODE_BACK,
+            .cull_mode = SG_CULLMODE_BACK,
             .label = "cube-pipeline"
         });
     }
@@ -128,13 +128,11 @@ void init(void) {
     // setup a sokol-gl pipeline needed for the second user draw callback
     {
         state.scene2.pip = sgl_make_pipeline(&(sg_pipeline_desc){
-            .depth_stencil = {
-                .depth_write_enabled = true,
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth = {
+                .write_enabled = true,
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
             },
-            .rasterizer = {
-                .cull_mode = SG_CULLMODE_BACK
-            }
+            .cull_mode = SG_CULLMODE_BACK
         });
     }
 }

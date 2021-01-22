@@ -101,7 +101,7 @@ int main() {
     /* a pass action to clear to blue-ish */
     sg_pass_action pass_action = {
         .colors = {
-            [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
+            [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
         }
     };
 

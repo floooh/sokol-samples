@@ -267,7 +267,7 @@ static void frame(void) {
     /* render pass */
     sg_begin_default_pass(&(sg_pass_action){
         .colors[0] = {
-            .action = SG_ACTION_CLEAR, .val = { 0.3f, 0.3f, 0.32f, 1.0f }
+            .action = SG_ACTION_CLEAR, .value = { 0.3f, 0.3f, 0.32f, 1.0f }
         }
     }, sapp_width(), sapp_height());
     sgl_draw();

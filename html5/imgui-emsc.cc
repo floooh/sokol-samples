@@ -206,7 +206,7 @@ int main() {
     });
 
     // pipeline object for imgui rendering
-    pip = sg_make_pipeline({
+    pip = sg_make_pipeline((sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
@@ -217,17 +217,20 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .blend = {
-            .enabled = true,
-            .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
-            .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .color_write_mask = SG_COLORMASK_RGB
+        .colors[0] = {
+            .write_mask = SG_COLORMASK_RGB,
+            .blend = {
+                .enabled = true,
+                .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+                .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            }
         }
+
     });
 
     // initial clear color
     pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
     emscripten_set_main_loop(draw, 0, 1);
@@ -262,7 +265,7 @@ void draw() {
     static float f = 0.0f;
     ImGui::Text("Hello, world!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
+    ImGui::ColorEdit3("clear color", &pass_action.colors[0].value.r);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

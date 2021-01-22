@@ -165,7 +165,7 @@ void frame(void) {
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
-                .val = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
+                .value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         }, sapp_width(), sapp_height());
     r_draw();
@@ -425,7 +425,7 @@ static void r_init(void) {
         }
     });
     pip = sgl_make_pipeline(&(sg_pipeline_desc){
-        .blend = {
+        .colors[0].blend = {
             .enabled = true,
             .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA

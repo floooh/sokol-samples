@@ -37,12 +37,12 @@ void init(void) {
 
     /* default pass action: clear to blue-ish */
     state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
     /* shadow pass action: clear to white */
     state.shadows.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 1.0f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 1.0f, 1.0f, 1.0f } }
     };
 
     /* a render pass with one color- and one depth-attachment image */
@@ -137,19 +137,15 @@ void init(void) {
         },
         .shader = sg_make_shader(shadow_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        /* Cull front faces in the shadow map pass */
+        .cull_mode = SG_CULLMODE_FRONT,
+        .sample_count = 1,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .color_format = SG_PIXELFORMAT_RGBA8,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            /* Cull front faces in the shadow map pass */
-            .cull_mode = SG_CULLMODE_FRONT,
-            .sample_count = 1
-        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "shadow-map-pipeline"
     });
 
@@ -164,13 +160,11 @@ void init(void) {
         },
         .shader = sg_make_shader(color_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            /* Cull back faces when rendering to the screen */
-            .cull_mode = SG_CULLMODE_BACK,
+        /* Cull back faces when rendering to the screen */
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "default-pipeline"
     });

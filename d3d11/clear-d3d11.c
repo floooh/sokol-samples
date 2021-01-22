@@ -19,14 +19,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* initial pass action: clear to red */
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* draw loop */
     while (d3d11_process_events()) {
-        float g = pass_action.colors[0].val[1] + 0.01f;
+        float g = pass_action.colors[0].value.g + 0.01f;
         if (g > 1.0f) g = 0.0f;
-        pass_action.colors[0].val[1] = g;
+        pass_action.colors[0].value.g = g;
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_end_pass();
         sg_commit();

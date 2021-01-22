@@ -37,7 +37,7 @@ void init(void) {
         .show_test_window = true,
         .pass_action = {
             .colors[0] = {
-                .action = SG_ACTION_CLEAR, .val = { 0.7f, 0.5f, 0.0f, 1.0f }
+                .action = SG_ACTION_CLEAR, .value = { 0.7f, 0.5f, 0.0f, 1.0f }
             }
         }
     };
@@ -54,7 +54,7 @@ void frame(void) {
     static float f = 0.0f;
     igText("Hello, world!");
     igSliderFloat("float", &f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
-    igColorEdit3("clear color", &state.pass_action.colors[0].val[0], 0);
+    igColorEdit3("clear color", &state.pass_action.colors[0].value.r, 0);
     if (igButton("Test Window", (ImVec2) { 0.0f, 0.0f})) state.show_test_window ^= 1;
     if (igButton("Another Window", (ImVec2) { 0.0f, 0.0f })) state.show_another_window ^= 1;
     igText("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / igGetIO()->Framerate, igGetIO()->Framerate);

@@ -140,11 +140,8 @@ int main() {
         },
         .shader = quad_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .blend = {
-            .enabled = true,
-            .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
-            .color_write_mask = SG_COLORMASK_RGB,
-        },
+        .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
+        .colors[0].write_mask = SG_COLORMASK_RGB,
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
@@ -170,10 +167,13 @@ int main() {
                 }
             }
             if (valid) {
-                pip_desc.blend.src_factor_rgb = src_blend;
-                pip_desc.blend.dst_factor_rgb = dst_blend;
-                pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-                pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
+                pip_desc.colors[0].blend = (sg_blend_state) {
+                    .enabled = true,
+                    .src_factor_rgb = src_blend,
+                    .dst_factor_rgb = dst_blend,
+                    .src_factor_alpha = SG_BLENDFACTOR_ONE,
+                    .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+                };
                 state.pips[src][dst] = sg_make_pipeline(&pip_desc);
                 assert(state.pips[src][dst].id != SG_INVALID_ID);
             }

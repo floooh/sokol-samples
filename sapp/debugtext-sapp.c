@@ -20,7 +20,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.125f, 0.25f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.125f, 0.25f, 1.0f } }
     }
 };
 

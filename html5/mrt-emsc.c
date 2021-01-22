@@ -61,7 +61,7 @@ int main() {
        so just drop out and later render a dark red screen */
     if (desc.context.gl.force_gles2) {
         state.display.pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
         };
         emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
         return 0;
@@ -94,9 +94,9 @@ int main() {
     /* a matching pass action with clear colors */
     state.offscreen.pass_action = (sg_pass_action){
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -204,18 +204,14 @@ int main() {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .color_count = 3,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = offscreen_sample_count
     });
 
     /* a vertex buffer to render a fullscreen rectangle */
@@ -384,9 +380,9 @@ void draw() {
 
 /* this is used as draw callback if webgl2 is not supported */
 void draw_webgl_fallback() {
-    float g = state.display.pass_action.colors[0].val[1] + 0.01f;
+    float g = state.display.pass_action.colors[0].value.g + 0.01f;
     if (g > 0.5f) g = 0.0f;
-    state.display.pass_action.colors[0].val[1] = g;
+    state.display.pass_action.colors[0].value.g = g;
     sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();

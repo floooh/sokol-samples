@@ -15,14 +15,14 @@ void init(void) {
         .context = sapp_sgcontext()
     });
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={1.0f, 0.0f, 0.0f, 1.0f} }
     };
     __dbgui_setup(sapp_sample_count());
 }
 
 void frame(void) {
-    float g = state.pass_action.colors[0].val[1] + 0.01f;
-    state.pass_action.colors[0].val[1] = (g > 1.0f) ? 0.0f : g;
+    float g = state.pass_action.colors[0].value.g + 0.01f;
+    state.pass_action.colors[0].value.g = (g > 1.0f) ? 0.0f : g;
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();
