@@ -119,11 +119,11 @@ static void init(void) {
             }
         },        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK,
+        .cull_mode = SG_CULLMODE_BACK,
     });
 
     /* fill the resource bindings, note how the same vertex
