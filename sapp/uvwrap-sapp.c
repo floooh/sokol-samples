@@ -21,7 +21,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a quad vertex buffer with "oversized" texture coords */
+    /* a quad vertex buffer */
     const float quad_vertices[] = {
         -1.0f, +1.0f,
         +1.0f, +1.0f,
