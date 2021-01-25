@@ -23,6 +23,7 @@ samples = [
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
     [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
+    [ 'mrt-pixelformats', 'mrt-pixelformats-sapp.c', 'mrt-pixelformats-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
     [ 'tex3d', 'tex3d-sapp.c', 'tex3d-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],

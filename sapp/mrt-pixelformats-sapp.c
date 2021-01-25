@@ -185,6 +185,7 @@ static void draw_fallback() {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -251,6 +252,8 @@ static void frame(void) {
         sg_apply_bindings(&bindings);
         sg_draw(0, 4, 1);
     }
+    sg_apply_viewport(0, 0, disp_width, disp_height, true);
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
