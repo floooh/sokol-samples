@@ -33,13 +33,13 @@ static struct {
     .offscreen.pass_action = {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+            .value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     },
     .deflt.pass_action = {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.25f, 1.0f, 1.0f }
+            .value = { 0.0f, 0.25f, 1.0f, 1.0f }
         }
     }
 };
@@ -105,8 +105,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
 
@@ -121,8 +120,7 @@ static void init(void) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -137,20 +135,16 @@ static void init(void) {
                 [ATTR_vs_offscreen_color0].format = SG_VERTEXFORMAT_FLOAT4
             }
         },
-        .shader = sg_make_shader(offscreen_shader_desc()),
+        .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .depth = {
+            .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .color_format = SG_PIXELFORMAT_RGBA8,
-            .depth_format = OFFSCREEN_DEPTH_FORMAT
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_MSAA_SAMPLES
-        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_MSAA_SAMPLES,
         .label = "offscreen-pipeline"
     });
 
@@ -164,15 +158,13 @@ static void init(void) {
                 [ATTR_vs_default_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(default_shader_desc()),
+        .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        },
+        .cull_mode = SG_CULLMODE_BACK,
         .label = "default-pipeline"
     });
 
@@ -207,7 +199,7 @@ static void frame(void) {
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -216,7 +208,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.deflt.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 

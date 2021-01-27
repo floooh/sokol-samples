@@ -115,11 +115,11 @@ static void init(void) {
 
     /* pass action for offscreen pass (clear to black) */
     app.offscreen_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 0.5f, 1.0f } }
     };
     /* pass action for default pass (clear to grey) */
     app.display_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.75f, 0.75f, 0.75f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.75f, 0.75f, 0.75f, 1.0f } }
     };
 
     /* vertex- and index-buffers for cube  */
@@ -135,39 +135,33 @@ static void init(void) {
 
     /* shader and pipeline objects for offscreen-rendering */
     sg_pipeline_desc pip_desc = {
-        .shader = sg_make_shader(shapes_shader_desc()),
+        .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .depth_format = SG_PIXELFORMAT_DEPTH,
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT
-        },
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "offscreen-shapes-pipeline"
     };
     app.offscreen_shapes_pip = sg_make_pipeline(&pip_desc);
-    pip_desc.blend.depth_format = 0;
+    pip_desc.depth.pixel_format = _SG_PIXELFORMAT_DEFAULT;
     pip_desc.label = "display-shapes-pipeline";
     app.display_shapes_pip = sg_make_pipeline(&pip_desc);
 
     /* shader and pipeline objects for display-rendering */
     app.display_cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(cube_shader_desc()),
+        .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .layout = layout,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .cull_mode = SG_CULLMODE_BACK,
     });
 
     /* 1:1 aspect ration projection matrix for offscreen rendering */
@@ -257,7 +251,7 @@ static void frame(void) {
         .light_dir = app.light_dir,
         .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
     };
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &SG_RANGE(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
     sg_end_pass();
@@ -296,7 +290,7 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
             .light_dir = app.light_dir,
             .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &uniforms, sizeof(uniforms));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_shape_uniforms, &SG_RANGE(uniforms));
         sg_draw(0, app.cube.num_elements, 1);
     }
 }
@@ -343,14 +337,12 @@ static mesh_t make_cube_mesh(void) {
     };
     mesh_t mesh = {
         .vbuf = sg_make_buffer(&(sg_buffer_desc){
-            .size = sizeof(vertices),
-            .content = vertices,
+            .data = SG_RANGE(vertices),
             .label = "cube-vertices"
         }),
         .ibuf = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .size = sizeof(indices),
-            .content = indices,
+            .data = SG_RANGE(indices),
             .label = "cube-indices"
         }),
         .num_elements = sizeof(indices) / sizeof(uint16_t)

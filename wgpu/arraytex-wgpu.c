@@ -24,7 +24,7 @@ static struct {
     int frame_index;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     }
 };
 
@@ -59,10 +59,7 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        },
+        .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "array-texture"
     });
 
@@ -100,8 +97,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
 
@@ -116,8 +112,7 @@ static void init(void) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -129,15 +124,13 @@ static void init(void) {
                 [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(arraytex_shader_desc()),
+        .shader = sg_make_shader(arraytex_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_NONE,
-        },
+        .cull_mode = SG_CULLMODE_NONE,
         .label = "cube-pipeline"
     });
 
@@ -173,7 +166,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

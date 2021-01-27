@@ -33,7 +33,7 @@ static struct {
     WGPUTexture wgpu_texture;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     }
 };
 
@@ -157,15 +157,13 @@ static void init(void) {
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT2 }
             },
         },
-        .shader = sg_make_shader(inject_shader_desc()),
+        .shader = sg_make_shader(inject_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
 
@@ -195,15 +193,13 @@ void frame() {
         }
     }
     state.counter++;
-    sg_image_content content = {
-        .subimage[0][0] = { .ptr = state.pixels, .size = sizeof(state.pixels) }
-    };
+    sg_image_data content = { .subimage[0][0] = SG_RANGE(state.pixels) };
     sg_update_image(state.bind.fs_images[0], &content);
 
     sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
