@@ -242,9 +242,9 @@ int main() {
             }
         },
         .fs.images = {
-            [0] = { .name="tex0", .type=SG_IMAGETYPE_2D },
-            [1] = { .name="tex1", .type=SG_IMAGETYPE_2D },
-            [2] = { .name="tex2", .type=SG_IMAGETYPE_2D }
+            [0] = { .name="tex0", .image_type=SG_IMAGETYPE_2D },
+            [1] = { .name="tex1", .image_type=SG_IMAGETYPE_2D },
+            [2] = { .name="tex2", .image_type=SG_IMAGETYPE_2D }
         },
         .vs.source =
             "#version 300 es\n"
@@ -303,7 +303,7 @@ int main() {
                 "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
                 "  uv = pos;\n"
                 "}\n",
-            .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+            .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
             .fs.source =
                 "#version 300 es\n"
                 "precision mediump float;\n"

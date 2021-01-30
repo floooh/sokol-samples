@@ -158,8 +158,8 @@ int main() {
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
     bind.fs_images[0] = sg_make_image({
-        .width = font_width,
-        .height = font_height,
+        .width = (uint32_t) font_width,
+        .height = (uint32_t) font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
@@ -194,7 +194,7 @@ int main() {
             "    uv = texcoord0;\n"
             "    color = color0;\n"
             "}\n",
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
         .fs.source =
             "precision mediump float;"
             "uniform sampler2D tex;\n"

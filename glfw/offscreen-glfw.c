@@ -156,7 +156,7 @@ int main() {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"

@@ -144,7 +144,7 @@ int main() {
                 "}\n"
         },
         .fs = {
-            .images[0] = { .name="tex", .type = SG_IMAGETYPE_2D },
+            .images[0] = { .name="tex", .image_type = SG_IMAGETYPE_2D },
             .source =
                 "precision mediump float;"
                 "uniform sampler2D tex;"

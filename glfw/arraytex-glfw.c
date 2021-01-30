@@ -142,7 +142,7 @@ int main() {
                 [3] = { .name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
             }
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_ARRAY },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_ARRAY },
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"

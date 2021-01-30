@@ -146,7 +146,7 @@ int main() {
         "    color = color0;\n"
         "}\n";
     shd_desc.fs.images[0].name = "tex";
-    shd_desc.fs.images[0].type = SG_IMAGETYPE_2D;
+    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
     shd_desc.fs.source =
         "#version 330\n"
         "uniform sampler2D tex;\n"
