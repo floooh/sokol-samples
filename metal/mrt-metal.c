@@ -224,9 +224,9 @@ static void init(void) {
         },
         .fs = {
             .images = {
-                [0] = { .type = SG_IMAGETYPE_2D },
-                [1] = { .type = SG_IMAGETYPE_2D },
-                [2] = { .type = SG_IMAGETYPE_2D }
+                [0] = { .image_type = SG_IMAGETYPE_2D },
+                [1] = { .image_type = SG_IMAGETYPE_2D },
+                [2] = { .image_type = SG_IMAGETYPE_2D }
             },
             .source =
                 "#include <metal_stdlib>\n"
@@ -289,7 +289,7 @@ static void init(void) {
                     "  out.uv = in.pos;\n"
                     "  return out;\n"
                     "}\n",
-                .fs.images[0].type = SG_IMAGETYPE_2D,
+                .fs.images[0].image_type = SG_IMAGETYPE_2D,
                 .fs.source =
                     "#include <metal_stdlib>\n"
                     "using namespace metal;\n"

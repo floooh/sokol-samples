@@ -147,7 +147,7 @@ static void init(void) {
             "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
             "  return out;\n"
             "}\n",
-        .fs.images[0].type = SG_IMAGETYPE_ARRAY,
+        .fs.images[0].image_type = SG_IMAGETYPE_ARRAY,
         .fs.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"

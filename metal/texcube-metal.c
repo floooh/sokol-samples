@@ -123,7 +123,7 @@ static void init(void) {
                 "}\n"
         },
         .fs = {
-            .images[0].type = SG_IMAGETYPE_2D,
+            .images[0].image_type = SG_IMAGETYPE_2D,
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"

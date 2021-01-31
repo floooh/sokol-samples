@@ -126,7 +126,7 @@ static void init(void) {
             "  out.uv = in.uv;\n"
             "  return out;\n"
             "}\n",
-        .fs.images[0].type = SG_IMAGETYPE_2D,
+        .fs.images[0].image_type = SG_IMAGETYPE_2D,
         .fs.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
