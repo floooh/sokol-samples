@@ -75,7 +75,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_buffers) {
     T(sg_isvalid());
 
     sg_buffer buf[3] = { {0} };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         buf[i] = sg_alloc_buffer();
         T(buf[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.buffer_pool.queue_top);
@@ -91,7 +91,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_buffers) {
         sg_fail_buffer(buf[i]);
         T(sg_query_buffer_state(buf[i]) == SG_RESOURCESTATE_FAILED);
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_buffer(buf[i]);
         T(sg_query_buffer_state(buf[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.buffer_pool.queue_top);
@@ -106,7 +106,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_images) {
     T(sg_isvalid());
 
     sg_image img[3] = { {0} };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         img[i] = sg_alloc_image();
         T(img[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.image_pool.queue_top);
@@ -122,7 +122,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_images) {
         sg_fail_image(img[i]);
         T(sg_query_image_state(img[i]) == SG_RESOURCESTATE_FAILED);
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_image(img[i]);
         T(sg_query_image_state(img[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.image_pool.queue_top);
@@ -137,7 +137,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_shaders) {
     T(sg_isvalid());
 
     sg_shader shd[3] = { {0} };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         shd[i] = sg_alloc_shader();
         T(shd[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.shader_pool.queue_top);
@@ -153,7 +153,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_shaders) {
         sg_fail_shader(shd[i]);
         T(sg_query_shader_state(shd[i]) == SG_RESOURCESTATE_FAILED);
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_shader(shd[i]);
         T(sg_query_shader_state(shd[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.shader_pool.queue_top);
@@ -168,7 +168,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_pipelines) {
     T(sg_isvalid());
 
     sg_pipeline pip[3] = { {0} };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         pip[i] = sg_alloc_pipeline();
         T(pip[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pipeline_pool.queue_top);
@@ -185,7 +185,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_pipelines) {
         sg_fail_pipeline(pip[i]);
         T(sg_query_pipeline_state(pip[i]) == SG_RESOURCESTATE_FAILED);
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_pipeline(pip[i]);
         T(sg_query_pipeline_state(pip[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.pipeline_pool.queue_top);
@@ -200,7 +200,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_passes) {
     T(sg_isvalid());
 
     sg_pass pass[3] = { {0} };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         pass[i] = sg_alloc_pass();
         T(pass[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pass_pool.queue_top);
@@ -216,7 +216,7 @@ UTEST(sokol_gfx, alloc_fail_destroy_passes) {
         sg_fail_pass(pass[i]);
         T(sg_query_pass_state(pass[i]) == SG_RESOURCESTATE_FAILED);
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_pass(pass[i]);
         T(sg_query_pass_state(pass[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.pass_pool.queue_top);
@@ -234,7 +234,7 @@ UTEST(sokol_gfx, make_destroy_buffers) {
 
     sg_buffer buf[3] = { {0} };
     sg_buffer_desc desc = { .data = SG_RANGE(data) };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         buf[i] = sg_make_buffer(&desc);
         T(buf[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.buffer_pool.queue_top);
@@ -257,7 +257,7 @@ UTEST(sokol_gfx, make_destroy_buffers) {
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_buffer(&desc).id == SG_INVALID_ID);
 
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_buffer(buf[i]);
         T(sg_query_buffer_state(buf[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.buffer_pool.queue_top);
@@ -279,7 +279,7 @@ UTEST(sokol_gfx, make_destroy_images) {
         .height = 8,
         .data.subimage[0][0] = SG_RANGE(data)
     };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         img[i] = sg_make_image(&desc);
         T(img[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.image_pool.queue_top);
@@ -311,7 +311,7 @@ UTEST(sokol_gfx, make_destroy_images) {
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_image(&desc).id == SG_INVALID_ID);
 
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_image(img[i]);
         T(sg_query_image_state(img[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.image_pool.queue_top);
@@ -331,7 +331,7 @@ UTEST(sokol_gfx, make_destroy_shaders) {
             .size = 16
         }
     };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         shd[i] = sg_make_shader(&desc);
         T(shd[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.shader_pool.queue_top);
@@ -350,7 +350,7 @@ UTEST(sokol_gfx, make_destroy_shaders) {
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_shader(&desc).id == SG_INVALID_ID);
 
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_shader(shd[i]);
         T(sg_query_shader_state(shd[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.shader_pool.queue_top);
@@ -374,7 +374,7 @@ UTEST(sokol_gfx, make_destroy_pipelines) {
             }
         },
     };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         pip[i] = sg_make_pipeline(&desc);
         T(pip[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pipeline_pool.queue_top);
@@ -397,7 +397,7 @@ UTEST(sokol_gfx, make_destroy_pipelines) {
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_pipeline(&desc).id == SG_INVALID_ID);
 
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_pipeline(pip[i]);
         T(sg_query_pipeline_state(pip[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.pipeline_pool.queue_top);
@@ -425,7 +425,7 @@ UTEST(sokol_gfx, make_destroy_passes) {
             [2].image = sg_make_image(&img_desc)
         },
     };
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         pass[i] = sg_make_pass(&pass_desc);
         T(pass[i].id != SG_INVALID_ID);
         T((2-i) == _sg.pools.pass_pool.queue_top);
@@ -445,7 +445,7 @@ UTEST(sokol_gfx, make_destroy_passes) {
     /* trying to create another one fails because buffer is exhausted */
     T(sg_make_pass(&pass_desc).id == SG_INVALID_ID);
 
-    for (uint32_t i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
         sg_destroy_pass(pass[i]);
         T(sg_query_pass_state(pass[i]) == SG_RESOURCESTATE_INVALID);
         T((i+1) == _sg.pools.pass_pool.queue_top);

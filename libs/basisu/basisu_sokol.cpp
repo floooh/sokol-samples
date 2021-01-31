@@ -75,7 +75,7 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
     desc.mag_filter = SG_FILTER_LINEAR;
     desc.max_anisotropy = 8;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
-    for (uint32_t i = 0; i < desc.num_mipmaps; i++) {
+    for (int i = 0; i < desc.num_mipmaps; i++) {
         uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
         uint32_t orig_width, orig_height, total_blocks;
         transcoder.get_image_level_desc(data, num_bytes, 0, i, orig_width, orig_height, total_blocks);
@@ -107,7 +107,7 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
 
 void sbasisu_free(const sg_image_desc* desc) {
     assert(desc);
-    for (uint32_t i = 0; i < desc->num_mipmaps; i++) {
+    for (int i = 0; i < desc->num_mipmaps; i++) {
         if (desc->data.subimage[0][i].ptr) {
             free((void*)desc->data.subimage[0][i].ptr);
         }
