@@ -158,8 +158,8 @@ int main() {
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
     bind.fs_images[0] = sg_make_image({
-        .width = (uint32_t) font_width,
-        .height = (uint32_t) font_height,
+        .width = font_width,
+        .height = font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
