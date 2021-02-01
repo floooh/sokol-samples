@@ -2,6 +2,19 @@
 # the sokol_config() macro is in the top-level CMakeLists.txt file!
 sokol_config()
 
+fips_ide_group(Samples/nuklear)
+fips_begin_app(nuklear-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(nuklear-sapp.c)
+    fips_deps(sokol)
+fips_end_app()
+fips_begin_app(nuklear-sapp-ui windowed)
+    fips_vs_warning_level(3)
+    fips_files(nuklear-sapp.c)
+    fips_deps(sokol)
+fips_end_app()
+target_compile_definitions(nuklear-sapp-ui PRIVATE)
+
 fips_ide_group(Samples/clear)
 fips_begin_app(clear-sapp windowed)
     fips_vs_warning_level(3)
