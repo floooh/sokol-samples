@@ -197,9 +197,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .attrs[0].sem_name = "POSITION",
         .vs.uniform_blocks[0].size = sizeof(params_t),
         .fs.images = {
-            [0].type=SG_IMAGETYPE_2D,
-            [1].type=SG_IMAGETYPE_2D,
-            [2].type=SG_IMAGETYPE_2D
+            [0].image_type=SG_IMAGETYPE_2D,
+            [1].image_type=SG_IMAGETYPE_2D,
+            [2].image_type=SG_IMAGETYPE_2D
         },
         .vs.source =
             "cbuffer params {\n"
@@ -282,7 +282,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  outp.uv = inp.pos;\n"
                 "  return outp;\n"
                 "}\n",
-            .fs.images[0].type=SG_IMAGETYPE_2D,
+            .fs.images[0].image_type=SG_IMAGETYPE_2D,
             .fs.source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"

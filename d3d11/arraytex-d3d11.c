@@ -122,7 +122,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [1].sem_name = "TEXCOORD"
         },
         .vs.uniform_blocks[0].size = sizeof(params_t),
-        .fs.images[0].type=SG_IMAGETYPE_ARRAY,
+        .fs.images[0].image_type=SG_IMAGETYPE_ARRAY,
         .vs.source =
             "cbuffer params {\n"
             "  float4x4 mvp;\n"
