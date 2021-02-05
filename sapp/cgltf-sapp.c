@@ -705,7 +705,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
     state.scene.num_meshes = (int) gltf->meshes_count;
     for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
         const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
-        if ((gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
+        if (((int)gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
             state.failed = true;
             return;
         }
@@ -769,7 +769,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
                 .type = p->type,
                 .data = {
                     .ptr = bytes + p->offset,
-                    .size = p->size,
+                    .size = (size_t)p->size,
                 }
             });
         }
@@ -781,7 +781,7 @@ static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t*
     for (int i = 0; i < state.scene.num_images; i++) {
         image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            sg_image_desc img_desc = sbasisu_transcode(bytes, num_bytes);
+            sg_image_desc img_desc = sbasisu_transcode(bytes, (uint32_t)num_bytes);
             state.scene.images[i] = sg_make_image(&img_desc);
             sbasisu_free(&img_desc);
         }

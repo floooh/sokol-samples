@@ -131,7 +131,7 @@ void frame(void) {
     /* update instance data */
     sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){
         .ptr = state.pos,
-        .size = state.cur_num_particles*sizeof(hmm_vec3)
+        .size = (size_t)state.cur_num_particles * sizeof(hmm_vec3)
     });
 
     /* model-view-projection matrix */

@@ -35,6 +35,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wshift-negative-value"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 #include "pl_mpeg/pl_mpeg.h"
 #if defined(__GNUC__) || defined(__clang__)
@@ -263,14 +264,14 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     if ((state.image_attrs[slot].width != (int)plane->width) ||
         (state.image_attrs[slot].height != (int)plane->height))
     {
-        state.image_attrs[slot].width = plane->width;
-        state.image_attrs[slot].height = plane->height;
+        state.image_attrs[slot].width = (int)plane->width;
+        state.image_attrs[slot].height = (int)plane->height;
 
         // NOTE: it's ok to call sg_destroy_image() with SG_INVALID_ID
         sg_destroy_image(state.bind.fs_images[slot]);
         state.bind.fs_images[slot] = sg_make_image(&(sg_image_desc){
-            .width = plane->width,
-            .height = plane->height,
+            .width = (int)plane->width,
+            .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
             .usage = SG_USAGE_STREAM,
             .min_filter = SG_FILTER_LINEAR,
@@ -304,7 +305,7 @@ static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
 static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
     (void)mpeg; (void)user;
-    saudio_push(samples->interleaved, samples->count);
+    saudio_push(samples->interleaved, (int)samples->count);
 }
 
 // the sokol-fetch response callback
@@ -408,7 +409,7 @@ static void ring_enqueue(ring_t* rb, int val) {
 
 static int ring_dequeue(ring_t* rb) {
     assert(!ring_empty(rb));
-    uint32_t slot_id = rb->buf[rb->tail];
+    int slot_id = rb->buf[rb->tail];
     rb->tail = ring_wrap(rb->tail + 1);
     return slot_id;
 }

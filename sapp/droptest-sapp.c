@@ -22,7 +22,7 @@ typedef enum {
 
 static struct {
     loadstate_t load_state;
-    uint32_t size;
+    int size;
     uint8_t buffer[MAX_FILE_SIZE];
 } state;
 
@@ -51,19 +51,19 @@ static void render_file_content(void) {
     ImGuiListClipper clipper = { 0 };
     ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
     ImGuiListClipper_Step(&clipper);
-    for (uint32_t line_i = clipper.DisplayStart; line_i < (uint32_t)clipper.DisplayEnd; line_i++) {
-        uint32_t start_offset = line_i * bytes_per_line;
-        uint32_t end_offset = start_offset + bytes_per_line;
+    for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
+        int start_offset = line_i * bytes_per_line;
+        int end_offset = start_offset + bytes_per_line;
         if (end_offset >= state.size) {
             end_offset = state.size;
         }
         igText("%04X: ", start_offset);
-        for (uint32_t i = start_offset; i < end_offset; i++) {
+        for (int i = start_offset; i < end_offset; i++) {
             igSameLine(0.0f, 0.0f);
             igText("%02X ", state.buffer[i]);
         }
         igSameLine((6 * 7.0f) + (bytes_per_line * 3 * 7.0f) + (2 * 7.0f), 0.0f);
-        for (uint32_t i = start_offset; i < end_offset; i++) {
+        for (int i = start_offset; i < end_offset; i++) {
             if (i != start_offset) {
                 igSameLine(0.0f, 0.0f);
             }
@@ -143,7 +143,7 @@ static void emsc_load_callback(const sapp_html5_fetch_response* response) {
 static void native_load_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_state = LOADSTATE_SUCCESS;
-        state.size = response->fetched_size;
+        state.size = (int)response->fetched_size;
     }
     else if (response->error_code == SFETCH_ERROR_BUFFER_TOO_SMALL) {
         state.load_state = LOADSTATE_FILE_TOO_BIG;

@@ -37,8 +37,8 @@ static void read_samples(state_t* state, float* buffer, int num_samples) {
         /* NOTE: for multi-channel playback, the samples are interleaved
            (e.g. left/right/left/right/...)
         */
-        int res = ModPlug_Read(state->mpf, (void*)state->int_buf, sizeof(int)*num_samples);
-        int samples_in_buffer = res / sizeof(int);
+        int res = ModPlug_Read(state->mpf, (void*)state->int_buf, (int)sizeof(int)*num_samples);
+        int samples_in_buffer = res / (int)sizeof(int);
         int i;
         for (i = 0; i < samples_in_buffer; i++) {
             buffer[i] = state->int_buf[i] / (float)0x7fffffff;

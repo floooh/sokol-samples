@@ -41,7 +41,7 @@ typedef struct {
 typedef struct {
     sg_buffer vbuf;
     sg_buffer ibuf;
-    uint32_t num_elements;
+    int num_elements;
 } mesh_t;
 
 /* the entire application state */

@@ -171,7 +171,7 @@ static void fetch_callback(const sfetch_response_t* response) {
                 .mag_filter = SG_FILTER_LINEAR,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
-                    .size = png_width * png_height * 4,
+                    .size = (size_t)(png_width * png_height * 4),
                 }
             });
             stbi_image_free(pixels);

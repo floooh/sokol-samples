@@ -15,7 +15,7 @@ typedef struct {
 
 static struct {
     sg_pass_action pass_action;
-    uint32_t frame_count;
+    int32_t frame_count;
     rgb_t color_palette[16];
 } state = {
     .pass_action = {
@@ -75,7 +75,7 @@ static void frame(void) {
     sdtx_font(USER_FONT);
     sdtx_color3b(0xff, 0x17, 0x44);
     sdtx_puts("Hello 8-bit ATARI font:\n\n");
-    uint32_t line = 0;
+    int line = 0;
     for (int c = 0x20; c < 0xA0; c++) {
         if ((c & 15) == 0) {
             sdtx_puts("\n\t");

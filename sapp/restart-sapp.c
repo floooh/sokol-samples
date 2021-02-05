@@ -228,7 +228,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
                 .mag_filter = SG_FILTER_LINEAR,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
-                    .size = png_width * png_height * 4,
+                    .size = (size_t)(png_width * png_height * 4),
                 }
             });
             stbi_image_free(pixels);
@@ -244,7 +244,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
 
 static void fetch_mod_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.mod.mpf = ModPlug_Load(response->buffer_ptr, response->fetched_size);
+        state.mod.mpf = ModPlug_Load(response->buffer_ptr, (int)response->fetched_size);
     }
     else if (response->failed) {
         // if loading the file failed, set clear color to red
@@ -285,8 +285,8 @@ static void frame(void) {
             /* NOTE: for multi-channel playback, the samples are interleaved
                (e.g. left/right/left/right/...)
             */
-            int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, sizeof(int)*num_samples);
-            int samples_in_buffer = res / sizeof(int);
+            int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, (int)sizeof(int)*num_samples);
+            int samples_in_buffer = res / (int)sizeof(int);
             int i;
             for (i = 0; i < samples_in_buffer; i++) {
                 state.mod.flt_buf[i] = state.mod.int_buf[i] / (float)0x7fffffff;

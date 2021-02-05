@@ -578,7 +578,7 @@ UTEST(sokol_gfx, query_mrt_pipeline_defaults) {
         .color_count = 3,
     });
     T(desc.color_count == 3);
-    for (uint32_t i = 0; i < desc.color_count; i++) {
+    for (int i = 0; i < desc.color_count; i++) {
         T(desc.colors[i].pixel_format == SG_PIXELFORMAT_RGBA8);
         T(desc.colors[i].write_mask == 0xF);
         T(desc.colors[i].blend.enabled == false);

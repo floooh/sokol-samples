@@ -15,9 +15,14 @@
 #pragma warning(disable:4996)   // strncpy use in fontstash.h
 #endif
 #if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 #include "fontstash/fontstash.h"
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 #define SOKOL_FONTSTASH_IMPL
 #include "sokol_fontstash.h"
 #include "dbgui/dbgui.h"
@@ -39,25 +44,25 @@ static state_t state;
 /* sokol-fetch load callbacks */
 static void font_normal_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_normal = fonsAddFontMem(state.fons, "sans", response->buffer_ptr, response->fetched_size,  false);
+        state.font_normal = fonsAddFontMem(state.fons, "sans", response->buffer_ptr, (int)response->fetched_size,  false);
     }
 }
 
 static void font_italic_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_italic = fonsAddFontMem(state.fons, "sans-italic", response->buffer_ptr, response->fetched_size, false);
+        state.font_italic = fonsAddFontMem(state.fons, "sans-italic", response->buffer_ptr, (int)response->fetched_size, false);
     }
 }
 
 static void font_bold_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_bold = fonsAddFontMem(state.fons, "sans-bold", response->buffer_ptr, response->fetched_size, false);
+        state.font_bold = fonsAddFontMem(state.fons, "sans-bold", response->buffer_ptr, (int)response->fetched_size, false);
     }
 }
 
 static void font_japanese_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_japanese = fonsAddFontMem(state.fons, "sans-japanese", response->buffer_ptr, response->fetched_size, false);
+        state.font_japanese = fonsAddFontMem(state.fons, "sans-japanese", response->buffer_ptr, (int)response->fetched_size, false);
     }
 }
 

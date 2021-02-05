@@ -218,7 +218,7 @@ static void frame(void) {
         sdtx_set_context(state.passes[i].text_context);
         sdtx_origin(1.0f, 0.5f);
         sdtx_font(i);
-        sdtx_printf("%02X", ((state.frame_count / 16) + i )& 0xFF);
+        sdtx_printf("%02X", ((state.frame_count / 16) + (uint32_t)i)& 0xFF);
     }
 
     // rasterize text into offscreen render targets, we could also put this
@@ -237,7 +237,7 @@ static void frame(void) {
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
-    for (uint32_t i = 0; i < NUM_FACES; i++) {
+    for (int i = 0; i < NUM_FACES; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,

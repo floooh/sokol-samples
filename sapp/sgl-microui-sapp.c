@@ -129,7 +129,7 @@ static void event(const sapp_event* ev) {
             break;
         case SAPP_EVENTTYPE_CHAR:
             {
-                char txt[2] = { ev->char_code & 255, 0 };
+                char txt[2] = { (char)(ev->char_code & 255), 0 };
                 mu_input_text(&state.mu_ctx, txt);
             }
             break;
@@ -405,7 +405,7 @@ static void r_init(void) {
     uint32_t* rgba8_pixels = (uint32_t*) malloc(rgba8_size);
     for (int y = 0; y < ATLAS_HEIGHT; y++) {
         for (int x = 0; x < ATLAS_WIDTH; x++) {
-            uint32_t index = y*ATLAS_WIDTH + x;
+            int index = y*ATLAS_WIDTH + x;
             rgba8_pixels[index] = 0x00FFFFFF | ((uint32_t)atlas_texture[index]<<24);
         }
     }
