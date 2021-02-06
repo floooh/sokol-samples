@@ -87,7 +87,7 @@
 #elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"
-#pragma clang diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #elif defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable:4996) 

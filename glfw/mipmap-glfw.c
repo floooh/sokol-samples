@@ -81,7 +81,7 @@ int main() {
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
         img_data.subimage[0][mip_index].ptr = ptr;
-        img_data.subimage[0][mip_index].size = dim * dim * 4;
+        img_data.subimage[0][mip_index].size = (size_t) (dim * dim * 4);
         for (int y = 0; y < dim; y++) {
             for (int x = 0; x < dim; x++) {
                 *ptr++ = even_odd ? mip_colors[mip_index] : 0xFF000000;
@@ -120,7 +120,7 @@ int main() {
     img_desc.min_lod = 0.0f;
     img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
     for (int i = 8; i < 12; i++) {
-        img_desc.max_anisotropy = 1<<(i-7);
+        img_desc.max_anisotropy = (uint32_t) 1<<(i-7);
         img[i] = sg_make_image(&img_desc);
     }
 

@@ -103,7 +103,7 @@ void init(void) {
     img_desc.min_lod = 0.0f;
     img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
     for (int i = 8; i < 12; i++) {
-        img_desc.max_anisotropy = 1<<(i-7);
+        img_desc.max_anisotropy = (uint32_t) (1<<(i-7));
         state.img[i] = sg_make_image(&img_desc);
     }
 
