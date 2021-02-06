@@ -129,7 +129,7 @@ static void cleanup(void) {
 static void emsc_load_callback(const sapp_html5_fetch_response* response) {
     if (response->succeeded) {
         state.load_state = LOADSTATE_SUCCESS;
-        state.size = response->fetched_size;
+        state.size = (int) response->fetched_size;
     }
     else if (SAPP_HTML5_FETCH_ERROR_BUFFER_TOO_SMALL == response->error_code) {
         state.load_state = LOADSTATE_FILE_TOO_BIG;
