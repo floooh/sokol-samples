@@ -175,7 +175,7 @@ void draw() {
     }
 
     /* update instance data */
-    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, state.cur_num_particles*sizeof(hmm_vec3) });
+    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, (size_t)state.cur_num_particles*sizeof(hmm_vec3) });
 
     /* model-view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
