@@ -84,8 +84,8 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     /* create device and swap chain */
     state.swap_chain_desc = (DXGI_SWAP_CHAIN_DESC) {
         .BufferDesc = {
-            .Width = w,
-            .Height = h,
+            .Width = (UINT)w,
+            .Height = (UINT)h,
             .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
             .RefreshRate = {
                 .Numerator = 60,
@@ -97,12 +97,12 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         .SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
         .BufferCount = 1,
         .SampleDesc = {
-            .Count = state.sample_count,
-            .Quality = state.sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0
+            .Count = (UINT) state.sample_count,
+            .Quality = (UINT) (state.sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0)
         },
         .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT
     };
-    int create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+    UINT create_flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
     #ifdef _DEBUG
         create_flags |= D3D11_CREATE_DEVICE_DEBUG;
     #endif
@@ -144,8 +144,8 @@ void d3d11_create_default_render_target(void) {
     assert(SUCCEEDED(hr) && state.render_target_view);
 
     D3D11_TEXTURE2D_DESC ds_desc = {
-        .Width = state.width,
-        .Height = state.height,
+        .Width = (UINT)state.width,
+        .Height = (UINT)state.height,
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
@@ -281,11 +281,13 @@ static const void* d3d11_device_context(void) {
 
 static const void* d3d11_render_target_view(void* user_data) {
     assert(0xDEADBEEF == (uintptr_t) user_data);
+    (void)user_data; // silence unused warning in release mode
     return (const void*) state.render_target_view;
 }
 
 static const void* d3d11_depth_stencil_view(void* user_data) {
     assert(0xDEADBEEF == (uintptr_t) user_data);
+    (void)user_data; // silence unused warning in release mode
     return (const void*) state.depth_stencil_view;
 }
 

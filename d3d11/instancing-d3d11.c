@@ -180,7 +180,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         /* update dynamic instance data buffer */
         sg_update_buffer(vbuf_inst, &(sg_range){
             .ptr = pos,
-            .size = cur_num_particles*sizeof(hmm_vec3)
+            .size = (size_t)cur_num_particles * sizeof(hmm_vec3)
         });
 
         /* model-view-projection matrix */
