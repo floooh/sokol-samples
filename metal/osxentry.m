@@ -81,6 +81,7 @@ static id mtk_view_controller;
     #if TARGET_OS_IPHONE
         CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
         window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
+        (void)window_delegate;
     #else
         window_delegate = [[SokolWindowDelegate alloc] init];
         const NSUInteger style =
