@@ -41,12 +41,12 @@ static void init(void) {
 
     /* default pass action: clear to blue-ish */
     state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.45f, 0.65f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.45f, 0.65f, 1.0f } }
     };
 
     /* offscreen pass action */
     state.offscreen.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.25f, 0.25f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.25f, 0.25f, 1.0f } }
     };
 
     /* a render pass with one color- and one depth-attachment image */
@@ -78,8 +78,8 @@ static void init(void) {
     sshape_vertex_t vertices[4000] = { 0 };
     uint16_t indices[24000] = { 0 };
     sshape_buffer_t buf = {
-        .vertices = { .buffer_ptr = vertices, .buffer_size = sizeof(vertices) },
-        .indices = { .buffer_ptr = indices, .buffer_size = sizeof(indices) }
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer  = SSHAPE_RANGE(indices),
     };
     buf = sshape_build_torus(&buf, &(sshape_torus_t){
         .radius = 0.5f,
@@ -109,20 +109,16 @@ static void init(void) {
                 [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc()
             }
         },
-        .shader = sg_make_shader(offscreen_shader_desc()),
+        .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .blend = {
-            .color_format = SG_PIXELFORMAT_RGBA8,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT
-        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "offscreen-pipeline"
     });
 
@@ -136,14 +132,12 @@ static void init(void) {
                 [ATTR_vs_default_texcoord0] = sshape_texcoord_attr_desc()
             }
         },
-        .shader = sg_make_shader(default_shader_desc()),
+        .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "default-pipeline"
     });
@@ -165,7 +159,7 @@ static void init(void) {
 /* helper function to compute model-view-projection matrix */
 static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
     hmm_mat4 proj = HMM_Perspective(45.0f, aspect, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, -eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -181,12 +175,12 @@ static void frame(void) {
 
     /* the offscreen pass, rendering an rotating, untextured donut into a render target image */
     vs_params = (vs_params_t) {
-        .mvp = compute_mvp(state.rx, state.ry, 1.0f, -2.5f)
+        .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
     };
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     sg_end_pass();
 
@@ -196,12 +190,12 @@ static void frame(void) {
     int w = sapp_width();
     int h = sapp_height();
     vs_params = (vs_params_t) {
-        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, -2.0f)
+        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 2.0f)
     };
     sg_begin_default_pass(&state.deflt.pass_action, w, h);
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();

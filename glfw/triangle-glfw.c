@@ -33,28 +33,15 @@ int main() {
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices, 
+        .data = SG_RANGE(vertices)
     });
-
-    /* prepare a resource binding struct, only the vertex buffer is needed here */
-    sg_bindings bind = {
-        .vertex_buffers[0] = vbuf
-    };
 
     /* a shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        /* vertex attribute lookup by name is optional in GL3.x, we
-           could also use "layout(location=N)" in the shader
-        */
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.source = 
+        .vs.source =
             "#version 330\n"
-            "in vec4 position;\n"
-            "in vec4 color0;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
             "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = position;\n"
@@ -69,10 +56,9 @@ int main() {
             "}\n"
     });
 
-    /* a pipeline state object */
+    /* a pipeline state object (default render states are fine for triangle) */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
-        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .layout = {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
@@ -80,6 +66,11 @@ int main() {
             }
         }
     });
+
+    /* resource bindings */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vbuf
+    };
 
     /* default pass action (clear to grey) */
     sg_pass_action pass_action = {0};

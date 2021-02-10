@@ -935,7 +935,7 @@ HMM_Power(float Base, int Exponent)
 {
     float Result = 1.0f;
     float Mul = Exponent < 0 ? 1.f / Base : Base;
-    unsigned int X = Exponent < 0 ? -Exponent : Exponent;
+    int X = Exponent < 0 ? -Exponent : Exponent;
     while (X)
     {
         if (X & 1)
@@ -1837,7 +1837,7 @@ HMM_DotQuaternion(hmm_quaternion Left, hmm_quaternion Right)
 HINLINE hmm_quaternion
 HMM_NormalizeQuaternion(hmm_quaternion Left)
 {
-    hmm_quaternion Result = {0};
+    hmm_quaternion Result;
 
     float Length = HMM_SquareRootF(HMM_DotQuaternion(Left, Left));
     Result = HMM_DivideQuaternionF(Left, Length);
@@ -1863,9 +1863,9 @@ HMM_NLerp(hmm_quaternion Left, float Time, hmm_quaternion Right)
 HINLINE hmm_quaternion
 HMM_Slerp(hmm_quaternion Left, float Time, hmm_quaternion Right)
 {
-    hmm_quaternion Result = {0};
-    hmm_quaternion QuaternionLeft = {0};
-    hmm_quaternion QuaternionRight = {0};
+    hmm_quaternion Result;
+    hmm_quaternion QuaternionLeft;
+    hmm_quaternion QuaternionRight;
 
     float Cos_Theta = HMM_DotQuaternion(Left, Right);
     float Angle = HMM_ACosF(Cos_Theta);
@@ -1886,7 +1886,7 @@ HMM_Slerp(hmm_quaternion Left, float Time, hmm_quaternion Right)
 HINLINE hmm_mat4
 HMM_QuaternionToMat4(hmm_quaternion Left)
 {
-    hmm_mat4 Result = {0};
+    hmm_mat4 Result;
     Result = HMM_Mat4d(1);
 
     hmm_quaternion NormalizedQuaternion = HMM_NormalizeQuaternion(Left);
@@ -1926,7 +1926,7 @@ HMM_QuaternionFromAxisAngle(hmm_vec3 Axis, float AngleOfRotation)
     hmm_quaternion Result = {0};
     float AxisNorm = 0;
     float SineOfRotation = 0;
-    hmm_vec3 RotatedVector = {0};
+    hmm_vec3 RotatedVector;
 
     AxisNorm = HMM_SquareRootF(HMM_DotVec3(Axis, Axis));
     SineOfRotation = HMM_SinF(AngleOfRotation / 2.0f);

@@ -90,19 +90,17 @@ void init(void) {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
     /* a shader to render a textured cube */
-    sg_shader shd = sg_make_shader(dyntex_shader_desc());
+    sg_shader shd = sg_make_shader(dyntex_shader_desc(sg_query_backend()));
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -115,11 +113,11 @@ void init(void) {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK,
         .label = "cube-pipelin"
     });
 
@@ -136,7 +134,7 @@ void init(void) {
 
 void frame(void) {
     /* compute model-view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
@@ -150,18 +148,15 @@ void frame(void) {
     game_of_life_update();
 
     /* update the texture */
-    sg_update_image(state.bind.fs_images[0], &(sg_image_content){
-        .subimage[0][0] = {
-            .ptr = state.pixels,
-            .size = sizeof(state.pixels)
-        }
+    sg_update_image(state.bind.fs_images[0], &(sg_image_data){
+        .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
     /* render the frame */
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

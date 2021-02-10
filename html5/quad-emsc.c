@@ -10,11 +10,13 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+static struct {
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_pass_action pass_action;
+} state = {
+    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-static sg_pipeline pip;
-static sg_bindings bind;
 
 void draw();
 
@@ -26,29 +28,27 @@ int main() {
     sg_desc desc = {0};
     sg_setup(&desc);
     assert(sg_isvalid());
-    
+
     /* a vertex buffer */
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices)
     });
 
     /* an index buffer */
     uint16_t indices[] = {
         0, 1, 2,    // first triangle
-        0, 2, 3,    // second triangle        
+        0, 2, 3,    // second triangle
     };
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(indices),
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* create a shader */
@@ -72,9 +72,9 @@ int main() {
             "  gl_FragColor = color;\n"
             "}\n"
     });
-    
+
     /* a pipeline object (default render state is fine) */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* test to provide attr offsets, but no buffer stride, this should compute the stride */
             .attrs = {
@@ -94,9 +94,9 @@ int main() {
 
 /* draw one frame */
 void draw() {
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();

@@ -35,7 +35,7 @@ void init(void) {
 
     /* a default pass action to clear to black */
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
@@ -64,10 +64,7 @@ void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        },
+        .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "array-texture"
     });
 
@@ -105,8 +102,7 @@ void init(void) {
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
 
@@ -121,8 +117,7 @@ void init(void) {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -134,14 +129,12 @@ void init(void) {
                 [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(arraytex_shader_desc()),
+        .shader = sg_make_shader(arraytex_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_NONE,
+        .cull_mode = SG_CULLMODE_NONE,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "cube-pipeline"
     });
@@ -157,7 +150,7 @@ void init(void) {
 /* this is called when GLES3/WebGL2 is not available */
 void draw_gles2_fallback(void) {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } },
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } },
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();
@@ -173,7 +166,7 @@ void frame(void) {
     }
 
     /* rotated model matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     state.rx += 0.25f; state.ry += 0.5f;
@@ -195,7 +188,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

@@ -25,16 +25,14 @@ static void init(void) {
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
 
     /* an index buffer with 2 triangles */
     const uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .data = SG_RANGE(indices)
     });
 
     /* a shader (use separate shader sources here */

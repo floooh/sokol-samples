@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //  dyntex-emsc.c
-//  update texture per-frame with CPU generated data 
+//  update texture per-frame with CPU generated data
 //------------------------------------------------------------------------------
 #include <stddef.h>     /* offsetof */
 #define GL_GLEXT_PROTOTYPES
@@ -23,15 +23,17 @@ typedef struct {
 #define IMAGE_HEIGHT (64)
 #define LIVING (0xFFFFFFFF)
 #define DEAD (0xFF000000)
-uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
+static uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
-static sg_pipeline pip;
-static sg_bindings bind;
-static sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+static struct {
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_pass_action pass_action;
+    float rx, ry;
+    int update_count;
+} state = {
+    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.2f, 0.3f, 0.4f, 1.0f } }
 };
-static float rx, ry;
-static int update_count;
 
 static void game_of_life_init();
 static void game_of_life_update();
@@ -42,8 +44,7 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){0});
     assert(sg_isvalid());
 
     /* a 128x128 image with streaming-update strategy */
@@ -66,7 +67,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 1.0f,
@@ -100,17 +101,15 @@ int main() {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* define the resource bindings */
-    bind = (sg_bindings){
+    state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
@@ -129,7 +128,7 @@ int main() {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
         .vs.source =
             "uniform mat4 mvp;\n"
             "attribute vec4 position;\n"
@@ -153,7 +152,7 @@ int main() {
     });
 
     /* a pipeline-state-object for the textured cube */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
@@ -163,11 +162,11 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* initial game-of-life seed state */
@@ -183,29 +182,25 @@ void draw() {
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    vs_params_t vs_params;
-    rx += 0.1f; ry += 0.2f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 0.1f; state.ry += 0.2f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    
+    const vs_params_t vs_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, model)
+    };
+
     /* update game-of-life state */
     game_of_life_update();
 
     /* update the dynamic image */
-    sg_update_image(bind.fs_images[0], &(sg_image_content){ 
-        .subimage[0][0] = { 
-            .ptr=pixels, 
-            .size=sizeof(pixels) 
-        } 
-    });
+    sg_update_image(state.bind.fs_images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
     /* draw pass */
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
@@ -255,8 +250,8 @@ void game_of_life_update() {
             }
         }
     }
-    if (update_count++ > 240) {
+    if (state.update_count++ > 240) {
         game_of_life_init();
-        update_count = 0;
+        state.update_count = 0;
     }
 }

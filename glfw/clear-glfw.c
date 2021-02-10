@@ -32,14 +32,14 @@ int main() {
 
     /* default pass action, clear to red */
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* draw loop */
     while (!glfwWindowShouldClose(w)) {
-        float g = (float)(pass_action.colors[0].val[1] + 0.01);
+        float g = (float)(pass_action.colors[0].value.g + 0.01);
         if (g > 1.0f) g = 0.0f;
-        pass_action.colors[0].val[1] = g;
+        pass_action.colors[0].value.g = g;
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);

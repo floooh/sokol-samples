@@ -55,8 +55,7 @@ static void init(void) {
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
 
     /* a shader for the fullscreen background quad */
@@ -160,17 +159,17 @@ static void init(void) {
         },
         .shader = quad_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .blend = {
-            .enabled = true,
-            .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
-        },
+        .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
-            pip_desc.blend.src_factor_rgb = (sg_blend_factor) (src + 1);
-            pip_desc.blend.dst_factor_rgb = (sg_blend_factor) (dst + 1);
-            pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-            pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
+            pip_desc.colors[0].blend = (sg_blend_state) {
+                .enabled = true,
+                .src_factor_rgb = (sg_blend_factor) (src + 1),
+                .dst_factor_rgb = (sg_blend_factor) (dst + 1),
+                .src_factor_alpha = SG_BLENDFACTOR_ONE,
+                .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+            };
             state.pips[src][dst] = sg_make_pipeline(&pip_desc);
             assert(state.pips[src][dst].id != SG_INVALID_ID);
         }
@@ -188,7 +187,7 @@ static void frame(void) {
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &state.fs_params, sizeof(state.fs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.fs_params));
     sg_draw(0, 4, 1);
 
     /* draw the blended quads */
@@ -204,7 +203,7 @@ static void frame(void) {
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &state.vs_params, sizeof(state.vs_params));
+            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(state.vs_params));
             sg_draw(0, 4, 1);
         }
     }

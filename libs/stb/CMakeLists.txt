@@ -1,3 +1,6 @@
 fips_begin_lib(stb)
     fips_files(stb_image.c stb_image.h)
 fips_end_lib(stb)
+if (FIPS_CLANG OR FIPS_GCC)
+    target_compile_options(stb PRIVATE -Wno-sign-conversion -Wno-unused-function)
+endif()

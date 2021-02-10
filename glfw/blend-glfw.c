@@ -55,8 +55,7 @@ int main() {
         +1.0f, +1.0f, 0.0f,  1.0f, 1.0f, 0.0f, 0.5f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
 
     /* a shader for the fullscreen background quad */
@@ -134,19 +133,17 @@ int main() {
         },
         .shader = quad_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .blend = {
-            .enabled = true,
-            .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
-        },
+        .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
     };
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
-            const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
-            const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            pip_desc.blend.src_factor_rgb = src_blend;
-            pip_desc.blend.dst_factor_rgb = dst_blend;
-            pip_desc.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-            pip_desc.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
+            pip_desc.colors[0].blend = (sg_blend_state) {
+                .enabled = true,
+                .src_factor_rgb = (sg_blend_factor) (src+1),
+                .dst_factor_rgb = (sg_blend_factor) (dst+1),
+                .src_factor_alpha = SG_BLENDFACTOR_ONE,
+                .dst_factor_alpha = SG_BLENDFACTOR_ZERO,
+            };
             pips[src][dst] = sg_make_pipeline(&pip_desc);
             assert(pips[src][dst].id != SG_INVALID_ID);
         }
@@ -179,7 +176,7 @@ int main() {
         /* draw a background quad */
         sg_apply_pipeline(bg_pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &fs_params, sizeof(fs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_params));
         sg_draw(0, 4, 1);
 
         /* draw the blended quads */
@@ -195,7 +192,7 @@ int main() {
 
                 sg_apply_pipeline(pips[src][dst]);
                 sg_apply_bindings(&bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

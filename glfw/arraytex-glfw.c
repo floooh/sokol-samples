@@ -70,10 +70,7 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     /* cube vertex buffer */
@@ -84,7 +81,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -110,8 +107,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     /* create an index buffer for the cube */
@@ -125,8 +121,7 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* resource bindings */
@@ -147,7 +142,7 @@ int main() {
                 [3] = { .name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
             }
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_ARRAY },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_ARRAY },
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
@@ -186,22 +181,22 @@ int main() {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* default pass action */
-    sg_pass_action pass_action = { 
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+    sg_pass_action pass_action = {
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
-    
+
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -230,7 +225,7 @@ int main() {
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

@@ -29,8 +29,7 @@ void init(void) {
     // a vertex buffer to render a 'fullscreen triangle'
     float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(fsq_verts),
-        .content = fsq_verts,
+        .data = SG_RANGE(fsq_verts),
         .label = "fsq vertices"
     });
 
@@ -39,7 +38,7 @@ void init(void) {
         .layout = {
             .attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT2
         },
-        .shader = sg_make_shader(sdf_shader_desc()),
+        .shader = sg_make_shader(sdf_shader_desc(sg_query_backend())),
     });
 
     // don't need to clear since the whole framebuffer is overwritten
@@ -56,7 +55,7 @@ void frame(void) {
     sg_begin_default_pass(&state.pass_action, w, h);
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &state.vs_params, sizeof(state.vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(state.vs_params));
     sg_draw(0, 3, 1);
     __dbgui_draw();
     sg_end_pass();

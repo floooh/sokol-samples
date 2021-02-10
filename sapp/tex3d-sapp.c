@@ -14,7 +14,6 @@
 #define TEX3D_DIM (32)
 
 static struct {
-    bool tex3d_supported;
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_bindings bind;
@@ -35,20 +34,14 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // check for 3D texture support
-    state.tex3d_supported = sg_query_features().imagetype_3d;
-    if (state.tex3d_supported) {
-        state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.5f, 0.75f, 1.0f } }
-        };
-    }
-    else {
-        // just clear to red if 3d textures are not supported
-        state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
-        };
+    // can't do anything without 3D texture support (this will render a red screen in the frame callback)
+    if (!sg_query_features().imagetype_3d) {
         return;
     }
+
+    state.pass_action = (sg_pass_action) {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
+    };
 
     // build cube vertex- and index-buffer
     const float vertices[] = {
@@ -69,14 +62,12 @@ static void init(void) {
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_VERTEXBUFFER,
-        .content = vertices,
-        .size = sizeof(vertices),
+        .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = indices,
-        .size = sizeof(indices),
+        .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
 
@@ -87,13 +78,13 @@ static void init(void) {
                 [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3
             }
         },
-        .shader = sg_make_shader(cube_shader_desc()),
+        .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK,
         .label = "cube-pipeline"
     });
 
@@ -116,16 +107,13 @@ static void init(void) {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .label = "3d texture",
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 }
 
 static void draw_fallback(void) {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();
@@ -144,7 +132,7 @@ static void frame(void) {
     state.rx += 1.0f;
     state.ry += 2.0f;
     state.t  += 0.03f;
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -159,7 +147,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

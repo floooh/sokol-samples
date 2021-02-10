@@ -14,7 +14,7 @@ static struct {
     sg_bindings bind;
 } state = {
     .pass_action = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f } }
     }
 };
 
@@ -32,8 +32,7 @@ void init(void) {
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "quad-vertices"
     });
 
@@ -41,13 +40,12 @@ void init(void) {
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices),
         .label = "quad-indices"
     });
 
     /* a shader (use separate shader sources here */
-    sg_shader shd = sg_make_shader(quad_shader_desc());
+    sg_shader shd = sg_make_shader(quad_shader_desc(sg_query_backend()));
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){

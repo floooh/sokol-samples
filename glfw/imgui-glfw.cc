@@ -123,8 +123,7 @@ int main() {
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.content.subimage[0][0].ptr = font_pixels;
-    img_desc.content.subimage[0][0].size = font_width * font_height * 4;
+    img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
     bind.fs_images[0] = sg_make_image(&img_desc);
 
     // shader object for imgui rendering
@@ -147,7 +146,7 @@ int main() {
         "    color = color0;\n"
         "}\n";
     shd_desc.fs.images[0].name = "tex";
-    shd_desc.fs.images[0].type = SG_IMAGETYPE_2D;
+    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
     shd_desc.fs.source =
         "#version 330\n"
         "uniform sampler2D tex;\n"
@@ -168,18 +167,15 @@ int main() {
     attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.blend.enabled = true;
-    pip_desc.blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
-    pip_desc.blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    pip_desc.blend.color_write_mask = SG_COLORMASK_RGB;
+    pip_desc.colors[0].blend.enabled = true;
+    pip_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
+    pip_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    pip_desc.colors[0].write_mask = SG_COLORMASK_RGB;
     pip = sg_make_pipeline(&pip_desc);
 
     // initial clear color
     pass_action.colors[0].action = SG_ACTION_CLEAR;
-    pass_action.colors[0].val[0] = 0.0f;
-    pass_action.colors[0].val[1] = 0.5f;
-    pass_action.colors[0].val[2] = 0.7f;
-    pass_action.colors[0].val[3] = 1.0f;
+    pass_action.colors[0].value = { 0.0f, 0.5f, 0.7f, 1.0f };
 
     // draw loop
     while (!glfwWindowShouldClose(w)) {
@@ -197,7 +193,7 @@ int main() {
         static float f = 0.0f;
         ImGui::Text("Hello, world!");
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
+        ImGui::ColorEdit3("clear color", &pass_action.colors[0].value.r);
         if (ImGui::Button("Test Window")) show_test_window ^= 1;
         if (ImGui::Button("Another Window")) show_another_window ^= 1;
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -245,15 +241,15 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
         // append vertices and indices to buffers, record start offsets in resource binding struct
-        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const uint32_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const uint32_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const uint32_t vb_offset = sg_append_buffer(bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
+        const uint32_t ib_offset = sg_append_buffer(bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)

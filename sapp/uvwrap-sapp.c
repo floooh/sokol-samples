@@ -21,7 +21,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a quad vertex buffer with "oversized" texture coords */
+    /* a quad vertex buffer */
     const float quad_vertices[] = {
         -1.0f, +1.0f,
         +1.0f, +1.0f,
@@ -29,8 +29,7 @@ static void init(void) {
         +1.0f, -1.0f,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .content = quad_vertices,
-        .size = sizeof(quad_vertices)
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* one test image per UV-wrap mode */
@@ -56,29 +55,26 @@ static void init(void) {
             .wrap_u = (sg_wrap) i,
             .wrap_v = (sg_wrap) i,
             .border_color = SG_BORDERCOLOR_OPAQUE_BLACK,
-            .content.subimage[0][0] = {
-                .ptr = test_pixels,
-                .size = sizeof(test_pixels)
-            }
+            .data.subimage[0][0] = SG_RANGE(test_pixels)
         });
     }
 
     /* a pipeline state object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(uvwrap_shader_desc()),
+        .shader = sg_make_shader(uvwrap_shader_desc(sg_query_backend())),
         .layout = {
             .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
     });
 
     /* pass action to clear to a background color */
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val={0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.5f, 0.7f, 1.0f } }
     };
 }
 
@@ -101,7 +97,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

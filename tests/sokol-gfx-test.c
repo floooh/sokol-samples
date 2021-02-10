@@ -233,10 +233,7 @@ UTEST(sokol_gfx, make_destroy_buffers) {
     float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
 
     sg_buffer buf[3] = { {0} };
-    sg_buffer_desc desc = {
-        .size = sizeof(data),
-        .content = data
-    };
+    sg_buffer_desc desc = { .data = SG_RANGE(data) };
     for (int i = 0; i < 3; i++) {
         buf[i] = sg_make_buffer(&desc);
         T(buf[i].id != SG_INVALID_ID);
@@ -280,11 +277,7 @@ UTEST(sokol_gfx, make_destroy_images) {
     sg_image_desc desc = {
         .width = 8,
         .height = 8,
-        .content.subimage[0][0] = {
-            .ptr = data,
-            .size = sizeof(data)
-        }
-
+        .data.subimage[0][0] = SG_RANGE(data)
     };
     for (int i = 0; i < 3; i++) {
         img[i] = sg_make_image(&desc);
@@ -394,7 +387,7 @@ UTEST(sokol_gfx, make_destroy_pipelines) {
         T(pipptr->shader == _sg_lookup_shader(&_sg.pools, desc.shader.id));
         T(pipptr->cmn.shader_id.id == desc.shader.id);
         T(pipptr->cmn.color_attachment_count == 1);
-        T(pipptr->cmn.color_format == SG_PIXELFORMAT_RGBA8);
+        T(pipptr->cmn.color_formats[0] == SG_PIXELFORMAT_RGBA8);
         T(pipptr->cmn.depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
         T(pipptr->cmn.sample_count == 1);
         T(pipptr->cmn.index_type == SG_INDEXTYPE_NONE);
@@ -467,10 +460,7 @@ UTEST(sokol_gfx, generation_counter) {
 
     static float data[] = { 1.0f, 2.0f, 3.0f, 4.0f };
     for (int i = 0; i < 64; i++) {
-        sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
-            .size = sizeof(data),
-            .content = data
-        });
+        sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){ .data = SG_RANGE(data) });
         T(buf.id != SG_INVALID_ID);
         T(sg_query_buffer_state(buf) == SG_RESOURCESTATE_VALID);
         T((buf.id >> 16) == (uint32_t)(i + 1));   /* this is the generation counter */
@@ -544,40 +534,130 @@ UTEST(sokol_gfx, query_pipeline_defaults) {
     T(desc.layout.attrs[1].offset == 12);
     T(desc.layout.attrs[1].buffer_index == 0);
     T(desc.layout.attrs[1].format == SG_VERTEXFORMAT_FLOAT4);
+    T(desc.stencil.front.fail_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.front.depth_fail_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.front.pass_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.front.compare == SG_COMPAREFUNC_ALWAYS);
+    T(desc.stencil.back.fail_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.back.depth_fail_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.back.pass_op == SG_STENCILOP_KEEP);
+    T(desc.stencil.back.compare == SG_COMPAREFUNC_ALWAYS);
+    T(desc.stencil.enabled == false);
+    T(desc.stencil.read_mask == 0);
+    T(desc.stencil.write_mask == 0);
+    T(desc.stencil.ref == 0);
+    T(desc.depth.pixel_format == SG_PIXELFORMAT_DEPTH_STENCIL);
+    T(desc.depth.compare == SG_COMPAREFUNC_ALWAYS);
+    T(desc.depth.write_enabled == false);
+    T(desc.depth.bias == 0);
+    T(desc.depth.bias_slope_scale == 0);
+    T(desc.depth.bias_clamp == 0);
+    T(desc.color_count == 1);
+    T(desc.colors[0].pixel_format == SG_PIXELFORMAT_RGBA8);
+    T(desc.colors[0].write_mask == 0xF);
+    T(desc.colors[0].blend.enabled == false);
+    T(desc.colors[0].blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+    T(desc.colors[0].blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[0].blend.op_rgb == SG_BLENDOP_ADD);
+    T(desc.colors[0].blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+    T(desc.colors[0].blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[0].blend.op_alpha == SG_BLENDOP_ADD);
+    T(desc.alpha_to_coverage_enabled == false);
     T(desc.primitive_type == SG_PRIMITIVETYPE_TRIANGLES);
     T(desc.index_type == SG_INDEXTYPE_NONE);
-    T(desc.depth_stencil.stencil_front.fail_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_front.depth_fail_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_front.pass_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_front.compare_func == SG_COMPAREFUNC_ALWAYS);
-    T(desc.depth_stencil.stencil_back.fail_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_back.depth_fail_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_back.pass_op == SG_STENCILOP_KEEP);
-    T(desc.depth_stencil.stencil_back.compare_func == SG_COMPAREFUNC_ALWAYS);
-    T(desc.depth_stencil.depth_compare_func == SG_COMPAREFUNC_ALWAYS);
-    T(desc.depth_stencil.depth_write_enabled == false);
-    T(desc.depth_stencil.stencil_enabled == false);
-    T(desc.depth_stencil.stencil_read_mask == 0);
-    T(desc.depth_stencil.stencil_write_mask == 0);
-    T(desc.depth_stencil.stencil_ref == 0);
-    T(desc.blend.enabled == false);
-    T(desc.blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
-    T(desc.blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
-    T(desc.blend.op_rgb == SG_BLENDOP_ADD);
-    T(desc.blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
-    T(desc.blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
-    T(desc.blend.op_alpha == SG_BLENDOP_ADD);
-    T(desc.blend.color_write_mask == 0xF);
-    T(desc.blend.color_attachment_count == 1);
-    T(desc.blend.color_format == SG_PIXELFORMAT_RGBA8);
-    T(desc.blend.depth_format == SG_PIXELFORMAT_DEPTH_STENCIL);
-    T(desc.rasterizer.alpha_to_coverage_enabled == false);
-    T(desc.rasterizer.cull_mode == SG_CULLMODE_NONE);
-    T(desc.rasterizer.face_winding == SG_FACEWINDING_CW);
-    T(desc.rasterizer.sample_count == 1);
-    T(desc.rasterizer.depth_bias == 0);
-    T(desc.rasterizer.depth_bias_slope_scale == 0);
-    T(desc.rasterizer.depth_bias_clamp == 0);
+    T(desc.cull_mode == SG_CULLMODE_NONE);
+    T(desc.face_winding == SG_FACEWINDING_CW);
+    T(desc.sample_count == 1);
+    sg_shutdown();
+}
+
+// test that color attachment defaults are set in all attachments
+UTEST(sokol_gfx, query_mrt_pipeline_defaults) {
+    sg_setup(&(sg_desc){0});
+    const sg_pipeline_desc desc = sg_query_pipeline_defaults(&(sg_pipeline_desc){
+        .color_count = 3,
+    });
+    T(desc.color_count == 3);
+    for (int i = 0; i < desc.color_count; i++) {
+        T(desc.colors[i].pixel_format == SG_PIXELFORMAT_RGBA8);
+        T(desc.colors[i].write_mask == 0xF);
+        T(desc.colors[i].blend.enabled == false);
+        T(desc.colors[i].blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+        T(desc.colors[i].blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+        T(desc.colors[i].blend.op_rgb == SG_BLENDOP_ADD);
+        T(desc.colors[i].blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+        T(desc.colors[i].blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+        T(desc.colors[i].blend.op_alpha == SG_BLENDOP_ADD);
+    };
+    sg_shutdown();
+}
+
+// test that first color attachment values are duplicated to other attachments
+UTEST(sokol_gfx, multiple_color_state) {
+    sg_setup(&(sg_desc){0});
+    const sg_pipeline_desc desc = sg_query_pipeline_defaults(&(sg_pipeline_desc){
+        .color_count = 3,
+        .colors = {
+            [0] = {
+                .pixel_format = SG_PIXELFORMAT_R8,
+                .write_mask = SG_COLORMASK_BA,
+                .blend = {
+                    .enabled = true,
+                    .src_factor_rgb = SG_BLENDFACTOR_SRC_COLOR,
+                    .dst_factor_rgb = SG_BLENDFACTOR_DST_COLOR,
+                    .op_rgb = SG_BLENDOP_SUBTRACT,
+                    .src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                    .dst_factor_alpha = SG_BLENDFACTOR_DST_ALPHA,
+                    .op_alpha = SG_BLENDOP_REVERSE_SUBTRACT
+                }
+            },
+            [2] = {
+                .pixel_format = SG_PIXELFORMAT_RG8,
+                .write_mask = SG_COLORMASK_GA,
+                .blend = {
+                    .enabled = true,
+                    .src_factor_rgb = SG_BLENDFACTOR_DST_COLOR,
+                    .dst_factor_rgb = SG_BLENDFACTOR_SRC_COLOR,
+                    .op_rgb = SG_BLENDOP_REVERSE_SUBTRACT,
+                    .src_factor_alpha = SG_BLENDFACTOR_DST_ALPHA,
+                    .dst_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                    .op_alpha = SG_BLENDOP_SUBTRACT
+                }
+            },
+        }
+    });
+    T(desc.color_count == 3);
+
+    T(desc.colors[0].pixel_format == SG_PIXELFORMAT_R8);
+    T(desc.colors[0].write_mask == SG_COLORMASK_BA);
+    T(desc.colors[0].blend.enabled == true);
+    T(desc.colors[0].blend.src_factor_rgb == SG_BLENDFACTOR_SRC_COLOR);
+    T(desc.colors[0].blend.dst_factor_rgb == SG_BLENDFACTOR_DST_COLOR);
+    T(desc.colors[0].blend.op_rgb == SG_BLENDOP_SUBTRACT);
+    T(desc.colors[0].blend.src_factor_alpha == SG_BLENDFACTOR_SRC_ALPHA);
+    T(desc.colors[0].blend.dst_factor_alpha == SG_BLENDFACTOR_DST_ALPHA);
+    T(desc.colors[0].blend.op_alpha == SG_BLENDOP_REVERSE_SUBTRACT);
+
+    T(desc.colors[1].pixel_format == SG_PIXELFORMAT_RGBA8);
+    T(desc.colors[1].write_mask == SG_COLORMASK_RGBA);
+    T(desc.colors[1].blend.enabled == false);
+    T(desc.colors[1].blend.src_factor_rgb == SG_BLENDFACTOR_ONE);
+    T(desc.colors[1].blend.dst_factor_rgb == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[1].blend.op_rgb == SG_BLENDOP_ADD);
+    T(desc.colors[1].blend.src_factor_alpha == SG_BLENDFACTOR_ONE);
+    T(desc.colors[1].blend.dst_factor_alpha == SG_BLENDFACTOR_ZERO);
+    T(desc.colors[1].blend.op_alpha == SG_BLENDOP_ADD);
+
+    T(desc.colors[2].pixel_format == SG_PIXELFORMAT_RG8);
+    T(desc.colors[2].write_mask == SG_COLORMASK_GA);
+    T(desc.colors[2].blend.enabled == true);
+    T(desc.colors[2].blend.src_factor_rgb == SG_BLENDFACTOR_DST_COLOR);
+    T(desc.colors[2].blend.dst_factor_rgb == SG_BLENDFACTOR_SRC_COLOR);
+    T(desc.colors[2].blend.op_rgb == SG_BLENDOP_REVERSE_SUBTRACT);
+    T(desc.colors[2].blend.src_factor_alpha == SG_BLENDFACTOR_DST_ALPHA);
+    T(desc.colors[2].blend.dst_factor_alpha == SG_BLENDFACTOR_SRC_ALPHA);
+    T(desc.colors[2].blend.op_alpha == SG_BLENDOP_SUBTRACT);
+
     sg_shutdown();
 }
 

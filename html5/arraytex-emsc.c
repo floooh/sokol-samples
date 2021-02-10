@@ -11,11 +11,13 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static sg_pass_action pass_action;
-static sg_pipeline pip;
-static sg_bindings bind;
-static float rx, ry;
-static int frame_index;
+static struct {
+    sg_pass_action pass_action;
+    sg_pipeline pip;
+    sg_bindings bind;
+    float rx, ry;
+    int frame_index;
+} state;
 
 typedef struct {
     hmm_mat4 mvp;
@@ -35,17 +37,16 @@ int main() {
     /* setup WebGL2 context */
     emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
     /* setup sokol_gfx */
-    sg_desc desc = {
+    sg_setup(&(sg_desc){
         .context.gl.force_gles2 = emsc_webgl_fallback()
-    };
-    sg_setup(&desc);
+    });
     assert(sg_isvalid());
 
     /* not much useful things to do in this demo if WebGL2 is not supported,
        so just drop out and later render a dark red screen */
-    if (desc.context.gl.force_gles2) {
-        pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+    if (emsc_webgl_fallback()) {
+        state.pass_action = (sg_pass_action){
+            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
         };
         emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
         return 0;
@@ -77,10 +78,7 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     /* cube vertex buffer */
@@ -117,8 +115,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     /* create an index buffer for the cube */
@@ -132,12 +129,11 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* define the resource bindings */
-    bind = (sg_bindings){
+    state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
@@ -158,7 +154,7 @@ int main() {
                 [3] = { .name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
             }
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_ARRAY },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_ARRAY },
         .vs.source =
             "#version 300 es\n"
             "uniform mat4 mvp;\n"
@@ -194,7 +190,7 @@ int main() {
     });
 
     /* create pipeline object */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
@@ -203,16 +199,16 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* default pass action */
-    pass_action = (sg_pass_action){
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f} }
+    state.pass_action = (sg_pass_action){
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     emscripten_set_main_loop(draw, 0, 1);
@@ -221,39 +217,40 @@ int main() {
 
 void draw() {
     /* rotated model matrix */
-    rx += 0.25f; ry += 0.5f;
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    state.rx += 0.25f; state.ry += 0.5f;
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
     /* model-view-projection matrix for vertex shader */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    params_t vs_params;
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    /* uv offsets */
-    float offset = (float)frame_index * 0.0001f;
-    vs_params.offset0 = HMM_Vec2(-offset, offset);
-    vs_params.offset1 = HMM_Vec2(offset, -offset);
-    vs_params.offset2 = HMM_Vec2(0.0f, 0.0f);
+    float offset = (float)state.frame_index * 0.0001f;
+    const params_t vs_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, model),
+        /* uv offsets */
+        .offset0 = HMM_Vec2(-offset, offset),
+        .offset1 = HMM_Vec2(offset, -offset),
+        .offset2 = HMM_Vec2(0.0f, 0.0f)
+    };
 
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
-    frame_index++;
+    state.frame_index++;
 }
 
 /* this is used as draw callback if webgl2 is not supported */
 void draw_webgl_fallback() {
-    float g = pass_action.colors[0].val[1] + 0.01f;
+    float g = state.pass_action.colors[0].value.g + 0.01f;
     if (g > 0.5f) g = 0.0f;
-    pass_action.colors[0].val[1] = g;
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
+    state.pass_action.colors[0].value.g = g;
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();
 }

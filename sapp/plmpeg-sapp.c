@@ -34,6 +34,8 @@
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wshift-negative-value"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 #include "pl_mpeg/pl_mpeg.h"
 #if defined(__GNUC__) || defined(__clang__)
@@ -154,8 +156,7 @@ static void init(void) {
         {  1, -1,  1,  1, 0, 0,  0, 1 },
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     const uint16_t indices[] = {
@@ -166,8 +167,7 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .data = SG_RANGE(indices)
     });
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -176,19 +176,17 @@ static void init(void) {
             [ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
             [ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
         },
-        .shader = sg_make_shader(plmpeg_shader_desc()),
+        .shader = sg_make_shader(plmpeg_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .cull_mode = SG_CULLMODE_NONE,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_NONE,
-        }
     });
 
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.569f, 0.918f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.569f, 0.918f, 1.0f } }
     };
 
     // NOTE: texture creation is deferred until first frame is decoded
@@ -230,7 +228,7 @@ static void frame(void) {
     }
 
     // compute model-view-projection matrix for vertex shader
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
@@ -243,7 +241,7 @@ static void frame(void) {
     if (state.bind.fs_images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 24, 1);
     }
     __dbgui_draw();
@@ -266,14 +264,14 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     if ((state.image_attrs[slot].width != (int)plane->width) ||
         (state.image_attrs[slot].height != (int)plane->height))
     {
-        state.image_attrs[slot].width = plane->width;
-        state.image_attrs[slot].height = plane->height;
+        state.image_attrs[slot].width = (int)plane->width;
+        state.image_attrs[slot].height = (int)plane->height;
 
         // NOTE: it's ok to call sg_destroy_image() with SG_INVALID_ID
         sg_destroy_image(state.bind.fs_images[slot]);
         state.bind.fs_images[slot] = sg_make_image(&(sg_image_desc){
-            .width = plane->width,
-            .height = plane->height,
+            .width = (int)plane->width,
+            .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
             .usage = SG_USAGE_STREAM,
             .min_filter = SG_FILTER_LINEAR,
@@ -287,7 +285,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     // sg_update_image() is called more than once per frame
     if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
         state.image_attrs[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.bind.fs_images[slot], &(sg_image_content){
+        sg_update_image(state.bind.fs_images[slot], &(sg_image_data){
             .subimage[0][0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)
@@ -307,7 +305,7 @@ static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
 static void audio_cb(plm_t* mpeg, plm_samples_t* samples, void* user) {
     (void)mpeg; (void)user;
-    saudio_push(samples->interleaved, samples->count);
+    saudio_push(samples->interleaved, (int)samples->count);
 }
 
 // the sokol-fetch response callback
@@ -411,7 +409,7 @@ static void ring_enqueue(ring_t* rb, int val) {
 
 static int ring_dequeue(ring_t* rb) {
     assert(!ring_empty(rb));
-    uint32_t slot_id = rb->buf[rb->tail];
+    int slot_id = rb->buf[rb->tail];
     rb->tail = ring_wrap(rb->tail + 1);
     return slot_id;
 }

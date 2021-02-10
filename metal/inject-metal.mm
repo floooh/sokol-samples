@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  inject-metal.m
+//  inject-metal.mm
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #define SOKOL_IMPL
@@ -85,7 +85,7 @@ static void init(void) {
     id<MTLBuffer> mtl_ibuf = [osx_mtl_device()
         newBufferWithBytes:indices length:sizeof(indices)
         options:MTLResourceStorageModeShared];
-        
+
     /* important to call sg_reset_state_cache() after calling Metal functions directly */
     sg_reset_state_cache();
 
@@ -159,7 +159,7 @@ static void init(void) {
                 "}\n"
         },
         .fs = {
-            .images[0].type = SG_IMAGETYPE_2D,
+            .images[0].image_type = SG_IMAGETYPE_2D,
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -187,13 +187,11 @@ static void init(void) {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
 
@@ -223,15 +221,12 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_image_content content = {
-        .subimage[0][0] = { .ptr = state.pixels, .size = sizeof(state.pixels) }
-    };
-    sg_update_image(state.bind.fs_images[0], &content);
+    sg_update_image(state.bind.fs_images[0], { .subimage[0][0] = SG_RANGE(state.pixels) });
 
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -39,8 +39,7 @@ int main() {
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
     };
     sg_buffer_desc vbuf_desc = {
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
@@ -50,9 +49,8 @@ int main() {
         0, 2, 3,    // second triangle        
     };
     sg_buffer_desc ibuf_desc = {
-        .size = sizeof(indices),
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .content = indices,
+        .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 

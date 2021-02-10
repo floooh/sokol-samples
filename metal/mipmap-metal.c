@@ -66,18 +66,17 @@ static void init(void) {
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
 
     /* initialize mipmap content, different colors and checkboard pattern */
-    sg_image_content img_content;
+    sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
     bool even_odd = false;
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
-        img_content.subimage[0][mip_index].ptr = ptr;
-        img_content.subimage[0][mip_index].size = dim * dim * 4;
+        img_data.subimage[0][mip_index].ptr = ptr;
+        img_data.subimage[0][mip_index].size = (size_t)(dim * dim * 4);
         for (int y = 0; y < dim; y++) {
             for (int x = 0; x < dim; x++) {
                 *ptr++ = even_odd ? state.mip_colors[mip_index] : 0xFF000000;
@@ -94,7 +93,7 @@ static void init(void) {
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .mag_filter = SG_FILTER_LINEAR,
-        .content = img_content
+        .data = img_data
     };
     sg_filter min_filter[] = {
         SG_FILTER_NEAREST_MIPMAP_NEAREST,
@@ -146,7 +145,7 @@ static void init(void) {
                 "}\n"
         },
         .fs = {
-            .images[0].type = SG_IMAGETYPE_2D,
+            .images[0].image_type = SG_IMAGETYPE_2D,
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -169,7 +168,7 @@ static void init(void) {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT2 }
-            } 
+            }
         },
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -198,7 +197,7 @@ static void frame(void) {
         vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
         bind.fs_images[0] = state.img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

@@ -93,12 +93,7 @@ UTEST(sokol_gl, texture) {
         .type = SG_IMAGETYPE_2D,
         .width = 8,
         .height = 8,
-        .content = {
-            .subimage[0][0] = {
-                .ptr = pixels,
-                .size = sizeof(pixels)
-            }
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     sgl_texture(img);
     T(_sgl.cur_img.id == img.id);
@@ -181,9 +176,9 @@ UTEST(sokol_gl, make_destroy_pipelines) {
 
     sgl_pipeline pip[3] = { {0} };
     sg_pipeline_desc desc = {
-        .depth_stencil = {
-            .depth_write_enabled = true,
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        .depth = {
+            .write_enabled = true,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL
         }
     };
     for (int i = 0; i < 3; i++) {

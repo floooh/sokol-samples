@@ -90,22 +90,20 @@ void init(void) {
     state.default_pass_action = (sg_pass_action) {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.5f, 0.7f, 1.0f }
+            .value = { 0.0f, 0.5f, 0.7f, 1.0f }
         }
     };
 
     // setup the sokol-gfx resources needed for the first user draw callback
     {
         state.scene1.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-            .size = sizeof(cube_vertices),
-            .content = cube_vertices,
+            .data = SG_RANGE(cube_vertices),
             .label = "cube-vertices"
         });
 
         state.scene1.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
             .type = SG_BUFFERTYPE_INDEXBUFFER,
-            .size = sizeof(cube_indices),
-            .content = cube_indices,
+            .data = SG_RANGE(cube_indices),
             .label = "cube-indices"
         });
 
@@ -116,13 +114,13 @@ void init(void) {
                     [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
                 }
             },
-            .shader = sg_make_shader(scene_shader_desc()),
+            .shader = sg_make_shader(scene_shader_desc(sg_query_backend())),
             .index_type = SG_INDEXTYPE_UINT16,
-            .depth_stencil = {
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-                .depth_write_enabled = true,
+            .depth = {
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
+                .write_enabled = true,
             },
-            .rasterizer.cull_mode = SG_CULLMODE_BACK,
+            .cull_mode = SG_CULLMODE_BACK,
             .label = "cube-pipeline"
         });
     }
@@ -130,13 +128,11 @@ void init(void) {
     // setup a sokol-gl pipeline needed for the second user draw callback
     {
         state.scene2.pip = sgl_make_pipeline(&(sg_pipeline_desc){
-            .depth_stencil = {
-                .depth_write_enabled = true,
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .depth = {
+                .write_enabled = true,
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
             },
-            .rasterizer = {
-                .cull_mode = SG_CULLMODE_BACK
-            }
+            .cull_mode = SG_CULLMODE_BACK
         });
     }
 }
@@ -177,7 +173,7 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     */
     sg_apply_pipeline(state.scene1.pip);
     sg_apply_bindings(&state.scene1.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
 }
 

@@ -47,12 +47,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     /* pass action for offscreen pass, clearing to black */
     sg_pass_action offscreen_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* pass action for default pass, clearing to blue-ish */
     sg_pass_action default_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
     /* cube vertex buffer with positions, colors and tex coords */
@@ -89,8 +89,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
     sg_buffer_desc vbuf_desc = {
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
@@ -105,8 +104,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     };
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
@@ -149,7 +147,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [2].sem_name = "TEXCOORD"
         },
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].type = SG_IMAGETYPE_2D,
+        .fs.images[0].image_type = SG_IMAGETYPE_2D,
         .vs.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
@@ -191,15 +189,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend.depth_format = SG_PIXELFORMAT_DEPTH,
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = rt_sample_count
-        }
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = rt_sample_count
     });
 
     /* pipeline object for rendering textured cube in default pass */
@@ -213,13 +209,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .shader = default_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .cull_mode = SG_CULLMODE_BACK,
     });
 
     /* resource bindings for offscreen rendering */
@@ -256,7 +250,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -264,7 +258,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 

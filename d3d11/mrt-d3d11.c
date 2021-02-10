@@ -61,9 +61,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* a matching pass action with clear colors */
     sg_pass_action offscreen_pass_action = {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -101,8 +101,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -116,8 +115,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = SG_RANGE(cube_indices)
     });
 
     /* a shader to render a cube into MRT offscreen render targets */
@@ -171,18 +169,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .color_count = 3,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = offscreen_sample_count
     });
 
     /* resource bindings for offscreen rendering */
@@ -194,8 +188,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* a shader to render a fullscreen rectangle, which 'composes'
@@ -204,9 +197,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .attrs[0].sem_name = "POSITION",
         .vs.uniform_blocks[0].size = sizeof(params_t),
         .fs.images = {
-            [0].type=SG_IMAGETYPE_2D,
-            [1].type=SG_IMAGETYPE_2D,
-            [2].type=SG_IMAGETYPE_2D
+            [0].image_type=SG_IMAGETYPE_2D,
+            [1].image_type=SG_IMAGETYPE_2D,
+            [2].image_type=SG_IMAGETYPE_2D
         },
         .vs.source =
             "cbuffer params {\n"
@@ -289,7 +282,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  outp.uv = inp.pos;\n"
                 "  return outp;\n"
                 "}\n",
-            .fs.images[0].type=SG_IMAGETYPE_2D,
+            .fs.images[0].image_type=SG_IMAGETYPE_2D,
             .fs.source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"
@@ -334,7 +327,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -343,7 +336,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
         sg_draw(0, 4, 1);
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {

@@ -27,7 +27,7 @@ static struct {
 } state = {
     /* a pass-action to clear to black */
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     }
 };
 
@@ -53,8 +53,7 @@ static void init(void) {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     /* index buffer for static geometry */
@@ -64,8 +63,7 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices,
+        .data = SG_RANGE(indices)
     });
 
     /* empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1 */
@@ -120,13 +118,11 @@ static void init(void) {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
         },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .cull_mode = SG_CULLMODE_BACK,
     });
 
     /* view-projection matrix */
@@ -168,7 +164,10 @@ static void frame(void) {
     }
 
     /* update instance data */
-    sg_update_buffer(state.bind.vertex_buffers[1], state.pos, state.cur_num_particles*sizeof(hmm_vec3));
+    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range) {
+        .ptr = state.pos,
+        .size = (size_t)state.cur_num_particles*sizeof(hmm_vec3)
+    });
 
     /* model-view-projection matrix */
     state.ry += 1.0f;
@@ -179,7 +178,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 24, state.cur_num_particles);
     sg_end_pass();
     sg_commit();

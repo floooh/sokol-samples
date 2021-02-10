@@ -27,9 +27,9 @@ static void init(void) {
 
     /* a pipeline object with less-equal depth-testing */
     state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
-        .depth_stencil = {
-            .depth_write_enabled = true,
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL
+        .depth = {
+            .write_enabled = true,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL
         }
     });
 
@@ -37,7 +37,7 @@ static void init(void) {
     state.pass_action = (sg_pass_action) {
         .colors[0] = {
             .action = SG_ACTION_CLEAR,
-            .val = { 0.0f, 0.0f, 0.0f, 1.0f }
+            .value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
 }
@@ -135,7 +135,7 @@ static void hairball(void) {
 }
 
 static void frame(void) {
-    const float aspect = (float)sapp_width() / (float) sapp_height();
+    const float aspect = sapp_widthf() / sapp_heightf();
     static uint32_t frame_count = 0;
     frame_count++;
 

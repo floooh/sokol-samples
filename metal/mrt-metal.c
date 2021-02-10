@@ -71,9 +71,9 @@ static void init(void) {
     /* a matching pass action with clear colors */
     state.offscreen_pass_action = (sg_pass_action){
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -111,8 +111,7 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     state.offscreen_bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -126,8 +125,7 @@ static void init(void) {
     };
     state.offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = SG_RANGE(cube_indices)
     });
 
     /* a shader to render the cube into offscreen MRT render targest */
@@ -181,24 +179,19 @@ static void init(void) {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-        }
+        .color_count = 3,
     });
 
     /* a vertex buffer to render a fullscreen rectangle */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images */
@@ -231,9 +224,9 @@ static void init(void) {
         },
         .fs = {
             .images = {
-                [0] = { .type = SG_IMAGETYPE_2D },
-                [1] = { .type = SG_IMAGETYPE_2D },
-                [2] = { .type = SG_IMAGETYPE_2D }
+                [0] = { .image_type = SG_IMAGETYPE_2D },
+                [1] = { .image_type = SG_IMAGETYPE_2D },
+                [2] = { .image_type = SG_IMAGETYPE_2D }
             },
             .source =
                 "#include <metal_stdlib>\n"
@@ -296,7 +289,7 @@ static void init(void) {
                     "  out.uv = in.pos;\n"
                     "  return out;\n"
                     "}\n",
-                .fs.images[0].type = SG_IMAGETYPE_2D,
+                .fs.images[0].image_type = SG_IMAGETYPE_2D,
                 .fs.source =
                     "#include <metal_stdlib>\n"
                     "using namespace metal;\n"
@@ -338,7 +331,7 @@ static void frame(void) {
     sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -346,7 +339,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.fsq_pip);
     sg_apply_bindings(&state.fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
     sg_draw(0, 4, 1);
 
     /* render the small debug quads */

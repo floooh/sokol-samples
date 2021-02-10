@@ -12,17 +12,23 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static sg_pass_desc offscreen_pass_desc;
-static sg_pass offscreen_pass;
-static sg_pass_action offscreen_pass_action;
-static sg_pass_action default_pass_action;
-static sg_pipeline offscreen_pip;
-static sg_bindings offscreen_bind;
-static sg_pipeline fsq_pip;
-static sg_bindings fsq_bind;
-static sg_pipeline dbg_pip;
-static sg_bindings dbg_bind;
-static float rx, ry;
+static struct {
+    float rx, ry;
+    struct {
+        sg_pass_desc pass_desc;
+        sg_pass pass;
+        sg_pass_action pass_action;
+        sg_pipeline pip;
+        sg_bindings bind;
+    } offscreen;
+    struct {
+        sg_pass_action pass_action;
+        sg_pipeline fsq_pip;
+        sg_bindings fsq_bind;
+        sg_pipeline dbg_pip;
+        sg_bindings dbg_bind;
+    } display;
+} state;
 
 typedef struct {
     float x, y, z;
@@ -54,8 +60,8 @@ int main() {
     /* not much useful things to do in this demo if WebGL2 is not supported,
        so just drop out and later render a dark red screen */
     if (desc.context.gl.force_gles2) {
-        default_pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.5f, 0.0f, 0.0f, 1.0f} }
+        state.display.pass_action = (sg_pass_action){
+            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
         };
         emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
         return 0;
@@ -75,7 +81,7 @@ int main() {
     };
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    offscreen_pass_desc = (sg_pass_desc){
+    state.offscreen.pass_desc = (sg_pass_desc){
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
@@ -83,14 +89,14 @@ int main() {
         },
         .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
     };
-    offscreen_pass = sg_make_pass(&offscreen_pass_desc);
+    state.offscreen.pass = sg_make_pass(&state.offscreen.pass_desc);
 
     /* a matching pass action with clear colors */
-    offscreen_pass_action = (sg_pass_action){
+    state.offscreen.pass_action = (sg_pass_action){
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -128,8 +134,7 @@ int main() {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -143,12 +148,11 @@ int main() {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = SG_RANGE(cube_indices)
     });
 
     /* resource bindings for offscreen rendering */
-    offscreen_bind = (sg_bindings){
+    state.offscreen.bind = (sg_bindings){
         .vertex_buffers[0] = cube_vbuf,
         .index_buffer = cube_ibuf
     };
@@ -190,7 +194,7 @@ int main() {
     });
 
     /* pipeline object for the offscreen-rendered cube */
-    offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
@@ -200,35 +204,30 @@ int main() {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .color_count = 3,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = offscreen_sample_count
     });
 
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* resource bindings to render the fullscreen quad */
-    fsq_bind = (sg_bindings){
+    state.display.fsq_bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
         .fs_images = {
-            [0] = offscreen_pass_desc.color_attachments[0].image,
-            [1] = offscreen_pass_desc.color_attachments[1].image,
-            [2] = offscreen_pass_desc.color_attachments[2].image,
+            [0] = state.offscreen.pass_desc.color_attachments[0].image,
+            [1] = state.offscreen.pass_desc.color_attachments[1].image,
+            [2] = state.offscreen.pass_desc.color_attachments[2].image,
         }
     };
 
@@ -243,9 +242,9 @@ int main() {
             }
         },
         .fs.images = {
-            [0] = { .name="tex0", .type=SG_IMAGETYPE_2D },
-            [1] = { .name="tex1", .type=SG_IMAGETYPE_2D },
-            [2] = { .name="tex2", .type=SG_IMAGETYPE_2D }
+            [0] = { .name="tex0", .image_type=SG_IMAGETYPE_2D },
+            [1] = { .name="tex1", .image_type=SG_IMAGETYPE_2D },
+            [2] = { .name="tex2", .image_type=SG_IMAGETYPE_2D }
         },
         .vs.source =
             "#version 300 es\n"
@@ -279,7 +278,7 @@ int main() {
     });
 
     /* the pipeline object for the fullscreen rectangle */
-    fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.display.fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
@@ -288,7 +287,7 @@ int main() {
     /* and prepare a pipeline and bindings to render a debug visualizations
        of the offscreen render target contents
     */
-    dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.display.dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
         },
@@ -304,7 +303,7 @@ int main() {
                 "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
                 "  uv = pos;\n"
                 "}\n",
-            .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+            .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
             .fs.source =
                 "#version 300 es\n"
                 "precision mediump float;\n"
@@ -316,13 +315,13 @@ int main() {
                 "}\n"
         })
     });
-    dbg_bind = (sg_bindings) {
+    state.display.dbg_bind = (sg_bindings) {
         .vertex_buffers[0] = quad_buf,
         /* images will be filled right before rendering */
     };
 
     /* default pass action, no clear needed, since whole screen is overwritten */
-    default_pass_action = (sg_pass_action){
+    state.display.pass_action = (sg_pass_action){
         .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
@@ -338,40 +337,41 @@ int main() {
 }
 
 void draw() {
-    offscreen_params_t offscreen_params;
-    params_t params;
-
     /* compute shader params */
-    rx += 1.0f; ry += 2.0f;
+    state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    offscreen_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
+    const offscreen_params_t offscreen_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, model)
+    };
+    const params_t params = {
+        .offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f)
+    };
 
     /* render cube into MRT offscreen render targets */
-    sg_begin_pass(offscreen_pass, &offscreen_pass_action);
-    sg_apply_pipeline(offscreen_pip);
-    sg_apply_bindings(&offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_apply_pipeline(state.offscreen.pip);
+    sg_apply_bindings(&state.offscreen.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
     /* render fullscreen quad with the 'composed image', plus 3 small
         debug-views with the content of the offscreen render targets */
-    sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(fsq_pip);
-    sg_apply_bindings(&fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+    sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.display.fsq_pip);
+    sg_apply_bindings(&state.display.fsq_bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
     sg_draw(0, 4, 1);
-    sg_apply_pipeline(dbg_pip);
+    sg_apply_pipeline(state.display.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
-        sg_apply_bindings(&dbg_bind);
+        state.display.dbg_bind.fs_images[0] = state.offscreen.pass_desc.color_attachments[i].image;
+        sg_apply_bindings(&state.display.dbg_bind);
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
@@ -380,10 +380,10 @@ void draw() {
 
 /* this is used as draw callback if webgl2 is not supported */
 void draw_webgl_fallback() {
-    float g = default_pass_action.colors[0].val[1] + 0.01f;
+    float g = state.display.pass_action.colors[0].value.g + 0.01f;
     if (g > 0.5f) g = 0.0f;
-    default_pass_action.colors[0].val[1] = g;
-    sg_begin_default_pass(&default_pass_action, emsc_width(), emsc_height());
+    state.display.pass_action.colors[0].value.g = g;
+    sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();
 }

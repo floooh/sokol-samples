@@ -35,10 +35,7 @@ static void init(void) {
 
     // initial clear color
     state.pass_action.colors[0].action = SG_ACTION_CLEAR;
-    state.pass_action.colors[0].val[0] = 0.0f;
-    state.pass_action.colors[0].val[1] = 0.5f;
-    state.pass_action.colors[0].val[2] = 0.7f;
-    state.pass_action.colors[0].val[3] = 1.0f;
+    state.pass_action.colors[0].value = { 0.0f, 0.5f, 0.7f, 1.0f };
 }
 
 static void frame(void) {
@@ -52,7 +49,7 @@ static void frame(void) {
     static float f = 0.0f;
     ImGui::Text("Hello, world!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    ImGui::ColorEdit3("clear color", &state.pass_action.colors[0].val[0]);
+    ImGui::ColorEdit3("clear color", &state.pass_action.colors[0].value.r);
     if (ImGui::Button("Test Window")) state.show_test_window ^= 1;
     if (ImGui::Button("Another Window")) state.show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

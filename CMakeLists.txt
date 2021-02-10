@@ -32,7 +32,7 @@ fips_ide_group("")
 
 # just suppress this pesky "missing field initializer warning" for now
 if (FIPS_CLANG OR FIPS_GCC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers -Wsign-conversion")
 endif()
 if (FIPS_GCC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-braces")

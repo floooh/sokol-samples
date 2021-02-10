@@ -13,10 +13,10 @@
 #include "sokol_gfx.h"
 
 // constants (VS doesn't like "const int" for array size)
-enum { 
+enum {
     WIDTH = 640,
     HEIGHT = 480,
-    IMG_WIDTH = 32, 
+    IMG_WIDTH = 32,
     IMG_HEIGHT = 32,
 };
 
@@ -51,7 +51,7 @@ int main() {
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f,
@@ -148,13 +148,13 @@ int main() {
 
     /* create shader */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = { 
+        .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
             .uniforms = {
                 [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             },
         },
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
         .vs.source =
             "#version 330\n"
             "uniform mat4 mvp;\n"
@@ -185,16 +185,16 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .rasterizer.cull_mode = SG_CULLMODE_BACK
+        .cull_mode = SG_CULLMODE_BACK
     });
 
     /* default pass action */
     sg_pass_action pass_action = { 0 };
-    
+
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -224,16 +224,14 @@ int main() {
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_content){
-            .subimage[0][0] = { .ptr = pixels, .size = sizeof(pixels) }
-        });
+        sg_update_image(img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

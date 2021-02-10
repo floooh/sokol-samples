@@ -17,7 +17,7 @@ static struct {
 } state = {
     .pass_action = {
         .colors = {
-            [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
+            [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
         }
     }
 };
@@ -45,13 +45,11 @@ static void init(void) {
         0, 1, 2, 0, 2, 3
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .data = SG_RANGE(indices)
     });
 
     /* a shader and pipeline to render 2D shapes */

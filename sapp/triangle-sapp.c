@@ -29,13 +29,12 @@ static void init(void) {
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices),
         .label = "triangle-vertices"
     });
 
     /* create shader from code-generated sg_shader_desc */
-    sg_shader shd = sg_make_shader(triangle_shader_desc());
+    sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
 
     /* create a pipeline object (default render states are fine for triangle) */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -52,7 +51,7 @@ static void init(void) {
 
     /* a pass action to framebuffer to black */
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f } }
     };
 }
 
