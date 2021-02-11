@@ -27,6 +27,7 @@
 #include "sokol_debugtext.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 

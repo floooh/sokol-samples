@@ -7,6 +7,7 @@
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "imgui.h"
+#include "imgui_internal.h" //Luke Zhou
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL

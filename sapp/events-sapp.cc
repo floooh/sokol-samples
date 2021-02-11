@@ -208,6 +208,7 @@ static void event(const sapp_event* e) {
     assert((e->type >= 0) && (e->type < _SAPP_EVENTTYPE_NUM));
     state.items[e->type].event = *e;
     simgui_handle_event(e);
+	sapp_show_keyboard(true);
 
     /* special case: show/hide mouse cursor when pressing SPACE */
     if ((e->type == SAPP_EVENTTYPE_KEY_DOWN) && !e->key_repeat) {

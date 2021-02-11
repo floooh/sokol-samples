@@ -9,6 +9,7 @@
 #include "sokol_time.h"
 #include "sokol_glue.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_font.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -19,6 +20,14 @@ static bool show_quit_dialog = false;
 static bool html5_ask_leave_site = false;
 
 static sg_pass_action pass_action;
+
+ImFont *g_font, *g_font_monospace;
+char InputBuf1[256], InputBuf2[256];
+
+// In C++11 you'd be better off using lambdas for this sort of forwarding callbacks
+static int TextEditCallbackStub(ImGuiInputTextCallbackData* data) {
+    return 0;
+}
 
 void init(void) {
     // setup sokol-gfx and sokol-time
@@ -34,13 +43,31 @@ void init(void) {
 
     // configure Dear ImGui with our own embedded font
     auto& io = ImGui::GetIO();
-    ImFontConfig fontCfg;
+    /*ImFontConfig fontCfg;
     fontCfg.FontDataOwnedByAtlas = false;
     fontCfg.OversampleH = 2;
     fontCfg.OversampleV = 2;
     fontCfg.RasterizerMultiply = 1.5f;
-    io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
+    io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 56.0f, &fontCfg);
+*/
+    ImFontConfig config_words;
+    config_words.OversampleV = 2;
+    config_words.OversampleH = 2; // 默认为3
+    config_words.RasterizerMultiply = 1.5f;
+    //io.Fonts->AddFontDefault();
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    ImWchar* glyph = NULL;
+    int fontcn = 0;//atoi(cp.get("-fontcn", "-1"));
+    if(fontcn == 0)
+        glyph = (ImWchar* )io.Fonts->GetGlyphRangesChineseSimplifiedCommon();
+    else if(fontcn == 1)
+        glyph = (ImWchar* )io.Fonts->GetGlyphRangesChineseFull();
+    //const char *font = "fonts/Cousine-Regular.ttf";
+    const char *font = "/system/fonts/NotoSansCJK-Regular.ttc";
+    g_font = io.Fonts->AddFontFromFileTTF(font, 24.0, &config_words, glyph);
+    //g_font_monospace = io.Fonts->AddFontFromFileTTF("/system/fonts/DroidSansMono.ttf", 24.0+2.0, &config_words);
 
+    io.FontGlobalScale = 1.8f;
     // create font texture for the custom font
     unsigned char* font_pixels;
     int font_width, font_height;
@@ -59,9 +86,9 @@ void init(void) {
 
     // initial clear color
     pass_action.colors[0].action = SG_ACTION_CLEAR;
-    pass_action.colors[0].val[0] = 0.3f;
-    pass_action.colors[0].val[1] = 0.7f;
-    pass_action.colors[0].val[2] = 0.0f;
+    pass_action.colors[0].val[0] = 0.0f;
+    pass_action.colors[0].val[1] = 0.3f;
+    pass_action.colors[0].val[2] = 0.3f;
     pass_action.colors[0].val[3] = 1.0f;
 }
 
@@ -72,26 +99,74 @@ void frame(void) {
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+    ImGui::SetNextWindowPos(ImVec2(0, 60));
+    ImGui::Begin("Main");
+    ImGui::SetWindowFontScale(1.5f);
     static float f = 0.0f;
     ImGui::Text("Hello, world!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
     ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
     ImGui::Text("width: %d, height: %d\n", sapp_width(), sapp_height());
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
+    ImGui::SameLine();
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
-    ImGui::Text("NOTE: programmatic quit isn't supported on mobile");
+    ImGui::Text("NOTE: 移动终端不支持退出programmatic quit isn't supported on mobile");
     if (ImGui::Button("Soft Quit")) {
         sapp_request_quit();
     }
+    ImGui::SameLine();
     if (ImGui::Button("Hard Quit")) {
         sapp_quit();
     }
+    bool reclaim_focus = false;
+    ImGuiInputTextFlags input_text_flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory;
+    ImGui::PushItemWidth(ImGui::GetColumnWidth() - ImGui::CalcTextSize("<<").x - ImGui::GetScrollX() - 1 * ImGui::GetStyle().ItemSpacing.x);
+    if (1) {
+        ImGui::InputText("in1", InputBuf1, IM_ARRAYSIZE(InputBuf1), input_text_flags, &TextEditCallbackStub, (void*)NULL);
+        ImGui::Text("Input1:%s", InputBuf1);
+        reclaim_focus = true;
+    }
+    else
+        ImGui::Text("Input1:");
+    ImGui::PopItemWidth();
+    // Auto-focus on window apparition
+    //ImGui::SetItemDefaultFocus();
+
+    ImGui::PushItemWidth(ImGui::GetColumnWidth() - ImGui::CalcTextSize("<<").x - ImGui::GetScrollX() - 1 * ImGui::GetStyle().ItemSpacing.x);
+    if (ImGui::InputText("in2", InputBuf2, IM_ARRAYSIZE(InputBuf2), input_text_flags, &TextEditCallbackStub, (void*)NULL)) {
+        ImGui::Text("Enter:%s", InputBuf2);
+        reclaim_focus = true;
+    }
+    else
+        ImGui::Text("Enter:");
+    ImGui::PopItemWidth();
+    //if (reclaim_focus)
+    //    ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
+    // Note: we are using a fixed-sized buffer for simplicity here. See ImGuiInputTextFlags_CallbackResize
+    // and the code in misc/cpp/imgui_stdlib.h for how to setup InputText() for dynamically resizing strings.
+    static char text[1024] =
+        "/*"
+        "The Pentium F00F bug, shorthand for F0 0F C7 C8,\n"
+        "the hexadecimal encoding of one offending instruction,\n"
+        "一段中文\n"
+        " more formally, the invalid operand with locked CMPXCHG8B\n"
+        " instruction bug, is a design flaw in the majority of\n"
+        " Intel Pentium, Pentium MMX, and Pentium OverDrive\n"
+        " processors (all in the P5 microarchitecture).\n"
+        "*/\n\n"
+        "label:\n"
+        "\tlock cmpxchg8b eax\n";
+
+    static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+    ImGui::InputTextMultiline("##source", text, IM_ARRAYSIZE(text), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 8), flags);
+
     if (ImGui::Checkbox("HTML5 Ask Leave Site", &html5_ask_leave_site)) {
         sapp_html5_ask_leave_site(html5_ask_leave_site);
     }
     if (ImGui::Button(sapp_is_fullscreen() ? "Switch to windowed" : "Switch to fullscreen")) {
         sapp_toggle_fullscreen();
     }
+    
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
@@ -127,7 +202,7 @@ void frame(void) {
         ImGui::OpenPopup("Really Quit?");
         show_quit_dialog = false;
     }
-
+    ImGui::End();
     // the sokol_gfx draw pass
     sg_begin_default_pass(&pass_action, width, height);
     simgui_render();
