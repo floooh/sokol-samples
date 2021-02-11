@@ -79,7 +79,7 @@ void frame(void) {
     // the sokol_gfx draw pass
     sg_begin_default_pass(&(sg_pass_action){
         .colors[0] = {
-            .action = SG_ACTION_CLEAR, .val = { 0.7f, 0.5f, 0.0f, 1.0f }
+            .action = SG_ACTION_CLEAR, .value = { 0.7f, 0.5f, 0.0f, 1.0f }
         }
     }, sapp_width(), sapp_height());
     snk_render(sapp_width(), sapp_height());
