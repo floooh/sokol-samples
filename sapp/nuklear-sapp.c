@@ -24,6 +24,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 #if defined(_MSC_VER)
 #pragma warning(disable:4996)   // sprintf,fopen,localtime: This function or variable may be unsafe
@@ -103,6 +104,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 /* copied from: https://github.com/Immediate-Mode-UI/Nuklear/blob/master/demo/overview.c */
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 static int
 draw_demo_ui(struct nk_context *ctx)
 {
