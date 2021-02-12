@@ -425,7 +425,7 @@ fips_ide_group(SamplesWithDebugUI)
 fips_begin_app(nuklear-sapp-ui windowed)
     fips_vs_warning_level(3)
     fips_files(nuklear-sapp.c)
-    fips_deps(sokol)
+    fips_deps(sokol dbgui imgui)
 fips_end_app()
 target_compile_definitions(nuklear-sapp-ui PRIVATE)
 
