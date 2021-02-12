@@ -427,7 +427,7 @@ fips_begin_app(nuklear-sapp-ui windowed)
     fips_files(nuklear-sapp.c)
     fips_deps(sokol dbgui imgui)
 fips_end_app()
-target_compile_definitions(nuklear-sapp-ui PRIVATE)
+target_compile_definitions(nuklear-sapp-ui PRIVATE USE_DBG_UI)
 
 fips_ide_group(Samples)
 fips_begin_app(cubemaprt-sapp windowed)

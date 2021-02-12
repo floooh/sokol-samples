@@ -8,8 +8,8 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
+#include "dbgui/dbgui.h"
 
 // include nuklear.h before the sokol_nuklear.h implementation
 #define NK_INCLUDE_FIXED_TYPES
@@ -43,7 +43,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    stm_setup();
+    __dbgui_setup(sapp_sample_count());
 
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
@@ -66,17 +66,21 @@ void frame(void) {
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     snk_render(sapp_width(), sapp_height());
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
+    __dbgui_shutdown();
     snk_shutdown();
     sg_shutdown();
 }
 
 void input(const sapp_event* event) {
-    snk_handle_event(event);
+    if (!__dbgui_event_with_retval(event)) {
+        snk_handle_event(event);
+    }
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
@@ -124,7 +128,7 @@ draw_demo_ui(struct nk_context *ctx)
     if (scale_left) window_flags |= NK_WINDOW_SCALE_LEFT;
     if (minimizable) window_flags |= NK_WINDOW_MINIMIZABLE;
 
-    if (nk_begin(ctx, "Overview", nk_rect(10, 10, 400, 600), window_flags))
+    if (nk_begin(ctx, "Overview", nk_rect(10, 20, 400, 600), window_flags))
     {
         if (show_menu)
         {
