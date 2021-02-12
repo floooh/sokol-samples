@@ -25,6 +25,9 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
+#if defined(_MSC_VER)
+#pragma warning(disable:4996)   // sprintf,fopen,localtime: This function or variable may be unsafe
+#endif
 #include "nuklear/nuklear.h"
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
@@ -128,7 +131,7 @@ draw_demo_ui(struct nk_context *ctx)
     if (scale_left) window_flags |= NK_WINDOW_SCALE_LEFT;
     if (minimizable) window_flags |= NK_WINDOW_MINIMIZABLE;
 
-    if (nk_begin(ctx, "Overview", nk_rect(10, 20, 400, 600), window_flags))
+    if (nk_begin(ctx, "Overview", nk_rect(10, 25, 400, 600), window_flags))
     {
         if (show_menu)
         {
