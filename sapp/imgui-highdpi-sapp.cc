@@ -107,8 +107,8 @@ void frame(void) {
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     ImGui::SameLine();
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
-    ImGui::Text("NOTE:移动终端不支持退出programmaticquit isn't supported on mobile");
-    if (ImGui::Button("SoftQuit")) {
+    ImGui::Text("NOTE:移动终端不支持退出programmatic quit isn't supported on mobile");
+    if (ImGui::Button("Soft Quit")) {
         sapp_request_quit();
     }
     ImGui::SameLine();
