@@ -8,7 +8,10 @@ if (FIPS_CLANG)
     target_compile_options(flextgl PRIVATE -Wno-incompatible-function-pointer-types)
     target_compile_options(flextgl12 PRIVATE -Wno-incompatible-function-pointer-types)
 endif()
-
+if (FIPS_CLANG OR FIPS_GCC)
+    target_compile_options(flextgl PRIVATE -Wno-sign-conversion)
+    target_compile_options(flextgl12 PRIVATE -Wno-sign-conversion)
+endif()
 
 fips_begin_app(clear-glfw cmdline)
     fips_vs_warning_level(3)

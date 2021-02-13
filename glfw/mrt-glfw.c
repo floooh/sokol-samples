@@ -72,9 +72,9 @@ int main() {
     /* a matching pass action with clear colors */
     sg_pass_action offscreen_pass_action = {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .val = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
+            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
+            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
         }
     };
 
@@ -112,8 +112,7 @@ int main() {
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
     sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = SG_RANGE(cube_vertices)
     });
 
     /* index buffer for the cube */
@@ -127,8 +126,7 @@ int main() {
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = SG_RANGE(cube_indices)
     });
 
     /* a shader to render the cube into offscreen MRT render targets */
@@ -172,7 +170,7 @@ int main() {
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                /* offsets are not strictly needed here because the vertex layout 
+                /* offsets are not strictly needed here because the vertex layout
                    is gapless, but this demonstrates that offsetof() can be used
                 */
                 [0] = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -181,26 +179,21 @@ int main() {
         },
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
-        .blend = {
-            .color_attachment_count = 3,
-            .depth_format = SG_PIXELFORMAT_DEPTH
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
-            .sample_count = offscreen_sample_count
-        }
+        .color_count = 3,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = offscreen_sample_count
     });
 
     /* a vertex buffer to render a fullscreen rectangle */
     /* -> FIXME: we should allow bufferless rendering */
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(quad_vertices),
-        .content = quad_vertices,
+        .data = SG_RANGE(quad_vertices)
     });
 
     /* resource bindings to render the fullscreen quad */
@@ -223,9 +216,9 @@ int main() {
             }
         },
         .fs.images = {
-            [0] = { .name="tex0", .type=SG_IMAGETYPE_2D },
-            [1] = { .name="tex1", .type=SG_IMAGETYPE_2D },
-            [2] = { .name="tex2", .type=SG_IMAGETYPE_2D }
+            [0] = { .name="tex0", .image_type=SG_IMAGETYPE_2D },
+            [1] = { .name="tex1", .image_type=SG_IMAGETYPE_2D },
+            [2] = { .name="tex2", .image_type=SG_IMAGETYPE_2D }
         },
         .vs.source =
             "#version 330\n"
@@ -256,7 +249,7 @@ int main() {
             "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
             "}\n"
     });
-    
+
     /* the pipeline object for the fullscreen rectangle */
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
@@ -283,7 +276,7 @@ int main() {
                 "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
                 "  uv = pos;\n"
                 "}\n",
-            .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+            .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
             .fs.source =
                 "#version 330\n"
                 "uniform sampler2D tex;\n"
@@ -301,7 +294,7 @@ int main() {
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
-        .colors = { 
+        .colors = {
             [0].action = SG_ACTION_DONTCARE,
             [1].action = SG_ACTION_DONTCARE,
             [2].action = SG_ACTION_DONTCARE
@@ -314,7 +307,7 @@ int main() {
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    
+
     offscreen_params_t offscreen_params;
     params_t params;
     float rx = 0.0f, ry = 0.0f;
@@ -330,7 +323,7 @@ int main() {
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &offscreen_params, sizeof(offscreen_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -341,7 +334,7 @@ int main() {
         sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &params, sizeof(params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
         sg_draw(0, 4, 1);
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {

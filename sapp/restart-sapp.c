@@ -147,20 +147,18 @@ static void init(void) {
     state.scene.bind.fs_images[0] = sg_alloc_image();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(cube_vertices),
-        .content = cube_vertices,
+        .data = SG_RANGE(cube_vertices),
         .label = "cube-vertices"
     });
 
     state.scene.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(cube_indices),
-        .content = cube_indices,
+        .data = SG_RANGE(cube_indices),
         .label = "cube-indices"
     });
 
     state.scene.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(restart_shader_desc()),
+        .shader = sg_make_shader(restart_shader_desc(sg_query_backend())),
         .layout = {
             .attrs = {
                 [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
@@ -168,12 +166,10 @@ static void init(void) {
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
-        .depth_stencil = {
-            .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
-            .depth_write_enabled = true
-        },
-        .rasterizer = {
-            .cull_mode = SG_CULLMODE_BACK,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
         },
         .label = "cube-pipeline"
     });
@@ -183,7 +179,7 @@ static void init(void) {
     float g = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     float b = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     state.scene.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR,.val = { r, g, b, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR,.value = { r, g, b, 1.0f } }
     };
 
     // initialize libmodplug
@@ -230,9 +226,9 @@ static void fetch_img_callback(const sfetch_response_t* response) {
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .min_filter = SG_FILTER_LINEAR,
                 .mag_filter = SG_FILTER_LINEAR,
-                .content.subimage[0][0] = {
+                .data.subimage[0][0] = {
                     .ptr = pixels,
-                    .size = png_width * png_height * 4,
+                    .size = (size_t)(png_width * png_height * 4),
                 }
             });
             stbi_image_free(pixels);
@@ -241,19 +237,19 @@ static void fetch_img_callback(const sfetch_response_t* response) {
     else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
 
 static void fetch_mod_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.mod.mpf = ModPlug_Load(response->buffer_ptr, response->fetched_size);
+        state.mod.mpf = ModPlug_Load(response->buffer_ptr, (int)response->fetched_size);
     }
     else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
@@ -289,8 +285,8 @@ static void frame(void) {
             /* NOTE: for multi-channel playback, the samples are interleaved
                (e.g. left/right/left/right/...)
             */
-            int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, sizeof(int)*num_samples);
-            int samples_in_buffer = res / sizeof(int);
+            int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, (int)sizeof(int)*num_samples);
+            int samples_in_buffer = res / (int)sizeof(int);
             int i;
             for (i = 0; i < samples_in_buffer; i++) {
                 state.mod.flt_buf[i] = state.mod.int_buf[i] / (float)0x7fffffff;
@@ -341,7 +337,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.scene.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.scene.pip);
     sg_apply_bindings(&state.scene.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sgl_draw();
     sdtx_draw();

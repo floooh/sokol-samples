@@ -10,32 +10,32 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static sg_pipeline pip;
-static sg_bindings bind;
-static sg_pass_action pass_action = {
-    .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.0f, 0.0f, 1.0f } }
+static struct {
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_pass_action pass_action;
+} state = {
+    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
-void draw();
+static void draw();
 
 int main() {
     /* setup WebGL context */
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){0});
     assert(sg_isvalid());
-    
+
     /* a vertex buffer with 3 vertices */
-    float vertices[] = {
+    const float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
+        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices)
     });
 
     /* create a shader */
@@ -61,7 +61,7 @@ int main() {
     });
 
     /* create a pipeline object (default render states are fine for triangle) */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
         .shader = shd,
         .layout = {
@@ -78,10 +78,10 @@ int main() {
 }
 
 /* draw one frame */
-void draw() {
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&bind);
+static void draw() {
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
     sg_end_pass();
     sg_commit();

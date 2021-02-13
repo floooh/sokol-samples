@@ -198,10 +198,7 @@ static void init(void) {
     simgui_setup(&simgui_desc);
 
     state.pass_action.colors[0].action = SG_ACTION_CLEAR;
-    state.pass_action.colors[0].val[0] = 0.0f;
-    state.pass_action.colors[0].val[1] = 0.5f;
-    state.pass_action.colors[0].val[2] = 0.7f;
-    state.pass_action.colors[0].val[3] = 1.0f;
+    state.pass_action.colors[0].value = { 0.0f, 0.5f, 0.7f, 1.0f };
 }
 
 static void event(const sapp_event* e) {

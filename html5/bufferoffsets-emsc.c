@@ -11,11 +11,13 @@
 #include "sokol_gfx.h"
 #include "emsc.h"
 
-static sg_pipeline pip;
-static sg_bindings bind;
-static sg_pass_action pass_action = {
-    .colors = {
-        [0] = { .action=SG_ACTION_CLEAR, .val = { 0.5f, 0.5f, 1.0f, 1.0f } }
+static struct {
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_pass_action pass_action;
+} state = {
+    .pass_action.colors = {
+        [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
     }
 };
 
@@ -31,8 +33,7 @@ int main() {
     emsc_init("#canvas", EMSC_NONE);
 
     /* setup sokol_gfx */
-    sg_desc desc = {0};
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){0});
     assert(sg_isvalid());
 
     /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
@@ -45,20 +46,18 @@ int main() {
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
-        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }        
+        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }
     };
     uint16_t indices[9] = {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices)
     });
-    bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .size = sizeof(indices),
-        .content = indices
+        .data = SG_RANGE(indices)
     });
 
     /* create a shader to render 2D colored shapes */
@@ -84,7 +83,7 @@ int main() {
     });
 
     /* a pipeline state object, default states are fine */
-    pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
@@ -94,23 +93,23 @@ int main() {
             }
         }
     });
-    
+
     emscripten_set_main_loop(draw, 0, 1);
     return 0;
 }
 
 void draw() {
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
+    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_apply_pipeline(state.pip);
     /* render triangle */
-    bind.vertex_buffer_offsets[0] = 0;
-    bind.index_buffer_offset = 0;
-    sg_apply_bindings(&bind);
+    state.bind.vertex_buffer_offsets[0] = 0;
+    state.bind.index_buffer_offset = 0;
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
     /* render quad */
-    bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    bind.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_bindings(&bind);
+    state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
+    state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
+    sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();

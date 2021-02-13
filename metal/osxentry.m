@@ -81,6 +81,7 @@ static id mtk_view_controller;
     #if TARGET_OS_IPHONE
         CGRect mainScreenBounds = [[UIScreen mainScreen] bounds];
         window = [[UIWindow alloc] initWithFrame:mainScreenBounds];
+        (void)window_delegate;
     #else
         window_delegate = [[SokolWindowDelegate alloc] init];
         const NSUInteger style =
@@ -109,7 +110,7 @@ static id mtk_view_controller;
     [mtk_view setDevice: mtl_device];
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
     [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
-    [mtk_view setSampleCount:sample_count];
+    [mtk_view setSampleCount:(NSUInteger)sample_count];
     #if !TARGET_OS_IPHONE
         [window setContentView:mtk_view];
         CGSize drawable_size = { (CGFloat) width, (CGFloat) height };

@@ -55,18 +55,17 @@ void init(void) {
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices,
+        .data = SG_RANGE(vertices)
     });
 
     /* initialize mipmap content, different colors and checkboard pattern */
-    sg_image_content img_content;
+    sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
     bool even_odd = false;
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
-        img_content.subimage[0][mip_index].ptr = ptr;
-        img_content.subimage[0][mip_index].size = dim * dim * 4;
+        img_data.subimage[0][mip_index].ptr = ptr;
+        img_data.subimage[0][mip_index].size = (size_t) (dim * dim * 4);
         for (int y = 0; y < dim; y++) {
             for (int x = 0; x < dim; x++) {
                 *ptr++ = even_odd ? mip_colors[mip_index] : 0xFF000000;
@@ -83,7 +82,7 @@ void init(void) {
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .mag_filter = SG_FILTER_LINEAR,
-        .content = img_content
+        .data = img_data
     };
     sg_filter min_filter[] = {
         SG_FILTER_NEAREST_MIPMAP_NEAREST,
@@ -104,7 +103,7 @@ void init(void) {
     img_desc.min_lod = 0.0f;
     img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
     for (int i = 8; i < 12; i++) {
-        img_desc.max_anisotropy = 1<<(i-7);
+        img_desc.max_anisotropy = (uint32_t) (1<<(i-7));
         state.img[i] = sg_make_image(&img_desc);
     }
 
@@ -116,13 +115,13 @@ void init(void) {
                 [ATTR_vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
-        .shader = sg_make_shader(mipmap_shader_desc()),
+        .shader = sg_make_shader(mipmap_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 }
 
 void frame(void) {
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)sapp_width()/(float)sapp_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(90.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
@@ -142,7 +141,7 @@ void frame(void) {
 
         bind.fs_images[SLOT_tex] = state.img[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

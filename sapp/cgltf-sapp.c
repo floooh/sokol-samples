@@ -244,14 +244,14 @@ static void init(void) {
 
     // normal background color, and a "load failed" background color
     state.pass_actions.ok = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={0.0f, 0.569f, 0.918f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.569f, 0.918f, 1.0f} }
     };
     state.pass_actions.failed = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .val={1.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .action=SG_ACTION_CLEAR, .value={1.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     // create shaders
-    state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc());
+    state.shaders.metallic = sg_make_shader(cgltf_metallic_shader_desc(sg_query_backend()));
     //state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
 
     // setup the point light
@@ -277,10 +277,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF000000;
@@ -289,10 +286,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF0000FF;
@@ -301,10 +295,7 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .content.subimage[0][0] = {
-            .ptr = pixels,
-            .size = sizeof(pixels)
-        }
+        .data.subimage[0][0] = SG_RANGE(pixels),
     });
 }
 
@@ -349,8 +340,8 @@ static void frame(void) {
                 if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &vs_params, sizeof(vs_params));
-                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &state.point_light, sizeof(state.point_light));
+                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &SG_RANGE(state.point_light));
                 if (mat->is_metallic) {
                     sg_image base_color_tex = state.scene.images[mat->metallic.images.base_color];
                     sg_image metallic_roughness_tex = state.scene.images[mat->metallic.images.metallic_roughness];
@@ -377,10 +368,7 @@ static void frame(void) {
                     bind.fs_images[SLOT_normal_texture] = normal_tex;
                     bind.fs_images[SLOT_occlusion_texture] = occlusion_tex;
                     bind.fs_images[SLOT_emissive_texture] = emissive_tex;
-                    sg_apply_uniforms(SG_SHADERSTAGE_FS,
-                        SLOT_metallic_params,
-                        &mat->metallic.fs_params,
-                        sizeof(metallic_params_t));
+                    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &SG_RANGE(mat->metallic.fs_params));
                 }
                 else {
                 /*
@@ -717,7 +705,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
     state.scene.num_meshes = (int) gltf->meshes_count;
     for (cgltf_size mesh_index = 0; mesh_index < gltf->meshes_count; mesh_index++) {
         const cgltf_mesh* gltf_mesh = &gltf->meshes[mesh_index];
-        if ((gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
+        if (((int)gltf_mesh->primitives_count + state.scene.num_primitives) > SCENE_MAX_PRIMITIVES) {
             state.failed = true;
             return;
         }
@@ -779,8 +767,10 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
             assert((p->offset + p->size) <= num_bytes);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
                 .type = p->type,
-                .size = p->size,
-                .content = bytes + p->offset
+                .data = {
+                    .ptr = bytes + p->offset,
+                    .size = (size_t)p->size,
+                }
             });
         }
     }
@@ -791,7 +781,7 @@ static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t*
     for (int i = 0; i < state.scene.num_images; i++) {
         image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            sg_image_desc img_desc = sbasisu_transcode(bytes, num_bytes);
+            sg_image_desc img_desc = sbasisu_transcode(bytes, (uint32_t)num_bytes);
             state.scene.images[i] = sg_make_image(&img_desc);
             sbasisu_free(&img_desc);
         }
@@ -958,19 +948,19 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
             .shader = is_metallic ? state.shaders.metallic : state.shaders.specular,
             .primitive_type = pip_params.prim_type,
             .index_type = pip_params.index_type,
-            .depth_stencil = {
-                .depth_write_enabled = !pip_params.alpha,
-                .depth_compare_func = SG_COMPAREFUNC_LESS_EQUAL,
+            .cull_mode = SG_CULLMODE_BACK,
+            .face_winding = SG_FACEWINDING_CCW,
+            .depth = {
+                .write_enabled = !pip_params.alpha,
+                .compare = SG_COMPAREFUNC_LESS_EQUAL,
             },
-            .blend = {
-                .enabled = pip_params.alpha,
-                .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
-                .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
-                .color_write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
-            },
-            .rasterizer = {
-                .cull_mode = SG_CULLMODE_BACK,
-                .face_winding = SG_FACEWINDING_CCW,
+            .colors[0] = {
+                .write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
+                .blend = {
+                    .enabled = pip_params.alpha,
+                    .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
+                    .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
+                },
             }
         });
         state.scene.num_pipelines++;

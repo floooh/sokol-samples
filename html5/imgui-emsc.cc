@@ -45,7 +45,7 @@ int main() {
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
-    sg_setup((sg_desc){ });
+    sg_setup(sg_desc{});
     assert(sg_isvalid());
 
     // setup the ImGui environment
@@ -163,9 +163,9 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .content.subimage[0][0] = {
+        .data.subimage[0][0] = {
             .ptr = font_pixels,
-            .size = font_width * font_height * 4
+            .size = size_t(font_width * font_height * 4)
         }
     });
 
@@ -194,7 +194,7 @@ int main() {
             "    uv = texcoord0;\n"
             "    color = color0;\n"
             "}\n",
-        .fs.images[0] = { .name="tex", .type=SG_IMAGETYPE_2D },
+        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
         .fs.source =
             "precision mediump float;"
             "uniform sampler2D tex;\n"
@@ -206,7 +206,7 @@ int main() {
     });
 
     // pipeline object for imgui rendering
-    pip = sg_make_pipeline({
+    pip = sg_make_pipeline((sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
@@ -217,17 +217,20 @@ int main() {
         },
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
-        .blend = {
-            .enabled = true,
-            .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
-            .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
-            .color_write_mask = SG_COLORMASK_RGB
+        .colors[0] = {
+            .write_mask = SG_COLORMASK_RGB,
+            .blend = {
+                .enabled = true,
+                .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+                .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            }
         }
+
     });
 
     // initial clear color
     pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .val = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
     emscripten_set_main_loop(draw, 0, 1);
@@ -262,7 +265,7 @@ void draw() {
     static float f = 0.0f;
     ImGui::Text("Hello, world!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    ImGui::ColorEdit3("clear color", &pass_action.colors[0].val[0]);
+    ImGui::ColorEdit3("clear color", &pass_action.colors[0].value.r);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -301,15 +304,15 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
         // append vertices and indices to buffers, record start offsets in binding struct
-        const int vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const int idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], &cl->VtxBuffer.front(), vtx_size);
-        const int ib_offset = sg_append_buffer(bind.index_buffer, &cl->IdxBuffer.front(), idx_size);
+        const size_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const size_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const int vb_offset = sg_append_buffer(bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
+        const int ib_offset = sg_append_buffer(bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
         /* don't render anything if the buffer is in overflow state (this is also
             checked internally in sokol_gfx, draw calls that attempt from
             overflowed buffers will be silently dropped)

@@ -129,7 +129,7 @@ static void event(const sapp_event* ev) {
             break;
         case SAPP_EVENTTYPE_CHAR:
             {
-                char txt[2] = { ev->char_code & 255, 0 };
+                char txt[2] = { (char)(ev->char_code & 255), 0 };
                 mu_input_text(&state.mu_ctx, txt);
             }
             break;
@@ -165,7 +165,7 @@ void frame(void) {
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
                 .action = SG_ACTION_CLEAR,
-                .val = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
+                .value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         }, sapp_width(), sapp_height());
     r_draw();
@@ -405,7 +405,7 @@ static void r_init(void) {
     uint32_t* rgba8_pixels = (uint32_t*) malloc(rgba8_size);
     for (int y = 0; y < ATLAS_HEIGHT; y++) {
         for (int x = 0; x < ATLAS_WIDTH; x++) {
-            uint32_t index = y*ATLAS_WIDTH + x;
+            int index = y*ATLAS_WIDTH + x;
             rgba8_pixels[index] = 0x00FFFFFF | ((uint32_t)atlas_texture[index]<<24);
         }
     }
@@ -417,7 +417,7 @@ static void r_init(void) {
         */
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
-        .content = {
+        .data = {
             .subimage[0][0] = {
                 .ptr = rgba8_pixels,
                 .size = rgba8_size
@@ -425,7 +425,7 @@ static void r_init(void) {
         }
     });
     pip = sgl_make_pipeline(&(sg_pipeline_desc){
-        .blend = {
+        .colors[0].blend = {
             .enabled = true,
             .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA

@@ -2,8 +2,8 @@
 
 @vs vs
 uniform vs_params {
-    float draw_mode;
     mat4 mvp;
+    float draw_mode;
 };
 
 layout(location=0) in vec4 position;

@@ -41,10 +41,12 @@ static uint32_t mip_colors[9] = {
     0xFFA000FF,     /* purple */
 };
 
-static sg_pipeline pip;
-static sg_bindings bind;
-static sg_image img[12];
-static float r;
+static struct {
+    sg_pipeline pip;
+    sg_bindings bind;
+    sg_image img[12];
+    float r;
+} state;
 
 static void draw();
 
@@ -65,19 +67,18 @@ int main() {
         -1.0, +1.0, 0.0,  0.0, 1.0,
         +1.0, +1.0, 0.0,  1.0, 1.0,
     };
-    bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices)
     });
 
     /* initialize mipmap content, different colors and checkboard pattern */
-    sg_image_content img_content;
+    sg_image_data img_data;
     uint32_t* ptr = pixels.mip0;
     bool even_odd = false;
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
-        img_content.subimage[0][mip_index].ptr = ptr;
-        img_content.subimage[0][mip_index].size = dim * dim * 4;
+        img_data.subimage[0][mip_index].ptr = ptr;
+        img_data.subimage[0][mip_index].size = (size_t) (dim * dim * 4);
         for (int y = 0; y < dim; y++) {
             for (int x = 0; x < dim; x++) {
                 *ptr++ = even_odd ? mip_colors[mip_index] : 0xFF000000;
@@ -94,7 +95,7 @@ int main() {
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .mag_filter = SG_FILTER_LINEAR,
-        .content = img_content
+        .data = img_data
     };
     sg_filter min_filter[] = {
         SG_FILTER_NEAREST_MIPMAP_NEAREST,
@@ -104,19 +105,19 @@ int main() {
     };
     for (int i = 0; i < 4; i++) {
         img_desc.min_filter = min_filter[i];
-        img[i] = sg_make_image(&img_desc);
+        state.img[i] = sg_make_image(&img_desc);
     }
     img_desc.min_lod = 2.0f;
     img_desc.max_lod = 4.0f;
     for (int i = 4; i < 8; i++) {
         img_desc.min_filter = min_filter[i-4];
-        img[i] = sg_make_image(&img_desc);
+        state.img[i] = sg_make_image(&img_desc);
     }
     img_desc.min_lod = 0.0f;
     img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
     for (int i = 8; i < 12; i++) {
         img_desc.max_anisotropy = 1<<(i-7);
-        img[i] = sg_make_image(&img_desc);
+        state.img[i] = sg_make_image(&img_desc);
     }
 
     /* shader */
@@ -143,7 +144,7 @@ int main() {
                 "}\n"
         },
         .fs = {
-            .images[0] = { .name="tex", .type = SG_IMAGETYPE_2D },
+            .images[0] = { .name="tex", .image_type = SG_IMAGETYPE_2D },
             .source =
                 "precision mediump float;"
                 "uniform sampler2D tex;"
@@ -155,7 +156,7 @@ int main() {
     });
 
     /* pipeline state */
-    pip = sg_make_pipeline(&(sg_pipeline_desc) {
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
@@ -172,26 +173,27 @@ int main() {
 }
 
 void draw() {
+    state.r += 0.1f;
+
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     vs_params_t vs_params;
-    r += 0.1f;
-    hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
     sg_begin_default_pass(&(sg_pass_action){0}, emsc_width(), emsc_height());
-    sg_apply_pipeline(pip);
+    sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        bind.fs_images[0] = img[i];
-        sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &vs_params, sizeof(vs_params));
+        state.bind.fs_images[0] = state.img[i];
+        sg_apply_bindings(&state.bind);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

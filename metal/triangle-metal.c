@@ -24,8 +24,7 @@ static void init(void) {
         -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .size = sizeof(vertices),
-        .content = vertices
+        .data = SG_RANGE(vertices)
     });
 
     /* a shader pair, compiled from source code */
