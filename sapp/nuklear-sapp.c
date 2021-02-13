@@ -21,6 +21,8 @@
 #define NK_INCLUDE_STANDARD_VARARGS
 #define NK_IMPLEMENTATION
 
+// NOTE: in real-world code it makes sense to include the nuklear.h implementation
+// in a separate .c file and do all the "warning hygiene" there.
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -39,10 +41,6 @@
 
 #define SOKOL_NUKLEAR_IMPL
 #include "sokol_nuklear.h"
-
-// needed by the Nuklear sample UI code
-#include <time.h>
-#include <limits.h>
 
 static int draw_demo_ui(struct nk_context* ctx);
 
@@ -111,6 +109,10 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
+
+#include <time.h>
+#include <limits.h>
+
 static int
 draw_demo_ui(struct nk_context *ctx)
 {
