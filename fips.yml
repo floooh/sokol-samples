@@ -21,4 +21,3 @@ imports:
     git: https://github.com/fips-libs/fips-utils
   fips-dawn:
     git: https://github.com/fips-libs/fips-dawn
-
