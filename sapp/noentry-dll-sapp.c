@@ -9,9 +9,6 @@
 //
 //  This sample also demonstrates the optional user-data callbacks.
 //------------------------------------------------------------------------------
-#if !defined(_WIN32)
-#error "noentry-dll-sapp sample currently only implemented for Windows"
-#endif
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -19,9 +16,11 @@
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_glue.h"
-#include <Windows.h>    /* WinMain */
 #include <stdlib.h>     /* calloc, free */
 #include "noentry-dll-sapp.glsl.h"
+#if defined(_WIN32)
+#include <Windows.h>
+#endif
 
 typedef struct {
     float rx, ry;
@@ -35,8 +34,12 @@ void frame(void* user_data);
 void cleanup(void);
 
 /* don't provide a sokol_main() callback, instead the platform's standard main() function */
+#if defined(_WIN32)
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
+#else
+int main() {
+#endif
     app_state_t* state = calloc(1, sizeof(app_state_t));
     sapp_run(&(sapp_desc){
         .user_data = state,
