@@ -674,7 +674,7 @@ fips_begin_app(noentry-sapp windowed)
 fips_end_app()
 endif()
 
-if (FIPS_WINDOWS OR FIPS_MACOS OR FIPS_LINUX)
+if ((FIPS_WINDOWS OR FIPS_MACOS OR FIPS_LINUX) AND NOT FIPS_UWP)
 fips_ide_group(Samples)
 fips_begin_app(noentry-dll-sapp windowed)
     fips_vs_warning_level(3)
