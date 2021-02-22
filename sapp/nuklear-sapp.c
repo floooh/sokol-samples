@@ -45,7 +45,7 @@
 static int draw_demo_ui(struct nk_context* ctx);
 
 void init(void) {
-    // setup sokol-gfx, sokol-time and sokol-imgui
+    // setup sokol-gfx, sokol-time and sokol-nuklear
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
