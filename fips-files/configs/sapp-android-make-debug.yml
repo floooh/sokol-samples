@@ -1,5 +1,5 @@
 ---
-platform: android 
+platform: android
 generator: Unix Makefiles
 build_tool: make
 build_type: Debug
@@ -7,4 +7,4 @@ cmake-toolchain: android.toolchain.cmake
 defines:
     USE_SOKOL_APP: ON
     ANDROID_ABI: armeabi-v7a
-    ANDROID_PLATFORM: android-21
+    ANDROID_PLATFORM: android-28
