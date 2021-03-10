@@ -1,9 +1,17 @@
 ---
-platform: win64 
+platform: win64
 generator-platform: x64
 build_tool: vscode_cmake
 build_type: Debug
 vscode_additional_defines: [ '__EMSCRIPTEN__', 'SOKOL_IMPL', 'SOKOL_D3D11', 'SOKOL_METAL', 'SOKOL_GLCORE33', 'SOKOL_GLES3', 'SOKOL_GLES2' ]
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-imgui
+    - fips-cimgui
 defines:
     USE_SOKOL_APP: ON
     SOKOL_USE_D3D11: ON

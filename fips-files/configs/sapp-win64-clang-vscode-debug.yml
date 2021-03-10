@@ -1,8 +1,16 @@
 ---
-platform: win64 
+platform: win64
 generator: Ninja
 build_tool: vscode_ninja
 build_type: Debug
 cmake-toolchain: windows-clang.cmake
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-imgui
+    - fips-cimgui
 defines:
     USE_SOKOL_APP: ON

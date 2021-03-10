@@ -3,6 +3,14 @@ platform: osx
 generator: Ninja
 build_tool: vscode_cmake
 build_type: Debug
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-imgui
+    - fips-cimgui
 defines:
     USE_SOKOL_APP: ON
     SOKOL_USE_METAL: ON
