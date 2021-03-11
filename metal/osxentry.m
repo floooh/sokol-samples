@@ -209,7 +209,7 @@ static id mtk_view_controller;
 }
 
 #if !TARGET_OS_IPHONE
-- (BOOL)canBecomeKey {
+- (BOOL)canBecomeKeyView {
     return YES;
 }
 
