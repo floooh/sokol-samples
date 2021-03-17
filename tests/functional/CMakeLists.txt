@@ -1,5 +1,5 @@
 fips_begin_app(sokol-test cmdline)
-    fips_vs_warning_level(4)
+    fips_vs_warning_level(3)
     fips_files(
         sokol_args_test.c
         sokol_audio_test.c
@@ -11,5 +11,5 @@ fips_begin_app(sokol-test cmdline)
         sokol_test.c
     )
     fips_dir(assets)
-    fipsutil_copy(sokol-fetch-test.yml)
+    fipsutil_copy(sokol_fetch_files.yml)
 fips_end_app()
