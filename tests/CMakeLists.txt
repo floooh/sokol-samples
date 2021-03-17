@@ -1,25 +1,6 @@
 sokol_config()
-
-if (NOT FIPS_ANDROID)
-fips_begin_app(sokol-test cmdline)
-    fips_vs_warning_level(3)
-    fips_files(
-        sokol-args-test.c
-        sokol-audio-test.c
-        sokol-gfx-test.c
-        sokol-gl-test.c
-        sokol-fetch-test.c
-        sokol-debugtext-test.c
-        sokol-shape-test.c
-        sokol-test.c
-    )
-    fips_dir(assets)
-    fipsutil_copy(sokol-fetch-test.yml)
-    if (FIPS_LINUX)
-        fips_libs(m)
-    endif()
-fips_end_app()
-endif()
+include_directories(common)
+add_subdirectory(functional)
 
 if (FIPS_OSX)
     # on Apple with Metal, must compile as Objective-C++

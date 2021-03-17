@@ -19,7 +19,7 @@ typedef struct {
     int a, b, c;
 } userdata_t;
 
-static const _sfetch_item_t zeroed_item;
+static const _sfetch_item_t zeroed_item = {0};
 
 #ifdef _WIN32
 #include <windows.h>
@@ -259,7 +259,7 @@ UTEST(sokol_fetch, ring_wrap_around) {
         _sfetch_ring_enqueue(&ring, _sfetch_make_id(1, i+1));
     }
     T(_sfetch_ring_full(&ring));
-    for (uint32_t i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         T(_sfetch_ring_dequeue(&ring) == _sfetch_make_id(1, (i + 61)));
     }
     T(_sfetch_ring_empty(&ring));

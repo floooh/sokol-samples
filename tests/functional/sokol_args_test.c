@@ -252,4 +252,3 @@ UTEST(sokol_args, escape_sequence) {
     TSTR(sargs_value_at(2), "val2\tval3");
     sargs_shutdown();
 }
-
