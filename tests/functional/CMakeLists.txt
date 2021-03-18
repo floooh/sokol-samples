@@ -1,3 +1,5 @@
+if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
+
 fips_begin_app(sokol-test cmdline)
     fips_vs_warning_level(3)
     fips_files(
@@ -14,3 +16,5 @@ fips_begin_app(sokol-test cmdline)
     fipsutil_copy(sokol_fetch_files.yml)
     fips_deps(m)
 fips_end_app()
+
+endif()

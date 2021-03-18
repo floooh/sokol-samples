@@ -21,6 +21,8 @@ macro(add_system_libs)
 endmacro()
 
 # test compiling the implementations as C/ObjC
+if (NOT FIPS_UWP)
+
 fips_begin_app(sokol_compiletest_c cmdline)
     fips_vs_warning_level(4)
     fips_files(
@@ -48,6 +50,7 @@ fips_end_app()
 if (FIPS_OSX)
     target_compile_options(sokol_compiletest_c PUBLIC -x objective-c)
 endif()
+endif() # FIPS_UWP
 
 # test compiling implementations as C++/ObjC++
 fips_begin_app(sokol_compiletest_cc cmdline)
