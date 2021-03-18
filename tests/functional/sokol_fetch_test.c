@@ -28,7 +28,7 @@ static void sleep_ms(int ms) {
 }
 #else
 #include <unistd.h>
-static void sleep_ms(int ms) {
+static void sleep_ms(uint32_t ms) {
     usleep(ms * 1000);
 }
 #endif
@@ -741,7 +741,7 @@ UTEST(sokol_fetch, load_channel) {
         .num_channels = LOAD_CHANNEL_NUM_CHANNELS
     });
     sfetch_handle_t h[LOAD_CHANNEL_NUM_CHANNELS];
-    for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
+    for (uint32_t chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
         h[chn] = sfetch_send(&(sfetch_request_t){
             .path = "comsi.s3m",
             .channel = chn,

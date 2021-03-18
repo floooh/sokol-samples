@@ -8,6 +8,7 @@
 #endif
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 #include <stdlib.h>     // malloc/free
 #include "fontstash/fontstash.h"
