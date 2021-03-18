@@ -23,7 +23,7 @@ endmacro()
 # test compiling the implementations as C/ObjC
 if (NOT FIPS_UWP)
 
-fips_begin_app(sokol_compiletest_c cmdline)
+fips_begin_app(sokol_compiletest_c windowed)
     fips_vs_warning_level(4)
     fips_files(
         sokol_gfx.c
@@ -53,7 +53,7 @@ endif()
 endif() # FIPS_UWP
 
 # test compiling implementations as C++/ObjC++
-fips_begin_app(sokol_compiletest_cc cmdline)
+fips_begin_app(sokol_compiletest_cc windowed)
     fips_vs_warning_level(4)
     fips_files(
         sokol_gfx.cc
