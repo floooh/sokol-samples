@@ -27,7 +27,7 @@ fips_begin_app(sokol_compiletest_c cmdline)
         sokol_gfx.c
         sokol_glue.c
         sokol_time.c
-        sokoL_args.c
+        sokol_args.c
         sokol_audio.c
         sokol_debugtext.c
         sokol_gl.c
