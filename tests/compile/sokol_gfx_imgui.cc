@@ -1,15 +1,11 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "imgui.h"
-#define SOKOL_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_IMPL
 #include "sokol_gfx_imgui.h"
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
-    sg_imgui_init({ });
-    return { };
+void use_gfx_imgui_impl() {
+    sg_imgui_init({});
 }
-
 

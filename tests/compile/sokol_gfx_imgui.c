@@ -6,15 +6,10 @@
 #pragma warning(disable:4214) // nonstandard extension used: bit field types other than int
 #endif
 #include "cimgui/cimgui.h"
-#define SOKOL_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_IMPL
 #include "sokol_gfx_imgui.h"
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+void use_gfx_imgui_impl(void) {
     sg_imgui_init(&(sg_imgui_t){0});
-    return (sapp_desc){0};
 }
-
-

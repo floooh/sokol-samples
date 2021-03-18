@@ -9,11 +9,7 @@
 #define SOKOL_IMPL
 #include "sokol_imgui.h"
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+void use_imgui_impl(void) {
     simgui_setup(&(simgui_desc_t){0});
-    return (sapp_desc){0};
 }
-
 

@@ -1,6 +1,6 @@
 #define SOKOL_IMPL
 #include "sokol_fetch.h"
 
-int main() {
+void use_fetch_impl(void) {
     sfetch_setup(&(sfetch_desc_t){0});
 }

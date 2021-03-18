@@ -1,7 +1,6 @@
 #define SOKOL_IMPL
 #include "sokol_args.h"
 
-int main() {
-    sargs_setup({ });
-    return 0;
+void use_args_impl() {
+    sargs_setup({});
 }

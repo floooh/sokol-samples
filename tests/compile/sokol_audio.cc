@@ -1,7 +1,6 @@
 #define SOKOL_IMPL
 #include "sokol_audio.h"
 
-int main() {
-    saudio_setup({ });
-    return 0;
+void use_audio_impl() {
+    saudio_setup({});
 }

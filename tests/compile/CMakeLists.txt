@@ -1,13 +1,3 @@
-# separate implementation libraries to make sure the impls don't add 'header pollution'
-fips_begin_lib(impl_sokol_app_gfx)
-    fips_files(impl_sokol_app_gfx.c)
-fips_end_lib()
-
-fips_begin_lib(impl_sokol_gl)
-    fips_files(impl_sokol_gl.c)
-    fips_deps(impl_sokol_app_gfx)
-fips_end_lib()
-
 macro(add_system_libs)
     if (FIPS_IOS)
         fips_frameworks_osx(UIKit AudioToolbox AVFoundation)
@@ -30,63 +20,59 @@ macro(add_system_libs)
     endif()
 endmacro()
 
-# create a C and C++ (or ObjC and ObjC++) exe target
-macro(compile_test name)
-    if (NOT FIPS_UWP)
-        fips_begin_app(${name}_c cmdline)
-            fips_vs_warning_level(4)
-            fips_files(${name}.c)
-            add_system_libs()
-            sokol_shader(shader.glsl ${slang})
-        fips_end_app()
+# test compiling the implementations as C/ObjC
+fips_begin_app(sokol_compiletest_c cmdline)
+    fips_vs_warning_level(4)
+    fips_files(
+        sokol_gfx.c
+        sokol_glue.c
+        sokol_time.c
+        sokoL_args.c
+        sokol_audio.c
+        sokol_debugtext.c
+        sokol_gl.c
+        sokol_fontstash.c
+        sokol_imgui.c
+        sokol_gfx_imgui.c
+        sokol_shape.c
+        sokol_nuklear.c
+        sokol_main.c
+    )
+    if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
+        fips_files(sokol_fetch.c)
     endif()
-    fips_begin_app(${name}_cc cmdline)
-        fips_vs_warning_level(4)
-        fips_files(${name}.cc)
-        add_system_libs()
-        sokol_shader(shader.glsl ${slang})
-    fips_end_app()
-    if (FIPS_OSX)
-        target_compile_options(${name}_c -ObjC)
-        target_compile_options(${name}_cc -ObjC++)
-    endif()
-endmacro()
-
-macro(addlib name lib)
-    if (NOT FIPS_UWP)
-        target_link_libraries(${name}_c ${lib})
-    endif()
-    target_link_libraries(${name}_cc ${lib})
-endmacro()
-
-compile_test(sokol_gfx)
-compile_test(sokol_glue)
-compile_test(sokol_time)
-compile_test(sokol_args)
-compile_test(sokol_audio)
-if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
-    compile_test(sokol_fetch)
+    sokol_shader(shader.glsl ${slang})
+    fips_deps(cimgui)
+    add_system_libs()
+fips_end_app()
+if (FIPS_OSX)
+    target_compile_options(sokol_compiletest_c -ObjC)
 endif()
 
-compile_test(sokol_debugtext)
-addlib(sokol_debugtext impl_sokol_app_gfx)
-
-compile_test(sokol_fontstash)
-addlib(sokol_fontstash impl_sokol_gl)
-
-compile_test(sokol_gl)
-addlib(sokol_gl impl_sokol_app_gfx)
-
-compile_test(sokol_imgui)
-addlib(sokol_imgui impl_sokol_app_gfx)
-addlib(sokol_imgui cimgui)
-
-compile_test(sokol_gfx_imgui)
-addlib(sokol_gfx_imgui impl_sokol_app_gfx)
-addlib(sokol_gfx_imgui cimgui)
-
-compile_test(sokol_shape)
-addlib(sokol_shape impl_sokol_app_gfx)
-
-compile_test(sokol_nuklear)
-addlib(sokol_nuklear impl_sokol_app_gfx)
+# test compiling implementations as C++/ObjC++
+fips_begin_app(sokol_compiletest_cc cmdline)
+    fips_vs_warning_level(4)
+    fips_files(
+        sokol_gfx.cc
+        sokol_glue.cc
+        sokol_time.cc
+        sokol_args.cc
+        sokol_audio.cc
+        sokol_debugtext.cc
+        sokol_gl.cc
+        sokol_fontstash.cc
+        sokol_imgui.cc
+        sokol_gfx_imgui.cc
+        sokol_shape.cc
+        sokol_main.cc
+    )
+    if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
+        fips_files(sokol_fetch.cc)
+    endif()
+    sokol_shader(shader.glsl ${slang})
+    fips_deps(imgui)
+    add_system_libs()
+fips_end_app()
+if (FIPS_OSX)
+    target_compile_options(sokol_compiletest_cc -ObjC++)
+endif()

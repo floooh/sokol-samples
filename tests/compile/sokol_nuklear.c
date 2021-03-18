@@ -35,12 +35,6 @@
 #define SOKOL_IMPL
 #include "sokol_nuklear.h"
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+void use_nuklear_impl(void) {
     snk_setup(&(snk_desc_t){0});
-    return (sapp_desc){0};
 }
-
-
-
