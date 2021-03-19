@@ -57,6 +57,7 @@ endif() # FIPS_UWP
 fips_begin_app(sokol_compiletest_cc windowed)
     fips_vs_warning_level(4)
     fips_files(
+        sokol_app.cc
         sokol_gfx.cc
         sokol_glue.cc
         sokol_time.cc
