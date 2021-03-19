@@ -2,12 +2,11 @@
 //  clear-glfw.c
 //  Simple draw loop, clear default framebuffer.
 //------------------------------------------------------------------------------
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 int main() {
 
@@ -23,7 +22,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Clear GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx */
     sg_desc desc = {0};

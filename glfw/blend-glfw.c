@@ -5,12 +5,11 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -38,7 +37,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Blend GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx (need to increase pipeline pool size) */
     sg_desc desc = {

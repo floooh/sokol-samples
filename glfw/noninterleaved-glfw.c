@@ -9,12 +9,11 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 /* a uniform block with a model-view-projection matrix */
 typedef struct {
@@ -35,7 +34,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Non-Interleaved Vertex Data GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx */
     sg_desc desc = {0};

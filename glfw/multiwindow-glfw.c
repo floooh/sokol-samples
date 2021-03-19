@@ -7,12 +7,11 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 /* different clear colors for 3 windows */
 sg_pass_action pass_actions[3] = {
@@ -50,7 +49,6 @@ int main() {
     glfwSetWindowPos(w[2], 40+WIDTH/2, 40+HEIGHT);
     glfwMakeContextCurrent(w[0]);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol-gfx */
     sg_setup(&(sg_desc) {0});

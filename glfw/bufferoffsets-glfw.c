@@ -3,12 +3,11 @@
 //  Render separate geometries in vertex- and index-buffers with
 //  buffer offsets.
 //------------------------------------------------------------------------------
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 typedef struct {
     float x, y, r, g, b;
@@ -28,7 +27,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Buffer Offsets GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -46,7 +44,7 @@ int main() {
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
-        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }        
+        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }
     };
     uint16_t indices[9] = {
         0, 1, 2,

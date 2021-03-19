@@ -26,6 +26,7 @@ if (NOT FIPS_UWP)
 fips_begin_app(sokol_compiletest_c windowed)
     fips_vs_warning_level(4)
     fips_files(
+        sokol_app.c
         sokol_gfx.c
         sokol_glue.c
         sokol_time.c

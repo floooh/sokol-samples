@@ -2,12 +2,11 @@
 //  quad-glfw.c
 //  Indexed drawing, explicit vertex attr locations.
 //------------------------------------------------------------------------------
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 int main() {
 
@@ -23,7 +22,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Quad GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx */
     sg_desc desc = {0};
@@ -36,7 +34,7 @@ int main() {
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,
     };
     sg_buffer_desc vbuf_desc = {
         .data = SG_RANGE(vertices)
@@ -46,7 +44,7 @@ int main() {
     /* create an index buffer */
     uint16_t indices[] = {
         0, 1, 2,    // first triangle
-        0, 2, 3,    // second triangle        
+        0, 2, 3,    // second triangle
     };
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
@@ -79,7 +77,7 @@ int main() {
             "  frag_color = color;\n"
             "}\n"
     });
-    
+
     /* create a pipeline object (default render state is fine) */
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
