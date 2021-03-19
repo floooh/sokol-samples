@@ -301,8 +301,8 @@ static void channel_worker(_sfetch_t* ctx, uint32_t slot_id) {
 UTEST(sokol_fetch, channel_init_discard) {
     num_processed_items = 0;
     _sfetch_channel_t chn = {0};
-    const int num_slots = 12;
-    const int num_lanes = 64;
+    const uint32_t num_slots = 12;
+    const uint32_t num_lanes = 64;
     _sfetch_channel_init(&chn, 0, num_slots, num_lanes, channel_worker);
     T(chn.valid);
     T(_sfetch_ring_full(&chn.free_lanes));
