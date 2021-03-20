@@ -5,6 +5,7 @@
 #if defined(_MSC_VER )
 #pragma warning(disable:4996)   // strncpy use in fontstash.h
 #pragma warning(disable:4505)   // unreferenced local function has been removed
+#pragma warning(disable:4100)   // unreferenced formal parameter
 #endif
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunused-function"
