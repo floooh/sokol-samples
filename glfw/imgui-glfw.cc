@@ -4,7 +4,6 @@
 //  texture or custom font support).
 //------------------------------------------------------------------------------
 #include "imgui.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
@@ -43,7 +42,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(Width, Height, "Sokol+ImGui+GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     // GLFW to ImGui input forwarding
     glfwSetMouseButtonCallback(w, [](GLFWwindow*, int btn, int action, int /*mods*/) {

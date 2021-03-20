@@ -19,7 +19,7 @@ typedef struct {
     int a, b, c;
 } userdata_t;
 
-static const _sfetch_item_t zeroed_item;
+static const _sfetch_item_t zeroed_item = {0};
 
 #ifdef _WIN32
 #include <windows.h>
@@ -28,7 +28,7 @@ static void sleep_ms(int ms) {
 }
 #else
 #include <unistd.h>
-static void sleep_ms(int ms) {
+static void sleep_ms(uint32_t ms) {
     usleep(ms * 1000);
 }
 #endif
@@ -259,7 +259,7 @@ UTEST(sokol_fetch, ring_wrap_around) {
         _sfetch_ring_enqueue(&ring, _sfetch_make_id(1, i+1));
     }
     T(_sfetch_ring_full(&ring));
-    for (uint32_t i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         T(_sfetch_ring_dequeue(&ring) == _sfetch_make_id(1, (i + 61)));
     }
     T(_sfetch_ring_empty(&ring));
@@ -301,8 +301,8 @@ static void channel_worker(_sfetch_t* ctx, uint32_t slot_id) {
 UTEST(sokol_fetch, channel_init_discard) {
     num_processed_items = 0;
     _sfetch_channel_t chn = {0};
-    const int num_slots = 12;
-    const int num_lanes = 64;
+    const uint32_t num_slots = 12;
+    const uint32_t num_lanes = 64;
     _sfetch_channel_init(&chn, 0, num_slots, num_lanes, channel_worker);
     T(chn.valid);
     T(_sfetch_ring_full(&chn.free_lanes));
@@ -741,7 +741,7 @@ UTEST(sokol_fetch, load_channel) {
         .num_channels = LOAD_CHANNEL_NUM_CHANNELS
     });
     sfetch_handle_t h[LOAD_CHANNEL_NUM_CHANNELS];
-    for (int chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
+    for (uint32_t chn = 0; chn < LOAD_CHANNEL_NUM_CHANNELS; chn++) {
         h[chn] = sfetch_send(&(sfetch_request_t){
             .path = "comsi.s3m",
             .channel = chn,

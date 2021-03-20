@@ -24,7 +24,7 @@ UTEST(sokol_audio, ring_buffer) {
     T(!_saudio_ring_full(&rb));
     T(!_saudio_ring_empty(&rb));
     T(1 == _saudio_ring_count(&rb));
-    
+
     T(23 == _saudio_ring_dequeue(&rb));
     T(1 == rb.head);
     T(1 == rb.tail);

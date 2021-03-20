@@ -266,7 +266,7 @@ UTEST(sokol_shape, build_plane_defaults) {
     T(0 == buf.indices.shape_offset);
     T(6 * sizeof(uint16_t) == buf.indices.data_size);
     for (int i = 0; i < 4; i++) {
-        T(vx[i].color = 0xFFFFFFFF);
+        T(vx[i].color == 0xFFFFFFFF);
     }
     T(ix[0] == 0);
     T(ix[1] == 1);

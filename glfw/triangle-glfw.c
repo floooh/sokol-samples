@@ -2,12 +2,11 @@
 //  triangle-glfw.c
 //  Vertex buffer, simple shader, pipeline state object.
 //------------------------------------------------------------------------------
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-#include "flextgl/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
 
 int main() {
 
@@ -20,7 +19,6 @@ int main() {
     GLFWwindow* w = glfwCreateWindow(640, 480, "Sokol Triangle GLFW", 0, 0);
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
-    flextInit();
 
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){0});
@@ -30,7 +28,7 @@ int main() {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f 
+        -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
     };
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices)
