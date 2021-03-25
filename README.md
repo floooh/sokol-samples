@@ -361,7 +361,7 @@ To build one of the sokol-app samples on Linux:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
-> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -I../../sokol -I../libs -lGL -ldl -lm -lpthread -lX11 -lasound
+> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -I../../sokol -I../libs -lGL -ldl -lm -lpthread -lX11 -lasound -lXi -lXcursor
 ```
 
 ## Many Thanks to:
