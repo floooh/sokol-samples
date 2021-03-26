@@ -6,6 +6,9 @@
 //
 //  Nuklear UI on github: https://github.com/Immediate-Mode-UI/Nuklear
 //------------------------------------------------------------------------------
+// this is needed for the Nuklear example code further down
+#define _CRT_SECURE_NO_WARNINGS (1)
+
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_glue.h"
