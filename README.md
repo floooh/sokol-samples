@@ -343,6 +343,43 @@ To build one of the sokol-app samples for GL on Windows:
 > cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE33 /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
 ```
 
+### Building manually on Windows with MSYS2/mingw gcc:
+
+> NOTE: compile with '-mwin32' (this defines _WIN32 for proper platform detection)
+
+From the MSYS2 shell:
+
+```sh
+> cd sokol-samples/sapp
+# compile shaders for HLSL and GLSL:
+> ../../sokol-tools-bin/bin/win32/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl330
+# build and run with D3D11 backend:
+> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11 -mwin32 -O2 -DSOKOL_D3D11 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -ldxgi -ld3d11 -ldxguid -lole32
+> ./cube-sapp-d3d11
+# build and run with GL backend:
+> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl -mwin32 -O2 -DSOKOL_GLCORE33 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -lgdi32 -lole32
+> ./cube-sapp-gl
+```
+
+### Building manually on Windows with Clang:
+
+> NOTE: AFAIK Clang for Windows needs a working MSVC toolchain and Windows SDK installed, I haven't tested without.
+
+Clang recognizes the ```#pragma comment(lib,...)``` statements in the Sokol headers, so you don't
+need to specify the link libraries manually.
+
+```sh
+> cd sokol-samples/sapp
+# compile shaders for HLSL and GLSL:
+> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl330
+# build and run with D3D11 backend:
+> clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11.exe -O2 -DSOKOL_D3D11 -I ../../sokol -I ../libs
+> cube-sapp-d3d11
+# build and run with GL backend:
+> clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl.exe -O2 -DSOKOL_GLCORE33 -I ../../sokol -I ../libs
+> cube-sapp-gl
+```
+
 ### Building manually on Linux with gcc
 
 On Linux you need the "usual" development-packages for OpenGL development, and
