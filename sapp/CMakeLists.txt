@@ -553,6 +553,13 @@ fips_begin_app(saudio-sapp windowed)
     endif()
 fips_end_app()
 
+fips_ide_group(Samples)
+fips_begin_app(window-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(window-sapp.c)
+    fips_deps(sokol)
+fips_end_app()
+
 if (NOT FIPS_UWP)
 fips_ide_group(Samples)
 fips_begin_app(droptest-sapp windowed)
