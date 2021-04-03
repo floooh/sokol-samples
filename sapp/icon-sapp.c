@@ -73,7 +73,7 @@ static void frame(void) {
     sdtx_canvas(sapp_widthf()*0.5f, sapp_heightf()*0.5f);
     sdtx_origin(1.0f, 2.0f);
     sdtx_home();
-    sdtx_puts("Press key to switch icon mode:\n\n\n");
+    sdtx_puts("Press key to switch icon:\n\n\n");
     for (int i = 0; i < NUM_ICONMODES; i++) {
         sdtx_puts((i == state.icon_mode) ? "==> " : "    ");
         sdtx_puts(help_text[i]);
@@ -157,7 +157,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .window_title = "Window Icon",
+        .window_title = "Window Icon Test",
         // set sokol-app's default icon initially
         .window_icon.sokol_default = true
     };
