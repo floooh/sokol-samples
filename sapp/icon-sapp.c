@@ -46,21 +46,19 @@ static void init(void) {
     });
 }
 
+// forward declared helper functions to set user icon
+static void set_static_icon(void);
+
 static void frame(void) {
-
-    // forward declared helper functions to set user icon
-    static void set_static_icon(void);
-    static void set_anim_icon(void);
-
     // apply static icon mode changes
     if (state.icon_mode_changed) {
         state.icon_mode_changed = false;
         switch (state.icon_mode) {
             case ICONMODE_SOKOLAPP_DEFAULT:
-                sapp_set_window_icon(&(sapp_icon_desc){ .sokol_default = true });
+                sapp_set_icon(&(sapp_icon_desc){ .sokol_default = true });
                 break;
             case ICONMODE_PLATFORM_DEFAULT:
-                sapp_set_window_icon(&(sapp_icon_desc){ .platform_default = true });
+                sapp_set_icon(&(sapp_icon_desc){ .platform_default = true });
                 break;
             case ICONMODE_USER_STATIC:
                 set_static_icon();
@@ -75,7 +73,7 @@ static void frame(void) {
     sdtx_home();
     sdtx_puts("Press key to switch icon:\n\n\n");
     for (int i = 0; i < NUM_ICONMODES; i++) {
-        sdtx_puts((i == state.icon_mode) ? "==> " : "    ");
+        sdtx_puts((i == (int)state.icon_mode) ? "==> " : "    ");
         sdtx_puts(help_text[i]);
     }
 
@@ -119,11 +117,23 @@ static void cleanup(void) {
 }
 
 // helper functions for setting up user image icons
-static void fill_cross_pattern(uint32_t* pixels, uint32_t w, uint32_t h) {
+static void fill_arrow_pixels(uint32_t* pixels, uint32_t w, uint32_t h) {
     static uint32_t colors[4] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000, 0xFF00FFFF }; // red, green, blue, yellow
     for (uint32_t y = 0; y < h; y++) {
         for (uint32_t x = 0; x < w; x++) {
-            pixels[y * h + x] = colors[((x ^ y)>>1) & 3];
+            uint32_t color = colors[((x ^ y)>>1) & 3];  // RGBY checker pattern
+            // arrow shape
+            if (y < h/2) {
+                if ((x < (h/2-y)) || (x > (h/2+y))) {
+                    color = 0;
+                }
+            }
+            else {
+                if ((x < w/4) || (x > (w/4)*3)) {
+                    color = 0;
+                }
+            }
+            pixels[y * h + x] = color;
         }
     }
 }
@@ -135,11 +145,11 @@ static void set_static_icon(void) {
     uint32_t medium[32 * 32];
     uint32_t big[64 * 64];
 
-    fill_cross_pattern(small, 16, 16);
-    fill_cross_pattern(medium, 32, 32);
-    fill_cross_pattern(big, 64, 64);
+    fill_arrow_pixels(small, 16, 16);
+    fill_arrow_pixels(medium, 32, 32);
+    fill_arrow_pixels(big, 64, 64);
 
-    sapp_set_window_icon(&(sapp_icon_desc){
+    sapp_set_icon(&(sapp_icon_desc){
         .images = {
             { .width = 16, .height = 16, .pixels = SAPP_RANGE(small) },
             { .width = 32, .height = 32, .pixels = SAPP_RANGE(medium) },
