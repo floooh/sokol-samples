@@ -7,6 +7,9 @@
 #endif
 #include "cimgui/cimgui.h"
 #define SOKOL_IMPL
+#if defined(SOKOL_DUMMY_BACKEND)
+#define SOKOL_IMGUI_NO_SOKOL_APP
+#endif
 #include "sokol_imgui.h"
 
 void use_imgui_impl(void) {

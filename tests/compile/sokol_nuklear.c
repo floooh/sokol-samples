@@ -12,6 +12,9 @@
 #include "nuklear/nuklear.h"
 
 #define SOKOL_IMPL
+#if defined(SOKOL_DUMMY_BACKEND)
+#define SOKOL_NUKLEAR_NO_SOKOL_APP
+#endif
 #include "sokol_nuklear.h"
 
 void use_nuklear_impl(void) {
