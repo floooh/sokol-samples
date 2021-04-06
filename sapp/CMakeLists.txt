@@ -1,6 +1,5 @@
 # select the 3D backend for sokol_gfx.h and sokol_app.h
-# the sokol_config() macro is in the top-level CMakeLists.txt file!
-sokol_config()
+add_definitions(-D${sokol_backend})
 
 fips_ide_group(Samples)
 fips_begin_app(clear-sapp windowed)
@@ -685,5 +684,3 @@ fips_end_app()
 endif()
 
 endif() # FIPS_UWP
-
-

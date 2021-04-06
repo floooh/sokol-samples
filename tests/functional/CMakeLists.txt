@@ -1,3 +1,5 @@
+add_definitions(-D${sokol_backend})
+
 if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
 
 fips_begin_app(sokol-test cmdline)
@@ -20,3 +22,4 @@ fips_begin_app(sokol-test cmdline)
 fips_end_app()
 
 endif()
+
