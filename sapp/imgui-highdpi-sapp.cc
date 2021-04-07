@@ -163,5 +163,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.ios_keyboard_resizes_canvas = false;
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
+    desc.icon.sokol_default = true;
     return desc;
 }

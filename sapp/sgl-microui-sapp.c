@@ -388,7 +388,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 720,
         .height = 540,
         .gl_force_gles2 = true,
-        .window_title = "microui+sokol_gl.h"
+        .window_title = "microui+sokol_gl.h",
+        .icon.sokol_default = true,
     };
 }
 

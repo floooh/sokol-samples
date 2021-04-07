@@ -301,6 +301,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .high_dpi = true,
         .gl_force_gles2 = true,
-        .window_title = "fontstash"
+        .window_title = "fontstash",
+        .icon.sokol_default = true,
     };
 }

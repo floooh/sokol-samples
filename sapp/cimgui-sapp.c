@@ -101,6 +101,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 768,
         .gl_force_gles2 = true,
         .window_title = "cimgui (sokol-app)",
-        .ios_keyboard_resizes_canvas = false
+        .ios_keyboard_resizes_canvas = false,
+        .icon.sokol_default = true,
     };
 }

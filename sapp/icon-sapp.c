@@ -14,16 +14,14 @@
 
 typedef enum {
     ICONMODE_SOKOLAPP_DEFAULT,
-    ICONMODE_PLATFORM_DEFAULT,
     ICONMODE_USER_STATIC,
 
     NUM_ICONMODES,
 } iconmode_t;
 
 static const char* help_text[NUM_ICONMODES] = {
-    "1: sokol-app's default icon\n\n",
-    "2: platform's default icon\n\n",
-    "3: static user icon\n\n",
+    "1: default icon\n\n",
+    "2: custom icon\n\n",
 };
 
 static struct {
@@ -57,9 +55,6 @@ static void frame(void) {
             case ICONMODE_SOKOLAPP_DEFAULT:
                 sapp_set_icon(&(sapp_icon_desc){ .sokol_default = true });
                 break;
-            case ICONMODE_PLATFORM_DEFAULT:
-                sapp_set_icon(&(sapp_icon_desc){ .platform_default = true });
-                break;
             case ICONMODE_USER_STATIC:
                 set_static_icon();
                 break;
@@ -88,8 +83,7 @@ static void input(const sapp_event* ev) {
     if (ev->type == SAPP_EVENTTYPE_CHAR) {
         switch (ev->char_code) {
             case '1': state.icon_mode_changed = true; state.icon_mode = ICONMODE_SOKOLAPP_DEFAULT; break;
-            case '2': state.icon_mode_changed = true; state.icon_mode = ICONMODE_PLATFORM_DEFAULT; break;
-            case '3': state.icon_mode_changed = true; state.icon_mode = ICONMODE_USER_STATIC; break;
+            case '2': state.icon_mode_changed = true; state.icon_mode = ICONMODE_USER_STATIC; break;
             default: break;
         }
     }
@@ -168,7 +162,5 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .window_title = "Window Icon Test",
-        // set sokol-app's default icon initially
-        .window_icon.sokol_default = true
     };
 }

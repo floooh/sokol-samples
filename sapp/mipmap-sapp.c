@@ -166,5 +166,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = " (sokol-app)",
+        .icon.sokol_default = true,
     };
 }
