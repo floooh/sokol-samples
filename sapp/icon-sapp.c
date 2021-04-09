@@ -13,15 +13,17 @@
 #define ICON_HEIGHT (8)
 
 typedef enum {
-    ICONMODE_SOKOLAPP_DEFAULT,
-    ICONMODE_USER_STATIC,
+    ICONMODE_NONE,
+    ICONMODE_DEFAULT,
+    ICONMODE_USER,
 
     NUM_ICONMODES,
 } iconmode_t;
 
 static const char* help_text[NUM_ICONMODES] = {
+    "<NONE>",
     "1: default icon\n\n",
-    "2: custom icon\n\n",
+    "2: user icon\n\n",
 };
 
 static struct {
@@ -29,8 +31,8 @@ static struct {
     iconmode_t icon_mode;
     sg_pass_action pass_action;
 } state = {
-    .icon_mode_changed = true,
-    .icon_mode = ICONMODE_SOKOLAPP_DEFAULT,
+    .icon_mode_changed = false,
+    .icon_mode = ICONMODE_NONE,
     .pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.5f, 1.0f } }
     }
@@ -45,18 +47,18 @@ static void init(void) {
 }
 
 // forward declared helper functions to set user icon
-static void set_static_icon(void);
+static void set_user_icon(void);
 
 static void frame(void) {
     // apply static icon mode changes
     if (state.icon_mode_changed) {
         state.icon_mode_changed = false;
         switch (state.icon_mode) {
-            case ICONMODE_SOKOLAPP_DEFAULT:
+            case ICONMODE_DEFAULT:
                 sapp_set_icon(&(sapp_icon_desc){ .sokol_default = true });
                 break;
-            case ICONMODE_USER_STATIC:
-                set_static_icon();
+            case ICONMODE_USER:
+                set_user_icon();
                 break;
             default: break;
         }
@@ -68,8 +70,10 @@ static void frame(void) {
     sdtx_home();
     sdtx_puts("Press key to switch icon:\n\n\n");
     for (int i = 0; i < NUM_ICONMODES; i++) {
-        sdtx_puts((i == (int)state.icon_mode) ? "==> " : "    ");
-        sdtx_puts(help_text[i]);
+        if (i != ICONMODE_NONE) {
+            sdtx_puts((i == (int)state.icon_mode) ? "==> " : "    ");
+            sdtx_puts(help_text[i]);
+        }
     }
 
     // just clear the window client area to some color
@@ -82,25 +86,9 @@ static void frame(void) {
 static void input(const sapp_event* ev) {
     if (ev->type == SAPP_EVENTTYPE_CHAR) {
         switch (ev->char_code) {
-            case '1': state.icon_mode_changed = true; state.icon_mode = ICONMODE_SOKOLAPP_DEFAULT; break;
-            case '2': state.icon_mode_changed = true; state.icon_mode = ICONMODE_USER_STATIC; break;
+            case '1': state.icon_mode_changed = true; state.icon_mode = ICONMODE_DEFAULT; break;
+            case '2': state.icon_mode_changed = true; state.icon_mode = ICONMODE_USER; break;
             default: break;
-        }
-    }
-    else if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
-        if (ev->key_code == SAPP_KEYCODE_UP) {
-            state.icon_mode_changed = true;
-            state.icon_mode--;
-            if (state.icon_mode < 0) {
-                state.icon_mode = NUM_ICONMODES - 1;
-            }
-        }
-        else if (ev->key_code == SAPP_KEYCODE_DOWN) {
-            state.icon_mode_changed = true;
-            state.icon_mode++;
-            if (state.icon_mode >= NUM_ICONMODES) {
-                state.icon_mode = 0;
-            }
         }
     }
 }
@@ -117,7 +105,7 @@ static void fill_arrow_pixels(uint32_t* pixels, uint32_t w, uint32_t h) {
         for (uint32_t x = 0; x < w; x++) {
             uint32_t color = colors[((x ^ y)>>1) & 3];  // RGBY checker pattern
             // arrow shape
-            if (y < h/2) {
+            if (y < (h/2)) {
                 if ((x < (h/2-y)) || (x > (h/2+y))) {
                     color = 0;
                 }
@@ -132,7 +120,7 @@ static void fill_arrow_pixels(uint32_t* pixels, uint32_t w, uint32_t h) {
     }
 }
 
-static void set_static_icon(void) {
+static void set_user_icon(void) {
     // create 3 icon image candidates, 16x16, 32x32 and 64x64 pixels
     // the sokol-app backend code will pick the best match by size
     uint32_t small[16 * 16];
