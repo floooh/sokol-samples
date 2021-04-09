@@ -284,5 +284,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .sample_count = SCREEN_SAMPLE_COUNT,
         .window_title = "Shadow Rendering (sokol-app)",
+        .icon.sokol_default = true,
     };
 }

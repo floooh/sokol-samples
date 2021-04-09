@@ -62,6 +62,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 300,
         .gl_force_gles2 = true,
         .window_title = "Sokol Audio Test",
+        .icon.sokol_default = true,
     };
 }
 

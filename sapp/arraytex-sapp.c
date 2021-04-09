@@ -212,5 +212,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .sample_count = 4,
         .window_title = "Array Texture (sokol-app)",
+        .icon.sokol_default = true,
     };
 }

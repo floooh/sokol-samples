@@ -372,6 +372,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
+        .icon.sokol_default = true,
         #if defined(USE_GLES2)
         .window_title = "Pixelformat Test (GLES2)",
         #endif

@@ -275,5 +275,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .sample_count = DISPLAY_SAMPLE_COUNT,
         .gl_force_gles2 = true,
         .window_title = "debugtext-context-sapp",
+        .icon.sokol_default = true,
     };
 }

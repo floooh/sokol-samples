@@ -105,6 +105,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .gl_force_gles2 = true,
         .window_title = "Buffer Offsets (sokol-app)",
+        .icon.sokol_default = true,
     };
 }
 

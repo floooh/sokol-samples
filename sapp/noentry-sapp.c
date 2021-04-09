@@ -51,6 +51,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Noentry (sokol-app)",
+        .icon.sokol_default = true,
     });
     free(state);    /* NOTE: on some platforms, this isn't reached on exit */
     return 0;

@@ -272,7 +272,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .window_title = "MRT Pixelformats"
+        .window_title = "MRT Pixelformats",
+        .icon.sokol_default = true,
     };
 }
 
