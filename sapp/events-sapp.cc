@@ -282,28 +282,37 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
     ImGui::BeginChild("event_panel", ImVec2(width, height), true);
     ImGui::Text("type:         %s", eventtype_to_str(type));
     ImGui::Text("frame:        %d", (uint32_t)ev.frame_count);
+    ImGui::Text("modifiers:   ");
+    if (0 == ev.modifiers) {
+        ImGui::SameLine(); ImGui::Text("NONE");
+    }
+    else {
+        if (0 != (ev.modifiers & SAPP_MODIFIER_SHIFT)) {
+            ImGui::SameLine(); ImGui::Text("SHIFT");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_CTRL)) {
+            ImGui::SameLine(); ImGui::Text("CTRL");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_ALT)) {
+            ImGui::SameLine(); ImGui::Text("ALT");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_SUPER)) {
+            ImGui::SameLine(); ImGui::Text("SUPER");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_LMB)) {
+            ImGui::SameLine(); ImGui::Text("LMB");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_RMB)) {
+            ImGui::SameLine(); ImGui::Text("RMB");
+        }
+        if (0 != (ev.modifiers & SAPP_MODIFIER_MMB)) {
+            ImGui::SameLine(); ImGui::Text("MMB");
+        }
+    }
     if (is_key_event(type)) {
         ImGui::Text("key code:     %s", keycode_to_str(ev.key_code));
         ImGui::Text("char code:    0x%05X", ev.char_code);
         ImGui::Text("key repeat:   %s", ev.key_repeat ? "true":"false");
-        ImGui::Text("modifiers:   ");
-        if (0 == ev.modifiers) {
-            ImGui::SameLine(); ImGui::Text("NONE");
-        }
-        else {
-            if (0 != (ev.modifiers & SAPP_MODIFIER_SHIFT)) {
-                ImGui::SameLine(); ImGui::Text("SHIFT");
-            }
-            if (0 != (ev.modifiers & SAPP_MODIFIER_CTRL)) {
-                ImGui::SameLine(); ImGui::Text("CTRL");
-            }
-            if (0 != (ev.modifiers & SAPP_MODIFIER_ALT)) {
-                ImGui::SameLine(); ImGui::Text("ALT");
-            }
-            if (0 != (ev.modifiers & SAPP_MODIFIER_SUPER)) {
-                ImGui::SameLine(); ImGui::Text("SUPER");
-            }
-        }
     }
     if (is_mouse_or_drop_event(type)) {
         ImGui::Text("mouse btn:    %s", button_to_str(ev.mouse_button));
@@ -341,7 +350,7 @@ static void frame(void) {
     simgui_new_frame(w, h, 1.0f/60.0f);
 
     const float panel_width = 240.0f - ImGui::GetStyle().FramePadding.x;
-    const float panel_height = 160.0f;
+    const float panel_height = 170.0f;
     const float panel_width_with_padding = panel_width + ImGui::GetStyle().FramePadding.x;
     const float pad = 5.0f;
     float pos_x = ImGui::GetStyle().WindowPadding.x;
