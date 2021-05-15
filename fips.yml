@@ -15,6 +15,8 @@ imports:
     git: https://github.com/fips-libs/fips-cimgui.git
   fips-imgui:
     git: https://github.com/fips-libs/fips-imgui.git
+  fips-imgui-dock:
+    git: https://github.com/fips-libs/fips-imgui-dock.git
   fips-libmodplug:
     git: https://github.com/fips-libs/fips-libmodplug
   fips-utils:

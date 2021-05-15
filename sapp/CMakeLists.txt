@@ -299,6 +299,17 @@ fips_begin_app(imgui-sapp windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(imgui-dock-sapp windowed)
+    fips_vs_warning_level(3)
+    fips_files(imgui-dock-sapp.cc)
+    # use sokol-cpp for testing here, this isn't required though
+    fips_deps(sokol-cpp imgui-dock)
+    if (FIPS_IOS)
+        fips_files(ios-info.plist)
+    endif()
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(imgui-highdpi-sapp windowed)
     fips_vs_warning_level(3)
     fips_files(imgui-highdpi-sapp.cc)
