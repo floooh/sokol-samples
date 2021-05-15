@@ -33,6 +33,7 @@ samples = [
     [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],
     [ 'shadows', 'shadows-sapp.c', 'shadows-sapp.glsl'],
     [ 'imgui', 'imgui-sapp.cc', None ],
+    [ 'imgui-dock', 'imgui-dock-sapp.cc', None ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
     [ 'imgui-usercallback', 'imgui-usercallback-sapp.c', 'imgui-usercallback-sapp.glsl'],
