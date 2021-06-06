@@ -12,6 +12,8 @@ static void d3d11_create_default_render_target(void);
 static void d3d11_destroy_default_render_target(void);
 static void d3d11_update_default_render_target(void);
 
+static const IID _d3d11entry_IID_ID3D11Texture2D = { 0x6f15aaf2,0xd208,0x4e89,0x9a,0xb4,0x48,0x95,0x35,0xd3,0x4f,0x9c };
+
 static struct {
     bool quit_requested;
     bool in_create_window;
@@ -138,7 +140,7 @@ void d3d11_shutdown(void) {
 
 void d3d11_create_default_render_target(void) {
     HRESULT hr;
-    hr = IDXGISwapChain_GetBuffer(state.swap_chain, 0, &IID_ID3D11Texture2D, (void**)&state.render_target);
+    hr = IDXGISwapChain_GetBuffer(state.swap_chain, 0, &_d3d11entry_IID_ID3D11Texture2D, (void**)&state.render_target);
     assert(SUCCEEDED(hr) && state.render_target);
     hr = ID3D11Device_CreateRenderTargetView(state.device, (ID3D11Resource*)state.render_target, NULL, &state.render_target_view);
     assert(SUCCEEDED(hr) && state.render_target_view);
