@@ -354,7 +354,7 @@ From the MSYS2 shell:
 # compile shaders for HLSL and GLSL:
 > ../../sokol-tools-bin/bin/win32/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl330
 # build and run with D3D11 backend:
-> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11 -mwin32 -O2 -DSOKOL_D3D11 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -ldxgi -ld3d11 -ldxguid -lole32
+> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11 -mwin32 -O2 -DSOKOL_D3D11 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -ldxgi -ld3d11 -lole32
 > ./cube-sapp-d3d11
 # build and run with GL backend:
 > gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl -mwin32 -O2 -DSOKOL_GLCORE33 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -lgdi32 -lole32
