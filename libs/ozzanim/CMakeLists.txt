@@ -1,0 +1,8 @@
+fips_begin_lib(ozzanim)
+    fips_dir(src)
+    fips_files(ozz_base.cc ozz_animation.cc)
+fips_end_lib()
+target_include_directories(ozzanim PUBLIC include)
+if (FIPS_CLANG)
+    target_compile_options(ozzanim PUBLIC -Wno-deprecated-copy -Wno-missing-field-initializers)
+endif()
