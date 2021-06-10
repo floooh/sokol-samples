@@ -687,7 +687,7 @@ fips_begin_app(ozz-anim-sapp windowed)
     fips_files(ozz-anim-sapp.cc)
     fips_dir(data)
     fipsutil_copy(ozz-assets.yml)
-    fips_deps(sokol ozzanim)
+    fips_deps(sokol ozzanim imgui)
 fips_end_app()
 
 if (NOT FIPS_ANDROID)
