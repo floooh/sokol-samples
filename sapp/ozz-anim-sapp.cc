@@ -2,7 +2,7 @@
 //  ozz-anim-sapp.cc
 //
 //  Port of the ozz-animation "Animation Playback" sample. Use sokol-gl
-//  for rendering the animated character skeleton (no skinning).
+//  for debug-rendering the animated character skeleton (no skinning).
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -36,8 +36,8 @@
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <cmath>    // fmodf
 
-// managed ozz-animation C++ objects, this must be freed before shutdown, otherwise
-// ozz-animation will report a memory leak
+// wrapper struct for managed ozz-animation C++ objects, must be deleted
+// before shutdown, otherwise ozz-animation will report a memory leak
 typedef struct {
     ozz::animation::Skeleton skeleton;
     ozz::animation::Animation animation;
@@ -49,13 +49,14 @@ typedef struct {
 static struct {
     std::unique_ptr<ozz_t> ozz;
     sg_pass_action pass_action;
-    sgl_pipeline pip;
     camera_t camera;
     bool skeleton_loaded;
     bool animation_loaded;
     bool load_failed;
     bool paused;
     float time_factor;
+    float anim_time_ratio;
+    bool anim_time_ratio_ui_override;
     uint64_t laptime;
     double cur_frame_time;
     double cur_abs_time;
@@ -103,13 +104,6 @@ static void init(void) {
     state.pass_action.colors[0].action = SG_ACTION_CLEAR;
     state.pass_action.colors[0].value = { 0.0f, 0.1f, 0.2f, 1.0f };
 
-    // create a sokol-gl pipeline object for 3D rendering
-    sg_pipeline_desc pipdesc = { };
-    pipdesc.cull_mode = SG_CULLMODE_BACK;
-    pipdesc.depth.write_enabled = true;
-    pipdesc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
-    state.pip = sgl_make_pipeline(&pipdesc);
-
     // initialize camera helper
     cam_init(&state.camera);
     state.camera.min_dist = 1.0f;
@@ -140,6 +134,8 @@ static void init(void) {
 }
 
 static void frame(void) {
+    sfetch_dowork();
+
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
     state.cur_frame_time = stm_sec(stm_round_to_common_refresh_rate(stm_laptime(&state.laptime)));
@@ -147,8 +143,6 @@ static void frame(void) {
 
     simgui_new_frame(fb_width, fb_height, state.cur_frame_time);
     draw_ui();
-
-    sfetch_dowork();
 
     if (state.animation_loaded && state.skeleton_loaded) {
         if (!state.paused) {
@@ -212,13 +206,15 @@ static void cleanup(void) {
 
 static void eval_animation(void) {
     const float anim_duration = state.ozz->animation.duration();
-    const float anim_ratio = fmodf(state.cur_abs_time / anim_duration, 1.0f);   // 0..1
+    if (!state.anim_time_ratio_ui_override) {
+        state.anim_time_ratio = fmodf(state.cur_abs_time / anim_duration, 1.0f);   // 0..1
+    }
 
     // sample animation
     ozz::animation::SamplingJob sampling_job;
     sampling_job.animation = &state.ozz->animation;
     sampling_job.cache = &state.ozz->cache;
-    sampling_job.ratio = anim_ratio;
+    sampling_job.ratio = state.anim_time_ratio;
     sampling_job.output = make_span(state.ozz->locals);
     sampling_job.Run();
 
@@ -228,6 +224,46 @@ static void eval_animation(void) {
     ltm_job.input = make_span(state.ozz->locals);
     ltm_job.output = make_span(state.ozz->models);
     ltm_job.Run();
+}
+
+static void draw_vec(const ozz::math::SimdFloat4& vec) {
+    sgl_v3f(ozz::math::GetX(vec), ozz::math::GetY(vec), ozz::math::GetZ(vec));
+}
+
+static void draw_line(const ozz::math::SimdFloat4& v0, const ozz::math::SimdFloat4& v1) {
+    draw_vec(v0);
+    draw_vec(v1);
+}
+
+static void draw_joint(int joint_index, int parent_joint_index) {
+    if (parent_joint_index < 0) {
+        return;
+    }
+
+    using namespace ozz::math;
+
+    // uff, this is not convenient :/
+    const Float4x4& m0 = state.ozz->models[joint_index];
+    const Float4x4& m1 = state.ozz->models[parent_joint_index];
+
+    // joint start pos
+    const SimdFloat4 p0 = m0.cols[3];
+    const SimdFloat4 p1 = m1.cols[3];
+    const SimdFloat4 ny = m1.cols[1];
+    const SimdFloat4 nz = m1.cols[2];
+
+    const SimdFloat4 len = Length3(p1 - p0) * simd_float4::Load1(0.1f);
+
+    const SimdFloat4 pmid = p0 + (p1 - p0) * simd_float4::Load1(0.66f);
+    const SimdFloat4 p2 = pmid + ny * len;
+    const SimdFloat4 p3 = pmid + nz * len;
+    const SimdFloat4 p4 = pmid - ny * len;
+    const SimdFloat4 p5 = pmid - nz * len;
+
+    sgl_c3f(1.0f, 1.0f, 0.0f);
+    draw_line(p0, p2); draw_line(p0, p3); draw_line(p0, p4); draw_line(p0, p5);
+    draw_line(p1, p2); draw_line(p1, p3); draw_line(p1, p4); draw_line(p1, p5);
+    draw_line(p2, p3); draw_line(p3, p4); draw_line(p4, p5); draw_line(p5, p2);
 }
 
 static void draw_scene(void) {
@@ -245,27 +281,13 @@ static void draw_scene(void) {
     ozz::span<const int16_t> joint_parents = state.ozz->skeleton.joint_parents();
 
     sgl_defaults();
-    sgl_load_pipeline(state.pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(60.0f), aspect, 0.1f, 100.0f);
     sgl_matrix_mode_modelview();
     sgl_lookat(eye_x, eye_y, eye_z, center_x, center_y, center_z, up_x, up_y, up_z);
     sgl_begin_lines();
-    sgl_c3b(0, 255, 0);
     for (int joint_index = 0; joint_index < num_joints; joint_index++) {
-        int16_t parent_index = joint_parents[joint_index];
-        if (parent_index >= 0) {
-            const auto& from = state.ozz->models[joint_index].cols[3];
-            const auto& to = state.ozz->models[parent_index].cols[3];
-            const float x0 = ozz::math::GetX(from);
-            const float y0 = ozz::math::GetY(from);
-            const float z0 = ozz::math::GetZ(from);
-            const float x1 = ozz::math::GetX(to);
-            const float y1 = ozz::math::GetY(to);
-            const float z1 = ozz::math::GetZ(to);
-            sgl_v3f(x0, y0, z0);
-            sgl_v3f(x1, y1, z1);
-        }
+        draw_joint(joint_index, joint_parents[joint_index]);
     }
     sgl_end();
 }
@@ -275,22 +297,36 @@ static void draw_ui(void) {
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Camera Controls:");
-        ImGui::Text("  LMB + Mouse Move: Look");
-        ImGui::Text("  Mouse Wheel: Zoom");
-        ImGui::SliderFloat("Distance", &state.camera.dist, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
-        ImGui::SliderFloat("Theta", &state.camera.polar.X, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
-        ImGui::SliderFloat("Phi", &state.camera.polar.Y, 0.0f, 360.0f, "%.1f", 1.0f);
-        ImGui::Separator();
-        ImGui::Text("Time Controls:");
-        ImGui::Checkbox("Paused", &state.paused);
-        ImGui::SliderFloat("Factor", &state.time_factor, 0.0f, 5.0f, "%.1f", 1.0f);
+        if (state.load_failed) {
+            ImGui::Text("Failed loading character data!");
+        }
+        else {
+            ImGui::Text("Camera Controls:");
+            ImGui::Text("  LMB + Mouse Move: Look");
+            ImGui::Text("  Mouse Wheel: Zoom");
+            ImGui::SliderFloat("Distance", &state.camera.dist, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
+            ImGui::SliderFloat("Theta", &state.camera.polar.X, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
+            ImGui::SliderFloat("Phi", &state.camera.polar.Y, 0.0f, 360.0f, "%.1f", 1.0f);
+            ImGui::Separator();
+            ImGui::Text("Time Controls:");
+            ImGui::Checkbox("Paused", &state.paused);
+            ImGui::SliderFloat("Factor", &state.time_factor, 0.0f, 10.0f, "%.1f", 1.0f);
+            if (ImGui::SliderFloat("Ratio", &state.anim_time_ratio, 0.0f, 1.0f)) {
+                state.anim_time_ratio_ui_override = true;
+            }
+            if (ImGui::IsItemDeactivatedAfterEdit()) {
+                state.anim_time_ratio_ui_override = false;
+            }
+        }
     }
     ImGui::End();
 }
 
 static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
+        // NOTE: if we derived our own ozz::io::Stream class we could
+        // avoid the extra allocation and memory copy that happens
+        // with the standard MemoryStream class
         ozz::io::MemoryStream stream;
         stream.Write(response->buffer_ptr, response->fetched_size);
         stream.Seek(0, ozz::io::Stream::kSet);

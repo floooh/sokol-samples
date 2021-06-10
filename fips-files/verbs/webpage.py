@@ -57,7 +57,8 @@ samples = [
     [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
     [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
-    [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl']
+    [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
+    [ 'ozz-anim', 'ozz-anim-sapp.cc', None ]
 ]
 
 # assets that must also be copied
@@ -75,7 +76,9 @@ assets = [
     "DroidSerif-Regular.ttf",
     "DroidSerif-Italic.ttf",
     "DroidSerif-Bold.ttf",
-    "DroidSansJapanese.ttf"
+    "DroidSansJapanese.ttf",
+    "skeleton.ozz",
+    "animation.ozz"
 ]
 
 # webpage template arguments
