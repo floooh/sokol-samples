@@ -252,7 +252,7 @@ static void draw_joint(int joint_index, int parent_joint_index) {
     const SimdFloat4 ny = m1.cols[1];
     const SimdFloat4 nz = m1.cols[2];
 
-    const SimdFloat4 len = Length3(p1 - p0) * simd_float4::Load1(0.1f);
+    const SimdFloat4 len = SplatX(Length3(p1 - p0)) * simd_float4::Load1(0.1f);
 
     const SimdFloat4 pmid = p0 + (p1 - p0) * simd_float4::Load1(0.66f);
     const SimdFloat4 p2 = pmid + ny * len;
