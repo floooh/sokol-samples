@@ -35,6 +35,12 @@ static void cam_init(camera_t* cam) {
 /* feed mouse movement */
 static void cam_orbit(camera_t* cam, float dx, float dy) {
     cam->polar.Y -= dx;
+    if (cam->polar.Y < 0.0f) {
+        cam->polar.Y += 360.0f;
+    }
+    if (cam->polar.Y > 360.0f) {
+        cam->polar.Y -= 360.0f;
+    }
     cam->polar.X = HMM_Clamp(cam->min_lat, cam->polar.X + dy, cam->max_lat);
 }
 
