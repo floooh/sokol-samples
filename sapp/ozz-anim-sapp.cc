@@ -67,7 +67,7 @@ static void init(void) {
     stm_setup();
 
     // setup sokol-fetch
-    sfetch_desc_t sfdesc;
+    sfetch_desc_t sfdesc = { };
     sfdesc.max_requests = 2;
     sfdesc.num_channels = 1;
     sfdesc.num_lanes = 2;
