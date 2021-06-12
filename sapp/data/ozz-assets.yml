@@ -2,5 +2,5 @@
 options:
     src_dir: ozz
 files:
-    - animation.ozz
-    - skeleton.ozz
+    - pab_animation.ozz
+    - pab_skeleton.ozz

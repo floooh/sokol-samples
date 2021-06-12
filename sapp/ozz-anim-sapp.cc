@@ -67,7 +67,7 @@ static uint8_t skel_data_buffer[4 * 1024];
 static uint8_t anim_data_buffer[32 * 1024];
 
 static void eval_animation(void);
-static void draw_scene(void);
+static void draw_skeleton(void);
 static void draw_ui(void);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void animation_data_loaded(const sfetch_response_t* response);
@@ -105,19 +105,19 @@ static void init(void) {
     state.pass_action.colors[0].value = { 0.0f, 0.1f, 0.2f, 1.0f };
 
     // initialize camera helper
-    cam_init(&state.camera);
-    state.camera.min_dist = 1.0f;
-    state.camera.max_dist = 10.0f;
-    state.camera.min_lat = -85.0f;
-    state.camera.max_lat = 85.0f;
-    state.camera.center.Y = 1.0f;
-    state.camera.dist = 3.0f;
-    state.camera.polar = HMM_Vec2(10.0f, 20.0f);
+    camera_desc_t camdesc = { };
+    camdesc.min_dist = 1.0f;
+    camdesc.max_dist = 10.0f;
+    camdesc.center.Y = 1.0f;
+    camdesc.distance = 3.0f;
+    camdesc.latitude = 10.0f;
+    camdesc.longitude = 20.0f;
+    cam_init(&state.camera, &camdesc);
 
-    // start loading the skeleton.ozz and animation.ozz files
+    // start loading the skeleton and animation files
     {
         sfetch_request_t req = { };
-        req.path = "skeleton.ozz";
+        req.path = "pab_skeleton.ozz";
         req.callback = skeleton_data_loaded;
         req.buffer_ptr = skel_data_buffer;
         req.buffer_size = sizeof(skel_data_buffer);
@@ -125,7 +125,7 @@ static void init(void) {
     }
     {
         sfetch_request_t req = { };
-        req.path = "animation.ozz";
+        req.path = "pab_animation.ozz";
         req.callback = animation_data_loaded;
         req.buffer_ptr = anim_data_buffer;
         req.buffer_size = sizeof(anim_data_buffer);
@@ -149,7 +149,7 @@ static void frame(void) {
             state.cur_abs_time += state.cur_frame_time * state.time_factor;
         }
         eval_animation();
-        draw_scene();
+        draw_skeleton();
     }
 
     sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
@@ -160,54 +160,28 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
-    // handle user interface input
     if (simgui_handle_event(ev)) {
         return;
     }
-
-    // handle camera controller input
-    switch (ev->type) {
-        case SAPP_EVENTTYPE_MOUSE_DOWN:
-            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
-                sapp_lock_mouse(true);
-            }
-            break;
-
-        case SAPP_EVENTTYPE_MOUSE_UP:
-            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
-                sapp_lock_mouse(false);
-            }
-            break;
-
-        case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            cam_zoom(&state.camera, ev->scroll_y * 0.5f);
-            break;
-
-        case SAPP_EVENTTYPE_MOUSE_MOVE:
-            if (sapp_mouse_locked()) {
-                cam_orbit(&state.camera, ev->mouse_dx * 0.25f, ev->mouse_dy * 0.25f);
-            }
-            break;
-
-        default:
-            break;
-    }
+    cam_handle_event(&state.camera, ev);
 }
 
 static void cleanup(void) {
-    // free C++ objects early, to silence ozz leak detection
-    state.ozz = nullptr;
-
     simgui_shutdown();
     sgl_shutdown();
     sfetch_shutdown();
     sg_shutdown();
+    
+    // free C++ objects early, other ozz-animation complains about memory leaks
+    state.ozz = nullptr;
 }
 
 static void eval_animation(void) {
+
+    // convert current time to animation ration (0.0 .. 1.0)
     const float anim_duration = state.ozz->animation.duration();
     if (!state.anim_time_ratio_ui_override) {
-        state.anim_time_ratio = fmodf(state.cur_abs_time / anim_duration, 1.0f);   // 0..1
+        state.anim_time_ratio = fmodf(state.cur_abs_time / anim_duration, 1.0f);
     }
 
     // sample animation
@@ -218,7 +192,7 @@ static void eval_animation(void) {
     sampling_job.output = make_span(state.ozz->locals);
     sampling_job.Run();
 
-    // convert from local to model space matrices
+    // convert joint matrices from local to model space
     ozz::animation::LocalToModelJob ltm_job;
     ltm_job.skeleton = &state.ozz->skeleton;
     ltm_job.input = make_span(state.ozz->locals);
@@ -235,6 +209,7 @@ static void draw_line(const ozz::math::SimdFloat4& v0, const ozz::math::SimdFloa
     draw_vec(v1);
 }
 
+// this draws a wireframe 3d rhombus between the current and parent joints
 static void draw_joint(int joint_index, int parent_joint_index) {
     if (parent_joint_index < 0) {
         return;
@@ -242,11 +217,9 @@ static void draw_joint(int joint_index, int parent_joint_index) {
 
     using namespace ozz::math;
 
-    // uff, this is not convenient :/
     const Float4x4& m0 = state.ozz->models[joint_index];
     const Float4x4& m1 = state.ozz->models[parent_joint_index];
 
-    // joint start pos
     const SimdFloat4 p0 = m0.cols[3];
     const SimdFloat4 p1 = m1.cols[3];
     const SimdFloat4 ny = m1.cols[1];
@@ -266,25 +239,15 @@ static void draw_joint(int joint_index, int parent_joint_index) {
     draw_line(p2, p3); draw_line(p3, p4); draw_line(p4, p5); draw_line(p5, p2);
 }
 
-static void draw_scene(void) {
-    const float aspect = sapp_widthf() / sapp_heightf();
-    const float eye_x = state.camera.eye_pos.X;
-    const float eye_y = state.camera.eye_pos.Y;
-    const float eye_z = state.camera.eye_pos.Z;
-    const float center_x = state.camera.center.X;
-    const float center_y = state.camera.center.Y;
-    const float center_z = state.camera.center.Z;
-    const float up_x = 0.0f;
-    const float up_y = 1.0f;
-    const float up_z = 0.0f;
-    const int num_joints = state.ozz->skeleton.num_joints();
-    ozz::span<const int16_t> joint_parents = state.ozz->skeleton.joint_parents();
-
+static void draw_skeleton(void) {
     sgl_defaults();
     sgl_matrix_mode_projection();
-    sgl_perspective(sgl_rad(60.0f), aspect, 0.1f, 100.0f);
+    sgl_load_matrix((const float*)&state.camera.proj);
     sgl_matrix_mode_modelview();
-    sgl_lookat(eye_x, eye_y, eye_z, center_x, center_y, center_z, up_x, up_y, up_z);
+    sgl_load_matrix((const float*)&state.camera.view);
+
+    const int num_joints = state.ozz->skeleton.num_joints();
+    ozz::span<const int16_t> joint_parents = state.ozz->skeleton.joint_parents();
     sgl_begin_lines();
     for (int joint_index = 0; joint_index < num_joints; joint_index++) {
         draw_joint(joint_index, joint_parents[joint_index]);
@@ -304,9 +267,9 @@ static void draw_ui(void) {
             ImGui::Text("Camera Controls:");
             ImGui::Text("  LMB + Mouse Move: Look");
             ImGui::Text("  Mouse Wheel: Zoom");
-            ImGui::SliderFloat("Distance", &state.camera.dist, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
-            ImGui::SliderFloat("Theta", &state.camera.polar.X, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
-            ImGui::SliderFloat("Phi", &state.camera.polar.Y, 0.0f, 360.0f, "%.1f", 1.0f);
+            ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
+            ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
+            ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", 1.0f);
             ImGui::Separator();
             ImGui::Text("Time Controls:");
             ImGui::Checkbox("Paused", &state.paused);
