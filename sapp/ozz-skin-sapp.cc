@@ -1,17 +1,13 @@
 //------------------------------------------------------------------------------
-//  ozz-anim-sapp.cc
+//  ozz-skin-sapp.c
 //
-//  Port of the ozz-animation "Animation Playback" sample. Use sokol-gl
-//  for debug-rendering the animated character skeleton (no skinning).
+//  Ozz-animation with GPU skinning.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
 #include "sokol_time.h"
 #include "sokol_glue.h"
-
-#define SOKOL_GL_IMPL
-#include "sokol_gl.h"
 
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
@@ -32,6 +28,7 @@
 #include "ozz/base/containers/vector.h"
 #include "ozz/base/maths/soa_transform.h"
 #include "ozz/base/maths/vec_float.h"
+#include "ozz/util/mesh.h"
 
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <cmath>    // fmodf
@@ -46,13 +43,25 @@ typedef struct {
     ozz::vector<ozz::math::Float4x4> models;
 } ozz_t;
 
+// FIXME: better packing
+typedef struct {
+    float px, py, pz;
+    float nx, ny, nz;
+    uint8_t joint_indices[4];
+    float joint_weights[4];
+} vertex_t;
+
 static struct {
     std::unique_ptr<ozz_t> ozz;
     sg_pass_action pass_action;
     camera_t camera;
+    sg_pipeline pip;
+    sg_buffer vbuf;
+    sg_buffer ibuf;
     struct {
         bool skeleton;
         bool animation;
+        bool mesh;
         bool failed;
     } loaded;
     struct {
@@ -66,15 +75,15 @@ static struct {
     } time;
 } state;
 
-// io buffers for skeleton and animation data files, we know the max file size upfront
-static uint8_t skel_data_buffer[4 * 1024];
-static uint8_t anim_data_buffer[32 * 1024];
+// IO buffers (we know the max file sizes upfront)
+static uint8_t skel_data_buffer[32 * 1024];
+static uint8_t anim_data_buffer[96 * 1024];
+static uint8_t mesh_data_buffer[3 * 2024 * 1024];
 
-static void eval_animation(void);
-static void draw_skeleton(void);
 static void draw_ui(void);
-static void skeleton_data_loaded(const sfetch_response_t* response);
-static void animation_data_loaded(const sfetch_response_t* response);
+static void skel_data_loaded(const sfetch_response_t* respone);
+static void anim_data_loaded(const sfetch_response_t* respone);
+static void mesh_data_loaded(const sfetch_response_t* respone);
 
 static void init(void) {
     state.ozz = std::make_unique<ozz_t>();
@@ -90,15 +99,10 @@ static void init(void) {
 
     // setup sokol-fetch
     sfetch_desc_t sfdesc = { };
-    sfdesc.max_requests = 2;
+    sfdesc.max_requests = 3;
     sfdesc.num_channels = 1;
-    sfdesc.num_lanes = 2;
+    sfdesc.num_lanes = 3;
     sfetch_setup(&sfdesc);
-
-    // setup sokol-gl
-    sgl_desc_t sgldesc = { };
-    sgldesc.sample_count = sapp_sample_count();
-    sgl_setup(&sgldesc);
 
     // setup sokol-imgui
     simgui_desc_t imdesc = { };
@@ -106,7 +110,7 @@ static void init(void) {
 
     // initialize pass action for default-pass
     state.pass_action.colors[0].action = SG_ACTION_CLEAR;
-    state.pass_action.colors[0].value = { 0.0f, 0.1f, 0.2f, 1.0f };
+    state.pass_action.colors[0].value = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     // initialize camera helper
     camera_desc_t camdesc = { };
@@ -118,21 +122,29 @@ static void init(void) {
     camdesc.longitude = 20.0f;
     cam_init(&state.camera, &camdesc);
 
-    // start loading the skeleton and animation files
+    // start loading data
     {
         sfetch_request_t req = { };
-        req.path = "ozz_anim_skeleton.ozz";
-        req.callback = skeleton_data_loaded;
+        req.path = "ozz_skin_skeleton.ozz";
+        req.callback = skel_data_loaded;
         req.buffer_ptr = skel_data_buffer;
         req.buffer_size = sizeof(skel_data_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
-        req.path = "ozz_anim_animation.ozz";
-        req.callback = animation_data_loaded;
+        req.path = "ozz_skin_animation.ozz";
+        req.callback = anim_data_loaded;
         req.buffer_ptr = anim_data_buffer;
         req.buffer_size = sizeof(anim_data_buffer);
+        sfetch_send(&req);
+    }
+    {
+        sfetch_request_t req = { };
+        req.path = "ozz_skin_mesh.ozz";
+        req.callback = mesh_data_loaded;
+        req.buffer_ptr = mesh_data_buffer;
+        req.buffer_size = sizeof(mesh_data_buffer);
         sfetch_send(&req);
     }
 }
@@ -148,16 +160,7 @@ static void frame(void) {
     simgui_new_frame(fb_width, fb_height, state.time.frame);
     draw_ui();
 
-    if (state.loaded.animation && state.loaded.skeleton) {
-        if (!state.time.paused) {
-            state.time.absolute += state.time.frame * state.time.factor;
-        }
-        eval_animation();
-        draw_skeleton();
-    }
-
     sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
-    sgl_draw();
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -172,91 +175,11 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     simgui_shutdown();
-    sgl_shutdown();
     sfetch_shutdown();
     sg_shutdown();
 
     // free C++ objects early, other ozz-animation complains about memory leaks
     state.ozz = nullptr;
-}
-
-static void eval_animation(void) {
-
-    // convert current time to animation ration (0.0 .. 1.0)
-    const float anim_duration = state.ozz->animation.duration();
-    if (!state.time.anim_ratio_ui_override) {
-        state.time.anim_ratio = fmodf(state.time.absolute / anim_duration, 1.0f);
-    }
-
-    // sample animation
-    ozz::animation::SamplingJob sampling_job;
-    sampling_job.animation = &state.ozz->animation;
-    sampling_job.cache = &state.ozz->cache;
-    sampling_job.ratio = state.time.anim_ratio;
-    sampling_job.output = make_span(state.ozz->locals);
-    sampling_job.Run();
-
-    // convert joint matrices from local to model space
-    ozz::animation::LocalToModelJob ltm_job;
-    ltm_job.skeleton = &state.ozz->skeleton;
-    ltm_job.input = make_span(state.ozz->locals);
-    ltm_job.output = make_span(state.ozz->models);
-    ltm_job.Run();
-}
-
-static void draw_vec(const ozz::math::SimdFloat4& vec) {
-    sgl_v3f(ozz::math::GetX(vec), ozz::math::GetY(vec), ozz::math::GetZ(vec));
-}
-
-static void draw_line(const ozz::math::SimdFloat4& v0, const ozz::math::SimdFloat4& v1) {
-    draw_vec(v0);
-    draw_vec(v1);
-}
-
-// this draws a wireframe 3d rhombus between the current and parent joints
-static void draw_joint(int joint_index, int parent_joint_index) {
-    if (parent_joint_index < 0) {
-        return;
-    }
-
-    using namespace ozz::math;
-
-    const Float4x4& m0 = state.ozz->models[joint_index];
-    const Float4x4& m1 = state.ozz->models[parent_joint_index];
-
-    const SimdFloat4 p0 = m0.cols[3];
-    const SimdFloat4 p1 = m1.cols[3];
-    const SimdFloat4 ny = m1.cols[1];
-    const SimdFloat4 nz = m1.cols[2];
-
-    const SimdFloat4 len = SplatX(Length3(p1 - p0)) * simd_float4::Load1(0.1f);
-
-    const SimdFloat4 pmid = p0 + (p1 - p0) * simd_float4::Load1(0.66f);
-    const SimdFloat4 p2 = pmid + ny * len;
-    const SimdFloat4 p3 = pmid + nz * len;
-    const SimdFloat4 p4 = pmid - ny * len;
-    const SimdFloat4 p5 = pmid - nz * len;
-
-    sgl_c3f(1.0f, 1.0f, 0.0f);
-    draw_line(p0, p2); draw_line(p0, p3); draw_line(p0, p4); draw_line(p0, p5);
-    draw_line(p1, p2); draw_line(p1, p3); draw_line(p1, p4); draw_line(p1, p5);
-    draw_line(p2, p3); draw_line(p3, p4); draw_line(p4, p5); draw_line(p5, p2);
-}
-
-static void draw_skeleton(void) {
-    sgl_defaults();
-    sgl_matrix_mode_projection();
-    sgl_load_matrix((const float*)&state.camera.proj);
-    sgl_matrix_mode_modelview();
-    sgl_load_matrix((const float*)&state.camera.view);
-
-    const int num_joints = state.ozz->skeleton.num_joints();
-    ozz::span<const int16_t> joint_parents = state.ozz->skeleton.joint_parents();
-    sgl_begin_lines();
-    for (int joint_index = 0; joint_index < num_joints; joint_index++) {
-        draw_joint(joint_index, joint_parents[joint_index]);
-    }
-    sgl_end();
 }
 
 static void draw_ui(void) {
@@ -289,11 +212,9 @@ static void draw_ui(void) {
     ImGui::End();
 }
 
-static void skeleton_data_loaded(const sfetch_response_t* response) {
+// FIXME: all loading code is much less efficient than it should be!
+static void skel_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        // NOTE: if we derived our own ozz::io::Stream class we could
-        // avoid the extra allocation and memory copy that happens
-        // with the standard MemoryStream class
         ozz::io::MemoryStream stream;
         stream.Write(response->buffer_ptr, response->fetched_size);
         stream.Seek(0, ozz::io::Stream::kSet);
@@ -311,12 +232,12 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
             state.loaded.failed = true;
         }
     }
-    else if (response->failed) {
+    else {
         state.loaded.failed = true;
     }
 }
 
-static void animation_data_loaded(const sfetch_response_t* response) {
+static void anim_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz::io::MemoryStream stream;
         stream.Write(response->buffer_ptr, response->fetched_size);
@@ -330,7 +251,69 @@ static void animation_data_loaded(const sfetch_response_t* response) {
             state.loaded.failed = true;
         }
     }
-    else if (response->failed) {
+    else {
+        state.loaded.failed = true;
+    }
+}
+
+static void mesh_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        ozz::io::MemoryStream stream;
+        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Seek(0, ozz::io::Stream::kSet);
+
+        ozz::vector<ozz::sample::Mesh> meshes;
+        ozz::io::IArchive archive(&stream);
+        while (archive.TestTag<ozz::sample::Mesh>()) {
+            meshes.resize(meshes.size() + 1);
+            archive >> meshes.back();
+        }
+        // assume one mesh and one submesh
+        assert((meshes.size() == 1) && (meshes[0].parts.size() == 1));
+        state.loaded.mesh = true;
+
+        const size_t num_vertices = (int) (meshes[0].parts[0].positions.size() / 3);
+        assert(meshes[0].parts[0].normals.size() == (num_vertices * 3));
+        assert(meshes[0].parts[0].joint_indices.size() == (num_vertices * 4));
+        assert(meshes[0].parts[0].joint_weights.size() == (num_vertices * 3));
+        const float* positions = &meshes[0].parts[0].positions[0];
+        const float* normals = &meshes[0].parts[0].normals[0];
+        const uint16_t* joint_indices = &meshes[0].parts[0].joint_indices[0];
+        const float* joint_weights = &meshes[0].parts[0].joint_weights[0];
+
+        vertex_t* vertices = (vertex_t*) calloc(num_vertices, sizeof(vertex_t));
+        for (size_t i = 0; i < num_vertices; i++) {
+            vertex_t* v = &vertices[i];
+            v->px = positions[i * 3 + 0];
+            v->py = positions[i * 3 + 1];
+            v->pz = positions[i * 3 + 2];
+            v->nz = normals[i * 3 + 0];
+            v->ny = normals[i * 3 + 1];
+            v->nz = normals[i * 3 + 2];
+            v->joint_indices[0] = (uint8_t) joint_indices[i * 4 + 0];
+            v->joint_indices[1] = (uint8_t) joint_indices[i * 4 + 1];
+            v->joint_indices[2] = (uint8_t) joint_indices[i * 4 + 2];
+            v->joint_indices[3] = (uint8_t) joint_indices[i * 4 + 3];
+            v->joint_weights[0] = joint_weights[i * 3 + 0];
+            v->joint_weights[1] = joint_weights[i * 3 + 1];
+            v->joint_weights[2] = joint_weights[i * 3 + 2];
+            v->joint_weights[3] = 1.0f - (v->joint_weights[0] + v->joint_weights[1] + v->joint_weights[2]);
+        }
+
+        sg_buffer_desc vbuf_desc = { };
+        vbuf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
+        vbuf_desc.data.ptr = vertices;
+        vbuf_desc.data.size = num_vertices * sizeof(vertices);
+        state.vbuf = sg_make_buffer(&vbuf_desc);
+        free(vertices); vertices = nullptr;
+
+        sg_buffer_desc ibuf_desc = { };
+        ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
+        ibuf_desc.data.ptr = &meshes[0].triangle_indices[0];
+        ibuf_desc.data.size = meshes[0].triangle_indices.size() * sizeof(uint16_t);
+        state.ibuf = sg_make_buffer(&ibuf_desc);
+    }
+    else {
         state.loaded.failed = true;
     }
 }
@@ -346,7 +329,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.width = 800;
     desc.height = 600;
     desc.sample_count = 4;
-    desc.window_title = "ozz-anim-sapp.cc";
+    desc.window_title = "ozz-skin-sapp.cc";
     desc.icon.sokol_default = true;
 
     return desc;

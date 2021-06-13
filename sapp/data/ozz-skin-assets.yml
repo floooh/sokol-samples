@@ -1,0 +1,7 @@
+---
+options:
+    src_dir: ozz
+files:
+    - ozz_skin_animation.ozz
+    - ozz_skin_skeleton.ozz
+    - ozz_skin_mesh.ozz

@@ -1,6 +1,6 @@
 fips_begin_lib(ozzanim)
     fips_dir(src)
-    fips_files(ozz_base.cc ozz_animation.cc)
+    fips_files(ozz_base.cc ozz_animation.cc mesh.cc)
 fips_end_lib()
 target_include_directories(ozzanim PUBLIC include)
 if (FIPS_CLANG)

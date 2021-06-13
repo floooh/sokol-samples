@@ -1,6 +1,0 @@
----
-options:
-    src_dir: ozz
-files:
-    - pab_animation.ozz
-    - pab_skeleton.ozz
