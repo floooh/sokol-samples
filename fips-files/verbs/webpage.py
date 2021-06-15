@@ -58,7 +58,8 @@ samples = [
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
     [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
-    [ 'ozz-anim', 'ozz-anim-sapp.cc', None ]
+    [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
+    [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl']
 ]
 
 # assets that must also be copied
@@ -77,8 +78,11 @@ assets = [
     "DroidSerif-Italic.ttf",
     "DroidSerif-Bold.ttf",
     "DroidSansJapanese.ttf",
-    "skeleton.ozz",
-    "animation.ozz"
+    "ozz_anim_skeleton.ozz",
+    "ozz_anim_animation.ozz",
+    "ozz_skin_skeleton.ozz",
+    "ozz_skin_animation.ozz",
+    "ozz_skin_mesh.ozz"
 ]
 
 # webpage template arguments
@@ -159,6 +163,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         src_path = '{}/{}'.format(wasm_deploy_dir, asset)
         if os.path.isfile(src_path):
             shutil.copy(src_path, webpage_dir)
+        else:
+            log.warn('!!! file {} not found!'.format(src_path))
 
     # copy the screenshots
     for sample in samples :
