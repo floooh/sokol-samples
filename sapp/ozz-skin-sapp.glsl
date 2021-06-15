@@ -46,8 +46,7 @@ void skinned_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 skin_weights, in vec4 ski
 
 @vs vs
 uniform vs_params {
-    mat4 mvp;
-    vec4 skin_info;
+    mat4 view_proj;
 };
 
 uniform sampler2D joint_tex;
@@ -56,6 +55,10 @@ in vec4 position;
 in vec4 normal;
 in vec4 jindices;
 in vec4 jweights;
+in vec4 inst_xxxx;
+in vec4 inst_yyyy;
+in vec4 inst_zzzz;
+in vec4 inst_skin_info;
 
 out vec3 color;
 
@@ -63,8 +66,9 @@ out vec3 color;
 
 void main() {
     vec4 pos, nrm;
-    skinned_pos_nrm(position, normal, jweights, jindices, skin_info, pos, nrm);
-    gl_Position = mvp * pos;
+    skinned_pos_nrm(position, normal, jweights, jindices, inst_skin_info, pos, nrm);
+    // FIXME: compute model-view-proj matrix
+    gl_Position = view_proj * pos;
     color = (nrm.xyz + 1.0) * 0.5;
 }
 @end

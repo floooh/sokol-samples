@@ -36,7 +36,8 @@
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <cmath>    // fmodf
 
-#define MAX_INSTANCES (3)
+#define MAX_PALETTE_JOINTS (256)
+#define MAX_INSTANCES (64)
 
 // wrapper struct for managed ozz-animation C++ objects, must be deleted
 // before shutdown, otherwise ozz-animation will report a memory leak
@@ -50,6 +51,9 @@ typedef struct {
     ozz::vector<ozz::math::Float4x4> model_matrices;
 } ozz_t;
 
+// a skinned-mesh vertex, we don't need the texcoords and tangent
+// in our example renderer so we just drop them. Normals, joint indices
+// and joint weights are packed into BYTE4N, UBYTE4 and UBYTE4N
 typedef struct {
     float position[3];
     uint32_t normal;
@@ -57,19 +61,27 @@ typedef struct {
     uint32_t joint_weights;
 } vertex_t;
 
+// per-instance data for hardware-instanced rendering includes the
+// transposed 4x3 model-to-world matrix, and information where the
+// joint palette is found in the joint texture
+typedef struct {
+    float model[3][4];
+    float skin_info[4];
+} instance_t;
+
 static struct {
     std::unique_ptr<ozz_t> ozz;
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_image joint_texture;
+    sg_buffer instance_buffer;
     sg_bindings bind;
     vs_params_t vs_params;
     int num_triangle_indices;
     int num_skin_joints;        // number of joints actually used by skinned mesh
-    int joint_texture_width;    // num pixels
-    int joint_texture_height;   // num pixels
-    int joint_texture_pitch;    // num bytes
-    float* joint_upload_buffer;
+    int joint_texture_width;    // in number of pixels
+    int joint_texture_height;   // in number of pixels
+    int joint_texture_pitch;    // in number of floats
     camera_t camera;
     struct {
         bool skeleton;
@@ -86,12 +98,22 @@ static struct {
         bool anim_ratio_ui_override;
         bool paused;
     } time;
+    struct {
+        bool joint_texture_shown;
+        int joint_texture_scale;
+    } ui;
 } state;
 
 // IO buffers (we know the max file sizes upfront)
 static uint8_t skel_io_buffer[32 * 1024];
 static uint8_t anim_io_buffer[96 * 1024];
 static uint8_t mesh_io_buffer[3 * 1024 * 1024];
+
+// instance data upload buffer
+instance_t instance_upload_buffer[MAX_INSTANCES];
+
+// joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
+float joint_upload_buffer[MAX_INSTANCES][MAX_PALETTE_JOINTS][3][4];
 
 static void draw_ui(void);
 static void skel_data_loaded(const sfetch_response_t* respone);
@@ -101,6 +123,7 @@ static void mesh_data_loaded(const sfetch_response_t* respone);
 static void init(void) {
     state.ozz = std::make_unique<ozz_t>();
     state.time.factor = 1.0f;
+    state.ui.joint_texture_scale = 4;
 
     // setup sokol-gfx
     sg_desc sgdesc = { };
@@ -139,10 +162,20 @@ static void init(void) {
     sg_pipeline_desc pip_desc = { };
     pip_desc.shader = sg_make_shader(skinned_shader_desc(sg_query_backend()));
     pip_desc.layout.buffers[0].stride = sizeof(vertex_t);
+    pip_desc.layout.buffers[1].stride = sizeof(instance_t);
+    pip_desc.layout.buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE;
     pip_desc.layout.attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3;
     pip_desc.layout.attrs[ATTR_vs_normal].format = SG_VERTEXFORMAT_BYTE4N;
     pip_desc.layout.attrs[ATTR_vs_jindices].format = SG_VERTEXFORMAT_UBYTE4;
     pip_desc.layout.attrs[ATTR_vs_jweights].format = SG_VERTEXFORMAT_UBYTE4N;
+    pip_desc.layout.attrs[ATTR_vs_inst_xxxx].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_vs_inst_xxxx].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_vs_inst_yyyy].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_vs_inst_yyyy].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_vs_inst_zzzz].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_vs_inst_zzzz].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_vs_inst_skin_info].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_vs_inst_skin_info].buffer_index = 1;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     // ozz mesh data appears to have counter-clock-wise face winding
     pip_desc.face_winding = SG_FACEWINDING_CCW;
@@ -150,6 +183,31 @@ static void init(void) {
     pip_desc.depth.write_enabled = true;
     pip_desc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
     state.pip = sg_make_pipeline(&pip_desc);
+
+    // create a dynamic joint-palette texture and intermediate joint-upload-buffer
+    state.joint_texture_width = MAX_PALETTE_JOINTS * 3;
+    state.joint_texture_height = MAX_INSTANCES;
+    state.joint_texture_pitch = state.joint_texture_width * 4;
+    sg_image_desc img_desc = { };
+    img_desc.width = state.joint_texture_width;
+    img_desc.height = state.joint_texture_height;
+    img_desc.num_mipmaps = 1;
+    img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
+    img_desc.usage = SG_USAGE_STREAM;
+    img_desc.min_filter = SG_FILTER_NEAREST;
+    img_desc.mag_filter = SG_FILTER_NEAREST;
+    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    state.joint_texture = sg_make_image(&img_desc);
+    state.bind.vs_images[SLOT_joint_tex] = state.joint_texture;
+
+    // create a dynamic instance-data buffer
+    sg_buffer_desc buf_desc = { };
+    buf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
+    buf_desc.size = MAX_INSTANCES * sizeof(instance_t);
+    buf_desc.usage = SG_USAGE_STREAM;
+    state.instance_buffer = sg_make_buffer(&buf_desc);
+    state.bind.vertex_buffers[1] = state.instance_buffer;
 
     // start loading data
     {
@@ -178,19 +236,6 @@ static void init(void) {
     }
 }
 
-// FIXME: this will go into per-instance vertex buffer
-static void update_vs_params(void) {
-    // model-view-projection matrix
-    state.vs_params.mvp = state.camera.view_proj;
-    // helper data to lookup skinning matrix in joint texture
-    const float half_pixel_x = 0.5f / (float)state.joint_texture_width;
-    const float half_pixel_y = 0.5f / (float)state.joint_texture_height;
-    state.vs_params.skin_info.X = half_pixel_x;
-    state.vs_params.skin_info.Y = half_pixel_y;
-    state.vs_params.skin_info.Z = (float)state.joint_texture_width;
-    state.vs_params.skin_info.W = (float)state.joint_texture_height;
-}
-
 static void eval_animation(void) {
     // convert current time to animation ration (0.0 .. 1.0)
     const float anim_duration = state.ozz->animation.duration();
@@ -214,9 +259,26 @@ static void eval_animation(void) {
     ltm_job.Run();
 }
 
+// update the instance-data buffer with the model-to-world matrices and
+// joint-palette-texture infos for each character instance
+static void update_instance_buffer(int num_instances) {
+    // FIXME: fill model-to-world matrices
+    const float half_pixel_x = 0.5f / (float)state.joint_texture_width;
+    const float half_pixel_y = 0.5f / (float)state.joint_texture_height;
+    for (int i = 0; i < num_instances; i++) {
+        instance_t* inst = &instance_upload_buffer[i];
+        inst->skin_info[0] = half_pixel_x;
+        inst->skin_info[1] = half_pixel_y + (i / (float)state.joint_texture_height);
+        inst->skin_info[2] = (float)state.joint_texture_width;
+        inst->skin_info[3] = (float)state.joint_texture_height;
+    }
+    sg_range data = { instance_upload_buffer, num_instances * sizeof(instance_t) };
+    sg_update_buffer(state.instance_buffer, &data);
+}
+
 // compute skinning matrices, and upload into joint texture
 static void update_joint_texture(void) {
-    float* ptr = state.joint_upload_buffer;
+    const int instance = 0;
     for (int i = 0; i < state.num_skin_joints; i++) {
         ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
         const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
@@ -224,14 +286,15 @@ static void update_joint_texture(void) {
         const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
         const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
 
+        float* ptr = &joint_upload_buffer[instance][i][0][0];
         *ptr++ = ozz::math::GetX(c0); *ptr++ = ozz::math::GetX(c1); *ptr++ = ozz::math::GetX(c2); *ptr++ = ozz::math::GetX(c3);
         *ptr++ = ozz::math::GetY(c0); *ptr++ = ozz::math::GetY(c1); *ptr++ = ozz::math::GetY(c2); *ptr++ = ozz::math::GetY(c3);
         *ptr++ = ozz::math::GetZ(c0); *ptr++ = ozz::math::GetZ(c1); *ptr++ = ozz::math::GetZ(c2); *ptr++ = ozz::math::GetZ(c3);
     }
 
     sg_image_data img_data = { };
-    img_data.subimage[0][0].ptr = state.joint_upload_buffer;
-    img_data.subimage[0][0].size = (size_t) (state.joint_texture_pitch * state.joint_texture_height);
+    // FIXME: upload partial texture? (needs sokol-gfx fixes)
+    img_data.subimage[0][0] = SG_RANGE(joint_upload_buffer);
     sg_update_image(state.joint_texture, img_data);
 }
 
@@ -253,8 +316,9 @@ static void frame(void) {
         }
         eval_animation();
         update_joint_texture();
-        update_vs_params();
+        update_instance_buffer(1);
 
+        state.vs_params.view_proj = state.camera.view_proj;
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(state.vs_params));
@@ -273,10 +337,6 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
-    if (state.joint_upload_buffer) {
-        free(state.joint_upload_buffer);
-        state.joint_upload_buffer = nullptr;
-    }
     simgui_shutdown();
     sfetch_shutdown();
     sg_shutdown();
@@ -310,7 +370,31 @@ static void draw_ui(void) {
             if (ImGui::IsItemDeactivatedAfterEdit()) {
                 state.time.anim_ratio_ui_override = false;
             }
+            ImGui::Separator();
+            if (ImGui::Button("Toggle Joint Texture")) {
+                state.ui.joint_texture_shown = !state.ui.joint_texture_shown;
+            }
         }
+    }
+    if (state.ui.joint_texture_shown) {
+        ImGui::SetNextWindowPos({ 20, 300 }, ImGuiCond_Once);
+        ImGui::SetNextWindowSize({ 600, 300 }, ImGuiCond_Once);
+        if (ImGui::Begin("Joint Texture", &state.ui.joint_texture_shown)) {
+            ImGui::InputInt("##scale", &state.ui.joint_texture_scale);
+            ImGui::SameLine();
+            if (ImGui::Button("1x")) { state.ui.joint_texture_scale = 1; }
+            ImGui::SameLine();
+            if (ImGui::Button("2x")) { state.ui.joint_texture_scale = 2; }
+            ImGui::SameLine();
+            if (ImGui::Button("4x")) { state.ui.joint_texture_scale = 4; }
+            ImGui::BeginChild("##frame", {0,0}, true, ImGuiWindowFlags_HorizontalScrollbar);
+            ImGui::Image((ImTextureID)(uintptr_t)state.joint_texture.id,
+                { (float)(state.joint_texture_width * state.ui.joint_texture_scale), (float)(state.joint_texture_height * state.ui.joint_texture_scale) },
+                { 0.0f, 0.0f },
+                { 1.0f, 1.0f });
+            ImGui::EndChild();
+        }
+        ImGui::End();
     }
     ImGui::End();
 }
@@ -443,26 +527,6 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         ibuf_desc.data.ptr = &meshes[0].triangle_indices[0];
         ibuf_desc.data.size = state.num_triangle_indices * sizeof(uint16_t);
         state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
-
-        // create a texture for uploading joint data to vertex shader
-        state.joint_texture_width = state.num_skin_joints * 3;
-        state.joint_texture_height = MAX_INSTANCES;
-        state.joint_texture_pitch = state.joint_texture_width * sizeof(float) * 4;
-        sg_image_desc img_desc = { };
-        img_desc.width = state.joint_texture_width;
-        img_desc.height = state.joint_texture_height;
-        img_desc.num_mipmaps = 1;
-        img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
-        img_desc.usage = SG_USAGE_STREAM;
-        img_desc.min_filter = SG_FILTER_NEAREST;
-        img_desc.mag_filter = SG_FILTER_NEAREST;
-        img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-        img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-        state.joint_texture = sg_make_image(&img_desc);
-        state.bind.vs_images[SLOT_joint_tex] = state.joint_texture;
-
-        // allocate joint texture upload buffer
-        state.joint_upload_buffer = (float*) calloc((size_t)(state.joint_texture_pitch * state.joint_texture_height), 1);
     }
     else {
         state.loaded.failed = true;
