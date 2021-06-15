@@ -42,8 +42,8 @@ typedef struct {
     ozz::animation::Skeleton skeleton;
     ozz::animation::Animation animation;
     ozz::animation::SamplingCache cache;
-    ozz::vector<ozz::math::SoaTransform> locals;
-    ozz::vector<ozz::math::Float4x4> models;
+    ozz::vector<ozz::math::SoaTransform> local_matrices;
+    ozz::vector<ozz::math::Float4x4> model_matrices;
 } ozz_t;
 
 static struct {
@@ -176,7 +176,7 @@ static void cleanup(void) {
     sfetch_shutdown();
     sg_shutdown();
 
-    // free C++ objects early, other ozz-animation complains about memory leaks
+    // free C++ objects early, otherwise ozz-animation complains about memory leaks
     state.ozz = nullptr;
 }
 
@@ -193,14 +193,14 @@ static void eval_animation(void) {
     sampling_job.animation = &state.ozz->animation;
     sampling_job.cache = &state.ozz->cache;
     sampling_job.ratio = state.time.anim_ratio;
-    sampling_job.output = make_span(state.ozz->locals);
+    sampling_job.output = make_span(state.ozz->local_matrices);
     sampling_job.Run();
 
     // convert joint matrices from local to model space
     ozz::animation::LocalToModelJob ltm_job;
     ltm_job.skeleton = &state.ozz->skeleton;
-    ltm_job.input = make_span(state.ozz->locals);
-    ltm_job.output = make_span(state.ozz->models);
+    ltm_job.input = make_span(state.ozz->local_matrices);
+    ltm_job.output = make_span(state.ozz->model_matrices);
     ltm_job.Run();
 }
 
@@ -221,8 +221,8 @@ static void draw_joint(int joint_index, int parent_joint_index) {
 
     using namespace ozz::math;
 
-    const Float4x4& m0 = state.ozz->models[joint_index];
-    const Float4x4& m1 = state.ozz->models[parent_joint_index];
+    const Float4x4& m0 = state.ozz->model_matrices[joint_index];
+    const Float4x4& m1 = state.ozz->model_matrices[parent_joint_index];
 
     const SimdFloat4 p0 = m0.cols[3];
     const SimdFloat4 p1 = m1.cols[3];
@@ -303,8 +303,8 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
             state.loaded.skeleton = true;
             const int num_soa_joints = state.ozz->skeleton.num_soa_joints();
             const int num_joints = state.ozz->skeleton.num_joints();
-            state.ozz->locals.resize(num_soa_joints);
-            state.ozz->models.resize(num_joints);
+            state.ozz->local_matrices.resize(num_soa_joints);
+            state.ozz->model_matrices.resize(num_joints);
             state.ozz->cache.Resize(num_joints);
         }
         else {
