@@ -91,7 +91,7 @@ static struct {
 // IO buffers (we know the max file sizes upfront)
 static uint8_t skel_io_buffer[32 * 1024];
 static uint8_t anim_io_buffer[96 * 1024];
-static uint8_t mesh_io_buffer[3 * 2024 * 1024];
+static uint8_t mesh_io_buffer[3 * 1024 * 1024];
 
 static void draw_ui(void);
 static void skel_data_loaded(const sfetch_response_t* respone);
