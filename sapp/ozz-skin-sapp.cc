@@ -90,7 +90,6 @@ static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_image joint_texture;
-    sg_buffer instance_buffer;
     sg_bindings bind;
     int num_instances;          // current number of character instances
     int num_triangle_indices;
@@ -206,7 +205,7 @@ static void init(void) {
     pip_desc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
     state.pip = sg_make_pipeline(&pip_desc);
 
-    // create a dynamic joint-palette texture and intermediate joint-upload-buffer
+    // create a dynamic joint-palette texture
     state.joint_texture_width = MAX_PALETTE_JOINTS * 3;
     state.joint_texture_height = MAX_INSTANCES;
     state.joint_texture_pitch = state.joint_texture_width * 4;
@@ -229,10 +228,8 @@ static void init(void) {
     init_instance_data();
     sg_buffer_desc buf_desc = { };
     buf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
-    buf_desc.size = MAX_INSTANCES * sizeof(instance_t);
     buf_desc.data = SG_RANGE(instance_data);
-    state.instance_buffer = sg_make_buffer(&buf_desc);
-    state.bind.vertex_buffers[1] = state.instance_buffer;
+    state.bind.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
     // start loading data
     {
