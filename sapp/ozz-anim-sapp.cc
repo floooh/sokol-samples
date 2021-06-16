@@ -187,7 +187,7 @@ static void eval_animation(void) {
     // convert current time to animation ration (0.0 .. 1.0)
     const float anim_duration = state.ozz->animation.duration();
     if (!state.time.anim_ratio_ui_override) {
-        state.time.anim_ratio = fmodf(state.time.absolute / anim_duration, 1.0f);
+        state.time.anim_ratio = fmodf((float)state.time.absolute / anim_duration, 1.0f);
     }
 
     // sample animation

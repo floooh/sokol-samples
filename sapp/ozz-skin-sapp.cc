@@ -312,7 +312,7 @@ static void update_joint_texture(void) {
     for (int instance = 0; instance < state.num_instances; instance++) {
 
         // each character instance evaluates its own animation
-        const float anim_ratio = fmodf((state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
+        const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
 
         // sample animation
         // NOTE: using one cache per instance versus one cache per animation
