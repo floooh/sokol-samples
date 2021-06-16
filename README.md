@@ -409,5 +409,6 @@ To build one of the sokol-app samples on Linux:
 - Dear Imgui: https://github.com/ocornut/imgui
 - cimgui: https://github.com/cimgui/cimgui
 - utest.h: https://github.com/sheredom/utest.h
+- Ozz Animation: https://github.com/guillaumeblanc/ozz-animation
 
 Enjoy!

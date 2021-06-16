@@ -50,7 +50,7 @@ set(cc_common_sources
 # test compiling the implementations as C/ObjC
 if (NOT FIPS_UWP)
 
-fips_begin_app(sokol_compiletest_c windowed)
+fips_begin_app(sokol-compiletest-c windowed)
     fips_vs_warning_level(4)
     fips_files(sokol_app.c sokol_glue.c ${c_common_sources})
     if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
@@ -60,13 +60,13 @@ fips_begin_app(sokol_compiletest_c windowed)
     fips_deps(cimgui nuklear)
     add_system_libs()
 fips_end_app()
-target_compile_definitions(sokol_compiletest_c PUBLIC ${sokol_backend})
+target_compile_definitions(sokol-compiletest-c PUBLIC ${sokol_backend})
 if (FIPS_OSX)
-    target_compile_options(sokol_compiletest_c PUBLIC -x objective-c)
+    target_compile_options(sokol-compiletest-c PUBLIC -x objective-c)
 endif()
 
 # test compiling with dummy backend
-fips_begin_app(sokol_compiletest_dummy cmdline)
+fips_begin_app(sokol-compiletest-dummy cmdline)
     fips_vs_warning_level(4)
     fips_files(${c_common_sources})
     if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
@@ -74,12 +74,12 @@ fips_begin_app(sokol_compiletest_dummy cmdline)
     endif()
     fips_deps(cimgui nuklear)
 fips_end_app()
-target_compile_definitions(sokol_compiletest_dummy PUBLIC SOKOL_DUMMY_BACKEND)
+target_compile_definitions(sokol-compiletest-dummy PUBLIC SOKOL_DUMMY_BACKEND)
 
 endif() # FIPS_UWP
 
 # test compiling implementations as C++/ObjC++
-fips_begin_app(sokol_compiletest_cc windowed)
+fips_begin_app(sokol-compiletest-cc windowed)
     fips_vs_warning_level(4)
     fips_files(sokol_app.cc sokol_glue.cc ${cc_common_sources})
     if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
@@ -89,8 +89,8 @@ fips_begin_app(sokol_compiletest_cc windowed)
     fips_deps(imgui)
     add_system_libs()
 fips_end_app()
-target_compile_definitions(sokol_compiletest_cc PUBLIC ${sokol_backend})
+target_compile_definitions(sokol-compiletest-cc PUBLIC ${sokol_backend})
 if (FIPS_OSX)
-    target_compile_options(sokol_compiletest_cc PUBLIC -x objective-c++)
+    target_compile_options(sokol-compiletest-cc PUBLIC -x objective-c++)
 endif()
 

@@ -1,0 +1,6 @@
+---
+options:
+    src_dir: ozz
+files:
+    - ozz_anim_animation.ozz
+    - ozz_anim_skeleton.ozz
