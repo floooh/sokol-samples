@@ -3,7 +3,7 @@
 //
 //  Ozz-animation with GPU skinning.
 //
-//  http://guillaumeblanc.github.io/ozz-animation/
+//  https://guillaumeblanc.github.io/ozz-animation/
 //
 //  Joint palette data for vertex skinning is uploaded each frame to a dynamic
 //  RGBA32F texture and sampled in the vertex shader to perform weighted

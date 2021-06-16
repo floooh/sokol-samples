@@ -1,6 +1,8 @@
 //------------------------------------------------------------------------------
 //  ozz-anim-sapp.cc
 //
+//  https://guillaumeblanc.github.io/ozz-animation/
+//
 //  Port of the ozz-animation "Animation Playback" sample. Use sokol-gl
 //  for debug-rendering the animated character skeleton (no skinning).
 //------------------------------------------------------------------------------
