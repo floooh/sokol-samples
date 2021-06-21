@@ -12,6 +12,7 @@ fips_begin_app(sokol-test cmdline)
         sokol_gfx_test.c
         sokol_gl_test.c
         sokol_shape_test.c
+        sokol_color_test.c
         sokol_test.c
     )
     fips_dir(assets)
