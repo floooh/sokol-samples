@@ -32,6 +32,7 @@ set(c_common_sources
     sokol_gfx_imgui.c
     sokol_shape.c
     sokol_nuklear.c
+    sokol_color.c
     sokol_main.c)
 
 set(cc_common_sources
@@ -45,6 +46,7 @@ set(cc_common_sources
     sokol_imgui.cc
     sokol_gfx_imgui.cc
     sokol_shape.cc
+    sokol_color.cc
     sokol_main.cc)
 
 # test compiling the implementations as C/ObjC
