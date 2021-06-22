@@ -47,7 +47,7 @@
 #include <cmath>    // fmodf
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
-// are stored in an UBYTE4), but the example mesh only needs less than 64
+// are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
 #define MAX_PALETTE_JOINTS (64)
 
 // this defines the size of the instance-buffer and height of the joint-texture
@@ -67,7 +67,10 @@ typedef struct {
 
 // a skinned-mesh vertex, we don't need the texcoords and tangent
 // in our example renderer so we just drop them. Normals, joint indices
-// and joint weights are packed into BYTE4N, UBYTE4 and UBYTE4N
+// and joint weights are packed into BYTE4N and UBYTE4N
+//
+// NOTE: joint indices are packed as UBYTE4N and not UBYTE4 because of
+// D3D11 compatibility (see "A NOTE ON PORTABLE PACKED VERTEX FORMATS" in sokol_gfx.h)
 typedef struct {
     float position[3];
     uint32_t normal;
@@ -187,7 +190,7 @@ static void init(void) {
     pip_desc.layout.buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE;
     pip_desc.layout.attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3;
     pip_desc.layout.attrs[ATTR_vs_normal].format = SG_VERTEXFORMAT_BYTE4N;
-    pip_desc.layout.attrs[ATTR_vs_jindices].format = SG_VERTEXFORMAT_UBYTE4;
+    pip_desc.layout.attrs[ATTR_vs_jindices].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.layout.attrs[ATTR_vs_jweights].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.layout.attrs[ATTR_vs_inst_xxxx].format = SG_VERTEXFORMAT_FLOAT4;
     pip_desc.layout.attrs[ATTR_vs_inst_xxxx].buffer_index = 1;

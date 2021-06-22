@@ -68,7 +68,7 @@ out vec3 color;
 void main() {
     // compute skinned model-space position and normal
     vec4 pos, nrm;
-    skinned_pos_nrm(position, normal, jweights, jindices, inst_joint_uv, pos, nrm);
+    skinned_pos_nrm(position, normal, jweights, jindices * 255.0, inst_joint_uv, pos, nrm);
 
     // transform pos and normal to world space
     pos = vec4(dot(pos,inst_xxxx), dot(pos,inst_yyyy), dot(pos,inst_zzzz), 1.0);
