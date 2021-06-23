@@ -484,7 +484,7 @@ static void skel_data_loaded(const sfetch_response_t* response) {
             state.loaded.failed = true;
         }
     }
-    else {
+    else if (response->failed) {
         state.loaded.failed = true;
     }
 }
@@ -503,7 +503,7 @@ static void anim_data_loaded(const sfetch_response_t* response) {
             state.loaded.failed = true;
         }
     }
-    else {
+    else if (response->failed) {
         state.loaded.failed = true;
     }
 }
@@ -593,7 +593,7 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         ibuf_desc.data.size = state.num_triangle_indices * sizeof(uint16_t);
         state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
     }
-    else {
+    else if (response->failed) {
         state.loaded.failed = true;
     }
 }
