@@ -59,7 +59,8 @@ samples = [
     [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
-    [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl']
+    [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
+    [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl']
 ]
 
 # assets that must also be copied
