@@ -543,13 +543,13 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         // assume one mesh and one submesh
         assert((meshes.size() == 1) && (meshes[0].parts.size() == 1));
         state.loaded.mesh = true;
-        state.ozz->joint_remaps = meshes[0].joint_remaps;
-        state.ozz->mesh_inverse_bindposes = meshes[0].inverse_bind_poses;
         state.num_skin_joints = meshes[0].num_joints();
         state.num_triangle_indices = (int)meshes[0].triangle_index_count();
+        state.ozz->joint_remaps = std::move(meshes[0].joint_remaps);
+        state.ozz->mesh_inverse_bindposes = std::move(meshes[0].inverse_bind_poses);
 
         // convert mesh data into packed vertices
-        size_t num_vertices  (meshes[0].parts[0].positions.size() / 3);
+        size_t num_vertices = (meshes[0].parts[0].positions.size() / 3);
         assert(meshes[0].parts[0].normals.size() == (num_vertices * 3));
         assert(meshes[0].parts[0].joint_indices.size() == (num_vertices * 4));
         assert(meshes[0].parts[0].joint_weights.size() == (num_vertices * 3));
