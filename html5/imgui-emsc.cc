@@ -206,7 +206,7 @@ int main() {
     });
 
     // pipeline object for imgui rendering
-    pip = sg_make_pipeline((sg_pipeline_desc){
+    pip = sg_make_pipeline({
         .layout = {
             .buffers[0].stride = sizeof(ImDrawVert),
             .attrs = {
@@ -225,7 +225,6 @@ int main() {
                 .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
             }
         }
-
     });
 
     // initial clear color
