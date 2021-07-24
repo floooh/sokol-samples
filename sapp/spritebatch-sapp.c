@@ -13,6 +13,7 @@
 #include "dbgui/dbgui.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
+#include "spritebatch-sapp-crt.glsl.h"
 
 #define GAMEPLAY_WIDTH (480)
 #define GAMEPLAY_HEIGHT (270)
@@ -66,6 +67,10 @@ static struct {
     sbatch_context target_context;
 
     sg_pass_action pass_action;
+
+    sg_shader crt_shader;
+    sg_pipeline crt_pipeline;
+    crt_params_t crt_params;
 } state;
 
 static sg_image load_sprite(const char* filepath, const char* label, sg_filter filter, sg_wrap wrap) {
@@ -118,9 +123,10 @@ void resize_backbuffer() {
     }
 
     state.target_context = sbatch_make_context(&(sbatch_context_desc) {
+        .pipeline      = state.crt_pipeline,
         .canvas_height = state.screen_height,
-        .canvas_width = state.screen_width,
-        .max_sprites = 1
+        .canvas_width  = state.screen_width,
+        .max_sprites   = 1
     });
 
     state.viewport_x = (state.screen_width / 2) - (state.viewport_width / 2);
@@ -222,6 +228,25 @@ void init(void) {
         .label = "gameplay-pass"
     });
 
+    state.crt_shader = sg_make_shader(spritebatch_crt_shader_desc(sg_query_backend()));
+
+    sg_pipeline_desc pipeline_desc;
+    memset(&pipeline_desc, 0, sizeof(sg_pipeline_desc));
+    pipeline_desc.color_count = 1;
+    pipeline_desc.colors[0].blend.enabled = true;
+    pipeline_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
+    pipeline_desc.colors[0].blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
+    pipeline_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    pipeline_desc.colors[0].blend.dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
+    pipeline_desc.shader = state.crt_shader;
+    pipeline_desc.index_type = SG_INDEXTYPE_UINT16;
+    pipeline_desc.layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT3;
+    pipeline_desc.layout.attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
+    pipeline_desc.layout.attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
+    pipeline_desc.label = "spritebatch-crt-pipeline";
+
+    state.crt_pipeline = sg_make_pipeline(&pipeline_desc);
+
     resize_backbuffer();
 }
 
@@ -316,7 +341,7 @@ void frame(void) {
     }
     sg_end_pass();
 
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_default_pass(&state.pass_action, state.screen_width, state.screen_height);
     {
         sbatch_begin(state.target_context);
         {
@@ -329,6 +354,18 @@ void frame(void) {
                     .height = (float)state.viewport_height
                 }
             });
+
+            state.crt_params.OutputSize[0] = (float)state.viewport_width;
+            state.crt_params.OutputSize[1] = (float)state.viewport_height;
+            state.crt_params.OutputSize[2] = 1.0f / (float)state.viewport_width;
+            state.crt_params.OutputSize[3] = 1.0f / (float)state.viewport_height;
+
+            state.crt_params.SourceSize[0] = GAMEPLAY_WIDTH;
+            state.crt_params.SourceSize[1] = GAMEPLAY_HEIGHT;
+            state.crt_params.SourceSize[2] = 1.0f / GAMEPLAY_WIDTH;
+            state.crt_params.SourceSize[3] = 1.0f / GAMEPLAY_HEIGHT;
+
+            sbatch_apply_fs_uniforms(0, &SG_RANGE(state.crt_params));
         }
         sbatch_end();
         __dbgui_draw();
