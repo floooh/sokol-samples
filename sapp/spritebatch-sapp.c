@@ -2,6 +2,15 @@
 //  spritebatch-sapp.c
 //------------------------------------------------------------------------------
 
+/*
+ * All artwork used in this sample was released into the public domain.
+ * Luis Zuno (ansimuz):
+ * https://opengameart.org/content/gothicvania-cemetery-pack
+ * https://opengameart.org/content/gothicvania-patreons-collection
+ * Michele Bucelli (Buch):
+ * https://opengameart.org/content/shiny-hud
+ */
+
 #define SOKOL_SPRITEBATCH_IMPL
 #define SOKOL_COLOR_IMPL
 #define STB_IMAGE_IMPLEMENTATION
