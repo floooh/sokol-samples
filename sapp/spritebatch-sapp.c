@@ -2,21 +2,21 @@
 //  spritebatch-sapp.c
 //------------------------------------------------------------------------------
 
+#define SOKOL_SPRITEBATCH_IMPL
+#define SOKOL_COLOR_IMPL
+#define STB_IMAGE_IMPLEMENTATION
+#define GAMEPLAY_WIDTH (480)
+#define GAMEPLAY_HEIGHT (270)
+
 #include "sokol_time.h"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#define SOKOL_SPRITEBATCH_IMPL
 #include "sokol_spritebatch.h"
-#define SOKOL_COLOR_IMPL
 #include "sokol_color.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #include "spritebatch-sapp-crt.glsl.h"
-
-#define GAMEPLAY_WIDTH (480)
-#define GAMEPLAY_HEIGHT (270)
 
 typedef struct bg_tile {
     sbatch_float2 position;
@@ -59,17 +59,16 @@ static struct {
     animation nightmare;
     animation demon;
 
-    sg_image gameplay_rt;
-    sg_image gameplay_depth_rt;
+    sg_pass_action pass_action;
+
+    sbatch_pipeline gameplay_pipeline;
+    sg_image gameplay_render_target;
     sbatch_context gameplay_context;
     sg_pass gameplay_pass;
 
-    sbatch_context target_context;
-
-    sg_pass_action pass_action;
-
     sg_shader crt_shader;
-    sg_pipeline crt_pipeline;
+    sbatch_pipeline crt_pipeline;
+    sbatch_context crt_context;
     crt_params_t crt_params;
 } state;
 
@@ -77,11 +76,9 @@ static sg_image load_sprite(const char* filepath, const char* label, sg_filter f
     int w, h, num_channels;
     const int desired_channels = 4;
 
-    stbi_uc* pixels = stbi_load(filepath,
-                                &w, &h,
-                                &num_channels, desired_channels);
-
+    stbi_uc* pixels = stbi_load(filepath, &w, &h, &num_channels, desired_channels);
     assert(pixels != NULL);
+
     sbatch_premultiply_alpha_rgba8(pixels, w * h);
 
     const sg_image image = sg_make_image(&(sg_image_desc) {
@@ -105,9 +102,9 @@ static sg_image load_sprite(const char* filepath, const char* label, sg_filter f
     return image;
 }
 
-void resize_backbuffer() {
-    if (state.target_context.id != SG_INVALID_ID) {
-        sbatch_destroy_context(state.target_context);
+void make_resolution_dependent_resources() {
+    if (state.crt_context.id != SG_INVALID_ID) {
+        sbatch_destroy_context(state.crt_context);
     }
 
     state.screen_height = sapp_height();
@@ -122,10 +119,10 @@ void resize_backbuffer() {
         state.viewport_width = (int)((float)state.viewport_height * aspect + 0.5f);
     }
 
-    state.target_context = sbatch_make_context(&(sbatch_context_desc) {
+    state.crt_context = sbatch_make_context(&(sbatch_context_desc) {
         .pipeline      = state.crt_pipeline,
-        .canvas_height = state.screen_height,
-        .canvas_width  = state.screen_width,
+        .canvas_height = state.screen_height, // shouldn't this be viewport_height
+        .canvas_width  = state.screen_width,  // shouldn't this be viewport_width
         .max_sprites   = 1
     });
 
@@ -151,7 +148,7 @@ void init_layer(int x, int y, int width, int height, int y_offset, scroll_layer*
 }
 
 void init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t mask, animation* ani) {
-    *ani = (animation){
+    *ani = (animation) {
         .position = {
             .x = (float)x_offset,
             .y = (float)(GAMEPLAY_HEIGHT - height) - (float)y_offset
@@ -179,20 +176,18 @@ void init(void) {
         .colors[0] = {.action = SG_ACTION_CLEAR, .value = sg_black }
     };
 
-    state.atlas = load_sprite("atlas.png", "sokol-spritebatch-atlas", SG_FILTER_NEAREST, SG_WRAP_REPEAT);
-
+    state.atlas = load_sprite("atlas.png", "spritebatch-sprite-atlas", SG_FILTER_NEAREST, SG_WRAP_REPEAT);
     init_layer(0, 270, 179, 192, 0, &state.mountains);
     init_layer(192, 326, 384, 123, 0, &state.graveyard);
     init_layer(0, 449, 1024, 169, 32, &state.objects);
     init_layer(192, 270, 64, 41, 0, &state.tiles);
-
     init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X, &state.nightmare);
     init_animation(0, 618, 960, 123, 6, 0, 128, 0, &state.demon);
 
     sbatch_setup(&(sbatch_desc) { 0 });
 
-    state.gameplay_rt = sg_make_image(&(sg_image_desc) {
-        .label = "sokol-spritebatch-color-rt",
+    state.gameplay_render_target = sg_make_image(&(sg_image_desc) {
+        .label = "spritebatch-gameplay-render-target",
         .render_target = true,
         .width = GAMEPLAY_WIDTH,
         .height = GAMEPLAY_HEIGHT,
@@ -202,52 +197,32 @@ void init(void) {
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE
     });
-    assert(state.gameplay_rt.id != SG_INVALID_ID);
 
-    state.gameplay_depth_rt = sg_make_image(&(sg_image_desc) {
-        .label = "sokol-spritebatch-depth-rt",
-        .render_target = true,
-        .width = GAMEPLAY_WIDTH,
-        .height = GAMEPLAY_HEIGHT,
-        .pixel_format = SG_PIXELFORMAT_DEPTH_STENCIL,
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE
+    state.gameplay_pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
+        .depth.pixel_format = SG_PIXELFORMAT_NONE,
+        .label = "spritebatch-gameplay-pipeline"
     });
-    assert(state.gameplay_depth_rt.id != SG_INVALID_ID);
 
     state.gameplay_context = sbatch_make_context(&(sbatch_context_desc) {
         .canvas_height = GAMEPLAY_HEIGHT,
-        .canvas_width = GAMEPLAY_WIDTH
+        .canvas_width = GAMEPLAY_WIDTH,
+        .pipeline = state.gameplay_pipeline,
+        .label = "spritebatch-gameplay-context"
     });
 
     state.gameplay_pass = sg_make_pass(&(sg_pass_desc) {
-        .color_attachments[0].image = state.gameplay_rt,
-        .depth_stencil_attachment.image = state.gameplay_depth_rt,
-        .label = "gameplay-pass"
+        .color_attachments[0].image = state.gameplay_render_target,
+        .label = "spritebatch-gameplay-pass"
     });
 
     state.crt_shader = sg_make_shader(spritebatch_crt_shader_desc(sg_query_backend()));
 
-    sg_pipeline_desc pipeline_desc;
-    memset(&pipeline_desc, 0, sizeof(sg_pipeline_desc));
-    pipeline_desc.color_count = 1;
-    pipeline_desc.colors[0].blend.enabled = true;
-    pipeline_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
-    pipeline_desc.colors[0].blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-    pipeline_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    pipeline_desc.colors[0].blend.dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    pipeline_desc.shader = state.crt_shader;
-    pipeline_desc.index_type = SG_INDEXTYPE_UINT16;
-    pipeline_desc.layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT3;
-    pipeline_desc.layout.attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
-    pipeline_desc.layout.attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
-    pipeline_desc.label = "spritebatch-crt-pipeline";
+    state.crt_pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
+        .shader = state.crt_shader,
+        .label = "spritebatch-crt-pipeline"
+    });
 
-    state.crt_pipeline = sg_make_pipeline(&pipeline_desc);
-
-    resize_backbuffer();
+    make_resolution_dependent_resources();
 }
 
 void draw_layer(float scroll_speed, scroll_layer* layer) {
@@ -256,12 +231,12 @@ void draw_layer(float scroll_speed, scroll_layer* layer) {
         layer->position.x = 0;
     }
     for (int i = 0; i < layer->repeat_count; i++) {
-        sbatch_float2 position = layer->position;
-        position.x += (float)i * layer->source.width;
-        position.x = floorf(position.x);
         sbatch_push_sprite(&(sbatch_sprite) {
             .image = state.atlas,
-            .position = position,
+            .position = {
+                .x = floorf(layer->position.x + (float)i * layer->source.width),
+                .y = floorf(layer->position.y)
+            },
             .source = layer->source
         });
     }
@@ -269,24 +244,27 @@ void draw_layer(float scroll_speed, scroll_layer* layer) {
 
 void draw_animation(float delta_time, animation* ani) {
     ani->frame_time += delta_time;
+
     if(ani->frame_time >= 1.0f / 12.0f) {
         ani->frame_time = 0.0f;
         ani->frame_index = (ani->frame_index + 1) % ani->frame_count;
     }
 
-    sbatch_sprite sprite = {
+    sbatch_push_sprite(&(sbatch_sprite) {
         .image = state.atlas,
-        .position = ani->position,
-        .source = ani->source,
+        .position = {
+            .x = floorf(ani->position.x),
+            .y = floorf(ani->position.y)
+        },
+        .source = {
+            .x = ani->source.x + ani->source.width * (float)ani->frame_index,
+            .y = ani->source.y,
+            .width = ani->source.width,
+            .height = ani->source.height,
+        },
         .flags = SBATCH_FLIP_X,
         .color = &ani->color
-    };
-
-    sprite.position.x = floorf(sprite.position.x);
-    sprite.position.y = floorf(sprite.position.y);
-    sprite.source.x = ani->source.x + sprite.source.width * (float)ani->frame_index;
-
-    sbatch_push_sprite(&sprite);
+    });
 }
 
 void frame(void) {
@@ -343,10 +321,10 @@ void frame(void) {
 
     sg_begin_default_pass(&state.pass_action, state.screen_width, state.screen_height);
     {
-        sbatch_begin(state.target_context);
+        sbatch_begin(state.crt_context);
         {
             sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
-                .image = state.gameplay_rt,
+                .image = state.gameplay_render_target,
                 .destination = {
                     .x = (float)state.viewport_x,
                     .y = (float)state.viewport_y,
@@ -377,11 +355,10 @@ void frame(void) {
 }
 
 void cleanup(void) {
-    sbatch_destroy_context(state.target_context);
+    sbatch_destroy_context(state.crt_context);
     sg_destroy_pass(state.gameplay_pass);
     sbatch_destroy_context(state.gameplay_context);
-    sg_destroy_image(state.gameplay_depth_rt);
-    sg_destroy_image(state.gameplay_rt);
+    sg_destroy_image(state.gameplay_render_target);
     sg_destroy_image(state.atlas);
     __dbgui_shutdown();
     sbatch_shutdown();
@@ -390,7 +367,7 @@ void cleanup(void) {
 
 void handle_event(const sapp_event* e) {
     if(e->type == SAPP_EVENTTYPE_RESIZED) {
-        resize_backbuffer();
+        make_resolution_dependent_resources();
     }
     __dbgui_event(e);
 }
