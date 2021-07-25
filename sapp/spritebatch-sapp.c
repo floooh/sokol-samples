@@ -91,16 +91,16 @@ static sg_image load_sprite(const char* filepath, const char* label, sg_filter f
     sbatch_premultiply_alpha_rgba8(pixels, w * h);
 
     const sg_image image = sg_make_image(&(sg_image_desc) {
-        .label        = label,
-        .width        = w,
-        .height       = h,
+        .label = label,
+        .width = w,
+        .height = h,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter   = filter,
-        .mag_filter   = filter,
-        .wrap_u       = wrap,
-        .wrap_v       = wrap,
+        .min_filter = filter,
+        .mag_filter = filter,
+        .wrap_u = wrap,
+        .wrap_v = wrap,
         .data.subimage[0][0] = {
-            .ptr  = pixels,
+            .ptr = pixels,
             .size = (size_t)w * h * 4
         }
     });
@@ -129,19 +129,19 @@ void make_resolution_dependent_resources() {
     }
 
     state.crt_context = sbatch_make_context(&(sbatch_context_desc) {
-        .pipeline      = state.crt_pipeline,
-        .canvas_height = state.screen_height, // shouldn't this be viewport_height
-        .canvas_width  = state.screen_width,  // shouldn't this be viewport_width
-        .max_sprites   = 1
+        .pipeline = state.crt_pipeline,
+        .canvas_height = state.screen_height,
+        .canvas_width = state.screen_width,
+        .max_sprites = 1
     });
 
     state.viewport_x = (state.screen_width / 2) - (state.viewport_width / 2);
     state.viewport_y = (state.screen_height / 2) - (state.viewport_height / 2);
 }
 
-void init_layer(int x, int y, int width, int height, int y_offset, scroll_layer* layer) {
+scroll_layer init_layer(int x, int y, int width, int height, int y_offset) {
     const float ratio = ceilf((float)GAMEPLAY_WIDTH / (float)width);
-    *layer = (scroll_layer){
+    return (scroll_layer){
         .position = {
             .x = 0,
             .y = (float)(GAMEPLAY_HEIGHT - height) - (float)y_offset
@@ -156,8 +156,8 @@ void init_layer(int x, int y, int width, int height, int y_offset, scroll_layer*
     };
 }
 
-void init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t mask, animation* ani) {
-    *ani = (animation) {
+animation init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t mask) {
+    return (animation) {
         .position = {
             .x = (float)x_offset,
             .y = (float)(GAMEPLAY_HEIGHT - height) - (float)y_offset
@@ -186,12 +186,12 @@ void init(void) {
     };
 
     state.atlas = load_sprite("atlas.png", "spritebatch-sprite-atlas", SG_FILTER_NEAREST, SG_WRAP_REPEAT);
-    init_layer(0, 270, 179, 192, 0, &state.mountains);
-    init_layer(192, 326, 384, 123, 0, &state.graveyard);
-    init_layer(0, 449, 1024, 169, 32, &state.objects);
-    init_layer(192, 270, 64, 41, 0, &state.tiles);
-    init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X, &state.nightmare);
-    init_animation(0, 618, 960, 123, 6, 0, 128, 0, &state.demon);
+    state.mountains = init_layer(0, 270, 179, 192, 0);
+    state.graveyard = init_layer(192, 326, 384, 123, 0);
+    state.objects = init_layer(0, 449, 1024, 169, 32);
+    state.tiles = init_layer(192, 270, 64, 41, 0);
+    state.nightmare = init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X);
+    state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, 0);
 
     sbatch_setup(&(sbatch_desc) { 0 });
 
@@ -364,6 +364,8 @@ void frame(void) {
 }
 
 void cleanup(void) {
+    sg_destroy_shader(state.crt_shader);
+    sbatch_destroy_pipeline(state.crt_pipeline);
     sbatch_destroy_context(state.crt_context);
     sg_destroy_pass(state.gameplay_pass);
     sbatch_destroy_context(state.gameplay_context);
