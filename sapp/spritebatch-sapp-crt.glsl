@@ -1,8 +1,7 @@
-//------------------------------------------------------------------------------
-//  Shader code for loadpng-sapp sample.
-//------------------------------------------------------------------------------
-@vs vs
-uniform vs_params {
+
+@vs crt_vs
+
+uniform crt_vs_params {
     mat4 mvp;
 };
 
@@ -20,7 +19,7 @@ void main() {
 }
 @end
 
-@fs fs
+@fs crt_fs
 
 #define CRT_GAMMA 2.4
 #define SCANLINE_THINNESS 0.5
@@ -36,7 +35,7 @@ uniform sampler2D Source;
 in vec2 vTexCoord;
 in vec4 color;
 
-uniform crt_params {
+uniform crt_fs_params {
     vec4 SourceSize;
     vec4 OutputSize;
 };
@@ -447,6 +446,6 @@ void main()
 
 @end
 
-@program spritebatch_crt vs fs
+@program spritebatch_crt crt_vs crt_fs
 
 

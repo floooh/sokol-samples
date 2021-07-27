@@ -13,7 +13,6 @@
 
 #define SOKOL_SPRITEBATCH_IMPL
 #define SOKOL_COLOR_IMPL
-#define STB_IMAGE_IMPLEMENTATION
 #define GAMEPLAY_WIDTH (480)
 #define GAMEPLAY_HEIGHT (270)
 
@@ -78,7 +77,7 @@ static struct {
     sg_shader crt_shader;
     sbatch_pipeline crt_pipeline;
     sbatch_context crt_context;
-    crt_params_t crt_params;
+    crt_fs_params_t crt_params;
 } state;
 
 static sg_image load_sprite(const char* filepath, const char* label, sg_filter filter, sg_wrap wrap) {
@@ -101,7 +100,7 @@ static sg_image load_sprite(const char* filepath, const char* label, sg_filter f
         .wrap_v = wrap,
         .data.subimage[0][0] = {
             .ptr = pixels,
-            .size = (size_t)w * h * 4
+            .size = (size_t)(w * h * 4)
         }
     });
     assert(image.id != SG_INVALID_ID);
@@ -298,9 +297,9 @@ void frame(void) {
             });
 
             draw_layer(30.0f * delta_time, &state.mountains);
-            draw_layer(65.0f * delta_time, &state.graveyard);
-            draw_layer(180.0f * delta_time, &state.objects);
-            draw_layer(250.0f * delta_time, &state.tiles);
+            draw_layer(60.0f * delta_time, &state.graveyard);
+            draw_layer(120.0f * delta_time, &state.objects);
+            draw_layer(240.0f * delta_time, &state.tiles);
             draw_animation(delta_time, &state.demon);
             draw_animation(delta_time, &state.nightmare);
 
