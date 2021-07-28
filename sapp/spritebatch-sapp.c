@@ -44,7 +44,7 @@ typedef struct animation {
     int frame_count;
     int frame_index;
     sg_color color;
-    uint32_t mask;
+    uint32_t flags;
 } animation;
 
 static struct {
@@ -155,7 +155,7 @@ scroll_layer init_layer(int x, int y, int width, int height, int y_offset) {
     };
 }
 
-animation init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t mask) {
+animation init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t flags) {
     return (animation) {
         .position = {
             .x = (float)x_offset,
@@ -169,7 +169,7 @@ animation init_animation(int x, int y, int width, int height, int frame_count, i
             .width = (float)width / (float)frame_count,
             .height = (float)height
         },
-        .mask = mask
+        .flags = flags
     };
 }
 
@@ -190,7 +190,7 @@ void init(void) {
     state.objects = init_layer(0, 449, 1024, 169, 32);
     state.tiles = init_layer(192, 270, 64, 41, 0);
     state.nightmare = init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X);
-    state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, 0);
+    state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, SBATCH_FLIP_X);
 
     sbatch_setup(&(sbatch_desc) { 0 });
 
@@ -270,7 +270,7 @@ void draw_animation(float delta_time, animation* ani) {
             .width = ani->source.width,
             .height = ani->source.height,
         },
-        .flags = SBATCH_FLIP_X,
+        .flags = ani->flags,
         .color = &ani->color
     });
 }
