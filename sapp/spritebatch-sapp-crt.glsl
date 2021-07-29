@@ -1,5 +1,6 @@
 
 @vs crt_vs
+@glsl_options flip_vert_y
 
 uniform crt_vs_params {
     mat4 mvp;

@@ -21,6 +21,7 @@
 #include "sokol_gfx.h"
 #include "sokol_spritebatch.h"
 #include "sokol_color.h"
+#include "sokol_fetch.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "stb/stb_image.h"
@@ -44,7 +45,7 @@ typedef struct animation {
     int frame_count;
     int frame_index;
     sg_color color;
-    uint32_t mask;
+    uint32_t flags;
 } animation;
 
 static struct {
@@ -78,36 +79,57 @@ static struct {
     sbatch_pipeline crt_pipeline;
     sbatch_context crt_context;
     crt_fs_params_t crt_params;
+
+    uint8_t file_buffer[128 * 1024];
 } state;
 
-static sg_image load_sprite(const char* filepath, const char* label, sg_filter filter, sg_wrap wrap) {
-    int w, h, num_channels;
-    const int desired_channels = 4;
+// sokol-fetch callback which actually initializes the atlas texture
+static void fetch_callback(const sfetch_response_t* response) {
+    if (response->fetched) {
+        // load image from memory buffer
+        int w, h, num_channels;
+        const int desired_channels = 4;
+        stbi_uc* pixels = stbi_load_from_memory(
+            response->buffer_ptr,
+            (int)response->fetched_size,
+            &w, &h,
+            &num_channels, desired_channels);
+        if (pixels) {
+            // convert to premultiplied RGBA
+            sbatch_premultiply_alpha_rgba8(pixels, w * h);
 
-    stbi_uc* pixels = stbi_load(filepath, &w, &h, &num_channels, desired_channels);
-    assert(pixels != NULL);
-
-    sbatch_premultiply_alpha_rgba8(pixels, w * h);
-
-    const sg_image image = sg_make_image(&(sg_image_desc) {
-        .label = label,
-        .width = w,
-        .height = h,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = filter,
-        .mag_filter = filter,
-        .wrap_u = wrap,
-        .wrap_v = wrap,
-        .data.subimage[0][0] = {
-            .ptr = pixels,
-            .size = (size_t)(w * h * 4)
+            // initialize image with pre-allocated handle
+            sg_init_image(state.atlas, &(sg_image_desc){
+                .label = "spritebatch-sprite-atlas",
+                .width = w,
+                .height = h,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .min_filter = SG_FILTER_NEAREST,
+                .mag_filter = SG_FILTER_NEAREST,
+                .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+                .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+                .data.subimage[0][0] = {
+                    .ptr = pixels,
+                    .size = (size_t)(w * h * 4)
+                }
+            });
+            stbi_image_free(pixels);
         }
+    }
+}
+
+static sg_image load_sprite(const char* filepath) {
+
+    // start loading the image file
+    sfetch_send(&(sfetch_request_t){
+        .path = filepath,
+        .callback = fetch_callback,
+        .buffer_ptr = state.file_buffer,
+        .buffer_size = sizeof(state.file_buffer)
     });
-    assert(image.id != SG_INVALID_ID);
 
-    stbi_image_free(pixels);
-
-    return image;
+    // pre-allocate an image handle, the actual image will be created in the fetch-callback
+    return sg_alloc_image();
 }
 
 void make_resolution_dependent_resources() {
@@ -155,7 +177,7 @@ scroll_layer init_layer(int x, int y, int width, int height, int y_offset) {
     };
 }
 
-animation init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t mask) {
+animation init_animation(int x, int y, int width, int height, int frame_count, int x_offset, int y_offset, uint32_t flags) {
     return (animation) {
         .position = {
             .x = (float)x_offset,
@@ -169,28 +191,36 @@ animation init_animation(int x, int y, int width, int height, int frame_count, i
             .width = (float)width / (float)frame_count,
             .height = (float)height
         },
-        .mask = mask
+        .flags = flags
     };
 }
 
 void init(void) {
     stm_setup();
+
     sg_setup(&(sg_desc) {
         .context = sapp_sgcontext()
     });
+
+    sfetch_setup(&(sfetch_desc_t){
+        .max_requests = 1,
+        .num_channels = 1,
+        .num_lanes = 1
+    });
+
     __dbgui_setup(sapp_sample_count());
 
     state.pass_action = (sg_pass_action) {
         .colors[0] = {.action = SG_ACTION_CLEAR, .value = sg_black }
     };
 
-    state.atlas = load_sprite("atlas.png", "spritebatch-sprite-atlas", SG_FILTER_NEAREST, SG_WRAP_REPEAT);
+    state.atlas = load_sprite("atlas.png");
     state.mountains = init_layer(0, 270, 179, 192, 0);
     state.graveyard = init_layer(192, 326, 384, 123, 0);
     state.objects = init_layer(0, 449, 1024, 169, 32);
     state.tiles = init_layer(192, 270, 64, 41, 0);
     state.nightmare = init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X);
-    state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, 0);
+    state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, SBATCH_FLIP_X);
 
     sbatch_setup(&(sbatch_desc) { 0 });
 
@@ -199,7 +229,7 @@ void init(void) {
         .render_target = true,
         .width = GAMEPLAY_WIDTH,
         .height = GAMEPLAY_HEIGHT,
-        .pixel_format = SG_PIXELFORMAT_BGRA8,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -207,6 +237,7 @@ void init(void) {
     });
 
     state.gameplay_pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .depth.pixel_format = SG_PIXELFORMAT_NONE,
         .label = "spritebatch-gameplay-pipeline"
     });
@@ -270,62 +301,72 @@ void draw_animation(float delta_time, animation* ani) {
             .width = ani->source.width,
             .height = ani->source.height,
         },
-        .flags = SBATCH_FLIP_X,
+        .flags = ani->flags,
         .color = &ani->color
     });
 }
 
 void frame(void) {
-    const float delta_time = (float)stm_sec(stm_laptime(&state.last_time));
+    // important: sokol-fetch per-frame work
+    sfetch_dowork();
+
+    const float delta_time =
+        (float)stm_sec(stm_round_to_common_refresh_rate(stm_laptime(&state.last_time)));
 
     state.accumulator += delta_time;
 
-    sg_begin_pass(state.gameplay_pass, &state.pass_action);
-    {
-        sbatch_begin(state.gameplay_context);
+    if (sg_query_image_state(state.atlas) == SG_RESOURCESTATE_VALID) {
+        // don't try to render until the image is loaded, this is because
+        // sbatch_push_sprite_rect() is calling sg_query_image_info(), and
+        // this doesn't contain a valid height for an allocated, but not
+        // valid image handle (FIXME?)
+        sg_begin_pass(state.gameplay_pass, &state.pass_action);
         {
-            sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
-                .image = state.atlas,
-                .destination = {
-                    .width = GAMEPLAY_WIDTH,
-                    .height = GAMEPLAY_HEIGHT
-                },
-                .source = {
-                    .width = GAMEPLAY_WIDTH,
-                    .height = GAMEPLAY_HEIGHT
-                }
-            });
+            sbatch_begin(state.gameplay_context);
+            {
+                sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
+                    .image = state.atlas,
+                    .destination = {
+                        .width = GAMEPLAY_WIDTH,
+                        .height = GAMEPLAY_HEIGHT
+                    },
+                    .source = {
+                        .width = GAMEPLAY_WIDTH,
+                        .height = GAMEPLAY_HEIGHT
+                    }
+                });
 
-            draw_layer(30.0f * delta_time, &state.mountains);
-            draw_layer(60.0f * delta_time, &state.graveyard);
-            draw_layer(120.0f * delta_time, &state.objects);
-            draw_layer(240.0f * delta_time, &state.tiles);
-            draw_animation(delta_time, &state.demon);
-            draw_animation(delta_time, &state.nightmare);
+                draw_layer(30.0f * delta_time, &state.mountains);
+                draw_layer(60.0f * delta_time, &state.graveyard);
+                draw_layer(120.0f * delta_time, &state.objects);
+                draw_layer(240.0f * delta_time, &state.tiles);
+                draw_animation(delta_time, &state.demon);
+                draw_animation(delta_time, &state.nightmare);
 
-            sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
-                .image = state.atlas,
-                .destination = {
-                    .x = GAMEPLAY_WIDTH - 152,
-                    .y = 0,
-                    .width = 152,
-                    .height = 88
-                },
-                .source = {
-                    .x = 480,
-                    .y = 0,
-                    .width = 152,
-                    .height = 88
-                }
-            });
+                sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
+                    .image = state.atlas,
+                    .destination = {
+                        .x = GAMEPLAY_WIDTH - 152,
+                        .y = 0,
+                        .width = 152,
+                        .height = 88
+                    },
+                    .source = {
+                        .x = 480,
+                        .y = 0,
+                        .width = 152,
+                        .height = 88
+                    }
+                });
 
-            state.demon.color = sg_color_multiply(&sg_white, 0.25f + (sinf(state.accumulator) / 2.0f) + 0.5f);
-            state.demon.position.x += sinf(state.accumulator);
-            state.demon.position.y += cosf(state.accumulator) / 2.0f;
+                state.demon.color = sg_color_multiply(&sg_white, 0.25f + (sinf(state.accumulator) / 2.0f) + 0.5f);
+                state.demon.position.x += sinf(state.accumulator);
+                state.demon.position.y += cosf(state.accumulator) / 2.0f;
+            }
+            sbatch_end();
         }
-        sbatch_end();
+        sg_end_pass();
     }
-    sg_end_pass();
 
     sg_begin_default_pass(&state.pass_action, state.screen_width, state.screen_height);
     {
@@ -372,6 +413,7 @@ void cleanup(void) {
     sg_destroy_image(state.atlas);
     __dbgui_shutdown();
     sbatch_shutdown();
+    sfetch_shutdown();
     sg_shutdown();
 }
 
