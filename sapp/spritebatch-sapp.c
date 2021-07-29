@@ -229,7 +229,6 @@ void init(void) {
         .render_target = true,
         .width = GAMEPLAY_WIDTH,
         .height = GAMEPLAY_HEIGHT,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -237,7 +236,6 @@ void init(void) {
     });
 
     state.gameplay_pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
-        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .depth.pixel_format = SG_PIXELFORMAT_NONE,
         .label = "spritebatch-gameplay-pipeline"
     });
