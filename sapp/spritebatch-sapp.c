@@ -315,68 +315,62 @@ void frame(void) {
 
     state.accumulator += delta_time;
 
-    if (sg_query_image_state(state.atlas) == SG_RESOURCESTATE_VALID) {
-        // don't try to render until the image is loaded, this is because
-        // sbatch_push_sprite_rect() is calling sg_query_image_info(), and
-        // this doesn't contain a valid height for an allocated, but not
-        // valid image handle (FIXME?)
-        sg_begin_pass(state.gameplay_pass, &state.pass_action);
+    sg_begin_pass(state.gameplay_pass, &state.pass_action);
+    {
+        sbatch_begin(state.gameplay_context, &(sbatch_render_state) {
+            .pipeline = state.gameplay_pipeline,
+            .canvas_width = GAMEPLAY_WIDTH,
+            .canvas_height = GAMEPLAY_HEIGHT
+        });
         {
-            sbatch_begin(state.gameplay_context, &(sbatch_render_state) {
-                .pipeline = state.gameplay_pipeline,
-                .canvas_width = GAMEPLAY_WIDTH,
-                .canvas_height = GAMEPLAY_HEIGHT
+            // draw static background
+            sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
+                .image = state.atlas,
+                .destination = {
+                    .width = GAMEPLAY_WIDTH,
+                    .height = GAMEPLAY_HEIGHT
+                },
+                .source = {
+                    .width = GAMEPLAY_WIDTH,
+                    .height = GAMEPLAY_HEIGHT
+                }
             });
-            {
-                // draw static background
-                sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
-                    .image = state.atlas,
-                    .destination = {
-                        .width = GAMEPLAY_WIDTH,
-                        .height = GAMEPLAY_HEIGHT
-                    },
-                    .source = {
-                        .width = GAMEPLAY_WIDTH,
-                        .height = GAMEPLAY_HEIGHT
-                    }
-                });
 
-                // draw scrolling background layers
-                draw_layer(30.0f * delta_time, &state.mountains);
-                draw_layer(60.0f * delta_time, &state.graveyard);
-                draw_layer(120.0f * delta_time, &state.objects);
-                draw_layer(240.0f * delta_time, &state.tiles);
+            // draw scrolling background layers
+            draw_layer(30.0f * delta_time, &state.mountains);
+            draw_layer(60.0f * delta_time, &state.graveyard);
+            draw_layer(120.0f * delta_time, &state.objects);
+            draw_layer(240.0f * delta_time, &state.tiles);
 
-                // draw characters
-                draw_animation(delta_time, &state.demon);
-                draw_animation(delta_time, &state.nightmare);
+            // draw characters
+            draw_animation(delta_time, &state.demon);
+            draw_animation(delta_time, &state.nightmare);
 
-                // draw hud
-                const float hud_width = 152.0f;
-                const float hud_height = 88.0f;
-                sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
-                    .image = state.atlas,
-                    .destination = {
-                        .x = GAMEPLAY_WIDTH - hud_width,
-                        .width = hud_width,
-                        .height = hud_height
-                    },
-                    .source = {
-                        .x = GAMEPLAY_WIDTH,
-                        .width = hud_width,
-                        .height = hud_height
-                    }
-                });
+            // draw hud
+            const float hud_width = 152.0f;
+            const float hud_height = 88.0f;
+            sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
+                .image = state.atlas,
+                .destination = {
+                    .x = GAMEPLAY_WIDTH - hud_width,
+                    .width = hud_width,
+                    .height = hud_height
+                },
+                .source = {
+                    .x = GAMEPLAY_WIDTH,
+                    .width = hud_width,
+                    .height = hud_height
+                }
+            });
 
-                // animate character movement / alpha
-                state.demon.color = sg_color_multiply(&sg_white, 0.25f + (sinf(state.accumulator) / 2.0f) + 0.5f);
-                state.demon.position.x += sinf(state.accumulator);
-                state.demon.position.y += cosf(state.accumulator) / 2.0f;
-            }
-            sbatch_end();
+            // animate character movement / alpha
+            state.demon.color = sg_color_multiply(&sg_white, 0.25f + (sinf(state.accumulator) / 2.0f) + 0.5f);
+            state.demon.position.x += sinf(state.accumulator);
+            state.demon.position.y += cosf(state.accumulator) / 2.0f;
         }
-        sg_end_pass();
+        sbatch_end();
     }
+    sg_end_pass();
 
     sg_begin_default_pass(&state.pass_action, state.screen_width, state.screen_height);
     {
