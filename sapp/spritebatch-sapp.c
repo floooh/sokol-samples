@@ -54,10 +54,10 @@ static struct {
 
     int screen_width;
     int screen_height;
-    int viewport_width;
-    int viewport_height;
-    int viewport_x;
-    int viewport_y;
+    int gameplay_quad_width;
+    int gameplay_quad_height;
+    int gameplay_quad_x;
+    int gameplay_quad_y;
 
     sg_image atlas;
     scroll_layer mountains;
@@ -133,31 +133,25 @@ static sg_image load_sprite(const char* filepath) {
 }
 
 void make_resolution_dependent_resources() {
-    if (state.crt_context.id != SG_INVALID_ID) {
-        sbatch_destroy_context(state.crt_context);
-    }
-
     state.screen_height = sapp_height();
     state.screen_width = sapp_width();
     const float aspect = (float)GAMEPLAY_WIDTH / (float)GAMEPLAY_HEIGHT;
 
-    state.viewport_width = state.screen_width;
-    state.viewport_height = (int)((float)state.viewport_width / aspect + 0.5f);
+    state.gameplay_quad_width = state.screen_width;
+    state.gameplay_quad_height = (int)((float)state.gameplay_quad_width / aspect + 0.5f);
 
-    if (state.viewport_height > state.screen_height) {
-        state.viewport_height = state.screen_height;
-        state.viewport_width = (int)((float)state.viewport_height * aspect + 0.5f);
+    if (state.gameplay_quad_height > state.screen_height) {
+        state.gameplay_quad_height = state.screen_height;
+        state.gameplay_quad_width = (int)((float)state.gameplay_quad_height * aspect + 0.5f);
     }
 
-    state.crt_context = sbatch_make_context(&(sbatch_context_desc) {
-        .pipeline = state.crt_pipeline,
-        .canvas_height = state.screen_height,
-        .canvas_width = state.screen_width,
-        .max_sprites = 1
-    });
+    state.gameplay_quad_x = (state.screen_width / 2) - (state.gameplay_quad_width / 2);
+    state.gameplay_quad_y = (state.screen_height / 2) - (state.gameplay_quad_height / 2);
 
-    state.viewport_x = (state.screen_width / 2) - (state.viewport_width / 2);
-    state.viewport_y = (state.screen_height / 2) - (state.viewport_height / 2);
+    state.crt_params.OutputSize[0] = (float)state.gameplay_quad_width;
+    state.crt_params.OutputSize[1] = (float)state.gameplay_quad_height;
+    state.crt_params.OutputSize[2] = 1.0f / (float)state.gameplay_quad_width;
+    state.crt_params.OutputSize[3] = 1.0f / (float)state.gameplay_quad_height;
 }
 
 scroll_layer init_layer(int x, int y, int width, int height, int y_offset) {
@@ -241,9 +235,6 @@ void init(void) {
     });
 
     state.gameplay_context = sbatch_make_context(&(sbatch_context_desc) {
-        .canvas_height = GAMEPLAY_HEIGHT,
-        .canvas_width = GAMEPLAY_WIDTH,
-        .pipeline = state.gameplay_pipeline,
         .label = "spritebatch-gameplay-context"
     });
 
@@ -252,12 +243,22 @@ void init(void) {
         .label = "spritebatch-gameplay-pass"
     });
 
+    state.crt_context = sbatch_make_context(&(sbatch_context_desc) {
+        .max_sprites_per_frame = 1,
+        .label = "spritebatch-crt-context"
+    });
+
     state.crt_shader = sg_make_shader(spritebatch_crt_shader_desc(sg_query_backend()));
 
     state.crt_pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
         .shader = state.crt_shader,
         .label = "spritebatch-crt-pipeline"
     });
+
+    state.crt_params.SourceSize[0] = GAMEPLAY_WIDTH;
+    state.crt_params.SourceSize[1] = GAMEPLAY_HEIGHT;
+    state.crt_params.SourceSize[2] = 1.0f / GAMEPLAY_WIDTH;
+    state.crt_params.SourceSize[3] = 1.0f / GAMEPLAY_HEIGHT;
 
     make_resolution_dependent_resources();
 }
@@ -282,7 +283,8 @@ void draw_layer(float scroll_speed, scroll_layer* layer) {
 void draw_animation(float delta_time, animation* ani) {
     ani->frame_time += delta_time;
 
-    if(ani->frame_time >= 1.0f / 12.0f) {
+    const float frames_per_second = 12.0f;
+    if(ani->frame_time >= 1.0f / frames_per_second) {
         ani->frame_time = 0.0f;
         ani->frame_index = (ani->frame_index + 1) % ani->frame_count;
     }
@@ -320,8 +322,13 @@ void frame(void) {
         // valid image handle (FIXME?)
         sg_begin_pass(state.gameplay_pass, &state.pass_action);
         {
-            sbatch_begin(state.gameplay_context);
+            sbatch_begin(state.gameplay_context, &(sbatch_render_state) {
+                .pipeline = state.gameplay_pipeline,
+                .canvas_width = GAMEPLAY_WIDTH,
+                .canvas_height = GAMEPLAY_HEIGHT
+            });
             {
+                // draw static background
                 sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
                     .image = state.atlas,
                     .destination = {
@@ -334,29 +341,34 @@ void frame(void) {
                     }
                 });
 
+                // draw scrolling background layers
                 draw_layer(30.0f * delta_time, &state.mountains);
                 draw_layer(60.0f * delta_time, &state.graveyard);
                 draw_layer(120.0f * delta_time, &state.objects);
                 draw_layer(240.0f * delta_time, &state.tiles);
+
+                // draw characters
                 draw_animation(delta_time, &state.demon);
                 draw_animation(delta_time, &state.nightmare);
 
+                // draw hud
+                const float hud_width = 152.0f;
+                const float hud_height = 88.0f;
                 sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
                     .image = state.atlas,
                     .destination = {
-                        .x = GAMEPLAY_WIDTH - 152,
-                        .y = 0,
-                        .width = 152,
-                        .height = 88
+                        .x = GAMEPLAY_WIDTH - hud_width,
+                        .width = hud_width,
+                        .height = hud_height
                     },
                     .source = {
-                        .x = 480,
-                        .y = 0,
-                        .width = 152,
-                        .height = 88
+                        .x = GAMEPLAY_WIDTH,
+                        .width = hud_width,
+                        .height = hud_height
                     }
                 });
 
+                // animate character movement / alpha
                 state.demon.color = sg_color_multiply(&sg_white, 0.25f + (sinf(state.accumulator) / 2.0f) + 0.5f);
                 state.demon.position.x += sinf(state.accumulator);
                 state.demon.position.y += cosf(state.accumulator) / 2.0f;
@@ -368,29 +380,22 @@ void frame(void) {
 
     sg_begin_default_pass(&state.pass_action, state.screen_width, state.screen_height);
     {
-        sbatch_begin(state.crt_context);
+        sbatch_begin(state.crt_context, &(sbatch_render_state){
+            .pipeline = state.crt_pipeline,
+            .fs_uniforms = SG_RANGE(state.crt_params),
+            .canvas_width = state.screen_width,
+            .canvas_height = state.screen_height
+        });
         {
             sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
                 .image = state.gameplay_render_target,
                 .destination = {
-                    .x = (float)state.viewport_x,
-                    .y = (float)state.viewport_y,
-                    .width = (float)state.viewport_width,
-                    .height = (float)state.viewport_height
+                    .x = (float)state.gameplay_quad_x,
+                    .y = (float)state.gameplay_quad_y,
+                    .width = (float)state.gameplay_quad_width,
+                    .height = (float)state.gameplay_quad_height
                 }
             });
-
-            state.crt_params.OutputSize[0] = (float)state.viewport_width;
-            state.crt_params.OutputSize[1] = (float)state.viewport_height;
-            state.crt_params.OutputSize[2] = 1.0f / (float)state.viewport_width;
-            state.crt_params.OutputSize[3] = 1.0f / (float)state.viewport_height;
-
-            state.crt_params.SourceSize[0] = GAMEPLAY_WIDTH;
-            state.crt_params.SourceSize[1] = GAMEPLAY_HEIGHT;
-            state.crt_params.SourceSize[2] = 1.0f / GAMEPLAY_WIDTH;
-            state.crt_params.SourceSize[3] = 1.0f / GAMEPLAY_HEIGHT;
-
-            sbatch_apply_fs_uniforms(0, &SG_RANGE(state.crt_params));
         }
         sbatch_end();
         __dbgui_draw();
