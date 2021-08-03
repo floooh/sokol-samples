@@ -3,21 +3,29 @@
 @glsl_options flip_vert_y
 
 uniform crt_vs_params {
-    mat4 mvp;
+    mat4 modelview;
+    mat4 projection;
+    float use_pixel_snap;
 };
 
 in vec3 pos;
 in vec2 texcoord0;
 in vec4 color0;
 
-out vec2 vTexCoord;
+out vec2 uv;
 out vec4 color;
 
 void main() {
-    gl_Position = mvp * vec4(pos, 1.0f);
-    vTexCoord = texcoord0;
+    vec4 outPos = modelview * vec4(pos, 1.0f);
+    uv = texcoord0;
+    if(use_pixel_snap == 1.0f) {
+        outPos.xy = floor(outPos + 0.5).xy;
+        uv += 1e-5;
+    }
+    gl_Position = projection * outPos;
     color = color0;
 }
+
 @end
 
 @fs crt_fs
@@ -33,7 +41,7 @@ void main() {
 
 uniform sampler2D Source;
 
-in vec2 vTexCoord;
+in vec2 uv;
 in vec4 color;
 
 uniform crt_fs_params {
@@ -428,7 +436,7 @@ void main()
 	warp_factor.x = CURVATURE;
 	warp_factor.y = (3.0 / 4.0) * warp_factor.x; // assume 4:3 aspect
 	warp_factor.x *= (1.0 - TRINITRON_CURVE);
-	FragColor.rgb = CrtsFilter(vTexCoord.xy * OutputSize.xy,
+	FragColor.rgb = CrtsFilter(uv.xy * OutputSize.xy,
 	SourceSize.xy * OutputSize.zw,
 	SourceSize.xy * vec2(0.5,0.5),
 	SourceSize.zw,

@@ -1,0 +1,6 @@
+---
+options:
+    src_dir: ldtk
+files:
+    - RPG_graphics.png
+    - TopDown_by_deepnight.png

@@ -13,8 +13,8 @@
 
 #define SOKOL_SPRITEBATCH_IMPL
 #define SOKOL_COLOR_IMPL
-#define GAMEPLAY_WIDTH (480)
-#define GAMEPLAY_HEIGHT (270)
+#define CAMERA_WIDTH (480)
+#define CAMERA_HEIGHT (270)
 
 #include "sokol_time.h"
 #include "sokol_app.h"
@@ -135,7 +135,7 @@ static sg_image load_sprite(const char* filepath) {
 void make_resolution_dependent_resources() {
     state.screen_height = sapp_height();
     state.screen_width = sapp_width();
-    const float aspect = (float)GAMEPLAY_WIDTH / (float)GAMEPLAY_HEIGHT;
+    const float aspect = (float)CAMERA_WIDTH / (float)CAMERA_HEIGHT;
 
     state.gameplay_quad_width = state.screen_width;
     state.gameplay_quad_height = (int)((float)state.gameplay_quad_width / aspect + 0.5f);
@@ -155,11 +155,11 @@ void make_resolution_dependent_resources() {
 }
 
 scroll_layer init_layer(int x, int y, int width, int height, int y_offset) {
-    const float ratio = ceilf((float)GAMEPLAY_WIDTH / (float)width);
+    const float ratio = ceilf((float)CAMERA_WIDTH / (float)width);
     return (scroll_layer){
         .position = {
             .x = 0,
-            .y = (float)(GAMEPLAY_HEIGHT - height) - (float)y_offset
+            .y = (float)(CAMERA_HEIGHT - height) - (float)y_offset
         },
         .repeat_count = (int)ratio + 1,
         .source = {
@@ -175,7 +175,7 @@ animation init_animation(int x, int y, int width, int height, int frame_count, i
     return (animation) {
         .position = {
             .x = (float)x_offset,
-            .y = (float)(GAMEPLAY_HEIGHT - height) - (float)y_offset
+            .y = (float)(CAMERA_HEIGHT - height) - (float)y_offset
         },
         .frame_count = frame_count,
         .color = sg_white,
@@ -213,7 +213,7 @@ void init(void) {
     state.graveyard = init_layer(192, 326, 384, 123, 0);
     state.objects = init_layer(0, 449, 1024, 169, 32);
     state.tiles = init_layer(192, 270, 64, 41, 0);
-    state.nightmare = init_animation(0, 741, 576, 96, 4, GAMEPLAY_WIDTH / 2 - 72, 32, SBATCH_FLIP_X);
+    state.nightmare = init_animation(0, 741, 576, 96, 4, CAMERA_WIDTH / 2 - 72, 32, SBATCH_FLIP_X);
     state.demon = init_animation(0, 618, 960, 123, 6, 0, 128, SBATCH_FLIP_X);
 
     sbatch_setup(&(sbatch_desc) { 0 });
@@ -221,8 +221,8 @@ void init(void) {
     state.gameplay_render_target = sg_make_image(&(sg_image_desc) {
         .label = "spritebatch-gameplay-render-target",
         .render_target = true,
-        .width = GAMEPLAY_WIDTH,
-        .height = GAMEPLAY_HEIGHT,
+        .width = CAMERA_WIDTH,
+        .height = CAMERA_HEIGHT,
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -255,10 +255,10 @@ void init(void) {
         .label = "spritebatch-crt-pipeline"
     });
 
-    state.crt_params.SourceSize[0] = GAMEPLAY_WIDTH;
-    state.crt_params.SourceSize[1] = GAMEPLAY_HEIGHT;
-    state.crt_params.SourceSize[2] = 1.0f / GAMEPLAY_WIDTH;
-    state.crt_params.SourceSize[3] = 1.0f / GAMEPLAY_HEIGHT;
+    state.crt_params.SourceSize[0] = CAMERA_WIDTH;
+    state.crt_params.SourceSize[1] = CAMERA_HEIGHT;
+    state.crt_params.SourceSize[2] = 1.0f / CAMERA_WIDTH;
+    state.crt_params.SourceSize[3] = 1.0f / CAMERA_HEIGHT;
 
     make_resolution_dependent_resources();
 }
@@ -272,8 +272,8 @@ void draw_layer(float scroll_speed, scroll_layer* layer) {
         sbatch_push_sprite(&(sbatch_sprite) {
             .image = state.atlas,
             .position = {
-                .x = floorf(layer->position.x + (float)i * layer->source.width),
-                .y = floorf(layer->position.y)
+                .x = layer->position.x + (float)i * layer->source.width,
+                .y = layer->position.y
             },
             .source = layer->source
         });
@@ -292,8 +292,8 @@ void draw_animation(float delta_time, animation* ani) {
     sbatch_push_sprite(&(sbatch_sprite) {
         .image = state.atlas,
         .position = {
-            .x = floorf(ani->position.x),
-            .y = floorf(ani->position.y)
+            .x = ani->position.x,
+            .y = ani->position.y
         },
         .source = {
             .x = ani->source.x + ani->source.width * (float)ani->frame_index,
@@ -319,20 +319,21 @@ void frame(void) {
     {
         sbatch_begin(state.gameplay_context, &(sbatch_render_state) {
             .pipeline = state.gameplay_pipeline,
-            .canvas_width = GAMEPLAY_WIDTH,
-            .canvas_height = GAMEPLAY_HEIGHT
+            .use_pixel_snap = true,
+            .canvas_width = CAMERA_WIDTH,
+            .canvas_height = CAMERA_HEIGHT
         });
         {
             // draw static background
             sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
                 .image = state.atlas,
                 .destination = {
-                    .width = GAMEPLAY_WIDTH,
-                    .height = GAMEPLAY_HEIGHT
+                    .width = CAMERA_WIDTH,
+                    .height = CAMERA_HEIGHT
                 },
                 .source = {
-                    .width = GAMEPLAY_WIDTH,
-                    .height = GAMEPLAY_HEIGHT
+                    .width = CAMERA_WIDTH,
+                    .height = CAMERA_HEIGHT
                 }
             });
 
@@ -352,12 +353,12 @@ void frame(void) {
             sbatch_push_sprite_rect(&(sbatch_sprite_rect) {
                 .image = state.atlas,
                 .destination = {
-                    .x = GAMEPLAY_WIDTH - hud_width,
+                    .x = CAMERA_WIDTH - hud_width,
                     .width = hud_width,
                     .height = hud_height
                 },
                 .source = {
-                    .x = GAMEPLAY_WIDTH,
+                    .x = CAMERA_WIDTH,
                     .width = hud_width,
                     .height = hud_height
                 }
