@@ -32,6 +32,7 @@
 #define MOD_SRCBUF_SAMPLES (16*1024)
 
 static struct {
+    bool reset;
     struct {
         float rx, ry;
         sg_pass_action pass_action;
@@ -254,8 +255,27 @@ static void fetch_mod_callback(const sfetch_response_t* response) {
     }
 }
 
+// the sokol-app cleanup callback is also called on restart
+static void shutdown(void) {
+    if (state.mod.mpf) {
+        ModPlug_Unload(state.mod.mpf);
+    }
+    saudio_shutdown();
+    sdtx_shutdown();
+    sgl_shutdown();
+    sfetch_shutdown();
+    sg_shutdown();
+    memset(&state, 0, sizeof(state));
+}
+
 // the sokol-app frame callback
 static void frame(void) {
+    if (state.reset) {
+        state.reset = false;
+        shutdown();
+        init();
+    }
+
     const int w = sapp_width();
     const int h = sapp_height();
     const float aspect = (float)w / (float)h;
@@ -345,25 +365,11 @@ static void frame(void) {
     sg_commit();
 }
 
-// the sokol-app cleanup callback is also called on restart
-static void shutdown(void) {
-    if (state.mod.mpf) {
-        ModPlug_Unload(state.mod.mpf);
-    }
-    saudio_shutdown();
-    sdtx_shutdown();
-    sgl_shutdown();
-    sfetch_shutdown();
-    sg_shutdown();
-    memset(&state, 0, sizeof(state));
-}
-
 // the sokol-app event callback, performs a "restart" when the SPACE key is pressed
 static void input(const sapp_event* ev) {
     if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
         if (ev->key_code == SAPP_KEYCODE_SPACE) {
-            shutdown();
-            init();
+            state.reset = true;
         }
     }
 }
