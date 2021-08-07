@@ -2,11 +2,19 @@
 //  spritebatch-ldtk-sapp.c
 //------------------------------------------------------------------------------
 
+/*
+ * LDtk is a 2D level editor developed by Sébastien Bénard (@deepknight)
+ * ldtk.io
+ * The GridVania sample level and all associated assets are released under the MIT licence.
+ * https://github.com/deepnight/ldtk/tree/master/app/samples
+ */
+
 #define LDTK_IMPL
 #define SOKOL_SPRITEBATCH_IMPL
 #define SOKOL_DEBUGTEXT_IMPL
 #define SOKOL_COLOR_IMPL
 
+#include "sokol_time.h"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_spritebatch.h"
@@ -76,6 +84,8 @@ static struct {
     sbatch_float2 screen_mouse;
     sbatch_float2 world_mouse;
     float camera_update_time;
+    float delta_time;
+    uint64_t last_time;
 } state;
 
 bool is_mouse_over(const LDtkLevel* level) {
@@ -154,7 +164,7 @@ float lerp(float a, float b, float amount) {
 sbatch_matrix update_camera(void) {
     if (state.camera_update_time <= 1.0f) {
 
-        state.camera_update_time += 1.0f / 60.0f;
+        state.camera_update_time += state.delta_time;
 
         state.camera.width = sapp_widthf();
         state.camera.height = sapp_heightf();
@@ -306,7 +316,7 @@ void draw_layer_entities(const LDtkLevel* level, const LDtkLayerEntities* layer)
     }
 }
 
-void render_previews(void) {
+void render_level_previews(void) {
     const sbatch_pipeline pipeline = sbatch_make_pipeline(&(sg_pipeline_desc) {
         .depth.pixel_format = SG_PIXELFORMAT_NONE
     });
@@ -360,6 +370,7 @@ void render_previews(void) {
 }
 
 void init(void) {
+    stm_setup();
 
     sg_setup(&(sg_desc) {
         .context = sapp_sgcontext()
@@ -379,7 +390,7 @@ void init(void) {
         state.level_previews[i] = sg_alloc_image();
     }
 
-    state.tilesets[0].on_loaded = render_previews;
+    state.tilesets[0].on_loaded = render_level_previews;
 
     for (int i = 0; i < LDtkTilesetsLength; i++) {
         load_tileset(state.tilesets + i, i);
@@ -392,7 +403,6 @@ void init(void) {
 
     state.context = sbatch_make_context(&(sbatch_context_desc) {
         .label = "ldtk-context",
-        .max_sprites_per_frame = 16384 * 2
     });
 
     state.action = (sg_pass_action) {
@@ -476,6 +486,9 @@ void render_world(void) {
 }
 
 void frame(void) {
+    state.delta_time =
+        (float)stm_sec(stm_round_to_common_refresh_rate(stm_laptime(&state.last_time)));
+
     sfetch_dowork();
     render_world();
     sg_commit();
@@ -506,7 +519,7 @@ void handle_event(const sapp_event* e) {
     switch(e->type) {
         case SAPP_EVENTTYPE_MOUSE_SCROLL: {
             state.camera.state = camera_state_default;
-            state.camera.zoom += (1.0f / 60.0f) * e->scroll_y;
+            state.camera.zoom += (state.delta_time) * e->scroll_y;
             if (state.camera.zoom < 0.1f) state.camera.zoom = 0.1f;
             if (state.camera.zoom > 4.0f) state.camera.zoom = 4.0f;
             break;
