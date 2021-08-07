@@ -16,7 +16,7 @@
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
 #include "stb/stb_image.h"
-#include "TopDown.h"
+#include "GridVania.h"
 
 typedef struct {
     sg_image image;
@@ -43,7 +43,7 @@ bool value_in_range(float value, float min, float max) {
     return (value >= min) && (value <= max);
 }
 
-bool is_visible(const camera* camera, const LDtkLevel* level) {
+static bool is_visible(const camera* camera, const LDtkLevel* level) {
     const float level_x = (float)level->worldX;
     const float level_y = (float)level->worldY;
     const float level_width = (float)level->pxWid;
@@ -89,7 +89,7 @@ bool is_mouse_over(const LDtkLevel* level) {
         state.world_mouse.y <= level_y + level_height;
 }
 
-static void fetch_callback(const sfetch_response_t* response) {
+void fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
 
         int w, h, num_channels;
@@ -201,107 +201,107 @@ sbatch_matrix update_camera(void) {
     return camera_view;
 }
 
-void draw_tile(sg_image image, float x, float y, float source_x, float source_y, float source_width, float source_height, float origin_x, float origin_y, uint32_t flags, const sg_color* color) {
-    sbatch_push_sprite(&(sbatch_sprite) {
-        .image = image,
-        .origin = { .x = origin_x, .y = origin_y },
-        .position = { .x = x, .y = y },
-        .flags = flags,
-        .source = {
-            .width = source_width,
-            .height = source_height,
-            .x = source_x,
-            .y = source_y
-        },
-        .color = color
-    });
-}
-
-void draw_layer_auto_layer(const LDtkLayerAutoLayer* layer, const sg_color* color, float levelX, float levelY) {
+void draw_layer_auto_layer(const LDtkLevel* level, const LDtkLayerAutoLayer* layer) {
     const tileset* tileset = state.tilesets + layer->tilesetIndex;
-    const sg_color layer_color = sg_color_multiply(color, layer->opacity);
-    const float xOffset = levelX + (float)layer->pxTotalOffsetX;
-    const float yOffset = levelY + (float)layer->pxTotalOffsetY;
+    const sg_color layer_color = sg_color_multiply(&sg_white, layer->opacity);
+    const float xOffset = (float)level->worldX + (float)layer->pxTotalOffsetX;
+    const float yOffset = (float)level->worldY + (float)layer->pxTotalOffsetY;
     const float gridSize = (float)layer->gridSize;
     for (size_t i = 0; i < layer->autoLayerTilesLength; i++) {
         const LDtkTile* tile = layer->autoLayerTiles + i;
-        draw_tile(tileset->image,
-            xOffset + (float)tile->px.x,
-            yOffset + (float)tile->px.y,
-            (float)tile->src.x,
-            (float)tile->src.y,
-            gridSize,
-            gridSize,
-            0.0f,
-            0.0f,
-            tile->f,
-            &layer_color);
+        sbatch_push_sprite(&(sbatch_sprite) {
+            .image = tileset->image,
+            .position = {
+                .x = xOffset + (float)tile->px.x,
+                .y = yOffset + (float)tile->px.y },
+            .flags = tile->f,
+            .source = {
+                .width = gridSize,
+                .height = gridSize,
+                .x = (float)tile->src.x,
+                .y = (float)tile->src.y
+            },
+            .color = &layer_color
+        });
     }
 }
 
-void draw_layer_tiles(const LDtkLayerTiles* layer, const sg_color* color, float levelX, float levelY) {
+void draw_layer_tiles(const LDtkLevel* level, const LDtkLayerTiles* layer) {
     const tileset* tileset = state.tilesets + layer->tilesetIndex;
-    const sg_color layer_color = sg_color_multiply(color, layer->opacity);
-    const float xOffset = levelX + (float)layer->pxTotalOffsetX;
-    const float yOffset = levelY + (float)layer->pxTotalOffsetY;
+    const sg_color layer_color = sg_color_multiply(&sg_white, layer->opacity);
+    const float xOffset = (float)level->worldX + (float)layer->pxTotalOffsetX;
+    const float yOffset = (float)level->worldY + (float)layer->pxTotalOffsetY;
     const float gridSize = (float)layer->gridSize;
     for (size_t i = 0; i < layer->gridTilesLength; i++) {
         const LDtkTile* tile = layer->gridTiles + i;
-        draw_tile(tileset->image,
-            xOffset + (float)tile->px.x,
-            yOffset + (float)tile->px.y,
-            (float)tile->src.x,
-            (float)tile->src.y,
-            gridSize,
-            gridSize,
-            0.0f,
-            0.0f,
-            tile->f,
-            &layer_color);
+        sbatch_push_sprite(&(sbatch_sprite) {
+            .image = tileset->image,
+            .position = {
+                .x = xOffset + (float)tile->px.x,
+                .y = yOffset + (float)tile->px.y },
+            .flags = tile->f,
+            .source = {
+                .width = gridSize,
+                .height = gridSize,
+                .x = (float)tile->src.x,
+                .y = (float)tile->src.y
+            },
+            .color = &layer_color
+        });
     }
 }
 
-void draw_layer_int_grid(const LDtkLayerIntGrid* layer, const sg_color* color, float levelX, float levelY) {
+void draw_layer_int_grid(const LDtkLevel* level, const LDtkLayerIntGrid* layer) {
     const tileset* tileset = state.tilesets + layer->tilesetIndex;
-    const sg_color layer_color = sg_color_multiply(color, layer->opacity);
-    const float xOffset = levelX + (float)layer->pxTotalOffsetX;
-    const float yOffset = levelY + (float)layer->pxTotalOffsetY;
+    const sg_color layer_color = sg_color_multiply(&sg_white, layer->opacity);
+    const float xOffset = (float)level->worldX + (float)layer->pxTotalOffsetX;
+    const float yOffset = (float)level->worldY + (float)layer->pxTotalOffsetY;
     const float gridSize = (float)layer->gridSize;
     for (size_t i = 0; i < layer->autoLayerTilesLength; i++) {
         const LDtkTile* tile = layer->autoLayerTiles + i;
-        draw_tile(tileset->image,
-            xOffset + (float)tile->px.x,
-            yOffset + (float)tile->px.y,
-            (float)tile->src.x,
-            (float)tile->src.y,
-            gridSize,
-            gridSize,
-            0.0f,
-            0.0f,
-            tile->f,
-            &layer_color);
+        sbatch_push_sprite(&(sbatch_sprite) {
+            .image = tileset->image,
+            .position = {
+                .x = xOffset + (float)tile->px.x,
+                .y = yOffset + (float)tile->px.y },
+            .flags = tile->f,
+            .source = {
+                .width = gridSize,
+                .height = gridSize,
+                .x = (float)tile->src.x,
+                .y = (float)tile->src.y
+            },
+            .color = &layer_color
+        });
     }
 }
 
-void draw_layer_entities(const LDtkLayerEntities* layer, const sg_color* color, float levelX, float levelY) {
+void draw_layer_entities(const LDtkLevel* level, const LDtkLayerEntities* layer) {
     for (size_t i = 0; i < layer->ItemsLength; i++) {
         const LDtkEntityItem* item = layer->Items + i;
         if (item->hasTile) {
             const tileset* tileset = state.tilesets + item->tile.tilesetIndex;
-            const sg_color layer_color = sg_color_multiply(color, layer->opacity);
-            const float xOffset = levelX + (float)layer->pxTotalOffsetX;
-            const float yOffset = levelY + (float)layer->pxTotalOffsetY;
-            draw_tile(tileset->image,
-                xOffset + (float)item->px.x,
-                yOffset + (float)item->px.y,
-                (float)item->tile.srcRect.x,
-                (float)item->tile.srcRect.y,
-                (float)item->tile.srcRect.width,
-                (float)item->tile.srcRect.height,
-                item->pivot.x * (float)item->tile.srcRect.width,
-                item->pivot.y * (float)item->tile.srcRect.height,
-                SBATCH_FLIP_NONE,
-                &layer_color);
+            const sg_color layer_color = sg_color_multiply(&sg_white, layer->opacity);
+            const float xOffset = (float)level->worldX + (float)layer->pxTotalOffsetX;
+            const float yOffset = (float)level->worldY + (float)layer->pxTotalOffsetY;
+            sbatch_push_sprite(&(sbatch_sprite) {
+                .image = tileset->image,
+                .position = {
+                    .x = xOffset + (float)item->px.x,
+                    .y = yOffset + (float)item->px.y
+                },
+                .origin = {
+                    .x = item->pivot.x* (float)item->tile.srcRect.width,
+                    .y = item->pivot.y* (float)item->tile.srcRect.height,
+                },
+                .source = {
+                    .width = (float)item->tile.srcRect.width,
+                    .height = (float)item->tile.srcRect.height,
+                    .x = (float)item->tile.srcRect.x,
+                    .y = (float)item->tile.srcRect.y
+                },
+                .color = &layer_color
+            });
         }
     }
 }
@@ -345,9 +345,9 @@ void render_previews(void) {
                 .transform = transform
             });
             {
-                draw_layer_int_grid(&level->layers.Collisions, &sg_white, (float)level->worldX, (float)level->worldY);
-                draw_layer_auto_layer(&level->layers.Shadows, &sg_white, (float)level->worldX, (float)level->worldY);
-                draw_layer_entities(&level->layers.Entities, &sg_white, (float)level->worldX, (float)level->worldY);
+                draw_layer_int_grid(level, &level->layers.Collisions);
+                draw_layer_auto_layer(level, &level->layers.Shadows);
+                draw_layer_entities(level, &level->layers.Entities);
             }
             sbatch_end();
         }
@@ -446,9 +446,9 @@ void render_world(void) {
                     sdtx_printf(level->identifier.data);
 
                     if (is_selected_level || i == state.target_level) {
-                        draw_layer_int_grid(&level->layers.Collisions, &sg_white, (float)level->worldX, (float)level->worldY);
-                        draw_layer_auto_layer(&level->layers.Shadows, &sg_white, (float)level->worldX, (float)level->worldY);
-                        draw_layer_entities(&level->layers.Entities, &sg_white, (float)level->worldX, (float)level->worldY);
+                        draw_layer_int_grid(level, &level->layers.Collisions);
+                        draw_layer_auto_layer(level, &level->layers.Shadows);
+                        draw_layer_entities(level, &level->layers.Entities);
                     }
                     else {
                         const sg_color color = sg_color_multiply(&sg_white, 0.5f);
