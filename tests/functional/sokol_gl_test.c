@@ -171,7 +171,7 @@ UTEST(sokol_gl, make_destroy_pipelines) {
     sg_setup(&(sg_desc){0});
     sgl_setup(&(sgl_desc_t){
         /* one pool slot is used by soko-gl itself */
-        .pipeline_pool_size = 4
+        .context.pipeline_pool_size = 4
     });
 
     sgl_pipeline pip[3] = { {0} };

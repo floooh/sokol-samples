@@ -23,7 +23,7 @@ static void init(void) {
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
-        .sample_count = sapp_sample_count()
+        .context.sample_count = sapp_sample_count()
     });
 
     /* a checkerboard texture */

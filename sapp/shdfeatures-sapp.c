@@ -299,7 +299,7 @@ static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
 
     // setup sokol-gl
-    sgl_setup(&(sgl_desc_t){ .sample_count = sapp_sample_count() });
+    sgl_setup(&(sgl_desc_t){ .context.sample_count = sapp_sample_count() });
 
     // setup sokol-time
     stm_setup();
