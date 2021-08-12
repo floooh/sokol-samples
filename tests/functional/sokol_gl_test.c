@@ -251,5 +251,31 @@ UTEST(sokol_gl, destroy_active_context) {
 }
 
 UTEST(sokol_gl, context_pipeline) {
+    init();
+    sgl_context ctx1 = sgl_make_context(&(sgl_context_desc_t){
+        .max_vertices = 1024,
+        .max_commands = 256,
+        .color_format = SG_PIXELFORMAT_R8,
+        .depth_format = SG_PIXELFORMAT_NONE,
+        .sample_count = 4,
+    });
+    sgl_context ctx2 = sgl_make_context(&(sgl_context_desc_t){
+        .max_vertices = 1024,
+        .max_commands = 256,
+        .color_format = SG_PIXELFORMAT_RG8,
+        .depth_format = SG_PIXELFORMAT_NONE,
+        .sample_count = 2,
+    });
+    sgl_set_context(ctx1);
+    sgl_pipeline pip1 = sgl_make_pipeline(&(sg_pipeline_desc){
+        .colors[0].blend.enabled = true,
+    });
+    T(pip1.id != SG_INVALID_ID);
+    // FIXME: currently sg_query_pipeline_info() doesn't provide enough information
 
+    sgl_pipeline pip2 = sgl_make_pipeline_with_context(ctx2, &(sg_pipeline_desc){
+        .alpha_to_coverage_enabled = true,
+    });
+    T(pip2.id != SG_INVALID_ID);
+    shutdown();
 }
