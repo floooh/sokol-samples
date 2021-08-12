@@ -23,71 +23,74 @@ static void shutdown(void) {
 UTEST(sokol_gl, default_init_shutdown) {
     init();
     T(_sgl.init_cookie == _SGL_INIT_COOKIE);
-    T(_sgl.num_vertices == 65536);
-    T(_sgl.num_commands == 16384);
-    T(_sgl.num_uniforms == 16384);
-    T(_sgl.cur_vertex == 0);
-    T(_sgl.cur_command == 0);
-    T(_sgl.cur_uniform == 0);
-    T(_sgl.vertices != 0);
-    T(_sgl.uniforms != 0);
-    T(_sgl.commands != 0);
-    T(_sgl.error == SGL_NO_ERROR);
-    T(!_sgl.in_begin);
-    T(_sgl.def_pip.id != SG_INVALID_ID);
+    T(_sgl.def_ctx_id.id == SGL_DEFAULT_CONTEXT.id);
+    T(_sgl.cur_ctx_id.id == _sgl.def_ctx_id.id);
+    T(_sgl.cur_ctx);
+    T(_sgl.cur_ctx->num_vertices == 65536);
+    T(_sgl.cur_ctx->num_commands == 16384);
+    T(_sgl.cur_ctx->num_uniforms == 16384);
+    T(_sgl.cur_ctx->cur_vertex == 0);
+    T(_sgl.cur_ctx->cur_command == 0);
+    T(_sgl.cur_ctx->cur_uniform == 0);
+    T(_sgl.cur_ctx->vertices != 0);
+    T(_sgl.cur_ctx->uniforms != 0);
+    T(_sgl.cur_ctx->commands != 0);
+    T(_sgl.cur_ctx->error == SGL_NO_ERROR);
+    T(!_sgl.cur_ctx->in_begin);
+    T(_sgl.cur_ctx->def_pip.id != SG_INVALID_ID);
     T(_sgl.pip_pool.pool.size == (_SGL_DEFAULT_PIPELINE_POOL_SIZE + 1));
-    TFLT(_sgl.u, 0.0f, FLT_MIN);
-    TFLT(_sgl.v, 0.0f, FLT_MIN);
-    T(_sgl.rgba == 0xFFFFFFFF);
-    T(_sgl.cur_img.id == _sgl.def_img.id);
+    TFLT(_sgl.cur_ctx->u, 0.0f, FLT_MIN);
+    TFLT(_sgl.cur_ctx->v, 0.0f, FLT_MIN);
+    T(_sgl.cur_ctx->rgba == 0xFFFFFFFF);
+    T(_sgl.cur_ctx->cur_img.id == _sgl.def_img.id);
     shutdown();
 }
 
 UTEST(sokol_gl, viewport) {
     init();
     sgl_viewport(1, 2, 3, 4, true);
-    T(_sgl.cur_command == 1);
-    T(_sgl.commands[0].cmd == SGL_COMMAND_VIEWPORT);
-    T(_sgl.commands[0].args.viewport.x == 1);
-    T(_sgl.commands[0].args.viewport.y == 2);
-    T(_sgl.commands[0].args.viewport.w == 3);
-    T(_sgl.commands[0].args.viewport.h == 4);
-    T(_sgl.commands[0].args.viewport.origin_top_left);
+    T(_sgl.cur_ctx->cur_command == 1);
+    T(_sgl.cur_ctx->commands[0].cmd == SGL_COMMAND_VIEWPORT);
+    T(_sgl.cur_ctx->commands[0].args.viewport.x == 1);
+    T(_sgl.cur_ctx->commands[0].args.viewport.y == 2);
+    T(_sgl.cur_ctx->commands[0].args.viewport.w == 3);
+    T(_sgl.cur_ctx->commands[0].args.viewport.h == 4);
+    T(_sgl.cur_ctx->commands[0].args.viewport.origin_top_left);
     sgl_viewport(5, 6, 7, 8, false);
-    T(_sgl.cur_command == 2);
-    T(_sgl.commands[1].cmd == SGL_COMMAND_VIEWPORT);
-    T(_sgl.commands[1].args.viewport.x == 5);
-    T(_sgl.commands[1].args.viewport.y == 6);
-    T(_sgl.commands[1].args.viewport.w == 7);
-    T(_sgl.commands[1].args.viewport.h == 8);
-    T(!_sgl.commands[1].args.viewport.origin_top_left);
+    T(_sgl.cur_ctx->cur_command == 2);
+    T(_sgl.cur_ctx->commands[1].cmd == SGL_COMMAND_VIEWPORT);
+    T(_sgl.cur_ctx->commands[1].args.viewport.x == 5);
+    T(_sgl.cur_ctx->commands[1].args.viewport.y == 6);
+    T(_sgl.cur_ctx->commands[1].args.viewport.w == 7);
+    T(_sgl.cur_ctx->commands[1].args.viewport.h == 8);
+    T(!_sgl.cur_ctx->commands[1].args.viewport.origin_top_left);
     shutdown();
 }
 
 UTEST(sokol_gl, scissor_rect) {
     init();
     sgl_scissor_rect(10, 20, 30, 40, true);
-    T(_sgl.cur_command == 1);
-    T(_sgl.commands[0].cmd == SGL_COMMAND_SCISSOR_RECT);
-    T(_sgl.commands[0].args.scissor_rect.x == 10);
-    T(_sgl.commands[0].args.scissor_rect.y == 20);
-    T(_sgl.commands[0].args.scissor_rect.w == 30);
-    T(_sgl.commands[0].args.scissor_rect.h == 40);
-    T(_sgl.commands[0].args.scissor_rect.origin_top_left);
+    T(_sgl.cur_ctx->cur_command == 1);
+    T(_sgl.cur_ctx->commands[0].cmd == SGL_COMMAND_SCISSOR_RECT);
+    T(_sgl.cur_ctx->commands[0].args.scissor_rect.x == 10);
+    T(_sgl.cur_ctx->commands[0].args.scissor_rect.y == 20);
+    T(_sgl.cur_ctx->commands[0].args.scissor_rect.w == 30);
+    T(_sgl.cur_ctx->commands[0].args.scissor_rect.h == 40);
+    T(_sgl.cur_ctx->commands[0].args.scissor_rect.origin_top_left);
     sgl_scissor_rect(50, 60, 70, 80, false);
-    T(_sgl.cur_command == 2);
-    T(_sgl.commands[1].cmd == SGL_COMMAND_SCISSOR_RECT);
-    T(_sgl.commands[1].args.scissor_rect.x == 50);
-    T(_sgl.commands[1].args.scissor_rect.y == 60);
-    T(_sgl.commands[1].args.scissor_rect.w == 70);
-    T(_sgl.commands[1].args.scissor_rect.h == 80);
-    T(!_sgl.commands[1].args.scissor_rect.origin_top_left);
+    T(_sgl.cur_ctx->cur_command == 2);
+    T(_sgl.cur_ctx->commands[1].cmd == SGL_COMMAND_SCISSOR_RECT);
+    T(_sgl.cur_ctx->commands[1].args.scissor_rect.x == 50);
+    T(_sgl.cur_ctx->commands[1].args.scissor_rect.y == 60);
+    T(_sgl.cur_ctx->commands[1].args.scissor_rect.w == 70);
+    T(_sgl.cur_ctx->commands[1].args.scissor_rect.h == 80);
+    T(!_sgl.cur_ctx->commands[1].args.scissor_rect.origin_top_left);
     shutdown();
 }
 
 UTEST(sokol_gl, texture) {
     init();
-    T(_sgl.cur_img.id == _sgl.def_img.id);
+    T(_sgl.cur_ctx->cur_img.id == _sgl.def_img.id);
     uint32_t pixels[64] = { 0 };
     sg_image img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
@@ -96,7 +99,7 @@ UTEST(sokol_gl, texture) {
         .data.subimage[0][0] = SG_RANGE(pixels),
     });
     sgl_texture(img);
-    T(_sgl.cur_img.id == img.id);
+    T(_sgl.cur_ctx->cur_img.id == img.id);
     shutdown();
 }
 
@@ -107,30 +110,30 @@ UTEST(sokol_gl, begin_end) {
     sgl_v3f(4.0f, 5.0f, 6.0f);
     sgl_v3f(7.0f, 8.0f, 9.0f);
     sgl_end();
-    T(_sgl.base_vertex == 0);
-    T(_sgl.cur_vertex == 3);
-    T(_sgl.cur_command == 1);
-    T(_sgl.cur_uniform == 1);
-    T(_sgl.commands[0].cmd == SGL_COMMAND_DRAW);
-    T(_sgl.commands[0].args.draw.pip.id == _sgl_pipeline_at(_sgl.def_pip.id)->pip[SGL_PRIMITIVETYPE_TRIANGLES].id);
-    T(_sgl.commands[0].args.draw.base_vertex == 0);
-    T(_sgl.commands[0].args.draw.num_vertices == 3);
-    T(_sgl.commands[0].args.draw.uniform_index == 0);
+    T(_sgl.cur_ctx->base_vertex == 0);
+    T(_sgl.cur_ctx->cur_vertex == 3);
+    T(_sgl.cur_ctx->cur_command == 1);
+    T(_sgl.cur_ctx->cur_uniform == 1);
+    T(_sgl.cur_ctx->commands[0].cmd == SGL_COMMAND_DRAW);
+    T(_sgl.cur_ctx->commands[0].args.draw.pip.id == _sgl_pipeline_at(_sgl.cur_ctx->def_pip.id)->pip[SGL_PRIMITIVETYPE_TRIANGLES].id);
+    T(_sgl.cur_ctx->commands[0].args.draw.base_vertex == 0);
+    T(_sgl.cur_ctx->commands[0].args.draw.num_vertices == 3);
+    T(_sgl.cur_ctx->commands[0].args.draw.uniform_index == 0);
     shutdown();
 }
 
 UTEST(sokol_gl, matrix_mode) {
     init();
-    sgl_matrix_mode_modelview(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
-    sgl_matrix_mode_projection(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
-    sgl_matrix_mode_texture(); T(_sgl.cur_matrix_mode == SGL_MATRIXMODE_TEXTURE);
+    sgl_matrix_mode_modelview(); T(_sgl.cur_ctx->cur_matrix_mode == SGL_MATRIXMODE_MODELVIEW);
+    sgl_matrix_mode_projection(); T(_sgl.cur_ctx->cur_matrix_mode == SGL_MATRIXMODE_PROJECTION);
+    sgl_matrix_mode_texture(); T(_sgl.cur_ctx->cur_matrix_mode == SGL_MATRIXMODE_TEXTURE);
     shutdown();
 }
 
 UTEST(sokol_gl, load_identity) {
     init();
     sgl_load_identity();
-    const _sgl_matrix_t* m = _sgl_matrix_modelview();
+    const _sgl_matrix_t* m = _sgl_matrix_modelview(_sgl.cur_ctx);
     TFLT(m->v[0][0], 1.0f, FLT_MIN); TFLT(m->v[0][1], 0.0f, FLT_MIN); TFLT(m->v[0][2], 0.0f, FLT_MIN); TFLT(m->v[0][3], 0.0f, FLT_MIN);
     TFLT(m->v[1][0], 0.0f, FLT_MIN); TFLT(m->v[1][1], 1.0f, FLT_MIN); TFLT(m->v[1][2], 0.0f, FLT_MIN); TFLT(m->v[1][3], 0.0f, FLT_MIN);
     TFLT(m->v[2][0], 0.0f, FLT_MIN); TFLT(m->v[2][1], 0.0f, FLT_MIN); TFLT(m->v[2][2], 1.0f, FLT_MIN); TFLT(m->v[2][3], 0.0f, FLT_MIN);
@@ -147,7 +150,7 @@ UTEST(sokol_gl, load_matrix) {
         2.0f, 3.0f, 4.0f, 1.0f
     };
     sgl_load_matrix(m);
-    const _sgl_matrix_t* m0 = _sgl_matrix_modelview();
+    const _sgl_matrix_t* m0 = _sgl_matrix_modelview(_sgl.cur_ctx);
     TFLT(m0->v[0][0], 0.5f, FLT_MIN);
     TFLT(m0->v[1][1], 0.5f, FLT_MIN);
     TFLT(m0->v[2][2], 0.5f, FLT_MIN);
@@ -156,7 +159,7 @@ UTEST(sokol_gl, load_matrix) {
     TFLT(m0->v[3][2], 4.0f, FLT_MIN);
     TFLT(m0->v[3][3], 1.0f, FLT_MIN);
     sgl_load_transpose_matrix(m);
-    const _sgl_matrix_t* m1 = _sgl_matrix_modelview();
+    const _sgl_matrix_t* m1 = _sgl_matrix_modelview(_sgl.cur_ctx);
     TFLT(m1->v[0][0], 0.5f, FLT_MIN);
     TFLT(m1->v[1][1], 0.5f, FLT_MIN);
     TFLT(m1->v[2][2], 0.5f, FLT_MIN);
@@ -171,7 +174,7 @@ UTEST(sokol_gl, make_destroy_pipelines) {
     sg_setup(&(sg_desc){0});
     sgl_setup(&(sgl_desc_t){
         /* one pool slot is used by soko-gl itself */
-        .context.pipeline_pool_size = 4
+        .pipeline_pool_size = 4
     });
 
     sgl_pipeline pip[3] = { {0} };
@@ -204,4 +207,49 @@ UTEST(sokol_gl, make_destroy_pipelines) {
     }
     sgl_shutdown();
     sg_shutdown();
+}
+
+UTEST(sokol_gl, make_destroy_contexts) {
+    init();
+    sgl_context ctx = sgl_make_context(&(sgl_context_desc_t){
+        .max_vertices = 1024,
+        .max_commands = 256,
+        .color_format = SG_PIXELFORMAT_RG8,
+        .depth_format = SG_PIXELFORMAT_NONE,
+        .sample_count = 4,
+    });
+    T(ctx.id != SG_INVALID_ID);
+    T(ctx.id != SGL_DEFAULT_CONTEXT.id);
+    // creating a context should not change the current context
+    T(ctx.id != _sgl.cur_ctx_id.id);
+    sgl_set_context(ctx);
+    T(_sgl.cur_ctx->num_vertices == 1024);
+    T(_sgl.cur_ctx->num_commands == 256);
+    T(_sgl.cur_ctx->num_uniforms == 256);
+    T(ctx.id == _sgl.cur_ctx_id.id);
+    T(sgl_get_context().id == ctx.id);
+    sgl_set_context(SGL_DEFAULT_CONTEXT);
+    T(sgl_get_context().id == SGL_DEFAULT_CONTEXT.id);
+    sgl_destroy_context(ctx);
+    shutdown();
+}
+
+UTEST(sokol_gl, destroy_active_context) {
+    init();
+    sgl_context ctx = sgl_make_context(&(sgl_context_desc_t){
+        .max_vertices = 1024,
+        .max_commands = 256,
+        .color_format = SG_PIXELFORMAT_RG8,
+        .depth_format = SG_PIXELFORMAT_NONE,
+        .sample_count = 4,
+    });
+    sgl_set_context(ctx);
+    sgl_destroy_context(ctx);
+    T(_sgl.cur_ctx == 0);
+    T(sgl_error() == SGL_ERROR_NO_CONTEXT);
+    shutdown();
+}
+
+UTEST(sokol_gl, context_pipeline) {
+
 }
