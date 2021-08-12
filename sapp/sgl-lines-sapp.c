@@ -21,9 +21,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-gl */
-    sgl_setup(&(sgl_desc_t){
-        .context.sample_count = sapp_sample_count()
-    });
+    sgl_setup(&(sgl_desc_t){0});
 
     /* a pipeline object with less-equal depth-testing */
     state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
