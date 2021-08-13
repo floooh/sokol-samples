@@ -1,6 +1,6 @@
 ---
-platform: emscripten 
-generator: Ninja 
+platform: emscripten
+generator: Ninja
 build_tool: vscode_cmake
 build_type: Release
 cmake-toolchain: emscripten.toolchain.cmake
@@ -10,7 +10,6 @@ defines:
     FIPS_EMSCRIPTEN_USE_WASM: ON
     FIPS_EMSCRIPTEN_USE_WEBGL2: ON
     FIPS_EMSCRIPTEN_MEM_INIT_METHOD: 0
-    FIPS_EMSCRIPTEN_USE_CLOSURE: ON
     FIPS_EMSCRIPTEN_USE_EMMALLOC: ON
     FIPS_EMSCRIPTEN_RELATIVE_SHELL_HTML: "webpage/shell.html"
     FIPS_EMSCRIPTEN_USE_CLOSURE: ON
