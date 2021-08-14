@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 //  sgl-context-sapp.c
 //
-//  Render into different passes/rendertargets with sokol-gl contexts.
+//  Demonstrates how to render in different render passes with sokol_gl.h
+//  using sokol-gl contexts.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -104,7 +105,7 @@ static void frame(void) {
     sgl_texture(state.offscreen.img);
     sgl_load_pipeline(state.display.sgl_pip);
     sgl_matrix_mode_projection();
-    sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
+    sgl_perspective(sgl_rad(45.0f), sapp_widthf()/sapp_heightf(), 0.1f, 100.0f);
     const float eye[3] = { sinf(a) * 6.0f, sinf(a) * 3.0f, cosf(a) * 6.0f };
     sgl_matrix_mode_modelview();
     sgl_lookat(eye[0], eye[1], eye[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
