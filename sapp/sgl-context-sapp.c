@@ -40,17 +40,15 @@ static void init(void) {
 
     // setup sokol-gl with the default context compatible with the default render pass
     sgl_setup(&(sgl_desc_t){
-        .context = {
-            .max_vertices = 64,
-            .max_commands = 16,
-        }
+        .max_vertices = 64,
+        .max_commands = 16,
     });
 
     // pass action and pipeline for the default render pass
     state.display.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.7f, 1.0f, 1.0f } }
     };
-    state.display.sgl_pip = sgl_make_pipeline(&(sg_pipeline_desc){
+    state.display.sgl_pip = sgl_context_make_pipeline(SGL_DEFAULT_CONTEXT, &(sg_pipeline_desc){
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .write_enabled = true,
@@ -113,10 +111,10 @@ static void frame(void) {
 
     // do the actual offscreen and display rendering in sokol-gfx passes
     sg_begin_pass(state.offscreen.pass, &(state.offscreen.pass_action));
-    sgl_draw_context(state.offscreen.sgl_ctx);
+    sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
-    sgl_draw_context(SGL_DEFAULT_CONTEXT);
+    sgl_context_draw(SGL_DEFAULT_CONTEXT);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();

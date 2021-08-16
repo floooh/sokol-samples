@@ -273,7 +273,7 @@ UTEST(sokol_gl, context_pipeline) {
     T(pip1.id != SG_INVALID_ID);
     // FIXME: currently sg_query_pipeline_info() doesn't provide enough information
 
-    sgl_pipeline pip2 = sgl_make_pipeline_with_context(ctx2, &(sg_pipeline_desc){
+    sgl_pipeline pip2 = sgl_context_make_pipeline(ctx2, &(sg_pipeline_desc){
         .alpha_to_coverage_enabled = true,
     });
     T(pip2.id != SG_INVALID_ID);

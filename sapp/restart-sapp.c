@@ -129,10 +129,8 @@ static void init(void) {
     });
     sgl_setup(&(sgl_desc_t){
         .pipeline_pool_size = 1,
-        .context = {
-            .max_vertices = 16,
-            .max_commands = 16,
-        }
+        .max_vertices = 16,
+        .max_commands = 16,
     });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,

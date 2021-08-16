@@ -99,7 +99,7 @@ static void init(void) {
 
     // setup sokol-gl
     sgl_desc_t sgldesc = { };
-    sgldesc.context.sample_count = sapp_sample_count();
+    sgldesc.sample_count = sapp_sample_count();
     sgl_setup(&sgldesc);
 
     // setup sokol-imgui
