@@ -7,7 +7,7 @@
 #define NK_INCLUDE_STANDARD_VARARGS
 #define NK_IMPLEMENTATION
 
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) && defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -16,6 +16,8 @@
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 #if defined(_MSC_VER)
 #pragma warning(disable:4996)   // sprintf,fopen,localtime: This function or variable may be unsafe
