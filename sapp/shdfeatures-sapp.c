@@ -631,6 +631,7 @@ static uint8_t* uniform_ptr(const shader_variation_t* var, uint8_t* base_ptr, sg
         return 0;
     }
     assert(var->uniform_desc_fn(stage, ub_name, u_name).type == expected_type);
+    (void)expected_type;
     return base_ptr + offset;
 }
 
