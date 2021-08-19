@@ -8,6 +8,7 @@
 #define NK_IMPLEMENTATION
 
 #if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wunknown-warning-option"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
