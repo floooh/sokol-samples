@@ -22,9 +22,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-gl */
-    sgl_setup(&(sgl_desc_t){
-        .sample_count = sapp_sample_count()
-    });
+    sgl_setup(&(sgl_desc_t){0});
 
     /* a checkerboard texture */
     uint32_t pixels[8][8];
