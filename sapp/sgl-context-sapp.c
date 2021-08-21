@@ -110,7 +110,7 @@ static void frame(void) {
     draw_cube();
 
     // do the actual offscreen and display rendering in sokol-gfx passes
-    sg_begin_pass(state.offscreen.pass, &(state.offscreen.pass_action));
+    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
