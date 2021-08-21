@@ -96,7 +96,7 @@ static void frame(void) {
     sgl_rotate(a, 0.0f, 0.0f, 1.0f);
     draw_quad();
 
-    // draw a rotating 3D cube, using the offscree render target as texture
+    // draw a rotating 3D cube, using the offscreen render target as texture
     sgl_set_context(SGL_DEFAULT_CONTEXT);
     sgl_defaults();
     sgl_enable_texture();
