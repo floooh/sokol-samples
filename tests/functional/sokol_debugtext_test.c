@@ -428,3 +428,9 @@ UTEST(sokol_debugtext, putr) {
     T((6 * 6) == (_sdtx.cur_ctx->cur_vertex_ptr - start_ptr));
     shutdown();
 }
+
+UTEST(sokol_debugtext, default_context) {
+    init();
+    T(sdtx_default_context().id == SDTX_DEFAULT_CONTEXT.id);
+    shutdown();
+}

@@ -279,3 +279,9 @@ UTEST(sokol_gl, context_pipeline) {
     T(pip2.id != SG_INVALID_ID);
     shutdown();
 }
+
+UTEST(sokol_gl, default_context) {
+    init();
+    T(sgl_default_context().id == SGL_DEFAULT_CONTEXT.id);
+    shutdown();
+}

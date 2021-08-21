@@ -48,7 +48,7 @@ static void init(void) {
     state.display.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.7f, 1.0f, 1.0f } }
     };
-    state.display.sgl_pip = sgl_context_make_pipeline(SGL_DEFAULT_CONTEXT, &(sg_pipeline_desc){
+    state.display.sgl_pip = sgl_context_make_pipeline(sgl_default_context(), &(sg_pipeline_desc){
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .write_enabled = true,
