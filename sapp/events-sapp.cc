@@ -32,6 +32,8 @@ static const char* eventtype_to_str(sapp_event_type t) {
         case SAPP_EVENTTYPE_RESIZED: return "RESIZED";
         case SAPP_EVENTTYPE_ICONIFIED: return "ICONIFIED";
         case SAPP_EVENTTYPE_RESTORED: return "RESTORED";
+        case SAPP_EVENTTYPE_FOCUSED: return "FOCUSED";
+        case SAPP_EVENTTYPE_UNFOCUSED: return "UNFOCUSED";
         case SAPP_EVENTTYPE_SUSPENDED: return "SUSPENDED";
         case SAPP_EVENTTYPE_RESUMED: return "RESUMED";
         case SAPP_EVENTTYPE_UPDATE_CURSOR: return "UPDATE_CURSOR";
@@ -370,7 +372,7 @@ static void frame(void) {
             ImGui::Text("    %d: %s\n", i, sapp_get_dropped_file_path(i));
             #endif
         }
-        for (int i = SAPP_EVENTTYPE_KEY_DOWN; i < _SAPP_EVENTTYPE_NUM; i++) {
+        for (int i = SAPP_EVENTTYPE_INVALID+1; i < _SAPP_EVENTTYPE_NUM; i++) {
             draw_event_info_panel((sapp_event_type)i, panel_width, panel_height);
             pos_x += panel_width_with_padding;
             if ((pos_x + panel_width_with_padding) < ImGui::GetContentRegionAvail().x) {
