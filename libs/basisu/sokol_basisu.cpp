@@ -51,16 +51,22 @@ static basist::transcoder_texture_format select_basis_textureformat(bool has_alp
         return basist::transcoder_texture_format::cTFPVRTC1_4_RGB;
     }
     else {
-        return basist::transcoder_texture_format::cTFETC2_RGBA;
+        if (has_alpha) {
+            return basist::transcoder_texture_format::cTFETC2_RGBA;
+        }
+        else {
+            return basist::transcoder_texture_format::cTFETC1_RGB;
+        }
     }
 }
 
 static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format fmt) {
     switch (fmt) {
+        case basist::transcoder_texture_format::cTFBC3_RGBA: return SG_PIXELFORMAT_BC3_RGBA;
         case basist::transcoder_texture_format::cTFBC1_RGB: return SG_PIXELFORMAT_BC1_RGBA;
         case basist::transcoder_texture_format::cTFPVRTC1_4_RGB: return SG_PIXELFORMAT_PVRTC_RGB_4BPP;
-        case basist::transcoder_texture_format::cTFETC2_RGBA: return SG_PIXELFORMAT_ETC2_RGB8;
-        case basist::transcoder_texture_format::cTFBC3_RGBA: return SG_PIXELFORMAT_BC3_RGBA;
+        case basist::transcoder_texture_format::cTFETC2_RGBA: return SG_PIXELFORMAT_ETC2_RGBA8;
+        case basist::transcoder_texture_format::cTFETC1_RGB: return SG_PIXELFORMAT_ETC2_RGB8;
         default: return _SG_PIXELFORMAT_DEFAULT;
     }
 }
