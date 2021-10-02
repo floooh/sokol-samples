@@ -18,7 +18,7 @@
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "cgltf-sapp.glsl.h"
-#include "basisu/basisu_sokol.h"
+#include "basisu/sokol_basisu.h"
 #define CGLTF_IMPLEMENTATION
 #define _CRT_SECURE_NO_WARNINGS
 #if defined(__GNUC__) || defined(__clang__)
