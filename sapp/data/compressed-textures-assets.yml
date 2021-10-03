@@ -1,0 +1,6 @@
+---
+options:
+    src_dir: basisu
+files:
+    - baboon.basis
+    - testcard_rgba.basis
