@@ -11,6 +11,7 @@
 #if defined(__ANDROID__)
     #define BASISD_SUPPORT_PVRTC2 (0)
 #endif
+#define BASISU_NO_ITERATOR_DEBUG_LEVEL (1)
 #include "basisu_transcoder.cpp"
 #include "sokol_gfx.h"
 #include "sokol_basisu.h"
