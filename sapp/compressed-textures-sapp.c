@@ -18,6 +18,7 @@
 static struct {
     sg_pass_action pass_action;
     sgl_pipeline alpha_pip;
+    sg_image dyn_img;
     struct {
         sg_image_desc desc;
         sg_image img;
@@ -25,7 +26,10 @@ static struct {
     struct {
         sg_image_desc desc;
         sg_image img;
-    } testcard;
+    } testcard_alpha;
+    struct {
+        sg_image_desc desc;
+    } testcard_opaque;
 } state = {
     .pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.25f, 1.0f, 1.0f }}
@@ -59,15 +63,26 @@ void init(void) {
     // until application shutdown, because we'll need the data in the
     // frame callback for the dynamically updated textures
     state.baboon.desc = sbasisu_transcode(embed_baboon_basis, sizeof(embed_baboon_basis));
-    state.testcard.desc = sbasisu_transcode(embed_testcard_rgba_basis, sizeof(embed_testcard_rgba_basis));
+    assert((state.baboon.desc.width == 256) && (state.baboon.desc.height == 256));
+    state.testcard_alpha.desc = sbasisu_transcode(embed_testcard_rgba_basis, sizeof(embed_testcard_rgba_basis));
+    assert((state.testcard_alpha.desc.width == 256) && (state.testcard_alpha.desc.height == 256));
+    state.testcard_opaque.desc = sbasisu_transcode(embed_testcard_basis, sizeof(embed_testcard_basis));
+    assert((state.testcard_opaque.desc.width == 256) && (state.testcard_opaque.desc.height == 256));
+    assert((state.testcard_opaque.desc.pixel_format == state.baboon.desc.pixel_format));
 
     // create textures from the transcoded image data
     if (_SG_PIXELFORMAT_DEFAULT != state.baboon.desc.pixel_format) {
         state.baboon.img = sg_make_image(&state.baboon.desc);
     }
-    if (_SG_PIXELFORMAT_DEFAULT != state.testcard.desc.pixel_format) {
-        state.testcard.img = sg_make_image(&state.testcard.desc);
+    if (_SG_PIXELFORMAT_DEFAULT != state.testcard_alpha.desc.pixel_format) {
+        state.testcard_alpha.img = sg_make_image(&state.testcard_alpha.desc);
     }
+
+    // create a dynamic texture to test uploading texture data
+    sg_image_desc dyn_img_desc = state.testcard_opaque.desc;
+    dyn_img_desc.usage = SG_USAGE_STREAM;
+    dyn_img_desc.data = (sg_image_data){0};
+    state.dyn_img = sg_make_image(&dyn_img_desc);
 
     // a sokol-gl pipeline object for alpha-blended rendering
     state.alpha_pip = sgl_make_pipeline(&(sg_pipeline_desc){
@@ -113,8 +128,19 @@ void frame(void) {
     // info text
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_origin(0.5f, 2.0f);
-    sdtx_printf("Baboon format:   %s\n\n", pixelformat_to_str(state.baboon.desc.pixel_format));
-    sdtx_printf("Testcard format: %s", pixelformat_to_str(state.testcard.desc.pixel_format));
+    sdtx_printf("Opaque format:   %s\n\n", pixelformat_to_str(state.baboon.desc.pixel_format));
+    sdtx_printf("Alpha format: %s", pixelformat_to_str(state.testcard_alpha.desc.pixel_format));
+
+    // dynamically update texture with either the baboon or testcard image data
+    // to test if uploading into compressed textures works
+    // NOTE: the upload happens each frame even though the image only
+    // changes every 32 frames, this is not a bug
+    if (sapp_frame_count() & 0x20) {
+        sg_update_image(state.dyn_img, &state.baboon.desc.data);
+    }
+    else {
+        sg_update_image(state.dyn_img, &state.testcard_opaque.desc.data);
+    }
 
     // draw some textured quads via sokol-gl
     sgl_defaults();
@@ -132,13 +158,13 @@ void frame(void) {
     draw_quad((quad_params_t){
         .pos = { +0.3f, -0.3f },
         .scale = { 0.25f, 0.25f },
-        .img = state.testcard.img,
+        .img = state.testcard_alpha.img,
         .pip = state.alpha_pip,
     });
     draw_quad((quad_params_t){
         .pos = { .y=+0.3f },
         .scale = { 0.25f, 0.25f },
-        .img = state.baboon.img,
+        .img = state.dyn_img,
         .pip = state.alpha_pip,
     });
 
@@ -153,7 +179,8 @@ void frame(void) {
 
 void cleanup(void) {
     sbasisu_free(&state.baboon.desc);
-    sbasisu_free(&state.testcard.desc);
+    sbasisu_free(&state.testcard_alpha.desc);
+    sbasisu_free(&state.testcard_opaque.desc);
     sbasisu_shutdown();
     sgl_shutdown();
     sdtx_shutdown();
