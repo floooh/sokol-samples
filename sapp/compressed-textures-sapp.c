@@ -42,6 +42,7 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
         case SG_PIXELFORMAT_BC3_RGBA:       return "BC3 RGBA";
         case SG_PIXELFORMAT_BC1_RGBA:       return "BC1 RGBA";
         case SG_PIXELFORMAT_PVRTC_RGB_4BPP: return "PVRTC RGB 4BPP";
+        case SG_PIXELFORMAT_PVRTC_RGBA_4BPP: return "PVRTC RGBA 4BPP";
         case SG_PIXELFORMAT_ETC2_RGBA8:     return "ETC2 RGBA8";
         case SG_PIXELFORMAT_ETC2_RGB8:      return "ETC2 RGB8";
         default:                            return "???";
@@ -128,7 +129,7 @@ void frame(void) {
     // info text
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_origin(0.5f, 2.0f);
-    sdtx_printf("Opaque format:   %s\n\n", pixelformat_to_str(state.baboon.desc.pixel_format));
+    sdtx_printf("Opaque format: %s\n\n", pixelformat_to_str(state.baboon.desc.pixel_format));
     sdtx_printf("Alpha format: %s", pixelformat_to_str(state.testcard_alpha.desc.pixel_format));
 
     // dynamically update texture with either the baboon or testcard image data
