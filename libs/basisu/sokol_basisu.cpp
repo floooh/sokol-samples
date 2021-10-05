@@ -76,6 +76,16 @@ static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format
     }
 }
 
+static bool is_pvrtc(basist::transcoder_texture_format fmt) {
+    switch (fmt) {
+        case basist::transcoder_texture_format::cTFPVRTC1_4_RGB:
+        case basist::transcoder_texture_format::cTFPVRTC1_4_RGBA:
+            return true;
+        default:
+            return false;
+    }
+}
+
 sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
     assert(g_pGlobal_codebook);
     basist::basisu_transcoder transcoder(g_pGlobal_codebook);
@@ -83,7 +93,7 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
 
     basist::basisu_image_info img_info;
     transcoder.get_image_info(data, num_bytes, img_info, 0);
-    basist::transcoder_texture_format fmt = select_basis_textureformat(img_info.m_alpha_flag);
+    const basist::transcoder_texture_format fmt = select_basis_textureformat(img_info.m_alpha_flag);
 
     sg_image_desc desc = { };
     desc.type = SG_IMAGETYPE_2D;
@@ -97,11 +107,11 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
     desc.max_anisotropy = 8;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
     for (int i = 0; i < desc.num_mipmaps; i++) {
-        uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
+        const uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
         uint32_t orig_width, orig_height, total_blocks;
         transcoder.get_image_level_desc(data, num_bytes, 0, i, orig_width, orig_height, total_blocks);
         uint32_t required_size = total_blocks * bytes_per_block;
-        if (fmt == basist::transcoder_texture_format::cTFPVRTC1_4_RGB) {
+        if (is_pvrtc(fmt)) {
             // For PVRTC1, Basis only writes (or requires) total_blocks * bytes_per_block.
             //  But GL requires extra padding for very small textures:
             // https://www.khronos.org/registry/OpenGL/extensions/IMG/IMG_texture_compression_pvrtc.txt
