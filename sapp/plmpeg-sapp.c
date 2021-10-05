@@ -42,6 +42,7 @@
 #pragma GCC diagnostic pop
 #endif
 #include <assert.h>
+#include "util/fileutil.h"
 
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
@@ -118,8 +119,9 @@ static void init(void) {
         .num_channels = 1,
         .num_lanes = 1
     });
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = filename,
+        .path = fileutil_get_path(filename, path_buf, sizeof(path_buf)),
         .callback = fetch_callback,
         .buffer_ptr = buf[state.cur_download_buffer],
         .buffer_size = BUFFER_SIZE,

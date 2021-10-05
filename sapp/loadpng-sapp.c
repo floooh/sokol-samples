@@ -18,6 +18,7 @@
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
+#include "util/fileutil.h"
 #include "loadpng-sapp.glsl.h"
 
 static struct {
@@ -138,12 +139,14 @@ static void init(void) {
         - NOTE that we're not using the user_data member, since all required
           state is in a global variable anyway
     */
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = "baboon.png",
+        .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
         .callback = fetch_callback,
         .buffer_ptr = state.file_buffer,
         .buffer_size = sizeof(state.file_buffer)
     });
+    printf("%s\n", path_buf);
 }
 
 /* The fetch-callback is called by sokol_fetch.h when the data is loaded,

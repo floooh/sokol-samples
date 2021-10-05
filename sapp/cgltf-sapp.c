@@ -26,6 +26,7 @@
 #endif
 #include "cgltf/cgltf.h"
 #include "util/camera.h"
+#include "util/fileutil.h"
 #include <assert.h>
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -224,7 +225,8 @@ static void init(void) {
     // initialize camera helper
     cam_init(&state.camera, &(camera_desc_t){
         .latitude = -10.0f,
-        .longitude = 45.0f
+        .longitude = 45.0f,
+        .distance = 3.0f
     });
 
     // initialize Basis Universal
@@ -266,8 +268,9 @@ static void init(void) {
     };
 
     // start loading the base gltf file...
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = filename,
+        .path = fileutil_get_path(filename, path_buf, sizeof(path_buf)),
         .callback = gltf_fetch_callback,
     });
 
@@ -550,8 +553,9 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
         gltf_buffer_fetch_userdata_t user_data = {
             .buffer_index = i
         };
+        char path_buf[512];
         sfetch_send(&(sfetch_request_t){
-            .path = gltf_buf->uri,
+            .path = fileutil_get_path(gltf_buf->uri, path_buf, sizeof(path_buf)),
             .callback = gltf_buffer_fetch_callback,
             .user_data_ptr = &user_data,
             .user_data_size = sizeof(user_data)
@@ -609,8 +613,9 @@ static void gltf_parse_images(const cgltf_data* gltf) {
         gltf_image_fetch_userdata_t user_data = {
             .image_index = i
         };
+        char path_buf[512];
         sfetch_send(&(sfetch_request_t){
-            .path = gltf_img->uri,
+            .path = fileutil_get_path(gltf_img->uri, path_buf, sizeof(path_buf)),
             .callback = gltf_image_fetch_callback,
             .user_data_ptr = &user_data,
             .user_data_size = sizeof(user_data)

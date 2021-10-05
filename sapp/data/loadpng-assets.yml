@@ -1,2 +1,5 @@
 ---
+options:
+    ios:
+        dst_dir: loadpng-sapp.app
 files: [ "baboon.png" ]

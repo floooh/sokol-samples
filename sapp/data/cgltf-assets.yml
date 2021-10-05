@@ -1,6 +1,8 @@
 ---
 options:
     src_dir: gltf/DamagedHelmet
+    ios:
+        dst_dir: cgltf-sapp.app
 files:
     - DamagedHelmet.bin
     - DamagedHelmet.gltf

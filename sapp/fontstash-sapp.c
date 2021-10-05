@@ -26,6 +26,7 @@
 #define SOKOL_FONTSTASH_IMPL
 #include "sokol_fontstash.h"
 #include "dbgui/dbgui.h"
+#include "util/fileutil.h"
 
 typedef struct {
     FONScontext* fons;
@@ -97,26 +98,27 @@ static void init(void) {
         .num_channels = 1,
         .num_lanes = 4
     });
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = "DroidSerif-Regular.ttf",
+        .path = fileutil_get_path("DroidSerif-Regular.ttf", path_buf, sizeof(path_buf)),
         .callback = font_normal_loaded,
         .buffer_ptr = state.font_normal_data,
         .buffer_size = sizeof(state.font_normal_data)
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "DroidSerif-Italic.ttf",
+        .path = fileutil_get_path("DroidSerif-Italic.ttf", path_buf, sizeof(path_buf)),
         .callback = font_italic_loaded,
         .buffer_ptr = state.font_italic_data,
         .buffer_size = sizeof(state.font_italic_data)
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "DroidSerif-Bold.ttf",
+        .path = fileutil_get_path("DroidSerif-Bold.ttf", path_buf, sizeof(path_buf)),
         .callback = font_bold_loaded,
         .buffer_ptr = state.font_bold_data,
         .buffer_size = sizeof(state.font_bold_data)
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "DroidSansJapanese.ttf",
+        .path = fileutil_get_path("DroidSansJapanese.ttf", path_buf, sizeof(path_buf)),
         .callback = font_japanese_loaded,
         .buffer_ptr = state.font_japanese_data,
         .buffer_size = sizeof(state.font_japanese_data)
