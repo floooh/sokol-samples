@@ -114,7 +114,7 @@ void frame(void) {
     const float angle = sgl_rad((float)sapp_frame_count());
     draw_quad((quad_params_t){
         .pos = { -0.425f, 0.0f },
-        .scale = { 0.4, 0.4f },
+        .scale = { 0.4f, 0.4f },
         .rot = angle,
         .img = state.opaque_img,
     });
