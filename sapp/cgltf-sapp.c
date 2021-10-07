@@ -204,8 +204,8 @@ static void gltf_fetch_callback(const sfetch_response_t*);
 static void gltf_buffer_fetch_callback(const sfetch_response_t*);
 static void gltf_image_fetch_callback(const sfetch_response_t*);
 
-static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes);
-static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes);
+static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range data);
+static void create_sg_images_for_gltf_image(int gltf_image_index, sg_range data);
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
 static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
@@ -440,10 +440,7 @@ static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
     else if (response->fetched) {
         const gltf_buffer_fetch_userdata_t* user_data = (const gltf_buffer_fetch_userdata_t*)response->user_data;
         int gltf_buffer_index = (int)user_data->buffer_index;
-        create_sg_buffers_for_gltf_buffer(
-            gltf_buffer_index,
-            (const uint8_t*)response->buffer_ptr,
-            (int)response->fetched_size);
+        create_sg_buffers_for_gltf_buffer(gltf_buffer_index, (sg_range){response->buffer_ptr, response->fetched_size});
     }
     if (response->finished) {
         if (response->failed) {
@@ -464,10 +461,7 @@ static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
         int gltf_image_index = (int)user_data->image_index;
-        create_sg_images_for_gltf_image(
-            gltf_image_index,
-            (const uint8_t*)response->buffer_ptr,
-            (int)response->fetched_size);
+        create_sg_images_for_gltf_image(gltf_image_index, (sg_range){response->buffer_ptr, response->fetched_size});
     }
     if (response->finished) {
         if (response->failed) {
@@ -743,15 +737,15 @@ static void gltf_parse_nodes(const cgltf_data* gltf) {
 }
 
 // create the sokol-gfx buffer objects associated with a GLTF buffer view
-static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8_t* bytes, int num_bytes) {
+static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range data) {
     for (int i = 0; i < state.scene.num_buffers; i++) {
         const buffer_creation_params_t* p = &state.creation_params.buffers[i];
         if (p->gltf_buffer_index == gltf_buffer_index) {
-            assert((p->offset + p->size) <= num_bytes);
+            assert((size_t)(p->offset + p->size) <= data.size);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
                 .type = p->type,
                 .data = {
-                    .ptr = bytes + p->offset,
+                    .ptr = (const uint8_t*)data.ptr + p->offset,
                     .size = (size_t)p->size,
                 }
             });
@@ -760,13 +754,11 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, const uint8
 }
 
 // create the sokol-gfx image objects associated with a GLTF image
-static void create_sg_images_for_gltf_image(int gltf_image_index, const uint8_t* bytes, int num_bytes) {
+static void create_sg_images_for_gltf_image(int gltf_image_index, sg_range data) {
     for (int i = 0; i < state.scene.num_images; i++) {
         image_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            sg_image_desc img_desc = sbasisu_transcode(bytes, (uint32_t)num_bytes);
-            state.scene.images[i] = sg_make_image(&img_desc);
-            sbasisu_free(&img_desc);
+            state.scene.images[i] = sbasisu_make_image(data);
         }
     }
 }

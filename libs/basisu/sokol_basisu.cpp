@@ -89,13 +89,13 @@ static bool is_pvrtc(basist::transcoder_texture_format fmt) {
     }
 }
 
-sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
+sg_image_desc sbasisu_transcode(sg_range basisu_data) {
     assert(g_pGlobal_codebook);
     basist::basisu_transcoder transcoder(g_pGlobal_codebook);
-    transcoder.start_transcoding(data, num_bytes);
+    transcoder.start_transcoding(basisu_data.ptr, basisu_data.size);
 
     basist::basisu_image_info img_info;
-    transcoder.get_image_info(data, num_bytes, img_info, 0);
+    transcoder.get_image_info(basisu_data.ptr, basisu_data.size, img_info, 0);
     const basist::transcoder_texture_format fmt = select_basis_textureformat(img_info.m_alpha_flag);
 
     sg_image_desc desc = { };
@@ -112,7 +112,7 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
     for (int i = 0; i < desc.num_mipmaps; i++) {
         const uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
         uint32_t orig_width, orig_height, total_blocks;
-        transcoder.get_image_level_desc(data, num_bytes, 0, i, orig_width, orig_height, total_blocks);
+        transcoder.get_image_level_desc(basisu_data.ptr, basisu_data.size, 0, i, orig_width, orig_height, total_blocks);
         uint32_t required_size = total_blocks * bytes_per_block;
         if (is_pvrtc(fmt)) {
             // For PVRTC1, Basis only writes (or requires) total_blocks * bytes_per_block.
@@ -126,8 +126,8 @@ sg_image_desc sbasisu_transcode(const void* data, uint32_t num_bytes) {
         desc.data.subimage[0][i].ptr = ptr;
         desc.data.subimage[0][i].size = required_size;
         bool res = transcoder.transcode_image_level(
-            data,
-            num_bytes,
+            basisu_data.ptr,
+            basisu_data.size,
             0,          // image index
             i,          // level index
             ptr,
@@ -146,4 +146,15 @@ void sbasisu_free(const sg_image_desc* desc) {
             free((void*)desc->data.subimage[0][i].ptr);
         }
     }
+}
+
+sg_image sbasisu_make_image(sg_range basisu_data) {
+    sg_image_desc img_desc = sbasisu_transcode(basisu_data);
+    sg_image img = sg_make_image(&img_desc);
+    sbasisu_free(&img_desc);
+    return img;
+}
+
+sg_pixel_format sbasisu_pixelformat(bool has_alpha) {
+    return basis_to_sg_pixelformat(select_basis_textureformat(has_alpha));
 }

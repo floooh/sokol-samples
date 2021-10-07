@@ -19,15 +19,8 @@
 static struct {
     sg_pass_action pass_action;
     sgl_pipeline alpha_pip;
-    sg_image dyn_img;
-    struct {
-        sg_image_desc desc;
-        sg_image img;
-    } opaque;
-    struct {
-        sg_image_desc desc;
-        sg_image img;
-    } alpha;
+    sg_image opaque_img;
+    sg_image alpha_img;
 } state = {
     .pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.25f, 1.0f, 1.0f }}
@@ -58,21 +51,9 @@ void init(void) {
     // setup Basis Universal
     sbasisu_setup();
 
-    // transcode the embedded basisu images, keep the decoded data around
-    // until application shutdown, because we'll need the data in the
-    // frame callback for the dynamically updated textures
-    state.opaque.desc = sbasisu_transcode(embed_testcard_basis, sizeof(embed_testcard_basis));
-    assert((state.opaque.desc.width == 256) && (state.opaque.desc.height == 256));
-    state.alpha.desc = sbasisu_transcode(embed_testcard_rgba_basis, sizeof(embed_testcard_rgba_basis));
-    assert((state.alpha.desc.width == 256) && (state.alpha.desc.height == 256));
-
-    // create textures from the transcoded image data
-    if (_SG_PIXELFORMAT_DEFAULT != state.opaque.desc.pixel_format) {
-        state.opaque.img = sg_make_image(&state.opaque.desc);
-    }
-    if (_SG_PIXELFORMAT_DEFAULT != state.alpha.desc.pixel_format) {
-        state.alpha.img = sg_make_image(&state.alpha.desc);
-    }
+    // transcode the embedded basisu images
+    state.opaque_img = sbasisu_make_image(SG_RANGE(embed_testcard_basis));
+    state.alpha_img  = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis));
 
     // a sokol-gl pipeline object for alpha-blended rendering
     state.alpha_pip = sgl_make_pipeline(&(sg_pipeline_desc){
@@ -120,8 +101,8 @@ void frame(void) {
     // info text
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_origin(0.5f, 2.0f);
-    sdtx_printf("Opaque format: %s\n\n", pixelformat_to_str(state.opaque.desc.pixel_format));
-    sdtx_printf("Alpha format: %s", pixelformat_to_str(state.alpha.desc.pixel_format));
+    sdtx_printf("Opaque format: %s\n\n", pixelformat_to_str(sbasisu_pixelformat(false)));
+    sdtx_printf("Alpha format: %s", pixelformat_to_str(sbasisu_pixelformat(true)));
 
     // draw some textured quads via sokol-gl
     sgl_defaults();
@@ -135,13 +116,13 @@ void frame(void) {
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4, 0.4f },
         .rot = angle,
-        .img = state.opaque.img,
+        .img = state.opaque_img,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = -angle,
-        .img = state.alpha.img,
+        .img = state.alpha_img,
         .pip = state.alpha_pip,
     });
 
@@ -155,8 +136,6 @@ void frame(void) {
 }
 
 void cleanup(void) {
-    sbasisu_free(&state.opaque.desc);
-    sbasisu_free(&state.alpha.desc);
     sbasisu_shutdown();
     sgl_shutdown();
     sdtx_shutdown();
