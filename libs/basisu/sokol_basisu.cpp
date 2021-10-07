@@ -48,6 +48,12 @@ static basist::transcoder_texture_format select_basis_textureformat(bool has_alp
     else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
         return basist::transcoder_texture_format::cTFBC1_RGB;
     }
+    else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGBA8).sample) {
+        return basist::transcoder_texture_format::cTFETC2_RGBA;
+    }
+    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGB8).sample) {
+        return basist::transcoder_texture_format::cTFETC1_RGB;
+    }
     else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGBA_4BPP).sample) {
         return basist::transcoder_texture_format::cTFPVRTC1_4_RGBA;
     }
@@ -55,12 +61,8 @@ static basist::transcoder_texture_format select_basis_textureformat(bool has_alp
         return basist::transcoder_texture_format::cTFPVRTC1_4_RGB;
     }
     else {
-        if (has_alpha) {
-            return basist::transcoder_texture_format::cTFETC2_RGBA;
-        }
-        else {
-            return basist::transcoder_texture_format::cTFETC1_RGB;
-        }
+        // UGH...
+        return basist::transcoder_texture_format::cTFRGBA32;
     }
 }
 
@@ -72,6 +74,7 @@ static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format
         case basist::transcoder_texture_format::cTFPVRTC1_4_RGBA: return SG_PIXELFORMAT_PVRTC_RGBA_4BPP;
         case basist::transcoder_texture_format::cTFETC2_RGBA: return SG_PIXELFORMAT_ETC2_RGBA8;
         case basist::transcoder_texture_format::cTFETC1_RGB: return SG_PIXELFORMAT_ETC2_RGB8;
+        case basist::transcoder_texture_format::cTFRGBA32: return SG_PIXELFORMAT_RGBA8;
         default: return _SG_PIXELFORMAT_DEFAULT;
     }
 }

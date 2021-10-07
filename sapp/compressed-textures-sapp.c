@@ -1,8 +1,9 @@
 //------------------------------------------------------------------------------
 //  compressed-textures-sapp.c
-//  Test compressed texture usage and features in sokol-gfx. Uses embedded
-//  Basis-Universal texture data which is then transcoded into texture
-//  formats supported by the runtime platform.
+//
+//  Test compressed texture support: two embedded Basis Universal textures
+//  (one without alpha channel, one with alpha channel) will be decoded into
+//  supported platform specific compressed texture formats and rendered.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -22,14 +23,11 @@ static struct {
     struct {
         sg_image_desc desc;
         sg_image img;
-    } baboon;
+    } opaque;
     struct {
         sg_image_desc desc;
         sg_image img;
-    } testcard_alpha;
-    struct {
-        sg_image_desc desc;
-    } testcard_opaque;
+    } alpha;
 } state = {
     .pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.25f, 1.0f, 1.0f }}
@@ -63,27 +61,18 @@ void init(void) {
     // transcode the embedded basisu images, keep the decoded data around
     // until application shutdown, because we'll need the data in the
     // frame callback for the dynamically updated textures
-    state.baboon.desc = sbasisu_transcode(embed_baboon_basis, sizeof(embed_baboon_basis));
-    assert((state.baboon.desc.width == 256) && (state.baboon.desc.height == 256));
-    state.testcard_alpha.desc = sbasisu_transcode(embed_testcard_rgba_basis, sizeof(embed_testcard_rgba_basis));
-    assert((state.testcard_alpha.desc.width == 256) && (state.testcard_alpha.desc.height == 256));
-    state.testcard_opaque.desc = sbasisu_transcode(embed_testcard_basis, sizeof(embed_testcard_basis));
-    assert((state.testcard_opaque.desc.width == 256) && (state.testcard_opaque.desc.height == 256));
-    assert((state.testcard_opaque.desc.pixel_format == state.baboon.desc.pixel_format));
+    state.opaque.desc = sbasisu_transcode(embed_testcard_basis, sizeof(embed_testcard_basis));
+    assert((state.opaque.desc.width == 256) && (state.opaque.desc.height == 256));
+    state.alpha.desc = sbasisu_transcode(embed_testcard_rgba_basis, sizeof(embed_testcard_rgba_basis));
+    assert((state.alpha.desc.width == 256) && (state.alpha.desc.height == 256));
 
     // create textures from the transcoded image data
-    if (_SG_PIXELFORMAT_DEFAULT != state.baboon.desc.pixel_format) {
-        state.baboon.img = sg_make_image(&state.baboon.desc);
+    if (_SG_PIXELFORMAT_DEFAULT != state.opaque.desc.pixel_format) {
+        state.opaque.img = sg_make_image(&state.opaque.desc);
     }
-    if (_SG_PIXELFORMAT_DEFAULT != state.testcard_alpha.desc.pixel_format) {
-        state.testcard_alpha.img = sg_make_image(&state.testcard_alpha.desc);
+    if (_SG_PIXELFORMAT_DEFAULT != state.alpha.desc.pixel_format) {
+        state.alpha.img = sg_make_image(&state.alpha.desc);
     }
-
-    // create a dynamic texture to test uploading texture data
-    sg_image_desc dyn_img_desc = state.testcard_opaque.desc;
-    dyn_img_desc.usage = SG_USAGE_STREAM;
-    dyn_img_desc.data = (sg_image_data){0};
-    state.dyn_img = sg_make_image(&dyn_img_desc);
 
     // a sokol-gl pipeline object for alpha-blended rendering
     state.alpha_pip = sgl_make_pipeline(&(sg_pipeline_desc){
@@ -101,6 +90,7 @@ void init(void) {
 typedef struct {
     struct { float x; float y; } pos;
     struct { float x; float y; } scale;
+    float rot;
     sg_image img;
     sgl_pipeline pip;
 } quad_params_t;
@@ -116,6 +106,7 @@ static void draw_quad(quad_params_t params) {
     sgl_push_matrix();
     sgl_translate(params.pos.x, params.pos.y, 0.0f);
     sgl_scale(params.scale.x, params.scale.y, 0.0f);
+    sgl_rotate(params.rot, 0.0f, 0.0f, 1.0f);
     sgl_begin_quads();
     sgl_v2f_t2f(-1.0f, -1.0f, 0.0f, 0.0f);
     sgl_v2f_t2f(+1.0f, -1.0f, 1.0f, 0.0f);
@@ -129,19 +120,8 @@ void frame(void) {
     // info text
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_origin(0.5f, 2.0f);
-    sdtx_printf("Opaque format: %s\n\n", pixelformat_to_str(state.baboon.desc.pixel_format));
-    sdtx_printf("Alpha format: %s", pixelformat_to_str(state.testcard_alpha.desc.pixel_format));
-
-    // dynamically update texture with either the baboon or testcard image data
-    // to test if uploading into compressed textures works
-    // NOTE: the upload happens each frame even though the image only
-    // changes every 32 frames, this is not a bug
-    if (sapp_frame_count() & 0x20) {
-        sg_update_image(state.dyn_img, &state.baboon.desc.data);
-    }
-    else {
-        sg_update_image(state.dyn_img, &state.testcard_opaque.desc.data);
-    }
+    sdtx_printf("Opaque format: %s\n\n", pixelformat_to_str(state.opaque.desc.pixel_format));
+    sdtx_printf("Alpha format: %s", pixelformat_to_str(state.alpha.desc.pixel_format));
 
     // draw some textured quads via sokol-gl
     sgl_defaults();
@@ -150,22 +130,18 @@ void frame(void) {
     const float aspect = sapp_heightf() / sapp_widthf();
     sgl_ortho(-1.0f, +1.0f, aspect, -aspect, -1.0f, +1.0f);
     sgl_matrix_mode_modelview();
-    sgl_translate(0.0f, 0.1f, 0.0f);
+    const float angle = sgl_rad((float)sapp_frame_count());
     draw_quad((quad_params_t){
-        .pos = { -0.3f, -0.3f },
-        .scale = { 0.25, 0.25f },
-        .img = state.baboon.img,
+        .pos = { -0.425f, 0.0f },
+        .scale = { 0.4, 0.4f },
+        .rot = angle,
+        .img = state.opaque.img,
     });
     draw_quad((quad_params_t){
-        .pos = { +0.3f, -0.3f },
-        .scale = { 0.25f, 0.25f },
-        .img = state.testcard_alpha.img,
-        .pip = state.alpha_pip,
-    });
-    draw_quad((quad_params_t){
-        .pos = { .y=+0.3f },
-        .scale = { 0.25f, 0.25f },
-        .img = state.dyn_img,
+        .pos = { +0.425f, 0.0f },
+        .scale = { 0.4f, 0.4f },
+        .rot = -angle,
+        .img = state.alpha.img,
         .pip = state.alpha_pip,
     });
 
@@ -179,9 +155,8 @@ void frame(void) {
 }
 
 void cleanup(void) {
-    sbasisu_free(&state.baboon.desc);
-    sbasisu_free(&state.testcard_alpha.desc);
-    sbasisu_free(&state.testcard_opaque.desc);
+    sbasisu_free(&state.opaque.desc);
+    sbasisu_free(&state.alpha.desc);
     sbasisu_shutdown();
     sgl_shutdown();
     sdtx_shutdown();
@@ -198,7 +173,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = 4,
         .window_title = "Compressed Textures",
         .icon.sokol_default = true
     };
