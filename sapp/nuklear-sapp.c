@@ -92,7 +92,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 
 /* copied from: https://github.com/Immediate-Mode-UI/Nuklear/blob/master/demo/overview.c */
 #if defined(__GNUC__)
+#if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunknown-warning-option"
+#endif
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 
