@@ -1,9 +1,10 @@
 //------------------------------------------------------------------------------
-//  compressed-textures-sapp.c
+//  basisu-sapp.c
 //
-//  Test compressed texture support: two embedded Basis Universal textures
-//  (one without alpha channel, one with alpha channel) will be decoded into
-//  supported platform specific compressed texture formats and rendered.
+//  This is mainly a regression test for compressed texture format support
+//  in sokol_gfx.h, but it's also a simple demo of how to use Basis Universal
+//  textures. Basis Univsersal compressed textures are embedded as C arrays
+//  so that texture data doesn't need to be loaded (for instance via sokol_fetch.h)
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -13,7 +14,7 @@
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
-#include "data/compressed-textures-assets.h"
+#include "data/basisu-assets.h"
 #include "basisu/sokol_basisu.h"
 
 static struct {
@@ -43,15 +44,13 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
 void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     __dbgui_setup(sapp_sample_count());
-    sdtx_setup(&(sdtx_desc_t){
-        .fonts[0] = sdtx_font_oric()
-    });
+    sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_oric() });
     sgl_setup(&(sgl_desc_t){0});
 
-    // setup Basis Universal
+    // setup Basis Universal via our own minimal wrapper code
     sbasisu_setup();
 
-    // transcode the embedded basisu images
+    // create sokol-gfx textures from the embedded Basis Universal textures
     state.opaque_img = sbasisu_make_image(SG_RANGE(embed_testcard_basis));
     state.alpha_img  = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis));
 
@@ -152,7 +151,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .window_title = "Compressed Textures",
+        .window_title = "basisu-sapp.c",
         .icon.sokol_default = true
     };
 }
