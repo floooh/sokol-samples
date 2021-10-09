@@ -5,6 +5,15 @@
 //  in sokol_gfx.h, but it's also a simple demo of how to use Basis Universal
 //  textures. Basis Univsersal compressed textures are embedded as C arrays
 //  so that texture data doesn't need to be loaded (for instance via sokol_fetch.h)
+//
+//  Texture credits: Paul Vera-Broadbent (twitter: @PVBroadz)
+//
+//  And some useful info from Carl Woffenden (twitter: @monsieurwoof):
+//
+//  "The testcard image, BTW, was specifically crafted to compress well with
+//  ETC1S. The regions fit into 4x4 bounds, with flat areas having only two
+//  colours (and gradients designed to work across the endpoints in a block).
+//  @PVBroadz created it when we were experimenting with BasisU."
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
