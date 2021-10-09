@@ -27,6 +27,7 @@ samples = [
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
     [ 'tex3d', 'tex3d-sapp.c', 'tex3d-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
+    [ 'basisu', 'basisu-sapp.c', None ],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
