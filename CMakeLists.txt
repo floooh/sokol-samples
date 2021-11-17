@@ -2,6 +2,7 @@
 # project: sokol-samples
 #
 cmake_minimum_required(VERSION 3.0)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
 project(sokol-samples)
 set(CMAKE_C_STANDARD 99)
 if (CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
