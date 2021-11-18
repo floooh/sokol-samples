@@ -57,6 +57,7 @@ samples = [
     [ 'restart', 'restart-sapp.c', 'restart-sapp.glsl' ],
     [ 'sgl', 'sgl-sapp.c', None ],
     [ 'sgl-lines', 'sgl-lines-sapp.c', None ],
+    [ 'sgl-points', 'sgl-points-sapp.c', None ],
     [ 'sgl-context', 'sgl-context-sapp.c', None ],
     [ 'loadpng', 'loadpng-sapp.c', 'loadpng-sapp.glsl'],
     [ 'plmpeg', 'plmpeg-sapp.c', 'plmpeg-sapp.glsl'],
