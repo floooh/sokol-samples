@@ -42,7 +42,6 @@ static const rgb_t palette[16] = {
 };
 
 static void init(void) {
-    // setup sokol-gfx and sokol-gl
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     __dbgui_setup(sapp_sample_count());
     sgl_setup(&(sgl_desc_t){0});
@@ -70,7 +69,7 @@ static void frame(void) {
     float psize = 5.0f;
     for (int i = 0; i < 300; i++) {
         const float a = sgl_rad(angle + i);
-        const rgb_t color = compute_color(fmodf((int)sapp_frame_count()+i, 300.0f) / 300.0f);
+        const rgb_t color = compute_color(fmodf((float)(sapp_frame_count()+i), 300.0f) / 300.0f);
         const float r = sinf(a*4);
         const float s = sinf(a);
         const float c = cosf(a);
