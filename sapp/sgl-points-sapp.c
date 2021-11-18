@@ -13,15 +13,6 @@
 
 typedef struct { float r, g, b; } rgb_t;
 
-static struct {
-    sg_pass_action pass_action;
-    sg_image img;
-} state = {
-    .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
-    },
-};
-
 static const rgb_t palette[16] = {
     { 0.957f, 0.263f, 0.212f },
     { 0.914f, 0.118f, 0.388f },
@@ -83,7 +74,10 @@ static void frame(void) {
     }
     sgl_end();
 
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    const sg_pass_action pass_action = {
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+    };
+    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sgl_draw();
     sg_end_pass();
     sg_commit();
