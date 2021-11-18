@@ -62,14 +62,15 @@ static rgb_t compute_color(float t) {
 }
 
 static void frame(void) {
-    const float angle = fmodf(sapp_frame_count() + 1.0f, 360.0f);
+    int frame_count = (int)sapp_frame_count();
+    const float angle = fmodf(frame_count + 1.0f, 360.0f);
 
     sgl_defaults();
     sgl_begin_points();
     float psize = 5.0f;
     for (int i = 0; i < 300; i++) {
         const float a = sgl_rad(angle + i);
-        const rgb_t color = compute_color(fmodf((float)(sapp_frame_count()+i), 300.0f) / 300.0f);
+        const rgb_t color = compute_color(fmodf((float)(frame_count+i), 300.0f) / 300.0f);
         const float r = sinf(a*4);
         const float s = sinf(a);
         const float c = cosf(a);
