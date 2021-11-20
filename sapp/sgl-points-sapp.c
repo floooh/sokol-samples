@@ -54,7 +54,7 @@ static rgb_t compute_color(float t) {
 
 static void frame(void) {
     int frame_count = (int)sapp_frame_count();
-    const float angle = fmodf(frame_count, 360.0f);
+    const float angle = fmodf((float)frame_count, 360.0f);
 
     sgl_defaults();
     sgl_begin_points();
