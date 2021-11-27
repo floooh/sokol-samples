@@ -3,13 +3,13 @@
 #
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
-project(sokol-samples)
 set(CMAKE_C_STANDARD 99)
 if (CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
     set(CMAKE_CXX_STANDARD 17)
 else()
     set(CMAKE_CXX_STANDARD 14)
 endif()
+project(sokol-samples)
 
 if (SOKOL_USE_WGPU_DAWN)
     set(USE_DAWN_SDK ON)
