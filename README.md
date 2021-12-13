@@ -13,6 +13,84 @@ Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8b
 |GH Actions (OSX/Linux/Win+VS2019/iOS/WASM/Android)|[![Build Status](https://github.com/floooh/sokol-samples/workflows/build_and_test/badge.svg)](https://github.com/floooh/sokol-samples/actions)|
 |AppVeyor (Windows,VS2015)|[![Build status](https://ci.appveyor.com/api/projects/status/3jxh6gi272i5jd84/branch/master?svg=true)](https://ci.appveyor.com/project/floooh/sokol-samples/branch/master)|
 
+### How to Build on Windows, Linux and macOS
+
+First check that the following tools are in the path. Exact versions shouldn't matter
+(on Windows you can use [scoop.sh](https://scoop.sh/) to easily install the required tools from the 
+command line):
+
+```sh
+> git --version
+2.x.x (any version should do)
+> python --version
+Python 3.x or 2.x
+> cmake --version
+cmake version 3.8.x or later
+# on OSX (on Windows you just need a recent VS)
+> xcodebuild -version
+Xcode 10.x (or later)
+# make is only needed on Linux or when building the WASM samples
+> make --version
+GNU Make 3.81
+# ninja is only needed for VSCode support on macOS and Linux
+> ninja --version
+1.x.y
+```
+
+> NOTE: on Linux you'll also need to install the OpenGL, X11 and ALSA development packages (e.g. mesa-common-dev, libx11-dev and libasound2-dev).
+
+Create a scratch/workspace dir and clone the project:
+```sh
+> mkdir ~/scratch
+> cd ~/scratch
+> git clone https://github.com/floooh/sokol-samples
+> cd sokol-samples
+```
+
+Select a build config for your platform and 3D backend combination:
+```sh
+# macOS with Metal:
+> ./fips set config sapp-metal-osx-xcode-debug
+# macOS with OpenGL:
+> ./fips set config sapp-osx-xcode-debug
+# Windows with D3D11:
+> ./fips set config sapp-d3d11-win64-vstudio-debug
+# Windows with OpenGL:
+> ./fips set config sapp-win64-vstudio-debug
+# Linux:
+> ./fips set config sapp-linux-make-debug
+```
+
+Build the project (this will also fetch additional dependencies):
+```sh
+> ./fips build
+```
+
+List and run the build targets:
+```sh
+> ./fips list targets
+...
+> ./fips run triangle-sapp
+```
+
+...to open the project in Visual Studio or Xcode:
+```sh
+> ./fips gen
+> ./fips open
+```
+
+...you can also open the project in VSCode (with the MS C/C++ extension),
+for instance on Linux:
+```sh
+> ./fips set config linux-vsocde-debug
+> ./fips gen
+> ./fips open
+```
+
+For additional platforms (like iOS/Android/UWP), continue reading the README past the What's New section.
+
+For more information on the fips build system see here: https://floooh.github.io/fips/
+
 ## What's New:
 
 - **23-Sep-2020**: samples can now be built for UWP using the ```sapp-uwp-vstudio-debug``` and ```sapp-uwp-vstudio-release``` build configs
@@ -76,27 +154,6 @@ required some code changes. If you already had checked out sokol-samples, perfor
 steps to udpate:
     1. delete the fips-imgui directory
     2. in the sokol-samples directory, run **./fips fetch**
-
-## How to build
-
-(for examples of how to build without a specific build system, scroll to the end)
-
-Make sure that the following tools are in the path. Exact versions shouldn't
-matter:
-```
-> git --version
-2.x.x (any version should do)
-> python --version
-Python 3.x (2.x should still work too)
-> cmake --version
-cmake version 3.8.2 (or later)
-# make is only needed for building through emscripten
-> make --version
-GNU Make 3.81
-# on OSX (on Windows you just need a recent VS)
-> xcodebuild -version
-Xcode 10.x (or later)
-```
 
 ### Building the platform-specific samples
 
@@ -204,7 +261,7 @@ To debug Android applications I recommend using Android Studio with
 "Profile or debug APK". You can find the compiled APK files under
 ```../fips-deploy/[project]/[config]```.
 
-## To build the platform-agnostic sokol_app.h samples:
+## Building the platform-agnostic samples for additional platforms:
 
 Building the sokol_app.h samples is currently supported for MacOS, Windows,
 Linux, iOS, HTML5 and Android (RaspberryPi is planned).
@@ -237,9 +294,6 @@ Note the following caveats:
 - for HTML5, first install the emscripten SDK as described above in the
   native HTML5 sample section
 - for iOS, set the developer team id, as described above in the iOS section
-- OpenGL is currently not supported on MacOS because NSOpenGLView and
-  friends are broken on the MacOS Mojave beta, instead use the
-  ```sapp-metal-*``` build configs (GLES on iOS is supported though)
 - for UWP you need a bleeding edge Visual Studio and Windows SDK version
   (at least VS2019 and SDK 10.0.19041.0)
 - fips build support for UWP is incomplete, you only get "raw" UWP
