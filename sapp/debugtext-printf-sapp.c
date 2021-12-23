@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
@@ -23,7 +22,6 @@ typedef struct {
 static struct {
     sg_pass_action pass_action;
     uint32_t frame_count;
-    uint64_t time_stamp;
     color_t palette[NUM_FONTS];
 } state = {
     .pass_action = {
@@ -38,7 +36,6 @@ static struct {
 
 
 static void init(void) {
-    stm_setup();
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
@@ -61,7 +58,7 @@ static void my_printf_wrapper(const char* fmt, ...) {
 
 static void frame(void) {
     state.frame_count++;
-    double frame_time = stm_ms(stm_laptime(&state.time_stamp));
+    double frame_time = sapp_frame_duration() * 1000.0;
 
     sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
     sdtx_origin(3.0f, 3.0f);
