@@ -34,12 +34,12 @@ void __cdbgui_draw(void) {
     simgui_new_frame(sapp_width(), sapp_height(), 1.0/60.0);
     if (igBeginMainMenuBar()) {
         if (igBeginMenu("sokol-gfx", true)) {
-            igMenuItemBoolPtr("Buffers", 0, &sg_imgui.buffers.open, true);
-            igMenuItemBoolPtr("Images", 0, &sg_imgui.images.open, true);
-            igMenuItemBoolPtr("Shaders", 0, &sg_imgui.shaders.open, true);
-            igMenuItemBoolPtr("Pipelines", 0, &sg_imgui.pipelines.open, true);
-            igMenuItemBoolPtr("Passes", 0, &sg_imgui.passes.open, true);
-            igMenuItemBoolPtr("Calls", 0, &sg_imgui.capture.open, true);
+            igMenuItem_BoolPtr("Buffers", 0, &sg_imgui.buffers.open, true);
+            igMenuItem_BoolPtr("Images", 0, &sg_imgui.images.open, true);
+            igMenuItem_BoolPtr("Shaders", 0, &sg_imgui.shaders.open, true);
+            igMenuItem_BoolPtr("Pipelines", 0, &sg_imgui.pipelines.open, true);
+            igMenuItem_BoolPtr("Passes", 0, &sg_imgui.passes.open, true);
+            igMenuItem_BoolPtr("Calls", 0, &sg_imgui.capture.open, true);
             igEndMenu();
         }
         igEndMainMenuBar();

@@ -663,13 +663,13 @@ static void draw_ui(void) {
             igText("Camera Controls:");
             igText("  LMB + Mouse Move: Look");
             igText("  Mouse Wheel: Zoom");
-            igPushIDStr("camera");
+            igPushID_Str("camera");
             igSliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", ImGuiSliderFlags_None);
             igSliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", ImGuiSliderFlags_None);
             igSliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
             igPopID();
             igSeparator();
-            igPushStyleColorU32(ImGuiCol_CheckMark, green);
+            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Skinning", &state.skinning.enabled);
             igPopStyleColor(1);
             if (state.skinning.enabled) {
@@ -678,11 +678,11 @@ static void draw_ui(void) {
                 igSliderFloat("Time Factor", &state.skinning.time_factor, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
             }
             igSeparator();
-            igPushStyleColorU32(ImGuiCol_CheckMark, green);
+            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Lighting", &state.light.enabled);
             igPopStyleColor(1);
             if (state.light.enabled) {
-                igPushIDStr("light");
+                igPushID_Str("light");
                 igSeparator();
                 igCheckbox("Draw Light Vector", &state.light.dbg_draw);
                 igSliderFloat("Latitude", &state.light.latitude, -85.0f, 85.0f, "%.1f", ImGuiSliderFlags_None);
@@ -692,11 +692,11 @@ static void draw_ui(void) {
                 igPopID();
             }
             igSeparator();
-            igPushStyleColorU32(ImGuiCol_CheckMark, green);
+            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Material", &state.material.enabled);
             igPopStyleColor(1);
             if (state.material.enabled) {
-                igPushIDStr("material");
+                igPushID_Str("material");
                 igSeparator();
                 igColorEdit3("Diffuse", &state.material.diffuse.X, ImGuiColorEditFlags_None);
                 igColorEdit3("Specular", &state.material.specular.X, ImGuiColorEditFlags_None);

@@ -47,7 +47,7 @@ static void render_file_content(void) {
     const int bytes_per_line = 16;  // keep this 2^N
     const int num_lines = (state.size + (bytes_per_line - 1)) / bytes_per_line;
 
-    igBeginChildStr("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
+    igBeginChild_Str("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
     ImGuiListClipper clipper = { 0 };
     ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
     ImGuiListClipper_Step(&clipper);
