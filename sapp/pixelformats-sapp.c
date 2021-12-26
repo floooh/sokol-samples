@@ -316,13 +316,13 @@ static void frame(void) {
         igText("blend");  igSameLine(264 + 4*66, 0);
         igText("msaa");
         igSeparator();
-        igBeginChildStr("#scrollregion", (ImVec2){0,0}, false, ImGuiWindowFlags_None);
+        igBeginChild_Str("#scrollregion", (ImVec2){0,0}, false, ImGuiWindowFlags_None);
         for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
             if (!state.fmt[i].valid) {
                 continue;
             }
             const char* fmt_string = pixelformat_string((sg_pixel_format)i);
-            if (igBeginChildStr(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
+            if (igBeginChild_Str(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLine(256, 0);
                 igImage((ImTextureID)(uintptr_t)state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
