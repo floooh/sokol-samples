@@ -138,8 +138,9 @@ static void init(void) {
 }
 
 static void frame(void) {
-    state.rx += 0.3f;
-    state.ry += 0.2f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 0.3f * t;
+    state.ry += 0.2f * t;
     const float w = sapp_widthf();
     const float h = sapp_heightf();
     const vs_params_t vs_params = compute_vsparams(w, h, state.rx, state.ry, state.point_size);

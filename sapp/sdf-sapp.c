@@ -50,7 +50,7 @@ void init(void) {
 void frame(void) {
     int w = sapp_width();
     int h = sapp_height();
-    state.vs_params.time += 1.0f / 60.0f;
+    state.vs_params.time += (float)sapp_frame_duration();
     state.vs_params.aspect = (float)w / (float)h;
     sg_begin_default_pass(&state.pass_action, w, h);
     sg_apply_pipeline(state.pip);

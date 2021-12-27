@@ -9,7 +9,6 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
 
 #define SOKOL_GL_IMPL
@@ -60,7 +59,6 @@ static struct {
     struct {
         double frame;
         double absolute;
-        uint64_t laptime;
         float factor;
         float anim_ratio;
         bool anim_ratio_ui_override;
@@ -86,9 +84,6 @@ static void init(void) {
     sg_desc sgdesc = { };
     sgdesc.context = sapp_sgcontext();
     sg_setup(&sgdesc);
-
-    // setup sokol-time
-    stm_setup();
 
     // setup sokol-fetch
     sfetch_desc_t sfdesc = { };
@@ -144,7 +139,7 @@ static void frame(void) {
 
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
-    state.time.frame = stm_sec(stm_round_to_common_refresh_rate(stm_laptime(&state.time.laptime)));
+    state.time.frame = sapp_frame_duration();
     cam_update(&state.camera, fb_width, fb_height);
 
     simgui_new_frame(fb_width, fb_height, state.time.frame);

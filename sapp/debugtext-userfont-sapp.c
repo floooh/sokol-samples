@@ -15,7 +15,6 @@ typedef struct {
 
 static struct {
     sg_pass_action pass_action;
-    int32_t frame_count;
     rgb_t color_palette[16];
 } state = {
     .pass_action = {
@@ -68,8 +67,6 @@ static void init(void) {
 }
 
 static void frame(void) {
-    state.frame_count++;
-
     sdtx_canvas(sapp_width() * 0.25f, sapp_height() * 0.25f);
     sdtx_origin(1, 2);
     sdtx_font(USER_FONT);
@@ -82,7 +79,7 @@ static void frame(void) {
             line++;
         }
         // color scrolling effect:
-        const rgb_t rgb = state.color_palette[(c + line + (state.frame_count / 2)) & 15];
+        const rgb_t rgb = state.color_palette[(c + line + ((int)sapp_frame_count() / 2)) & 15];
         sdtx_color3b(rgb.r, rgb.g, rgb.b);
         sdtx_putc(c);
     }

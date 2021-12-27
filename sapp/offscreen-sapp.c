@@ -169,8 +169,9 @@ static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
 }
 
 static void frame(void) {
-    state.rx += 1.0f;
-    state.ry += 2.0f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t;
+    state.ry += 2.0f * t;
     vs_params_t vs_params;
 
     /* the offscreen pass, rendering an rotating, untextured donut into a render target image */

@@ -248,17 +248,18 @@ static void frame(void) {
 
     const int w = sapp_width();
     const int h = sapp_height();
+    const float t = (float)(sapp_frame_duration() * 60.0);
 
     // compute the model-view-proj matrix for rendering to render targets
     hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.rx += 1.0f; state.ry += 2.0f;
+    state.rx += 1.0f * t; state.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     state.cube_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    state.bg_fs_params.tick += 1.0f;
+    state.bg_fs_params.tick += 1.0f * t;
 
     // render into all the offscreen render targets
     for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {

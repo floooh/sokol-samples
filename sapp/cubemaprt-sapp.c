@@ -184,10 +184,12 @@ void init(void) {
 }
 
 void frame(void) {
+    /* compute a frame time multiplier */
+    const float t = (float)sapp_frame_duration();
 
     /* update the little cubes that are reflected in the big cube */
     for (int i = 0; i < NUM_SHAPES; i++) {
-        app.shapes[i].angle += app.shapes[i].angular_velocity * (1.0f/60.0f);
+        app.shapes[i].angle += app.shapes[i].angular_velocity * t;
         hmm_mat4 scale = HMM_Scale(HMM_Vec3(0.25f, 0.25f, 0.25f));
         hmm_mat4 rot = HMM_Rotate(app.shapes[i].angle, app.shapes[i].axis);
         hmm_mat4 trans = HMM_Translate(HMM_Vec3(0.0f, 0.0f, app.shapes[i].radius));
@@ -239,7 +241,7 @@ void frame(void) {
     draw_cubes(app.display_shapes_pip, eye_pos, view_proj);
 
     /* render a big cube in the middle with environment mapping */
-    app.rx += 0.1f; app.ry += 0.2f;
+    app.rx += 0.1f * 60.0f * t; app.ry += 0.2f * 60.0f * t;
     hmm_mat4 rxm = HMM_Rotate(app.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(app.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(HMM_MultiplyMat4(rxm, rym), HMM_Scale(HMM_Vec3(2.0f, 2.0f, 2.f)));

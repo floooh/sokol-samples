@@ -36,7 +36,6 @@
 #define DISPLAY_SAMPLE_COUNT    (4)
 
 static struct {
-    uint32_t frame_count;
     float rx, ry;
     sg_buffer vbuf;
     sg_buffer ibuf;
@@ -201,9 +200,10 @@ vs_params_t compute_vs_params(int w, int h) {
 static void frame(void) {
     const int disp_width = sapp_width();
     const int disp_height = sapp_height();
-    state.frame_count++;
-    state.rx += 0.25f;
-    state.ry += 0.5f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    const uint32_t frame_count = (uint32_t)sapp_frame_count();
+    state.rx += 0.25f * t;
+    state.ry += 0.5f * t;
     vs_params_t vs_params = compute_vs_params(disp_width, disp_height);
 
     // text in the main display
@@ -211,14 +211,14 @@ static void frame(void) {
     sdtx_canvas(disp_width * 0.5f, disp_height * 0.5f);
     sdtx_origin(3, 3);
     sdtx_puts("Hello from main context!\n");
-    sdtx_printf("Frame count: %d\n", state.frame_count);
+    sdtx_printf("Frame count: %d\n", frame_count);
 
     // text in each offscreen render target
     for (int i = 0; i < NUM_FACES; i++) {
         sdtx_set_context(state.passes[i].text_context);
         sdtx_origin(1.0f, 0.5f);
         sdtx_font(i);
-        sdtx_printf("%02X", ((state.frame_count / 16) + (uint32_t)i)& 0xFF);
+        sdtx_printf("%02X", ((frame_count / 16) + (uint32_t)i)& 0xFF);
     }
 
     // rasterize text into offscreen render targets, we could also put this

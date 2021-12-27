@@ -129,9 +129,10 @@ static void frame(void) {
     }
 
     // compute vertex-shader params (mvp and texcoord-scale)
-    state.rx += 1.0f;
-    state.ry += 2.0f;
-    state.t  += 0.03f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t;
+    state.ry += 2.0f * t;
+    state.t  += 0.03f * t;
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);

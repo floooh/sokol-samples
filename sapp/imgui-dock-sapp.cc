@@ -5,13 +5,11 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
 #include "imgui-dock/imgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
-static uint64_t last_time = 0;
 static bool show_test_window = true;
 static bool show_another_window = false;
 
@@ -22,7 +20,6 @@ void init(void) {
     sg_desc desc = { };
     desc.context = sapp_sgcontext();
     sg_setup(&desc);
-    stm_setup();
 
     // use sokol-imgui with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
@@ -38,7 +35,7 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    const double delta_time = stm_sec(stm_laptime(&last_time));
+    const double delta_time = sapp_frame_duration();
     simgui_new_frame(width, height, delta_time);
 
     // 1. Show a simple window

@@ -31,7 +31,6 @@
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_fetch.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "ozzutil/ozzutil.h"
@@ -137,7 +136,6 @@ static struct {
     sg_pass_action pass_action;
     camera_t camera;
     ozz_instance_t* ozz;
-    uint64_t laptime;
     double frame_time_sec;
     struct {
         bool enabled;
@@ -301,9 +299,6 @@ static void init(void) {
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){ .sample_count = sapp_sample_count() });
 
-    // setup sokol-time
-    stm_setup();
-
     // setup sokol-fetch
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
@@ -427,8 +422,7 @@ static void frame(void) {
     const int vp_width = (int) (fb_width * 0.7f);
     const int vp_height = (int) fb_height;
 
-    uint64_t frame_ticks = stm_round_to_common_refresh_rate(stm_laptime(&state.laptime));
-    state.frame_time_sec = stm_sec(frame_ticks);
+    state.frame_time_sec = sapp_frame_duration();
     cam_update(&state.camera, vp_width, vp_height);
     simgui_new_frame(fb_width, fb_height, state.frame_time_sec);
 

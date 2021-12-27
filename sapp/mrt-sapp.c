@@ -273,9 +273,10 @@ void frame(void) {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     /* shader parameters */
+    const float t = (float)(sapp_frame_duration() * 60.0);
     offscreen_params_t offscreen_params;
     fsq_params_t fsq_params;
-    state.rx += 1.0f; state.ry += 2.0f;
+    state.rx += 1.0f * t; state.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);

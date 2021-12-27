@@ -87,7 +87,8 @@ static void init(void) {
 }
 
 static void frame(void) {
-    const float a = sgl_rad((float)sapp_frame_count());
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    const float a = sgl_rad((float)sapp_frame_count() * t);
 
     // draw a rotating quad into the offscreen render target texture
     sgl_set_context(state.offscreen.sgl_ctx);

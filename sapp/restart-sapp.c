@@ -279,6 +279,7 @@ static void frame(void) {
     const int w = sapp_width();
     const int h = sapp_height();
     const float aspect = (float)w / (float)h;
+    const float t = (float)(sapp_frame_duration() * 60.0);
 
     // pump the sokol-fetch message queues, and invoke response callbacks
     sfetch_dowork();
@@ -347,7 +348,7 @@ static void frame(void) {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
-    state.scene.rx += 1.0f; state.scene.ry += 2.0f;
+    state.scene.rx += 1.0f * t; state.scene.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.scene.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.scene.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
