@@ -344,7 +344,7 @@ static void frame(void) {
 
     // test sapp_set_window_title()
     char window_title[64];
-    snprintf(window_title, sizeof(window_title), "Events (frame_count=%d)", (int) sapp_frame_count());
+    snprintf(window_title, sizeof(window_title), "Events (frame_count=%d, dur=%.3fms)", (int) sapp_frame_count(), sapp_frame_duration()*1000.0);
     sapp_set_window_title(window_title);
 
     const int w = sapp_width();

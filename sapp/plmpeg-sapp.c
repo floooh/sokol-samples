@@ -205,7 +205,7 @@ static void frame(void) {
     // data ready, to allow slow downloads to catch up
     if (state.plm) {
         if (!ring_empty(&state.full_buffers)) {
-            plm_decode(state.plm, 1.0/60.0);
+            plm_decode(state.plm, sapp_frame_duration());
         }
     }
     // initialize plmpeg once two buffers are filled with data
@@ -234,7 +234,7 @@ static void frame(void) {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     vs_params_t vs_params;
-    state.ry += -0.1f;
+    state.ry += -0.1f * 60.0f * (float)sapp_frame_duration();
     hmm_mat4 model = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 

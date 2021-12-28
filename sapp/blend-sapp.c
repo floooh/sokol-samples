@@ -162,8 +162,9 @@ void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-    state.r += 0.6f;
-    state.bg_fs_params.tick += 1.0f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.r += 0.6f * t;
+    state.bg_fs_params.tick += 1.0f * t;
 }
 
 void cleanup(void) {

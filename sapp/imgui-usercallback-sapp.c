@@ -151,11 +151,12 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     sg_apply_viewport(cx, cy, 360, 360, true);
 
     // a model-view-proj matrix for the vertex shader
+    const float t = (float)(sapp_frame_duration() * 60.0);
     vs_params_t vs_params;
     hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.scene1.rx += 1.0f; state.scene1.ry += 2.0f;
+    state.scene1.rx += 1.0f * t; state.scene1.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.scene1.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.scene1.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
@@ -216,6 +217,7 @@ static void cube_sgl(void) {
 // another ImGui draw callback to render via sokol-gl
 void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
     (void)dl;
+    const float t = (float)(sapp_frame_duration() * 60.0);
 
     const int cx = (int) cmd->ClipRect.x;
     const int cy = (int) cmd->ClipRect.y;
@@ -224,8 +226,8 @@ void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
     sgl_scissor_rect(cx, cy, cw, ch, true);
     sgl_viewport(cx, cy, 360, 360, true);
 
-    state.scene2.r0 += 1.0f;
-    state.scene2.r1 += 2.0f;
+    state.scene2.r0 += 1.0f * t;
+    state.scene2.r1 += 2.0f * t;
 
     sgl_defaults();
     sgl_load_pipeline(state.scene2.pip);
@@ -268,7 +270,7 @@ void frame(void) {
     // rendering its own custom 3D scene via a user draw callback
     const int w = sapp_width();
     const int h = sapp_height();
-    simgui_new_frame(w, h, 1.0f / 60.0f);
+    simgui_new_frame(w, h, sapp_frame_duration());
 
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){800, 400}, ImGuiCond_Once);

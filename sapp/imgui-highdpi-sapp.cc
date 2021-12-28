@@ -65,7 +65,8 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    simgui_new_frame(width, height, 1.0/60.0);
+    const double dt = sapp_frame_duration();
+    simgui_new_frame(width, height, dt);
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"

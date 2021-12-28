@@ -187,7 +187,8 @@ void init(void) {
 
 void frame(void) {
 
-    state.ry += 0.2f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.ry += 0.2f * t;
 
     /* Calculate matrices for shadow pass */
     const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f,1.0f,0.0f));

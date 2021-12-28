@@ -97,7 +97,7 @@ void init(void) {
 }
 
 void frame(void) {
-    const float frame_time = 1.0f / 60.0f;
+    const float frame_time = (float)(sapp_frame_duration());
 
     /* emit new particles */
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
@@ -138,7 +138,7 @@ void frame(void) {
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.ry += 1.0f;
+    state.ry += 60.0f * frame_time;
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 

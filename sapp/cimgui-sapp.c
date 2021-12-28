@@ -6,7 +6,6 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "sokol_time.h"
 #include "sokol_glue.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
@@ -26,7 +25,6 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    stm_setup();
 
     // use sokol-imgui with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
@@ -46,7 +44,7 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    const double delta_time = stm_sec(stm_laptime(&state.last_time));
+    const double delta_time = sapp_frame_duration();
     simgui_new_frame(width, height, delta_time);
 
     // 1. Show a simple window

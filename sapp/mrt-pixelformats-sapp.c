@@ -204,8 +204,9 @@ static void frame(void) {
         draw_fallback();
         return;
     }
-    state.rx += 1.0f;
-    state.ry += 2.0f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t;
+    state.ry += 2.0f * t;
 
     // render donut shape into MRT offscreen render targets
     const offscreen_params_t offscreen_params = compute_offscreen_params();

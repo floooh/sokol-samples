@@ -68,10 +68,10 @@ static void draw_triangle(void) {
     sgl_end();
 }
 
-static void draw_quad(void) {
+static void draw_quad(float t) {
     static float angle_deg = 0.0f;
     float scale = 1.0f + sinf(sgl_rad(angle_deg)) * 0.5f;
-    angle_deg += 1.0f;
+    angle_deg += 1.0f * t;
     sgl_defaults();
     sgl_rotate(sgl_rad(angle_deg), 0.0f, 0.0f, 1.0f);
     sgl_scale(scale, scale, 1.0f);
@@ -119,10 +119,10 @@ static void cube(void) {
     sgl_end();
 }
 
-static void draw_cubes(void) {
+static void draw_cubes(const float t) {
     static float rot[2] = { 0.0f, 0.0f };
-    rot[0] += 1.0f;
-    rot[1] += 2.0f;
+    rot[0] += 1.0f * t;
+    rot[1] += 2.0f * t;
 
     sgl_defaults();
     sgl_load_pipeline(state.pip_3d);
@@ -151,10 +151,10 @@ static void draw_cubes(void) {
     sgl_pop_matrix();
 }
 
-static void draw_tex_cube(void) {
+static void draw_tex_cube(const float t) {
     static float frame_count = 0.0f;
     frame_count += 1.0f;
-    float a = sgl_rad(frame_count);
+    float a = sgl_rad(frame_count * t);
 
     // texture matrix rotation and scale
     float tex_rot = 0.5f * a;
@@ -182,6 +182,9 @@ static void draw_tex_cube(void) {
 }
 
 static void frame(void) {
+    /* frame time multiplier (normalized for 60fps) */
+    const float t = (float)(sapp_frame_duration() * 60.0);
+
     /* compute viewport rectangles so that the views are horizontally
        centered and keep a 1:1 aspect ratio
     */
@@ -197,11 +200,11 @@ static void frame(void) {
     sgl_viewport(x0, y0, ww, hh, true);
     draw_triangle();
     sgl_viewport(x1, y0, ww, hh, true);
-    draw_quad();
+    draw_quad(t);
     sgl_viewport(x0, y1, ww, hh, true);
-    draw_cubes();
+    draw_cubes(t);
     sgl_viewport(x1, y1, ww, hh, true);
-    draw_tex_cube();
+    draw_tex_cube(t);
     sgl_viewport(0, 0, dw, dh, true);
 
     /* Render the sokol-gfx default pass, all sokol-gl commands

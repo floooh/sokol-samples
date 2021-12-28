@@ -113,7 +113,6 @@ static struct {
         double frame_time_ms;
         double frame_time_sec;
         double abs_time_sec;
-        uint64_t laptime;
         uint64_t anim_eval_time;
         float factor;
         bool paused;
@@ -358,9 +357,8 @@ static void frame(void) {
 
     const int fb_width = sapp_width();
     const int fb_height = sapp_height();
-    uint64_t frame_ticks = stm_round_to_common_refresh_rate(stm_laptime(&state.time.laptime));
-    state.time.frame_time_ms = stm_ms(frame_ticks);
-    state.time.frame_time_sec = stm_sec(frame_ticks);
+    state.time.frame_time_sec = sapp_frame_duration();
+    state.time.frame_time_ms = sapp_frame_duration() * 1000.0;
     cam_update(&state.camera, fb_width, fb_height);
 
     simgui_new_frame(fb_width, fb_height, state.time.frame_time_sec);

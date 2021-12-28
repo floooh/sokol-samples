@@ -20,7 +20,6 @@ static struct {
     sg_pipeline pip;
     sg_bindings bind;
     float rx, ry;
-    int frame_index;
 } state;
 
 void init(void) {
@@ -166,23 +165,23 @@ void frame(void) {
     }
 
     /* rotated model matrix */
+    const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     state.rx += 0.25f; state.ry += 0.5f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 rxm = HMM_Rotate(state.rx * t, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(state.ry * t, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
     /* model-view-projection matrix for vertex shader */
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
     /* uv offsets */
-    float offset = (float) state.frame_index * 0.0001f;
+    float offset = (float)sapp_frame_count() * 0.0001f * t;
     vs_params.offset0 = HMM_Vec2(-offset, offset);
     vs_params.offset1 = HMM_Vec2(offset, -offset);
     vs_params.offset2 = HMM_Vec2(0.0f, 0.0f);
-    state.frame_index++;
 
     /* render the frame */
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());

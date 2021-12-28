@@ -149,8 +149,9 @@ static void frame(void) {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     // model-rotation matrix
-    state.rx += 1.0f;
-    state.ry += 2.0f;
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t;
+    state.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 rm = HMM_MultiplyMat4(rxm, rym);
