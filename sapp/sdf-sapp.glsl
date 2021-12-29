@@ -17,7 +17,6 @@ out vec3 eye;
 out vec3 up;
 out vec3 right;
 out vec3 fwd;
-out float sin_t;
 
 // compute eye position (orbit around center)
 vec3 eye_pos(float time, vec3 center) {
@@ -32,7 +31,6 @@ void lookat(vec3 eye, vec3 center, vec3 up, out vec3 out_fwd, out vec3 out_right
 }
 
 void main() {
-    sin_t = sin(time * 0.5);
     gl_Position = position;
     pos.x = position.x * aspect;
     pos.y = position.y;
@@ -50,7 +48,6 @@ in vec3 eye;
 in vec3 up;
 in vec3 right;
 in vec3 fwd;
-in float sin_t;
 
 out vec4 frag_color;
 

@@ -100,8 +100,12 @@ in vec4 jweights;
 @include_block skin_utils
 #endif
 
+#ifdef LIGHTING
 out vec3 P;
+#endif
+#if defined(LIGHTING) || !defined(MATERIAL)
 out vec3 N;
+#endif
 
 void main() {
     // compute skinned model-space position and normal
@@ -114,16 +118,24 @@ void main() {
     #endif
 
     gl_Position = mvp * pos;
+    #ifdef LIGHTING
     P = (model * pos).xyz;
+    #endif
+    #if defined(LIGHTING) || !defined(MATERIAL)
     N = (model * nrm).xyz;
+    #endif
 }
 @end
 
 @fs fs
 @include_block light_utils
 
+#ifdef LIGHTING
 in vec3 P;
+#endif
+#if defined(LIGHTING) || !defined(MATERIAL)
 in vec3 N;
+#endif
 out vec4 frag_color;
 
 void main() {
