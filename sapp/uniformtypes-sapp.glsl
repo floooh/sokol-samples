@@ -3,12 +3,14 @@
 // NOTE: mixing float and int base types in one uniform block is fairly
 // inefficient in the sokol-gfx GL backend, because the uniform
 // block will not be flattened into a single float or int array!
+//
 uniform vs_params {
     vec2 offset;
     vec2 scale;
+    // scramble the vector sizes to enforce 'weird' padding
     int sel;
-    int i1;
     ivec2 i2;
+    int i1;
     ivec3 i3;
     ivec4 i4;
     vec4 pal[10];
