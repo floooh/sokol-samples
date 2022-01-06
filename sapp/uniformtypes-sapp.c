@@ -94,6 +94,8 @@ static void frame(void) {
     
     sdtx_canvas(w * 0.5f, h * 0.5f);
     sdtx_origin(3, 3);
+    sdtx_color3f(1.0f, 1.0f, 1.0f);
+    sdtx_puts("Color names must match\nquad color on same line:\n\n\n");
     for (int i = 0; i < NUM_COLORS; i++) {
         sdtx_color3f(pal[i].r, pal[i].g, pal[i].b);
         sdtx_puts(names[i]);
@@ -104,7 +106,7 @@ static void frame(void) {
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     float x0 = -1.0f + (28.0f * glyph_w);
-    float y0 = 1.0f - (8.0f * glyph_h);
+    float y0 = 1.0f - (16.0f * glyph_h);
     state.vs_params.scale[0] = 5.0f * glyph_w;
     state.vs_params.scale[1] = 2.0f * glyph_h;
     for (int i = 0; i < NUM_COLORS; i++) {
