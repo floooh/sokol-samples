@@ -34,4 +34,6 @@ jobs:
         run: |
           git config user.email "none"
           git config user.name "GH Action"
-          git diff
+          git add .
+          git commit -m "updated (${{ github.run_number }})"
+          git push
