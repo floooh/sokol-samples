@@ -7,7 +7,13 @@ import subprocess
 import glob
 from string import Template
 
-from mod import log, util, project, emscripten, android
+from mod import log, util, project
+
+# webpage template arguments
+GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
+
+# build configuration
+BuildConfig = 'sapp-webgl2-wasm-ninja-release'
 
 # sample attributes
 samples = [
@@ -91,21 +97,9 @@ assets = [
     "ozz_skin_mesh.ozz"
 ]
 
-# webpage template arguments
-GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
-
-# build configuration
-BuildConfig = 'sapp-webgl2-wasm-ninja-release'
-
 #-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
-    """builds the final webpage under under fips-deploy/sokol-webpage"""
-    ws_dir = util.get_workspace_dir(fips_dir)
-    wasm_deploy_dir = '{}/fips-deploy/sokol-samples/{}'.format(ws_dir, BuildConfig)
-
-    # create directories
-    if not os.path.exists(webpage_dir):
-        os.makedirs(webpage_dir)
+    wasm_deploy_dir = util.get_deploy_dir(fips_dir, 'sokol-samples', BuildConfig)
 
     # build the thumbnail gallery
     content = ''
@@ -139,29 +133,28 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
         shutil.copy(proj_dir + '/webpage/' + name, webpage_dir + '/' + name)
 
     # generate WebAssembly HTML pages
-    if emscripten.check_exists(fips_dir):
-        for sample in samples :
-            name = sample[0]
-            source = sample[1]
-            glsl = sample[2]
-            log.info('> generate wasm HTML page: {}'.format(name))
-            for postfix in ['sapp', 'sapp-ui']:
-                for ext in ['wasm', 'js'] :
-                    src_path = '{}/{}-{}.{}'.format(wasm_deploy_dir, name, postfix, ext)
-                    if os.path.isfile(src_path) :
-                        shutil.copy(src_path, '{}/'.format(webpage_dir))
-                    with open(proj_dir + '/webpage/wasm.html', 'r') as f :
-                        templ = Template(f.read())
-                    src_url = GitHubSamplesURL + source
-                    if glsl is None:
-                        glsl_url = "."
-                        glsl_hidden = "hidden"
-                    else:
-                        glsl_url = GitHubSamplesURL + glsl
-                        glsl_hidden = ""
-                    html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url, glsl=glsl_url, hidden=glsl_hidden)
-                    with open('{}/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
-                        f.write(html)
+    for sample in samples :
+        name = sample[0]
+        source = sample[1]
+        glsl = sample[2]
+        log.info('> generate wasm HTML page: {}'.format(name))
+        for postfix in ['sapp', 'sapp-ui']:
+            for ext in ['wasm', 'js'] :
+                src_path = '{}/{}-{}.{}'.format(wasm_deploy_dir, name, postfix, ext)
+                if os.path.isfile(src_path) :
+                    shutil.copy(src_path, '{}/'.format(webpage_dir))
+                with open(proj_dir + '/webpage/wasm.html', 'r') as f :
+                    templ = Template(f.read())
+                src_url = GitHubSamplesURL + source
+                if glsl is None:
+                    glsl_url = "."
+                    glsl_hidden = "hidden"
+                else:
+                    glsl_url = GitHubSamplesURL + glsl
+                    glsl_hidden = ""
+                html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url, glsl=glsl_url, hidden=glsl_hidden)
+                with open('{}/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
+                    f.write(html)
 
     # copy assets from deploy directory
     for asset in assets:
@@ -183,8 +176,8 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
 #-------------------------------------------------------------------------------
 def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
     # if webpage dir exists, clear it first
-    ws_dir = util.get_workspace_dir(fips_dir)
-    webpage_dir = '{}/fips-deploy/sokol-webpage'.format(ws_dir)
+    proj_build_dir = util.get_deploy_root_dir(fips_dir, 'sokol-samples')
+    webpage_dir = '{}/sokol-webpage'.format(proj_build_dir)
     if rebuild :
         if os.path.isdir(webpage_dir) :
             shutil.rmtree(webpage_dir)
@@ -192,9 +185,8 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
         os.makedirs(webpage_dir)
 
     # compile samples
-    if emscripten.check_exists(fips_dir) :
-        project.gen(fips_dir, proj_dir, BuildConfig)
-        project.build(fips_dir, proj_dir, BuildConfig)
+    project.gen(fips_dir, proj_dir, BuildConfig)
+    project.build(fips_dir, proj_dir, BuildConfig)
 
     # deploy the webpage
     deploy_webpage(fips_dir, proj_dir, webpage_dir)
@@ -203,8 +195,8 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
 
 #-------------------------------------------------------------------------------
 def serve_webpage(fips_dir, proj_dir) :
-    ws_dir = util.get_workspace_dir(fips_dir)
-    webpage_dir = '{}/fips-deploy/sokol-webpage'.format(ws_dir)
+    proj_build_dir = util.get_deploy_root_dir(fips_dir, 'sokol-samples')
+    webpage_dir = '{}/sokol-webpage'.format(proj_build_dir)
     p = util.get_host_platform()
     if p == 'osx' :
         try :

@@ -1,0 +1,37 @@
+name: Deploy Webpage
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: seanmiddleditch/gha-setup-ninja@master
+      - name: prepare
+        run:  python fips emsdk install latest
+      - name: build
+        run: |
+          python fips set local on
+          python fips webpage build
+      - name: upload-artifact
+        uses: actions/upload-artifact@v2
+        with: 
+          name: webpage
+          path: fips-files/deploy/sokol-webpage
+          retention-days: 1
+deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: floooh/sokol-html5
+          ssh-key: ${{ secrets.GHACTION_PUSH }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: webpage
+      - name: "commit and push"
+        run: |
+          git config user.email "none"
+          git config user.name "GH Action"
+          git diff
