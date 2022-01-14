@@ -19,7 +19,7 @@ jobs:
           name: webpage
           path: fips-files/deploy/sokol-webpage
           retention-days: 1
-deploy:
+  deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
