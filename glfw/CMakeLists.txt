@@ -110,8 +110,15 @@ fips_begin_app(multiwindow-glfw cmdline)
     fips_deps(glfw3)
 fips_end_app()
 
+fips_begin_app(uniformarrays-glfw cmdline)
+    fips_vs_warning_level(3)
+    fips_files(uniformarrays-glfw.c)
+    fips_deps(glfw3)
+fips_end_app()
+
 fips_begin_app(sgl-test-glfw cmdline)
     fips_vs_warning_level(3)
     fips_files(sgl-test-glfw.c)
     fips_deps(glfw3 flextgl12)
 fips_end_app()
+
