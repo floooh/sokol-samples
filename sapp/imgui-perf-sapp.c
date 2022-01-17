@@ -73,7 +73,12 @@ static void frame(void) {
         }
     }
 
-    simgui_new_frame(width, height, rounded_frame_time);
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = width,
+        .height = height,
+        .delta_time = rounded_frame_time,
+        .dpi_scale = sapp_dpi_scale()
+    });
 
     // controls window
     igSetNextWindowPos((ImVec2){ 10, 10 }, ImGuiCond_Once, (ImVec2){0,0});

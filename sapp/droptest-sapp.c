@@ -86,7 +86,12 @@ static void frame(void) {
 
     const int width = sapp_width();
     const int height = sapp_height();
-    simgui_new_frame(width, height, 1.0/60.0);
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = width,
+        .height = height,
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale()
+    });
 
     igSetNextWindowPos((ImVec2){10, 10}, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){600,500}, ImGuiCond_Once);

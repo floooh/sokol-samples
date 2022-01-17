@@ -35,8 +35,7 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    const double delta_time = sapp_frame_duration();
-    simgui_new_frame(width, height, delta_time);
+    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"

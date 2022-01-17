@@ -361,7 +361,7 @@ static void frame(void) {
     state.time.frame_time_ms = sapp_frame_duration() * 1000.0;
     cam_update(&state.camera, fb_width, fb_height);
 
-    simgui_new_frame(fb_width, fb_height, state.time.frame_time_sec);
+    simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     draw_ui();
 
     sg_begin_default_pass(&state.pass_action, fb_width, fb_height);

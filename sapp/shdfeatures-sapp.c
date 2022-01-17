@@ -424,7 +424,12 @@ static void frame(void) {
 
     state.frame_time_sec = sapp_frame_duration();
     cam_update(&state.camera, vp_width, vp_height);
-    simgui_new_frame(fb_width, fb_height, state.frame_time_sec);
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = fb_width,
+        .height = fb_height,
+        .delta_time = state.frame_time_sec,
+        .dpi_scale = sapp_dpi_scale()
+    });
 
     if (state.light.enabled) {
         const float lat = HMM_ToRadians(state.light.latitude);
