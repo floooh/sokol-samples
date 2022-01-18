@@ -29,7 +29,6 @@ void init(void) {
     // setup sokol-imgui, but provide our own font
     simgui_desc_t simgui_desc = { };
     simgui_desc.no_default_font = true;
-    simgui_desc.dpi_scale = sapp_dpi_scale();
     simgui_setup(&simgui_desc);
 
     // configure Dear ImGui with our own embedded font
