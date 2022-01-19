@@ -31,7 +31,12 @@ void __cdbgui_shutdown(void) {
 }
 
 void __cdbgui_draw(void) {
-    simgui_new_frame(sapp_width(), sapp_height(), 1.0/60.0);
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale()
+    });
     if (igBeginMainMenuBar()) {
         if (igBeginMenu("sokol-gfx", true)) {
             igMenuItem_BoolPtr("Buffers", 0, &sg_imgui.buffers.open, true);

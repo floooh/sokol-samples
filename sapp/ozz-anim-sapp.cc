@@ -142,7 +142,7 @@ static void frame(void) {
     state.time.frame = sapp_frame_duration();
     cam_update(&state.camera, fb_width, fb_height);
 
-    simgui_new_frame(fb_width, fb_height, state.time.frame);
+    simgui_new_frame({ fb_width, fb_height, state.time.frame, sapp_dpi_scale() });
     draw_ui();
 
     if (state.loaded.animation && state.loaded.skeleton) {

@@ -29,7 +29,6 @@ void init(void) {
     // setup sokol-imgui, but provide our own font
     simgui_desc_t simgui_desc = { };
     simgui_desc.no_default_font = true;
-    simgui_desc.dpi_scale = sapp_dpi_scale();
     simgui_setup(&simgui_desc);
 
     // configure Dear ImGui with our own embedded font
@@ -65,8 +64,7 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    const double dt = sapp_frame_duration();
-    simgui_new_frame(width, height, dt);
+    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -74,7 +72,7 @@ void frame(void) {
     ImGui::Text("Hello, world!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
     ImGui::ColorEdit3("clear color", &pass_action.colors[0].value.r);
-    ImGui::Text("width: %d, height: %d\n", sapp_width(), sapp_height());
+    ImGui::Text("width: %d, height: %d, dpi_scale: %.1f\n", sapp_width(), sapp_height(), sapp_dpi_scale());
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("NOTE: programmatic quit isn't supported on mobile");

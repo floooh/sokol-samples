@@ -307,7 +307,12 @@ static void frame(void) {
     }
 
     // ImGui rendering...
-    simgui_new_frame(w, h, 1.0f/60.0f);
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = w,
+        .height = h,
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale()
+    });
     igSetNextWindowSize((ImVec2){640, 480}, ImGuiCond_Once);
     if (igBegin("Pixel Formats (without UINT and SINT formats)", 0, 0)) {
         igText("format"); igSameLine(264, 0);

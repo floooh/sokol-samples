@@ -349,7 +349,7 @@ static void frame(void) {
 
     const int w = sapp_width();
     const int h = sapp_height();
-    simgui_new_frame(w, h, 1.0f/60.0f);
+    simgui_new_frame({ w, h, sapp_frame_duration(), sapp_dpi_scale() });
 
     const float panel_width = 240.0f - ImGui::GetStyle().FramePadding.x;
     const float panel_height = 170.0f;

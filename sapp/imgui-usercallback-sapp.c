@@ -270,7 +270,12 @@ void frame(void) {
     // rendering its own custom 3D scene via a user draw callback
     const int w = sapp_width();
     const int h = sapp_height();
-    simgui_new_frame(w, h, sapp_frame_duration());
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = w,
+        .height = h,
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale()
+    });
 
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){800, 400}, ImGuiCond_Once);

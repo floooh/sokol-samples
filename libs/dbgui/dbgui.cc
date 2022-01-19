@@ -23,7 +23,6 @@ void __dbgui_setup(int sample_count) {
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
     simgui_desc.sample_count = sample_count;
-    simgui_desc.dpi_scale = sapp_dpi_scale();
     simgui_setup(&simgui_desc);
 }
 
@@ -33,7 +32,7 @@ void __dbgui_shutdown(void) {
 }
 
 void __dbgui_draw(void) {
-    simgui_new_frame(sapp_width(), sapp_height(), 1.0/60.0);
+    simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("sokol-gfx")) {
             ImGui::MenuItem("Capabilities", 0, &sg_imgui.caps.open);
