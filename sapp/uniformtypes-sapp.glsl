@@ -11,9 +11,9 @@ uniform vs_params {
     int sel;
     ivec2 i2;
     int i1;
-    ivec3 i3;
     ivec4 i4;
     vec4 pal[10];
+    ivec3 i3;
 };
 
 in vec2 position;
