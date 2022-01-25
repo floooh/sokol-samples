@@ -2,7 +2,10 @@
 //  imgui-sapp.c
 //
 //  Demonstrates Dear ImGui UI rendering via sokol_gfx.h and
-//  the utility header sokol_imgui.h
+//  the utility header sokol_imgui.h.
+//
+//  Also tests default window size by keeping sapp_desc.width/height
+//  zero-initialized.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -84,8 +87,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.frame_cb = frame;
     desc.cleanup_cb = cleanup;
     desc.event_cb = input;
-    desc.width = 1024;
-    desc.height = 768;
     desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui (sokol-app)";
     desc.ios_keyboard_resizes_canvas = false;
