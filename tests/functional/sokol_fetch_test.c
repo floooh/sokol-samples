@@ -24,7 +24,7 @@ static const _sfetch_item_t zeroed_item = {0};
 #ifdef _WIN32
 #include <windows.h>
 static void sleep_ms(int ms) {
-    Sleep(ms);
+    Sleep((DWORD)ms);
 }
 #else
 #include <unistd.h>
