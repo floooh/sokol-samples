@@ -36,9 +36,6 @@ fips_ide_group("")
 if (FIPS_CLANG OR FIPS_GCC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-field-initializers -Wsign-conversion")
 endif()
-if (FIPS_GCC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-missing-braces")
-endif()
 
 #  platform selection
 add_definitions(-DSOKOL_NO_DEPRECATED)
