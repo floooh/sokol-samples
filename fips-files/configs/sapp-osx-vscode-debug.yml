@@ -14,3 +14,4 @@ vscode_exclude_from_workspace:
     - fips-cimgui
 defines:
     USE_SOKOL_APP: ON
+    FIPS_OSX_UNIVERSAL: ON

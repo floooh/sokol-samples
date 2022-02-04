@@ -14,4 +14,5 @@ vscode_exclude_from_workspace:
 defines:
     USE_SOKOL_APP: ON
     SOKOL_USE_METAL: ON
+    FIPS_OSX_UNIVERSAL: ON
 
