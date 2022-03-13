@@ -140,7 +140,7 @@ void frame(void) {
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     state.ry += 60.0f * frame_time;
     vs_params_t vs_params;
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
+    vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
 
     /* ...and draw */
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
