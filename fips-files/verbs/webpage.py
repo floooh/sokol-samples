@@ -47,6 +47,7 @@ samples = [
     [ 'cimgui', 'cimgui-sapp.c', None ],
     [ 'imgui-usercallback', 'imgui-usercallback-sapp.c', 'imgui-usercallback-sapp.glsl'],
     [ 'nuklear', 'nuklear-sapp.c', None ],
+    [ 'nuklear-images', 'nuklear-images-sapp.c', None ],
     [ 'sgl-microui', 'sgl-microui-sapp.c', None],
     [ 'fontstash', 'fontstash-sapp.c', None],
     [ 'debugtext', 'debugtext-sapp.c', None],
