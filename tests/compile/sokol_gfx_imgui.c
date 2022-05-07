@@ -12,6 +12,6 @@
 
 void use_gfx_imgui_impl(void) {
     sg_imgui_t ctx = {0};
-    sg_imgui_init(&ctx);
+    sg_imgui_init(&ctx, &(sg_imgui_desc_t){0});
     sg_imgui_discard(&ctx);
 }

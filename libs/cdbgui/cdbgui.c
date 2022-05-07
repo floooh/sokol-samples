@@ -17,7 +17,7 @@ static sg_imgui_t sg_imgui;
 
 void __cdbgui_setup(int sample_count) {
     // setup debug inspection header(s)
-    sg_imgui_init(&sg_imgui);
+    sg_imgui_init(&sg_imgui, &(sg_imgui_desc_t){0});
 
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
