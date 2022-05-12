@@ -16,5 +16,5 @@
 #include "sokol_fontstash.h"
 
 void use_fontstash_impl(void) {
-    sfons_create(0, 0, 0);
+    sfons_create(&(sfons_desc_t){ 0 });
 }
