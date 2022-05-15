@@ -112,6 +112,7 @@ UTEST(sokol_fetch, item_init_userdata_overflow) {
 }
 
 UTEST(sokol_fetch, pool_init_discard) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_pool_t pool = {0};
     const uint32_t num_items = 127;
     T(_sfetch_pool_init(&pool, num_items));
@@ -125,9 +126,11 @@ UTEST(sokol_fetch, pool_init_discard) {
     T(!pool.valid);
     T(pool.free_slots == 0);
     T(pool.items == 0);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, pool_alloc_free) {
+    sfetch_setup(&(sfetch_desc_t){0});
     uint8_t buf[32];
     _sfetch_pool_t pool = {0};
     const uint32_t num_items = 16;
@@ -152,9 +155,11 @@ UTEST(sokol_fetch, pool_alloc_free) {
     T(pool.items[1].buffer.size == 0);
     T(pool.free_top == 16);
     _sfetch_pool_discard(&pool);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, pool_overflow) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_pool_t pool = {0};
     _sfetch_pool_init(&pool, 4);
     uint32_t id0 = _sfetch_pool_item_alloc(&pool, &(sfetch_request_t){ .path="path0" });
@@ -179,9 +184,11 @@ UTEST(sokol_fetch, pool_overflow) {
     T(pool.items[1].handle.id == id5);
     TSTR(pool.items[1].path.buf, "path5");
     _sfetch_pool_discard(&pool);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, lookup_item) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_pool_t pool = {0};
     _sfetch_pool_init(&pool, 4);
     uint32_t id0 = _sfetch_pool_item_alloc(&pool, &(sfetch_request_t){ .path="path0" });
@@ -196,9 +203,11 @@ UTEST(sokol_fetch, lookup_item) {
     _sfetch_pool_item_free(&pool, id0);
     T(0 == _sfetch_pool_item_lookup(&pool, id0));
     _sfetch_pool_discard(&pool);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, ring_init_discard) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_ring_t ring = {0};
     const uint32_t num_slots = 4;
     T(_sfetch_ring_init(&ring, num_slots));
@@ -211,9 +220,11 @@ UTEST(sokol_fetch, ring_init_discard) {
     T(ring.tail == 0);
     T(ring.num == 0);
     T(ring.buf == 0);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, ring_enqueue_dequeue) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_ring_t ring = {0};
     const uint32_t num_slots = 4;
     _sfetch_ring_init(&ring, num_slots);
@@ -242,9 +253,11 @@ UTEST(sokol_fetch, ring_enqueue_dequeue) {
     T(_sfetch_ring_empty(&ring));
     T(!_sfetch_ring_full(&ring));
     _sfetch_ring_discard(&ring);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, ring_wrap_around) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_ring_t ring = {0};
     _sfetch_ring_init(&ring, 4);
     uint32_t i = 0;
@@ -264,9 +277,11 @@ UTEST(sokol_fetch, ring_wrap_around) {
     }
     T(_sfetch_ring_empty(&ring));
     _sfetch_ring_discard(&ring);
+    sfetch_shutdown();
 }
 
 UTEST(sokol_fetch, ring_wrap_count) {
+    sfetch_setup(&(sfetch_desc_t){0});
     _sfetch_ring_t ring = {0};
     _sfetch_ring_init(&ring, 8);
     // add and remove 4 items to move tail to the middle
@@ -288,6 +303,7 @@ UTEST(sokol_fetch, ring_wrap_count) {
     T(_sfetch_ring_count(&ring) == 0);
     T(_sfetch_ring_empty(&ring));
     _sfetch_ring_discard(&ring);
+    sfetch_shutdown();
 }
 
 /* NOTE: channel_worker is called from a thread */
@@ -299,6 +315,7 @@ static void channel_worker(_sfetch_t* ctx, uint32_t slot_id) {
 }
 
 UTEST(sokol_fetch, channel_init_discard) {
+    sfetch_setup(&(sfetch_desc_t){0});
     num_processed_items = 0;
     _sfetch_channel_t chn = {0};
     const uint32_t num_slots = 12;
@@ -315,6 +332,7 @@ UTEST(sokol_fetch, channel_init_discard) {
     T(_sfetch_ring_empty(&chn.user_outgoing));
     _sfetch_channel_discard(&chn);
     T(!chn.valid);
+    sfetch_shutdown();
 }
 
 /* public API functions */
