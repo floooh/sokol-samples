@@ -8,11 +8,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
-        run:  python fips emsdk install latest
+        run:  python3 fips emsdk install latest
       - name: build
         run: |
-          python fips set local on
-          python fips webpage build
+          python3 fips set local on
+          python3 fips webpage build
       - name: upload-artifact
         uses: actions/upload-artifact@v2
         with: 
