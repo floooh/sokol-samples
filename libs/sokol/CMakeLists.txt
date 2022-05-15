@@ -61,19 +61,6 @@ fips_begin_lib(sokol-noentry)
 fips_end_lib()
 endif()
 
-# a variant with memory tracking for leak-detection
-fips_begin_lib(sokol-memtrack)
-    fips_vs_warning_level(4)
-    if (FIPS_OSX)
-        fips_files(sokol-memtrack.m)
-    elseif (FIPS_UWP)
-        fips_files(sokol-memtrack.cc)
-    else()
-        fips_files(sokol-memtrack.c)
-    endif()
-    sokol_system_deps()
-fips_end_lib()
-
 # the sokol implementations library as DLL
 # FIXME: implement this also for other platforms
 if ((FIPS_WINDOWS OR FIPS_MACOS OR FIPS_LINUX) AND NOT FIPS_UWP)

@@ -15,11 +15,13 @@
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_glue.h"
+#include "stb/stb_image.h"
+
+#define SOKOL_IMPL
 #include "sokol_gl.h"
 #include "sokol_debugtext.h"
 #include "sokol_memtrack.h"
-#include "sokol_glue.h"
-#include "stb/stb_image.h"
 
 #include "modplug.h"
 
@@ -120,17 +122,29 @@ static void init(void) {
         .pass_pool_size = 1,
         .context_pool_size = 1,
         .sampler_cache_size = 4,
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
+        }
     });
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 2,
         .num_channels = 2,
-        .num_lanes = 1
+        .num_lanes = 1,
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
+        }
     });
     sgl_setup(&(sgl_desc_t){
         .pipeline_pool_size = 1,
         .max_vertices = 16,
         .max_commands = 16,
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
+        }
     });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
@@ -138,10 +152,18 @@ static void init(void) {
         .fonts[0] = sdtx_font_cpc(),
         .context = {
             .char_buf_size = 128,
+        },
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
         }
     });
     saudio_setup(&(saudio_desc){
         .num_channels = MOD_NUM_CHANNELS,
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
+        }
     });
 
     // setup rendering resources
@@ -388,5 +410,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .gl_force_gles2 = true,
         .window_title = "Restart Sokol Libs (sokol-app)",
         .icon.sokol_default = true,
+        .allocator = {
+            .alloc = smemtrack_alloc,
+            .free = smemtrack_free,
+        }
     };
 }

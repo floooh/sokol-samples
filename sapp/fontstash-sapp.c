@@ -42,6 +42,17 @@ typedef struct {
 } state_t;
 static state_t state;
 
+/* optional memory allocation function overrides (see sfons_create()) */
+static void* my_alloc(size_t size, void* user_data) {
+    (void)user_data;
+    return malloc(size);
+}
+
+static void my_free(void* ptr, void* user_data) {
+    (void)user_data;
+    free(ptr);
+}
+
 /* sokol-fetch load callbacks */
 static void font_normal_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
@@ -86,7 +97,15 @@ static void init(void) {
 
     /* make sure the fontstash atlas width/height is pow-2 */
     const int atlas_dim = round_pow2(512.0f * state.dpi_scale);
-    FONScontext* fons_context = sfons_create(atlas_dim, atlas_dim, FONS_ZERO_TOPLEFT);
+    FONScontext* fons_context = sfons_create(&(sfons_desc_t){
+        .width = atlas_dim,
+        .height = atlas_dim,
+        // allocator functions are optional, just check if it works
+        .allocator = {
+            .alloc = my_alloc,
+            .free = my_free,
+        }
+    });
     state.fons = fons_context;
     state.font_normal = FONS_INVALID;
     state.font_italic = FONS_INVALID;

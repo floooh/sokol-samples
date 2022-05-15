@@ -146,7 +146,6 @@ static void init(void) {
         .buffer_ptr = state.file_buffer,
         .buffer_size = sizeof(state.file_buffer)
     });
-    printf("%s\n", path_buf);
 }
 
 /* The fetch-callback is called by sokol_fetch.h when the data is loaded,
