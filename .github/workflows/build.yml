@@ -23,8 +23,6 @@ jobs:
           run:  python3 fips build sapp-d3d11-win64-vstudio-debug
         - name: sapp-d3d11-win64-vstudio-release
           run:  python3 fips build sapp-d3d11-win64-vstudio-release
-        - name: sokol-test sapp-win64-vstudio-debug
-          run:  python3 fips run sokol-test sapp-win64-vstudio-debug
     mac:
         runs-on: macos-latest
         steps:
@@ -41,8 +39,6 @@ jobs:
           run:  python3 fips build sapp-metal-osx-make-debug
         - name: sapp-metal-osx-make-release
           run:  python3 fips build sapp-metal-osx-make-release
-        - name: sokol-test sapp-metal-osx-make-debug
-          run:  python3 fips run sokol-test sapp-metal-osx-make-debug
     ios:
         runs-on: macos-latest
         steps:
@@ -76,8 +72,6 @@ jobs:
           run:  python3 fips build sapp-linux-make-debug
         - name: sapp-linux-make-release
           run:  python3 fips build sapp-linux-make-release
-        - name: sokol-test sapp-linux-make-debug
-          run:  python3 fips run sokol-test sapp-linux-make-debug
     emscripten:
         runs-on: ubuntu-latest
         steps:
