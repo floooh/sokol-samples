@@ -14,7 +14,4 @@ build_script:
     - cmd: c:/Python36/python.exe fips build sapp-win64-vstudio-release
     - cmd: c:/Python36/python.exe fips build sapp-d3d11-win64-vstudio-debug
     - cmd: c:/Python36/python.exe fips build sapp-d3d11-win64-vstudio-release
-      # run tests
-    - cmd: c:/Python36/python.exe fips set config sapp-win64-vstudio-debug
-    - cmd: c:/Python36/python.exe fips run sokol-test
 
