@@ -56,7 +56,7 @@ static void my_printf_wrapper(const char* fmt, ...) {
 }
 
 static void frame(void) {
-    uint32_t frame_count = sapp_frame_count();
+    uint32_t frame_count = (uint32_t)sapp_frame_count();
     double frame_time = sapp_frame_duration() * 1000.0;
 
     sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
