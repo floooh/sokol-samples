@@ -21,7 +21,6 @@ typedef struct {
 
 static struct {
     sg_pass_action pass_action;
-    uint32_t frame_count;
     color_t palette[NUM_FONTS];
 } state = {
     .pass_action = {
@@ -57,7 +56,7 @@ static void my_printf_wrapper(const char* fmt, ...) {
 }
 
 static void frame(void) {
-    state.frame_count++;
+    uint32_t frame_count = sapp_frame_count();
     double frame_time = sapp_frame_duration() * 1000.0;
 
     sdtx_canvas(sapp_width() * 0.5f, sapp_height() * 0.5f);
@@ -66,9 +65,9 @@ static void frame(void) {
         color_t color = state.palette[i];
         sdtx_font(i);
         sdtx_color3b(color.r, color.g, color.b);
-        sdtx_printf("Hello '%s'!\n", (state.frame_count & (1<<7)) ? "Welt" : "World");
+        sdtx_printf("Hello '%s'!\n", (frame_count & (1<<7)) ? "Welt" : "World");
         sdtx_printf("\tFrame Time:\t\t%.3f\n", frame_time);
-        my_printf_wrapper("\tFrame Count:\t%d\t0x%04X\n", state.frame_count, state.frame_count);
+        my_printf_wrapper("\tFrame Count:\t%d\t0x%04X\n", frame_count, frame_count);
         sdtx_putr("Range Test 1(xyzbla)", 12);
         sdtx_putr("\nRange Test 2\n", 32);
         sdtx_move_y(2);
