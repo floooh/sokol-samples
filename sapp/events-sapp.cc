@@ -36,7 +36,6 @@ static const char* eventtype_to_str(sapp_event_type t) {
         case SAPP_EVENTTYPE_UNFOCUSED: return "UNFOCUSED";
         case SAPP_EVENTTYPE_SUSPENDED: return "SUSPENDED";
         case SAPP_EVENTTYPE_RESUMED: return "RESUMED";
-        case SAPP_EVENTTYPE_UPDATE_CURSOR: return "UPDATE_CURSOR";
         case SAPP_EVENTTYPE_QUIT_REQUESTED: return "QUIT_REQUESTED";
         case SAPP_EVENTTYPE_CLIPBOARD_PASTED: return "CLIPBOARD_PASTED";
         case SAPP_EVENTTYPE_FILES_DROPPED: return "FILES_DROPPED";
@@ -406,7 +405,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.width = 832;
     desc.height = 600;
     desc.window_title = "Events";
-    desc.user_cursor = true;
     desc.gl_force_gles2 = true;
     desc.enable_clipboard = true;
     desc.enable_dragndrop = true;
