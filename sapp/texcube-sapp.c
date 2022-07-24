@@ -100,7 +100,7 @@ void init(void) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    /* NOTE: tex_slot is provided by shader code generation */
+    /* NOTE: SLOT_tex is provided by shader code generation */
     state.bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
