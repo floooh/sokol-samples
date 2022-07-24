@@ -64,10 +64,7 @@ void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /*
-        a pipeline object, note that we need to provide the
-        MSAA sample count of the default framebuffer
-    */
+    /* a shader and pipeline object */
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(noninterleaved_shader_desc(sg_query_backend())),
         .layout = {
