@@ -142,13 +142,13 @@ static void init(void) {
         .label = "default-pipeline"
     });
 
-    /* the resource bindings for rendering a non-textured cube into offscreen render target */
+    /* the resource bindings for rendering a non-textured shape into offscreen render target */
     state.offscreen.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* resource bindings to render a textured cube, using the offscreen render target as texture */
+    /* resource bindings to render a textured shape, using the offscreen render target as texture */
     state.deflt.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
