@@ -39,6 +39,7 @@ typedef struct {
     float x, y, z, b;
 } vertex_t;
 
+
 /* called initially and when window size changes */
 void create_offscreen_pass(int width, int height) {
     /* destroy previous resource (can be called for invalid id) */
@@ -49,7 +50,6 @@ void create_offscreen_pass(int width, int height) {
     sg_destroy_image(state.offscreen.pass_desc.depth_stencil_attachment.image);
 
     /* create offscreen rendertarget images and pass */
-    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = width,
@@ -58,7 +58,7 @@ void create_offscreen_pass(int width, int height) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = offscreen_sample_count,
+        .sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1,
         .label = "color image"
     };
     sg_image_desc depth_img_desc = color_img_desc;
@@ -188,7 +188,7 @@ void init(void) {
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
-        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
