@@ -22,7 +22,6 @@ static struct {
         sg_pass_action pass_action;
         sgl_pipeline sgl_pip;
     } display;
-    float frame_count;
 } state;
 
 #define OFFSCREEN_PIXELFORMAT (SG_PIXELFORMAT_RGBA8)
