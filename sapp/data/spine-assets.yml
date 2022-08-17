@@ -1,0 +1,9 @@
+---
+options:
+    src_dir: spine
+    ios:
+        dst_dir: spine-sapp.app
+files:
+    - spineboy-pro.json
+    - spineboy.atlas
+    - spineboy.png
