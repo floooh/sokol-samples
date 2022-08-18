@@ -17,8 +17,9 @@ static struct {
     sg_pass_action pass_action;
     struct {
         bool failed;
-        bool atlas_loaded;
-        bool json_loaded;
+        int load_count;
+        size_t atlas_size;
+        size_t json_size;
     } load_status;
     struct {
         uint8_t atlas[8 * 1024];
@@ -68,7 +69,15 @@ static void init(void) {
 
 static void frame(void) {
     sfetch_dowork();
-    if (state.load_status.atlas_loaded && state.load_status.json_loaded) {
+    if (state.load_status.load_count == 2) {
+        state.load_status.load_count = 0;
+        state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
+            .data = {
+                .ptr = state.buffers.atlas,
+                .size = state.load_status.atlas_size,
+            }
+        });
+
         // FIXME: create atlas and skeleton
     }
 
@@ -105,7 +114,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 
 static void atlas_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.load_status.atlas_loaded = true;
+        state.load_status.load_count++;
+        state.load_status.atlas_size = response->fetched_size;
     }
     else if (response->failed) {
     }   state.load_status.failed = true;
@@ -113,7 +123,8 @@ static void atlas_loaded(const sfetch_response_t* response) {
 
 static void json_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.load_status.json_loaded = true;
+        state.load_status.load_count++;
+        state.load_status.json_size = response->fetched_size;
     }
     else if (response->failed) {
         state.load_status.failed = true;
