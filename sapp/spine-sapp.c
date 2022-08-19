@@ -31,6 +31,7 @@ static struct {
 // sokol-fetch callback functions
 static void atlas_loaded(const sfetch_response_t* response);
 static void json_loaded(const sfetch_response_t* response);
+static void image_loaded(const sfetch_response_t* response);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
@@ -71,6 +72,8 @@ static void frame(void) {
     sfetch_dowork();
     if (state.load_status.load_count == 2) {
         state.load_status.load_count = 0;
+
+        // create atlas from file data
         state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
             .data = {
                 .ptr = state.buffers.atlas,
@@ -78,7 +81,21 @@ static void frame(void) {
             }
         });
 
-        // FIXME: create atlas and skeleton
+        // asynchronously load images
+        const int num_images = sspine_get_num_images(state.atlas);
+        for (int img_index = 0; img_index < num_images; img_index++) {
+            const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
+            char path_buf[512];
+            sfetch_send(&(sfetch_request_t){
+                .channel = 0,
+                .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
+                .buffer_ptr = state.buffers.png,
+                .buffer_size = sizeof(state.buffers.png),
+                .user_data_ptr = &img_info,
+                .user_data_size = sizeof(img_info),
+                .callback = image_loaded,
+            });
+        }
     }
 
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
@@ -125,6 +142,15 @@ static void json_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_status.load_count++;
         state.load_status.json_size = response->fetched_size;
+    }
+    else if (response->failed) {
+        state.load_status.failed = true;
+    }
+}
+
+static void image_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        __builtin_printf("FIXME: create image\n");
     }
     else if (response->failed) {
         state.load_status.failed = true;
