@@ -15,12 +15,12 @@
 
 static struct {
     sspine_atlas atlas;
+    sspine_skeleton skeleton;
     sg_pass_action pass_action;
     struct {
         bool failed;
         int load_count;
         size_t atlas_data_size;
-        size_t skeleton_data_size;
     } load_status;
     struct {
         uint8_t atlas[8 * 1024];
@@ -65,7 +65,8 @@ static void init(void) {
         .path = fileutil_get_path("spineboy-pro.json", path_buf, sizeof(path_buf)),
         .channel = 1,
         .buffer_ptr = state.buffers.skeleton,
-        .buffer_size = sizeof(state.buffers.skeleton),
+        // the skeleton file is text data, make sure we have room for a terminating zero
+        .buffer_size = sizeof(state.buffers.skeleton) - 1,
         .callback = skeleton_loaded,
     });
 }
@@ -120,7 +121,9 @@ static void atlas_loaded(const sfetch_response_t* response) {
 
 static void skeleton_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.load_status.skeleton_data_size = response->fetched_size;
+        // the loaded data file is JSON text, make sure it's zero terminated
+        assert(response->fetched_size < sizeof(state.buffers.skeleton));
+        state.buffers.skeleton[response->fetched_size] = 0;
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
         if (++state.load_status.load_count == 2) {
@@ -158,7 +161,12 @@ static void setup_spine_objects(void) {
         });
     }
 
-    // FIXME: create skeleton
+    // create a skeleton object
+    state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
+        .atlas = state.atlas,
+        // we already made sure the JSON text data is zero-terminated
+        .json_data = (const char*)&state.buffers.skeleton,
+    });
 }
 
 static void image_loaded(const sfetch_response_t* response) {
