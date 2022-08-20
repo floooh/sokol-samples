@@ -16,6 +16,7 @@
 static struct {
     sspine_atlas atlas;
     sspine_skeleton skeleton;
+    sspine_instance instance;
     sg_pass_action pass_action;
     struct {
         bool failed;
@@ -166,6 +167,11 @@ static void setup_spine_objects(void) {
         .atlas = state.atlas,
         // we already made sure the JSON text data is zero-terminated
         .json_data = (const char*)&state.buffers.skeleton,
+    });
+
+    // create a skeleton instance
+    state.instance = sspine_make_instance(&(sspine_instance_desc){
+        .skeleton = state.skeleton,
     });
 }
 
