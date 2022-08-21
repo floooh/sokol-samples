@@ -144,6 +144,7 @@ static void setup_spine_objects(void) {
             .size = state.load_status.atlas_data_size,
         }
     });
+    assert(sspine_atlas_valid(state.atlas));
 
     // asynchronously load atlas images
     const int num_images = sspine_get_num_images(state.atlas);
@@ -168,11 +169,13 @@ static void setup_spine_objects(void) {
         // we already made sure the JSON text data is zero-terminated
         .json_data = (const char*)&state.buffers.skeleton,
     });
+    assert(sspine_skeleton_valid(state.skeleton));
 
     // create a skeleton instance
     state.instance = sspine_make_instance(&(sspine_instance_desc){
         .skeleton = state.skeleton,
     });
+    assert(sspine_instance_valid(state.instance));
 }
 
 static void image_loaded(const sfetch_response_t* response) {
