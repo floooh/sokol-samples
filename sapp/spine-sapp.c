@@ -12,6 +12,9 @@
 #include "sokol_spine.h"
 #include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
+#define HANDMADE_MATH_IMPLEMENTATION
+#define HANDMADE_MATH_NO_SSE
+#include "HandmadeMath.h"
 
 static struct {
     sspine_atlas atlas;
@@ -35,6 +38,7 @@ static void setup_spine_objects(void);
 static void atlas_loaded(const sfetch_response_t* response);
 static void skeleton_loaded(const sfetch_response_t* response);
 static void image_loaded(const sfetch_response_t* response);
+static sspine_mat4 compute_transform(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
@@ -74,7 +78,12 @@ static void init(void) {
 
 static void frame(void) {
     sfetch_dowork();
+
+    sspine_set_transform(compute_transform());
+    sspine_draw_instance(state.instance);
+
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sspine_draw_frame();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -104,6 +113,11 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "spine-sapp.c",
         .icon.sokol_default = true,
     };
+}
+
+sspine_mat4 compute_transform(void) {
+    hmm_mat4 ortho = HMM_Orthographic(0.0f, sapp_width(), sapp_heightf(), 0.0f, 0.0f, 10.0f);
+    return *(sspine_mat4*)&ortho;
 }
 
 // called by sokol-fetch when atlas file has been loaded
