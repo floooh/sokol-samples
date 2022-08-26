@@ -118,7 +118,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 sspine_mat4 compute_transform(void) {
     const float wh = sapp_widthf() * 0.5f;
     const float hh = sapp_heightf() * 0.5f;
-    hmm_mat4 ortho = HMM_Orthographic(-wh, wh, -hh, hh, -1.0f, 1.0f);
+    hmm_mat4 ortho = HMM_Orthographic(-wh, wh, hh, -hh, -1.0f, 1.0f);
     return *(sspine_mat4*)&ortho;
 }
 
