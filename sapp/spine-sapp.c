@@ -116,7 +116,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 }
 
 sspine_mat4 compute_transform(void) {
-    hmm_mat4 ortho = HMM_Orthographic(0.0f, sapp_width(), sapp_heightf(), 0.0f, 0.0f, 10.0f);
+    const float wh = sapp_widthf() * 0.5f;
+    const float hh = sapp_heightf() * 0.5f;
+    hmm_mat4 ortho = HMM_Orthographic(-wh, wh, -hh, hh, -1.0f, 1.0f);
     return *(sspine_mat4*)&ortho;
 }
 
@@ -180,6 +182,8 @@ static void setup_spine_objects(void) {
     // create a skeleton object
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
+        .skeleton_prescale = 0.5f,
+        .anim_default_mix = 0.2f,
         // we already made sure the JSON text data is zero-terminated
         .json_data = (const char*)&state.buffers.skeleton,
     });
