@@ -120,7 +120,8 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         }
     }
     else if (response->failed) {
-    }   state.load_status.failed = true;
+        state.load_status.failed = true;
+    }
 }
 
 static void skeleton_data_loaded(const sfetch_response_t* response) {
