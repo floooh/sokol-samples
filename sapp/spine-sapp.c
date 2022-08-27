@@ -33,12 +33,10 @@ static struct {
     } buffers;
 } state;
 
-// sokol-fetch callback functions
 static void setup_spine_objects(void);
-static void atlas_loaded(const sfetch_response_t* response);
-static void skeleton_loaded(const sfetch_response_t* response);
-static void image_loaded(const sfetch_response_t* response);
-static sspine_mat4 compute_transform(void);
+static void atlas_data_loaded(const sfetch_response_t* response);
+static void skeleton_data_loaded(const sfetch_response_t* response);
+static void image_data_loaded(const sfetch_response_t* response);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
@@ -58,13 +56,14 @@ static void init(void) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f} }
     };
 
+    // start loading Spine atlas and skeleton file asynchronously
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("spineboy.atlas", path_buf, sizeof(path_buf)),
         .channel = 0,
         .buffer_ptr = state.buffers.atlas,
         .buffer_size = sizeof(state.buffers.atlas),
-        .callback = atlas_loaded,
+        .callback = atlas_data_loaded,
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("spineboy-pro.json", path_buf, sizeof(path_buf)),
@@ -72,18 +71,28 @@ static void init(void) {
         .buffer_ptr = state.buffers.skeleton,
         // the skeleton file is text data, make sure we have room for a terminating zero
         .buffer_size = sizeof(state.buffers.skeleton) - 1,
-        .callback = skeleton_loaded,
+        .callback = skeleton_data_loaded,
     });
 }
 
 static void frame(void) {
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
+
     sfetch_dowork();
 
-    sspine_set_transform(compute_transform());
-    sspine_draw_instance(state.instance);
+    // can call Spine drawing functions with invalid or 'incomplete' object handles
+    sspine_new_frame();
+    sspine_draw_instance_in_layer(state.instance, 0);
 
+    // the actual sokol-gfx render pass
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
-    sspine_draw_frame();
+    // NOTE: using the display width/height here means the Spine rendering
+    // is mapped to pixels and doesn't scale with window size
+    sspine_draw_layer(0, &(sspine_layer_transform){
+        .size   = { .x = w, .y = h },
+        .origin = { .x = w * 0.5f, .y = h * 0.6f }
+    });
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -100,30 +109,8 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-sapp_desc sokol_main(int argc, char* argv[]) {
-    (void)argc; (void)argv;
-    return (sapp_desc){
-        .init_cb = init,
-        .frame_cb = frame,
-        .cleanup_cb = cleanup,
-        .event_cb = input,
-        .width = 800,
-        .height = 600,
-        .sample_count = 4,
-        .window_title = "spine-sapp.c",
-        .icon.sokol_default = true,
-    };
-}
-
-sspine_mat4 compute_transform(void) {
-    const float wh = sapp_widthf() * 0.5f;
-    const float hh = sapp_heightf() * 0.5f;
-    hmm_mat4 ortho = HMM_Orthographic(-wh, wh, hh, -hh, -1.0f, 1.0f);
-    return *(sspine_mat4*)&ortho;
-}
-
 // called by sokol-fetch when atlas file has been loaded
-static void atlas_loaded(const sfetch_response_t* response) {
+static void atlas_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_status.atlas_data_size = response->fetched_size;
         // if both the atlas and skeleton file had been loaded, create
@@ -136,7 +123,7 @@ static void atlas_loaded(const sfetch_response_t* response) {
     }   state.load_status.failed = true;
 }
 
-static void skeleton_loaded(const sfetch_response_t* response) {
+static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         // the loaded data file is JSON text, make sure it's zero terminated
         assert(response->fetched_size < sizeof(state.buffers.skeleton));
@@ -152,6 +139,7 @@ static void skeleton_loaded(const sfetch_response_t* response) {
     }
 }
 
+// called when both the Spine atlas and skeleton file has finished loading
 static void setup_spine_objects(void) {
     // create atlas from file data
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
@@ -162,27 +150,10 @@ static void setup_spine_objects(void) {
     });
     assert(sspine_atlas_valid(state.atlas));
 
-    // asynchronously load atlas images
-    const int num_images = sspine_get_num_images(state.atlas);
-    for (int img_index = 0; img_index < num_images; img_index++) {
-        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
-        char path_buf[512];
-        sfetch_send(&(sfetch_request_t){
-            .channel = 0,
-            .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
-            .buffer_ptr = state.buffers.image,
-            .buffer_size = sizeof(state.buffers.image),
-            .callback = image_loaded,
-            // sspine_image_info is small enough to directly fit into the user data payload
-            .user_data_ptr = &img_info,
-            .user_data_size = sizeof(img_info)
-        });
-    }
-
     // create a skeleton object
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
-        .skeleton_prescale = 0.5f,
+        .prescale = 0.75f,
         .anim_default_mix = 0.2f,
         // we already made sure the JSON text data is zero-terminated
         .json_data = (const char*)&state.buffers.skeleton,
@@ -194,9 +165,27 @@ static void setup_spine_objects(void) {
         .skeleton = state.skeleton,
     });
     assert(sspine_instance_valid(state.instance));
+
+    // asynchronously load atlas images
+    const int num_images = sspine_get_num_images(state.atlas);
+    for (int img_index = 0; img_index < num_images; img_index++) {
+        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
+        char path_buf[512];
+        sfetch_send(&(sfetch_request_t){
+            .channel = 0,
+            .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
+            .buffer_ptr = state.buffers.image,
+            .buffer_size = sizeof(state.buffers.image),
+            .callback = image_data_loaded,
+            // sspine_image_info is small enough to directly fit into the user data payload
+            .user_data_ptr = &img_info,
+            .user_data_size = sizeof(img_info)
+        });
+    }
 }
 
-static void image_loaded(const sfetch_response_t* response) {
+// called when atlas image data has finished loading
+static void image_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
         // decode image via stb_image.h
@@ -216,6 +205,7 @@ static void image_loaded(const sfetch_response_t* response) {
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .min_filter = img_info->min_filter,
                 .mag_filter = img_info->mag_filter,
+                .label = img_info->filename,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -231,4 +221,19 @@ static void image_loaded(const sfetch_response_t* response) {
     else if (response->failed) {
         state.load_status.failed = true;
     }
+}
+
+sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
+    return (sapp_desc){
+        .init_cb = init,
+        .frame_cb = frame,
+        .cleanup_cb = cleanup,
+        .event_cb = input,
+        .width = 800,
+        .height = 600,
+        .sample_count = 4,
+        .window_title = "spine-sapp.c",
+        .icon.sokol_default = true,
+    };
 }
