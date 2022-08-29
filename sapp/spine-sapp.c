@@ -78,11 +78,13 @@ static void init(void) {
 static void frame(void) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
+    const double delta_time = sapp_frame_duration();
 
     sfetch_dowork();
 
     // can call Spine drawing functions with invalid or 'incomplete' object handles
     sspine_new_frame();
+    sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
     // the actual sokol-gfx render pass
@@ -91,7 +93,7 @@ static void frame(void) {
     // is mapped to pixels and doesn't scale with window size
     sspine_draw_layer(0, &(sspine_layer_transform){
         .size   = { .x = w, .y = h },
-        .origin = { .x = w * 0.5f, .y = h * 0.6f }
+        .origin = { .x = w * 0.5f, .y = h * 0.8f }
     });
     __dbgui_draw();
     sg_end_pass();
@@ -166,6 +168,8 @@ static void setup_spine_objects(void) {
         .skeleton = state.skeleton,
     });
     assert(sspine_instance_valid(state.instance));
+    sspine_set_animation_by_name(state.instance, 0, "portal", false);
+    sspine_add_animation_by_name(state.instance, 0, "run", true, 0.0f);
 
     // asynchronously load atlas images
     const int num_images = sspine_get_num_images(state.atlas);
