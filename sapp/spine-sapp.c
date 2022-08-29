@@ -12,6 +12,12 @@
 #include "sokol_spine.h"
 #include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
+#define SOKOL_IMGUI_IMPL
+#define SOKOL_GFX_IMGUI_IMPL
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui/cimgui.h"
+#include "sokol_imgui.h"
+#include "sokol_gfx_imgui.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -31,16 +37,26 @@ static struct {
         uint8_t skeleton[256 * 1024];
         uint8_t image[256 * 1024];
     } buffers;
+    struct {
+        sg_imgui_t sgimgui;
+        bool atlas_open;
+        bool skeleton_open;
+        bool instance_open;
+    } ui;
 } state;
 
 static void setup_spine_objects(void);
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
+static void ui_draw(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-    __dbgui_setup(sapp_sample_count());
+
+    // setup UI libs
+    simgui_setup(&(simgui_desc_t){0});
+    sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
 
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
@@ -76,38 +92,47 @@ static void init(void) {
 }
 
 static void frame(void) {
-    const float w = sapp_widthf();
-    const float h = sapp_heightf();
     const double delta_time = sapp_frame_duration();
 
     sfetch_dowork();
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .dpi_scale = sapp_dpi_scale(),
+        .delta_time = delta_time,
+    });
 
     // can call Spine drawing functions with invalid or 'incomplete' object handles
     sspine_new_frame();
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
+    ui_draw();
+
     // the actual sokol-gfx render pass
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     // NOTE: using the display width/height here means the Spine rendering
     // is mapped to pixels and doesn't scale with window size
     sspine_draw_layer(0, &(sspine_layer_transform){
-        .size   = { .x = w, .y = h },
-        .origin = { .x = w * 0.5f, .y = h * 0.8f }
+        .size   = { .x = sapp_widthf(), .y = sapp_heightf() },
+        .origin = { .x = sapp_widthf() * 0.5f, .y = sapp_heightf() * 0.8f }
     });
-    __dbgui_draw();
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 static void input(const sapp_event* ev) {
-    __dbgui_event(ev);
+    if (simgui_handle_event(ev)) {
+        return;
+    }
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
     sspine_shutdown();
     sfetch_shutdown();
+    sg_imgui_discard(&state.ui.sgimgui);
+    simgui_shutdown();
     sg_shutdown();
 }
 
@@ -172,7 +197,7 @@ static void setup_spine_objects(void) {
     sspine_add_animation_by_name(state.instance, 0, "run", true, 0.0f);
 
     // asynchronously load atlas images
-    const int num_images = sspine_get_num_images(state.atlas);
+    const int num_images = sspine_num_images(state.atlas);
     for (int img_index = 0; img_index < num_images; img_index++) {
         const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
         char path_buf[512];
@@ -228,6 +253,76 @@ static void image_data_loaded(const sfetch_response_t* response) {
     }
 }
 
+static const char* ui_sgfilter_name(sg_filter f) {
+    switch (f) {
+        case SG_FILTER_NEAREST: return "NEAREST";
+        case SG_FILTER_LINEAR: return "LINEAR";
+        case SG_FILTER_NEAREST_MIPMAP_NEAREST: return "NEAREST_MIPMAP_NEAREST";
+        case SG_FILTER_NEAREST_MIPMAP_LINEAR: return "NEAREST_MIPMAP_LINEAR";
+        case SG_FILTER_LINEAR_MIPMAP_NEAREST: return "LINEAR_MIPMAP_NEAREST";
+        case SG_FILTER_LINEAR_MIPMAP_LINEAR: return "LINEAR_MIPMAP_LINEAR";
+        default: return "???";
+    }
+}
+
+static const char* ui_sgwrap_name(sg_wrap w) {
+    switch (w) {
+        case SG_WRAP_REPEAT: return "REPEAT";
+        case SG_WRAP_CLAMP_TO_EDGE: return "CLAMP_TO_EDGE";
+        case SG_WRAP_CLAMP_TO_BORDER: return "CLAMP_TO_BORDER";
+        case SG_WRAP_MIRRORED_REPEAT: return "MIRRORED_REPEAT";
+        default: return "???";
+    }
+}
+
+static void ui_draw(void) {
+    if (igBeginMainMenuBar()) {
+        if (igBeginMenu("sokol-spine", true)) {
+            if (igMenuItem_Bool("Load...", 0, false, true)) {
+                // FIXME: open load window
+            }
+            igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
+            igMenuItem_BoolPtr("Skeleton...", 0, &state.ui.skeleton_open, true);
+            igMenuItem_BoolPtr("Instance...", 0, &state.ui.instance_open, true);
+            igEndMenu();
+        }
+        if (igBeginMenu("sokol-gfx", true)) {
+            igMenuItem_BoolPtr("Capabilities...", 0, &state.ui.sgimgui.caps.open, true);
+            igMenuItem_BoolPtr("Buffers...", 0, &state.ui.sgimgui.buffers.open, true);
+            igMenuItem_BoolPtr("Images...", 0, &state.ui.sgimgui.images.open, true);
+            igMenuItem_BoolPtr("Shaders...", 0, &state.ui.sgimgui.shaders.open, true);
+            igMenuItem_BoolPtr("Pipelines...", 0, &state.ui.sgimgui.pipelines.open, true);
+            igMenuItem_BoolPtr("Passes...", 0, &state.ui.sgimgui.passes.open, true);
+            igMenuItem_BoolPtr("Calls...", 0, &state.ui.sgimgui.capture.open, true);
+            igEndMenu();
+        }
+        igEndMainMenuBar();
+    }
+    if (state.ui.atlas_open) {
+        igSetNextWindowSize(IMVEC2(400, 200), ImGuiCond_Once);
+        if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
+            if (sspine_atlas_valid(state.atlas)) {
+                const int num_atlas_pages = sspine_num_atlas_pages(state.atlas);
+                igText("Num Pages: %d", num_atlas_pages);
+                for (int i = 0; i < num_atlas_pages; i++) {
+                    sspine_atlas_page page = sspine_atlas_page_at(state.atlas, i);
+                    const sspine_atlas_page_info info = sspine_get_atlas_page_info(page);
+                    igSeparator();
+                    igText("Name: %s", info.name);
+                    igText("Min Filter: %s", ui_sgfilter_name(info.min_filter));
+                    igText("Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
+                    igText("Wrap U: %s", ui_sgwrap_name(info.wrap_u));
+                    igText("Wrap V: %s", ui_sgwrap_name(info.wrap_v));
+                    igText("Width: %d\n", info.width);
+                    igText("Height: %d\n", info.height);
+                    igText("Premul Alpha: %s", (info.premultiplied_alpha == 0) ? "NO" : "YES");
+                }
+            }
+        }
+        igEnd();
+    }
+}
+
 sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     return (sapp_desc){
@@ -237,7 +332,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .sample_count = 4,
         .window_title = "spine-sapp.c",
         .icon.sokol_default = true,
     };
