@@ -174,6 +174,10 @@ static void setup_spine_objects(void) {
         .data = {
             .ptr = state.buffers.atlas,
             .size = state.load_status.atlas_data_size,
+        },
+        .override = {
+            .min_filter = SG_FILTER_NEAREST,
+            .mag_filter = SG_FILTER_NEAREST,
         }
     });
     assert(sspine_atlas_valid(state.atlas));
@@ -296,6 +300,19 @@ static void ui_draw(void) {
             igMenuItem_BoolPtr("Calls...", 0, &state.ui.sgimgui.capture.open, true);
             igEndMenu();
         }
+        if (igBeginMenu("options", true)) {
+            static int theme = 0;
+            if (igRadioButton_IntPtr("Dark Theme", &theme, 0)) {
+                igStyleColorsDark(0);
+            }
+            if (igRadioButton_IntPtr("Light Theme", &theme, 1)) {
+                igStyleColorsLight(0);
+            }
+            if (igRadioButton_IntPtr("Classic Theme", &theme, 2)) {
+                igStyleColorsClassic(0);
+            }
+            igEndMenu();
+        }
         igEndMainMenuBar();
     }
     if (state.ui.atlas_open) {
@@ -313,14 +330,15 @@ static void ui_draw(void) {
                     igText("Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
                     igText("Wrap U: %s", ui_sgwrap_name(info.wrap_u));
                     igText("Wrap V: %s", ui_sgwrap_name(info.wrap_v));
-                    igText("Width: %d\n", info.width);
-                    igText("Height: %d\n", info.height);
+                    igText("Width: %d", info.width);
+                    igText("Height: %d", info.height);
                     igText("Premul Alpha: %s", (info.premultiplied_alpha == 0) ? "NO" : "YES");
                 }
             }
         }
         igEnd();
     }
+    sg_imgui_draw(&state.ui.sgimgui);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
