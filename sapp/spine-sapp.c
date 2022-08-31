@@ -40,8 +40,12 @@ static struct {
     struct {
         sg_imgui_t sgimgui;
         bool atlas_open;
-        bool skeleton_open;
+        bool bones_open;
+        bool slots_open;
+        bool events_open;
+        bool anims_open;
         bool instance_open;
+        int sel_bone_index;
     } ui;
 } state;
 
@@ -57,6 +61,7 @@ static void init(void) {
     // setup UI libs
     simgui_setup(&(simgui_desc_t){0});
     sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
+    state.ui.sel_bone_index = -1;
 
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
@@ -259,6 +264,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 static const char* ui_sgfilter_name(sg_filter f) {
     switch (f) {
+        case _SG_FILTER_DEFAULT: return "DEFAULT";
         case SG_FILTER_NEAREST: return "NEAREST";
         case SG_FILTER_LINEAR: return "LINEAR";
         case SG_FILTER_NEAREST_MIPMAP_NEAREST: return "NEAREST_MIPMAP_NEAREST";
@@ -271,6 +277,7 @@ static const char* ui_sgfilter_name(sg_filter f) {
 
 static const char* ui_sgwrap_name(sg_wrap w) {
     switch (w) {
+        case _SG_WRAP_DEFAULT: return "DEFAULT";
         case SG_WRAP_REPEAT: return "REPEAT";
         case SG_WRAP_CLAMP_TO_EDGE: return "CLAMP_TO_EDGE";
         case SG_WRAP_CLAMP_TO_BORDER: return "CLAMP_TO_BORDER";
@@ -286,8 +293,11 @@ static void ui_draw(void) {
                 // FIXME: open load window
             }
             igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
-            igMenuItem_BoolPtr("Skeleton...", 0, &state.ui.skeleton_open, true);
             igMenuItem_BoolPtr("Instance...", 0, &state.ui.instance_open, true);
+            igMenuItem_BoolPtr("Bones...", 0, &state.ui.bones_open, true);
+            igMenuItem_BoolPtr("Slots...", 0, &state.ui.slots_open, true);
+            igMenuItem_BoolPtr("Events...", 0, &state.ui.events_open, true);
+            igMenuItem_BoolPtr("Anims...", 0, &state.ui.anims_open, true);
             igEndMenu();
         }
         if (igBeginMenu("sokol-gfx", true)) {
@@ -316,23 +326,74 @@ static void ui_draw(void) {
         igEndMainMenuBar();
     }
     if (state.ui.atlas_open) {
-        igSetNextWindowSize(IMVEC2(400, 200), ImGuiCond_Once);
+        igSetNextWindowSize(IMVEC2(300, 330), ImGuiCond_Once);
         if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
             if (sspine_atlas_valid(state.atlas)) {
                 const int num_atlas_pages = sspine_num_atlas_pages(state.atlas);
                 igText("Num Pages: %d", num_atlas_pages);
                 for (int i = 0; i < num_atlas_pages; i++) {
                     sspine_atlas_page page = sspine_atlas_page_at(state.atlas, i);
-                    const sspine_atlas_page_info info = sspine_get_atlas_page_info(page);
+                    sspine_atlas_page_info info = sspine_get_atlas_page_info(page);
                     igSeparator();
                     igText("Name: %s", info.name);
-                    igText("Min Filter: %s", ui_sgfilter_name(info.min_filter));
-                    igText("Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
-                    igText("Wrap U: %s", ui_sgwrap_name(info.wrap_u));
-                    igText("Wrap V: %s", ui_sgwrap_name(info.wrap_v));
                     igText("Width: %d", info.width);
                     igText("Height: %d", info.height);
                     igText("Premul Alpha: %s", (info.premultiplied_alpha == 0) ? "NO" : "YES");
+                    igText("Original Spine params:");
+                    igText("  Min Filter: %s", ui_sgfilter_name(info.min_filter));
+                    igText("  Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
+                    igText("  Wrap U: %s", ui_sgwrap_name(info.wrap_u));
+                    igText("  Wrap V: %s", ui_sgwrap_name(info.wrap_v));
+                    igText("Overrides:");
+                    igText("  Min Filter: %s", ui_sgfilter_name(info.overrides.min_filter));
+                    igText("  Mag Filter: %s", ui_sgfilter_name(info.overrides.mag_filter));
+                    igText("  Wrap U: %s", ui_sgwrap_name(info.overrides.wrap_u));
+                    igText("  Wrap V: %s", ui_sgwrap_name(info.overrides.wrap_v));
+                    igText("  Premul Alpha Enabled: %s", info.overrides.premul_alpha_enabled ? "YES" : "NO");
+                    igText("  Premul Alpha Disabled: %s", info.overrides.premul_alpha_disabled ? "YES" : "NO");
+                }
+            }
+        }
+        igEnd();
+    }
+    if (state.ui.bones_open) {
+        igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        if (igBegin("Bones", &state.ui.bones_open, 0)) {
+            if (sspine_instance_valid(state.instance)) {
+                const int num_bones = sspine_num_bones(state.instance);
+                igText("Num Bones: %d", num_bones);
+                igBeginChild_Str("bones_list", IMVEC2(128, 0), true, 0);
+                for (int i = 0; i < num_bones; i++) {
+                    sspine_bone bone = sspine_bone_at(state.instance, i);
+                    SOKOL_ASSERT(sspine_bone_valid(bone));
+                    const sspine_bone_info info = sspine_get_bone_info(bone);
+                    igPushID_Int(bone.index);
+                    if (igSelectable_Bool(info.name, state.ui.sel_bone_index == bone.index, 0, IMVEC2(0,0))) {
+                        state.ui.sel_bone_index = bone.index;
+                    }
+                    igPopID();
+                }
+                igEndChild();
+                igSameLine(0, -1);
+                sspine_bone bone = sspine_bone_at(state.instance, state.ui.sel_bone_index);
+                if (sspine_bone_valid(bone)) {
+                    const sspine_bone_info info = sspine_get_bone_info(bone);
+                    igBeginChild_Str("bone_info", IMVEC2(0,0), false, 0);
+                    igText("Index: %d", info.index);
+                    igText("Name: %s", info.name);
+                    igText("Length: %.3f", info.length);
+                    igText("Pose Transform:");
+                    igText("  Position: %.3f,%.3f", info.pose_tform.position.x, info.pose_tform.position.y);
+                    igText("  Rotation: %.3f", info.pose_tform.rotation);
+                    igText("  Scale: %.3f,%.3f", info.pose_tform.scale.x, info.pose_tform.scale.y);
+                    igText("  Shear: %.3f,%.3f", info.pose_tform.shear.x, info.pose_tform.shear.y);
+                    igText("Current Transform:");
+                    igText("  Position: %.3f,%.3f", info.cur_tform.position.x, info.cur_tform.position.y);
+                    igText("  Rotation: %.3f", info.cur_tform.rotation);
+                    igText("  Scale: %.3f,%.3f", info.cur_tform.scale.x, info.cur_tform.scale.y);
+                    igText("  Shear: %.3f,%.3f", info.cur_tform.shear.x, info.cur_tform.shear.y);
+                    igText("Color: %.2f,%.2f,%.2f,%.2f", info.color.r, info.color.b, info.color.g, info.color.a);
+                    igEndChild();
                 }
             }
         }
