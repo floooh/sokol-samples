@@ -338,7 +338,7 @@ static void ui_draw(void) {
                     igText("Name: %s", info.name);
                     igText("Width: %d", info.width);
                     igText("Height: %d", info.height);
-                    igText("Premul Alpha: %s", (info.premultiplied_alpha == 0) ? "NO" : "YES");
+                    igText("Premul Alpha: %s", (info.premul_alpha == 0) ? "NO" : "YES");
                     igText("Original Spine params:");
                     igText("  Min Filter: %s", ui_sgfilter_name(info.min_filter));
                     igText("  Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
