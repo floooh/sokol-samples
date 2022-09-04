@@ -46,6 +46,7 @@ static struct {
         bool anims_open;
         bool instance_open;
         int sel_bone_index;
+        int sel_slot_index;
     } ui;
 } state;
 
@@ -62,6 +63,7 @@ static void init(void) {
     simgui_setup(&(simgui_desc_t){0});
     sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
     state.ui.sel_bone_index = -1;
+    state.ui.sel_slot_index = -1;
 
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
@@ -72,10 +74,6 @@ static void init(void) {
 
     // setup sokol-spine with default attributes
     sspine_setup(&(sspine_desc){0});
-
-    state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f} }
-    };
 
     // start loading Spine atlas and skeleton file asynchronously
     char path_buf[512];
@@ -113,6 +111,18 @@ static void frame(void) {
     sspine_draw_instance_in_layer(state.instance, 0);
 
     ui_draw();
+
+    // when loading has failed, change the clear color to red
+    if (state.load_status.failed) {
+        state.pass_action = (sg_pass_action){
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f} }
+        };
+    }
+    else {
+        state.pass_action = (sg_pass_action){
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f} }
+        };
+    }
 
     // the actual sokol-gfx render pass
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
@@ -328,7 +338,10 @@ static void ui_draw(void) {
     if (state.ui.atlas_open) {
         igSetNextWindowSize(IMVEC2(300, 330), ImGuiCond_Once);
         if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
-            if (sspine_atlas_valid(state.atlas)) {
+            if (!sspine_atlas_valid(state.atlas)) {
+                igText("No Spine data loaded.");
+            }
+            else {
                 const int num_atlas_pages = sspine_num_atlas_pages(state.atlas);
                 igText("Num Pages: %d", num_atlas_pages);
                 for (int i = 0; i < num_atlas_pages; i++) {
@@ -359,13 +372,16 @@ static void ui_draw(void) {
     if (state.ui.bones_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
         if (igBegin("Bones", &state.ui.bones_open, 0)) {
-            if (sspine_instance_valid(state.instance)) {
+            if (!sspine_instance_valid(state.instance)) {
+                igText("No Spine data loaded.");
+            }
+            else {
                 const int num_bones = sspine_num_bones(state.instance);
                 igText("Num Bones: %d", num_bones);
                 igBeginChild_Str("bones_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_bones; i++) {
                     sspine_bone bone = sspine_bone_at(state.instance, i);
-                    SOKOL_ASSERT(sspine_bone_valid(bone));
+                    assert(sspine_bone_valid(bone));
                     const sspine_bone_info info = sspine_get_bone_info(bone);
                     igPushID_Int(bone.index);
                     if (igSelectable_Bool(info.name, state.ui.sel_bone_index == bone.index, 0, IMVEC2(0,0))) {
@@ -393,6 +409,44 @@ static void ui_draw(void) {
                     igText("  Scale: %.3f,%.3f", info.cur_tform.scale.x, info.cur_tform.scale.y);
                     igText("  Shear: %.3f,%.3f", info.cur_tform.shear.x, info.cur_tform.shear.y);
                     igText("Color: %.2f,%.2f,%.2f,%.2f", info.color.r, info.color.b, info.color.g, info.color.a);
+                    igEndChild();
+                }
+            }
+        }
+        igEnd();
+    }
+    if (state.ui.slots_open) {
+        igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        if (igBegin("Slots", &state.ui.slots_open, 0)) {
+            if (!sspine_instance_valid(state.instance)) {
+                igText("No Spine data loaded.");
+            }
+            else {
+                const int num_slots = sspine_num_slots(state.instance);
+                igText("Num Slots: %d", num_slots);
+                igBeginChild_Str("slot_list", IMVEC2(128, 0), true, 0);
+                for (int i = 0; i < num_slots; i++) {
+                    sspine_slot slot = sspine_slot_at(state.instance, i);
+                    assert(sspine_slot_valid(slot));
+                    const sspine_slot_info info = sspine_get_slot_info(slot);
+                    igPushID_Int(slot.index);
+                    if (igSelectable_Bool(info.name, state.ui.sel_slot_index == slot.index, 0, IMVEC2(0,0))) {
+                        state.ui.sel_slot_index = slot.index;
+                    }
+                    igPopID();
+                }
+                igEndChild();
+                igSameLine(0, -1);
+                sspine_slot slot = sspine_slot_at(state.instance, state.ui.sel_slot_index);
+                if (sspine_slot_valid(slot)) {
+                    const sspine_slot_info slot_info = sspine_get_slot_info(slot);
+                    const sspine_bone_info bone_info = sspine_get_bone_info(slot_info.bone);
+                    igBeginChild_Str("slot_info", IMVEC2(0,0), false, 0);
+                    igText("Index: %d", slot_info.index);
+                    igText("Name: %s", slot_info.name);
+                    igText("Attachment: %s", slot_info.attachment_name ? slot_info.attachment_name : "-");
+                    igText("Bone Name: %s", bone_info.name);
+                    igText("Color: %.2f,%.2f,%.2f,%.2f", slot_info.color.r, slot_info.color.b, slot_info.color.g, slot_info.color.a);
                     igEndChild();
                 }
             }
