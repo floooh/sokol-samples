@@ -45,10 +45,16 @@ static void (*freeFunc)(void *ptr) = free;
 static float (*randomFunc)() = _spInternalRandom;
 
 void *_spMalloc(size_t size, const char *file, int line) {
+    // FIXME SOKOL: minimal workaround for a weird Emscripten linker issue
+    // (see here for details: https://groups.google.com/g/emscripten-discuss/c/11fw5kJuq-4)
+    /*
 	if (debugMallocFunc)
 		return debugMallocFunc(size, file, line);
 
 	return mallocFunc(size);
+    */
+    (void)file; (void)line;
+    return malloc(size);
 }
 
 void *_spCalloc(size_t num, size_t size, const char *file, int line) {
