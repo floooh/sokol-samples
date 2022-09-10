@@ -45,7 +45,7 @@ int main(void) {
     // create GLFW window without GL context
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow *window = glfwCreateWindow(640, 480, "GLFW Metal", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(640, 480, "GLFW + sokol_gfx.h + Metal", NULL, NULL);
     NSWindow* nswindow = glfwGetCocoaWindow(window);
 
     // attach CAMetalLayer to window
