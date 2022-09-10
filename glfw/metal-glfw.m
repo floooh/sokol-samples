@@ -14,7 +14,6 @@
 #include "GLFW/glfw3.h"
 #include "GLFW/glfw3native.h"
 
-#import <Cocoa/Cocoa.h>
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 
@@ -22,7 +21,7 @@ static id<MTLDevice> device;
 static CAMetalLayer* layer;
 static id<CAMetalDrawable> next_drawable;
 
-// callback to obtain MTLRenderPassDescriptor, called form sg_begin_default_pass()
+// callback to obtain MTLRenderPassDescriptor, called from sg_begin_default_pass()
 static const void* get_render_pass_descriptor(void) {
     next_drawable = [layer nextDrawable];
     MTLRenderPassDescriptor* pass_desc = [MTLRenderPassDescriptor renderPassDescriptor];
