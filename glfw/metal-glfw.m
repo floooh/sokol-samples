@@ -17,7 +17,6 @@
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 
-static id<MTLDevice> device;
 static CAMetalLayer* layer;
 static id<CAMetalDrawable> next_drawable;
 
@@ -36,7 +35,7 @@ static const void* get_next_drawable(void) {
 
 int main(void) {
     // create Metal device and layer
-    device = MTLCreateSystemDefaultDevice();
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     layer = [CAMetalLayer layer];
     layer.device = device;
     layer.opaque = YES;
