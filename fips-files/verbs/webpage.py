@@ -72,7 +72,8 @@ samples = [
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
-    [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl']
+    [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
+    [ 'spine-inspector', 'spine-inspector-sapp.c', None ]
 ]
 
 # assets that must also be copied
@@ -95,7 +96,19 @@ assets = [
     "ozz_anim_animation.ozz",
     "ozz_skin_skeleton.ozz",
     "ozz_skin_animation.ozz",
-    "ozz_skin_mesh.ozz"
+    "ozz_skin_mesh.ozz",
+    "raptor-pma.atlas",
+    "raptor-pma.png",
+    "raptor-pro.skel",
+    "spineboy-pro.json",
+    "spineboy.atlas",
+    "spineboy.png",
+    "alien-pma.atlas",
+    "alien-pma.png",
+    "alien-pro.skel",
+    "speedy-pma.atlas",
+    "speedy-pma.png",
+    "speedy-ess.skel",
 ]
 
 #-------------------------------------------------------------------------------

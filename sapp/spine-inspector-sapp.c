@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  spine-sapp.c
-//  Simple sokol_spine.h sample
+//  spine-inspector-sapp.c
+//  Spine sample with inspector UI.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -28,14 +28,17 @@ static struct {
     sspine_instance instance;
     sg_pass_action pass_action;
     struct {
+        int scene_index;
+        int pending_count;
         bool failed;
-        int load_count;
         size_t atlas_data_size;
+        size_t skel_data_size;
+        bool skel_data_is_binary;
     } load_status;
     struct {
         uint8_t atlas[8 * 1024];
         uint8_t skeleton[256 * 1024];
-        uint8_t image[256 * 1024];
+        uint8_t image[512 * 1024];
     } buffers;
     struct {
         sg_imgui_t sgimgui;
@@ -53,49 +56,96 @@ static struct {
     } ui;
 } state;
 
-static void setup_spine_objects(void);
+// describe Spine scenes available for loading
+#define MAX_SPINE_SCENES (4)
+#define MAX_QUEUE_ANIMS (4)
+typedef struct {
+    const char* name;
+    bool looping;
+    float delay;
+} anim_t;
+typedef struct {
+    const char* ui_name;
+    const char* atlas_file;
+    const char* skel_file_json;     // skeleton files are either json or binary
+    const char* skel_file_binary;
+    float prescale;
+    sspine_atlas_overrides atlas_overrides;
+    anim_t anim_queue[MAX_QUEUE_ANIMS];
+} scene_t;
+scene_t spine_scenes[MAX_SPINE_SCENES] = {
+    {
+        .ui_name = "Spine Boy",
+        .atlas_file = "spineboy.atlas",
+        .skel_file_json = "spineboy-pro.json",
+        .prescale = 0.75f,
+        .atlas_overrides = {
+            .min_filter = SG_FILTER_NEAREST,
+            .mag_filter = SG_FILTER_NEAREST,
+        },
+        .anim_queue = {
+            { .name = "portal" },
+            { .name = "run", .looping = true },
+        }
+    },
+    {
+        .ui_name = "Raptor",
+        .atlas_file = "raptor-pma.atlas",
+        .skel_file_binary = "raptor-pro.skel",
+        .prescale = 0.5f,
+        .anim_queue = {
+            { .name = "jump" },
+            { .name = "roar" },
+            { .name = "walk", .looping = true },
+        }
+    },
+    {
+        .ui_name = "Alien",
+        .atlas_file = "alien-pma.atlas",
+        .skel_file_binary = "alien-pro.skel",
+        .prescale = 0.5f,
+        .anim_queue = {
+            { .name = "run", .looping = true },
+            { .name = "death", .looping = false, .delay = 5.0f },
+            { .name = "run", .looping = true },
+            { .name = "death", .looping = true, .delay = 5.0f },
+        },
+    },
+    {
+        .ui_name = "Speedy",
+        .atlas_file = "speedy-pma.atlas",
+        .skel_file_binary = "speedy-ess.skel",
+        .anim_queue = {
+            { .name = "run", .looping = true }
+        },
+    },
+};
+
+// helper functions
+static bool load_spine_scene(int scene_index);
+static void setup_spine_objects();
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
+static void ui_setup(void);
+static void ui_shutdown(void);
 static void ui_draw(void);
 
 static void init(void) {
+    // setup sokol-gfx
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-
     // setup UI libs
-    simgui_setup(&(simgui_desc_t){0});
-    sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
-    state.ui.selected.bone = -1;
-    state.ui.selected.slot = -1;
-    state.ui.selected.anim = -1;
-
+    ui_setup();
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
         .num_channels = 2,
         .num_lanes = 1,
     });
-
     // setup sokol-spine with default attributes
     sspine_setup(&(sspine_desc){0});
-
     // start loading Spine atlas and skeleton file asynchronously
-    char path_buf[512];
-    sfetch_send(&(sfetch_request_t){
-        .path = fileutil_get_path("spineboy.atlas", path_buf, sizeof(path_buf)),
-        .channel = 0,
-        .buffer_ptr = state.buffers.atlas,
-        .buffer_size = sizeof(state.buffers.atlas),
-        .callback = atlas_data_loaded,
-    });
-    sfetch_send(&(sfetch_request_t){
-        .path = fileutil_get_path("spineboy-pro.json", path_buf, sizeof(path_buf)),
-        .channel = 1,
-        .buffer_ptr = state.buffers.skeleton,
-        // the skeleton file is text data, make sure we have room for a terminating zero
-        .buffer_size = sizeof(state.buffers.skeleton) - 1,
-        .callback = skeleton_data_loaded,
-    });
+    load_spine_scene(0);
 }
 
 static void frame(void) {
@@ -150,18 +200,70 @@ static void input(const sapp_event* ev) {
 static void cleanup(void) {
     sspine_shutdown();
     sfetch_shutdown();
-    sg_imgui_discard(&state.ui.sgimgui);
-    simgui_shutdown();
+    ui_shutdown();
     sg_shutdown();
+}
+
+// start loading a spine scene asynchronously
+static bool load_spine_scene(int scene_index) {
+    assert((scene_index >= 0) && (scene_index < MAX_SPINE_SCENES));
+    assert(spine_scenes[scene_index].atlas_file);
+    assert(spine_scenes[scene_index].skel_file_json || spine_scenes[scene_index].skel_file_binary);
+
+    // don't disturb any in-progress scene loading
+    if (state.load_status.pending_count > 0) {
+        return false;
+    }
+    state.load_status.scene_index = scene_index;
+    state.load_status.pending_count = 0;
+    state.load_status.failed = false;
+    state.load_status.atlas_data_size = 0;
+    state.load_status.skel_data_size = 0;
+    state.load_status.skel_data_is_binary = false;
+
+    // discard previous spine scene (functions can be called with invalid handles)
+    sspine_destroy_instance(state.instance);
+    sspine_destroy_skeleton(state.skeleton);
+    sspine_destroy_atlas(state.atlas);
+
+    char path_buf[512];
+    sfetch_send(&(sfetch_request_t){
+        .path = fileutil_get_path(spine_scenes[scene_index].atlas_file, path_buf, sizeof(path_buf)),
+        .channel = 0,
+        .buffer_ptr = state.buffers.atlas,
+        .buffer_size = sizeof(state.buffers.atlas),
+        .callback = atlas_data_loaded,
+    });
+    state.load_status.pending_count++;
+
+    const char* skel_file = spine_scenes[scene_index].skel_file_json;
+    if (!skel_file) {
+        skel_file = spine_scenes[scene_index].skel_file_binary;
+        state.load_status.skel_data_is_binary = true;
+    }
+    sfetch_send(&(sfetch_request_t){
+        .path = fileutil_get_path(skel_file, path_buf, sizeof(path_buf)),
+        .channel = 1,
+        .buffer_ptr = state.buffers.skeleton,
+        // in case the skeleton file is JSON text data, make sure we have room for a terminating zero
+        .buffer_size = sizeof(state.buffers.skeleton) - 1,
+        .callback = skeleton_data_loaded,
+    });
+    state.load_status.pending_count++;
+    return true;
 }
 
 // called by sokol-fetch when atlas file has been loaded
 static void atlas_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched || response->failed) {
+        assert(state.load_status.pending_count > 0);
+        state.load_status.pending_count--;
+    }
     if (response->fetched) {
         state.load_status.atlas_data_size = response->fetched_size;
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
-        if (++state.load_status.load_count == 2) {
+        if (state.load_status.pending_count == 0) {
             setup_spine_objects();
         }
     }
@@ -171,13 +273,18 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
 }
 
 static void skeleton_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched || response->failed) {
+        assert(state.load_status.pending_count > 0);
+        state.load_status.pending_count--;
+    }
     if (response->fetched) {
-        // the loaded data file is JSON text, make sure it's zero terminated
+        state.load_status.skel_data_size = response->fetched_size;
+        // in case the loaded data file is JSON text, make sure it's zero terminated
         assert(response->fetched_size < sizeof(state.buffers.skeleton));
         state.buffers.skeleton[response->fetched_size] = 0;
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
-        if (++state.load_status.load_count == 2) {
+        if (state.load_status.pending_count == 0) {
             setup_spine_objects();
         }
     }
@@ -188,26 +295,37 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 
 // called when both the Spine atlas and skeleton file has finished loading
 static void setup_spine_objects(void) {
+    const int scene_index = state.load_status.scene_index;
+
     // create atlas from file data
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
         .data = {
             .ptr = state.buffers.atlas,
             .size = state.load_status.atlas_data_size,
         },
-        .override = {
-            .min_filter = SG_FILTER_NEAREST,
-            .mag_filter = SG_FILTER_NEAREST,
-        }
+        .override = spine_scenes[scene_index].atlas_overrides,
     });
     assert(sspine_atlas_valid(state.atlas));
 
-    // create a skeleton object
+    // create a skeleton object, the skeleton data might be either JSON or binary
+    const char* skel_json_data = 0;
+    sspine_range skel_binary_data = {0};
+    if (state.load_status.skel_data_is_binary) {
+        skel_binary_data = (sspine_range){
+            .ptr = &state.buffers.skeleton,
+            .size = state.load_status.skel_data_size,
+        };
+    }
+    else {
+        skel_json_data = (const char*)&state.buffers.skeleton;
+    }
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
-        .prescale = 0.75f,
+        .prescale = spine_scenes[scene_index].prescale,
         .anim_default_mix = 0.2f,
         // we already made sure the JSON text data is zero-terminated
-        .json_data = (const char*)&state.buffers.skeleton,
+        .json_data = skel_json_data,
+        .binary_data = skel_binary_data
     });
     assert(sspine_skeleton_valid(state.skeleton));
 
@@ -216,8 +334,20 @@ static void setup_spine_objects(void) {
         .skeleton = state.skeleton,
     });
     assert(sspine_instance_valid(state.instance));
-    sspine_set_animation_by_name(state.instance, 0, "portal", false);
-    sspine_add_animation_by_name(state.instance, 0, "run", true, 0.0f);
+
+    // setup animation queue
+    assert((scene_index >= 0) && (scene_index < MAX_SPINE_SCENES));
+    for (int anim_index = 0; anim_index < MAX_QUEUE_ANIMS; anim_index++) {
+        const anim_t* anim = &spine_scenes[scene_index].anim_queue[anim_index];
+        if (anim->name) {
+            if (anim_index == 0) {
+                sspine_set_animation_by_name(state.instance, 0, anim->name, anim->looping);
+            }
+            else {
+                sspine_add_animation_by_name(state.instance, 0, anim->name, anim->looping, anim->delay);
+            }
+        }
+    }
 
     // asynchronously load atlas images
     const int num_images = sspine_num_images(state.atlas);
@@ -234,11 +364,16 @@ static void setup_spine_objects(void) {
             .user_data_ptr = &img_info,
             .user_data_size = sizeof(img_info)
         });
+        state.load_status.pending_count++;
     }
 }
 
 // called when atlas image data has finished loading
 static void image_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched || response->failed) {
+        assert(state.load_status.pending_count > 0);
+        state.load_status.pending_count--;
+    }
     if (response->fetched) {
         const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
         // decode image via stb_image.h
@@ -276,6 +411,20 @@ static void image_data_loaded(const sfetch_response_t* response) {
     }
 }
 
+//=== UI STUFF =================================================================
+static void ui_setup(void) {
+    simgui_setup(&(simgui_desc_t){0});
+    sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
+    state.ui.selected.bone = -1;
+    state.ui.selected.slot = -1;
+    state.ui.selected.anim = -1;
+}
+
+static void ui_shutdown(void) {
+    sg_imgui_discard(&state.ui.sgimgui);
+    simgui_shutdown();
+}
+
 static const char* ui_sgfilter_name(sg_filter f) {
     switch (f) {
         case _SG_FILTER_DEFAULT: return "DEFAULT";
@@ -303,8 +452,15 @@ static const char* ui_sgwrap_name(sg_wrap w) {
 static void ui_draw(void) {
     if (igBeginMainMenuBar()) {
         if (igBeginMenu("sokol-spine", true)) {
-            if (igMenuItem_Bool("Load...", 0, false, true)) {
-                // FIXME: open load window
+            if (igBeginMenu("Load", true)) {
+                for (int i = 0; i < MAX_SPINE_SCENES; i++) {
+                    if (spine_scenes[i].ui_name) {
+                        if (igMenuItem_Bool(spine_scenes[i].ui_name, 0, (i == state.load_status.scene_index), true)) {
+                            load_spine_scene(i);
+                        }
+                    }
+                }
+                igEndMenu();
             }
             igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
             igMenuItem_BoolPtr("Instance...", 0, &state.ui.instance_open, true);
@@ -505,7 +661,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .window_title = "spine-sapp.c",
+        .window_title = "spine-inspector-sapp.c",
         .icon.sokol_default = true,
     };
 }
