@@ -223,6 +223,7 @@ static bool load_spine_scene(int scene_index) {
     sspine_destroy_skeleton(state.skeleton);
     sspine_destroy_atlas(state.atlas);
 
+    // start loading the atlas file
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path(spine_scenes[scene_index].atlas_file, path_buf, sizeof(path_buf)),
@@ -233,6 +234,7 @@ static bool load_spine_scene(int scene_index) {
     });
     state.load_status.pending_count++;
 
+    // start loading the skeleton file, this can either be provided as JSON or as binary data
     const char* skel_file = spine_scenes[scene_index].skel_file_json;
     if (!skel_file) {
         skel_file = spine_scenes[scene_index].skel_file_binary;
@@ -269,6 +271,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
     }
 }
 
+// called by sokol-fetch when skeleton file has been loaded
 static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched || response->failed) {
         assert(state.load_status.pending_count > 0);
@@ -320,7 +323,7 @@ static void setup_spine_objects(void) {
         .atlas = state.atlas,
         .prescale = spine_scenes[scene_index].prescale,
         .anim_default_mix = 0.2f,
-        // we already made sure the JSON text data is zero-terminated
+        // one of those two will be valid:
         .json_data = skel_json_data,
         .binary_data = skel_binary_data
     });
@@ -332,7 +335,7 @@ static void setup_spine_objects(void) {
     });
     assert(sspine_instance_valid(state.instance));
 
-    // setup animation queue
+    // populate animation queue
     assert((scene_index >= 0) && (scene_index < MAX_SPINE_SCENES));
     for (int anim_index = 0; anim_index < MAX_QUEUE_ANIMS; anim_index++) {
         const anim_t* anim = &spine_scenes[scene_index].anim_queue[anim_index];
