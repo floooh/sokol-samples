@@ -18,9 +18,6 @@
 #include "cimgui/cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 
 static struct {
     sspine_atlas atlas;
