@@ -42,13 +42,13 @@ static struct {
         bool atlas_open;
         bool bones_open;
         bool slots_open;
-        bool events_open;
         bool anims_open;
-        bool instance_open;
+        bool events_open;
         struct {
             int bone_index;
             int slot_index;
             int anim_index;
+            int event_index;
         } selected;
     } ui;
 } state;
@@ -418,6 +418,7 @@ static void ui_setup(void) {
     state.ui.selected.bone_index = -1;
     state.ui.selected.slot_index = -1;
     state.ui.selected.anim_index = -1;
+    state.ui.selected.event_index = -1;
 }
 
 static void ui_shutdown(void) {
@@ -463,11 +464,10 @@ static void ui_draw(void) {
                 igEndMenu();
             }
             igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
-            igMenuItem_BoolPtr("Instance...", 0, &state.ui.instance_open, true);
             igMenuItem_BoolPtr("Bones...", 0, &state.ui.bones_open, true);
             igMenuItem_BoolPtr("Slots...", 0, &state.ui.slots_open, true);
-            igMenuItem_BoolPtr("Events...", 0, &state.ui.events_open, true);
             igMenuItem_BoolPtr("Anims...", 0, &state.ui.anims_open, true);
+            igMenuItem_BoolPtr("Events...", 0, &state.ui.events_open, true);
             igEndMenu();
         }
         if (igBeginMenu("sokol-gfx", true)) {
@@ -539,7 +539,7 @@ static void ui_draw(void) {
                 igText("Num Bones: %d", num_bones);
                 igBeginChild_Str("bones_list", IMVEC2(128, 0), true, 0);
                 for (int bone_index = 0; bone_index < num_bones; bone_index++) {
-                    const sspine_bone_info info = sspine_get_bone_info(state.instance, bone_index);
+                    const sspine_bone_info info = sspine_get_bone_info(state.skeleton, bone_index);
                     igPushID_Int(bone_index);
                     if (igSelectable_Bool(info.name, state.ui.selected.bone_index == bone_index, 0, IMVEC2(0,0))) {
                         state.ui.selected.bone_index = bone_index;
@@ -549,22 +549,23 @@ static void ui_draw(void) {
                 igEndChild();
                 igSameLine(0, -1);
                 if (sspine_bone_index_valid(state.skeleton, state.ui.selected.bone_index)) {
-                    const sspine_bone_info info = sspine_get_bone_info(state.instance, state.ui.selected.bone_index);
+                    const sspine_bone_info info = sspine_get_bone_info(state.skeleton, state.ui.selected.bone_index);
                     igBeginChild_Str("bone_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name);
                     igText("Length: %.3f", info.length);
                     igText("Pose Transform:");
-                    igText("  Position: %.3f,%.3f", info.pose_tform.position.x, info.pose_tform.position.y);
-                    igText("  Rotation: %.3f", info.pose_tform.rotation);
-                    igText("  Scale: %.3f,%.3f", info.pose_tform.scale.x, info.pose_tform.scale.y);
-                    igText("  Shear: %.3f,%.3f", info.pose_tform.shear.x, info.pose_tform.shear.y);
-                    igText("Current Transform:");
-                    igText("  Position: %.3f,%.3f", info.cur_tform.position.x, info.cur_tform.position.y);
-                    igText("  Rotation: %.3f", info.cur_tform.rotation);
-                    igText("  Scale: %.3f,%.3f", info.cur_tform.scale.x, info.cur_tform.scale.y);
-                    igText("  Shear: %.3f,%.3f", info.cur_tform.shear.x, info.cur_tform.shear.y);
+                    igText("  Position: %.3f,%.3f", info.pose.position.x, info.pose.position.y);
+                    igText("  Rotation: %.3f", info.pose.rotation);
+                    igText("  Scale: %.3f,%.3f", info.pose.scale.x, info.pose.scale.y);
+                    igText("  Shear: %.3f,%.3f", info.pose.shear.x, info.pose.shear.y);
                     igText("Color: %.2f,%.2f,%.2f,%.2f", info.color.r, info.color.b, info.color.g, info.color.a);
+                    igText("Current Transform:");
+                    const sspine_bone_transform cur_tform = sspine_get_bone_transform(state.instance, state.ui.selected.bone_index);
+                    igText("  Position: %.3f,%.3f", cur_tform.position.x, cur_tform.position.y);
+                    igText("  Rotation: %.3f", cur_tform.rotation);
+                    igText("  Scale: %.3f,%.3f", cur_tform.scale.x, cur_tform.scale.y);
+                    igText("  Shear: %.3f,%.3f", cur_tform.shear.x, cur_tform.shear.y);
                     igEndChild();
                 }
             }
@@ -583,7 +584,7 @@ static void ui_draw(void) {
                 igBeginChild_Str("slot_list", IMVEC2(128, 0), true, 0);
                 for (int slot_index = 0; slot_index < num_slots; slot_index++) {
                     assert(sspine_slot_index_valid(state.skeleton, slot_index));
-                    const sspine_slot_info info = sspine_get_slot_info(state.instance, slot_index);
+                    const sspine_slot_info info = sspine_get_slot_info(state.skeleton, slot_index);
                     igPushID_Int(slot_index);
                     if (igSelectable_Bool(info.name, state.ui.selected.slot_index == slot_index, 0, IMVEC2(0,0))) {
                         state.ui.selected.slot_index = slot_index;
@@ -593,8 +594,8 @@ static void ui_draw(void) {
                 igEndChild();
                 igSameLine(0, -1);
                 if (sspine_slot_index_valid(state.skeleton, state.ui.selected.slot_index)) {
-                    const sspine_slot_info slot_info = sspine_get_slot_info(state.instance, state.ui.selected.slot_index);
-                    const sspine_bone_info bone_info = sspine_get_bone_info(state.instance, slot_info.bone_index);
+                    const sspine_slot_info slot_info = sspine_get_slot_info(state.skeleton, state.ui.selected.slot_index);
+                    const sspine_bone_info bone_info = sspine_get_bone_info(state.skeleton, slot_info.bone_index);
                     igBeginChild_Str("slot_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", slot_info.index);
                     igText("Name: %s", slot_info.name);
@@ -619,7 +620,7 @@ static void ui_draw(void) {
                 igBeginChild_Str("anim_list", IMVEC2(128, 0), true, 0);
                 for (int anim_index = 0; anim_index < num_anims; anim_index++) {
                     assert(sspine_anim_index_valid(state.skeleton, anim_index));
-                    const sspine_anim_info info = sspine_get_anim_info(state.instance, anim_index);
+                    const sspine_anim_info info = sspine_get_anim_info(state.skeleton, anim_index);
                     igPushID_Int(anim_index);
                     if (igSelectable_Bool(info.name, state.ui.selected.anim_index == anim_index, 0, IMVEC2(0,0))) {
                         state.ui.selected.anim_index = anim_index;
@@ -630,11 +631,49 @@ static void ui_draw(void) {
                 igEndChild();
                 igSameLine(0, -1);
                 if (sspine_anim_index_valid(state.skeleton, state.ui.selected.anim_index)) {
-                    const sspine_anim_info info = sspine_get_anim_info(state.instance, state.ui.selected.anim_index);
+                    const sspine_anim_info info = sspine_get_anim_info(state.skeleton, state.ui.selected.anim_index);
                     igBeginChild_Str("anim_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name);
                     igText("Duration: %.3f", info.duration);
+                    igEndChild();
+                }
+            }
+        }
+        igEnd();
+    }
+    if (state.ui.events_open) {
+        igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        if (igBegin("Events", &state.ui.events_open, 0)) {
+            if (!sspine_skeleton_valid(state.skeleton)) {
+                igText("No Spine data loaded");
+            }
+            else {
+                const int num_events = sspine_num_events(state.skeleton);
+                igText("Num Events: %d", num_events);
+                igBeginChild_Str("event_list", IMVEC2(128, 0), true, 0);
+                for (int event_index = 0; event_index < num_events; event_index++) {
+                    assert(sspine_event_index_valid(state.skeleton, event_index));
+                    const sspine_event_info info = sspine_get_event_info(state.skeleton, event_index);
+                    igPushID_Int(event_index);
+                    if (igSelectable_Bool(info.name, state.ui.selected.event_index == event_index, 0, IMVEC2(0,0))) {
+                        state.ui.selected.event_index = event_index;
+                    }
+                    igPopID();
+                }
+                igEndChild();
+                igSameLine(0, -1);
+                if (sspine_event_index_valid(state.skeleton, state.ui.selected.event_index)) {
+                    const sspine_event_info info = sspine_get_event_info(state.skeleton, state.ui.selected.event_index);
+                    igBeginChild_Str("event_info", IMVEC2(0,0), false, 0);
+                    igText("Index: %d", info.index);
+                    igText("Name: %s", info.name);
+                    igText("Int Value: %d\n", info.int_value);
+                    igText("Float Value: %.3f\n", info.float_value);
+                    igText("String Value: %s", info.string_value ? info.string_value : "NONE");
+                    igText("Audio Path: %s", info.audio_path ? info.audio_path : "NONE");
+                    igText("Volume: %.3f", info.volume);
+                    igText("Balance: %.3f", info.balance);
                     igEndChild();
                 }
             }
