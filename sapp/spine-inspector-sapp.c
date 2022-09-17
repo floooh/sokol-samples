@@ -26,6 +26,8 @@ static struct {
     sspine_skeleton skeleton;
     sspine_instance instance;
     sg_pass_action pass_action;
+    sspine_layer_transform layer_transform;
+    sspine_vec2 ik_target_pos;
     struct {
         int scene_index;
         int pending_count;
@@ -131,6 +133,7 @@ static void setup_spine_objects();
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
+static void set_ik_target(float mouse_x, float mouse_y);
 static void ui_setup(void);
 static void ui_shutdown(void);
 static void ui_draw(void);
@@ -155,6 +158,10 @@ static void init(void) {
 static void frame(void) {
     const double delta_time = sapp_frame_duration();
     state.ui.cur_time += delta_time;
+    state.layer_transform = (sspine_layer_transform) {
+        .size   = { .x = sapp_widthf(), .y = sapp_heightf() },
+        .origin = { .x = sapp_widthf() * 0.5f, .y = sapp_heightf() * 0.8f }
+    };
 
     sfetch_dowork();
     simgui_new_frame(&(simgui_frame_desc_t){
@@ -166,6 +173,11 @@ static void frame(void) {
 
     // can call Spine drawing functions with invalid or 'incomplete' object handles
     sspine_new_frame();
+    int ik_bone_index = sspine_find_bone_index(state.skeleton, "crosshair");
+    if (ik_bone_index != -1) {
+        sspine_vec2 root_local_pos = sspine_bone_world_to_local(state.instance, 0, state.ik_target_pos);
+        sspine_set_bone_position(state.instance, ik_bone_index, root_local_pos);
+    }
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
@@ -194,10 +206,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     // NOTE: using the display width/height here means the Spine rendering
     // is mapped to pixels and doesn't scale with window size
-    sspine_draw_layer(0, &(sspine_layer_transform){
-        .size   = { .x = sapp_widthf(), .y = sapp_heightf() },
-        .origin = { .x = sapp_widthf() * 0.5f, .y = sapp_heightf() * 0.8f }
-    });
+    sspine_draw_layer(0, &state.layer_transform);
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -206,6 +215,10 @@ static void frame(void) {
 static void input(const sapp_event* ev) {
     if (simgui_handle_event(ev)) {
         return;
+    }
+    if (ev->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
+        state.ik_target_pos.x = ev->mouse_x - state.layer_transform.origin.x;
+        state.ik_target_pos.y = ev->mouse_y - state.layer_transform.origin.y;
     }
 }
 
@@ -569,6 +582,7 @@ static void ui_draw(void) {
                     const sspine_bone_info info = sspine_get_bone_info(state.skeleton, state.ui.selected.bone_index);
                     igBeginChild_Str("bone_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
+                    igText("Parent Index: %d", info.parent_index);
                     igText("Name: %s", info.name);
                     igText("Length: %.3f", info.length);
                     igText("Pose Transform:");
