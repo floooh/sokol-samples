@@ -19,6 +19,8 @@
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
 
+#define MAX_TRIGGERED_EVENTS (16)
+
 static struct {
     sspine_atlas atlas;
     sspine_skeleton skeleton;
@@ -50,6 +52,11 @@ static struct {
             int anim_index;
             int event_index;
         } selected;
+        double cur_time;
+        struct {
+            double time;
+            int index;
+        } last_triggered_event;
     } ui;
 } state;
 
@@ -147,6 +154,7 @@ static void init(void) {
 
 static void frame(void) {
     const double delta_time = sapp_frame_duration();
+    state.ui.cur_time += delta_time;
 
     sfetch_dowork();
     simgui_new_frame(&(simgui_frame_desc_t){
@@ -160,6 +168,13 @@ static void frame(void) {
     sspine_new_frame();
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
+
+    // keep track of triggered events
+    const int num_triggered_events = sspine_num_triggered_events(state.instance);
+    for (int i = 0; i < num_triggered_events; i++) {
+        state.ui.last_triggered_event.time = state.ui.cur_time;
+        state.ui.last_triggered_event.index = sspine_get_triggered_event_info(state.instance, i).event_index;
+    }
 
     ui_draw();
 
@@ -296,6 +311,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 // called when both the Spine atlas and skeleton file has finished loading
 static void setup_spine_objects(void) {
     const int scene_index = state.load_status.scene_index;
+    state.ui.last_triggered_event.index = -1;
 
     // create atlas from file data
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
@@ -419,6 +435,7 @@ static void ui_setup(void) {
     state.ui.selected.slot_index = -1;
     state.ui.selected.anim_index = -1;
     state.ui.selected.event_index = -1;
+    state.ui.last_triggered_event.index = -1;
 }
 
 static void ui_shutdown(void) {
@@ -679,6 +696,24 @@ static void ui_draw(void) {
             }
         }
         igEnd();
+    }
+    // display triggered events
+    const double triggered_event_fade_time = 1.0;
+    if ((state.ui.last_triggered_event.index != -1) && (state.ui.last_triggered_event.time + triggered_event_fade_time) > state.ui.cur_time) {
+        const int event_index = state.ui.last_triggered_event.index;
+        const char* event_name = sspine_get_event_info(state.skeleton, event_index).name;
+        const double event_time = state.ui.last_triggered_event.time;
+        if (event_name) {
+            const float alpha = 1.0 - ((state.ui.cur_time - event_time) / triggered_event_fade_time);
+            igSetNextWindowBgAlpha(alpha);
+            igSetNextWindowPos(IMVEC2(sapp_widthf() * 0.5f, sapp_heightf() - 50.0f), ImGuiCond_Always, IMVEC2(0.5f,0.5f));
+            igPushStyleColor_U32(ImGuiCol_WindowBg, 0xFF0000FF);
+            if (igBegin("Triggered Events", 0, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav)) {
+                igText("%s: %.3f (age: %.3f)", sspine_get_event_info(state.skeleton, event_index).name, event_time, state.ui.cur_time - event_time);
+            }
+            igEnd();
+            igPopStyleColor(1);
+        }
     }
     sg_imgui_draw(&state.ui.sgimgui);
 }
