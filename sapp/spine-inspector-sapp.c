@@ -27,7 +27,7 @@ static struct {
     sspine_instance instance;
     sg_pass_action pass_action;
     sspine_layer_transform layer_transform;
-    sspine_vec2 ik_target_pos;
+    sspine_vec2 iktarget_pos;
     struct {
         int scene_index;
         int pending_count;
@@ -48,11 +48,13 @@ static struct {
         bool slots_open;
         bool anims_open;
         bool events_open;
+        bool iktargets_open;
         struct {
             int bone_index;
             int slot_index;
             int anim_index;
             int event_index;
+            int iktarget_index;
         } selected;
         double cur_time;
         struct {
@@ -133,8 +135,8 @@ static void setup_spine_objects();
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
-static void set_ik_target(float mouse_x, float mouse_y);
 static void ui_setup(void);
+static void ui_reset(void);
 static void ui_shutdown(void);
 static void ui_draw(void);
 
@@ -171,14 +173,19 @@ static void frame(void) {
         .delta_time = delta_time,
     });
 
-    // can call Spine drawing functions with invalid or 'incomplete' object handles
+    // can call Spine functions with invalid or 'incomplete' object handles
     sspine_new_frame();
-    int ik_bone_index = sspine_find_bone_index(state.skeleton, "crosshair");
-    if (ik_bone_index != -1) {
-        sspine_vec2 root_local_pos = sspine_bone_world_to_local(state.instance, 0, state.ik_target_pos);
-        sspine_set_bone_position(state.instance, ik_bone_index, root_local_pos);
+
+    // link IK target to mouse
+    int iktarget_index = (state.ui.selected.iktarget_index == -1) ? 0 : state.ui.selected.iktarget_index;
+    if (sspine_iktarget_index_valid(state.skeleton, iktarget_index)) {
+        sspine_set_iktarget_world_pos(state.instance, iktarget_index, state.iktarget_pos);
     }
+
+    // update instance animation and bone state
     sspine_update_instance(state.instance, delta_time);
+
+    // draw instance to layer 0
     sspine_draw_instance_in_layer(state.instance, 0);
 
     // keep track of triggered events
@@ -217,8 +224,8 @@ static void input(const sapp_event* ev) {
         return;
     }
     if (ev->type == SAPP_EVENTTYPE_MOUSE_MOVE) {
-        state.ik_target_pos.x = ev->mouse_x - state.layer_transform.origin.x;
-        state.ik_target_pos.y = ev->mouse_y - state.layer_transform.origin.y;
+        state.iktarget_pos.x = ev->mouse_x - state.layer_transform.origin.x;
+        state.iktarget_pos.y = ev->mouse_y - state.layer_transform.origin.y;
     }
 }
 
@@ -324,7 +331,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 // called when both the Spine atlas and skeleton file has finished loading
 static void setup_spine_objects(void) {
     const int scene_index = state.load_status.scene_index;
-    state.ui.last_triggered_event.index = -1;
+    ui_reset();
 
     // create atlas from file data
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
@@ -444,10 +451,15 @@ static void image_data_loaded(const sfetch_response_t* response) {
 static void ui_setup(void) {
     simgui_setup(&(simgui_desc_t){0});
     sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
+    ui_reset();
+}
+
+static void ui_reset(void) {
     state.ui.selected.bone_index = -1;
     state.ui.selected.slot_index = -1;
     state.ui.selected.anim_index = -1;
     state.ui.selected.event_index = -1;
+    state.ui.selected.iktarget_index = -1;
     state.ui.last_triggered_event.index = -1;
 }
 
@@ -498,6 +510,7 @@ static void ui_draw(void) {
             igMenuItem_BoolPtr("Slots...", 0, &state.ui.slots_open, true);
             igMenuItem_BoolPtr("Anims...", 0, &state.ui.anims_open, true);
             igMenuItem_BoolPtr("Events...", 0, &state.ui.events_open, true);
+            igMenuItem_BoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
             igEndMenu();
         }
         if (igBeginMenu("sokol-gfx", true)) {
@@ -705,6 +718,39 @@ static void ui_draw(void) {
                     igText("Audio Path: %s", info.audio_path ? info.audio_path : "NONE");
                     igText("Volume: %.3f", info.volume);
                     igText("Balance: %.3f", info.balance);
+                    igEndChild();
+                }
+            }
+        }
+        igEnd();
+    }
+    if (state.ui.iktargets_open) {
+        igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        if (igBegin("IK Targets", &state.ui.iktargets_open, 0)) {
+            if (!sspine_skeleton_valid(state.skeleton)) {
+                igText("No Spine data loaded");
+            }
+            else {
+                const int num_iktargets = sspine_num_iktargets(state.skeleton);
+                igText("Num IK Targets: %d", num_iktargets);
+                igBeginChild_Str("iktarget_list", IMVEC2(128, 0), true, 0);
+                for (int iktarget_index = 0; iktarget_index < num_iktargets; iktarget_index++) {
+                    assert(sspine_iktarget_index_valid(state.skeleton, iktarget_index));
+                    const sspine_iktarget_info info = sspine_get_iktarget_info(state.skeleton, iktarget_index);
+                    igPushID_Int(iktarget_index);
+                    if (igSelectable_Bool(info.name, state.ui.selected.iktarget_index == iktarget_index, 0, IMVEC2(0,0))) {
+                        state.ui.selected.iktarget_index = iktarget_index;
+                    }
+                    igPopID();
+                }
+                igEndChild();
+                igSameLine(0, -1);
+                if (sspine_iktarget_index_valid(state.skeleton, state.ui.selected.iktarget_index)) {
+                    const sspine_iktarget_info info = sspine_get_iktarget_info(state.skeleton, state.ui.selected.iktarget_index);
+                    igBeginChild_Str("iktarget_info", IMVEC2(0,0), false, 0);
+                    igText("Index: %d", info.index);
+                    igText("Name: %s", info.name);
+                    igText("Target Bone Index: %d", info.target_bone_index);
                     igEndChild();
                 }
             }
