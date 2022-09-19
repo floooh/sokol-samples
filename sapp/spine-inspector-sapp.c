@@ -10,14 +10,16 @@
 #define SOKOL_SPINE_IMPL
 #include "spine/spine.h"
 #include "sokol_spine.h"
-#include "stb/stb_image.h"
-#include "dbgui/dbgui.h"
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_GFX_IMGUI_IMPL
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
+#include "stb/stb_image.h"
+#include "dbgui/dbgui.h"
 
 #define MAX_TRIGGERED_EVENTS (16)
 
@@ -43,6 +45,7 @@ static struct {
     } buffers;
     struct {
         sg_imgui_t sgimgui;
+        bool draw_bones_enabled;
         bool atlas_open;
         bool bones_open;
         bool slots_open;
@@ -137,6 +140,7 @@ static void setup_spine_objects();
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
+static void draw_bones(void);
 static void ui_setup(void);
 static void ui_reset(void);
 static void ui_shutdown(void);
@@ -145,8 +149,8 @@ static void ui_draw(void);
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-    // setup UI libs
-    ui_setup();
+    // setup sokol-gl
+    sgl_setup(&(sgl_desc_t){0});
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
@@ -155,6 +159,8 @@ static void init(void) {
     });
     // setup sokol-spine with default attributes
     sspine_setup(&(sspine_desc){0});
+    // setup UI libs
+    ui_setup();
     // start loading Spine atlas and skeleton file asynchronously
     load_spine_scene(0);
 }
@@ -197,6 +203,11 @@ static void frame(void) {
         state.ui.last_triggered_event.index = sspine_get_triggered_event_info(state.instance, i).event_index;
     }
 
+    // draw spine bones via sokol-gl
+    if (state.ui.draw_bones_enabled) {
+        draw_bones();
+    }
+
     ui_draw();
 
     // when loading has failed, change the clear color to red
@@ -216,6 +227,7 @@ static void frame(void) {
     // NOTE: using the display width/height here means the Spine rendering
     // is mapped to pixels and doesn't scale with window size
     sspine_draw_layer(0, &state.layer_transform);
+    sgl_draw();
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -232,9 +244,10 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    ui_shutdown();
     sspine_shutdown();
     sfetch_shutdown();
-    ui_shutdown();
+    sgl_shutdown();
     sg_shutdown();
 }
 
@@ -510,6 +523,7 @@ static void ui_draw(void) {
                 }
                 igEndMenu();
             }
+            igMenuItem_BoolPtr("Draw Bones", 0, &state.ui.draw_bones_enabled, true);
             igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
             igMenuItem_BoolPtr("Bones...", 0, &state.ui.bones_open, true);
             igMenuItem_BoolPtr("Slots...", 0, &state.ui.slots_open, true);
@@ -830,6 +844,29 @@ static void ui_draw(void) {
     sg_imgui_draw(&state.ui.sgimgui);
 }
 
+static void draw_bones(void) {
+    if (!sspine_instance_valid(state.instance)) {
+        return;
+    }
+    const sspine_mat4 proj = sspine_layer_transform_to_mat4(&state.layer_transform);
+    sgl_defaults();
+    sgl_matrix_mode_projection();
+    sgl_load_matrix(proj.m);
+    sgl_c3f(0.0f, 1.0f, 0.0f);
+    sgl_begin_lines();
+    const int num_bones = sspine_num_bones(state.skeleton);
+    for (int bone_index = 0; bone_index < num_bones; bone_index++) {
+        const int parent_bone_index = sspine_get_bone_info(state.skeleton, bone_index).parent_index;
+        if (parent_bone_index != -1) {
+            const sspine_vec2 p0 = sspine_get_bone_world_position(state.instance, parent_bone_index);
+            const sspine_vec2 p1 = sspine_get_bone_world_position(state.instance, bone_index);
+            sgl_v2f(p0.x, p0.y);
+            sgl_v2f(p1.x, p1.y);
+        }
+    }
+    sgl_end();
+}
+
 sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     return (sapp_desc){
@@ -839,6 +876,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
+        .sample_count = 4,
         .window_title = "spine-inspector-sapp.c",
         .icon.sokol_default = true,
     };
