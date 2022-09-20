@@ -1,3 +1,8 @@
+# special case Linux: EGL window system glue with desktop GL 3D backend
+if (SOKOL_USE_EGL_GL)
+    add_definitions(-DSOKOL_FORCE_EGL)
+endif()
+
 # a dummy library with the system library dependencies
 macro(sokol_system_deps)
     if (FIPS_OSX)
@@ -19,7 +24,11 @@ macro(sokol_system_deps)
         if (FIPS_ANDROID)
             fips_libs(GLESv3 EGL OpenSLES log android)
         elseif (FIPS_LINUX)
-            fips_libs(X11 Xi Xcursor GL m dl asound)
+            if (SOKOL_USE_EGL_GLES3 OR SOKOL_USE_EGL_GL)
+                fips_libs(X11 Xi Xcursor EGL GL m dl asound)
+            else()
+                fips_libs(X11 Xi Xcursor GL m dl asound)
+            endif()
         endif()
     endif()
 endmacro()
