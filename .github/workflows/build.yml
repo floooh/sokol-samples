@@ -62,7 +62,7 @@ jobs:
         - name: prepare
           run:  |
             sudo apt-get update
-            sudo apt-get install libglu1-mesa-dev mesa-common-dev xorg-dev libasound-dev
+            sudo apt-get install libgl1-mesa-dev libegl1-mesa-dev mesa-common-dev xorg-dev libasound-dev
             cmake --version
         - name: linux-make-debug
           run:  python3 fips build linux-make-debug
