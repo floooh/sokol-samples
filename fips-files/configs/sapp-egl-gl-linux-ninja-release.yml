@@ -1,0 +1,8 @@
+---
+platform: linux 
+generator: Ninja
+build_tool: ninja
+build_type: Release
+defines:
+    USE_SOKOL_APP: ON
+    SOKOL_USE_EGL_GL: ON

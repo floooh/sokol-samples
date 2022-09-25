@@ -72,6 +72,14 @@ jobs:
           run:  python3 fips build sapp-linux-make-debug
         - name: sapp-linux-make-release
           run:  python3 fips build sapp-linux-make-release
+        - name: sapp-egl-gl-linux-make-debug
+          run:  python3 fips build sapp-linux-make-debug
+        - name: sapp-egl-gl-linux-make-release
+          run:  python3 fips build sapp-linux-make-release
+        - name: sapp-egl-gles3-linux-make-debug
+          run:  python3 fips build sapp-linux-make-debug
+        - name: sapp-egl-gles3-linux-make-release
+          run:  python3 fips build sapp-linux-make-release
     emscripten:
         runs-on: ubuntu-latest
         steps:
