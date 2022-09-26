@@ -39,11 +39,6 @@ static struct {
         bool skel_data_is_binary;
     } load_status;
     struct {
-        uint8_t atlas[8 * 1024];
-        uint8_t skeleton[256 * 1024];
-        uint8_t image[512 * 1024];
-    } buffers;
-    struct {
         sg_imgui_t sgimgui;
         bool draw_bones_enabled;
         bool atlas_open;
@@ -67,10 +62,15 @@ static struct {
             int index;
         } last_triggered_event;
     } ui;
+    struct {
+        uint8_t atlas[8 * 1024];
+        uint8_t skeleton[512 * 1024];
+        uint8_t image[512 * 1024];
+    } buffers;
 } state;
 
 // describe Spine scenes available for loading
-#define MAX_SPINE_SCENES (4)
+#define MAX_SPINE_SCENES (5)
 #define MAX_QUEUE_ANIMS (4)
 typedef struct {
     const char* name;
@@ -131,6 +131,11 @@ scene_t spine_scenes[MAX_SPINE_SCENES] = {
         .anim_queue = {
             { .name = "run", .looping = true }
         },
+    },
+    {
+        .ui_name = "Mix & Match",
+        .atlas_file = "mix-and-match-pma.atlas",
+        .skel_file_binary = "mix-and-match-pro.skel",
     },
 };
 
