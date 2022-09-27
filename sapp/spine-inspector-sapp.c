@@ -82,6 +82,7 @@ typedef struct {
     const char* atlas_file;
     const char* skel_file_json;     // skeleton files are either json or binary
     const char* skel_file_binary;
+    const char* skin;
     float prescale;
     sspine_atlas_overrides atlas_overrides;
     anim_t anim_queue[MAX_QUEUE_ANIMS];
@@ -136,6 +137,9 @@ scene_t spine_scenes[MAX_SPINE_SCENES] = {
         .ui_name = "Mix & Match",
         .atlas_file = "mix-and-match-pma.atlas",
         .skel_file_binary = "mix-and-match-pro.skel",
+        .skin = "full-skins/girl",
+        .prescale = 0.5f,
+        .anim_queue[0] = { .name = "walk", .looping = true },
     },
 };
 
@@ -390,6 +394,11 @@ static void setup_spine_objects(void) {
         .skeleton = state.skeleton,
     });
     assert(sspine_instance_valid(state.instance));
+
+    // set initial skin if requested
+    if (spine_scenes[scene_index].skin) {
+        sspine_set_skin(state.instance, sspine_find_skin_index(state.skeleton, spine_scenes[scene_index].skin));
+    }
 
     // populate animation queue
     assert((scene_index >= 0) && (scene_index < MAX_SPINE_SCENES));
@@ -776,6 +785,7 @@ static void ui_draw(void) {
                     igPushID_Int(skin_index);
                     if (igSelectable_Bool(info.name, state.ui.selected.skin_index == skin_index, 0, IMVEC2(0,0))) {
                         state.ui.selected.skin_index = skin_index;
+                        sspine_set_skin(state.instance, skin_index);
                     }
                     igPopID();
                 }
