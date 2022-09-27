@@ -572,8 +572,11 @@ static void ui_draw(void) {
         }
         igEndMainMenuBar();
     }
+
+    ImVec2 pos = IMVEC2(30, 30);
     if (state.ui.atlas_open) {
         igSetNextWindowSize(IMVEC2(300, 330), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
             if (!sspine_atlas_valid(state.atlas)) {
                 igText("No Spine data loaded.");
@@ -606,8 +609,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.bones_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Bones", &state.ui.bones_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
@@ -653,8 +658,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.slots_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Slots", &state.ui.slots_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
@@ -692,8 +699,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.anims_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Anims", &state.ui.anims_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
@@ -728,8 +737,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.events_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Events", &state.ui.events_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
@@ -768,8 +779,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.skins_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("Skins", &state.ui.skins_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
@@ -803,8 +816,10 @@ static void ui_draw(void) {
         }
         igEnd();
     }
+    pos.x += 20; pos.y += 20;
     if (state.ui.iktargets_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
+        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
         if (igBegin("IK Targets", &state.ui.iktargets_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
