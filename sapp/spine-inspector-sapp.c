@@ -145,7 +145,7 @@ scene_t spine_scenes[MAX_SPINE_SCENES] = {
 
 // helper functions
 static bool load_spine_scene(int scene_index);
-static void setup_spine_objects();
+static void create_spine_objects(void);
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
 static void image_data_loaded(const sfetch_response_t* response);
@@ -322,7 +322,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
         if (state.load_status.pending_count == 0) {
-            setup_spine_objects();
+            create_spine_objects();
         }
     }
     else if (response->failed) {
@@ -344,7 +344,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
         if (state.load_status.pending_count == 0) {
-            setup_spine_objects();
+            create_spine_objects();
         }
     }
     else if (response->failed) {
@@ -353,7 +353,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 }
 
 // called when both the Spine atlas and skeleton file has finished loading
-static void setup_spine_objects(void) {
+static void create_spine_objects(void) {
     const int scene_index = state.load_status.scene_index;
     ui_reset();
 
@@ -440,9 +440,9 @@ static void image_data_loaded(const sfetch_response_t* response) {
         assert(state.load_status.pending_count > 0);
         state.load_status.pending_count--;
     }
+    const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
+    assert(img_info->valid);
     if (response->fetched) {
-        const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
-        assert(img_info->valid);
         // decode image via stb_image.h
         const int desired_channels = 4;
         int img_width, img_height, num_channels;
@@ -475,6 +475,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
     }
     else if (response->failed) {
         state.load_status.failed = true;
+        sg_fail_image(img_info->image);
     }
 }
 
