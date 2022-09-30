@@ -13,8 +13,9 @@
 #include "util/fileutil.h"
 #include "dbgui/dbgui.h"
 
-#define NUM_INSTANCES_PER_SIDE (4)
+#define NUM_INSTANCES_PER_SIDE (8)
 #define NUM_INSTANCES (NUM_INSTANCES_PER_SIDE * NUM_INSTANCES_PER_SIDE)
+#define NUM_SKINS (8)
 
 typedef struct {
     bool loaded;
@@ -37,6 +38,78 @@ static struct {
         uint8_t image[512 * 1024];
     } buffers;
 } state;
+
+// unique skins to be combined into skin sets
+const char* accessories[NUM_SKINS] = {
+    "accessories/backpack",
+    "accessories/bag",
+    "accessories/cape-blue",
+    "accessories/cape-red",
+    "accessories/hat-pointy-blue-yellow",
+    "accessories/hat-red-yellow",
+    "accessories/scarf",
+    "accessories/backpack",
+};
+const char* clothes[NUM_SKINS] = {
+    "clothes/dress-blue",
+    "clothes/dress-green",
+    "clothes/hoodie-blue-and-scarf",
+    "clothes/hoodie-orange",
+    "clothes/dress-blue",
+    "clothes/dress-green",
+    "clothes/hoodie-blue-and-scarf",
+    "clothes/hoodie-orange"
+};
+const char* eyelids[NUM_SKINS] = {
+    "eyelids/girly",
+    "eyelids/semiclosed",
+    "eyelids/girly",
+    "eyelids/semiclosed",
+    "eyelids/girly",
+    "eyelids/semiclosed",
+    "eyelids/girly",
+    "eyelids/semiclosed",
+};
+const char* eyes[NUM_SKINS] = {
+    "eyes/eyes-blue",
+    "eyes/green",
+    "eyes/violet",
+    "eyes/yellow",
+    "eyes/eyes-blue",
+    "eyes/green",
+    "eyes/violet",
+    "eyes/yellow",
+};
+const char* hair[NUM_SKINS] = {
+    "hair/blue",
+    "hair/brown",
+    "hair/long-blue-with-scarf",
+    "hair/pink",
+    "hair/short-red",
+    "hair/blue",
+    "hair/brown",
+    "hair/long-blue-with-scarf",
+};
+const char* legs[NUM_SKINS] = {
+    "legs/boots-pink",
+    "legs/boots-red",
+    "legs/pants-green",
+    "legs/pants-jeans",
+    "legs/boots-pink",
+    "legs/boots-red",
+    "legs/pants-green",
+    "legs/pants-jeans"
+};
+const char* nose[NUM_SKINS] = {
+    "nose/long",
+    "nose/short",
+    "nose/long",
+    "nose/short",
+    "nose/long",
+    "nose/short",
+    "nose/long",
+    "nose/short",
+};
 
 static void atlas_data_loaded(const sfetch_response_t* response);
 static void skeleton_data_loaded(const sfetch_response_t* response);
@@ -97,8 +170,13 @@ static void frame(void) {
     sfetch_dowork();
     sspine_new_frame();
 
-    sspine_update_instance(state.instances[0], delta_time);
-    sspine_draw_instance_in_layer(state.instances[0], 0);
+static size_t instance_index = 0;
+if ((sapp_frame_count() & 127) == 0) {
+    instance_index = (instance_index + 1) % NUM_INSTANCES;
+}
+
+    sspine_update_instance(state.instances[instance_index], delta_time);
+    sspine_draw_instance_in_layer(state.instances[instance_index], 0);
 
     sg_begin_default_passf(&state.pass_action, width, height);
     sspine_draw_layer(0, &layer_transform);
@@ -188,6 +266,15 @@ static void image_data_loaded(const sfetch_response_t* response) {
     }
 }
 
+// returns a xorshift32 random number between 0..<NUM_SKINS
+static uint32_t random_skin_index(void) {
+    static uint32_t x = 0x87654321;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return (x % NUM_SKINS);
+}
+
 // called when both the atlas and skeleton file have been loaded
 static void create_spine_objects(void) {
     
@@ -223,8 +310,6 @@ static void create_spine_objects(void) {
         });
     }
 
-    // FIXME: create random skin sets
-
     // create many instances
     for (int i = 0; i < NUM_INSTANCES; i++) {
         state.instances[i] = sspine_make_instance(&(sspine_instance_desc){
@@ -233,8 +318,22 @@ static void create_spine_objects(void) {
         assert(sspine_instance_valid(state.instances[i]));
         sspine_set_animation_by_name(state.instances[i], 0, "walk", true);
 
-        // FIXME: set skinset instead
-        sspine_set_skin(state.instances[i], sspine_find_skin_index(state.skeleton, "full-skins/girl"));
+        // create a skin set
+        sspine_skinset skinset = sspine_make_skinset(&(sspine_skinset_desc){
+            .skeleton = state.skeleton,
+            .skins = {
+                "skin-base",
+                accessories[random_skin_index()],
+                clothes[random_skin_index()],
+                eyelids[random_skin_index()],
+                eyes[random_skin_index()],
+                hair[random_skin_index()],
+                legs[random_skin_index()],
+                nose[random_skin_index()]
+            }
+        });
+        assert(sspine_skinset_valid(skinset));
+        sspine_set_skinset(state.instances[i], skinset);
     }
 }
 
