@@ -3,9 +3,12 @@
 //  Test/demonstrate skinset usage and draw call merging.
 //------------------------------------------------------------------------------
 #define SOKOL_SPINE_IMPL
+#define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_debugtext.h"
+#include "sokol_time.h"
 #include "sokol_glue.h"
 #include "spine/spine.h"
 #include "sokol_spine.h"
@@ -13,8 +16,9 @@
 #include "util/fileutil.h"
 #include "dbgui/dbgui.h"
 
-#define NUM_INSTANCES_PER_SIDE (8)
-#define NUM_INSTANCES (NUM_INSTANCES_PER_SIDE * NUM_INSTANCES_PER_SIDE)
+#define NUM_INSTANCES_X (20)
+#define NUM_INSTANCES_Y (7)
+#define NUM_INSTANCES (NUM_INSTANCES_X * NUM_INSTANCES_Y)
 #define NUM_SKINS (8)
 
 typedef struct {
@@ -22,11 +26,17 @@ typedef struct {
     sspine_range data;
 } load_status_t;
 
+typedef struct {
+    sspine_vec2 pos;
+    sspine_vec2 vec;
+} cell_t;
+
 static struct {
     sspine_atlas atlas;
     sspine_skeleton skeleton;
     sspine_instance instances[NUM_INSTANCES];
     sg_pass_action pass_action;
+    cell_t grid[NUM_INSTANCES];
     struct {        
         load_status_t atlas;
         load_status_t skeleton;
@@ -117,11 +127,16 @@ static void image_data_loaded(const sfetch_response_t* response);
 static void create_spine_objects(void);
 
 static void init(void) {
+    stm_setup();
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     __dbgui_setup(sapp_sample_count());
+    sdtx_setup(&(sdtx_desc_t){
+        .fonts[0] = sdtx_font_oric()
+    });
     sspine_setup(&(sspine_desc){
         .skinset_pool_size = NUM_INSTANCES,
         .instance_pool_size = NUM_INSTANCES,
+        .max_vertices = 256 * 1024,
     });
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
@@ -143,6 +158,7 @@ static void init(void) {
         .buffer_size = sizeof(state.buffers.atlas),
         .callback = atlas_data_loaded,
     });
+
     // start loading spine skeleton file in parallel
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("mix-and-match-pro.skel", path_buf, sizeof(path_buf)),
@@ -151,35 +167,58 @@ static void init(void) {
         .buffer_size = sizeof(state.buffers.skeleton),
         .callback = skeleton_data_loaded,
     });
+
+    // initialize the entity position grid
+    const float dx = 64.0f;
+    const float dy = 96.0f;
+    float y = -dy * (NUM_INSTANCES_Y/2) + dy * 0.5f;
+    for (int iy = 0; iy < NUM_INSTANCES_Y; iy++) {
+        float x = -dx * (NUM_INSTANCES_X/2) + dx * 0.5f;
+        for (int ix = 0; ix < NUM_INSTANCES_X; ix++) {
+            state.grid[iy * NUM_INSTANCES_X + ix].pos = (sspine_vec2){ x, y };
+            x += dx;
+        }
+        y += dy;
+    }
 }
 
 static void frame(void) {
     const double delta_time = sapp_frame_duration();
     const float width = sapp_widthf();
     const float height = sapp_heightf();
-    const float aspect = height / width;
+    const float aspect = width / height;
 
     // use a fixed 'virtual resolution' for the spine rendering, but keep the same
     // aspect as the window/display
-    const sspine_vec2 virt_size = { 1024.0f, 1024.0f * aspect };
+    const sspine_vec2 virt_size = { 1024.0f * aspect, 1024.0f };
     const sspine_layer_transform layer_transform = {
         .size = virt_size,
         .origin = { .x = virt_size.x * 0.5f, .y = virt_size.y * 0.5f }
     };
 
     sfetch_dowork();
+
+    uint64_t start_time = stm_now();
     sspine_new_frame();
+    for (int i = 0; i < NUM_INSTANCES; i++) {
+        sspine_set_position(state.instances[i], state.grid[i].pos);
+        sspine_update_instance(state.instances[i], delta_time);
+        sspine_draw_instance_in_layer(state.instances[i], 0);
+    }
+    double eval_time = stm_ms(stm_since(start_time));
 
-static size_t instance_index = 0;
-if ((sapp_frame_count() & 127) == 0) {
-    instance_index = (instance_index + 1) % NUM_INSTANCES;
-}
+    sspine_context_info ctx_info = sspine_get_context_info(sspine_default_context());
 
-    sspine_update_instance(state.instances[instance_index], delta_time);
-    sspine_draw_instance_in_layer(state.instances[instance_index], 0);
+    sdtx_canvas(sapp_widthf() * 0.25f, sapp_height() * 0.25f);
+    sdtx_origin(2.0f, 2.0f);
+    sdtx_home();
+    sdtx_color3b(0, 0, 0);
+    sdtx_printf("spine eval time:%.3fms\n", eval_time); sdtx_move_y(0.5f);
+    sdtx_printf("vertices:%d indices:%d draws:%d", ctx_info.num_vertices, ctx_info.num_indices, ctx_info.num_commands);
 
     sg_begin_default_passf(&state.pass_action, width, height);
     sspine_draw_layer(0, &layer_transform);
+    sdtx_draw();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -189,6 +228,7 @@ static void cleanup(void) {
     sfetch_shutdown();
     sspine_shutdown();
     __dbgui_shutdown();
+    sdtx_shutdown();
     sg_shutdown();
 }
 
@@ -272,7 +312,7 @@ static uint32_t random_skin_index(void) {
     x ^= x<<13;
     x ^= x>>17;
     x ^= x<<5;
-    return (x % NUM_SKINS);
+    return (x & (NUM_SKINS-1));
 }
 
 // called when both the atlas and skeleton file have been loaded
@@ -287,7 +327,7 @@ static void create_spine_objects(void) {
     // create spine skeleton object
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
-        .prescale = 0.25f,
+        .prescale = 0.15f,
         .anim_default_mix = 0.2f,
         .binary_data = state.load_status.skeleton.data,
     });
@@ -311,12 +351,13 @@ static void create_spine_objects(void) {
     }
 
     // create many instances
+    double initial_time = 0.0;
     for (int i = 0; i < NUM_INSTANCES; i++) {
         state.instances[i] = sspine_make_instance(&(sspine_instance_desc){
             .skeleton = state.skeleton,
         });
         assert(sspine_instance_valid(state.instances[i]));
-        sspine_set_animation_by_name(state.instances[i], 0, "walk", true);
+        sspine_set_animation_by_name(state.instances[i], 0, (i & 1) ? "walk" : "dance", true);
 
         // create a skin set
         sspine_skinset skinset = sspine_make_skinset(&(sspine_skinset_desc){
@@ -334,6 +375,8 @@ static void create_spine_objects(void) {
         });
         assert(sspine_skinset_valid(skinset));
         sspine_set_skinset(state.instances[i], skinset);
+        sspine_update_instance(state.instances[i], initial_time);
+        initial_time += 0.1;
     }
 }
 
@@ -346,6 +389,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
+        .high_dpi = true,
         .window_title = "spine-skinsets-sapp.c",
         .icon.sokol_default = true,
     };
