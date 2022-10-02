@@ -17,9 +17,14 @@
 #include "dbgui/dbgui.h"
 
 #define NUM_INSTANCES_X (20)
-#define NUM_INSTANCES_Y (7)
+#define NUM_INSTANCES_Y (8)
 #define NUM_INSTANCES (NUM_INSTANCES_X * NUM_INSTANCES_Y)
 #define NUM_SKINS (8)
+#define PRESCALE (0.15f)
+#define GRID_DX (64.0f)
+#define GRID_DY (96.0f)
+
+typedef sspine_vec2 vec2;
 
 typedef struct {
     bool loaded;
@@ -27,16 +32,18 @@ typedef struct {
 } load_status_t;
 
 typedef struct {
-    sspine_vec2 pos;
-    sspine_vec2 vec;
-} cell_t;
+    vec2 pos;
+    vec2 vec;
+} grid_cell_t;
 
 static struct {
     sspine_atlas atlas;
     sspine_skeleton skeleton;
     sspine_instance instances[NUM_INSTANCES];
     sg_pass_action pass_action;
-    cell_t grid[NUM_INSTANCES];
+    float t;       // time interval 0..1
+    uint32_t t_count;   // bumped each time t goes over 1
+    grid_cell_t grid[NUM_INSTANCES];
     struct {        
         load_status_t atlas;
         load_status_t skeleton;
@@ -127,22 +134,27 @@ static void image_data_loaded(const sfetch_response_t* response);
 static void create_spine_objects(void);
 
 static void init(void) {
+    // setup sokol-time
     stm_setup();
+    // setup sokol-gfx
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-    __dbgui_setup(sapp_sample_count());
+    // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric()
     });
+    // setup sokol-spine
     sspine_setup(&(sspine_desc){
         .skinset_pool_size = NUM_INSTANCES,
         .instance_pool_size = NUM_INSTANCES,
         .max_vertices = 256 * 1024,
     });
+    // setup sokol-fetch
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
         .num_channels = 2,
         .num_lanes = 1,
     });
+    __dbgui_setup(sapp_sample_count());
 
     // pass action to clear to blue-ish
     state.pass_action = (sg_pass_action){
@@ -159,7 +171,7 @@ static void init(void) {
         .callback = atlas_data_loaded,
     });
 
-    // start loading spine skeleton file in parallel
+    // start loading spine skeleton file
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("mix-and-match-pro.skel", path_buf, sizeof(path_buf)),
         .channel = 1,
@@ -168,17 +180,25 @@ static void init(void) {
         .callback = skeleton_data_loaded,
     });
 
-    // initialize the entity position grid
-    const float dx = 64.0f;
-    const float dy = 96.0f;
-    float y = -dy * (NUM_INSTANCES_Y/2) + dy * 0.5f;
+    // setup position- and motion-vector-grid
+    const float dx = GRID_DX;
+    const float dy = GRID_DY;
+    float y = -dy * (NUM_INSTANCES_Y/2) + dy;
     for (int iy = 0; iy < NUM_INSTANCES_Y; iy++) {
         float x = -dx * (NUM_INSTANCES_X/2) + dx * 0.5f;
         for (int ix = 0; ix < NUM_INSTANCES_X; ix++) {
-            state.grid[iy * NUM_INSTANCES_X + ix].pos = (sspine_vec2){ x, y };
-            x += dx;
+            grid_cell_t* cell = &state.grid[iy * NUM_INSTANCES_X + ix];
+            if ((iy & 1) == 0) {
+                cell->pos = (vec2){ x + ix*dx, y + iy*dy };
+                if (ix == (NUM_INSTANCES_X - 1)) { cell->vec = (vec2){ 0.0f, 1.0f }; }
+                else                             { cell->vec = (vec2){ 1.0f, 0.0f }; }
+            }
+            else {
+                cell->pos = (vec2){ x + (NUM_INSTANCES_X-1-ix)*dx, y + iy*dy };
+                if (ix == (NUM_INSTANCES_X - 1)) { cell->vec = (vec2){ 0.0f, 1.0f }; }
+                else                             { cell->vec = (vec2){ -1.0f, 0.0f }; }
+            }
         }
-        y += dy;
     }
 }
 
@@ -187,28 +207,40 @@ static void frame(void) {
     const float width = sapp_widthf();
     const float height = sapp_heightf();
     const float aspect = width / height;
+    state.t += (float)delta_time;
+    if (state.t > 1.0f) {
+        state.t_count++;
+        state.t -= 1.0f;
+    }
+    sfetch_dowork();
 
     // use a fixed 'virtual resolution' for the spine rendering, but keep the same
     // aspect as the window/display
-    const sspine_vec2 virt_size = { 1024.0f * aspect, 1024.0f };
+    const vec2 virt_size = { 1024.0f * aspect, 1024.0f };
     const sspine_layer_transform layer_transform = {
         .size = virt_size,
         .origin = { .x = virt_size.x * 0.5f, .y = virt_size.y * 0.5f }
     };
 
-    sfetch_dowork();
-
+    // update and draw Spine objects
     uint64_t start_time = stm_now();
     sspine_new_frame();
-    for (int i = 0; i < NUM_INSTANCES; i++) {
-        sspine_set_position(state.instances[i], state.grid[i].pos);
+    for (uint32_t i = 0; i < NUM_INSTANCES; i++) {
+        const uint32_t grid_index = (i + state.t_count) % NUM_INSTANCES;
+        const vec2 pos = state.grid[grid_index].pos;
+        const vec2 vec = state.grid[grid_index].vec;
+        vec2 p = {
+            .x = pos.x + vec.x * GRID_DX * state.t,
+            .y = pos.y + vec.y * GRID_DY * state.t,
+        };
+        sspine_set_position(state.instances[i], p);
         sspine_update_instance(state.instances[i], delta_time);
         sspine_draw_instance_in_layer(state.instances[i], 0);
     }
     double eval_time = stm_ms(stm_since(start_time));
 
+    // debug text
     sspine_context_info ctx_info = sspine_get_context_info(sspine_default_context());
-
     sdtx_canvas(sapp_widthf() * 0.25f, sapp_height() * 0.25f);
     sdtx_origin(2.0f, 2.0f);
     sdtx_home();
@@ -216,6 +248,7 @@ static void frame(void) {
     sdtx_printf("spine eval time:%.3fms\n", eval_time); sdtx_move_y(0.5f);
     sdtx_printf("vertices:%d indices:%d draws:%d", ctx_info.num_vertices, ctx_info.num_indices, ctx_info.num_commands);
 
+    // actual sokol-gfx render pass
     sg_begin_default_passf(&state.pass_action, width, height);
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
@@ -239,6 +272,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
             .loaded = true,
             .data = (sspine_range) { .ptr = response->buffer_ptr, .size = response->fetched_size },
         };
+        // when both atlas and skeleton file have finished loading, create spine objects
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
@@ -255,6 +289,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
             .loaded = true,
             .data = (sspine_range) { .ptr = response->buffer_ptr, .size = response->fetched_size },
         };
+        // when both atlas and skeleton file have finished loading, create spine objects
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
@@ -269,7 +304,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
     const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
     assert(img_info->valid);
     if (response->fetched) {
-        // decode image via stb_image.h
+        // decode pixels via stb_image.h
         const int desired_channels = 4;
         int img_width, img_height, num_channels;
         stbi_uc* pixels = stbi_load_from_memory(
@@ -315,7 +350,9 @@ static uint32_t random_skin_index(void) {
     return (x & (NUM_SKINS-1));
 }
 
-// called when both the atlas and skeleton file have been loaded
+// called when both the atlas and skeleton files have been loaded,
+// creates an sspine_atlas and sspine_skeleton object, starts loading
+// the atlas texture(s) and finally creates and sets up spine instances
 static void create_spine_objects(void) {
     
     // create spine atlas object
@@ -327,7 +364,7 @@ static void create_spine_objects(void) {
     // create spine skeleton object
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
-        .prescale = 0.15f,
+        .prescale = PRESCALE,
         .anim_default_mix = 0.2f,
         .binary_data = state.load_status.skeleton.data,
     });
