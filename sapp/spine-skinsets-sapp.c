@@ -16,7 +16,7 @@
 #include "util/fileutil.h"
 #include "dbgui/dbgui.h"
 
-#define NUM_INSTANCES_X (20)
+#define NUM_INSTANCES_X (16)
 #define NUM_INSTANCES_Y (8)
 #define NUM_INSTANCES (NUM_INSTANCES_X * NUM_INSTANCES_Y)
 #define NUM_SKINS (8)
@@ -44,13 +44,13 @@ static struct {
     float t;       // time interval 0..1
     uint32_t t_count;   // bumped each time t goes over 1
     grid_cell_t grid[NUM_INSTANCES];
-    struct {        
+    struct {
         load_status_t atlas;
         load_status_t skeleton;
         bool failed;
     } load_status;
     struct {
-        uint8_t atlas[8 * 1024];
+        uint8_t atlas[16 * 1024];
         uint8_t skeleton[300 * 1024];
         uint8_t image[512 * 1024];
     } buffers;
@@ -234,7 +234,7 @@ static void frame(void) {
             .y = pos.y + vec.y * GRID_DY * state.t,
         };
         sspine_set_position(state.instances[i], p);
-        sspine_update_instance(state.instances[i], delta_time);
+        sspine_update_instance(state.instances[i], (float)delta_time);
         sspine_draw_instance_in_layer(state.instances[i], 0);
     }
     double eval_time = stm_ms(stm_since(start_time));
@@ -354,7 +354,7 @@ static uint32_t random_skin_index(void) {
 // creates an sspine_atlas and sspine_skeleton object, starts loading
 // the atlas texture(s) and finally creates and sets up spine instances
 static void create_spine_objects(void) {
-    
+
     // create spine atlas object
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
         .data = state.load_status.atlas.data
@@ -388,7 +388,7 @@ static void create_spine_objects(void) {
     }
 
     // create many instances
-    double initial_time = 0.0;
+    float initial_time = 0.0f;
     for (int i = 0; i < NUM_INSTANCES; i++) {
         state.instances[i] = sspine_make_instance(&(sspine_instance_desc){
             .skeleton = state.skeleton,
@@ -413,7 +413,7 @@ static void create_spine_objects(void) {
         assert(sspine_skinset_valid(skinset));
         sspine_set_skinset(state.instances[i], skinset);
         sspine_update_instance(state.instances[i], initial_time);
-        initial_time += 0.1;
+        initial_time += 0.1f;
     }
 }
 

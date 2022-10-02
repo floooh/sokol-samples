@@ -63,7 +63,7 @@ static struct {
         } last_triggered_event;
     } ui;
     struct {
-        uint8_t atlas[8 * 1024];
+        uint8_t atlas[16 * 1024];
         uint8_t skeleton[512 * 1024];
         uint8_t image[512 * 1024];
     } buffers;
@@ -200,7 +200,7 @@ static void frame(void) {
     }
 
     // update instance animation and bone state
-    sspine_update_instance(state.instance, delta_time);
+    sspine_update_instance(state.instance, (float)delta_time);
 
     // draw instance to layer 0
     sspine_draw_instance_in_layer(state.instance, 0);
@@ -861,7 +861,7 @@ static void ui_draw(void) {
         const sspine_event_info event_info = sspine_get_event_info(state.skeleton, event_index);
         const double event_time = state.ui.last_triggered_event.time;
         if (event_info.valid) {
-            const float alpha = 1.0 - ((state.ui.cur_time - event_time) / triggered_event_fade_time);
+            const float alpha = (float) (1.0 - ((state.ui.cur_time - event_time) / triggered_event_fade_time));
             igSetNextWindowBgAlpha(alpha);
             igSetNextWindowPos(IMVEC2(sapp_widthf() * 0.5f, sapp_heightf() - 50.0f), ImGuiCond_Always, IMVEC2(0.5f,0.5f));
             igPushStyleColor_U32(ImGuiCol_WindowBg, 0xFF0000FF);
