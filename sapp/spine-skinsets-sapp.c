@@ -394,20 +394,21 @@ static void create_spine_objects(void) {
             .skeleton = state.skeleton,
         });
         assert(sspine_instance_valid(state.instances[i]));
-        sspine_set_animation_by_name(state.instances[i], 0, (i & 1) ? "walk" : "dance", true);
+        const char* anim_name = (i & 1) ? "walk" : "dance";
+        sspine_set_animation(state.instances[i], sspine_anim_by_name(state.skeleton, anim_name), 0, true);
 
         // create a skin set
         sspine_skinset skinset = sspine_make_skinset(&(sspine_skinset_desc){
             .skeleton = state.skeleton,
             .skins = {
-                "skin-base",
-                accessories[random_skin_index()],
-                clothes[random_skin_index()],
-                eyelids[random_skin_index()],
-                eyes[random_skin_index()],
-                hair[random_skin_index()],
-                legs[random_skin_index()],
-                nose[random_skin_index()]
+                sspine_skin_by_name(state.skeleton, "skin-base"),
+                sspine_skin_by_name(state.skeleton, accessories[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, clothes[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, eyelids[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, eyes[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, hair[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, legs[random_skin_index()]),
+                sspine_skin_by_name(state.skeleton, nose[random_skin_index()])
             }
         });
         assert(sspine_skinset_valid(skinset));
