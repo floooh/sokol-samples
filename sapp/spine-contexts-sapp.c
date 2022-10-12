@@ -4,18 +4,64 @@
 //  via sokol_spine.h contexts.
 //------------------------------------------------------------------------------
 #define SOKOL_SPINE_IMPL
+#define SOKOL_GL_IMPL
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
 #include "spine/spine.h"
 #include "sokol_spine.h"
+#include "sokol_gl.h"
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
 #include "util/fileutil.h"
 #include "dbgui/dbgui.h"
 
+typedef struct {
+    sspine_context ctx;
+    sg_image img;
+    sg_pass pass;
+    sg_pass_action pass_action;
+} offscreen_t;
+
+typedef struct {
+    bool loaded;
+    sspine_range data;
+} load_status_t;
+
+static struct {
+    offscreen_t offscreen[2];
+    sspine_atlas atlas;
+    sspine_skeleton skeleton;
+    sspine_instance instances[2];
+    sspine_layer_transform layer_transform;
+    struct {
+        load_status_t atlas;
+        load_status_t skeleton;
+        bool failed;
+    } load_status;
+    struct {
+        uint8_t atlas[16 * 1024];
+        uint8_t skeleton[512 * 1024];
+        uint8_t image[512 * 1024];
+    } buffers;
+} state;
+
+static offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clear_color);
+static void atlas_data_loaded(const sfetch_response_t* response);
+static void skeleton_data_loaded(const sfetch_response_t* response);
+static void image_data_loaded(const sfetch_response_t* response);
+static void create_spine_objects(void);
+typedef struct {
+    struct { float x; float y; } pos;
+    struct { float x; float y; } scale;
+    float rot;
+    sg_image img;
+} quad_params_t;
+static void draw_quad(quad_params_t params);
+
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sgl_setup(&(sgl_desc_t){0});
     sspine_setup(&(sspine_desc){0});
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
@@ -23,12 +69,90 @@ static void init(void) {
         .num_lanes = 1,
     });
     __dbgui_setup(sapp_sample_count());
+
+    // create 2 sspine contexts for rendering into offscreen render targets
+    state.offscreen[0] = setup_offscreen(SG_PIXELFORMAT_RGBA8, 512, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });
+    state.offscreen[1] = setup_offscreen(SG_PIXELFORMAT_RG8, 64, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });
+
+    // common fixed-size spine layer transform
+    state.layer_transform = (sspine_layer_transform){
+        .size = { .x = 512.0f, .y = 512.0f },
+        .origin = { .x = 256.0f, .y = 256.0f },
+    };
+
+    // start loading spine atlas and skeleton
+    char path[512];
+    sfetch_send(&(sfetch_request_t){
+        .path = fileutil_get_path("speedy-pma.atlas", path, sizeof(path)),
+        .channel = 0,
+        .buffer_ptr = state.buffers.atlas,
+        .buffer_size = sizeof(state.buffers.atlas),
+        .callback = atlas_data_loaded,
+    });
+    sfetch_send(&(sfetch_request_t){
+        .path = fileutil_get_path("speedy-ess.skel", path, sizeof(path)),
+        .channel = 1,
+        .buffer_ptr = state.buffers.skeleton,
+        .buffer_size = sizeof(state.buffers.skeleton),
+        .callback = skeleton_data_loaded,
+    });
 }
 
 static void frame(void) {
+    const double delta_time = sapp_frame_duration();
     sfetch_dowork();
+    sspine_new_frame();
+
+    // render spine objects in separate contexts, first one by setting the current context,
+    // second one by calling function with ctx arg
+    sspine_update_instance(state.instances[0], delta_time);
+    sspine_set_context(state.offscreen[0].ctx);
+    sspine_draw_instance_in_layer(state.instances[0], 0);
+
+    sspine_update_instance(state.instances[1], delta_time);
+    sspine_context_draw_instance_in_layer(state.offscreen[1].ctx, state.instances[1], 0);
+
+    // draw two quads via sokol-gl which use the offscreen-rendered spine scenes as textures
+    const float dw = sapp_widthf();
+    const float dh = sapp_heightf();
+    const float aspect = dh / dw;
+    const float t = (float)(delta_time * 60.0);
+    const float angle = sgl_rad((float)sapp_frame_count() * t);
+    sgl_defaults();
+    sgl_enable_texture();
+    sgl_matrix_mode_projection();
+    sgl_ortho(-1.0f, +1.0f, aspect, -aspect, -1.0f, +1.0f);
+    sgl_matrix_mode_modelview();
+    draw_quad((quad_params_t){
+        .pos = { -0.425f, 0.0f },
+        .scale = { 0.4f, 0.4f },
+        .rot = angle,
+        .img = state.offscreen[0].img,
+    });
+    draw_quad((quad_params_t){
+        .pos = { +0.425f, 0.0f },
+        .scale = { 0.4f, 0.4f },
+        .rot = -angle,
+        .img = state.offscreen[1].img,
+    });
+
+    // do all the sokol-gfx rendering:
+    // - two offscreen pass, rendering spine jnstances into render target textures
+    //   (one is setting the current spine context, other is calling draw function with ctx arg)
+    // - the default pass which renders the previously recorded sokol-gl scene using
+    //   the two render targets as textures
+    //  
+    sg_begin_pass(state.offscreen[0].pass, &state.offscreen[0].pass_action);
+    sspine_set_context(state.offscreen[0].ctx);
+    sspine_draw_layer(0, &state.layer_transform);
+    sg_end_pass();
+
+    sg_begin_pass(state.offscreen[1].pass, &state.offscreen[1].pass_action);
+    sspine_context_draw_layer(state.offscreen[1].ctx, 0, &state.layer_transform);
+    sg_end_pass();
 
     sg_begin_default_pass(&(sg_pass_action){0}, sapp_width(), sapp_height());
+    sgl_draw();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -38,7 +162,173 @@ static void cleanup(void) {
     __dbgui_shutdown();
     sfetch_shutdown();
     sspine_shutdown();
+    sgl_shutdown();
     sg_shutdown();
+}
+
+// helper function to create an offscreen render target and pass, and matching sokol-spine context
+offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clear_color) {
+    const sg_image img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = width_height,
+        .height = width_height,
+        .pixel_format = fmt,
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+    });
+    return (offscreen_t){
+        .ctx = sspine_make_context(&(sspine_context_desc){
+            .color_format = fmt,
+            .depth_format = SG_PIXELFORMAT_NONE,
+        }),
+        .img = img,
+        .pass = sg_make_pass(&(sg_pass_desc){
+            .color_attachments[0] = {
+                .image = img,
+            }
+        }),
+        .pass_action = {
+            .colors[0] = { .action = SG_ACTION_CLEAR, .value = clear_color },
+        },
+    };
+}
+
+// fetch callback for atlas data
+static void atlas_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        state.load_status.atlas = (load_status_t){
+            .loaded = true,
+            .data = (sspine_range){ .ptr = response->buffer_ptr, .size = response->fetched_size }
+        };
+        // when both atlas and skeleton data loaded, create spine objects
+        if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
+            create_spine_objects();
+        }
+    }
+    else if (response->failed) {
+        state.load_status.failed = true;
+    }
+}
+
+// fetch callback for skeleton data
+static void skeleton_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        state.load_status.skeleton = (load_status_t){
+            .loaded = true,
+            .data = (sspine_range){ .ptr = response->buffer_ptr, .size = response->fetched_size }
+        };
+        // when both atlas and skeleton data loaded, create spine objects
+        if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
+            create_spine_objects();
+        }
+    }
+    else if (response->failed) {
+        state.load_status.failed = true;
+    }
+}
+
+// called when both the atlas and skeleton files have been loaded,
+// creates spine atlas, skeleton and instance, and starts loading
+// the atlas image(s)
+static void create_spine_objects(void) {
+    // create spine atlas object
+    state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
+        .data = state.load_status.atlas.data
+    });
+    assert(sspine_atlas_valid(state.atlas));
+
+    // create spine skeleton object
+    state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
+        .atlas = state.atlas,
+        .anim_default_mix = 0.2f,
+        .binary_data = state.load_status.skeleton.data,
+    });
+    assert(sspine_skeleton_valid(state.skeleton));
+
+    // create two instance objects
+    for (int i = 0; i < 2; i++) {
+        state.instances[i] = sspine_make_instance(&(sspine_instance_desc){
+            .skeleton = state.skeleton
+        });
+        assert(sspine_instance_valid(state.instances[i]));
+        sspine_set_position(state.instances[i], (sspine_vec2){ 0.0f, 128.0f });
+        sspine_set_animation(state.instances[i], sspine_anim_by_name(state.skeleton, (i & 1) ? "run-linear" : "run"), 0, true);
+    }
+
+    // start loading atlas images
+    const int num_images = sspine_num_images(state.atlas);
+    for (int img_index = 0; img_index < num_images; img_index++) {
+        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
+        assert(img_info.valid);
+        char path_buf[512];
+        sfetch_send(&(sfetch_request_t){
+            .channel = 0,
+            .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
+            .buffer_ptr = state.buffers.image,
+            .buffer_size = sizeof(state.buffers.image),
+            .callback = image_data_loaded,
+            .user_data_ptr = &img_info,
+            .user_data_size = sizeof(img_info),
+        });
+    }
+}
+
+// load spine atlas image data and create a sokol-gfx image object
+static void image_data_loaded(const sfetch_response_t* response) {
+    const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
+    assert(img_info->valid);
+    if (response->fetched) {
+        // decode pixels via stb_image.h
+        const int desired_channels = 4;
+        int img_width, img_height, num_channels;
+        stbi_uc* pixels = stbi_load_from_memory(
+            response->buffer_ptr,
+            (int)response->fetched_size,
+            &img_width,
+            &img_height,
+            &num_channels, desired_channels);
+        if (pixels) {
+            // sokol-spine has already allocated a sokol-gfx image handle for use,
+            // now "populate" the handle with an actual image
+            sg_init_image(img_info->image, &(sg_image_desc){
+                .width = img_width,
+                .height = img_height,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .min_filter = img_info->min_filter,
+                .mag_filter = img_info->mag_filter,
+                .label = img_info->filename,
+                .data.subimage[0][0] = {
+                    .ptr = pixels,
+                    .size = (size_t)(img_width * img_height * 4)
+                }
+            });
+            stbi_image_free(pixels);
+        }
+        else {
+            state.load_status.failed = true;
+            sg_fail_image(img_info->image);
+        }
+    }
+    else if (response->failed) {
+        state.load_status.failed = true;
+        sg_fail_image(img_info->image);
+    }
+}
+
+// draw a rotating quad via sokol-gl
+static void draw_quad(quad_params_t params) {
+    sgl_texture(params.img);
+    sgl_push_matrix();
+    sgl_translate(params.pos.x, params.pos.y, 0.0f);
+    sgl_scale(params.scale.x, params.scale.y, 0.0f);
+    sgl_rotate(params.rot, 0.0f, 0.0f, 1.0f);
+    sgl_begin_quads();
+    sgl_v2f_t2f(-1.0f, -1.0f, 0.0f, 0.0f);
+    sgl_v2f_t2f(+1.0f, -1.0f, 1.0f, 0.0f);
+    sgl_v2f_t2f(+1.0f, +1.0f, 1.0f, 1.0f);
+    sgl_v2f_t2f(-1.0f, +1.0f, 0.0f, 1.0f);
+    sgl_end();
+    sgl_pop_matrix();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
@@ -50,6 +340,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
+        .sample_count = 4,
         .window_title = "spine-contexts-sapp.c",
         .icon.sokol_default = true
     };
