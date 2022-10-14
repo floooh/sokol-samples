@@ -252,7 +252,10 @@ static void image_data_loaded(const sfetch_response_t* response) {
     }
     else {
         state.load_status.failed = false;
-        // image loading has failed, need to put image into the 'failed' resource state
+        // image loading has failed, it's not strictly necessary, but
+        // it's better here to put the sokol-gfx image object into
+        // the 'failed' resource state (otherwise it would be stuck
+        // in the 'alloc' state)
         sg_fail_image(img_info->image);
     }
 }
