@@ -217,7 +217,7 @@ static void create_spine_objects(void) {
 //
 // The fetch callback just needs to finish the image setup by
 // calling sg_init_image(), or if loading has failed, put the
-// image into the 'failed' resource state.
+// image object into the 'failed' resource state.
 // 
 static void image_data_loaded(const sfetch_response_t* response) {
     // we had stored the entire sspine_image_info struct in the
