@@ -140,7 +140,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 // this function is called when both the spine atlas and skeleton file has been loaded,
 // first an atlas object is created from the loaded atlas data, and then a skeleton
 // object (which requires an atlas object as dependency), then a spine instance object.
-// Finally any images requires by the atlas object are loaded
+// Finally any images required by the atlas object are loaded
 static void create_spine_objects(void) {
     // Create spine atlas object from loaded atlas data.
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
