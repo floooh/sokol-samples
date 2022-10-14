@@ -22,7 +22,6 @@ static struct {
     sspine_atlas atlas;
     sspine_skeleton skeleton;
     sspine_instance instance;
-    sspine_layer_transform layer_transform;
     sg_pass_action pass_action;
     struct {
         load_status_t atlas;
