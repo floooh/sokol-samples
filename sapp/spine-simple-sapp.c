@@ -190,11 +190,11 @@ static void create_spine_objects(void) {
         // creation. Alternatively we could store the atlas handle and image index,
         // and then call sspine_get_image_info() in the fetch callback, up to you.
         //
-        // Also important to note: all image fetch requests go into the same
+        // Also important to note: all image fetch requests load their into the same
         // buffer. This is fine because sokol-fetch has been configured
         // with num_lanes=1, this will cause all requests on the same
-        // channel to be serialized and not run in parallel. That way
-        // the same buffer can be reused even if there are multiple images.
+        // channel to be serialized (not run in parallel). That way
+        // the same buffer can be reused even if there are multiple atlas images.
         // The downside is that loading multiple images would take longer.
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(img_info.filename, path_buf,  sizeof(path_buf)),
