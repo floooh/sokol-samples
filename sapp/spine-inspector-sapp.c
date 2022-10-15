@@ -413,7 +413,8 @@ static void create_spine_objects(void) {
     // asynchronously load atlas images
     const int num_images = sspine_num_images(state.atlas);
     for (int img_index = 0; img_index < num_images; img_index++) {
-        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
+        const sspine_image img = sspine_image_by_index(state.atlas, img_index);
+        const sspine_image_info img_info = sspine_get_image_info(img);
         assert(img_info.valid);
         char path_buf[512];
         sfetch_send(&(sfetch_request_t){
@@ -422,9 +423,8 @@ static void create_spine_objects(void) {
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),
             .callback = image_data_loaded,
-            // sspine_image_info is small enough to directly fit into the user data payload
-            .user_data_ptr = &img_info,
-            .user_data_size = sizeof(img_info)
+            .user_data_ptr = &img,
+            .user_data_size = sizeof(img)
         });
         state.load_status.pending_count++;
     }
@@ -436,8 +436,9 @@ static void image_data_loaded(const sfetch_response_t* response) {
         assert(state.load_status.pending_count > 0);
         state.load_status.pending_count--;
     }
-    const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
-    assert(img_info->valid);
+    const sspine_image img = *(sspine_image*)response->user_data;
+    const sspine_image_info img_info = sspine_get_image_info(img);
+    assert(img_info.valid);
     if (response->fetched) {
         // decode image via stb_image.h
         const int desired_channels = 4;
@@ -450,13 +451,13 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated a sokol-gfx image handle for use,
             // now "populate" the handle with an actual image
-            sg_init_image(img_info->sgimage, &(sg_image_desc){
+            sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info->min_filter,
-                .mag_filter = img_info->mag_filter,
-                .label = img_info->filename,
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .label = img_info.filename,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -466,12 +467,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
         }
         else {
             state.load_status.failed = false;
-            sg_fail_image(img_info->sgimage);
+            sg_fail_image(img_info.sgimage);
         }
     }
     else if (response->failed) {
         state.load_status.failed = true;
-        sg_fail_image(img_info->sgimage);
+        sg_fail_image(img_info.sgimage);
     }
 }
 
@@ -571,7 +572,7 @@ static void ui_draw(void) {
                 const int num_atlas_pages = sspine_num_atlas_pages(state.atlas);
                 igText("Num Pages: %d", num_atlas_pages);
                 for (int i = 0; i < num_atlas_pages; i++) {
-                    sspine_atlas_page_info info = sspine_get_atlas_page_info(state.atlas, i);
+                    sspine_atlas_page_info info = sspine_get_atlas_page_info(sspine_atlas_page_by_index(state.atlas, i));
                     assert(info.valid);
                     igSeparator();
                     igText("Filename: %s", info.image.filename);

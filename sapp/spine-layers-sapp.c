@@ -202,7 +202,8 @@ static void create_spine_objects(void) {
     // start loading atlas images
     const int num_images = sspine_num_images(state.atlas);
     for (int img_index = 0; img_index < num_images; img_index++) {
-        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
+        const sspine_image img = sspine_image_by_index(state.atlas, img_index);
+        const sspine_image_info img_info = sspine_get_image_info(img);
         assert(img_info.valid);
         char path_buf[512];
         sfetch_send(&(sfetch_request_t){
@@ -211,16 +212,17 @@ static void create_spine_objects(void) {
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),
             .callback = image_data_loaded,
-            .user_data_ptr = &img_info,
-            .user_data_size = sizeof(img_info),
+            .user_data_ptr = &img,
+            .user_data_size = sizeof(img),
         });
     }
 }
 
 // load spine atlas image data and create a sokol-gfx image object
 static void image_data_loaded(const sfetch_response_t* response) {
-    const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
-    assert(img_info->valid);
+    const sspine_image img = *(sspine_image*)response->user_data;
+    const sspine_image_info img_info = sspine_get_image_info(img);
+    assert(img_info.valid);
     if (response->fetched) {
         // decode pixels via stb_image.h
         const int desired_channels = 4;
@@ -234,13 +236,13 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated a sokol-gfx image handle for use,
             // now "populate" the handle with an actual image
-            sg_init_image(img_info->sgimage, &(sg_image_desc){
+            sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info->min_filter,
-                .mag_filter = img_info->mag_filter,
-                .label = img_info->filename,
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .label = img_info.filename,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -250,12 +252,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
         }
         else {
             state.load_status.failed = true;
-            sg_fail_image(img_info->sgimage);
+            sg_fail_image(img_info.sgimage);
         }
     }
     else if (response->failed) {
         state.load_status.failed = true;
-        sg_fail_image(img_info->sgimage);
+        sg_fail_image(img_info.sgimage);
     }
 }
 

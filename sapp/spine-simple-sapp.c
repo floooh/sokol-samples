@@ -181,13 +181,12 @@ static void create_spine_objects(void) {
     // actual sokol-gfx image creation happens in the fetch-callback.
     const int num_images = sspine_num_images(state.atlas);
     for (int img_index = 0; img_index < num_images; img_index++) {
-        const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
-        char path_buf[512];
-        // Note how the entire image info struct is stored into the fetch
-        // request's user data blob, this is fine because the image info struct
-        // fits into 64 bytes. We'll need that info later for the actual image
-        // creation. Alternatively we could store the atlas handle and image index,
-        // and then call sspine_get_image_info() in the fetch callback, up to you.
+        const sspine_image img = sspine_image_by_index(state.atlas, img_index);
+        const sspine_image_info img_info = sspine_get_image_info(img);
+
+        // We'll store the sspine_image handle in the fetch request's user data
+        // blob, because we need the image info again later in the fetch callback
+        // in order to initialize the sokol-gfx image with the right parameters.
         //
         // Also important to note: all image fetch requests load their data into the same
         // buffer. This is fine because sokol-fetch has been configured
@@ -195,14 +194,15 @@ static void create_spine_objects(void) {
         // channel to be serialized (not run in parallel). That way
         // the same buffer can be reused even if there are multiple atlas images.
         // The downside is that loading multiple images would take longer.
+        char path_buf[512];
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(img_info.filename, path_buf,  sizeof(path_buf)),
             .channel = 0,
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),
             .callback = image_data_loaded,
-            .user_data_ptr = &img_info,
-            .user_data_size = sizeof(img_info)
+            .user_data_ptr = &img,
+            .user_data_size = sizeof(img)
         });
     }
 }
@@ -219,9 +219,10 @@ static void create_spine_objects(void) {
 // image object into the 'failed' resource state.
 // 
 static void image_data_loaded(const sfetch_response_t* response) {
-    // we had stored the entire sspine_image_info struct in the
-    // sokol-fetch request's user data blob...
-    const sspine_image_info* img_info = (sspine_image_info*)response->user_data;
+    // retrieve the sspine_image handle from user data and look up image info
+    // with image setup parameetrs
+    const sspine_image img = *(sspine_image*)response->user_data;
+    const sspine_image_info img_info = sspine_get_image_info(img);
     if (response->fetched) {
         // decode pixels via stb_image.h
         const int desired_channels = 4;
@@ -235,12 +236,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated an image handle,
             // just need to call sg_init_image() to complete the image setup
-            sg_init_image(img_info->sgimage, &(sg_image_desc){
+            sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info->min_filter,
-                .mag_filter = img_info->mag_filter,
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -255,12 +256,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
             // it's better here to put the sokol-gfx image object into
             // the 'failed' resource state (otherwise it would be stuck
             // in the 'alloc' state)
-            sg_fail_image(img_info->sgimage);
+            sg_fail_image(img_info.sgimage);
         }
     }
     else {
         state.load_status.failed = true;
-        sg_fail_image(img_info->sgimage);
+        sg_fail_image(img_info.sgimage);
     }
 }
 
