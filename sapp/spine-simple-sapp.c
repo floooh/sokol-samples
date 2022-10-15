@@ -184,7 +184,7 @@ static void create_spine_objects(void) {
         const sspine_image_info img_info = sspine_get_image_info(state.atlas, img_index);
         char path_buf[512];
         // Note how the entire image info struct is stored into the fetch
-        // request's user data blob, this is fine because the image data struct
+        // request's user data blob, this is fine because the image info struct
         // fits into 64 bytes. We'll need that info later for the actual image
         // creation. Alternatively we could store the atlas handle and image index,
         // and then call sspine_get_image_info() in the fetch callback, up to you.
