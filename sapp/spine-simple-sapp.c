@@ -235,7 +235,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated an image handle,
             // just need to call sg_init_image() to complete the image setup
-            sg_init_image(img_info->image, &(sg_image_desc){
+            sg_init_image(img_info->sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -248,14 +248,19 @@ static void image_data_loaded(const sfetch_response_t* response) {
             });
             stbi_image_free(pixels);
         }
+        else {
+            // decoding has failed
+            state.load_status.failed = true;
+            // image decoding has failed, it's not strictly necessary, but
+            // it's better here to put the sokol-gfx image object into
+            // the 'failed' resource state (otherwise it would be stuck
+            // in the 'alloc' state)
+            sg_fail_image(img_info->sgimage);
+        }
     }
     else {
-        state.load_status.failed = false;
-        // image loading has failed, it's not strictly necessary, but
-        // it's better here to put the sokol-gfx image object into
-        // the 'failed' resource state (otherwise it would be stuck
-        // in the 'alloc' state)
-        sg_fail_image(img_info->image);
+        state.load_status.failed = true;
+        sg_fail_image(img_info->sgimage);
     }
 }
 

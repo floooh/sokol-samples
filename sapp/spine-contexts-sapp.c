@@ -290,7 +290,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated a sokol-gfx image handle for use,
             // now "populate" the handle with an actual image
-            sg_init_image(img_info->image, &(sg_image_desc){
+            sg_init_image(img_info->sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -306,12 +306,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
         }
         else {
             state.load_status.failed = true;
-            sg_fail_image(img_info->image);
+            sg_fail_image(img_info->sgimage);
         }
     }
     else if (response->failed) {
         state.load_status.failed = true;
-        sg_fail_image(img_info->image);
+        sg_fail_image(img_info->sgimage);
     }
 }
 

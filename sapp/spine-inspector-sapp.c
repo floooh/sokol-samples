@@ -450,7 +450,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
         if (pixels) {
             // sokol-spine has already allocated a sokol-gfx image handle for use,
             // now "populate" the handle with an actual image
-            sg_init_image(img_info->image, &(sg_image_desc){
+            sg_init_image(img_info->sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -466,12 +466,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
         }
         else {
             state.load_status.failed = false;
-            sg_fail_image(img_info->image);
+            sg_fail_image(img_info->sgimage);
         }
     }
     else if (response->failed) {
         state.load_status.failed = true;
-        sg_fail_image(img_info->image);
+        sg_fail_image(img_info->sgimage);
     }
 }
 
@@ -574,15 +574,15 @@ static void ui_draw(void) {
                     sspine_atlas_page_info info = sspine_get_atlas_page_info(state.atlas, i);
                     assert(info.valid);
                     igSeparator();
-                    igText("Name: %s", info.name);
-                    igText("Width: %d", info.width);
-                    igText("Height: %d", info.height);
-                    igText("Premul Alpha: %s", (info.premul_alpha == 0) ? "NO" : "YES");
+                    igText("Filename: %s", info.image.filename);
+                    igText("Width: %d", info.image.width);
+                    igText("Height: %d", info.image.height);
+                    igText("Premul Alpha: %s", (info.image.premul_alpha == 0) ? "NO" : "YES");
                     igText("Original Spine params:");
-                    igText("  Min Filter: %s", ui_sgfilter_name(info.min_filter));
-                    igText("  Mag Filter: %s", ui_sgfilter_name(info.mag_filter));
-                    igText("  Wrap U: %s", ui_sgwrap_name(info.wrap_u));
-                    igText("  Wrap V: %s", ui_sgwrap_name(info.wrap_v));
+                    igText("  Min Filter: %s", ui_sgfilter_name(info.image.min_filter));
+                    igText("  Mag Filter: %s", ui_sgfilter_name(info.image.mag_filter));
+                    igText("  Wrap U: %s", ui_sgwrap_name(info.image.wrap_u));
+                    igText("  Wrap V: %s", ui_sgwrap_name(info.image.wrap_v));
                     igText("Overrides:");
                     igText("  Min Filter: %s", ui_sgfilter_name(info.overrides.min_filter));
                     igText("  Mag Filter: %s", ui_sgfilter_name(info.overrides.mag_filter));
