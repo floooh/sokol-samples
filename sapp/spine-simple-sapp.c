@@ -46,7 +46,7 @@ static void init(void) {
     // optional debugging UI, only active in the spine-simple-sapp-ui sample
     __dbgui_setup(sapp_sample_count());
 
-    // Setup sokol_spine.h, if desired, memory usage can be tuned by 
+    // Setup sokol_spine.h, if desired, memory usage can be tuned by
     // setting the max number of vertices, draw commands and pool sizes
     sspine_setup(&(sspine_desc){
         .max_vertices = 6 * 1024,
@@ -54,7 +54,7 @@ static void init(void) {
         .atlas_pool_size = 1,
         .skeleton_pool_size = 1,
         .skinset_pool_size = 1,
-        .instance_pool_size = 1, 
+        .instance_pool_size = 1,
     });
 
     // We'll use sokol_fetch.h for data loading because this gives us
@@ -76,7 +76,7 @@ static void init(void) {
     };
 
     // Start loading the spine atlas and skeleton file. This happens asynchronously
-    // and in undefined finish-order. The 'fetch callbacks' will be called when the data 
+    // and in undefined finish-order. The 'fetch callbacks' will be called when the data
     // has finished loading (or an error occurs).
     // sokol_spine.h itself doesn't care about how the data is loaded, it expects
     // all data in memory chunks.
@@ -98,7 +98,7 @@ static void init(void) {
 }
 
 // sokol-fetch callback functions for loading the atlas and skeleton data.
-// These are called in undefined order, but the spine atlas must be created 
+// These are called in undefined order, but the spine atlas must be created
 // before the skeleton (because the skeleton creation functions needs an
 // atlas handle), this ordering problem is solved by both functions checking
 // whether the other function has already finished, and if yes a common
@@ -175,7 +175,7 @@ static void create_spine_objects(void) {
     sspine_add_animation(state.instance, sspine_anim_by_name(state.skeleton, "roar"), 0, false, 0.0f);
     sspine_add_animation(state.instance, sspine_anim_by_name(state.skeleton, "walk"), 0, true, 0.0f);
 
-    // Finally start loading any atlas image files, one image file seems to be 
+    // Finally start loading any atlas image files, one image file seems to be
     // common, but apparently atlases can also reference multiple images.
     // Image loading also happens asynchronously via sokol-fetch, and the
     // actual sokol-gfx image creation happens in the fetch-callback.
@@ -196,7 +196,7 @@ static void create_spine_objects(void) {
         // The downside is that loading multiple images would take longer.
         char path_buf[512];
         sfetch_send(&(sfetch_request_t){
-            .path = fileutil_get_path(img_info.filename, path_buf,  sizeof(path_buf)),
+            .path = fileutil_get_path(img_info.filename.cstr, path_buf,  sizeof(path_buf)),
             .channel = 0,
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),
@@ -217,7 +217,7 @@ static void create_spine_objects(void) {
 // The fetch callback just needs to finish the image setup by
 // calling sg_init_image(), or if loading has failed, put the
 // image object into the 'failed' resource state.
-// 
+//
 static void image_data_loaded(const sfetch_response_t* response) {
     // retrieve the sspine_image handle from user data and look up image info
     // with image setup parameetrs

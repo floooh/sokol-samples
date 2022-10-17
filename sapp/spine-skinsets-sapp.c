@@ -323,7 +323,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .min_filter = img_info.min_filter,
                 .mag_filter = img_info.mag_filter,
-                .label = img_info.filename,
+                .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -378,7 +378,7 @@ static void create_spine_objects(void) {
         const sspine_image_info img_info = sspine_get_image_info(img);
         char path_buf[512];
         sfetch_send(&(sfetch_request_t){
-            .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
+            .path = fileutil_get_path(img_info.filename.cstr, path_buf, sizeof(path_buf)),
             .channel = 0,
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),

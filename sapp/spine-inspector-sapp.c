@@ -419,7 +419,7 @@ static void create_spine_objects(void) {
         char path_buf[512];
         sfetch_send(&(sfetch_request_t){
             .channel = 0,
-            .path = fileutil_get_path(img_info.filename, path_buf, sizeof(path_buf)),
+            .path = fileutil_get_path(img_info.filename.cstr, path_buf, sizeof(path_buf)),
             .buffer_ptr = state.buffers.image,
             .buffer_size = sizeof(state.buffers.image),
             .callback = image_data_loaded,
@@ -457,7 +457,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .min_filter = img_info.min_filter,
                 .mag_filter = img_info.mag_filter,
-                .label = img_info.filename,
+                .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
@@ -575,7 +575,7 @@ static void ui_draw(void) {
                     sspine_atlas_page_info info = sspine_get_atlas_page_info(sspine_atlas_page_by_index(state.atlas, i));
                     assert(info.valid);
                     igSeparator();
-                    igText("Filename: %s", info.image.filename);
+                    igText("Filename: %s", info.image.filename.cstr);
                     igText("Width: %d", info.image.width);
                     igText("Height: %d", info.image.height);
                     igText("Premul Alpha: %s", (info.image.premul_alpha == 0) ? "NO" : "YES");
@@ -613,7 +613,7 @@ static void ui_draw(void) {
                     const sspine_bone_info info = sspine_get_bone_info(bone);
                     assert(info.valid);
                     igPushID_Int(bone.index);
-                    if (igSelectable_Bool(info.name, sspine_bone_equal(state.ui.selected.bone, bone), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_bone_equal(state.ui.selected.bone, bone), 0, IMVEC2(0,0))) {
                         state.ui.selected.bone = bone;
                     }
                     igPopID();
@@ -625,8 +625,8 @@ static void ui_draw(void) {
                     assert(info.valid);
                     igBeginChild_Str("bone_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
-                    igText("Parent Bone: %s", sspine_bone_valid(info.parent_bone) ? sspine_get_bone_info(info.parent_bone).name : "---");
-                    igText("Name: %s", info.name);
+                    igText("Parent Bone: %s", sspine_bone_valid(info.parent_bone) ? sspine_get_bone_info(info.parent_bone).name.cstr : "---");
+                    igText("Name: %s", info.name.cstr);
                     igText("Length: %.3f", info.length);
                     igText("Pose Transform:");
                     igText("  Position: %.3f,%.3f", info.pose.position.x, info.pose.position.y);
@@ -663,7 +663,7 @@ static void ui_draw(void) {
                     const sspine_slot_info info = sspine_get_slot_info(slot);
                     assert(info.valid);
                     igPushID_Int(slot.index);
-                    if (igSelectable_Bool(info.name, sspine_slot_equal(state.ui.selected.slot, slot), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_slot_equal(state.ui.selected.slot, slot), 0, IMVEC2(0,0))) {
                         state.ui.selected.slot = slot;
                     }
                     igPopID();
@@ -677,9 +677,9 @@ static void ui_draw(void) {
                     assert(bone_info.valid);
                     igBeginChild_Str("slot_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", slot_info.index);
-                    igText("Name: %s", slot_info.name);
-                    igText("Attachment: %s", slot_info.attachment_name ? slot_info.attachment_name : "-");
-                    igText("Bone Name: %s", bone_info.name);
+                    igText("Name: %s", slot_info.name.cstr);
+                    igText("Attachment: %s", slot_info.attachment_name.valid ? slot_info.attachment_name.cstr : "-");
+                    igText("Bone Name: %s", bone_info.name.cstr);
                     igText("Color: %.2f,%.2f,%.2f,%.2f", slot_info.color.r, slot_info.color.b, slot_info.color.g, slot_info.color.a);
                     igEndChild();
                 }
@@ -704,7 +704,7 @@ static void ui_draw(void) {
                     const sspine_anim_info info = sspine_get_anim_info(anim);
                     assert(info.valid);
                     igPushID_Int(anim.index);
-                    if (igSelectable_Bool(info.name, sspine_anim_equal(state.ui.selected.anim, anim), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_anim_equal(state.ui.selected.anim, anim), 0, IMVEC2(0,0))) {
                         state.ui.selected.anim = anim;
                         sspine_set_animation(state.instance, anim, 0, true);
                     }
@@ -717,7 +717,7 @@ static void ui_draw(void) {
                     assert(info.valid);
                     igBeginChild_Str("anim_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
-                    igText("Name: %s", info.name);
+                    igText("Name: %s", info.name.cstr);
                     igText("Duration: %.3f", info.duration);
                     igEndChild();
                 }
@@ -742,7 +742,7 @@ static void ui_draw(void) {
                     const sspine_event_info info = sspine_get_event_info(event);
                     assert(info.valid);
                     igPushID_Int(event.index);
-                    if (igSelectable_Bool(info.name, sspine_event_equal(state.ui.selected.event, event), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_event_equal(state.ui.selected.event, event), 0, IMVEC2(0,0))) {
                         state.ui.selected.event = event;
                     }
                     igPopID();
@@ -754,11 +754,11 @@ static void ui_draw(void) {
                     assert(info.valid);
                     igBeginChild_Str("event_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
-                    igText("Name: %s", info.name);
+                    igText("Name: %s", info.name.cstr);
                     igText("Int Value: %d\n", info.int_value);
                     igText("Float Value: %.3f\n", info.float_value);
-                    igText("String Value: %s", info.string_value ? info.string_value : "NONE");
-                    igText("Audio Path: %s", info.audio_path ? info.audio_path : "NONE");
+                    igText("String Value: %s", info.string_value.valid ? info.string_value.cstr : "NONE");
+                    igText("Audio Path: %s", info.audio_path.valid ? info.audio_path.cstr : "NONE");
                     igText("Volume: %.3f", info.volume);
                     igText("Balance: %.3f", info.balance);
                     igEndChild();
@@ -784,7 +784,7 @@ static void ui_draw(void) {
                     const sspine_skin_info info = sspine_get_skin_info(skin);
                     assert(info.valid);
                     igPushID_Int(skin.index);
-                    if (igSelectable_Bool(info.name, sspine_skin_equal(state.ui.selected.skin, skin), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_skin_equal(state.ui.selected.skin, skin), 0, IMVEC2(0,0))) {
                         state.ui.selected.skin = skin;
                         sspine_set_skin(state.instance, skin);
                     }
@@ -797,7 +797,7 @@ static void ui_draw(void) {
                     assert(info.valid);
                     igBeginChild_Str("skin_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
-                    igText("Name: %s", info.name);
+                    igText("Name: %s", info.name.cstr);
                     igEndChild();
                 }
             }
@@ -821,7 +821,7 @@ static void ui_draw(void) {
                     const sspine_iktarget_info info = sspine_get_iktarget_info(iktarget);
                     assert(info.valid);
                     igPushID_Int(iktarget.index);
-                    if (igSelectable_Bool(info.name, sspine_iktarget_equal(state.ui.selected.iktarget, iktarget), 0, IMVEC2(0,0))) {
+                    if (igSelectable_Bool(info.name.cstr, sspine_iktarget_equal(state.ui.selected.iktarget, iktarget), 0, IMVEC2(0,0))) {
                         state.ui.selected.iktarget = iktarget;
                     }
                     igPopID();
@@ -833,8 +833,8 @@ static void ui_draw(void) {
                     assert(info.valid);
                     igBeginChild_Str("iktarget_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
-                    igText("Name: %s", info.name);
-                    igText("Target Bone: %s", sspine_get_bone_info(info.target_bone).name);
+                    igText("Name: %s", info.name.cstr);
+                    igText("Target Bone: %s", sspine_get_bone_info(info.target_bone).name.cstr);
                     igEndChild();
                 }
             }
@@ -853,7 +853,7 @@ static void ui_draw(void) {
             igSetNextWindowPos(IMVEC2(sapp_widthf() * 0.5f, sapp_heightf() - 50.0f), ImGuiCond_Always, IMVEC2(0.5f,0.5f));
             igPushStyleColor_U32(ImGuiCol_WindowBg, 0xFF0000FF);
             if (igBegin("Triggered Events", 0, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav)) {
-                igText("%s: %.3f (age: %.3f)", event_info.name, event_time, state.ui.cur_time - event_time);
+                igText("%s: %.3f (age: %.3f)", event_info.name.cstr, event_time, state.ui.cur_time - event_time);
             }
             igEnd();
             igPopStyleColor(1);
