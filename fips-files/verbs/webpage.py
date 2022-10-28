@@ -73,7 +73,11 @@ samples = [
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
     [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
-    [ 'spine-inspector', 'spine-inspector-sapp.c', None ]
+    [ 'spine-simple', 'spine-simple-sappp.c', None ],
+    [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
+    [ 'spine-layers', 'spine-layers-sapp.c', None ],
+    [ 'spine-skinsets', 'spine-skinsets-sapp.c', None ],
+    [ 'spine-contexts', 'spine-contexts-sapp.c', None ],
 ]
 
 # assets that must also be copied
@@ -109,6 +113,9 @@ assets = [
     "speedy-pma.atlas",
     "speedy-pma.png",
     "speedy-ess.skel",
+    "mix-and-match-pma.atlas",
+    "mix-and-match-pma.png",
+    "mix-and-match-pro.skel",
 ]
 
 #-------------------------------------------------------------------------------
@@ -256,4 +263,3 @@ def help() :
              'fips webpage serve\n' +
              log.DEF +
              '    build sokol samples webpage')
-
