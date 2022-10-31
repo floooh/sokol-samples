@@ -77,6 +77,7 @@ samples = [
     [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
     [ 'spine-layers', 'spine-layers-sapp.c', None ],
     [ 'spine-skinsets', 'spine-skinsets-sapp.c', None ],
+    [ 'spine-switch-skinsets', 'spine-switch-skinsets-sapp.c', None ],
     [ 'spine-contexts', 'spine-contexts-sapp.c', None ],
 ]
 
