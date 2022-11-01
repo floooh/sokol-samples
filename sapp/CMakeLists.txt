@@ -834,7 +834,7 @@ fips_begin_app(spine-layers-sapp-ui windowed)
     fipsutil_copy(spine-assets.yml)
     fips_deps(sokol spine-c stb fileutil dbgui)
 fips_end_app()
-target_compile_definitions(spine-skinsets-sapp-ui PRIVATE USE_DBG_UI)
+target_compile_definitions(spine-layers-sapp-ui PRIVATE USE_DBG_UI)
 
 fips_ide_group(Samples)
 fips_begin_app(spine-contexts-sapp windowed)

@@ -99,7 +99,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    const double delta_time = sapp_frame_duration();
+    const float delta_time = (float)sapp_frame_duration();
     sfetch_dowork();
     sspine_new_frame();
 
@@ -116,7 +116,7 @@ static void frame(void) {
     const float dw = sapp_widthf();
     const float dh = sapp_heightf();
     const float aspect = dh / dw;
-    const float t = (float)(delta_time * 60.0);
+    const float t = delta_time * 60.0f;
     const float angle = sgl_rad((float)sapp_frame_count() * t);
     sgl_defaults();
     sgl_enable_texture();
@@ -141,7 +141,7 @@ static void frame(void) {
     //   (one is setting the current spine context, other is calling draw function with ctx arg)
     // - the default pass which renders the previously recorded sokol-gl scene using
     //   the two render targets as textures
-    //  
+    //
     sg_begin_pass(state.offscreen[0].pass, &state.offscreen[0].pass_action);
     sspine_set_context(state.offscreen[0].ctx);
     sspine_draw_layer(0, &state.layer_transform);

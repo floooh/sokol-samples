@@ -161,7 +161,7 @@ static void input(const sapp_event* ev) {
                 break;
         }
     }
-
+    __dbgui_event(ev);
 }
 
 static void load_failed(void) {

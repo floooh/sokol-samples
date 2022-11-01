@@ -80,7 +80,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    const double delta_time = sapp_frame_duration();
+    const float delta_time = (float)sapp_frame_duration();
     sfetch_dowork();
     sspine_new_frame();
 
