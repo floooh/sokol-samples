@@ -73,7 +73,7 @@ samples = [
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
     [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
-    [ 'spine-simple', 'spine-simple-sappp.c', None ],
+    [ 'spine-simple', 'spine-simple-sapp.c', None ],
     [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
     [ 'spine-layers', 'spine-layers-sapp.c', None ],
     [ 'spine-skinsets', 'spine-skinsets-sapp.c', None ],
