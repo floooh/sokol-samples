@@ -39,6 +39,7 @@ void __cdbgui_draw(void) {
     });
     if (igBeginMainMenuBar()) {
         if (igBeginMenu("sokol-gfx", true)) {
+            igMenuItem_BoolPtr("Capabilities", 0, &sg_imgui.caps.open, true);
             igMenuItem_BoolPtr("Buffers", 0, &sg_imgui.buffers.open, true);
             igMenuItem_BoolPtr("Images", 0, &sg_imgui.images.open, true);
             igMenuItem_BoolPtr("Shaders", 0, &sg_imgui.shaders.open, true);

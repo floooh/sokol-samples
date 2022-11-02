@@ -1,0 +1,21 @@
+---
+options:
+    src_dir: spine
+    ios:
+        dst_dir: spine-sapp.app
+files:
+    - spineboy-pro.json
+    - spineboy.atlas
+    - spineboy.png
+    - raptor-pro.skel
+    - raptor-pma.atlas
+    - raptor-pma.png
+    - alien-pro.skel
+    - alien-pma.atlas
+    - alien-pma.png
+    - speedy-ess.skel
+    - speedy-pma.atlas
+    - speedy-pma.png
+    - mix-and-match-pro.skel
+    - mix-and-match-pma.atlas
+    - mix-and-match-pma.png

@@ -72,7 +72,13 @@ samples = [
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
-    [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl']
+    [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
+    [ 'spine-simple', 'spine-simple-sappp.c', None ],
+    [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
+    [ 'spine-layers', 'spine-layers-sapp.c', None ],
+    [ 'spine-skinsets', 'spine-skinsets-sapp.c', None ],
+    [ 'spine-switch-skinsets', 'spine-switch-skinsets-sapp.c', None ],
+    [ 'spine-contexts', 'spine-contexts-sapp.c', None ],
 ]
 
 # assets that must also be copied
@@ -95,7 +101,22 @@ assets = [
     "ozz_anim_animation.ozz",
     "ozz_skin_skeleton.ozz",
     "ozz_skin_animation.ozz",
-    "ozz_skin_mesh.ozz"
+    "ozz_skin_mesh.ozz",
+    "raptor-pma.atlas",
+    "raptor-pma.png",
+    "raptor-pro.skel",
+    "spineboy-pro.json",
+    "spineboy.atlas",
+    "spineboy.png",
+    "alien-pma.atlas",
+    "alien-pma.png",
+    "alien-pro.skel",
+    "speedy-pma.atlas",
+    "speedy-pma.png",
+    "speedy-ess.skel",
+    "mix-and-match-pma.atlas",
+    "mix-and-match-pma.png",
+    "mix-and-match-pro.skel",
 ]
 
 #-------------------------------------------------------------------------------
@@ -243,4 +264,3 @@ def help() :
              'fips webpage serve\n' +
              log.DEF +
              '    build sokol samples webpage')
-
