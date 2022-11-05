@@ -166,8 +166,7 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("mix-and-match-pma.atlas", path_buf, sizeof(path_buf)),
         .channel = 0,
-        .buffer_ptr = state.buffers.atlas,
-        .buffer_size = sizeof(state.buffers.atlas),
+        .buffer = SFETCH_RANGE(state.buffers.atlas),
         .callback = atlas_data_loaded,
     });
 
@@ -175,8 +174,7 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("mix-and-match-pro.skel", path_buf, sizeof(path_buf)),
         .channel = 1,
-        .buffer_ptr = state.buffers.skeleton,
-        .buffer_size = sizeof(state.buffers.skeleton),
+        .buffer = SFETCH_RANGE(state.buffers.skeleton),
         .callback = skeleton_data_loaded,
     });
 
@@ -270,7 +268,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_status.atlas = (load_status_t){
             .loaded = true,
-            .data = (sspine_range) { .ptr = response->buffer_ptr, .size = response->fetched_size },
+            .data = (sspine_range) { .ptr = response->data.ptr, .size = response->data.size },
         };
         // when both atlas and skeleton file have finished loading, create spine objects
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
@@ -287,7 +285,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_status.skeleton = (load_status_t){
             .loaded = true,
-            .data = (sspine_range) { .ptr = response->buffer_ptr, .size = response->fetched_size },
+            .data = (sspine_range) { .ptr = response->data.ptr, .size = response->data.size },
         };
         // when both atlas and skeleton file have finished loading, create spine objects
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
@@ -309,8 +307,8 @@ static void image_data_loaded(const sfetch_response_t* response) {
         const int desired_channels = 4;
         int img_width, img_height, num_channels;
         stbi_uc* pixels = stbi_load_from_memory(
-            response->buffer_ptr,
-            (int)response->fetched_size,
+            response->data.ptr,
+            (int)response->data.size,
             &img_width,
             &img_height,
             &num_channels, desired_channels);
@@ -380,11 +378,9 @@ static void create_spine_objects(void) {
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(img_info.filename.cstr, path_buf, sizeof(path_buf)),
             .channel = 0,
-            .buffer_ptr = state.buffers.image,
-            .buffer_size = sizeof(state.buffers.image),
+            .buffer = SFETCH_RANGE(state.buffers.image),
             .callback = image_data_loaded,
-            .user_data_ptr = &img,
-            .user_data_size = sizeof(img)
+            .user_data = SFETCH_RANGE(img),
         });
     }
 

@@ -34,8 +34,8 @@ static struct {
         int scene_index;
         int pending_count;
         bool failed;
-        size_t atlas_data_size;
-        size_t skel_data_size;
+        sspine_range atlas_data;
+        sspine_range skel_data;
         bool skel_data_is_binary;
     } load_status;
     struct {
@@ -269,8 +269,8 @@ static bool load_spine_scene(int scene_index) {
     state.load_status.scene_index = scene_index;
     state.load_status.pending_count = 0;
     state.load_status.failed = false;
-    state.load_status.atlas_data_size = 0;
-    state.load_status.skel_data_size = 0;
+    state.load_status.atlas_data = (sspine_range){0};
+    state.load_status.skel_data = (sspine_range){0};
     state.load_status.skel_data_is_binary = false;
 
     // discard previous spine scene (functions can be called with invalid handles)
@@ -283,8 +283,7 @@ static bool load_spine_scene(int scene_index) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path(spine_scenes[scene_index].atlas_file, path_buf, sizeof(path_buf)),
         .channel = 0,
-        .buffer_ptr = state.buffers.atlas,
-        .buffer_size = sizeof(state.buffers.atlas),
+        .buffer = SFETCH_RANGE(state.buffers.atlas),
         .callback = atlas_data_loaded,
     });
     state.load_status.pending_count++;
@@ -298,9 +297,8 @@ static bool load_spine_scene(int scene_index) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path(skel_file, path_buf, sizeof(path_buf)),
         .channel = 1,
-        .buffer_ptr = state.buffers.skeleton,
         // in case the skeleton file is JSON text data, make sure we have room for a terminating zero
-        .buffer_size = sizeof(state.buffers.skeleton) - 1,
+        .buffer = { .ptr = state.buffers.skeleton, .size = sizeof(state.buffers.skeleton) - 1 },
         .callback = skeleton_data_loaded,
     });
     state.load_status.pending_count++;
@@ -314,7 +312,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         state.load_status.pending_count--;
     }
     if (response->fetched) {
-        state.load_status.atlas_data_size = response->fetched_size;
+        state.load_status.atlas_data = (sspine_range){ response->data.ptr, response->data.size };
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
         if (state.load_status.pending_count == 0) {
@@ -333,10 +331,10 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         state.load_status.pending_count--;
     }
     if (response->fetched) {
-        state.load_status.skel_data_size = response->fetched_size;
+        state.load_status.skel_data = (sspine_range){ response->data.ptr, response->data.size };
         // in case the loaded data file is JSON text, make sure it's zero terminated
-        assert(response->fetched_size < sizeof(state.buffers.skeleton));
-        state.buffers.skeleton[response->fetched_size] = 0;
+        assert(response->data.size < sizeof(state.buffers.skeleton));
+        state.buffers.skeleton[response->data.size] = 0;
         // if both the atlas and skeleton file had been loaded, create
         // the atlas and skeleton spine objects
         if (state.load_status.pending_count == 0) {
@@ -354,10 +352,7 @@ static void create_spine_objects(void) {
 
     // create atlas from file data
     state.atlas = sspine_make_atlas(&(sspine_atlas_desc){
-        .data = {
-            .ptr = state.buffers.atlas,
-            .size = state.load_status.atlas_data_size,
-        },
+        .data = state.load_status.atlas_data,
         .override = spine_scenes[scene_index].atlas_overrides,
     });
     assert(sspine_atlas_valid(state.atlas));
@@ -366,13 +361,10 @@ static void create_spine_objects(void) {
     const char* skel_json_data = 0;
     sspine_range skel_binary_data = {0};
     if (state.load_status.skel_data_is_binary) {
-        skel_binary_data = (sspine_range){
-            .ptr = &state.buffers.skeleton,
-            .size = state.load_status.skel_data_size,
-        };
+        skel_binary_data = state.load_status.skel_data;
     }
     else {
-        skel_json_data = (const char*)&state.buffers.skeleton;
+        skel_json_data = (const char*)state.load_status.skel_data.ptr;
     }
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
         .atlas = state.atlas,
@@ -420,11 +412,9 @@ static void create_spine_objects(void) {
         sfetch_send(&(sfetch_request_t){
             .channel = 0,
             .path = fileutil_get_path(img_info.filename.cstr, path_buf, sizeof(path_buf)),
-            .buffer_ptr = state.buffers.image,
-            .buffer_size = sizeof(state.buffers.image),
+            .buffer = SFETCH_RANGE(state.buffers.image),
             .callback = image_data_loaded,
-            .user_data_ptr = &img,
-            .user_data_size = sizeof(img)
+            .user_data = SFETCH_RANGE(img),
         });
         state.load_status.pending_count++;
     }
@@ -444,8 +434,8 @@ static void image_data_loaded(const sfetch_response_t* response) {
         const int desired_channels = 4;
         int img_width, img_height, num_channels;
         stbi_uc* pixels = stbi_load_from_memory(
-            response->buffer_ptr,
-            (int)response->fetched_size,
+            response->data.ptr,
+            (int)response->data.size,
             &img_width, &img_height,
             &num_channels, desired_channels);
         if (pixels) {

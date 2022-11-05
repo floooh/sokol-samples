@@ -221,14 +221,12 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = "baboon.png",
         .callback = fetch_img_callback,
-        .buffer_ptr = state.io.img_buffer,
-        .buffer_size = sizeof(state.io.img_buffer)
+        .buffer = SFETCH_RANGE(state.io.img_buffer),
     });
     sfetch_send(&(sfetch_request_t){
         .path = "comsi.s3m",
         .callback = fetch_mod_callback,
-        .buffer_ptr = state.io.mod_buffer,
-        .buffer_size = sizeof(state.io.mod_buffer)
+        .buffer = SFETCH_RANGE(state.io.mod_buffer),
     });
 }
 
@@ -238,8 +236,8 @@ static void fetch_img_callback(const sfetch_response_t* response) {
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
-            response->buffer_ptr,
-            (int)response->fetched_size,
+            response->data.ptr,
+            (int)response->data.size,
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
@@ -267,7 +265,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
 
 static void fetch_mod_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.mod.mpf = ModPlug_Load(response->buffer_ptr, (int)response->fetched_size);
+        state.mod.mpf = ModPlug_Load(response->data.ptr, (int)response->data.size);
     }
     else if (response->failed) {
         // if loading the file failed, set clear color to red
