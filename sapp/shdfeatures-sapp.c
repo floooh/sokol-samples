@@ -394,20 +394,17 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = "ozz_skin_skeleton.ozz",
         .callback = skeleton_data_loaded,
-        .buffer_ptr = skeleton_io_buffer,
-        .buffer_size = sizeof(skeleton_io_buffer)
+        .buffer = SFETCH_RANGE(skeleton_io_buffer),
     });
     sfetch_send(&(sfetch_request_t){
         .path = "ozz_skin_animation.ozz",
         .callback = animation_data_loaded,
-        .buffer_ptr = animation_io_buffer,
-        .buffer_size = sizeof(animation_io_buffer)
+        .buffer= SFETCH_RANGE(animation_io_buffer),
     });
     sfetch_send(&(sfetch_request_t){
         .path = "ozz_skin_mesh.ozz",
         .callback = mesh_data_loaded,
-        .buffer_ptr = mesh_io_buffer,
-        .buffer_size = sizeof(mesh_io_buffer)
+        .buffer = SFETCH_RANGE(mesh_io_buffer),
     });
 }
 
@@ -508,7 +505,7 @@ static void input(const sapp_event* ev) {
 
 static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        ozz_load_skeleton(state.ozz, response->buffer_ptr, response->fetched_size);
+        ozz_load_skeleton(state.ozz, response->data.ptr, response->data.size);
     }
     else if (response->failed) {
         ozz_set_load_failed(state.ozz);
@@ -517,7 +514,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 
 static void animation_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        ozz_load_animation(state.ozz, response->buffer_ptr, response->fetched_size);
+        ozz_load_animation(state.ozz, response->data.ptr, response->data.size);
     }
     else if (response->failed) {
         ozz_set_load_failed(state.ozz);
@@ -526,7 +523,7 @@ static void animation_data_loaded(const sfetch_response_t* response) {
 
 static void mesh_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        ozz_load_mesh(state.ozz, response->buffer_ptr, response->fetched_size);
+        ozz_load_mesh(state.ozz, response->data.ptr, response->data.size);
         for (int i = 0; i < MAX_SHADER_VARIATIONS; i++) {
             if (state.variations[i].valid) {
                 state.variations[i].bind.vertex_buffers[0] = ozz_vertex_buffer(state.ozz);

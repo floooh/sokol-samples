@@ -134,7 +134,7 @@ static void cleanup(void) {
 static void emsc_load_callback(const sapp_html5_fetch_response* response) {
     if (response->succeeded) {
         state.load_state = LOADSTATE_SUCCESS;
-        state.size = (int) response->fetched_size;
+        state.size = (int) response->data.size;
     }
     else if (SAPP_HTML5_FETCH_ERROR_BUFFER_TOO_SMALL == response->error_code) {
         state.load_state = LOADSTATE_FILE_TOO_BIG;
@@ -148,7 +148,7 @@ static void emsc_load_callback(const sapp_html5_fetch_response* response) {
 static void native_load_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load_state = LOADSTATE_SUCCESS;
-        state.size = (int)response->fetched_size;
+        state.size = (int)response->data.size;
     }
     else if (response->error_code == SFETCH_ERROR_BUFFER_TOO_SMALL) {
         state.load_state = LOADSTATE_FILE_TOO_BIG;
@@ -167,16 +167,14 @@ static void input(const sapp_event* ev) {
             sapp_html5_fetch_dropped_file(&(sapp_html5_fetch_request){
                 .dropped_file_index = 0,
                 .callback = emsc_load_callback,
-                .buffer_ptr = state.buffer,
-                .buffer_size = sizeof(state.buffer),
+                .buffer = SAPP_RANGE(state.buffer)
             });
         #else
             // native platform: use sokol-fetch to load file content
             sfetch_send(&(sfetch_request_t){
                 .path = sapp_get_dropped_file_path(0),
                 .callback = native_load_callback,
-                .buffer_ptr = state.buffer,
-                .buffer_size = sizeof(state.buffer)
+                .buffer = SFETCH_RANGE(state.buffer)
             });
         #endif
     }

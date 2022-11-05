@@ -47,7 +47,7 @@
 static const char* filename = "bjork-all-is-full-of-love.mpg";
 
 // statically allocated streaming buffers
-#define BUFFER_SIZE (512*1024)
+#define BUFFER_SIZE (1024*1024)
 #define CHUNK_SIZE (128*1024)
 #define NUM_BUFFERS (4)
 static uint8_t buf[NUM_BUFFERS][BUFFER_SIZE];
@@ -123,8 +123,7 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path(filename, path_buf, sizeof(path_buf)),
         .callback = fetch_callback,
-        .buffer_ptr = buf[state.cur_download_buffer],
-        .buffer_size = BUFFER_SIZE,
+        .buffer = SFETCH_RANGE(buf[state.cur_download_buffer]),
         .chunk_size = CHUNK_SIZE
     });
 
@@ -324,7 +323,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             // ...otherwise start streaming into the next free buffer
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
             sfetch_unbind_buffer(response->handle);
-            sfetch_bind_buffer(response->handle, buf[state.cur_download_buffer], BUFFER_SIZE);
+            sfetch_bind_buffer(response->handle, SFETCH_RANGE(buf[state.cur_download_buffer]));
         }
     }
     else if (response->paused) {
@@ -333,7 +332,7 @@ static void fetch_callback(const sfetch_response_t* response) {
         if (!ring_empty(&state.free_buffers)) {
             state.cur_download_buffer = ring_dequeue(&state.free_buffers);
             sfetch_unbind_buffer(response->handle);
-            sfetch_bind_buffer(response->handle, buf[state.cur_download_buffer], BUFFER_SIZE);
+            sfetch_bind_buffer(response->handle, SFETCH_RANGE(buf[state.cur_download_buffer]));
             sfetch_continue(response->handle);
         }
     }

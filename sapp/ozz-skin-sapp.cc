@@ -238,24 +238,21 @@ static void init(void) {
         sfetch_request_t req = { };
         req.path = "ozz_skin_skeleton.ozz";
         req.callback = skel_data_loaded;
-        req.buffer_ptr = skel_io_buffer;
-        req.buffer_size = sizeof(skel_io_buffer);
+        req.buffer = SFETCH_RANGE(skel_io_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
         req.path = "ozz_skin_animation.ozz";
         req.callback = anim_data_loaded;
-        req.buffer_ptr = anim_io_buffer;
-        req.buffer_size = sizeof(anim_io_buffer);
+        req.buffer = SFETCH_RANGE(anim_io_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
         req.path = "ozz_skin_mesh.ozz";
         req.callback = mesh_data_loaded;
-        req.buffer_ptr = mesh_io_buffer;
-        req.buffer_size = sizeof(mesh_io_buffer);
+        req.buffer = SFETCH_RANGE(mesh_io_buffer);
         sfetch_send(&req);
     }
 }
@@ -465,7 +462,7 @@ static void draw_ui(void) {
 static void skel_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz::io::MemoryStream stream;
-        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Write(response->data.ptr, response->data.size);
         stream.Seek(0, ozz::io::Stream::kSet);
         ozz::io::IArchive archive(&stream);
         if (archive.TestTag<ozz::animation::Skeleton>()) {
@@ -490,7 +487,7 @@ static void skel_data_loaded(const sfetch_response_t* response) {
 static void anim_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz::io::MemoryStream stream;
-        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Write(response->data.ptr, response->data.size);
         stream.Seek(0, ozz::io::Stream::kSet);
         ozz::io::IArchive archive(&stream);
         if (archive.TestTag<ozz::animation::Animation>()) {
@@ -529,7 +526,7 @@ static uint32_t pack_f4_ubyte4n(float x, float y, float z, float w) {
 static void mesh_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz::io::MemoryStream stream;
-        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Write(response->data.ptr, response->data.size);
         stream.Seek(0, ozz::io::Stream::kSet);
 
         ozz::vector<ozz::sample::Mesh> meshes;

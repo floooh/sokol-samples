@@ -56,25 +56,25 @@ static void my_free(void* ptr, void* user_data) {
 /* sokol-fetch load callbacks */
 static void font_normal_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_normal = fonsAddFontMem(state.fons, "sans", response->buffer_ptr, (int)response->fetched_size,  false);
+        state.font_normal = fonsAddFontMem(state.fons, "sans", (void*)response->data.ptr, (int)response->data.size,  false);
     }
 }
 
 static void font_italic_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_italic = fonsAddFontMem(state.fons, "sans-italic", response->buffer_ptr, (int)response->fetched_size, false);
+        state.font_italic = fonsAddFontMem(state.fons, "sans-italic", (void*)response->data.ptr, (int)response->data.size, false);
     }
 }
 
 static void font_bold_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_bold = fonsAddFontMem(state.fons, "sans-bold", response->buffer_ptr, (int)response->fetched_size, false);
+        state.font_bold = fonsAddFontMem(state.fons, "sans-bold", (void*)response->data.ptr, (int)response->data.size, false);
     }
 }
 
 static void font_japanese_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
-        state.font_japanese = fonsAddFontMem(state.fons, "sans-japanese", response->buffer_ptr, (int)response->fetched_size, false);
+        state.font_japanese = fonsAddFontMem(state.fons, "sans-japanese", (void*)response->data.ptr, (int)response->data.size, false);
     }
 }
 
@@ -121,26 +121,22 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("DroidSerif-Regular.ttf", path_buf, sizeof(path_buf)),
         .callback = font_normal_loaded,
-        .buffer_ptr = state.font_normal_data,
-        .buffer_size = sizeof(state.font_normal_data)
+        .buffer = SFETCH_RANGE(state.font_normal_data),
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("DroidSerif-Italic.ttf", path_buf, sizeof(path_buf)),
         .callback = font_italic_loaded,
-        .buffer_ptr = state.font_italic_data,
-        .buffer_size = sizeof(state.font_italic_data)
+        .buffer = SFETCH_RANGE(state.font_italic_data),
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("DroidSerif-Bold.ttf", path_buf, sizeof(path_buf)),
         .callback = font_bold_loaded,
-        .buffer_ptr = state.font_bold_data,
-        .buffer_size = sizeof(state.font_bold_data)
+        .buffer = SFETCH_RANGE(state.font_bold_data),
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("DroidSansJapanese.ttf", path_buf, sizeof(path_buf)),
         .callback = font_japanese_loaded,
-        .buffer_ptr = state.font_japanese_data,
-        .buffer_size = sizeof(state.font_japanese_data)
+        .buffer = SFETCH_RANGE(state.font_japanese_data),
     });
 }
 

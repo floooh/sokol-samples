@@ -143,8 +143,7 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
         .callback = fetch_callback,
-        .buffer_ptr = state.file_buffer,
-        .buffer_size = sizeof(state.file_buffer)
+        .buffer = SFETCH_RANGE(state.file_buffer)
     });
 }
 
@@ -159,8 +158,8 @@ static void fetch_callback(const sfetch_response_t* response) {
         int png_width, png_height, num_channels;
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
-            response->buffer_ptr,
-            (int)response->fetched_size,
+            response->data.ptr,
+            (int)response->data.size,
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
@@ -239,6 +238,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-
-
-

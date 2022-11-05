@@ -193,7 +193,7 @@ static struct {
     } placeholders;
 } state;
 
-static void gltf_parse(const void* ptr, uint64_t num_bytes);
+static void gltf_parse(sfetch_range_t file_data);
 static void gltf_parse_buffers(const cgltf_data* gltf);
 static void gltf_parse_images(const cgltf_data* gltf);
 static void gltf_parse_materials(const cgltf_data* gltf);
@@ -415,11 +415,11 @@ static void input(const sapp_event* ev) {
 static void gltf_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
         // bind buffer to load file into
-        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
+        sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
     }
     else if (response->fetched) {
         // file has been loaded, parse as GLTF
-        gltf_parse(response->buffer_ptr, response->fetched_size);
+        gltf_parse(response->data);
     }
     if (response->finished) {
         if (response->failed) {
@@ -435,12 +435,12 @@ typedef struct {
 
 static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
-        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
+        sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
     }
     else if (response->fetched) {
         const gltf_buffer_fetch_userdata_t* user_data = (const gltf_buffer_fetch_userdata_t*)response->user_data;
         int gltf_buffer_index = (int)user_data->buffer_index;
-        create_sg_buffers_for_gltf_buffer(gltf_buffer_index, (sg_range){response->buffer_ptr, response->fetched_size});
+        create_sg_buffers_for_gltf_buffer(gltf_buffer_index, (sg_range){response->data.ptr, response->data.size});
     }
     if (response->finished) {
         if (response->failed) {
@@ -456,12 +456,12 @@ typedef struct {
 
 static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
-        sfetch_bind_buffer(response->handle, sfetch_buffers[response->channel][response->lane], MAX_FILE_SIZE);
+        sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
     }
     else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
         int gltf_image_index = (int)user_data->image_index;
-        create_sg_images_for_gltf_image(gltf_image_index, (sg_range){response->buffer_ptr, response->fetched_size});
+        create_sg_images_for_gltf_image(gltf_image_index, (sg_range){response->data.ptr, response->data.size});
     }
     if (response->finished) {
         if (response->failed) {
@@ -471,10 +471,10 @@ static void gltf_image_fetch_callback(const sfetch_response_t* response) {
 }
 
 // load GLTF data from memory, build scene and issue resource fetch requests
-static void gltf_parse(const void* ptr, uint64_t num_bytes) {
+static void gltf_parse(sfetch_range_t file_data) {
     cgltf_options options = { 0 };
     cgltf_data* data = 0;
-    const cgltf_result result = cgltf_parse(&options, ptr, num_bytes, &data);
+    const cgltf_result result = cgltf_parse(&options, file_data.ptr, file_data.size, &data);
     if (result == cgltf_result_success) {
         gltf_parse_buffers(data);
         gltf_parse_images(data);
@@ -551,8 +551,7 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(gltf_buf->uri, path_buf, sizeof(path_buf)),
             .callback = gltf_buffer_fetch_callback,
-            .user_data_ptr = &user_data,
-            .user_data_size = sizeof(user_data)
+            .user_data = SFETCH_RANGE(user_data),
         });
     }
 }
@@ -611,8 +610,7 @@ static void gltf_parse_images(const cgltf_data* gltf) {
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(gltf_img->uri, path_buf, sizeof(path_buf)),
             .callback = gltf_image_fetch_callback,
-            .user_data_ptr = &user_data,
-            .user_data_size = sizeof(user_data)
+            .user_data = SFETCH_RANGE(user_data),
         });
     }
 }
@@ -1005,6 +1003,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-
-
-

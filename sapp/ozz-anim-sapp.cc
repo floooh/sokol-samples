@@ -120,16 +120,14 @@ static void init(void) {
         sfetch_request_t req = { };
         req.path = "ozz_anim_skeleton.ozz";
         req.callback = skeleton_data_loaded;
-        req.buffer_ptr = skel_data_buffer;
-        req.buffer_size = sizeof(skel_data_buffer);
+        req.buffer = SFETCH_RANGE(skel_data_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
         req.path = "ozz_anim_animation.ozz";
         req.callback = animation_data_loaded;
-        req.buffer_ptr = anim_data_buffer;
-        req.buffer_size = sizeof(anim_data_buffer);
+        req.buffer = SFETCH_RANGE(anim_data_buffer);
         sfetch_send(&req);
     }
 }
@@ -292,7 +290,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         // avoid the extra allocation and memory copy that happens
         // with the standard MemoryStream class
         ozz::io::MemoryStream stream;
-        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Write(response->data.ptr, response->data.size);
         stream.Seek(0, ozz::io::Stream::kSet);
         ozz::io::IArchive archive(&stream);
         if (archive.TestTag<ozz::animation::Skeleton>()) {
@@ -316,7 +314,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 static void animation_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz::io::MemoryStream stream;
-        stream.Write(response->buffer_ptr, response->fetched_size);
+        stream.Write(response->data.ptr, response->data.size);
         stream.Seek(0, ozz::io::Stream::kSet);
         ozz::io::IArchive archive(&stream);
         if (archive.TestTag<ozz::animation::Animation>()) {
