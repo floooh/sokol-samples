@@ -125,7 +125,6 @@ static void frame(void) {
     sdtx_home();
     sdtx_puts("Press 1, 2, 3 to switch skin sets!");
 
-    sspine_new_frame();
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 

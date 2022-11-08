@@ -80,7 +80,6 @@ static void init(void) {
 static void frame(void) {
     const float delta_time = (float)sapp_frame_duration();
     sfetch_dowork();
-    sspine_new_frame();
 
     // use a fixed 'virtual' canvas size for the spine layer transform so that
     // the spine scene scales with the window size

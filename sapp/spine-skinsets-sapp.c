@@ -222,7 +222,6 @@ static void frame(void) {
 
     // update and draw Spine objects
     uint64_t start_time = stm_now();
-    sspine_new_frame();
     for (uint32_t i = 0; i < NUM_INSTANCES; i++) {
         const uint32_t grid_index = (i + state.t_count) % NUM_INSTANCES;
         const vec2 pos = state.grid[grid_index].pos;

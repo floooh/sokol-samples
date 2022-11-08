@@ -276,13 +276,12 @@ static void frame(void) {
         .origin = { .x = w * 0.5f, .y = h * 0.5f }
     };
 
-    // Start a new spine frame, advance the instance animation and draw the instance.
+    // Advance the instance animation and draw the instance.
     // Important to note here is that no actual sokol-gfx rendering happens yet,
     // instead sokol-spine will only record vertices, indices and draw commands.
     // Also, all sokol-spine functions can be called with invalid or 'incomplete'
     // handles, that way we don't need to care about whether the spine objects
     // have actually been created yet (because their data might still be loading)
-    sspine_new_frame();
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 

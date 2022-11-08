@@ -99,7 +99,6 @@ static void init(void) {
 static void frame(void) {
     const float delta_time = (float)sapp_frame_duration();
     sfetch_dowork();
-    sspine_new_frame();
 
     // render spine objects in separate contexts, first one by setting the current context,
     // second one by calling function with ctx arg

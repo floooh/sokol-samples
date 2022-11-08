@@ -189,9 +189,6 @@ static void frame(void) {
         .delta_time = delta_time,
     });
 
-    // can call Spine functions with invalid or 'incomplete' object handles
-    sspine_new_frame();
-
     // link IK target to mouse (no-op if there's no selected iktarget)
     sspine_set_iktarget_world_pos(state.instance, state.ui.selected.iktarget, state.iktarget_pos);
 
