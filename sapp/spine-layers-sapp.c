@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 //  spine-layers-sapp.c
-//  Demonstrates sokol_spine.h layered rendering mixed with sokol_gl.h
-//  rendering.
+//  Use layered rendering to mix sokol-spine and sokol-gl rendering.
 //------------------------------------------------------------------------------
 #define SOKOL_SPINE_IMPL
 #define SOKOL_GL_IMPL
@@ -21,7 +20,7 @@ typedef struct {
     sspine_range data;
 } load_status_t;
 
-#define NUM_INSTANCES (2)
+#define NUM_INSTANCES (3)
 
 static struct {
     sspine_atlas atlas;
@@ -58,7 +57,7 @@ static void init(void) {
 
     // setup sokol-gfx pass action to clear screen
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.625f, 0.08f, 0.33f, 1.0f } }
+        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     // start loading spine skeleton and atlas files in parallel
@@ -88,40 +87,51 @@ static void frame(void) {
         .origin = { .x = 512.0f, .y = 384.0f },
     };
 
-    // draw a couple of bars with sokol-gl, note how the order how we handle sokol-gl
+    // draw a 3 layers of vertical bars couple sokol-gl, note how the order how we handle sokol-gl
     // and sokol-spine rendering doesn't matter outside the sokol-gfx render pass
     sgl_defaults();
-    sgl_c3f(0.0f, 0.75f, 0.0f);
-    sgl_begin_quads();
-    const int num_bars = 30;
-    const float bar_width_half = 0.02f;
-    for (int i = 0; i <= num_bars; i++) {
-        const float x = (i * (1.0f / num_bars)) * 2.0f - 1.0f;
-        const float x0 = x - bar_width_half;
-        const float x1 = x + bar_width_half;
-        sgl_v2f(x0, -1.0f); sgl_v2f(x1, -1.0f);
-        sgl_v2f(x1, +1.0f); sgl_v2f(x0, +1.0f);
+    for (int layer_index = 0; layer_index < 3; layer_index++) {
+        sgl_layer(layer_index);
+        switch (layer_index) {
+            case 0: sgl_c3f(0.0f, 0.0f, 1.0f); break;
+            case 1: sgl_c3f(0.0f, 1.0f, 0.0f); break;
+            case 2: sgl_c3f(1.0f, 0.0f, 0.0f); break;
+        }
+        sgl_begin_quads();
+        const int num_bars = 30;
+        const float bar_width_half = 0.0075f;
+        const float bar_offset_x = (float)layer_index * 0.02f;
+        for (int i = 0; i <= num_bars; i++) {
+            const float x = bar_offset_x + ((i * (1.0f / num_bars)) * 2.0f - 1.0f);
+            const float x0 = x - bar_width_half;
+            const float x1 = x + bar_width_half;
+            sgl_v2f(x0, -1.0f); sgl_v2f(x1, -1.0f);
+            sgl_v2f(x1, +1.0f); sgl_v2f(x0, +1.0f);
+        }
+        sgl_end();
     }
-    sgl_end();
 
-    // draw first spine instance into layer 0
+    // draw spine instances into different layers
     sspine_set_position(state.instances[0], (sspine_vec2){ -225.0f, 128.0f });
     sspine_update_instance(state.instances[0], delta_time);
     sspine_draw_instance_in_layer(state.instances[0], 0);
 
-    // draw second spine instance into layer 1
-    sspine_set_position(state.instances[1], (sspine_vec2){ +225.0f, 128.0f });
+    sspine_set_position(state.instances[1], (sspine_vec2){ 0.0f, 128.0f });
     sspine_update_instance(state.instances[1], delta_time);
     sspine_draw_instance_in_layer(state.instances[1], 1);
 
-    // sokol-gfx render pass
-    // - first draw the sspine layer 0
-    // - then draw the sokol-gl scene
-    // - then draw the sspine layer 1
+    sspine_set_position(state.instances[2], (sspine_vec2){ +225.0f, 128.0f });
+    sspine_update_instance(state.instances[2], delta_time);
+    sspine_draw_instance_in_layer(state.instances[2], 2);
+
+    // sokol-gfx render pass, draw the sokol-gl and sokol-spine layers interleaved
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sspine_draw_layer(0, &layer_transform);
-    sgl_draw();
+    sgl_draw_layer(0);
     sspine_draw_layer(1, &layer_transform);
+    sgl_draw_layer(1);
+    sspine_draw_layer(2, &layer_transform);
+    sgl_draw_layer(2);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -193,7 +203,7 @@ static void create_spine_objects(void) {
             .skeleton = state.skeleton
         });
         assert(sspine_instance_valid(state.instances[i]));
-        sspine_set_animation(state.instances[i], sspine_anim_by_name(state.skeleton, (i & 1) ? "run-linear" : "run"), 0, true);
+        sspine_set_animation(state.instances[i], sspine_anim_by_name(state.skeleton, "run-linear"), 0, true);
     }
 
     // start loading atlas images
