@@ -120,7 +120,7 @@ void frame(void) {
     const float aspect = sapp_heightf() / sapp_widthf();
     sgl_ortho(-1.0f, +1.0f, aspect, -aspect, -1.0f, +1.0f);
     sgl_matrix_mode_modelview();
-    state.angle_deg = fmod((state.angle_deg + sapp_frame_duration() * 60.0), 360.0);
+    state.angle_deg += sapp_frame_duration() * 60.0;
     draw_quad((quad_params_t){
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },

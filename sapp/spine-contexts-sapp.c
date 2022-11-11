@@ -114,7 +114,7 @@ static void frame(void) {
     const float dw = sapp_widthf();
     const float dh = sapp_heightf();
     const float aspect = dh / dw;
-    state.angle_deg = fmod((state.angle_deg + sapp_frame_duration() * 60.0), 360.0);
+    state.angle_deg += sapp_frame_duration() * 60.0;
     sgl_defaults();
     sgl_enable_texture();
     sgl_matrix_mode_projection();

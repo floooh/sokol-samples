@@ -87,7 +87,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    state.angle_deg = fmod((state.angle_deg + sapp_frame_duration() * 60.0), 360.0);
+    state.angle_deg += sapp_frame_duration() * 60.0;
     const float a = sgl_rad((float)state.angle_deg);
 
     // draw a rotating quad into the offscreen render target texture
