@@ -31,6 +31,7 @@ static struct {
     sgl_pipeline alpha_pip;
     sg_image opaque_img;
     sg_image alpha_img;
+    double angle_deg;
 } state = {
     .pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.25f, 1.0f, 1.0f }}
@@ -119,18 +120,17 @@ void frame(void) {
     const float aspect = sapp_heightf() / sapp_widthf();
     sgl_ortho(-1.0f, +1.0f, aspect, -aspect, -1.0f, +1.0f);
     sgl_matrix_mode_modelview();
-    const float t = (float)(sapp_frame_duration() * 60.0);
-    const float angle = sgl_rad((float)sapp_frame_count() * t);
+    state.angle_deg += sapp_frame_duration() * 60.0;
     draw_quad((quad_params_t){
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
-        .rot = angle,
+        .rot = sgl_rad((float)state.angle_deg),
         .img = state.opaque_img,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
-        .rot = -angle,
+        .rot = -sgl_rad((float)state.angle_deg),
         .img = state.alpha_img,
         .pip = state.alpha_pip,
     });

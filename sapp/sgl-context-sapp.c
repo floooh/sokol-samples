@@ -12,6 +12,7 @@
 #include "dbgui/dbgui.h"
 
 static struct {
+    double angle_deg;
     struct {
         sg_pass_action pass_action;
         sg_pass pass;
@@ -86,8 +87,8 @@ static void init(void) {
 }
 
 static void frame(void) {
-    const float t = (float)(sapp_frame_duration() * 60.0);
-    const float a = sgl_rad((float)sapp_frame_count() * t);
+    state.angle_deg += sapp_frame_duration() * 60.0;
+    const float a = sgl_rad((float)state.angle_deg);
 
     // draw a rotating quad into the offscreen render target texture
     sgl_set_context(state.offscreen.sgl_ctx);

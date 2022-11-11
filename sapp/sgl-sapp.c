@@ -153,8 +153,8 @@ static void draw_cubes(const float t) {
 
 static void draw_tex_cube(const float t) {
     static float frame_count = 0.0f;
-    frame_count += 1.0f;
-    float a = sgl_rad(frame_count * t);
+    frame_count += 1.0f * t;
+    float a = sgl_rad(frame_count);
 
     // texture matrix rotation and scale
     float tex_rot = 0.5f * a;
