@@ -87,8 +87,8 @@ static void frame(void) {
         .origin = { .x = 512.0f, .y = 384.0f },
     };
 
-    // draw a 3 layers of vertical bars couple sokol-gl, note how the order how we handle sokol-gl
-    // and sokol-spine rendering doesn't matter outside the sokol-gfx render pass
+    // draw 3 layers of vertical bars with sokol-gl, note how the order how we handle sokol-gl
+    // vs sokol-spine rendering doesn't matter outside the sokol-gfx render pass
     sgl_defaults();
     for (int layer_index = 0; layer_index < 3; layer_index++) {
         sgl_layer(layer_index);
@@ -126,12 +126,10 @@ static void frame(void) {
 
     // sokol-gfx render pass, draw the sokol-gl and sokol-spine layers interleaved
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
-    sspine_draw_layer(0, &layer_transform);
-    sgl_draw_layer(0);
-    sspine_draw_layer(1, &layer_transform);
-    sgl_draw_layer(1);
-    sspine_draw_layer(2, &layer_transform);
-    sgl_draw_layer(2);
+    for (int layer_index = 0; layer_index < 3; layer_index++) {
+        sspine_draw_layer(layer_index, &layer_transform);
+        sgl_draw_layer(layer_index);
+    }
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
