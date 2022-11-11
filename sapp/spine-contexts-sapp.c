@@ -34,6 +34,7 @@ static struct {
     sspine_skeleton skeleton;
     sspine_instance instances[2];
     sspine_layer_transform layer_transform;
+    double angle_deg;
     struct {
         load_status_t atlas;
         load_status_t skeleton;
@@ -113,8 +114,7 @@ static void frame(void) {
     const float dw = sapp_widthf();
     const float dh = sapp_heightf();
     const float aspect = dh / dw;
-    const float t = delta_time * 60.0f;
-    const float angle = sgl_rad((float)sapp_frame_count() * t);
+    state.angle_deg = fmod((state.angle_deg + sapp_frame_duration() * 60.0), 360.0);
     sgl_defaults();
     sgl_enable_texture();
     sgl_matrix_mode_projection();
@@ -123,13 +123,13 @@ static void frame(void) {
     draw_quad((quad_params_t){
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
-        .rot = angle,
+        .rot = sgl_rad((float)state.angle_deg),
         .img = state.offscreen[0].img,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
-        .rot = -angle,
+        .rot = -sgl_rad((float)state.angle_deg),
         .img = state.offscreen[1].img,
     });
 
