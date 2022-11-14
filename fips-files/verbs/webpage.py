@@ -54,6 +54,7 @@ samples = [
     [ 'debugtext-printf', 'debugtext-printf-sapp.c', None],
     [ 'debugtext-userfont', 'debugtext-userfont-sapp.c', None],
     [ 'debugtext-context', 'debugtext-context-sapp.c', 'debugtext-context-sapp.glsl'],
+    [ 'debugtext-layers', 'debugtext-layers-sapp.c', None],
     [ 'events', 'events-sapp.cc', None],
     [ 'icon', 'icon-sapp.c', None ],
     [ 'droptest', 'droptest-sapp.c', None],
