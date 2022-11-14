@@ -47,13 +47,13 @@ static void init(void) {
 static void frame(void) {
 
     // render debugtext into layers
-    sdtx_canvas(128.0f, 96.0f);
+    sdtx_canvas(64.0f, 48.0f);
     sdtx_font(0);
     sdtx_color3b(255, 255, 255);
     sdtx_home();
     for (int i = 0; i < NUM_LAYERS; i++) {
         sdtx_layer(i);
-        sdtx_pos(2.0f, 1.5f + 4.0f * (float)i);
+        sdtx_pos(0.5f, 0.5f + 2.0f * (float)i);
         sdtx_printf("Layer %d", i);
     }
 
