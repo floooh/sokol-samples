@@ -168,7 +168,6 @@ static void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-
 }
 
 static void cleanup(void) {
