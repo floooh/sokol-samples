@@ -50,7 +50,7 @@ samples = [
     [ 'nuklear-images', 'nuklear-images-sapp.c', None ],
     [ 'sgl-microui', 'sgl-microui-sapp.c', None],
     [ 'fontstash', 'fontstash-sapp.c', None],
-    [ 'fontstash-layers', 'fontstash-layers.c', 'fontstash-layers-sapp.glsl'],
+    [ 'fontstash-layers', 'fontstash-layers-sapp.c', 'fontstash-layers-sapp.glsl'],
     [ 'debugtext', 'debugtext-sapp.c', None],
     [ 'debugtext-printf', 'debugtext-printf-sapp.c', None],
     [ 'debugtext-userfont', 'debugtext-userfont-sapp.c', None],
