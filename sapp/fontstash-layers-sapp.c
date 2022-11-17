@@ -33,7 +33,6 @@ static struct {
     sg_pipeline pip;
     sg_bindings bind;
     FONScontext* fons;
-    float dpi_scale;
     int font;
     uint8_t font_data[256 * 1024];
 } state;
