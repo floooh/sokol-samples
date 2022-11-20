@@ -6,7 +6,7 @@ jobs:
     windows:
         runs-on: windows-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: win64-vstudio-debug
           run:  python3 fips build win64-vstudio-debug
         - name: win64-vstudio-release
@@ -26,7 +26,7 @@ jobs:
     mac:
         runs-on: macos-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: osx-make-debug
           run:  python3 fips build osx-make-debug
         - name: osx-make-release
@@ -42,7 +42,7 @@ jobs:
     ios:
         runs-on: macos-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: ios-xcode-debug
           run:  python3 fips build ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         - name: ios-xcode-release
@@ -58,7 +58,7 @@ jobs:
     linux:
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: prepare
           run:  |
             sudo apt-get update
@@ -83,7 +83,7 @@ jobs:
     emscripten:
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: prepare
           run: |
             sudo apt-get install ninja-build
@@ -99,7 +99,7 @@ jobs:
     android:
         runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - uses: actions/setup-java@v1
           with:
             java-version: '8'
@@ -113,7 +113,7 @@ jobs:
     uwp:
         runs-on: windows-latest
         steps:
-        - uses: actions/checkout@v1
+        - uses: actions/checkout@v3
         - name: sapp-uwp-vstudio-debug
           run:  python3 fips build sapp-uwp-vstudio-debug
         - name: sapp-uwp-vstudio-release

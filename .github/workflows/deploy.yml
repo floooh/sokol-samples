@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
         run:  python3 fips emsdk install latest
@@ -14,8 +14,8 @@ jobs:
           python3 fips set local on
           python3 fips webpage build
       - name: upload-artifact
-        uses: actions/upload-artifact@v2
-        with: 
+        uses: actions/upload-artifact@v3
+        with:
           name: webpage
           path: fips-files/deploy/sokol-webpage
           retention-days: 1
@@ -23,11 +23,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: floooh/sokol-html5
           ssh-key: ${{ secrets.GHACTION_PUSH }}
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: webpage
       - name: "commit and push"
