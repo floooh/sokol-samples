@@ -2,7 +2,7 @@
 options:
     src_dir: spine
     ios:
-        dst_dir: spine-sapp.app
+        dst_dir: $TARGET_NAME.app
 files:
     - spineboy-pro.json
     - spineboy.atlas

@@ -1,7 +1,7 @@
 ---
 options:
     ios:
-        dst_dir: fontstash-sapp.app
+        dst_dir: $TARGET_NAME.app
 files:
     - DroidSansJapanese.ttf
     - DroidSerif-Bold.ttf

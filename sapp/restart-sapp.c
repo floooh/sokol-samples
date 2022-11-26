@@ -29,6 +29,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "restart-sapp.glsl.h"
+#include "util/fileutil.h"
 
 #define MOD_NUM_CHANNELS (2)
 #define MOD_SRCBUF_SAMPLES (16*1024)
@@ -218,13 +219,14 @@ static void init(void) {
     ModPlug_SetSettings(&mps);
 
     // start loading files
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = "baboon.png",
+        .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
         .callback = fetch_img_callback,
         .buffer = SFETCH_RANGE(state.io.img_buffer),
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "comsi.s3m",
+        .path = fileutil_get_path("comsi.s3m", path_buf, sizeof(path_buf)),
         .callback = fetch_mod_callback,
         .buffer = SFETCH_RANGE(state.io.mod_buffer),
     });

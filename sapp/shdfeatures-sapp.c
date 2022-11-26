@@ -47,6 +47,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "util/camera.h"
+#include "util/fileutil.h"
 
 // shader feature flags
 #define SHD_NONE     (0)     // no features enabled
@@ -391,18 +392,19 @@ static void init(void) {
     }
 
     // start loading character data
+    char path_buf[512];
     sfetch_send(&(sfetch_request_t){
-        .path = "ozz_skin_skeleton.ozz",
+        .path = fileutil_get_path("ozz_skin_skeleton.ozz", path_buf, sizeof(path_buf)),
         .callback = skeleton_data_loaded,
         .buffer = SFETCH_RANGE(skeleton_io_buffer),
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "ozz_skin_animation.ozz",
+        .path = fileutil_get_path("ozz_skin_animation.ozz", path_buf, sizeof(path_buf)),
         .callback = animation_data_loaded,
         .buffer= SFETCH_RANGE(animation_io_buffer),
     });
     sfetch_send(&(sfetch_request_t){
-        .path = "ozz_skin_mesh.ozz",
+        .path = fileutil_get_path("ozz_skin_mesh.ozz", path_buf, sizeof(path_buf)),
         .callback = mesh_data_loaded,
         .buffer = SFETCH_RANGE(mesh_io_buffer),
     });

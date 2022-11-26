@@ -22,6 +22,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "util/camera.h"
+#include "util/fileutil.h"
 
 // ozz-animation headers
 #include "ozz/animation/runtime/animation.h"
@@ -116,16 +117,17 @@ static void init(void) {
     cam_init(&state.camera, &camdesc);
 
     // start loading the skeleton and animation files
+    char path_buf[512];
     {
         sfetch_request_t req = { };
-        req.path = "ozz_anim_skeleton.ozz";
+        req.path = fileutil_get_path("ozz_anim_skeleton.ozz", path_buf, sizeof(path_buf));
         req.callback = skeleton_data_loaded;
         req.buffer = SFETCH_RANGE(skel_data_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
-        req.path = "ozz_anim_animation.ozz";
+        req.path = fileutil_get_path("ozz_anim_animation.ozz", path_buf, sizeof(path_buf));
         req.callback = animation_data_loaded;
         req.buffer = SFETCH_RANGE(anim_data_buffer);
         sfetch_send(&req);

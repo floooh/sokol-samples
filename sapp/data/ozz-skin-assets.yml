@@ -1,6 +1,8 @@
 ---
 options:
     src_dir: ozz
+    ios:
+        dst_dir: $TARGET_NAME.app
 files:
     - ozz_skin_animation.ozz
     - ozz_skin_skeleton.ozz

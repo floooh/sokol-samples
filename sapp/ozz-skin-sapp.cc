@@ -28,6 +28,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "util/camera.h"
+#include "util/fileutil.h"
 
 #include "ozz-skin-sapp.glsl.h"
 
@@ -234,23 +235,24 @@ static void init(void) {
     state.bind.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
     // start loading data
+    char path_buf[512];
     {
         sfetch_request_t req = { };
-        req.path = "ozz_skin_skeleton.ozz";
+        req.path = fileutil_get_path("ozz_skin_skeleton.ozz", path_buf, sizeof(path_buf));
         req.callback = skel_data_loaded;
         req.buffer = SFETCH_RANGE(skel_io_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
-        req.path = "ozz_skin_animation.ozz";
+        req.path = fileutil_get_path("ozz_skin_animation.ozz", path_buf, sizeof(path_buf));
         req.callback = anim_data_loaded;
         req.buffer = SFETCH_RANGE(anim_io_buffer);
         sfetch_send(&req);
     }
     {
         sfetch_request_t req = { };
-        req.path = "ozz_skin_mesh.ozz";
+        req.path = fileutil_get_path("ozz_skin_mesh.ozz", path_buf, sizeof(path_buf));
         req.callback = mesh_data_loaded;
         req.buffer = SFETCH_RANGE(mesh_io_buffer);
         sfetch_send(&req);

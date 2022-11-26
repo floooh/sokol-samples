@@ -1,5 +1,5 @@
 ---
 options:
     ios:
-        dst_dir: loadpng-sapp.app
+        dst_dir: $TARGET_NAME.app
 files: [ "baboon.png" ]
