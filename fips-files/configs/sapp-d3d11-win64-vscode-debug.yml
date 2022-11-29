@@ -1,7 +1,8 @@
 ---
 platform: win64
+generator: Visual Studio 17
 generator-platform: x64
-build_tool: vscode_cmake
+build_tool: vscode
 build_type: Debug
 vscode_exclude_from_workspace:
     - fips-glfw
