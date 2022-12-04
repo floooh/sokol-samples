@@ -105,5 +105,3 @@ else()
         add_subdirectory(glfw)
     endif()
 endif()
-
-fips_finish()
