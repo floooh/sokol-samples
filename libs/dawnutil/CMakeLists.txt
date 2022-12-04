@@ -16,9 +16,9 @@ fips_begin_lib(dawnutil)
         dawn_utils
         glfw3
     )
+    if (FIPS_OSX)
+        target_compile_definitions(dawnutil PRIVATE DAWN_ENABLE_BACKEND_METAL)
+    endif()
+    target_include_directories(dawnutil INTERFACE .)
 fips_end_lib(dawnutil)
-if (FIPS_OSX)
-    target_compile_definitions(dawnutil PRIVATE DAWN_ENABLE_BACKEND_METAL)
-endif()
-target_include_directories(dawnutil INTERFACE .)
 
