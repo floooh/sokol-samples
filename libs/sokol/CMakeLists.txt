@@ -6,6 +6,7 @@ endif()
 # a dummy library with the system library dependencies
 macro(sokol_system_deps)
     if (FIPS_OSX)
+        fips_frameworks_osx(Foundation)
         if (FIPS_IOS)
             fips_frameworks_osx(UIKit AudioToolbox AVFoundation)
             if (SOKOL_USE_METAL)
