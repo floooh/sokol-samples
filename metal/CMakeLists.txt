@@ -1,9 +1,10 @@
 fips_begin_lib(osxentry)
     fips_files(osxentry.m osxentry.h)
+    fips_frameworks_osx(Foundation)
     if (FIPS_MACOS)
         fips_frameworks_osx(Cocoa Metal MetalKit QuartzCore)
     else()
-        fips_frameworks_osx(Metal MetalKit)
+        fips_frameworks_osx(UIKit Metal MetalKit)
     endif()
 fips_end_lib()
 
