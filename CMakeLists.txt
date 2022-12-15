@@ -3,6 +3,11 @@
 #
 cmake_minimum_required(VERSION 3.2)
 set(CMAKE_C_STANDARD 99)
+if (FIPS_IOS)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
+else()
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
+endif()
 if (CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
     set(CMAKE_CXX_STANDARD 17)
 else()
@@ -17,12 +22,6 @@ endif()
 # include the fips main cmake file
 get_filename_component(FIPS_ROOT_DIR "../fips" ABSOLUTE)
 include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
-
-if (FIPS_IOS)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
-else()
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "")
-endif()
 
 fips_setup()
 fips_ide_group("Imports")
