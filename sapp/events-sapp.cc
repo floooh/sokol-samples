@@ -211,22 +211,10 @@ static void event(const sapp_event* e) {
     if ((e->type == SAPP_EVENTTYPE_KEY_DOWN) && !e->key_repeat) {
         switch (e->key_code) {
             case SAPP_KEYCODE_SPACE:
-                sapp_show_mouse(false);
+                sapp_show_mouse(!sapp_mouse_shown());
                 break;
             case SAPP_KEYCODE_M:
-                sapp_lock_mouse(true);
-                break;
-            default:
-                break;
-        }
-    }
-    else if (e->type == SAPP_EVENTTYPE_KEY_UP) {
-        switch (e->key_code) {
-            case SAPP_KEYCODE_SPACE:
-                sapp_show_mouse(true);
-                break;
-            case SAPP_KEYCODE_M:
-                sapp_lock_mouse(false);
+                sapp_lock_mouse(!sapp_mouse_locked());
                 break;
             default:
                 break;
