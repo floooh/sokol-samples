@@ -110,6 +110,10 @@ jobs:
           run: python3 fips build sapp-android-make-debug
         - name: sapp-android-make-release
           run: python3 fips build sapp-android-make-release
+        - name: sapp-android-sles-make-debug
+          run: python3 fips build sapp-android-sles-make-debug
+        - name: sapp-android-sles-make-release
+          run: python3 fips build sapp-android-sles-make-release
     uwp:
         runs-on: windows-latest
         steps:
