@@ -476,6 +476,7 @@ static sg_range gen_pixels(sg_pixel_format fmt) {
         case SG_PIXELFORMAT_RG16SN: gen_pixels_32(0x7FFF7FFF);  return (sg_range) {pixels, 8*8*4};
         case SG_PIXELFORMAT_RG16F:      gen_pixels_32(0x3C003C00);  return (sg_range) {pixels, 8*8*4};
         case SG_PIXELFORMAT_RGBA8:      gen_pixels_32(0xFFFFFFFF);  return (sg_range) {pixels, 8*8*4};
+        case SG_PIXELFORMAT_SRGB8A8:    gen_pixels_32(0xFFFFFFFF);  return (sg_range) {pixels, 8*8*4};
         case SG_PIXELFORMAT_RGBA8SN:    gen_pixels_32(0x7F7F7F7F); return (sg_range) {pixels, 8*8*4};
         case SG_PIXELFORMAT_BGRA8:      gen_pixels_32(0xFFFFFFFF); return (sg_range) {pixels, 8*8*4};
         case SG_PIXELFORMAT_RGB10A2:    gen_pixels_32((uint32_t)(0x3<<30 | 0x3FF<<20 | 0x3FF<<10 | 0x3FF)); return (sg_range) {pixels, 8*8*4};
@@ -515,6 +516,7 @@ static const char* pixelformat_string(sg_pixel_format fmt) {
         case SG_PIXELFORMAT_RG16SI: return "SG_PIXELFORMAT_RG16SI";
         case SG_PIXELFORMAT_RG16F: return "SG_PIXELFORMAT_RG16F";
         case SG_PIXELFORMAT_RGBA8: return "SG_PIXELFORMAT_RGBA8";
+        case SG_PIXELFORMAT_SRGB8A8: return "SG_PIXELFORMAT_SRGB8A8";
         case SG_PIXELFORMAT_RGBA8SN: return "SG_PIXELFORMAT_RGBA8SN";
         case SG_PIXELFORMAT_RGBA8UI: return "SG_PIXELFORMAT_RGBA8UI";
         case SG_PIXELFORMAT_RGBA8SI: return "SG_PIXELFORMAT_RGBA8SI";
