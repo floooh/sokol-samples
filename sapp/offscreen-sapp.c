@@ -15,6 +15,7 @@
 #include "offscreen-sapp.glsl.h"
 
 #define OFFSCREEN_SAMPLE_COUNT (4)
+#define OFFSCREEN_PIXEL_FORMAT (SG_PIXELFORMAT_RGBA8)
 
 static struct {
     struct {
@@ -54,7 +55,7 @@ static void init(void) {
         .render_target = true,
         .width = 256,
         .height = 256,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .pixel_format = OFFSCREEN_PIXEL_FORMAT,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
@@ -118,7 +119,7 @@ static void init(void) {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
-        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
+        .colors[0].pixel_format = OFFSCREEN_PIXEL_FORMAT,
         .label = "offscreen-pipeline"
     });
 
