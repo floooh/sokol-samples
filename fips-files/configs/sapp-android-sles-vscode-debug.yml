@@ -1,0 +1,19 @@
+---
+platform: android
+generator: Ninja
+build_tool: vscode
+build_type: Debug
+cmake-toolchain: android.toolchain.cmake
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-imgui
+    - fips-cimgui
+defines:
+    USE_SOKOL_APP: ON
+    SOKOL_USE_OPENSLES: ON
+    ANDROID_ABI: armeabi-v7a
+    ANDROID_PLATFORM: android-28
