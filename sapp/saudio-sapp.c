@@ -5,6 +5,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 
 #define NUM_SAMPLES (32)
@@ -20,7 +21,7 @@ void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext()
     });
-    saudio_setup(&(saudio_desc){0});
+    saudio_setup(&(saudio_desc){ .logger.func = slog_func });
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.5f, 0.0f, 1.0f } }
     };
@@ -65,4 +66,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-

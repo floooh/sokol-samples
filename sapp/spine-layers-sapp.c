@@ -7,6 +7,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "spine/spine.h"
 #include "sokol_spine.h"
 #include "sokol_gl.h"
@@ -46,7 +47,7 @@ static void create_spine_objects(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-    sspine_setup(&(sspine_desc){0});
+    sspine_setup(&(sspine_desc){ .logger.func = slog_func });
     sgl_setup(&(sgl_desc_t){0});
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,

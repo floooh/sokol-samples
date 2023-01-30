@@ -7,6 +7,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "modplug.h"
 #include "data/mods.h"
@@ -78,8 +79,11 @@ void init(void* user_data) {
         .num_channels = MODPLAY_NUM_CHANNELS,
         #if !MODPLAY_USE_PUSH
         .stream_userdata_cb = stream_cb,
-        .user_data = state
+        .user_data = state,
         #endif
+        .logger = {
+            .func = slog_func,
+        }
     });
 
     /* setup libmodplug and load mod from embedded C array */

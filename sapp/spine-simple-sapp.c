@@ -6,6 +6,7 @@
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "spine/spine.h"
 #include "sokol_spine.h"
 #include "sokol_glue.h"
@@ -55,6 +56,9 @@ static void init(void) {
         .skeleton_pool_size = 1,
         .skinset_pool_size = 1,
         .instance_pool_size = 1,
+        .logger = {
+            .func = slog_func,
+        },
     });
 
     // We'll use sokol_fetch.h for data loading because this gives us

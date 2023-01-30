@@ -5,6 +5,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "util/fileutil.h"
 #define SOKOL_SPINE_IMPL
@@ -166,7 +167,7 @@ static void init(void) {
         .num_lanes = 1,
     });
     // setup sokol-spine with default attributes
-    sspine_setup(&(sspine_desc){0});
+    sspine_setup(&(sspine_desc){ .logger.func = slog_func });
     // setup UI libs
     ui_setup();
     // start loading Spine atlas and skeleton file asynchronously

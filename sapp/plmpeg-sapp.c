@@ -27,6 +27,7 @@
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "plmpeg-sapp.glsl.h"
@@ -224,6 +225,7 @@ static void frame(void) {
                 .buffer_frames = 4096,
                 .num_packets = 256,
                 .num_channels = 2,
+                .logger.func = slog_func,
             });
         }
     }

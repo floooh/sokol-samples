@@ -11,6 +11,7 @@
 #include "spine/spine.h"
 #include "sokol_spine.h"
 #include "sokol_gl.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
 #include "util/fileutil.h"
@@ -63,7 +64,7 @@ static void draw_quad(quad_params_t params);
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     sgl_setup(&(sgl_desc_t){0});
-    sspine_setup(&(sspine_desc){0});
+    sspine_setup(&(sspine_desc){ .logger.func = slog_func });
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
         .num_channels = 2,

@@ -15,6 +15,7 @@
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "stb/stb_image.h"
 
@@ -164,7 +165,10 @@ static void init(void) {
         .allocator = {
             .alloc = smemtrack_alloc,
             .free = smemtrack_free,
-        }
+        },
+        .logger = {
+            .func = slog_func,
+        },
     });
 
     // setup rendering resources
