@@ -9,6 +9,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 
 #define SOKOL_GL_IMPL
@@ -91,6 +92,7 @@ static void init(void) {
     sfdesc.max_requests = 2;
     sfdesc.num_channels = 1;
     sfdesc.num_lanes = 2;
+    sfdesc.logger.func = slog_func;
     sfetch_setup(&sfdesc);
 
     // setup sokol-gl

@@ -5,6 +5,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -60,6 +61,7 @@ static void init(void) {
     sfetch_setup(&(sfetch_desc_t){
         .num_channels = 1,
         .num_lanes = 1,
+        .logger.func = slog_func,
     });
 
     // make sure fontstash atlas width/height is pow 2

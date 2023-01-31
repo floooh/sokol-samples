@@ -11,6 +11,7 @@
 #include "sokol_gfx.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "plmpeg-wgpu.glsl.h"
 #define PL_MPEG_IMPLEMENTATION
 #include "../libs/pl_mpeg/pl_mpeg.h"
@@ -92,7 +93,8 @@ static void init(void) {
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 1,
         .num_channels = 1,
-        .num_lanes = 1
+        .num_lanes = 1,
+        .logger.func = slog_func,
     });
     sfetch_send(&(sfetch_request_t){
         .path = filename,

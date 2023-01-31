@@ -18,6 +18,7 @@
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 
 #include "imgui.h"
@@ -161,6 +162,7 @@ static void init(void) {
     sfdesc.max_requests = 3;
     sfdesc.num_channels = 1;
     sfdesc.num_lanes = 3;
+    sfdesc.logger.func = slog_func;
     sfetch_setup(&sfdesc);
 
     // setup sokol-imgui

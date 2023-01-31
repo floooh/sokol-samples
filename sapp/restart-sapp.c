@@ -137,6 +137,9 @@ static void init(void) {
         .allocator = {
             .alloc = smemtrack_alloc,
             .free = smemtrack_free,
+        },
+        .logger = {
+            .func = slog_func,
         }
     });
     sgl_setup(&(sgl_desc_t){

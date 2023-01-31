@@ -13,6 +13,7 @@
 #include "sokol_app.h"
 #include "sokol_audio.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
 #include "sokol_glue.h"
@@ -244,7 +245,8 @@ static void init(void) {
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 64,
         .num_channels = SFETCH_NUM_CHANNELS,
-        .num_lanes = SFETCH_NUM_LANES
+        .num_lanes = SFETCH_NUM_LANES,
+        .logger.func = slog_func,
     });
 
     // normal background color, and a "load failed" background color

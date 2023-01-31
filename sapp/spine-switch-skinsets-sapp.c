@@ -88,6 +88,7 @@ static void init(void) {
         .max_requests = 3,
         .num_channels = 2,
         .num_lanes = 1,
+        .logger.func = slog_func,
     });
     sspine_setup(&(sspine_desc){ .logger.func = slog_func });
     __dbgui_setup(sapp_sample_count());

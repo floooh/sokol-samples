@@ -118,7 +118,8 @@ static void init(void) {
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 1,
         .num_channels = 1,
-        .num_lanes = 1
+        .num_lanes = 1,
+        .logger.func = slog_func,
     });
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){

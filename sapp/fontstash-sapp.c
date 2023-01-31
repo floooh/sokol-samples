@@ -6,6 +6,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -115,7 +116,8 @@ static void init(void) {
     /* use sokol_fetch for loading the TTF font files */
     sfetch_setup(&(sfetch_desc_t){
         .num_channels = 1,
-        .num_lanes = 4
+        .num_lanes = 4,
+        .logger.func = slog_func,
     });
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){

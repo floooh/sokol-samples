@@ -71,6 +71,7 @@ static void init(void) {
         .max_requests = 3,
         .num_channels = 2,
         .num_lanes = 1,
+        .logger.func = slog_func,
     });
 
     // Setup a sokol-gfx pass action to clear the default framebuffer to black
