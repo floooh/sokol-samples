@@ -8,6 +8,7 @@
 #include "HandmadeMath.h"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
 #include "sokol_glue.h"
@@ -71,7 +72,8 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
-        .fonts[0] = sdtx_font_z1013()
+        .fonts[0] = sdtx_font_z1013(),
+        .logger.func = slog_func,
     });
 
     // vertex- and index-buffers

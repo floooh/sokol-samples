@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -21,7 +22,9 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     /* setup sokol-gl */
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func,
+    });
 
     /* a pipeline object with less-equal depth-testing */
     state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
@@ -196,4 +199,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-

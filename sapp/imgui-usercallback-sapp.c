@@ -9,6 +9,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -84,7 +85,9 @@ void init(void) {
         .context = sapp_sgcontext()
     });
     simgui_setup(&(simgui_desc_t){ 0 });
-    sgl_setup(&(sgl_desc_t){ 0 });
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func
+    });
 
     // default pass actions
     state.default_pass_action = (sg_pass_action) {

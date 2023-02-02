@@ -83,6 +83,7 @@ static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_kc854(),
+        .logger.func = slog_func,
     });
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,

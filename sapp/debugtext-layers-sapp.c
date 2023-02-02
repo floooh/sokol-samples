@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
@@ -23,8 +24,11 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_cpc(),
+        .logger.func = slog_func,
     });
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func
+    });
 
     // pass action for clearing to black
     state.pass_action = (sg_pass_action) {

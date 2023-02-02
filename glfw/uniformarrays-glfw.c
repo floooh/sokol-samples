@@ -6,6 +6,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_debugtext.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
@@ -40,8 +41,9 @@ int main() {
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
         .fonts[0] = sdtx_font_oric(),
+        .logger.func = slog_func,
     });
-    
+
     const float vertices[] = {
          0.0f,  0.0f,
         +1.0f,  0.0f,
@@ -64,11 +66,11 @@ int main() {
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .index_type = SG_INDEXTYPE_UINT16
     });
-    
+
     sg_pass_action pass_action = {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
-    
+
     // initialize uniform block array values
     vs_params_t vs_params = {0};
     for (int idx = 0; idx < ARRAY_COUNT; idx++) {
@@ -80,23 +82,23 @@ int main() {
         vs_params.f3[idx][1] = v;
         vs_params.f3[idx][2] = v;
     }
-    
+
     while (!glfwWindowShouldClose(win)) {
         int cur_width, cur_height;
         glfwGetFramebufferSize(win, &cur_width, &cur_height);
-        
+
         const float w = (float) cur_width;
         const float h = (float) cur_height;
         const float cw = w * 0.5f;
         const float ch = h * 0.5f;
         const float glyph_w = 8.0f / cw;
         const float glyph_h = 8.0f / ch;
-        
+
         sdtx_canvas(cw, ch);
         sdtx_origin(3, 3);
         sdtx_color3f(1.0f, 1.0f, 1.0f);
         sdtx_puts("You should see 3 rows of increasing\nbrightness (red, yellow, grey)");
-        
+
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bindings);
@@ -115,7 +117,7 @@ int main() {
         sdtx_draw();
         sg_end_pass();
         sg_commit();
-        
+
         glfwSwapBuffers(win);
         glfwPollEvents();
     }

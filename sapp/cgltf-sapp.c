@@ -237,7 +237,8 @@ static void init(void) {
     sdtx_setup(&(sdtx_desc_t){
         .fonts = {
             [0] = sdtx_font_oric()
-        }
+        },
+        .logger.func = slog_func,
     });
 
     // setup sokol-fetch with 2 channels and 6 lanes per channel,

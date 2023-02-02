@@ -159,7 +159,7 @@ static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     // setup sokol-gl
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){ .logger.func = slog_func });
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,

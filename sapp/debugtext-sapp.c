@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
@@ -41,6 +42,7 @@ static void init(void) {
             [FONT_C64]   = sdtx_font_c64(),
             [FONT_ORIC]  = sdtx_font_oric()
         },
+        .logger.func = slog_func,
     });
 }
 

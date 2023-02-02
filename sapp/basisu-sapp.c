@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -54,8 +55,13 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
 void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     __dbgui_setup(sapp_sample_count());
-    sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_oric() });
-    sgl_setup(&(sgl_desc_t){0});
+    sdtx_setup(&(sdtx_desc_t){
+        .fonts[0] = sdtx_font_oric(),
+        .logger.func = slog_func,
+    });
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func
+    });
 
     // setup Basis Universal via our own minimal wrapper code
     sbasisu_setup();

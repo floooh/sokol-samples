@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -42,6 +43,7 @@ static void init(void) {
     sgl_setup(&(sgl_desc_t){
         .max_vertices = 64,
         .max_commands = 16,
+        .logger.func = slog_func,
     });
 
     // pass action and pipeline for the default render pass

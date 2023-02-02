@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
@@ -62,7 +63,8 @@ static void init(void) {
             .data = SDTX_RANGE(user_font),
             .first_char = 0x20,
             .last_char  = 0x9F
-        }
+        },
+        .logger.func = slog_func,
     });
 }
 

@@ -57,7 +57,9 @@ static void font_loaded(const sfetch_response_t* response) {
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     __dbgui_setup(sapp_sample_count());
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func,
+    });
     sfetch_setup(&(sfetch_desc_t){
         .num_channels = 1,
         .num_lanes = 1,

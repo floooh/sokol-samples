@@ -149,6 +149,9 @@ static void init(void) {
         .allocator = {
             .alloc = smemtrack_alloc,
             .free = smemtrack_free,
+        },
+        .logger = {
+            .func = slog_func,
         }
     });
     sdtx_setup(&(sdtx_desc_t){
@@ -161,6 +164,9 @@ static void init(void) {
         .allocator = {
             .alloc = smemtrack_alloc,
             .free = smemtrack_free,
+        },
+        .logger = {
+            .func = slog_func,
         }
     });
     saudio_setup(&(saudio_desc){

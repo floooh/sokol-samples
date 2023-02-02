@@ -94,7 +94,9 @@ static void init(void) {
         .context = sapp_sgcontext()
     });
     __dbgui_setup(sapp_sample_count());
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func
+    });
 
     /* make sure the fontstash atlas width/height is pow-2 */
     const int atlas_dim = round_pow2(512.0f * state.dpi_scale);

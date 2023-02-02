@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_IMPL
 #include "sokol_debugtext.h"
@@ -42,7 +43,8 @@ static void init(void) {
     // setup sokol-gfx and sokol-debugtext
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     sdtx_setup(&(sdtx_desc_t){
-        .fonts[0] = sdtx_font_oric()
+        .fonts[0] = sdtx_font_oric(),
+        .logger.func = slog_func,
     });
 }
 

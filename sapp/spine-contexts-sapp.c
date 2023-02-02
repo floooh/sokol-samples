@@ -63,7 +63,7 @@ static void draw_quad(quad_params_t params);
 
 static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){ .logger.func = slog_func });
     sspine_setup(&(sspine_desc){ .logger.func = slog_func });
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,

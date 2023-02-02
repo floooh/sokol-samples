@@ -12,6 +12,7 @@
 #endif
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "microui/microui.h"
 #include "microui/atlas.inl"
@@ -83,7 +84,9 @@ static void init(void) {
     __cdbgui_setup(1);
 
     /* setup sokol-gl */
-    sgl_setup(&(sgl_desc_t){0});
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func,
+    });
 
     /* setup microui renderer */
     r_init();

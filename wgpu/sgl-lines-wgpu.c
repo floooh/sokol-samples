@@ -5,6 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
@@ -23,7 +24,8 @@ static void init(void) {
 
     /* setup sokol-gl */
     sgl_setup(&(sgl_desc_t){
-        .sample_count = wgpu_get_context().sample_count
+        .sample_count = wgpu_get_context().sample_count,
+        .logger.func = slog_func,
     });
 
     /* a pipeline object with less-equal depth-testing */

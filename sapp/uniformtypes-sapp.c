@@ -5,6 +5,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_color.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include "uniformtypes-sapp.glsl.h"
@@ -33,10 +34,11 @@ static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
-        .fonts[0] = sdtx_font_oric()
+        .fonts[0] = sdtx_font_oric(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
-    
+
     // setup vertex shader uniform block
     state.vs_params.scale[0] = 1.0f;
     state.vs_params.scale[1] = 1.0f;
@@ -56,7 +58,7 @@ static void init(void) {
         state.vs_params.pal[i][2] = pal[i].b;
         state.vs_params.pal[i][3] = 1.0;
     }
-    
+
     // a quad vertex buffer, index buffer and pipeline object
     const float vertices[] = {
          0.0f,  0.0f,
@@ -77,7 +79,7 @@ static void init(void) {
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .index_type = SG_INDEXTYPE_UINT16,
     });
-      
+
     // default pass action to clear background to black
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
@@ -91,7 +93,7 @@ static void frame(void) {
     const float ch = h * 0.5f;
     const float glyph_w = 8.0f / cw;
     const float glyph_h = 8.0f / ch;
-    
+
     sdtx_canvas(w * 0.5f, h * 0.5f);
     sdtx_origin(3, 3);
     sdtx_color3f(1.0f, 1.0f, 1.0f);

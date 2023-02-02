@@ -141,7 +141,8 @@ static void init(void) {
     sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
-        .fonts[0] = sdtx_font_oric()
+        .fonts[0] = sdtx_font_oric(),
+        .logger.func = slog_func,
     });
     // setup sokol-spine
     sspine_setup(&(sspine_desc){
