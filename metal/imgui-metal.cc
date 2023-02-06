@@ -10,6 +10,7 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #include "imgui.h"
 #define SOKOL_METAL
 #define SOKOL_IMGUI_IMPL
@@ -27,7 +28,10 @@ static sg_pass_action pass_action;
 void init() {
     // setup sokol_gfx and sokol_time
     sg_desc desc = {
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger = {
+            .func = slog_func,
+        }
     };
     sg_setup(&desc);
     stm_setup();

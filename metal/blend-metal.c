@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -43,7 +44,8 @@ struct {
 static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a quad vertex buffer */
@@ -220,4 +222,3 @@ static void shutdown(void) {
 int main() {
     osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Blend (Metal)", init, frame, shutdown);
 }
-

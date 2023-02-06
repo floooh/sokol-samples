@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 static struct {
     sg_pass_action pass_action;
@@ -13,7 +14,8 @@ static struct {
 static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a vertex buffer */
@@ -22,7 +24,7 @@ static void init(void) {
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices)

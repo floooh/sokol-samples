@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -34,7 +35,8 @@ typedef struct {
 static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */

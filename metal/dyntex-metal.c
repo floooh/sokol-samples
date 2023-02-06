@@ -4,6 +4,7 @@
 #include <stdlib.h> /* rand */
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -36,7 +37,8 @@ static void game_of_life_update();
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a 128x128 image with streaming update strategy */
@@ -251,4 +253,3 @@ static void game_of_life_update() {
         state.update_count = 0;
     }
 }
-

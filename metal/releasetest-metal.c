@@ -7,6 +7,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 static struct {
     sg_pass_action pass_action;
@@ -22,7 +23,8 @@ static void init(void) {
         .shader_pool_size = 4,
         .pipeline_pool_size = 4,
         .pass_pool_size = 2,
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 }
 

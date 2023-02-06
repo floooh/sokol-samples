@@ -4,6 +4,7 @@
 #include "stdlib.h"
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -38,7 +39,8 @@ typedef struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */

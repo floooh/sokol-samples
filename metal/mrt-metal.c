@@ -4,6 +4,7 @@
 #include <stddef.h>     /* offsetof */
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -43,7 +44,8 @@ typedef struct {
 static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a render pass with 3 color attachment images, and a depth attachment image */

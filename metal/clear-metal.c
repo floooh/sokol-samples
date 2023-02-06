@@ -3,12 +3,14 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 static sg_pass_action pass_action;
 
 static void init(void) {
     sg_setup(&(sg_desc) {
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* setup pass action to clear to red */

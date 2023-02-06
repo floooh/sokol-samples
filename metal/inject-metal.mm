@@ -5,6 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_METAL
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -34,7 +35,10 @@ typedef struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_desc desc = {
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger = {
+            .func = slog_func,
+        }
     };
     sg_setup(&desc);
 
@@ -240,6 +244,3 @@ int main() {
     osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Resource Injection (Metal)", init, frame, shutdown);
     return 0;
 }
-
-
-

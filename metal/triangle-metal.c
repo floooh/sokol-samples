@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 static struct {
     sg_pass_action pass_action;
@@ -13,7 +14,8 @@ static struct {
 static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a vertex buffer with 3 vertices */
@@ -30,9 +32,9 @@ static void init(void) {
     /* a shader pair, compiled from source code */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         /*
-            The shader main() function cannot be called 'main' in 
+            The shader main() function cannot be called 'main' in
             the Metal shader languages, thus we define '_main' as the
-            default function. This can be override with the 
+            default function. This can be override with the
             sg_shader_desc.vs.entry and sg_shader_desc.fs.entry fields.
         */
         .vs.source =

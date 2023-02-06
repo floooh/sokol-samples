@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -26,7 +27,8 @@ typedef struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = osx_get_context()
+        .context = osx_get_context(),
+        .logger.func = slog_func,
     });
 
     /* cube vertex buffer */
@@ -191,6 +193,3 @@ int main() {
     osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol TexCube (Metal)", init, frame, shutdown);
     return 0;
 }
-
-
-
