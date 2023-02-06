@@ -29,7 +29,8 @@ struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric(),

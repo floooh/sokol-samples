@@ -71,7 +71,8 @@ void init(void* user_data) {
     state_t* state = (state_t*) user_data;
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
 
     /* setup sokol_audio (default sample rate is 44100Hz) */

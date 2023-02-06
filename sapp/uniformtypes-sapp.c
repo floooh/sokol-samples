@@ -31,7 +31,10 @@ static const char* names[NUM_COLORS] = {
 };
 
 static void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
         .fonts[0] = sdtx_font_oric(),

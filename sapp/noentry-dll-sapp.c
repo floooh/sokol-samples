@@ -15,6 +15,7 @@
 #define SOKOL_DLL
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include <stdlib.h>     /* calloc, free */
 #include "noentry-dll-sapp.glsl.h"
@@ -59,7 +60,8 @@ int main() {
 void init(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
 
     /* cube vertex buffer */

@@ -6,6 +6,7 @@
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
@@ -43,6 +44,7 @@ static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     stm_setup();
     simgui_setup(&(simgui_desc_t){0});

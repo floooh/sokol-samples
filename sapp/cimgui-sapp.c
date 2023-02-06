@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
@@ -23,7 +24,8 @@ static state_t state;
 void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
 
     // use sokol-imgui with all default-options (we're not doing

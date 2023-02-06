@@ -6,6 +6,7 @@
 #include <stddef.h> /* offsetof */
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -91,7 +92,8 @@ void event(const sapp_event* e) {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
     if (sapp_gles2()) {

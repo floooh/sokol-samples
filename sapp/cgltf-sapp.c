@@ -218,7 +218,8 @@ static vs_params_t vs_params_for_node(int node_index);
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     // setup the optional debugging UI
     __dbgui_setup(sapp_sample_count());

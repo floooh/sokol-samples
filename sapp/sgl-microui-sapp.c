@@ -79,7 +79,8 @@ static void write_log(const char* text) {
 static void init(void) {
     /* setup sokol-gfx */
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __cdbgui_setup(1);
 

@@ -138,7 +138,10 @@ static void init(void) {
     // setup sokol-time
     stm_setup();
     // setup sokol-gfx
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric(),

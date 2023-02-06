@@ -82,7 +82,8 @@ static uint16_t cube_indices[] = {
 void init(void) {
     // setup sokol-gfx, sokol-imgui and sokol-gl
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     simgui_setup(&(simgui_desc_t){ 0 });
     sgl_setup(&(sgl_desc_t){

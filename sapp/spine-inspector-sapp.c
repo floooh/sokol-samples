@@ -157,9 +157,14 @@ static void ui_draw(void);
 
 static void init(void) {
     // setup sokol-gfx
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     // setup sokol-gl
-    sgl_setup(&(sgl_desc_t){ .logger.func = slog_func });
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func
+    });
     // setup sokol-fetch for loading up to 2 files in parallel
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 3,
@@ -168,7 +173,9 @@ static void init(void) {
         .logger.func = slog_func,
     });
     // setup sokol-spine with default attributes
-    sspine_setup(&(sspine_desc){ .logger.func = slog_func });
+    sspine_setup(&(sspine_desc){
+        .logger.func = slog_func
+    });
     // setup UI libs
     ui_setup();
     // start loading Spine atlas and skeleton file asynchronously

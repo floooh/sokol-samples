@@ -85,6 +85,7 @@ static void init(void) {
     // setup sokol-gfx
     sg_desc sgdesc = { };
     sgdesc.context = sapp_sgcontext();
+    sgdesc.logger.func = slog_func;
     sg_setup(&sgdesc);
 
     // setup sokol-fetch

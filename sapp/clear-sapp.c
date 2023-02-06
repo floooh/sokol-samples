@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 
@@ -10,7 +11,8 @@ sg_pass_action pass_action;
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     pass_action = (sg_pass_action) {
         .colors[0] = { .action=SG_ACTION_CLEAR, .value={1.0f, 0.0f, 0.0f, 1.0f} }
@@ -47,4 +49,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-

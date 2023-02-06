@@ -11,6 +11,7 @@
 
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 
@@ -31,7 +32,8 @@ static int draw_demo_ui(struct nk_context* ctx);
 void init(void) {
     // setup sokol-gfx, sokol-time and sokol-nuklear
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
 

@@ -7,6 +7,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #include <stddef.h> /* offsetof */
@@ -78,7 +79,8 @@ static inline float rnd(float min_val, float max_val) {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(DISPLAY_SAMPLE_COUNT);
 

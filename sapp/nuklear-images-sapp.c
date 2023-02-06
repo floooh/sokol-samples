@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 
@@ -42,7 +43,10 @@ struct nk_image make_image(const sg_image_desc* desc) {
 
 static void init(void) {
     // setup sokok-gfx, sokol_fetch and sokol-nuklear
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
     snk_setup(&(snk_desc_t){
         .dpi_scale = sapp_dpi_scale(),
@@ -109,7 +113,7 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     snk_shutdown();
-    sg_shutdown();    
+    sg_shutdown();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

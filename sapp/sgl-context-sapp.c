@@ -36,7 +36,10 @@ static void draw_cube(void);
 static void draw_quad(void);
 
 static void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
 
     // setup sokol-gl with the default context compatible with the default render pass

@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define SOKOL_SHAPE_IMPL
 #include "sokol_shape.h"
@@ -47,7 +48,10 @@ static struct {
 } state;
 
 static void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
 
     // check if requires features are supported
@@ -277,5 +281,3 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
     };
 }
-
-

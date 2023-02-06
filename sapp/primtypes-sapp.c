@@ -68,7 +68,10 @@ static void init(void) {
     state.cur_prim_type = POINTS;
     state.point_size = 4.0f;
 
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){

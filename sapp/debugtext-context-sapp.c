@@ -68,7 +68,8 @@ static const sg_color bg[NUM_FACES] = {
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
 

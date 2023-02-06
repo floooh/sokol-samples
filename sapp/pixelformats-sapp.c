@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
@@ -47,7 +48,8 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 256,
         .pass_pool_size = 128,
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
 
     // setup cimgui

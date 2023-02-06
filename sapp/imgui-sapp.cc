@@ -9,6 +9,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
@@ -23,6 +24,7 @@ void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
     desc.context = sapp_sgcontext();
+    desc.logger.func = slog_func;
     sg_setup(&desc);
 
     // use sokol-imgui with all default-options (we're not doing

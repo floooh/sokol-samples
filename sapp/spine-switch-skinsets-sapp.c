@@ -80,7 +80,10 @@ static const char* skins[NUM_SKINSETS][NUM_SKINS_PER_SKINSET] = {
 };
 
 static void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_kc854(),
         .logger.func = slog_func,

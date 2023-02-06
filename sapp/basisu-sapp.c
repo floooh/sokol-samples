@@ -53,7 +53,10 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
 }
 
 void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric(),

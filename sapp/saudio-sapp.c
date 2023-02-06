@@ -19,7 +19,8 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     saudio_setup(&(saudio_desc){ .logger.func = slog_func });
     state.pass_action = (sg_pass_action) {

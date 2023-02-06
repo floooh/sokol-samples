@@ -55,7 +55,10 @@ static void font_loaded(const sfetch_response_t* response) {
 }
 
 static void init(void) {
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     __dbgui_setup(sapp_sample_count());
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func,

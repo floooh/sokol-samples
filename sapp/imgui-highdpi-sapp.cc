@@ -6,7 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
-#include "sokol_time.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #include "imgui.h"
 #include "imgui_font.h"
@@ -24,6 +24,7 @@ void init(void) {
     // setup sokol-gfx and sokol-time
     sg_desc desc = { };
     desc.context = sapp_sgcontext();
+    desc.logger.func = slog_func;
     sg_setup(&desc);
 
     // setup sokol-imgui, but provide our own font

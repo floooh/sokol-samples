@@ -296,7 +296,10 @@ static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr
 
 static void init(void) {
     // setup sokol-gfx
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
 
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){

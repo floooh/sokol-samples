@@ -91,7 +91,8 @@ static int round_pow2(float v) {
 static void init(void) {
     state.dpi_scale = sapp_dpi_scale();
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
     sgl_setup(&(sgl_desc_t){

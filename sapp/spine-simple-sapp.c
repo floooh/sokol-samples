@@ -43,7 +43,10 @@ static void create_spine_objects(void);
 
 static void init(void) {
     // sokol-gfx must be setup before sokol-spine
-    sg_setup(&(sg_desc){ .context = sapp_sgcontext() });
+    sg_setup(&(sg_desc){
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
+    });
     // optional debugging UI, only active in the spine-simple-sapp-ui sample
     __dbgui_setup(sapp_sample_count());
 

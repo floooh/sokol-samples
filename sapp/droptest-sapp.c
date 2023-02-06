@@ -29,7 +29,8 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
     simgui_setup(&(simgui_desc_t){ 0 });
 

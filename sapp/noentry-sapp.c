@@ -14,6 +14,7 @@
 #include "HandmadeMath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "sokol_glue.h"
 #if defined(_WIN32)
 #include <Windows.h>    /* WinMain */
@@ -60,7 +61,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 void init(void* user_data) {
     app_state_t* state = (app_state_t*) user_data;
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext()
+        .context = sapp_sgcontext(),
+        .logger.func = slog_func,
     });
 
     /* cube vertex buffer */
