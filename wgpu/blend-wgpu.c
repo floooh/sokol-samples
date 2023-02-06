@@ -9,6 +9,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "blend-wgpu.glsl.h"
 
@@ -34,7 +35,8 @@ static struct {
 static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a quad vertex buffer */
@@ -87,9 +89,9 @@ static void init(void) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
             const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            /* WebGL exceptions: 
+            /* WebGL exceptions:
                 - "GL_SRC_ALPHA_SATURATE as a destination blend function is disallowed in WebGL 1"
-                - "constant color and constant alpha cannot be used together as source and 
+                - "constant color and constant alpha cannot be used together as source and
                    destination factors in the blend function"
             */
             bool valid = true;

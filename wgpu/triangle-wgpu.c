@@ -5,6 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "triangle-wgpu.glsl.h"
 
@@ -20,7 +21,8 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a vertex buffer with 3 vertices */
@@ -73,4 +75,3 @@ int main() {
     });
     return 0;
 }
-

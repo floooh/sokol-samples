@@ -106,7 +106,8 @@ static void init(void) {
 
     // initialize sokol-gfx
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     // vertex-, index-buffer, shader and pipeline

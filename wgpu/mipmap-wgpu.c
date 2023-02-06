@@ -8,6 +8,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "mipmap-wgpu.glsl.h"
 
@@ -45,7 +46,8 @@ static const uint32_t mip_colors[9] = {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a plane vertex buffer */
@@ -113,7 +115,7 @@ static void init(void) {
             .attrs = {
                 [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
                 [ATTR_vs_uv0].format = SG_VERTEXFORMAT_FLOAT2
-            } 
+            }
         },
         .shader = sg_make_shader(mipmap_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -138,7 +140,7 @@ static void frame(void) {
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        
+
         bind.fs_images[SLOT_tex] = state.img[i];
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));

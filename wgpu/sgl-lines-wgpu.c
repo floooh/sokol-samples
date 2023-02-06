@@ -19,7 +19,8 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* setup sokol-gl */

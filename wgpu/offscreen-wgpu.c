@@ -9,6 +9,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "offscreen-wgpu.glsl.h"
 
@@ -46,7 +47,8 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a render pass with one color- and one depth-attachment image */
@@ -79,7 +81,7 @@ static void init(void) {
          1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 1.0f,
 
-        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f, 
+        -1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.5f, 1.0f, 0.5f, 1.0f,     0.0f, 1.0f,

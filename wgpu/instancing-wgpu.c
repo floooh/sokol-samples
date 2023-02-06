@@ -9,6 +9,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "instancing-wgpu.glsl.h"
 
@@ -43,7 +44,8 @@ static uint32_t xorshift32(void) {
 static void init(void) {
     sg_setup(&(sg_desc){
         .staging_buffer_size = MAX_PARTICLES * sizeof(hmm_vec3),
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */

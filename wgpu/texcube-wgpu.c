@@ -8,6 +8,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "texcube-wgpu.glsl.h"
 
@@ -28,12 +29,13 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /*
         Cube vertex buffer with packed vertex formats for color and texture coords.
-        Note that a vertex format which must be portable across all 
+        Note that a vertex format which must be portable across all
         backends must only use the normalized integer formats
         (BYTE4N, UBYTE4N, SHORT2N, SHORT4N), which can be converted
         to floating point formats in the vertex shader inputs.
@@ -49,7 +51,7 @@ static void init(void) {
         {  1.0f,  1.0f, -1.0f,  0xFF0000FF, 32767, 32767 },
         { -1.0f,  1.0f, -1.0f,  0xFF0000FF,     0, 32767 },
 
-        { -1.0f, -1.0f,  1.0f,  0xFF00FF00,     0,     0 }, 
+        { -1.0f, -1.0f,  1.0f,  0xFF00FF00,     0,     0 },
         {  1.0f, -1.0f,  1.0f,  0xFF00FF00, 32767,     0 },
         {  1.0f,  1.0f,  1.0f,  0xFF00FF00, 32767, 32767 },
         { -1.0f,  1.0f,  1.0f,  0xFF00FF00,     0, 32767 },

@@ -6,6 +6,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "bufferoffsets-wgpu.glsl.h"
 
@@ -28,7 +29,8 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
@@ -42,7 +44,7 @@ static void init(void) {
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
-        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }        
+        { -0.25f, -0.55f,  1.0f, 1.0f, 0.0f }
     };
     uint16_t indices[9] = {
         0, 1, 2,

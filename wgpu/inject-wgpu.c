@@ -9,6 +9,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "inject-wgpu.glsl.h"
 
@@ -40,7 +41,8 @@ static struct {
 static void init(void) {
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
     WGPUDevice wgpu_dev = (WGPUDevice) wgpu_get_context().wgpu.device;
 
@@ -224,6 +226,3 @@ int main() {
     });
     return 0;
 }
-
-
-

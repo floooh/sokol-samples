@@ -5,6 +5,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "quad-wgpu.glsl.h"
 
@@ -20,7 +21,8 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a vertex buffer */
@@ -29,7 +31,7 @@ void init(void) {
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
          0.5f,  0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,        
+        -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),

@@ -8,6 +8,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "cubemaprt-wgpu.glsl.h"
 
@@ -76,7 +77,8 @@ static inline float rnd(float min_val, float max_val) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* create a cubemap as render target, and a matching depth-buffer texture */

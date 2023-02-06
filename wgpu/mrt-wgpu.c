@@ -10,6 +10,7 @@
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "wgpu_entry.h"
 #include "mrt-wgpu.glsl.h"
 
@@ -85,7 +86,8 @@ static void create_offscreen_pass(int width, int height) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context()
+        .context = wgpu_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a pass action for the default render pass */

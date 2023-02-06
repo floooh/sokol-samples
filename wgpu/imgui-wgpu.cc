@@ -7,6 +7,7 @@
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_IMGUI_NO_SOKOL_APP
@@ -25,6 +26,7 @@ static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
     desc.context = wgpu_get_context();
+    desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
 
