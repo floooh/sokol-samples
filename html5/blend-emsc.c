@@ -11,6 +11,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "emsc.h"
 
 typedef struct {
@@ -40,7 +41,8 @@ int main() {
 
     /* setup sokol_gfx (need to increase pipeline pool size) */
     sg_setup(&(sg_desc){
-        .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1
+        .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
+        .logger.func = slog_func,
     });
 
     /* a pass action which does not clear, since the entire screen is overwritten anyway */

@@ -8,6 +8,7 @@
 #include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES3
+#include "sokol_log.h"
 #include "sokol_gfx.h"
 #include "emsc.h"
 
@@ -38,7 +39,8 @@ int main() {
     emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context.gl.force_gles2 = emsc_webgl_fallback()
+        .context.gl.force_gles2 = emsc_webgl_fallback(),
+        .logger.func = slog_func,
     });
     assert(sg_isvalid());
 

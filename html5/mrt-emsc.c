@@ -10,6 +10,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "emsc.h"
 
 static struct {
@@ -52,7 +53,8 @@ int main() {
 
     /* setup sokol_gfx */
     sg_desc desc = {
-        .context.gl.force_gles2 = emsc_webgl_fallback()
+        .context.gl.force_gles2 = emsc_webgl_fallback(),
+        .logger.func = slog_func,
     };
     sg_setup(&desc);
     assert(sg_isvalid());

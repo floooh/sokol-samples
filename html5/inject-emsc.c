@@ -11,6 +11,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "emsc.h"
 
 #define IMG_WIDTH (32)
@@ -38,7 +39,7 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
-    sg_setup(&(sg_desc){0});
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
 
     /* create a native GL vertex and index buffer */
     float vertices[] = {

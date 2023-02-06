@@ -13,6 +13,7 @@
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #include "emsc.h"
 
 /* these are fairly recent warnings in clang */
@@ -45,7 +46,11 @@ int main() {
 
     /* setup sokol_gfx and sokol_time */
     stm_setup();
-    sg_setup(sg_desc{});
+    sg_setup(sg_desc{
+        .logger = {
+            .func = slog_func
+        }
+    });
     assert(sg_isvalid());
 
     // setup the ImGui environment
@@ -343,4 +348,3 @@ void draw_imgui(ImDrawData* draw_data) {
         }
     }
 }
-

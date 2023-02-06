@@ -11,6 +11,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLES2
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "emsc.h"
 
 static struct {
@@ -31,7 +32,7 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
-    sg_setup(&(sg_desc){0});
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
     /* cube vertex buffer */
