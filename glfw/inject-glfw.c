@@ -8,6 +8,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
@@ -39,7 +40,7 @@ int main() {
     glfwSwapInterval(1);
 
     /* setup sokol_gfx */
-    sg_setup(&(sg_desc){0});
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
 
     /* create a native GL vertex and index buffer */
     float vertices[] = {

@@ -8,6 +8,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_time.h"
+#include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
@@ -72,6 +73,7 @@ int main() {
     // setup sokol_gfx and sokol_time
     stm_setup();
     sg_desc desc = { };
+    desc.logger.func = slog_func;
     sg_setup(&desc);
     assert(sg_isvalid());
 

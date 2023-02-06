@@ -10,6 +10,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
@@ -51,7 +52,7 @@ int main() {
     glfwSwapInterval(1);
 
     /* setup sokol-gfx */
-    sg_setup(&(sg_desc) {0});
+    sg_setup(&(sg_desc) { .logger.func = slog_func });
 
     /* cube vertices and indices */
     static const float vertices[] = {
@@ -202,4 +203,3 @@ int main() {
     glfwTerminate();
     return 0;
 }
-

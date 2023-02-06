@@ -9,6 +9,7 @@
 #define SOKOL_IMPL
 #define SOKOL_METAL
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include "GLFW/glfw3.h"
@@ -60,6 +61,9 @@ int main(void) {
                 .renderpass_descriptor_cb = get_render_pass_descriptor,
                 .drawable_cb = get_next_drawable,
             }
+        },
+        .logger = {
+            .func = slog_func
         }
     });
 
@@ -150,4 +154,3 @@ int main(void) {
 
     return 0;
 }
-

@@ -8,6 +8,7 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
@@ -40,7 +41,8 @@ int main() {
 
     /* setup sokol_gfx (need to increase pipeline pool size) */
     sg_desc desc = {
-        .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1
+        .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
+        .logger.func = slog_func,
     };
     sg_setup(&desc);
 

@@ -37,7 +37,9 @@ int main() {
     glfwMakeContextCurrent(win);
     glfwSwapInterval(1);
 
-    sg_setup(&(sg_desc){0});
+    sg_setup(&(sg_desc){
+        .logger.func = slog_func,
+    });
     sdtx_setup(&(sdtx_desc_t){
         .context_pool_size = 1,
         .fonts[0] = sdtx_font_oric(),
