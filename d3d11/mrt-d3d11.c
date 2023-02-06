@@ -5,8 +5,8 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -30,7 +30,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int height = 600;
     d3d11_init(width, height, 1, L"Sokol MRT D3D11");
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context()
+        .context = d3d11_get_context(),
+        .logger.func = slog_func,
     });
 
 

@@ -6,8 +6,8 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 typedef struct {
     float x, y, r, g, b;
@@ -21,7 +21,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int height = 600;
     d3d11_init(width, height, sample_count, L"Sokol Buffer Offsets D3D11");
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context()
+        .context = d3d11_get_context(),
+        .logger.func = slog_func,
     });
 
     /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */

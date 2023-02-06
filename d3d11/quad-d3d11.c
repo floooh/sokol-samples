@@ -5,15 +5,16 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     /* setup d3d11 app wrapper and sokol_gfx */
     d3d11_init(640, 480, 1, L"Sokol Quad D3D11");
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context()
+        .context = d3d11_get_context(),
+        .logger.func = slog_func,
     });
 
     /* vertex and index buffer */

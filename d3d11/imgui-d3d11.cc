@@ -5,8 +5,8 @@
 #include "d3d11entry.h"
 #define SOKOL_IMPL
 #define SOKOL_D3D11
-#define SOKOL_LOG(s) OutputDebugStringA(s)
 #include "sokol_gfx.h"
+#include "sokol_log.h"
 #include "sokol_time.h"
 #include "imgui.h"
 
@@ -35,6 +35,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
     sg_desc desc = { };
     desc.context = d3d11_get_context();
+    desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
 
