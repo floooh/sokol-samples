@@ -188,5 +188,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .sample_count = 4,
         .window_title = "shapes-transform-sapp.c",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

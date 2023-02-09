@@ -224,5 +224,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .sample_count = 4,
         .window_title = "Offscreen Rendering (sokol-app)",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

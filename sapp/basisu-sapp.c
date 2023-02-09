@@ -171,6 +171,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .window_title = "basisu-sapp.c",
-        .icon.sokol_default = true
+        .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

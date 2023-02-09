@@ -174,5 +174,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .sample_count = 4,
         .window_title = "3D Texture Rendering",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

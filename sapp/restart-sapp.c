@@ -429,6 +429,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .allocator = {
             .alloc = smemtrack_alloc,
             .free = smemtrack_free,
-        }
+        },
+        .logger.func = slog_func,
     };
 }

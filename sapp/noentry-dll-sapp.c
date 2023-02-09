@@ -52,6 +52,7 @@ int main() {
         .sample_count = 4,
         .gl_force_gles2 = true,
         .window_title = "Noentry DLL (sokol-app)",
+        .logger.func = slog_func,
     });
     free(state);    /* NOTE: on some platforms, this isn't reached on exit */
     return 0;

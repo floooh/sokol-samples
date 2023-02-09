@@ -128,5 +128,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .window_title = "nuklear-image-sapp.c",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

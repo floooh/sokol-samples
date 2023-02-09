@@ -104,6 +104,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 512,
         .gl_force_gles2 = true,
         .window_title = "sgl-points",
-        .icon.sokol_default = true
+        .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

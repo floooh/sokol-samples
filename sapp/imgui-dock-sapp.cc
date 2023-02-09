@@ -93,5 +93,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.ios_keyboard_resizes_canvas = false;
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;
+    desc.logger.func = slog_func;
     return desc;
 }

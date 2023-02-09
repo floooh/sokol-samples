@@ -400,5 +400,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.enable_dragndrop = true;
     desc.max_dropped_files = max_dropped_files;
     desc.icon.sokol_default = true;
+    desc.logger.func = slog_func;
     return desc;
 }

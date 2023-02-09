@@ -143,5 +143,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .gl_force_gles2 = true,
         .window_title = "imgui perftest",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

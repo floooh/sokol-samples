@@ -155,5 +155,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .window_title = "Window Icon Test",
+        .logger.func = slog_func,
     };
 }

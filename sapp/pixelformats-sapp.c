@@ -383,7 +383,10 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .icon.sokol_default = true,
         #if defined(USE_GLES2)
         .window_title = "Pixelformat Test (GLES2)",
+        #else
+        .window_title = "Pixelformat Test",
         #endif
+        .logger.func = slog_func,
     };
 }
 

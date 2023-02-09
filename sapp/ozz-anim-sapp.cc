@@ -349,6 +349,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.sample_count = 4;
     desc.window_title = "ozz-anim-sapp.cc";
     desc.icon.sokol_default = true;
+    desc.logger.func = slog_func;
 
     return desc;
 }

@@ -322,5 +322,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 768,
         .window_title = "spine-simple-sapp.c",
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }

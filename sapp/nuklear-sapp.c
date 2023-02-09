@@ -89,6 +89,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "nuklear (sokol-app)",
         .ios_keyboard_resizes_canvas = true,
         .icon.sokol_default = true,
+        .logger.func = slog_func,
     };
 }
 
