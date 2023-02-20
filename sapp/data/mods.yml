@@ -1,3 +1,8 @@
 ---
+options:
+    ios:
+        dst_dir: $TARGET_NAME.app
+    macos:
+        dst_dir: $TARGET_NAME.app/Contents/Resources
 files:
     - disco_feva_baby.s3m

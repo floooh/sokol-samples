@@ -2,4 +2,6 @@
 options:
     ios:
         dst_dir: $TARGET_NAME.app
+    macos:
+        dst_dir: $TARGET_NAME.app/contents/resources
 files: [ "bjork-all-is-full-of-love.mpg" ]

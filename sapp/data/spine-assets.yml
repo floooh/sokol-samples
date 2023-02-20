@@ -3,6 +3,8 @@ options:
     src_dir: spine
     ios:
         dst_dir: $TARGET_NAME.app
+    macos:
+        dst_dir: $TARGET_NAME.app/Contents/Resources
 files:
     - spineboy-pro.json
     - spineboy.atlas

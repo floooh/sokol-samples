@@ -1,6 +1,6 @@
 fips_begin_lib(fileutil)
-    if(FIPS_IOS)
-        fips_files(fileutil.m fileutil.h)
+    if (FIPS_OSX)
+        fips_files(fileutil_osx.m fileutil.h)
     else()
         fips_files(fileutil.c fileutil.h)
     endif()

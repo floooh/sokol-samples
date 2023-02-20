@@ -3,6 +3,8 @@ options:
     src_dir: gltf/DamagedHelmet
     ios:
         dst_dir: $TARGET_NAME.app
+    macos:
+        dst_dir: $TARGET_NAME.app/Contents/Resources
 files:
     - DamagedHelmet.bin
     - DamagedHelmet.gltf
