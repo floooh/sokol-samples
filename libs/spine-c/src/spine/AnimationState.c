@@ -438,7 +438,7 @@ int spAnimationState_apply(spAnimationState *self, spSkeleton *skeleton) {
 				if (!shortestRotation && timeline->type == SP_TIMELINE_ROTATE)
 					_spAnimationState_applyRotateTimeline(self, timeline, skeleton, applyTime, mix, timelineBlend,
 														  timelinesRotation, ii << 1, firstFrame);
-				else if (timeline->type == SP_TIMELINE_ROTATE)
+				else if (timeline->type == SP_TIMELINE_ATTACHMENT)
 					_spAnimationState_applyAttachmentTimeline(self, timeline, skeleton, applyTime, timelineBlend, -1);
 				else
 					spTimeline_apply(timeline, skeleton, animationLast, applyTime, applyEvents, &internal->eventsCount,
@@ -595,10 +595,11 @@ _spAnimationState_setAttachment(spAnimationState *self, spSkeleton *skeleton, sp
 
 /* @param target After the first and before the last entry. */
 static int binarySearch1(float *values, int valuesLength, float target) {
-    for (int i = 1; i < valuesLength; i++) {
-        if (values[i] > target) return (int) (i - 1);
-    }
-    return (int) valuesLength - 1;
+	int i;
+	for (i = 1; i < valuesLength; i++) {
+		if (values[i] > target) return (int) (i - 1);
+	}
+	return (int) valuesLength - 1;
 }
 
 void _spAnimationState_applyAttachmentTimeline(spAnimationState *self, spTimeline *timeline, spSkeleton *skeleton,

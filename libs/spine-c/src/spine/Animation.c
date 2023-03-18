@@ -1870,6 +1870,7 @@ void _spDeformTimeline_apply(
 					/* Vertex positions or deform offsets, with alpha. */
 					for (i = 0; i < vertexCount; i++)
 						deformArray[i] += (lastVertices[i] - deformArray[i]) * alpha;
+					break;
 				case SP_MIX_BLEND_ADD:
 					vertexAttachment = SUB_CAST(spVertexAttachment, slot->attachment);
 					if (!vertexAttachment->bones) {
@@ -2015,7 +2016,8 @@ void _spSequenceTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float
 
 	slotAttachment = slot->attachment;
 	if (slotAttachment != self->attachment) {
-		switch (slot->attachment->type) {
+		if (slotAttachment == NULL) return;
+		switch (slotAttachment->type) {
 			case SP_ATTACHMENT_BOUNDING_BOX:
 			case SP_ATTACHMENT_CLIPPING:
 			case SP_ATTACHMENT_MESH:
