@@ -2,8 +2,6 @@
 //  inject-metal.mm
 //------------------------------------------------------------------------------
 #include "osxentry.h"
-#define SOKOL_IMPL
-#define SOKOL_METAL
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION

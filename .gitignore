@@ -1,3 +1,6 @@
+.fibs/
+CMakeLists.txt
+CMakePresets.json
 .vscode/
 *.swp
 .DS_Store

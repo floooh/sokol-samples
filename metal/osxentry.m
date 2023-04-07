@@ -1,3 +1,5 @@
+#include "osxentry.h"
+
 #include <TargetConditionals.h>
 #if !TARGET_OS_IPHONE
 #import <Cocoa/Cocoa.h>
@@ -8,7 +10,6 @@
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
-#include "osxentry.h"
 
 #if !TARGET_OS_IPHONE
 @interface SokolApp : NSApplication
