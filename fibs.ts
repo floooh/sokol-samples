@@ -64,6 +64,41 @@ export const metal_targets= () => {
     return targets;
 }
 
+// ### EMSCRIPTEN SAMPLES ###
+export const emscripten_targets = () => {
+    const enabled = (context: fibs.ProjectBuildContext) => context.config.name.startsWith('emsc-');
+    const samples: Sample[] = [
+        { name: 'arraytex',         type: 'c', libs: [] },
+        { name: 'blend',            type: 'c', libs: [] },
+        { name: 'bufferoffsets',    type: 'c', libs: [] },
+        { name: 'clear',            type: 'c', libs: [] },
+        { name: 'cube',             type: 'c', libs: [] },
+        { name: 'dyntex',           type: 'c', libs: [] },
+        { name: 'imgui',            type: 'cc', libs: [ 'imgui' ] },
+        { name: 'inject',           type: 'c', libs: [] },
+        { name: 'instancing',       type: 'c', libs: [] },
+        { name: 'mipmap',           type: 'c', libs: [] },
+        { name: 'mrt',              type: 'c', libs: [] },
+        { name: 'noninterleaved',   type: 'c', libs: [] },
+        { name: 'offscreen',        type: 'c', libs: [] },
+        { name: 'quad',             type: 'c', libs: [] },
+        { name: 'texcube',          type: 'c', libs: [] },
+        { name: 'triangle',         type: 'c', libs: [] },
+    ];
+    const targets: Record<string, fibs.TargetDesc> = {};
+    samples.forEach((sample) => {
+        targets[`${sample.name}-emsc`] = {
+            enabled,
+            type: 'windowed-exe',
+            dir: 'html5',
+            sources: [ `${sample.name}-emsc.${sample.type}` ],
+            libs: [ 'sokol-includes', ...sample.libs ],
+            linkOptions: { public: [ '-sUSE_WEBGL2=1' ] },
+        }
+    });
+    return targets;
+}
+
 export const project: fibs.ProjectDesc = {
     name: 'sokol-samples',
     imports: {
@@ -78,9 +113,10 @@ export const project: fibs.ProjectDesc = {
     },
     targets: {
         ...metal_targets(),
+        ...emscripten_targets(),
     },
     configs: {
-        // use these configs to build the 'raw' Metal samples
+        // use these configs to build the samples under metal/
         'metal-macos-ninja-debug': { inherits: 'macos-ninja-debug' },
         'metal-macos-ninja-release': { inherits: 'macos-ninja-release' },
         'metal-macos-make-debug': { inherits: 'macos-make-debug' },
