@@ -165,6 +165,10 @@ export const project: fibs.ProjectDesc = {
         }
     },
     targets: {
+        // only enable glfw3 target for glfw build configs
+        glfw3: {
+            enabled: (context) => context.config.name.startsWith('glfw-'),
+        },
         ...metal_targets(),
         ...emscripten_targets(),
         ...glfw_targets(),
