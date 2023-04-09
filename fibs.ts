@@ -33,7 +33,6 @@ const samples: Sample[] = [
     { name: 'texcube',          ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
     { name: 'triangle',         ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
     { name: 'uniformarrays',    ext: 'c',  libs: [], type: ['glfw'] },
-    // FIXME: sgl-test glfw
 ];
 
 // ### METAL SAMPLES ###
