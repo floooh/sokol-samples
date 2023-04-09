@@ -58,7 +58,7 @@ export const metal_targets= () => {
     };
     samples.forEach((sample) => {
         if (sample.type.includes('metal')) {
-            let ext = sample.name === 'inject' ? 'mm' : sample.ext;
+            const ext = sample.name === 'inject' ? 'mm' : sample.ext;
             targets[`${sample.name}-metal`] = {
                 enabled,
                 type: 'windowed-exe',
