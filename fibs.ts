@@ -7,34 +7,38 @@ import * as fibs from 'https://raw.githubusercontent.com/floooh/fibs/main/mod.ts
 
 type Sample = {
     name: string,
-    type: 'c' | 'cc' | 'm' | 'mm',
+    ext: 'c' | 'cc' | 'm' | 'mm',
     libs: string[],
+    type: ('metal' | 'glfw' | 'emsc')[],
 };
+
+const samples: Sample[] = [
+    { name: 'arraytex',         ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'binshader',        ext: 'c',  libs: [], type: ['metal'] },
+    { name: 'blend',            ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'bufferoffsets',    ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'clear',            ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'cube',             ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'dyntex',           ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'imgui',            ext: 'cc', libs: ['imgui'], type: ['metal','glfw','emsc'] },
+    { name: 'inject',           ext: 'c', libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'instancing',       ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'mipmap',           ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'mrt',              ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'multiwindow',      ext: 'c',  libs: [], type: ['glfw'] },
+    { name: 'noninterleaved',   ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'offscreen',        ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'quad',             ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'releasetest',      ext: 'c',  libs: [], type: ['metal'] },
+    { name: 'texcube',          ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'triangle',         ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'uniformarrays',    ext: 'c',  libs: [], type: ['glfw'] },
+    // FIXME: sgl-test glfw
+];
 
 // ### METAL SAMPLES ###
 export const metal_targets= () => {
-    const enabled = (context: fibs.ProjectBuildContext) => context.config.name.startsWith('metal-');
-    const samples: Sample[] = [
-        { name: 'arraytex',         type: 'c',  libs: [] },
-        { name: 'binshader',        type: 'c',  libs: [] },
-        { name: 'blend',            type: 'c',  libs: [] },
-        { name: 'bufferoffsets',    type: 'c',  libs: [] },
-        { name: 'clear',            type: 'c',  libs: [] },
-        { name: 'cube',             type: 'c',  libs: [] },
-        { name: 'dyntex',           type: 'c',  libs: [] },
-        { name: 'instancing',       type: 'c',  libs: [] },
-        { name: 'mipmap',           type: 'c',  libs: [] },
-        { name: 'mrt',              type: 'c',  libs: [] },
-        { name: 'noninterleaved',   type: 'c',  libs: [] },
-        { name: 'offscreen',        type: 'c',  libs: [] },
-        { name: 'quad',             type: 'c',  libs: [] },
-        { name: 'releasetest',      type: 'c',  libs: [] },
-        { name: 'texcube',          type: 'c',  libs: [] },
-        { name: 'triangle',         type: 'c',  libs: [] },
-        { name: 'imgui',            type: 'cc', libs: [ 'imgui' ] },
-        { name: 'inject',           type: 'mm', libs: [] },
-    ];
-
+    const enabled = (ctx: fibs.ProjectContext) => ctx.config.name.startsWith('metal-');
     const targets: Record<string, fibs.TargetDesc> = {
         'entry_metal': {
             enabled,
@@ -53,12 +57,15 @@ export const metal_targets= () => {
         },
     };
     samples.forEach((sample) => {
-        targets[`${sample.name}-metal`] = {
-            enabled,
-            type: 'windowed-exe',
-            dir: 'metal',
-            sources: [ `${sample.name}-metal.${sample.type}` ],
-            libs: [ 'entry_metal', ...sample.libs ],
+        if (sample.type.includes('metal')) {
+            let ext = sample.name === 'inject' ? 'mm' : sample.ext;
+            targets[`${sample.name}-metal`] = {
+                enabled,
+                type: 'windowed-exe',
+                dir: 'metal',
+                sources: [ `${sample.name}-metal.${ext}` ],
+                libs: [ 'entry_metal', ...sample.libs ],
+            }
         }
     });
     return targets;
@@ -66,34 +73,18 @@ export const metal_targets= () => {
 
 // ### EMSCRIPTEN SAMPLES ###
 export const emscripten_targets = () => {
-    const enabled = (context: fibs.ProjectBuildContext) => context.config.name.startsWith('emsc-');
-    const samples: Sample[] = [
-        { name: 'arraytex',         type: 'c', libs: [] },
-        { name: 'blend',            type: 'c', libs: [] },
-        { name: 'bufferoffsets',    type: 'c', libs: [] },
-        { name: 'clear',            type: 'c', libs: [] },
-        { name: 'cube',             type: 'c', libs: [] },
-        { name: 'dyntex',           type: 'c', libs: [] },
-        { name: 'imgui',            type: 'cc', libs: [ 'imgui' ] },
-        { name: 'inject',           type: 'c', libs: [] },
-        { name: 'instancing',       type: 'c', libs: [] },
-        { name: 'mipmap',           type: 'c', libs: [] },
-        { name: 'mrt',              type: 'c', libs: [] },
-        { name: 'noninterleaved',   type: 'c', libs: [] },
-        { name: 'offscreen',        type: 'c', libs: [] },
-        { name: 'quad',             type: 'c', libs: [] },
-        { name: 'texcube',          type: 'c', libs: [] },
-        { name: 'triangle',         type: 'c', libs: [] },
-    ];
+    const enabled = (context: fibs.ProjectContext) => context.config.name.startsWith('emsc-');
     const targets: Record<string, fibs.TargetDesc> = {};
     samples.forEach((sample) => {
-        targets[`${sample.name}-emsc`] = {
-            enabled,
-            type: 'windowed-exe',
-            dir: 'html5',
-            sources: [ `${sample.name}-emsc.${sample.type}` ],
-            libs: [ 'sokol-includes', ...sample.libs ],
-            linkOptions: { public: [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
+        if (sample.type.includes('emsc')) {
+            targets[`${sample.name}-emsc`] = {
+                enabled,
+                type: 'windowed-exe',
+                dir: 'html5',
+                sources: [ `${sample.name}-emsc.${sample.ext}` ],
+                libs: [ 'sokol-includes', ...sample.libs ],
+                linkOptions: { public: [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
+            }
         }
     });
     return targets;
@@ -101,36 +92,17 @@ export const emscripten_targets = () => {
 
 // ### GLFW SAMPLES ###
 export const glfw_targets = () => {
-    const enabled = (context: fibs.ProjectBuildContext) => context.config.name.startsWith('glfw-');
-    const samples: Sample[] = [
-        { name: 'arraytex',         type: 'c', libs: [] },
-        { name: 'blend',            type: 'c', libs: [] },
-        { name: 'bufferoffsets',    type: 'c', libs: [] },
-        { name: 'clear',            type: 'c', libs: [] },
-        { name: 'cube',             type: 'c', libs: [] },
-        { name: 'dyntex',           type: 'c', libs: [] },
-        { name: 'imgui',            type: 'cc', libs: [ 'imgui' ] },
-        { name: 'inject',           type: 'c', libs: [] },
-        { name: 'instancing',       type: 'c', libs: [] },
-        { name: 'mipmap',           type: 'c', libs: [] },
-        { name: 'mrt',              type: 'c', libs: [] },
-        { name: 'multiwindow',      type: 'c', libs: [] },
-        { name: 'noninterleaved',   type: 'c', libs: [] },
-        { name: 'offscreen',        type: 'c', libs: [] },
-        { name: 'quad',             type: 'c', libs: [] },
-        { name: 'texcube',          type: 'c', libs: [] },
-        { name: 'triangle',         type: 'c', libs: [] },
-        { name: 'uniformarrays',    type: 'c', libs: [] },
-        // FIXME: { name: 'sgl-test',         type: 'c', libs: [] },
-    ];
+    const enabled = (context: fibs.ProjectContext) => context.config.name.startsWith('glfw-');
     const targets: Record<string, fibs.TargetDesc> = {};
     samples.forEach((sample) => {
-        targets[`${sample.name}-glfw`] = {
-            enabled,
-            type: 'windowed-exe',
-            dir: 'glfw',
-            sources: [ `${sample.name}-glfw.${sample.type}` ],
-            libs: [ 'sokol-includes', 'glfw3', ...sample.libs ],
+        if (sample.type.includes('glfw')) {
+            targets[`${sample.name}-glfw`] = {
+                enabled,
+                type: 'windowed-exe',
+                dir: 'glfw',
+                sources: [ `${sample.name}-glfw.${sample.ext}` ],
+                libs: [ 'sokol-includes', 'glfw3', ...sample.libs ],
+            }
         }
     });
     // special metal-glfw target
