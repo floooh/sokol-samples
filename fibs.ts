@@ -37,13 +37,13 @@ const samples: Sample[] = [
 
 // ### METAL SAMPLES ###
 export const metal_targets= () => {
-    const enabled = (ctx: fibs.ProjectContext) => ctx.config.name.startsWith('metal-');
+    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
     const targets: Record<string, fibs.TargetDesc> = {
         'entry_metal': {
             enabled,
             type: 'lib',
             dir: 'metal',
-            sources: [ 'osxentry.m', 'osxentry.h', 'sokol.m' ],
+            sources: () => [ 'osxentry.m', 'osxentry.h', 'sokol.m' ],
             libs: (context) => {
                 const libs = [ 'sokol-includes', '-framework Metal', '-framework MetalKit' ];
                 if (context.config.platform === 'macos') {
@@ -62,8 +62,8 @@ export const metal_targets= () => {
                 enabled,
                 type: 'windowed-exe',
                 dir: 'metal',
-                sources: [ `${sample.name}-metal.${ext}` ],
-                libs: [ 'entry_metal', ...sample.libs ],
+                sources: () => [ `${sample.name}-metal.${ext}` ],
+                libs: () => [ 'entry_metal', ...sample.libs ],
             }
         }
     });
@@ -72,17 +72,16 @@ export const metal_targets= () => {
 
 // ### EMSCRIPTEN SAMPLES ###
 export const emscripten_targets = () => {
-    const enabled = (context: fibs.ProjectContext) => context.config.name.startsWith('emsc-');
     const targets: Record<string, fibs.TargetDesc> = {};
     samples.forEach((sample) => {
         if (sample.type.includes('emsc')) {
             targets[`${sample.name}-emsc`] = {
-                enabled,
+                enabled: (ctx) => ctx.config.name.startsWith('emsc-'),
                 type: 'windowed-exe',
                 dir: 'html5',
-                sources: [ `${sample.name}-emsc.${sample.ext}` ],
-                libs: [ 'sokol-includes', ...sample.libs ],
-                linkOptions: { public: [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
+                sources: () => [ `${sample.name}-emsc.${sample.ext}` ],
+                libs: () => [ 'sokol-includes', ...sample.libs ],
+                linkOptions: { public: () => [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
             }
         }
     });
@@ -91,34 +90,33 @@ export const emscripten_targets = () => {
 
 // ### GLFW SAMPLES ###
 export const glfw_targets = () => {
-    const enabled = (context: fibs.ProjectContext) => context.config.name.startsWith('glfw-');
     const targets: Record<string, fibs.TargetDesc> = {};
     samples.forEach((sample) => {
         if (sample.type.includes('glfw')) {
             targets[`${sample.name}-glfw`] = {
-                enabled,
+                enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
                 type: 'windowed-exe',
                 dir: 'glfw',
-                sources: [ `${sample.name}-glfw.${sample.ext}` ],
-                libs: [ 'sokol-includes', 'glfw3', ...sample.libs ],
+                sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
+                libs: () => [ 'sokol-includes', 'glfw3', ...sample.libs ],
             }
         }
     });
     // special metal-glfw target
     targets['metal-glfw'] = {
-        enabled: (context) => context.config.name.startsWith('glfw-') && context.config.platform === 'macos',
+        enabled: (ctx) => ctx.config.name.startsWith('glfw-') && ctx.config.platform === 'macos',
         type: 'windowed-exe',
         dir: 'glfw',
-        sources: [ 'metal-glfw.m' ],
-        libs: [ 'sokol-includes', 'glfw3', '-framework Metal', '-framework QuartzCore' ]
+        sources: () => [ 'metal-glfw.m' ],
+        libs: () => [ 'sokol-includes', 'glfw3', '-framework Metal', '-framework QuartzCore' ]
     };
     // special sgl-test-glfw target
     targets['sgl-test-glfw'] = {
-        enabled: (context) => context.config.name.startsWith('glfw-'),
+        enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
         type: 'windowed-exe',
         dir: 'glfw',
-        sources: [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
-        libs: [ 'glfw3' ],
+        sources: () => [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
+        libs: () => [ 'glfw3' ],
     };
     return targets;
 }
