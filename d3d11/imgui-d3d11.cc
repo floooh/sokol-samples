@@ -160,7 +160,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         const int cur_height = d3d11_height();
 
         // this is standard ImGui demo code
-        ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
         io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();

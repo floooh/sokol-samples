@@ -9,34 +9,60 @@ type Sample = {
     name: string,
     ext: 'c' | 'cc' | 'm' | 'mm',
     libs: string[],
-    type: ('metal' | 'glfw' | 'emsc')[],
+    type: ('metal' | 'glfw' | 'emsc' | 'd3d11')[],
 };
 
 const samples: Sample[] = [
-    { name: 'arraytex',         ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'binshader',        ext: 'c',  libs: [], type: ['metal'] },
-    { name: 'blend',            ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'bufferoffsets',    ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'clear',            ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'cube',             ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'dyntex',           ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'imgui',            ext: 'cc', libs: ['imgui'], type: ['metal','glfw','emsc'] },
-    { name: 'inject',           ext: 'c', libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'instancing',       ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'mipmap',           ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'mrt',              ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'arraytex',         ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'binshader',        ext: 'c',  libs: [], type: ['metal','d3d11'] },
+    { name: 'blend',            ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'bufferoffsets',    ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'clear',            ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'cube',             ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'dyntex',           ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'imgui',            ext: 'cc', libs: ['imgui'], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'inject',           ext: 'c', libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'instancing',       ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'mipmap',           ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'mrt',              ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
     { name: 'multiwindow',      ext: 'c',  libs: [], type: ['glfw'] },
     { name: 'noninterleaved',   ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'offscreen',        ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'quad',             ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'offscreen',        ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'quad',             ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
     { name: 'releasetest',      ext: 'c',  libs: [], type: ['metal'] },
-    { name: 'texcube',          ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'triangle',         ext: 'c',  libs: [], type: ['metal','glfw','emsc'] },
+    { name: 'texcube',          ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'triangle',         ext: 'c',  libs: [], type: ['metal','glfw','emsc','d3d11'] },
     { name: 'uniformarrays',    ext: 'c',  libs: [], type: ['glfw'] },
 ];
 
+// ### D3D11 SAMPLES ###
+export const d3d11_targets = () => {
+    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-');
+    const targets: Record<string, fibs.TargetDesc> = {
+        'entry_d3d11': {
+            enabled,
+            type: 'lib',
+            dir: 'd3d11',
+            sources: () => [ 'd3d11entry.c', 'd3d11entry.h' ],
+            libs: () => [ 'sokol-includes' ],
+        }
+    };
+    samples.forEach((sample) => {
+        if (sample.type.includes('d3d11')) {
+            targets[`${sample.name}-d3d11`] = {
+                enabled,
+                type: 'windowed-exe',
+                dir: 'd3d11',
+                sources: () => [ `${sample.name}-d3d11.${sample.ext}`],
+                libs: () => [ 'entry_d3d11', ...sample.libs ],
+            }
+        }
+    });
+    return targets;
+}
+
 // ### METAL SAMPLES ###
-export const metal_targets= () => {
+export const metal_targets = () => {
     const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
     const targets: Record<string, fibs.TargetDesc> = {
         'entry_metal': {
@@ -52,8 +78,8 @@ export const metal_targets= () => {
                     libs.push('-framework UIKit');
                 }
                 return libs;
-            },
-        },
+            }
+        }
     };
     samples.forEach((sample) => {
         if (sample.type.includes('metal')) {
@@ -142,6 +168,7 @@ export const project: fibs.ProjectDesc = {
         glfw3: {
             enabled: (context) => context.config.name.startsWith('glfw-'),
         },
+        ...d3d11_targets(),
         ...metal_targets(),
         ...emscripten_targets(),
         ...glfw_targets(),
@@ -156,6 +183,9 @@ export const project: fibs.ProjectDesc = {
         'metal-macos-vscode-release': { inherits: 'macos-vscode-release' },
         'metal-macos-xcode-debug': { inherits: 'macos-xcode-debug' },
         'metal-macos-xcode-release': { inherits: 'macos-xcode-release' },
+        // use these configs to build the samples under d3d11/
+        'd3d11-win-vstudio-debug': { inherits: 'win-vstudio-debug' },
+        'd3d11-win-vstudio-release': { inherits: 'win-vstudio-release' },
         // use these configs to build the samples under glfw/
         'glfw-macos-ninja-debug': { inherits: 'macos-ninja-debug' },
         'glfw-macos-ninja-release': { inherits: 'macos-ninja-release' },
