@@ -183,7 +183,6 @@ int main() {
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
 
         // this is standard ImGui demo code
-        ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
         io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();

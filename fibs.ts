@@ -95,7 +95,7 @@ export const glfw_targets = () => {
         if (sample.type.includes('glfw')) {
             targets[`${sample.name}-glfw`] = {
                 enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
-                type: 'windowed-exe',
+                type: 'plain-exe',
                 dir: 'glfw',
                 sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
                 libs: () => [ 'sokol-includes', 'glfw3', ...sample.libs ],
@@ -105,7 +105,7 @@ export const glfw_targets = () => {
     // special metal-glfw target
     targets['metal-glfw'] = {
         enabled: (ctx) => ctx.config.name.startsWith('glfw-') && ctx.config.platform === 'macos',
-        type: 'windowed-exe',
+        type: 'plain-exe',
         dir: 'glfw',
         sources: () => [ 'metal-glfw.m' ],
         libs: () => [ 'sokol-includes', 'glfw3', '-framework Metal', '-framework QuartzCore' ]
@@ -113,9 +113,13 @@ export const glfw_targets = () => {
     // special sgl-test-glfw target
     targets['sgl-test-glfw'] = {
         enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
-        type: 'windowed-exe',
+        type: 'plain-exe',
         dir: 'glfw',
         sources: () => [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
+        // suppress flextGL warnings on MSVC
+        compileOptions: {
+            private: (ctx) => (ctx.compiler === 'msvc') ? ['/wd4996', '/wd4152'] : []
+        },
         libs: () => [ 'glfw3' ],
     };
     return targets;
@@ -161,5 +165,7 @@ export const project: fibs.ProjectDesc = {
         'glfw-macos-vscode-release': { inherits: 'macos-vscode-release' },
         'glfw-macos-xcode-debug': { inherits: 'macos-xcode-debug' },
         'glfw-macos-xcode-release': { inherits: 'macos-xcode-release' },
+        'glfw-win-vstudio-debug': { inherits: 'win-vstudio-debug' },
+        'glfw-win-vstudio-release': { inherits: 'win-vstudio-release' },
     }
 }
