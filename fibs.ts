@@ -179,11 +179,12 @@ export const emscripten_targets = () => {
 
 // ### GLFW SAMPLES ###
 export const glfw_targets = () => {
+    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('glfw-');
     const targets: fibs.TargetDescs = {};
     samples.forEach((sample) => {
         if (sample.type.includes('glfw')) {
             targets[`${sample.name}-glfw`] = {
-                enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
+                enabled,
                 type: 'plain-exe',
                 dir: 'glfw',
                 sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
@@ -193,7 +194,7 @@ export const glfw_targets = () => {
     });
     // special metal-glfw target
     targets['metal-glfw'] = {
-        enabled: (ctx) => ctx.config.name.startsWith('glfw-') && ctx.config.platform === 'macos',
+        enabled: (ctx) => enabled(ctx) && ctx.config.platform === 'macos',
         type: 'plain-exe',
         dir: 'glfw',
         sources: () => [ 'metal-glfw.m' ],
@@ -201,7 +202,7 @@ export const glfw_targets = () => {
     };
     // special sgl-test-glfw target
     targets['sgl-test-glfw'] = {
-        enabled: (ctx) => ctx.config.name.startsWith('glfw-'),
+        enabled,
         type: 'plain-exe',
         dir: 'glfw',
         sources: () => [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
