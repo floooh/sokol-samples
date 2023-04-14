@@ -61,7 +61,7 @@ const configs: fibs.ConfigDescs = {
     'glfw-macos-xcode-release':     { inherits: 'macos-xcode-release' },
     'glfw-win-vstudio-debug':       { inherits: 'win-vstudio-debug' },
     'glfw-win-vstudio-release':     { inherits: 'win-vstudio-release' },
-    // configs to build the sokol-app samples under sapp/ for metal+macos
+    // configs to build the sokol-app samples under sapp/ for macos+gl
     'sapp-metal-macos-ninja-debug':     { inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
     'sapp-metal-macos-ninja-release':   { inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_METAL: '1' } },
     'sapp-metal-macos-make-debug':      { inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_METAL: '1' } },
@@ -70,32 +70,67 @@ const configs: fibs.ConfigDescs = {
     'sapp-metal-macos-vscode-release':  { inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_METAL: '1' } },
     'sapp-metal-macos-xcode-debug':     { inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
     'sapp-metal-macos-xcode-release':   { inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_METAL: '1' } },
+    // configs to build the sokol-app samples under sapp/ for macos+gl
+    'sapp-gl-macos-ninja-debug':     { inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-ninja-release':   { inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-make-debug':      { inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-make-release':    { inherits: 'macos-make-release',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-vscode-debug':    { inherits: 'macos-vscode-debug',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-vscode-release':  { inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-xcode-debug':     { inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    'sapp-gl-macos-xcode-release':   { inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
 }
 
 // ### SOKOL-APP SAMPLES ###
 export const sapp_targets = () => {
     const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
-    const targets: fibs.TargetDescs = {};
+    const sampleTargets: fibs.TargetDescs = {};
     samples.forEach((sample) => {
         if (sample.type.includes('sapp')) {
             const name = `${sample.name}-sapp`;
-            targets[name] = {
+            sampleTargets[name] = {
                 enabled,
                 type: 'windowed-exe',
                 dir: 'sapp',
                 sources: () => [ `${name}.${sample.ext}` ],
-                libs: () => [ 'sokol-includes' ],
+                libs: () => [ 'sokol' ],
                 // FIXME: build jobs
             }
             if (sample.ui) {
-                targets[`${name}-ui`] = {
-                    ...targets[name],
-                    libs: () => [ 'sokol-includes','cdbgui' ],
+                sampleTargets[`${name}-ui`] = {
+                    ...sampleTargets[name],
+                    libs: () => [ 'sokol', 'dbgui' ],
+                    compileDefinitions: {
+                        private: () => ({ USE_DBG_UI: '1' })
+                    },
                 }
             }
         }
     });
-    return targets;
+    const libTargets: fibs.TargetDescs = {
+        sokol: {
+            enabled,
+            type: 'lib',
+            dir: 'libs/sokol',
+            sources: () => [ 'sokol.c' ],
+            libs: () => [ 'sokol-config' ],
+        },
+        cdbgui: {
+            enabled,
+            type: 'lib',
+            dir: 'libs/cdbgui',
+            sources: () => [ 'cdbgui.c', 'cdbgui.h' ],
+            libs: () => [ 'sokol', 'cimgui' ],
+        },
+        dbgui: {
+            enabled,
+            type: 'lib',
+            dir: 'libs/dbgui',
+            sources: () => [ 'dbgui.cc', 'dbgui.h' ],
+            libs: () => [ 'sokol', 'imgui' ],
+        }
+    }
+    return { ...libTargets, ...sampleTargets };
 }
 
 // ### D3D11 SAMPLES ###
@@ -220,7 +255,7 @@ export const project: fibs.ProjectDesc = {
     imports: {
         libs: {
             url: 'https://github.com/floooh/fibs-libs',
-            import: [ 'sokol.ts', 'imgui.ts', 'glfw3.ts' ],
+            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'glfw3.ts' ],
         },
         utils: {
             url: 'https://github.com/floooh/fibs-utils',
