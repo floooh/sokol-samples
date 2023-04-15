@@ -37,134 +37,149 @@ const samples: Sample[] = [
     { name: 'uniformarrays',    ext: 'c',            libs: [], type: ['glfw'] },
 ];
 
-const configs: fibs.ConfigDescs = {
-    // use these configs to build the samples under metal/
-    'metal-macos-ninja-debug':      { inherits: 'macos-ninja-debug' },
-    'metal-macos-ninja-release':    { inherits: 'macos-ninja-release' },
-    'metal-macos-make-debug':       { inherits: 'macos-make-debug' },
-    'metal-macos-make-release':     { inherits: 'macos-make-release' },
-    'metal-macos-vscode-debug':     { inherits: 'macos-vscode-debug' },
-    'metal-macos-vscode-release':   { inherits: 'macos-vscode-release' },
-    'metal-macos-xcode-debug':      { inherits: 'macos-xcode-debug' },
-    'metal-macos-xcode-release':    { inherits: 'macos-xcode-release' },
-    // use these configs to build the samples under d3d11/
-    'd3d11-win-vstudio-debug':      { inherits: 'win-vstudio-debug' },
-    'd3d11-win-vstudio-release':    { inherits: 'win-vstudio-release' },
-    // use these configs to build the samples under glfw/
-    'glfw-macos-ninja-debug':       { inherits: 'macos-ninja-debug' },
-    'glfw-macos-ninja-release':     { inherits: 'macos-ninja-release' },
-    'glfw-macos-make-debug':        { inherits: 'macos-make-debug' },
-    'glfw-macos-make-release':      { inherits: 'macos-make-release' },
-    'glfw-macos-vscode-debug':      { inherits: 'macos-vscode-debug' },
-    'glfw-macos-vscode-release':    { inherits: 'macos-vscode-release' },
-    'glfw-macos-xcode-debug':       { inherits: 'macos-xcode-debug' },
-    'glfw-macos-xcode-release':     { inherits: 'macos-xcode-release' },
-    'glfw-win-vstudio-debug':       { inherits: 'win-vstudio-debug' },
-    'glfw-win-vstudio-release':     { inherits: 'win-vstudio-release' },
-    // configs to build the sokol-app samples under sapp/ for macos+gl
-    'sapp-metal-macos-ninja-debug':     { inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-ninja-release':   { inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-make-debug':      { inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-make-release':    { inherits: 'macos-make-release',   compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-vscode-debug':    { inherits: 'macos-vscode-debug',   compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-vscode-release':  { inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-xcode-debug':     { inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
-    'sapp-metal-macos-xcode-release':   { inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_METAL: '1' } },
-    // configs to build the sokol-app samples under sapp/ for macos+gl
-    'sapp-gl-macos-ninja-debug':     { inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-ninja-release':   { inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-make-debug':      { inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-make-release':    { inherits: 'macos-make-release',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-vscode-debug':    { inherits: 'macos-vscode-debug',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-vscode-release':  { inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-xcode-debug':     { inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
-    'sapp-gl-macos-xcode-release':   { inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
-}
+const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
+const glfwEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('glfw-');
+const metalEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
+const d3d11Enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-');
+const emscEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('emsc-');
 
-// ### SOKOL-APP SAMPLES ###
-export const sapp_targets = () => {
-    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
-    const sampleTargets: fibs.TargetDescs = {};
-    samples.forEach((sample) => {
-        if (sample.type.includes('sapp')) {
-            const name = `${sample.name}-sapp`;
-            sampleTargets[name] = {
-                enabled,
-                type: 'windowed-exe',
-                dir: 'sapp',
-                sources: () => [ `${name}.${sample.ext}` ],
-                libs: () => [ 'sokol' ],
-                // FIXME: build jobs
-            }
-            if (sample.ui) {
-                sampleTargets[`${name}-ui`] = {
-                    ...sampleTargets[name],
-                    libs: () => [ 'sokol', 'dbgui' ],
-                    compileDefinitions: {
-                        private: () => ({ USE_DBG_UI: '1' })
-                    },
-                }
-            }
+export const project: fibs.ProjectDesc = {
+    name: 'sokol-samples',
+    imports: [
+        {
+            name: 'libs',
+            url: 'https://github.com/floooh/fibs-libs',
+            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'glfw3.ts' ],
+        },
+        {
+            name: 'utils',
+            url: 'https://github.com/floooh/fibs-utils',
+            import: [ 'stdoptions.ts' ],
         }
-    });
-    const libTargets: fibs.TargetDescs = {
-        sokol: {
-            enabled,
+    ],
+    includeDirectories: () => [ 'libs' ],
+    configs: [
+        // use these configs to build the samples under metal/
+        { name: 'metal-macos-ninja-debug',      inherits: 'macos-ninja-debug' },
+        { name: 'metal-macos-ninja-release',    inherits: 'macos-ninja-release' },
+        { name: 'metal-macos-make-debug',       inherits: 'macos-make-debug' },
+        { name: 'metal-macos-make-release',     inherits: 'macos-make-release' },
+        { name: 'metal-macos-vscode-debug',     inherits: 'macos-vscode-debug' },
+        { name: 'metal-macos-vscode-release',   inherits: 'macos-vscode-release' },
+        { name: 'metal-macos-xcode-debug',      inherits: 'macos-xcode-debug' },
+        { name: 'metal-macos-xcode-release',    inherits: 'macos-xcode-release' },
+        // use these configs to build the samples under d3d11/
+        { name: 'd3d11-win-vstudio-debug',      inherits: 'win-vstudio-debug' },
+        { name: 'd3d11-win-vstudio-release',    inherits: 'win-vstudio-release' },
+        // use these configs to build the samples under glfw/
+        { name: 'glfw-macos-ninja-debug',       inherits: 'macos-ninja-debug' },
+        { name: 'glfw-macos-ninja-release',     inherits: 'macos-ninja-release' },
+        { name: 'glfw-macos-make-debug',        inherits: 'macos-make-debug' },
+        { name: 'glfw-macos-make-release',      inherits: 'macos-make-release' },
+        { name: 'glfw-macos-vscode-debug',      inherits: 'macos-vscode-debug' },
+        { name: 'glfw-macos-vscode-release',    inherits: 'macos-vscode-release' },
+        { name: 'glfw-macos-xcode-debug',       inherits: 'macos-xcode-debug' },
+        { name: 'glfw-macos-xcode-release',     inherits: 'macos-xcode-release' },
+        { name: 'glfw-win-vstudio-debug',       inherits: 'win-vstudio-debug' },
+        { name: 'glfw-win-vstudio-release',     inherits: 'win-vstudio-release' },
+        // configs to build the sokol-app samples under sapp/ for macos+gl
+        { name: 'sapp-metal-macos-ninja-debug',     inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-ninja-release',   inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-make-debug',      inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-make-release',    inherits: 'macos-make-release',   compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-vscode-debug',    inherits: 'macos-vscode-debug',   compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-vscode-release',  inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-xcode-debug',     inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
+        { name: 'sapp-metal-macos-xcode-release',   inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_METAL: '1' } },
+        // configs to build the sokol-app samples under sapp/ for macos+gl
+        { name: 'sapp-gl-macos-ninja-debug',        inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-ninja-release',      inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-make-debug',         inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-make-release',       inherits: 'macos-make-release',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-vscode-debug',       inherits: 'macos-vscode-debug',   compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-vscode-release',     inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-xcode-debug',        inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        { name: 'sapp-gl-macos-xcode-release',      inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
+    ],
+    targets: [
+        // only enable glfw3 target for glfw build configs
+        {
+            name: 'glfw3',
+            enabled: glfwEnabled,
+        },
+        // sokol-app samples
+        ...samples.filter((sample) => sample.type.includes('sapp')).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-sapp`,
+            enabled: sappEnabled,
+            type: 'windowed-exe',
+            dir: 'sapp',
+            sources: () => [ `${sample.name}-sapp.${sample.ext}` ],
+            libs: () => [ 'sokol' ],
+        })),
+        ...samples.filter((sample) => sample.type.includes('sapp') && sample.ui).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-sapp-ui`,
+            enabled: sappEnabled,
+            type: 'windowed-exe',
+            dir: 'sapp',
+            sources: () => [ `${sample.name}-sapp.${sample.ext}` ],
+            libs: () => [ 'sokol', 'dbgui' ],
+            compileDefinitions: {
+                private: () => ({ USE_DBG_UI: '1' })
+            }
+        })),
+        {
+            name: 'sokol',
+            enabled: sappEnabled,
             type: 'lib',
             dir: 'libs/sokol',
             sources: () => [ 'sokol.c' ],
             libs: () => [ 'sokol-config' ],
         },
-        cdbgui: {
-            enabled,
+        {
+            name: 'cdbgui',
+            enabled: sappEnabled,
             type: 'lib',
             dir: 'libs/cdbgui',
             sources: () => [ 'cdbgui.c', 'cdbgui.h' ],
             libs: () => [ 'sokol', 'cimgui' ],
         },
-        dbgui: {
-            enabled,
+        {
+            name: 'dbgui',
+            enabled: sappEnabled,
             type: 'lib',
             dir: 'libs/dbgui',
             sources: () => [ 'dbgui.cc', 'dbgui.h' ],
             libs: () => [ 'sokol', 'imgui' ],
-        }
-    }
-    return { ...libTargets, ...sampleTargets };
-}
-
-// ### D3D11 SAMPLES ###
-export const d3d11_targets = () => {
-    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-');
-    const targets: fibs.TargetDescs = {
-        'entry_d3d11': {
-            enabled,
+        },
+        // ### d3d11 samples
+        ...samples.filter((sample) => sample.type.includes('d3d11')).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-d3d11`,
+            enabled: d3d11Enabled,
+            type: 'windowed-exe',
+            dir: 'd3d11',
+            sources: () => [ `${sample.name}-d3d11.${sample.ext}`],
+            libs: () => [ 'entry_d3d11', ...sample.libs ],
+        })),
+        {
+            name: 'entry_d3d11',
+            enabled: d3d11Enabled,
             type: 'lib',
             dir: 'd3d11',
             sources: () => [ 'd3d11entry.c', 'd3d11entry.h' ],
             libs: () => [ 'sokol-includes' ],
-        }
-    };
-    samples.forEach((sample) => {
-        if (sample.type.includes('d3d11')) {
-            targets[`${sample.name}-d3d11`] = {
-                enabled,
-                type: 'windowed-exe',
-                dir: 'd3d11',
-                sources: () => [ `${sample.name}-d3d11.${sample.ext}`],
-                libs: () => [ 'entry_d3d11', ...sample.libs ],
-            }
-        }
-    });
-    return targets;
-}
-
-// ### METAL SAMPLES ###
-export const metal_targets = () => {
-    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
-    const targets: fibs.TargetDescs = {
-        'entry_metal': {
-            enabled,
+        },
+        // ### Metal samples
+        ...samples.filter((sample) => sample.type.includes('metal')).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-metal`,
+            enabled: metalEnabled,
+            type: 'windowed-exe',
+            dir: 'metal',
+            sources: () => [ `${sample.name}-metal.${sample.name === 'inject' ? 'mm' : sample.ext}` ],
+            libs: () => [ 'entry_metal', ...sample.libs ],
+        })),
+        {
+            name: 'entry_metal',
+            enabled: metalEnabled,
             type: 'lib',
             dir: 'metal',
             sources: () => [ 'osxentry.m', 'osxentry.h', 'sokol.m' ],
@@ -177,103 +192,45 @@ export const metal_targets = () => {
                 }
                 return libs;
             }
-        }
-    };
-    samples.forEach((sample) => {
-        if (sample.type.includes('metal')) {
-            const ext = sample.name === 'inject' ? 'mm' : sample.ext;
-            targets[`${sample.name}-metal`] = {
-                enabled,
-                type: 'windowed-exe',
-                dir: 'metal',
-                sources: () => [ `${sample.name}-metal.${ext}` ],
-                libs: () => [ 'entry_metal', ...sample.libs ],
-            }
-        }
-    });
-    return targets;
-}
-
-// ### EMSCRIPTEN SAMPLES ###
-export const emscripten_targets = () => {
-    const targets: fibs.TargetDescs = {};
-    samples.forEach((sample) => {
-        if (sample.type.includes('emsc')) {
-            targets[`${sample.name}-emsc`] = {
-                enabled: (ctx) => ctx.config.name.startsWith('emsc-'),
-                type: 'windowed-exe',
-                dir: 'html5',
-                sources: () => [ `${sample.name}-emsc.${sample.ext}` ],
-                libs: () => [ 'sokol-includes', ...sample.libs ],
-                linkOptions: { public: () => [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
-            }
-        }
-    });
-    return targets;
-}
-
-// ### GLFW SAMPLES ###
-export const glfw_targets = () => {
-    const enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('glfw-');
-    const targets: fibs.TargetDescs = {};
-    samples.forEach((sample) => {
-        if (sample.type.includes('glfw')) {
-            targets[`${sample.name}-glfw`] = {
-                enabled,
-                type: 'plain-exe',
-                dir: 'glfw',
-                sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
-                libs: () => [ 'sokol-includes', 'glfw3', ...sample.libs ],
-            }
-        }
-    });
-    // special metal-glfw target
-    targets['metal-glfw'] = {
-        enabled: (ctx) => enabled(ctx) && ctx.config.platform === 'macos',
-        type: 'plain-exe',
-        dir: 'glfw',
-        sources: () => [ 'metal-glfw.m' ],
-        libs: () => [ 'sokol-includes', 'glfw3', '-framework Metal', '-framework QuartzCore' ]
-    };
-    // special sgl-test-glfw target
-    targets['sgl-test-glfw'] = {
-        enabled,
-        type: 'plain-exe',
-        dir: 'glfw',
-        sources: () => [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
-        // suppress flextGL warnings on MSVC
-        compileOptions: {
-            private: (ctx) => (ctx.compiler === 'msvc') ? ['/wd4996', '/wd4152'] : []
         },
-        libs: () => [ 'glfw3' ],
-    };
-    return targets;
-}
-
-export const project: fibs.ProjectDesc = {
-    name: 'sokol-samples',
-    imports: {
-        libs: {
-            url: 'https://github.com/floooh/fibs-libs',
-            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'glfw3.ts' ],
+        // ### emscripten samples
+        ...samples.filter((sample) => sample.type.includes('emsc')).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-emsc`,
+            enabled: emscEnabled,
+            type: 'windowed-exe',
+            dir: 'html5',
+            sources: () => [ `${sample.name}-emsc.${sample.ext}` ],
+            libs: () => [ 'sokol-includes', ...sample.libs ],
+            linkOptions: { public: () => [ '-sUSE_WEBGL2=1', "-sMALLOC='emmalloc'" ] },
+        })),
+        // ### glfw samples
+        ...samples.filter((sample) => sample.type.includes('glfw')).map((sample): fibs.TargetDesc => ({
+            name: `${sample.name}-glfw`,
+            enabled: glfwEnabled,
+            type: 'plain-exe',  // not a but
+            dir: 'glfw',
+            sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
+            libs: () => [ 'sokol-includes', 'glfw3', ...sample.libs ],
+        })),
+        {
+            name: 'metal-glfw',
+            enabled: (ctx) => glfwEnabled(ctx) && ctx.config.platform === 'macos',
+            type: 'plain-exe',
+            dir: 'glfw',
+            sources: () => [ 'metal-glfw.m' ],
+            libs: () => [ 'sokol-includes', 'glfw3', '-framework Metal', '-framework QuartzCore' ]
         },
-        utils: {
-            url: 'https://github.com/floooh/fibs-utils',
-            import: [ 'stdoptions.ts' ],
+        {
+            name: 'sgl-test-glfw',
+            enabled: glfwEnabled,
+            type: 'plain-exe',
+            dir: 'glfw',
+            sources: () => [ 'sgl-test-glfw.c', 'flextgl12/flextGL.c' ],
+            // suppress flextGL warnings on MSVC
+            compileOptions: {
+                private: (ctx) => (ctx.compiler === 'msvc') ? ['/wd4996', '/wd4152'] : []
+            },
+            libs: () => [ 'glfw3' ],
         }
-    },
-    includeDirectories: () => [ 'libs' ],
-    targets: {
-        // only enable glfw3 target for glfw build configs
-        glfw3: {
-            enabled: (context) => context.config.name.startsWith('glfw-'),
-        },
-        /* @ts-ignore: */
-        ...d3d11_targets(),
-        ...metal_targets(),
-        ...emscripten_targets(),
-        ...glfw_targets(),
-        ...sapp_targets(),
-    },
-    configs,
+    ],
 }
