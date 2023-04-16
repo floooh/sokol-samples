@@ -243,7 +243,7 @@ export const project: fibs.ProjectDesc = {
         ...samples.filter((sample) => sample.type.includes('glfw')).map((sample): fibs.TargetDesc => ({
             name: `${sample.name}-glfw`,
             enabled: glfwEnabled,
-            type: 'plain-exe',  // not a but
+            type: 'plain-exe',  // not a bug
             dir: 'glfw',
             sources: () => [ `${sample.name}-glfw.${sample.ext}` ],
             libs: () => [ 'sokol-includes', 'glfw3', ...sample.libs ],
