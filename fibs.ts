@@ -59,7 +59,6 @@ const samples: Sample[] = [
     { name: 'saudio',               ext: 'c',                       libs: [], type: ['sapp'] },
     { name: 'icon',                 ext: 'c',                       libs: [], type: ['sapp'] },
     { name: 'droptest',             ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
-
 ];
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -108,7 +107,7 @@ export const project: fibs.ProjectDesc = {
         { name: 'glfw-macos-xcode-release',     inherits: 'macos-xcode-release' },
         { name: 'glfw-win-vstudio-debug',       inherits: 'win-vstudio-debug' },
         { name: 'glfw-win-vstudio-release',     inherits: 'win-vstudio-release' },
-        // configs to build the sokol-app samples under sapp/ for macos+gl
+        // configs to build the sokol-app samples under sapp/ for macos+metal
         { name: 'sapp-metal-macos-ninja-debug',     inherits: 'macos-ninja-debug',    compileDefinitions: { SOKOL_METAL: '1' } },
         { name: 'sapp-metal-macos-ninja-release',   inherits: 'macos-ninja-release',  compileDefinitions: { SOKOL_METAL: '1' } },
         { name: 'sapp-metal-macos-make-debug',      inherits: 'macos-make-debug',     compileDefinitions: { SOKOL_METAL: '1' } },
@@ -126,6 +125,12 @@ export const project: fibs.ProjectDesc = {
         { name: 'sapp-gl-macos-vscode-release',     inherits: 'macos-vscode-release', compileDefinitions: { SOKOL_GLCORE33: '1' } },
         { name: 'sapp-gl-macos-xcode-debug',        inherits: 'macos-xcode-debug',    compileDefinitions: { SOKOL_GLCORE33: '1' } },
         { name: 'sapp-gl-macos-xcode-release',      inherits: 'macos-xcode-release',  compileDefinitions: { SOKOL_GLCORE33: '1' } },
+        // configs to build the sokol-app samples under sapp/ for windows+d3d11
+        { name: 'sapp-d3d11-win-vstudio-debug',     inherits: 'win-vstudio-debug',    compileDefinitions: { SOKOL_D3D11: '1'} },
+        { name: 'sapp-d3d11-win-vstudio-release',   inherits: 'win-vstudio-release',  compileDefinitions: { SOKOL_D3D11: '1'} },
+        // configs to build the sokol-app samples under sapp/ for windows+d3d11
+        { name: 'sapp-gl-win-vstudio-debug',        inherits: 'win-vstudio-debug',    compileDefinitions: { SOKOL_GLCORE33: '1'} },
+        { name: 'sapp-gl-win-vstudio-release',      inherits: 'win-vstudio-release',  compileDefinitions: { SOKOL_GLCORE33: '1'} },
     ],
     targets: [
         // only enable glfw3 target for glfw build configs
