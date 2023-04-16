@@ -15,26 +15,51 @@ type Sample = {
 };
 
 const samples: Sample[] = [
-    { name: 'arraytex',         ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'binshader',        ext: 'c',            libs: [], type: ['metal','d3d11'] },
-    { name: 'blend',            ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'bufferoffsets',    ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'clear',            ext: 'c',  ui: true, libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
-    { name: 'cube',             ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'dyntex',           ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'imgui',            ext: 'cc',           libs: ['imgui'], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'inject',           ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'instancing',       ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'mipmap',           ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'mrt',              ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'multiwindow',      ext: 'c',            libs: [], type: ['glfw'] },
-    { name: 'noninterleaved',   ext: 'c',            libs: [], type: ['metal','glfw','emsc'] },
-    { name: 'offscreen',        ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'quad',             ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'releasetest',      ext: 'c',            libs: [], type: ['metal'] },
-    { name: 'texcube',          ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'triangle',         ext: 'c',            libs: [], type: ['metal','glfw','emsc','d3d11'] },
-    { name: 'uniformarrays',    ext: 'c',            libs: [], type: ['glfw'] },
+    { name: 'arraytex',             ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'binshader',            ext: 'c',                       libs: [], type: ['metal','d3d11'] },
+    { name: 'blend',                ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'bufferoffsets',        ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'clear',                ext: 'c', ui: true,             libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'cube',                 ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'dyntex',               ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'imgui',                ext: 'cc',                      libs: ['imgui'], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'inject',               ext: 'c',                       libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'instancing',           ext: 'c',                       libs: [], type: ['metal','glfw','emsc','d3d11'] },
+    { name: 'mipmap',               ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'mrt',                  ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'multiwindow',          ext: 'c',                       libs: [], type: ['glfw'] },
+    { name: 'noninterleaved',       ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc', 'sapp'] },
+    { name: 'offscreen',            ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'quad',                 ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'releasetest',          ext: 'c',                       libs: [], type: ['metal'] },
+    { name: 'texcube',              ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'triangle',             ext: 'c', ui: true, shd: true,  libs: [], type: ['metal','glfw','emsc','d3d11','sapp'] },
+    { name: 'uniformarrays',        ext: 'c',                       libs: [], type: ['glfw'] },
+    { name: 'shadows',              ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'mrt-pixelformats',     ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'tex3d',                ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'uvwrap',               ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'uniformtypes',         ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'events',               ext: 'cc',                      libs: ['imgui'], type: ['sapp'] },
+    { name: 'pixelformats',         ext: 'c',           shd: true,  libs: ['cimgui'], type: ['sapp'] },
+    { name: 'sgl',                  ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'sgl-lines',            ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'sgl-points',           ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'sgl-context',          ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'cubemaprt',            ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'sdf',                  ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'shapes',               ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'shapes-transform',     ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'primtypes',            ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'debugtext',            ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'debugtext-printf',     ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'debugtext-userfont',   ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'debugtext-context',    ext: 'c', ui: true, shd: true,  libs: [], type: ['sapp'] },
+    { name: 'debugtext-layers',     ext: 'c', ui: true,             libs: [], type: ['sapp'] },
+    { name: 'saudio',               ext: 'c',                       libs: [], type: ['sapp'] },
+    { name: 'icon',                 ext: 'c',                       libs: [], type: ['sapp'] },
+    { name: 'droptest',             ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
+
 ];
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -42,6 +67,7 @@ const glfwEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('glfw-');
 const metalEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
 const d3d11Enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-');
 const emscEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('emsc-');
+const shdcJob = (sample: Sample) => sample.shd ? { job: 'sokolshdc', args: { src: `${sample.name}-sapp.glsl` } } : undefined;
 
 export const project: fibs.ProjectDesc = {
     name: 'sokol-samples',
@@ -54,7 +80,7 @@ export const project: fibs.ProjectDesc = {
         {
             name: 'utils',
             url: 'https://github.com/floooh/fibs-utils',
-            import: [ 'stdoptions.ts' ],
+            import: [ 'stdoptions.ts', 'sokolshdc.ts' ],
         }
     ],
     includeDirectories: () => [ 'libs' ],
@@ -113,16 +139,26 @@ export const project: fibs.ProjectDesc = {
             enabled: sappEnabled,
             type: 'windowed-exe',
             dir: 'sapp',
-            sources: () => [ `${sample.name}-sapp.${sample.ext}` ],
-            libs: () => [ 'sokol' ],
+            sources: () => [
+                `${sample.name}-sapp.${sample.ext}`,
+                sample.shd ? `${sample.name}-sapp.glsl` : undefined,
+            ],
+            includeDirectories: { public: () => [ '@targetbuild:' ] },
+            libs: () => [ 'sokol', ...sample.libs ],
+            jobs: [ shdcJob(sample) ],
         })),
         ...samples.filter((sample) => sample.type.includes('sapp') && sample.ui).map((sample): fibs.TargetDesc => ({
             name: `${sample.name}-sapp-ui`,
             enabled: sappEnabled,
             type: 'windowed-exe',
             dir: 'sapp',
-            sources: () => [ `${sample.name}-sapp.${sample.ext}` ],
-            libs: () => [ 'sokol', 'dbgui' ],
+            sources: () => [
+                `${sample.name}-sapp.${sample.ext}`,
+                sample.shd ? `${sample.name}-sapp.glsl` : undefined,
+            ],
+            includeDirectories: { public: () => [ '@targetbuild:' ] },
+            libs: () => [ 'sokol', 'dbgui', ...sample.libs ],
+            jobs: [ shdcJob(sample) ],
             compileDefinitions: {
                 private: () => ({ USE_DBG_UI: '1' })
             }
