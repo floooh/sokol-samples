@@ -59,6 +59,11 @@ const samples: Sample[] = [
     { name: 'saudio',               ext: 'c',                       libs: [], type: ['sapp'] },
     { name: 'icon',                 ext: 'c',                       libs: [], type: ['sapp'] },
     { name: 'droptest',             ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
+    { name: 'imgui-dock',           ext: 'cc',                      libs: ['imgui-docking'], type: ['sapp'] },
+    { name: 'imgui-highdpi',        ext: 'cc',                      libs: ['imgui'], type: ['sapp']},
+    { name: 'cimgui',               ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
+    { name: 'imgui-usercallback',   ext: 'c',           shd: true,  libs: ['cimgui'], type: ['sapp'] },
+    { name: 'imgui-perf',           ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
 ];
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -74,7 +79,7 @@ export const project: fibs.ProjectDesc = {
         {
             name: 'libs',
             url: 'https://github.com/floooh/fibs-libs',
-            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'glfw3.ts' ],
+            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'imgui-docking.ts', 'glfw3.ts' ],
         },
         {
             name: 'utils',

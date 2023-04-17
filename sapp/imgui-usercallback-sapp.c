@@ -15,7 +15,7 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #include "imgui-usercallback-sapp.glsl.h"
