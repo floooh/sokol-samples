@@ -64,6 +64,7 @@ const samples: Sample[] = [
     { name: 'cimgui',               ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
     { name: 'imgui-usercallback',   ext: 'c',           shd: true,  libs: ['cimgui'], type: ['sapp'] },
     { name: 'imgui-perf',           ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
+    { name: 'sgl-microui',          ext: 'c',                       libs: ['microui'], type: ['sapp'] },
 ];
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -79,7 +80,14 @@ export const project: fibs.ProjectDesc = {
         {
             name: 'libs',
             url: 'https://github.com/floooh/fibs-libs',
-            import: [ 'sokol.ts', 'imgui.ts', 'cimgui.ts', 'imgui-docking.ts', 'glfw3.ts' ],
+            import: [
+                'sokol.ts',
+                'imgui.ts',
+                'cimgui.ts',
+                'imgui-docking.ts',
+                'glfw3.ts',
+                'microui.ts',
+            ],
         },
         {
             name: 'utils',

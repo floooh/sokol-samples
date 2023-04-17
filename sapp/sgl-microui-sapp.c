@@ -14,8 +14,8 @@
 #include "sokol_app.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "microui/microui.h"
-#include "microui/atlas.inl"
+#include "microui.h"
+#include "../demo/atlas.inl"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include "cdbgui/cdbgui.h"
@@ -123,7 +123,7 @@ static void event(const sapp_event* ev) {
             mu_input_mousemove(&state.mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y);
             break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            mu_input_mousewheel(&state.mu_ctx, (int)ev->scroll_y);
+            mu_input_scroll(&state.mu_ctx, 0, (int)ev->scroll_y);
             break;
         case SAPP_EVENTTYPE_KEY_DOWN:
             mu_input_keydown(&state.mu_ctx, key_map[ev->key_code & 511]);
@@ -185,64 +185,57 @@ static void cleanup(void) {
 }
 
 static void test_window(mu_Context* ctx) {
-    static mu_Container window;
-
-    /* init window manually so we can set its position and size */
-    if (!window.inited) {
-        mu_init_window(ctx, &window, 0);
-        window.rect = mu_rect(40, 40, 300, 450);
-    }
-
-    /* limit window to minimum size */
-    window.rect.w = mu_max(window.rect.w, 240);
-    window.rect.h = mu_max(window.rect.h, 300);
-
     /* do window */
-    if (mu_begin_window(ctx, &window, "Demo Window")) {
+    if (mu_begin_window(ctx, "Demo Window", mu_rect(40, 40, 300, 450))) {
+        mu_Container *win = mu_get_current_container(ctx);
+        win->rect.w = mu_max(win->rect.w, 240);
+        win->rect.h = mu_max(win->rect.h, 300);
 
         /* window info */
-        static int show_info = 0;
-        if (mu_header(ctx, &show_info, "Window Info")) {
+        if (mu_header(ctx, "Window Info")) {
+            mu_Container *win = mu_get_current_container(ctx);
             char buf[64];
             mu_layout_row(ctx, 2, (int[]) { 54, -1 }, 0);
             mu_label(ctx,"Position:");
-            sprintf(buf, "%d, %d", window.rect.x, window.rect.y); mu_label(ctx, buf);
+            sprintf(buf, "%d, %d", win->rect.x, win->rect.y); mu_label(ctx, buf);
             mu_label(ctx, "Size:");
-            sprintf(buf, "%d, %d", window.rect.w, window.rect.h); mu_label(ctx, buf);
+            sprintf(buf, "%d, %d", win->rect.w, win->rect.h); mu_label(ctx, buf);
         }
 
         /* labels + buttons */
-        static int show_buttons = 1;
-        if (mu_header(ctx, &show_buttons, "Test Buttons")) {
+        if (mu_header_ex(ctx, "Test Buttons", MU_OPT_EXPANDED)) {
             mu_layout_row(ctx, 3, (int[]) { 86, -110, -1 }, 0);
             mu_label(ctx, "Test buttons 1:");
             if (mu_button(ctx, "Button 1")) { write_log("Pressed button 1"); }
             if (mu_button(ctx, "Button 2")) { write_log("Pressed button 2"); }
             mu_label(ctx, "Test buttons 2:");
             if (mu_button(ctx, "Button 3")) { write_log("Pressed button 3"); }
-            if (mu_button(ctx, "Button 4")) { write_log("Pressed button 4"); }
+            if (mu_button(ctx, "Popup")) { mu_open_popup(ctx, "Test Popup"); }
+            if (mu_begin_popup(ctx, "Test Popup")) {
+                mu_button(ctx, "Hello");
+                mu_button(ctx, "World");
+                mu_end_popup(ctx);
+            }
         }
 
         /* tree */
-        static int show_tree = 1;
-        if (mu_header(ctx, &show_tree, "Tree and Text")) {
+        if (mu_header_ex(ctx, "Tree and Text", MU_OPT_EXPANDED)) {
             mu_layout_row(ctx, 2, (int[]) { 140, -1 }, 0);
             mu_layout_begin_column(ctx);
-            static int states[8];
-            if (mu_begin_treenode(ctx, &states[0], "Test 1")) {
-                if (mu_begin_treenode(ctx, &states[1], "Test 1a")) {
-                mu_label(ctx, "Hello");
-                mu_label(ctx, "world");
-                mu_end_treenode(ctx);
+            if (mu_begin_treenode(ctx, "Test 1")) {
+                if (mu_begin_treenode(ctx, "Test 1a")) {
+                    mu_label(ctx, "Hello");
+                    mu_label(ctx, "world");
+                    mu_end_treenode(ctx);
                 }
-                if (mu_begin_treenode(ctx, &states[2], "Test 1b")) {
-                if (mu_button(ctx, "Button 1")) { write_log("Pressed button 1"); }
-                if (mu_button(ctx, "Button 2")) { write_log("Pressed button 2"); }
-                mu_end_treenode(ctx);
+                if (mu_begin_treenode(ctx, "Test 1b")) {
+                    if (mu_button(ctx, "Button 1")) { write_log("Pressed button 1"); }
+                    if (mu_button(ctx, "Button 2")) { write_log("Pressed button 2"); }
+                    mu_end_treenode(ctx);
                 }
                 mu_end_treenode(ctx);
             }
-            if (mu_begin_treenode(ctx, &states[3], "Test 2")) {
+            if (mu_begin_treenode(ctx, "Test 2")) {
                 mu_layout_row(ctx, 2, (int[]) { 54, 54 }, 0);
                 if (mu_button(ctx, "Button 3")) { write_log("Pressed button 3"); }
                 if (mu_button(ctx, "Button 4")) { write_log("Pressed button 4"); }
@@ -250,11 +243,11 @@ static void test_window(mu_Context* ctx) {
                 if (mu_button(ctx, "Button 6")) { write_log("Pressed button 6"); }
                 mu_end_treenode(ctx);
             }
-            if (mu_begin_treenode(ctx, &states[4], "Test 3")) {
+            if (mu_begin_treenode(ctx, "Test 3")) {
                 static int checks[3] = { 1, 0, 1 };
-                mu_checkbox(ctx, &checks[0], "Checkbox 1");
-                mu_checkbox(ctx, &checks[1], "Checkbox 2");
-                mu_checkbox(ctx, &checks[2], "Checkbox 3");
+                mu_checkbox(ctx, "Checkbox 1", &checks[0]);
+                mu_checkbox(ctx, "Checkbox 2", &checks[1]);
+                mu_checkbox(ctx, "Checkbox 3", &checks[2]);
                 mu_end_treenode(ctx);
             }
             mu_layout_end_column(ctx);
@@ -268,8 +261,7 @@ static void test_window(mu_Context* ctx) {
         }
 
         /* background color sliders */
-        static int show_sliders = 1;
-        if (mu_header(ctx, &show_sliders, "Background Color")) {
+        if (mu_header_ex(ctx, "Background Color", MU_OPT_EXPANDED)) {
             mu_layout_row(ctx, 2, (int[]) { -78, -1 }, 74);
             /* sliders */
             mu_layout_begin_column(ctx);
@@ -280,39 +272,28 @@ static void test_window(mu_Context* ctx) {
             mu_layout_end_column(ctx);
             /* color preview */
             mu_Rect r = mu_layout_next(ctx);
-            mu_draw_rect(ctx, r, mu_color((int)state.bg.r, (int)state.bg.g, (int)state.bg.b, 255));
+            mu_draw_rect(ctx, r, mu_color(state.bg.r, state.bg.g, state.bg.b, 255));
             char buf[32];
-            sprintf(buf, "#%02X%02X%02X", (int)state.bg.r, (int)state.bg.g, (int)state.bg.b);
+            snprintf(buf, sizeof(buf), "#%02X%02X%02X", (int) state.bg.r, (int) state.bg.g, (int) state.bg.b);
             mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
         }
-
         mu_end_window(ctx);
     }
 }
 
 static void log_window(mu_Context *ctx) {
-  static mu_Container window;
-
-    /* init window manually so we can set its position and size */
-    if (!window.inited) {
-        mu_init_window(ctx, &window, 0);
-        window.rect = mu_rect(350, 40, 300, 200);
-    }
-
-    if (mu_begin_window(ctx, &window, "Log Window")) {
-
+    if (mu_begin_window(ctx, "Log Window", mu_rect(350, 40, 300, 200))) {
         /* output text panel */
-        static mu_Container panel;
-        mu_layout_row(ctx, 1, (int[]) { -1 }, -28);
-        mu_begin_panel(ctx, &panel);
+        mu_layout_row(ctx, 1, (int[]) { -1 }, -25);
+        mu_begin_panel(ctx, "Log Output");
+        mu_Container *panel = mu_get_current_container(ctx);
         mu_layout_row(ctx, 1, (int[]) { -1 }, -1);
         mu_text(ctx, state.logbuf);
         mu_end_panel(ctx);
         if (state.logbuf_updated) {
-            panel.scroll.y = panel.content_size.y;
+            panel->scroll.y = panel->content_size.y;
             state.logbuf_updated = 0;
         }
-
         /* input textbox + submit button */
         static char buf[128];
         int submitted = 0;
@@ -334,21 +315,13 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
     static float tmp;
     mu_push_id(ctx, &value, sizeof(value));
     tmp = *value;
-    int res = mu_slider_ex(ctx, (mu_Real*)&tmp, (mu_Real)low, (mu_Real)high, 0, "%.0f", MU_OPT_ALIGNCENTER);
-    *value = (unsigned char)tmp;
+    int res = mu_slider_ex(ctx, &tmp, low, high, 0, "%.0f", MU_OPT_ALIGNCENTER);
+    *value = tmp;
     mu_pop_id(ctx);
     return res;
 }
 
 static void style_window(mu_Context *ctx) {
-    static mu_Container window;
-
-    /* init window manually so we can set its position and size */
-    if (!window.inited) {
-        mu_init_window(ctx, &window, 0);
-        window.rect = mu_rect(350, 250, 300, 240);
-    }
-
     static struct { const char *label; int idx; } colors[] = {
         { "text:",         MU_COLOR_TEXT        },
         { "border:",       MU_COLOR_BORDER      },
@@ -364,19 +337,19 @@ static void style_window(mu_Context *ctx) {
         { "basefocus:",    MU_COLOR_BASEFOCUS   },
         { "scrollbase:",   MU_COLOR_SCROLLBASE  },
         { "scrollthumb:",  MU_COLOR_SCROLLTHUMB },
-        { NULL }
+        { NULL, 0 }
     };
 
-    if (mu_begin_window(ctx, &window, "Style Editor")) {
-        int sw = (int)(mu_get_container(ctx)->body.w * 0.14f);
+    if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
+        int sw = mu_get_current_container(ctx)->body.w * 0.14;
         mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
         for (int i = 0; colors[i].label; i++) {
-          mu_label(ctx, colors[i].label);
-          uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
-          uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
-          uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
-          uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
-          mu_draw_rect(ctx, mu_layout_next(ctx), ctx->style->colors[i]);
+            mu_label(ctx, colors[i].label);
+            uint8_slider(ctx, &ctx->style->colors[i].r, 0, 255);
+            uint8_slider(ctx, &ctx->style->colors[i].g, 0, 255);
+            uint8_slider(ctx, &ctx->style->colors[i].b, 0, 255);
+            uint8_slider(ctx, &ctx->style->colors[i].a, 0, 255);
+            mu_draw_rect(ctx, mu_layout_next(ctx), ctx->style->colors[i]);
         }
         mu_end_window(ctx);
     }
