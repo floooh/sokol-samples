@@ -68,15 +68,39 @@ const samples: Sample[] = [
     { name: 'nuklear',              ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
     { name: 'nuklear-images',       ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
     { name: 'loadpng',              ext: 'c', ui: 'cc', shd: true,  libs: ['stb', 'fileutil'], type: ['sapp'] },
+    { name: 'restart',              ext: 'c',           shd: true,  libs: ['stb', 'fileutil', 'libmodplug'], type: ['sapp'] },
+    { name: 'plmpeg',               ext: 'c', ui: 'cc', shd: true,  libs: ['fileutil'], type: ['sapp'] },
+    { name: 'cgltf',                ext: 'c', ui: 'cc', shd: true,  libs: ['basisu', 'fileutil'], type: ['sapp'] },
 ];
 
-const jobs: {[key: string]: fibs.TargetJobDesc[] } = {
-    'loadpng': [
-        {
-            job: 'copyfiles',
-            args: { srcDir: '@targetsources:data', files: [ 'baboon.png' ] }
-        }
-    ]
+const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
+    'loadpng': [{
+        job: 'copyfiles',
+        args: { srcDir: '@targetsources:data', files: [ 'baboon.png' ] },
+    }],
+    'restart': [{
+        job: 'copyfiles',
+        args: { srcDir: '@targetsources:data', files: [ 'baboon.png', 'comsi.s3m' ] },
+    }],
+    'plmpeg': [{
+        job: 'copyfiles',
+        args: { srcDir: '@targetsources:data', files: [ 'bjork-all-is-full-of-love.mpg'] },
+    }],
+    'cgltf': [{
+        job: 'copyfiles',
+        args: {
+            srcDir: '@targetsources:data/gltf/DamagedHelmet',
+            files: [
+                'DamagedHelmet.bin',
+                'DamagedHelmet.gltf',
+                'Default_albedo.basis',
+                'Default_AO.basis',
+                'Default_emissive.basis',
+                'Default_metalRoughness.basis',
+                'Default_normal.basis',
+            ],
+        },
+    }],
 }
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -86,7 +110,7 @@ const d3d11Enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-')
 const emscEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('emsc-');
 const sappJobs = (sample: Sample) => [
     sample.shd ? { job: 'sokolshdc', args: { src: `${sample.name}-sapp.glsl` } } : undefined,
-    ...(jobs[sample.name] !== undefined) ? jobs[sample.name] : [undefined],
+    ...(extraJobs[sample.name] !== undefined) ? extraJobs[sample.name] : [undefined],
 ];
 
 export const project: fibs.ProjectDesc = {
@@ -250,6 +274,28 @@ export const project: fibs.ProjectDesc = {
                     return [ 'fileutil.c', 'fileutil.h' ];
                 }
             }
+        },
+        {
+            name: 'basisu',
+            enabled: sappEnabled,
+            type: 'lib',
+            dir: 'libs/basisu',
+            sources: () => [ 'sokol_basisu.cpp', 'sokol_basisu.h'],
+            libs: () => [ 'sokol' ],
+            compileOptions: {
+                private: (ctx) => {
+                    const gccClangWarnings = [ '-Wno-unused-value', '-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-type-limits' ];
+                    const gccWarnings = [ '-Wno-maybe-uninitialized', '-Wno-class-memaccess' ];
+                    const clangWarnings = [ '-Wno-deprecated-declarations' ];
+                    if (ctx.compiler === 'gcc') {
+                        return [ ...gccClangWarnings, ...gccWarnings ];
+                    } else if ((ctx.compiler === 'clang') || (ctx.compiler === 'appleclang')) {
+                        return [ ...gccClangWarnings, ...clangWarnings ];
+                    } else {
+                        return [];
+                    }
+                }
+            },
         },
         // ### d3d11 samples
         ...samples.filter((sample) => sample.type.includes('d3d11')).map((sample): fibs.TargetDesc => ({
