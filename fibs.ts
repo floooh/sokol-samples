@@ -67,14 +67,27 @@ const samples: Sample[] = [
     { name: 'sgl-microui',          ext: 'c', ui: 'c',              libs: ['microui'], type: ['sapp'] },
     { name: 'nuklear',              ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
     { name: 'nuklear-images',       ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
+    { name: 'loadpng',              ext: 'c', ui: 'cc', shd: true,  libs: ['stb', 'fileutil'], type: ['sapp'] },
 ];
+
+const jobs: {[key: string]: fibs.TargetJobDesc[] } = {
+    'loadpng': [
+        {
+            job: 'copyfiles',
+            args: { srcDir: '@targetsources:data', files: [ 'baboon.png' ] }
+        }
+    ]
+}
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
 const glfwEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('glfw-');
 const metalEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('metal-');
 const d3d11Enabled = (ctx: fibs.Context) => ctx.config.name.startsWith('d3d11-');
 const emscEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('emsc-');
-const shdcJob = (sample: Sample) => sample.shd ? { job: 'sokolshdc', args: { src: `${sample.name}-sapp.glsl` } } : undefined;
+const sappJobs = (sample: Sample) => [
+    sample.shd ? { job: 'sokolshdc', args: { src: `${sample.name}-sapp.glsl` } } : undefined,
+    ...(jobs[sample.name] !== undefined) ? jobs[sample.name] : [undefined],
+];
 
 export const project: fibs.ProjectDesc = {
     name: 'sokol-samples',
@@ -96,7 +109,7 @@ export const project: fibs.ProjectDesc = {
         {
             name: 'utils',
             url: 'https://github.com/floooh/fibs-utils',
-            import: [ 'stdoptions.ts', 'sokolshdc.ts' ],
+            import: [ 'stdoptions.ts', 'sokolshdc.ts', 'copyfiles.ts' ],
         }
     ],
     includeDirectories: () => [ 'libs' ],
@@ -167,7 +180,7 @@ export const project: fibs.ProjectDesc = {
             ],
             includeDirectories: { public: () => [ '@targetbuild:' ] },
             libs: () => [ 'sokol', ...sample.libs ],
-            jobs: [ shdcJob(sample) ],
+            jobs: sappJobs(sample),
         })),
         ...samples.filter((sample) => sample.type.includes('sapp') && sample.ui).map((sample): fibs.TargetDesc => ({
             name: `${sample.name}-sapp-ui`,
@@ -180,7 +193,7 @@ export const project: fibs.ProjectDesc = {
             ],
             includeDirectories: { public: () => [ '@targetbuild:' ] },
             libs: () => [ 'sokol', sample.ui === 'cc' ? 'dbgui' : 'cdbgui', ...sample.libs ],
-            jobs: [ shdcJob(sample) ],
+            jobs: sappJobs(sample),
             compileDefinitions: {
                 private: () => ({ USE_DBG_UI: '1' })
             }
@@ -208,6 +221,35 @@ export const project: fibs.ProjectDesc = {
             dir: 'libs/dbgui',
             sources: () => [ 'dbgui.cc', 'dbgui.h' ],
             libs: () => [ 'sokol', 'imgui' ],
+        },
+        {
+            name: 'stb',
+            enabled: sappEnabled,
+            type: 'lib',
+            dir: 'libs/stb',
+            sources: () => [ 'stb_image.c', 'stb_image.h' ],
+            compileOptions: {
+                private: (ctx) => {
+                    if (ctx.compiler !== 'msvc') {
+                        return [ '-Wno-sign-conversion', '-Wno-unused-function' ]
+                    } else {
+                        return [];
+                    }
+                }
+            }
+        },
+        {
+            name: 'fileutil',
+            enabled: sappEnabled,
+            type: 'lib',
+            dir: 'libs/util',
+            sources: (ctx) => {
+                if ((ctx.config.platform === 'macos') || (ctx.config.platform === 'ios')) {
+                    return [ 'fileutil_osx.m', 'fileutil.h' ];
+                } else {
+                    return [ 'fileutil.c', 'fileutil.h' ];
+                }
+            }
         },
         // ### d3d11 samples
         ...samples.filter((sample) => sample.type.includes('d3d11')).map((sample): fibs.TargetDesc => ({
