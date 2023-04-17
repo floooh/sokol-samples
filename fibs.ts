@@ -65,6 +65,8 @@ const samples: Sample[] = [
     { name: 'imgui-usercallback',   ext: 'c',           shd: true,  libs: ['cimgui'], type: ['sapp'] },
     { name: 'imgui-perf',           ext: 'c',                       libs: ['cimgui'], type: ['sapp'] },
     { name: 'sgl-microui',          ext: 'c', ui: 'c',              libs: ['microui'], type: ['sapp'] },
+    { name: 'nuklear',              ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
+    { name: 'nuklear-images',       ext: 'c', ui: 'cc',             libs: ['nuklear'], type: ['sapp'] },
 ];
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -87,6 +89,7 @@ export const project: fibs.ProjectDesc = {
                 'imgui-docking.ts',
                 'glfw3.ts',
                 'microui.ts',
+                'nuklear.ts',
             ],
         },
         {

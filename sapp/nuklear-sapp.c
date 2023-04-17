@@ -16,6 +16,7 @@
 #include "dbgui/dbgui.h"
 
 // include nuklear.h before the sokol_nuklear.h implementation
+#define NK_IMPLEMENTATION
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_DEFAULT_ALLOCATOR
@@ -23,7 +24,7 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_INCLUDE_STANDARD_VARARGS
-#include "nuklear/nuklear.h"
+#include "nuklear.h"
 #define SOKOL_NUKLEAR_IMPL
 #include "sokol_nuklear.h"
 
