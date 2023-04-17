@@ -90,6 +90,7 @@ export const project: fibs.ProjectDesc = {
                 'glfw3.ts',
                 'microui.ts',
                 'nuklear.ts',
+                'libmodplug.ts',
             ],
         },
         {
