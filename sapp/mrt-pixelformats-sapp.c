@@ -55,8 +55,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     // check if requires features are supported
-    state.features_ok = sg_query_features().multiple_render_targets &&
-                        sg_query_pixelformat(DEPTH_PIXEL_FORMAT).render &&
+    state.features_ok = sg_query_pixelformat(DEPTH_PIXEL_FORMAT).render &&
                         sg_query_pixelformat(NORMAL_PIXEL_FORMAT).render &&
                         sg_query_pixelformat(COLOR_PIXEL_FORMAT).render;
     if (!state.features_ok) {

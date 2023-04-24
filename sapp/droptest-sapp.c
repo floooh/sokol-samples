@@ -193,7 +193,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .gl_force_gles2 = true,
         .window_title = "droptest-sapp",
         .enable_dragndrop = true,
         .max_dropped_files = 1,

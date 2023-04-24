@@ -53,11 +53,10 @@ static void draw();
 
 int main() {
     /* try to setup WebGL2 context (for the mipmap min/max lod stuff) */
-    emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {
-        .context.gl.force_gles2 = emsc_webgl_fallback(),
         .logger.func = slog_func,
     };
     sg_setup(&desc);

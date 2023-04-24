@@ -360,7 +360,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .gl_force_gles2 = true,
         .window_title = "Primitive Types",
         .icon.sokol_default = true,
         .logger.func = slog_func,

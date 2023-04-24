@@ -88,7 +88,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
-    desc.gl_force_gles2 = true;
     desc.window_title = "Dear ImGui Docking (sokol-app)";
     desc.ios_keyboard_resizes_canvas = false;
     desc.icon.sokol_default = true;

@@ -60,7 +60,6 @@ samples = [
     [ 'icon', 'icon-sapp.c', None ],
     [ 'droptest', 'droptest-sapp.c', None],
     [ 'pixelformats', 'pixelformats-sapp.c', None],
-    [ 'pixelformats-gles2', 'pixelformats-sapp.c', None],
     [ 'saudio', 'saudio-sapp.c', None],
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],

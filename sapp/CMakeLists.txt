@@ -357,17 +357,6 @@ fips_begin_app(pixelformats-sapp windowed)
     endif()
 fips_end_app()
 
-# on emscripten, build a second pixelformats simple which enforces WebGL
-if (FIPS_EMSCRIPTEN)
-fips_ide_group(Samples)
-fips_begin_app(pixelformats-gles2-sapp windowed)
-    fips_files(pixelformats-sapp.c)
-    sokol_shader(pixelformats-sapp.glsl ${slang})
-    fips_deps(sokol cimgui)
-    target_compile_definitions(pixelformats-gles2-sapp PRIVATE USE_GLES2)
-fips_end_app()
-endif()
-
 fips_ide_group(Samples)
 fips_begin_app(sgl-sapp windowed)
     fips_files(sgl-sapp.c)

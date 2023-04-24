@@ -36,11 +36,6 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // can't do anything without 3D texture support (this will render a red screen in the frame callback)
-    if (!sg_query_features().imagetype_3d) {
-        return;
-    }
-
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
@@ -113,23 +108,7 @@ static void init(void) {
     });
 }
 
-static void draw_fallback(void) {
-    const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
-    };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    __dbgui_draw();
-    sg_end_pass();
-    sg_commit();
-}
-
 static void frame(void) {
-    // can't do anything without 3D texture support
-    if (!sg_query_features().imagetype_3d) {
-        draw_fallback();
-        return;
-    }
-
     // compute vertex-shader params (mvp and texcoord-scale)
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.rx += 1.0f * t;

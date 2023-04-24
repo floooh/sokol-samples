@@ -7,7 +7,7 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #define SOKOL_IMPL
-#define SOKOL_GLES2
+#define SOKOL_GLES3
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "emsc.h"
