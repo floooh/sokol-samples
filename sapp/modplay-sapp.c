@@ -10,7 +10,7 @@
 #include "sokol_log.h"
 #include "sokol_glue.h"
 #include "modplug.h"
-#include "data/mods.h"
+#include "mods.h"
 #include <assert.h>
 
 /* select between mono (1) and stereo (2) */
