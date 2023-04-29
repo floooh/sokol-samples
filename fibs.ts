@@ -72,6 +72,7 @@ const samples: Sample[] = [
     { name: 'plmpeg',               ext: 'c', ui: 'cc', shd: true,  libs: ['fileutil'], type: ['sapp'] },
     { name: 'cgltf',                ext: 'c', ui: 'cc', shd: true,  libs: ['basisu', 'fileutil'], type: ['sapp'] },
     { name: 'basisu',               ext: 'c', ui: 'cc',             libs: ['basisu'], type: ['sapp'] },
+    { name: 'modplay',              ext: 'c',                       libs: ['libmodplug'], type: ['sapp'] },
 ];
 
 const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
@@ -109,6 +110,14 @@ const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
             files: [ 'testcard.basis', 'testcard_rgba.basis' ],
             outHeader: '@targetbuild:basisu-assets.h',
         },
+    }],
+    'modplay': [{
+        job: 'embedfiles',
+        args: {
+            dir: '@targetsources:data',
+            files: [ 'disco_feva_baby.s3m'],
+            outHeader: '@targetbuild:mods.h',
+        }
     }]
 }
 
