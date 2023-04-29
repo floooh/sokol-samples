@@ -24,7 +24,7 @@
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
 #include "dbgui/dbgui.h"
-#include "data/basisu-assets.h"
+#include "basisu-assets.h"
 #include "basisu/sokol_basisu.h"
 
 static struct {

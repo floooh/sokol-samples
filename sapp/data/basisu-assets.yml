@@ -1,6 +1,0 @@
----
-options:
-    src_dir: basisu
-files:
-    - testcard.basis
-    - testcard_rgba.basis

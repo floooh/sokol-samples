@@ -107,8 +107,7 @@ const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
         args: {
             dir: '@targetsources:data/basisu',
             files: [ 'testcard.basis', 'testcard_rgba.basis' ],
-            outHeader: '@targetassets:basisu-assets.h',
-            list: true,
+            outHeader: '@targetbuild:basisu-assets.h',
         },
     }]
 }
