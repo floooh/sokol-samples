@@ -71,6 +71,7 @@ const samples: Sample[] = [
     { name: 'restart',              ext: 'c',           shd: true,  libs: ['stb', 'fileutil', 'libmodplug'], type: ['sapp'] },
     { name: 'plmpeg',               ext: 'c', ui: 'cc', shd: true,  libs: ['fileutil'], type: ['sapp'] },
     { name: 'cgltf',                ext: 'c', ui: 'cc', shd: true,  libs: ['basisu', 'fileutil'], type: ['sapp'] },
+    { name: 'basisu',               ext: 'c', ui: 'cc',             libs: ['basisu'], type: ['sapp'] },
 ];
 
 const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
@@ -101,6 +102,15 @@ const extraJobs: {[key: string]: fibs.TargetJobDesc[] } = {
             ],
         },
     }],
+    'basisu': [{
+        job: 'embedfiles',
+        args: {
+            dir: '@targetsources:data/basisu',
+            files: [ 'testcard.basis', 'testcard_rgba.basis' ],
+            outHeader: '@targetassets:basisu-assets.h',
+            list: true,
+        },
+    }]
 }
 
 const sappEnabled = (ctx: fibs.Context) => ctx.config.name.startsWith('sapp-');
@@ -133,7 +143,7 @@ export const project: fibs.ProjectDesc = {
         {
             name: 'utils',
             url: 'https://github.com/floooh/fibs-utils',
-            import: [ 'stdoptions.ts', 'sokolshdc.ts', 'copyfiles.ts' ],
+            import: [ 'stdoptions.ts', 'sokolshdc.ts', 'copyfiles.ts', 'embedfiles.ts' ],
         }
     ],
     includeDirectories: () => [ 'libs' ],
