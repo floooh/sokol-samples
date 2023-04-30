@@ -371,9 +371,6 @@ static void cleanup(void) {
 sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc; (void)argv;
     return (sapp_desc){
-        #if defined(USE_GLES2)
-        .gl_force_gles2 = true,
-        #endif
         .init_cb = init,
         .frame_cb = frame,
         .event_cb = input,
@@ -381,11 +378,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .icon.sokol_default = true,
-        #if defined(USE_GLES2)
-        .window_title = "Pixelformat Test (GLES2)",
-        #else
         .window_title = "Pixelformat Test",
-        #endif
         .logger.func = slog_func,
     };
 }

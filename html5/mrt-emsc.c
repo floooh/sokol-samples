@@ -45,32 +45,20 @@ typedef struct {
 } params_t;
 
 static void draw();
-static void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL context */
-    emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
 
     /* setup sokol_gfx */
     sg_desc desc = {
-        .context.gl.force_gles2 = emsc_webgl_fallback(),
         .logger.func = slog_func,
     };
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* not much useful things to do in this demo if WebGL2 is not supported,
-       so just drop out and later render a dark red screen */
-    if (desc.context.gl.force_gles2) {
-        state.display.pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
-        };
-        emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
-        return 0;
-    }
-
     /* a render pass with 3 color attachment images, and a depth attachment image */
-    const int offscreen_sample_count = sg_query_features().msaa_render_targets ? 4 : 1;
+    const int offscreen_sample_count = 4;
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = emsc_width(),
@@ -376,16 +364,6 @@ void draw() {
         sg_apply_bindings(&state.display.dbg_bind);
         sg_draw(0, 4, 1);
     }
-    sg_end_pass();
-    sg_commit();
-}
-
-/* this is used as draw callback if webgl2 is not supported */
-void draw_webgl_fallback() {
-    float g = state.display.pass_action.colors[0].value.g + 0.01f;
-    if (g > 0.5f) g = 0.0f;
-    state.display.pass_action.colors[0].value.g = g;
-    sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();
 }

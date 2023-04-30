@@ -92,9 +92,9 @@ jobs:
           run:  python3 fips build sapp-webgl2-wasm-ninja-debug
         - name: sapp-webgl2-wasm-ninja-release
           run:  python3 fips build sapp-webgl2-wasm-ninja-release
-        - name: wasm-ninja-debug
+        - name: webgl2-wasm-ninja-debug
           run:  python3 fips make cube-emsc wasm-ninja-debug
-        - name: wasm-ninja-release
+        - name: webgl2-wasm-ninja-release
           run:  python3 fips make cube-emsc wasm-ninja-release
     android:
         runs-on: ubuntu-latest

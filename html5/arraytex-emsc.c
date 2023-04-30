@@ -32,27 +32,15 @@ typedef struct {
 #define IMG_HEIGHT (16)
 
 static void draw();
-static void draw_webgl_fallback();
 
 int main() {
     /* setup WebGL2 context */
-    emsc_init("#canvas", EMSC_TRY_WEBGL2|EMSC_ANTIALIAS);
+    emsc_init("#canvas", EMSC_ANTIALIAS);
     /* setup sokol_gfx */
     sg_setup(&(sg_desc){
-        .context.gl.force_gles2 = emsc_webgl_fallback(),
         .logger.func = slog_func,
     });
     assert(sg_isvalid());
-
-    /* not much useful things to do in this demo if WebGL2 is not supported,
-       so just drop out and later render a dark red screen */
-    if (emsc_webgl_fallback()) {
-        state.pass_action = (sg_pass_action){
-            .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} }
-        };
-        emscripten_set_main_loop(draw_webgl_fallback, 0, 1);
-        return 0;
-    }
 
     /* a 16x16 array texture with 3 layers and a checkerboard pattern */
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
@@ -245,14 +233,4 @@ void draw() {
     sg_end_pass();
     sg_commit();
     state.frame_index++;
-}
-
-/* this is used as draw callback if webgl2 is not supported */
-void draw_webgl_fallback() {
-    float g = state.pass_action.colors[0].value.g + 0.01f;
-    if (g > 0.5f) g = 0.0f;
-    state.pass_action.colors[0].value.g = g;
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
-    sg_end_pass();
-    sg_commit();
 }

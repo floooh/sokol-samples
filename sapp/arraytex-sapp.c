@@ -29,10 +29,6 @@ void init(void) {
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
-    if (sapp_gles2()) {
-        /* this demo needs GLES3/WebGL */
-        return;
-    }
 
     /* a default pass action to clear to black */
     state.pass_action = (sg_pass_action) {
@@ -160,12 +156,6 @@ void draw_gles2_fallback(void) {
 }
 
 void frame(void) {
-    /* can't do anything useful on GLES2/WebGL */
-    if (sapp_gles2()) {
-        draw_gles2_fallback();
-        return;
-    }
-
     /* rotated model matrix */
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);

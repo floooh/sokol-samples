@@ -59,7 +59,7 @@ void create_offscreen_pass(int width, int height) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "color image"
     };
     sg_image_desc depth_img_desc = color_img_desc;
@@ -96,10 +96,6 @@ void init(void) {
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
-    if (sapp_gles2()) {
-        /* this demo needs GLES3/WebGL */
-        return;
-    }
 
     /* a pass action for the default render pass */
     state.pass_action = (sg_pass_action) {
@@ -190,7 +186,7 @@ void init(void) {
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
-        .sample_count = sg_query_features().msaa_render_targets ? OFFSCREEN_SAMPLE_COUNT : 1,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
@@ -251,24 +247,7 @@ void init(void) {
     };
 }
 
-/* this is called when GLES3/WebGL2 is not available */
-void draw_gles2_fallback(void) {
-    const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } },
-    };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    __dbgui_draw();
-    sg_end_pass();
-    sg_commit();
-}
-
 void frame(void) {
-    /* can't do anything useful on GLES2/WebGL */
-    if (sapp_gles2()) {
-        draw_gles2_fallback();
-        return;
-    }
-
     /* view-projection matrix */
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));

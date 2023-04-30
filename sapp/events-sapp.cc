@@ -395,7 +395,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.width = 832;
     desc.height = 600;
     desc.window_title = "Events";
-    desc.gl_force_gles2 = true;
     desc.enable_clipboard = true;
     desc.enable_dragndrop = true;
     desc.max_dropped_files = max_dropped_files;

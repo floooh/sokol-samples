@@ -27,7 +27,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
 
     /* create one color and one depth render target image */
-    const int rt_sample_count = sg_query_features().msaa_render_targets ? sample_count : 1;
+    const int rt_sample_count = sample_count; 
     sg_image_desc img_desc = {
         .render_target = true,
         .width = 512,

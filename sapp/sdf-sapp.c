@@ -78,7 +78,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
-        .gl_force_gles2 = true,
         .window_title = "SDF Rendering",
         .icon.sokol_default = true,
         .logger.func = slog_func,
