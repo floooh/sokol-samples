@@ -78,6 +78,18 @@ static void init(void) {
         .label = "msaa-image"
     });
 
+    // create a depth-buffer image for the offscreen pass,
+    // this needs the same dimensions and sample count as the
+    // render target image
+    const sg_image depth_image = sg_make_image(&(sg_image_desc){
+        .render_attachment = true,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "depth-image",
+    });
+
     // create a matching resolve-image where the MSAA-rendered content will
     // be resolved to at the end of the offscreen pass, and which will be
     // texture-sampled in the display pass
@@ -94,18 +106,6 @@ static void init(void) {
         .label = "resolve-image",
     });
 
-    // create a depth-buffer image for the offscreen pass,
-    // this needs the same dimensions and sample count as the
-    // render target image
-    const sg_image depth_image = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
-        .width = OFFSCREEN_WIDTH,
-        .height = OFFSCREEN_HEIGHT,
-        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
-        .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .label = "depth-image",
-    });
-
     // finally, create the offscreen render pass object, by setting a resolve-attachment,
     // an MSAA-resolve operation will happen from the color attachment into the
     // resolve attachment in sg_end_pass()
@@ -113,6 +113,7 @@ static void init(void) {
         .color_attachments[0].image = msaa_image,
         .resolve_attachments[0].image = resolve_image,
         .depth_stencil_attachment.image = depth_image,
+        .label = "offscreen-pass",
     });
 
     // create a couple of meshes
@@ -136,8 +137,10 @@ static void init(void) {
     });
     state.donut = sshape_element_range(&buf);
 
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    vbuf_desc.label = "shape-vbuf";
+    ibuf_desc.label = "shape-ibuf";
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 

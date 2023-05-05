@@ -107,8 +107,10 @@ static void init(void) {
     });
     state.sphere = sshape_element_range(&buf);
 
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    vbuf_desc.label = "shape-vbuf";
+    ibuf_desc.label = "shape-ibuf";
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
