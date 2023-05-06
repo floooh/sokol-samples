@@ -32,17 +32,15 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /*
-        Cube vertex buffer with packed vertex formats for color and texture coords.
-        Note that a vertex format which must be portable across all
-        backends must only use the normalized integer formats
-        (BYTE4N, UBYTE4N, SHORT2N, SHORT4N), which can be converted
-        to floating point formats in the vertex shader inputs.
-
-        The reason is that D3D11 cannot convert from non-normalized
-        formats to floating point inputs (only to integer inputs),
-        and WebGL2 / GLES2 don't support integer vertex shader inputs.
-    */
+    // Cube vertex buffer with packed vertex formats for color and texture coords.
+    // Note that a vertex format which must be portable across all
+    // backends must only use the normalized integer formats
+    // (BYTE4N, UBYTE4N, SHORT2N, SHORT4N), which can be converted
+    // to floating point formats in the vertex shader inputs.
+    //
+    // The reason is that D3D11 cannot convert from non-normalized
+    // formats to floating point inputs (only to integer inputs),
+    // and WebGL2 / GLES2 don't support integer vertex shader inputs.
     vertex_t vertices[] = {
         /* pos                  color       uvs */
         { -1.0f, -1.0f, -1.0f,  0xFF0000FF,     0,     0 },
@@ -80,7 +78,7 @@ void init(void) {
         .label = "cube-vertices"
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -95,14 +93,14 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* create a checkerboard texture */
+    // create a checkerboard texture
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    /* NOTE: SLOT_tex is provided by shader code generation */
+    // NOTE: SLOT_tex is provided by shader code generation
     state.bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
@@ -110,10 +108,10 @@ void init(void) {
         .label = "cube-texture"
     });
 
-    /* a shader */
+    // a shader
     sg_shader shd = sg_make_shader(texcube_shader_desc(sg_query_backend()));
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -132,14 +130,14 @@ void init(void) {
         .label = "cube-pipeline"
     });
 
-    /* default pass action */
+    // default pass action
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } }
     };
 }
 
 void frame(void) {
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
