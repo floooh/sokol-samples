@@ -200,8 +200,8 @@ static void init(void) {
     simgui_desc_t simgui_desc = { };
     simgui_setup(&simgui_desc);
 
-    state.pass_action.colors[0].action = SG_ACTION_CLEAR;
-    state.pass_action.colors[0].value = { 0.0f, 0.5f, 0.7f, 1.0f };
+    state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    state.pass_action.colors[0].clear_value = { 0.0f, 0.5f, 0.7f, 1.0f };
 }
 
 static void event(const sapp_event* e) {
@@ -209,7 +209,7 @@ static void event(const sapp_event* e) {
     state.items[e->type].event = *e;
     simgui_handle_event(e);
 
-    /* special case: show/hide mouse cursor when pressing SPACE */
+    // special case: show/hide mouse cursor when pressing SPACE
     if ((e->type == SAPP_EVENTTYPE_KEY_DOWN) && !e->key_repeat) {
         switch (e->key_code) {
             case SAPP_KEYCODE_SPACE:
@@ -276,8 +276,7 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
     ImGui::Text("modifiers:   ");
     if (0 == ev.modifiers) {
         ImGui::SameLine(); ImGui::Text("NONE");
-    }
-    else {
+    } else {
         if (0 != (ev.modifiers & SAPP_MODIFIER_SHIFT)) {
             ImGui::SameLine(); ImGui::Text("SHIFT");
         }
@@ -366,8 +365,7 @@ static void frame(void) {
             pos_x += panel_width_with_padding;
             if ((pos_x + panel_width_with_padding) < ImGui::GetContentRegionAvail().x) {
                 ImGui::SameLine();
-            }
-            else {
+            } else {
                 pos_x = ImGui::GetStyle().WindowPadding.x;
             }
         }

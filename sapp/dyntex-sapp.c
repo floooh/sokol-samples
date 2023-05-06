@@ -37,7 +37,7 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a 128x128 image with streaming update strategy */
+    // a 128x128 image with streaming update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
@@ -50,17 +50,17 @@ void init(void) {
         .label = "dynamic-texture"
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-        1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-        1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-        1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
-        1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     1.0f, 1.0f,
         -1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 0.0f,
@@ -68,20 +68,20 @@ void init(void) {
         -1.0f,  1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     1.0f, 1.0f,
         -1.0f, -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,     0.0f, 1.0f,
 
-        1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
-        1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
-        1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
-        1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 0.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 0.0f,
         -1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 0.0f,
-        1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
-        1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f, -1.0f,    0.0f, 0.5f, 1.0f, 1.0f,     0.0f, 1.0f,
 
         -1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 0.0f,
         -1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 0.0f,
-        1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
-        1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
+         1.0f,  1.0f,  1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     1.0f, 1.0f,
+         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.5f, 1.0f,     0.0f, 1.0f
     };
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
@@ -101,10 +101,10 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* a shader to render a textured cube */
+    // a shader to render a textured cube
     sg_shader shd = sg_make_shader(dyntex_shader_desc(sg_query_backend()));
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -123,19 +123,19 @@ void init(void) {
         .label = "cube-pipelin"
     });
 
-    /* setup the resource bindings */
+    // setup the resource bindings
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[SLOT_tex] = img
     };
 
-    /* initialize the game-of-life state */
+    // initialize the game-of-life state
     game_of_life_init();
 }
 
 void frame(void) {
-    /* compute model-view-projection matrix */
+    // compute model-view-projection matrix
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -147,15 +147,15 @@ void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    /* update game-of-life state */
+    // update game-of-life state
     game_of_life_update();
 
-    /* update the texture */
+    // update the texture
     sg_update_image(state.bind.fs_images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
-    /* render the frame */
+    // render the frame
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -176,8 +176,7 @@ void game_of_life_init() {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             if ((rand() & 255) > 230) {
                 state.pixels[y][x] = LIVING;
-            }
-            else {
+            } else {
                 state.pixels[y][x] = DEAD;
             }
         }
@@ -198,19 +197,17 @@ void game_of_life_update() {
                     }
                 }
             }
-            /* any live cell... */
+            // any live cell...
             if (state.pixels[y][x] == LIVING) {
                 if (num_living_neighbours < 2) {
                     /* ... with fewer than 2 living neighbours dies, as if caused by underpopulation */
                     state.pixels[y][x] = DEAD;
-                }
-                else if (num_living_neighbours > 3) {
+                } else if (num_living_neighbours > 3) {
                     /* ... with more than 3 living neighbours dies, as if caused by overpopulation */
                     state.pixels[y][x] = DEAD;
                 }
-            }
-            else if (num_living_neighbours == 3) {
-                /* any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction */
+            } else if (num_living_neighbours == 3) {
+                // any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction
                 state.pixels[y][x] = LIVING;
             }
         }

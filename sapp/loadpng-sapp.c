@@ -38,14 +38,14 @@ typedef struct {
 static void fetch_callback(const sfetch_response_t*);
 
 static void init(void) {
-    /* setup sokol-gfx and the optional debug-ui*/
+    // setup sokol-gfx and the optional debug-ui
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* setup sokol-fetch with the minimal "resource limits" */
+    // setup sokol-fetch with the minimal "resource limits"
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 1,
         .num_channels = 1,
@@ -53,9 +53,9 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* pass action for clearing the framebuffer to some color */
+    // pass action for clearing the framebuffer to some color
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.125f, 0.25f, 0.35f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.125f, 0.25f, 0.35f, 1.0f } }
     };
 
     /* Allocate an image handle, but don't actually initialize the image yet,
@@ -65,9 +65,9 @@ static void init(void) {
     */
     state.bind.fs_images[SLOT_tex] = sg_alloc_image();
 
-    /* cube vertex buffer with packed texcoords */
+    // cube vertex buffer with packed texcoords
     const vertex_t vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         { -1.0f, -1.0f, -1.0f,      0,     0 },
         {  1.0f, -1.0f, -1.0f,  32767,     0 },
         {  1.0f,  1.0f, -1.0f,  32767, 32767 },
@@ -103,7 +103,7 @@ static void init(void) {
         .label = "cube-vertices"
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     const uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -118,7 +118,7 @@ static void init(void) {
         .label = "cube-indices"
     });
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(loadpng_shader_desc(sg_query_backend())),
         .layout = {
@@ -166,7 +166,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            /* ok, time to actually initialize the sokol-gfx texture */
+            // ok, time to actually initialize the sokol-gfx texture
             sg_init_image(state.bind.fs_images[SLOT_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
@@ -180,11 +180,10 @@ static void fetch_callback(const sfetch_response_t* response) {
             });
             stbi_image_free(pixels);
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
@@ -195,10 +194,10 @@ static void fetch_callback(const sfetch_response_t* response) {
    frame to pump the sokol-fetch message queues.
 */
 static void frame(void) {
-    /* pump the sokol-fetch message queues, and invoke response callbacks */
+    // pump the sokol-fetch message queues, and invoke response callbacks
     sfetch_dowork();
 
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));

@@ -165,7 +165,7 @@ static void init(void) {
 
         // the render target texture, render pass
         state.passes[i].img = sg_make_image(&(sg_image_desc){
-            .render_target = true,
+            .render_attachment = true,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .pixel_format = OFFSCREEN_PIXELFORMAT,
@@ -180,8 +180,8 @@ static void init(void) {
         // each render target is cleared to a different background color
         state.passes[i].pass_action = (sg_pass_action){
             .colors[0] = {
-                .action = SG_ACTION_CLEAR,
-                .value = bg[i],
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = bg[i],
             }
         };
     }

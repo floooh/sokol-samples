@@ -37,19 +37,25 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* default pass action: clear to blue-ish */
+    // default pass action: clear to blue-ish
     state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f }
+        }
     };
 
-    /* shadow pass action: clear to white */
+    // shadow pass action: clear to white
     state.shadows.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 1.0f, 1.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f }
+        }
     };
 
-    /* a render pass with one color- and one depth-attachment image */
+    // a render pass with one color- and one depth-attachment image
     sg_image_desc img_desc = {
-        .render_target = true,
+        .render_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -68,9 +74,9 @@ void init(void) {
         .label = "shadow-map-pass"
     });
 
-    /* cube vertex buffer with positions & normals */
+    // cube vertex buffer with positions & normals
     float vertices[] = {
-        /* pos                  normals             */
+        // pos                  normals
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,  //CUBE BACK FACE
          1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,
          1.0f,  1.0f, -1.0f,    0.0f, 0.0f, -1.0f,
@@ -111,7 +117,7 @@ void init(void) {
         .label = "cube-vertices"
     });
 
-    /* an index buffer for the cube */
+    // an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -127,19 +133,19 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* pipeline-state-object for shadows-rendered cube, don't need texture coord here */
+    // pipeline-state-object for shadows-rendered cube, don't need texture coord here
     state.shadows.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* need to provide stride, because the buffer's normal vector is skipped */
+            // need to provide stride, because the buffer's normal vector is skipped
             .buffers[0].stride = 6 * sizeof(float),
-            /* but don't need to provide attr offsets, because pos and normal are continuous */
+            // but don't need to provide attr offsets, because pos and normal are continuous
             .attrs = {
                 [ATTR_shadowVS_position].format = SG_VERTEXFORMAT_FLOAT3
             }
         },
         .shader = sg_make_shader(shadow_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        /* Cull front faces in the shadow map pass */
+        // Cull front faces in the shadow map pass
         .cull_mode = SG_CULLMODE_FRONT,
         .sample_count = 1,
         .depth = {
@@ -151,10 +157,10 @@ void init(void) {
         .label = "shadow-map-pipeline"
     });
 
-    /* and another pipeline-state-object for the default pass */
+    // and another pipeline-state-object for the default pass
     state.deflt.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* don't need to provide buffer stride or attr offsets, no gaps here */
+            // don't need to provide buffer stride or attr offsets, no gaps here
             .attrs = {
                 [ATTR_colorVS_position].format = SG_VERTEXFORMAT_FLOAT3,
                 [ATTR_colorVS_normal].format = SG_VERTEXFORMAT_FLOAT3
@@ -162,7 +168,7 @@ void init(void) {
         },
         .shader = sg_make_shader(color_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        /* Cull back faces when rendering to the screen */
+        // Cull back faces when rendering to the screen
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
@@ -171,13 +177,13 @@ void init(void) {
         .label = "default-pipeline"
     });
 
-    /* the resource bindings for rendering the cube into the shadow map render target */
+    // the resource bindings for rendering the cube into the shadow map render target
     state.shadows.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* resource bindings to render the cube, using the shadow map render target as texture */
+    // resource bindings to render the cube, using the shadow map render target as texture
     state.deflt.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
@@ -192,12 +198,12 @@ void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.ry += 0.2f * t;
 
-    /* Calculate matrices for shadow pass */
+    // Calculate matrices for shadow pass
     const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f,1.0f,0.0f));
     const hmm_vec4 light_dir = HMM_MultiplyMat4ByVec4(rym, HMM_Vec4(50.0f,50.0f,-50.0f,0.0f));
     const hmm_mat4 light_view = HMM_LookAt(light_dir.XYZ, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
 
-    /* Configure a bias matrix for converting view-space coordinates into uv coordinates */
+    // Configure a bias matrix for converting view-space coordinates into uv coordinates
     hmm_mat4 light_proj = { {
         { 0.5f, 0.0f, 0.0f, 0 },
         { 0.0f, 0.5f, 0.0f, 0 },
@@ -207,28 +213,28 @@ void frame(void) {
     light_proj = HMM_MultiplyMat4(light_proj, HMM_Orthographic(-4.0f, 4.0f, -4.0f, 4.0f, 0, 200.0f));
     const hmm_mat4 light_view_proj = HMM_MultiplyMat4(light_proj, light_view);
 
-    /* Calculate matrices for camera pass */
+    // Calculate matrices for camera pass
     const hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
     const hmm_mat4 view = HMM_LookAt(HMM_Vec3(5.0f, 5.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* Calculate transform matrices for plane and cube */
+    // Calculate transform matrices for plane and cube
     const hmm_mat4 scale = HMM_Scale(HMM_Vec3(5,0,5));
     const hmm_mat4 translate = HMM_Translate(HMM_Vec3(0,1.5f,0));
 
-    /* Initialise fragment uniforms for light shader */
+    // Initialise fragment uniforms for light shader
     const fs_light_params_t fs_light_params = {
         .lightDir = HMM_NormalizeVec3(light_dir.XYZ),
         .shadowMapSize = HMM_Vec2(2048,2048),
         .eyePos = HMM_Vec3(5.0f,5.0f,5.0f)
     };
 
-    /* the shadow map pass, render the vertices into the depth image */
+    // the shadow map pass, render the vertices into the depth image
     sg_begin_pass(state.shadows.pass, &state.shadows.pass_action);
     sg_apply_pipeline(state.shadows.pip);
     sg_apply_bindings(&state.shadows.bind);
     {
-        /* Render the cube into the shadow map */
+        // Render the cube into the shadow map
         const vs_shadow_params_t vs_shadow_params = {
             .mvp = HMM_MultiplyMat4(light_view_proj,translate)
         };
@@ -237,13 +243,13 @@ void frame(void) {
     }
     sg_end_pass();
 
-    /* and the display-pass, rendering the scene, using the previously rendered shadow map as a texture */
+    // and the display-pass, rendering the scene, using the previously rendered shadow map as a texture
     sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.deflt.pip);
     sg_apply_bindings(&state.deflt.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_light_params, &SG_RANGE(fs_light_params));
     {
-        /* Render the plane in the light pass */
+        // Render the plane in the light pass
         const vs_light_params_t vs_light_params = {
             .mvp = HMM_MultiplyMat4(view_proj,scale),
             .lightMVP = HMM_MultiplyMat4(light_view_proj,scale),
@@ -254,7 +260,7 @@ void frame(void) {
         sg_draw(36, 6, 1);
     }
     {
-        /* Render the cube in the light pass */
+        // Render the cube in the light pass
         const vs_light_params_t vs_light_params = {
             .lightMVP = HMM_MultiplyMat4(light_view_proj,translate),
             .model = translate,

@@ -98,7 +98,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     char path_buf[512];
@@ -168,7 +168,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void load_failed(void) {
-    state.pass_action.colors[0].value = (sg_color){ 1.0f, 0.0f, 0.0f, 1.0f };
+    state.pass_action.colors[0].clear_value = (sg_color){ 1.0f, 0.0f, 0.0f, 1.0f };
 }
 
 static void atlas_data_loaded(const sfetch_response_t* response) {
@@ -180,8 +180,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         load_failed();
     }
 }
@@ -195,8 +194,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         load_failed();
     }
 }
@@ -277,13 +275,11 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 }
             });
             stbi_image_free(pixels);
-        }
-        else {
+        } else {
             sg_fail_image(img_info.sgimage);
             load_failed();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         sg_fail_image(img_info.sgimage);
         load_failed();
     }

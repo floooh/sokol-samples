@@ -19,7 +19,7 @@
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include "cdbgui/cdbgui.h"
-#include <stdio.h> /* sprintf */
+#include <stdio.h> // sprintf
 
 typedef struct {
     float r, g, b;
@@ -34,12 +34,12 @@ static struct {
     .bg = { 90.0f, 95.0f, 100.0f }
 };
 
-/* UI functions */
+// UI functions
 static void test_window(mu_Context* ctx);
 static void log_window(mu_Context* ctx);
 static void style_window(mu_Context* ctx);
 
-/* microui renderer functions (implementation is at the end of this file) */
+// microui renderer functions (implementation is at the end of this file)
 static void r_init(void);
 static void r_begin(int disp_width, int disp_height);
 static void r_end(void);
@@ -52,7 +52,7 @@ static int r_get_text_width(const char* text, int len);
 static int r_get_text_height(void);
 static void r_set_clip_rect(mu_Rect rect);
 
-/* callbacks */
+// callbacks
 static int text_width_cb(mu_Font font, const char* text, int len) {
     (void)font;
     if (len == -1) {
@@ -67,7 +67,7 @@ static int text_height_cb(mu_Font font) {
 }
 
 static void write_log(const char* text) {
-    /* FIXME: THIS IS UNSAFE! */
+    // FIXME: THIS IS UNSAFE!
     if (state.logbuf[0]) {
         strcat(state.logbuf, "\n");
     }
@@ -75,24 +75,24 @@ static void write_log(const char* text) {
     state.logbuf_updated = 1;
 }
 
-/* initialization */
+// initialization
 static void init(void) {
-    /* setup sokol-gfx */
+    // setup sokol-gfx
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
     });
     __cdbgui_setup(1);
 
-    /* setup sokol-gl */
+    // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func,
     });
 
-    /* setup microui renderer */
+    // setup microui renderer
     r_init();
 
-    /* setup microui */
+    // setup microui
     mu_init(&state.mu_ctx);
     state.mu_ctx.text_width = text_width_cb;
     state.mu_ctx.text_height = text_height_cb;
@@ -110,7 +110,7 @@ static const char key_map[512] = {
 };
 
 static void event(const sapp_event* ev) {
-    /* FIXME: need to filter out events consumed by the Dear ImGui debug UI */
+    // FIXME: need to filter out events consumed by the Dear ImGui debug UI
     __cdbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
@@ -142,17 +142,17 @@ static void event(const sapp_event* ev) {
     }
 }
 
-/* do one frame */
+// do one frame
 void frame(void) {
 
-    /* UI definition */
+    // UI definition
     mu_begin(&state.mu_ctx);
     test_window(&state.mu_ctx);
     log_window(&state.mu_ctx);
     style_window(&state.mu_ctx);
     mu_end(&state.mu_ctx);
 
-    /* micro-ui rendering */
+    // micro-ui rendering
     r_begin(sapp_width(), sapp_height());
     mu_Command* cmd = 0;
     while(mu_next_command(&state.mu_ctx, &cmd)) {
@@ -165,11 +165,11 @@ void frame(void) {
     }
     r_end();
 
-    /* render the sokol-gfx default pass */
+    // render the sokol-gfx default pass
     sg_begin_default_pass(&(sg_pass_action){
             .colors[0] = {
-                .action = SG_ACTION_CLEAR,
-                .value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         }, sapp_width(), sapp_height());
     r_draw();
@@ -187,20 +187,20 @@ static void cleanup(void) {
 static void test_window(mu_Context* ctx) {
     static mu_Container window;
 
-    /* init window manually so we can set its position and size */
+    // init window manually so we can set its position and size
     if (!window.inited) {
         mu_init_window(ctx, &window, 0);
         window.rect = mu_rect(40, 40, 300, 450);
     }
 
-    /* limit window to minimum size */
+    // limit window to minimum size
     window.rect.w = mu_max(window.rect.w, 240);
     window.rect.h = mu_max(window.rect.h, 300);
 
-    /* do window */
+    // do window
     if (mu_begin_window(ctx, &window, "Demo Window")) {
 
-        /* window info */
+        // window info
         static int show_info = 0;
         if (mu_header(ctx, &show_info, "Window Info")) {
             char buf[64];
@@ -211,7 +211,7 @@ static void test_window(mu_Context* ctx) {
             sprintf(buf, "%d, %d", window.rect.w, window.rect.h); mu_label(ctx, buf);
         }
 
-        /* labels + buttons */
+        // labels + buttons
         static int show_buttons = 1;
         if (mu_header(ctx, &show_buttons, "Test Buttons")) {
             mu_layout_row(ctx, 3, (int[]) { 86, -110, -1 }, 0);
@@ -223,7 +223,7 @@ static void test_window(mu_Context* ctx) {
             if (mu_button(ctx, "Button 4")) { write_log("Pressed button 4"); }
         }
 
-        /* tree */
+        // tree
         static int show_tree = 1;
         if (mu_header(ctx, &show_tree, "Tree and Text")) {
             mu_layout_row(ctx, 2, (int[]) { 140, -1 }, 0);
@@ -267,18 +267,18 @@ static void test_window(mu_Context* ctx) {
             mu_layout_end_column(ctx);
         }
 
-        /* background color sliders */
+        // background color sliders
         static int show_sliders = 1;
         if (mu_header(ctx, &show_sliders, "Background Color")) {
             mu_layout_row(ctx, 2, (int[]) { -78, -1 }, 74);
-            /* sliders */
+            // sliders
             mu_layout_begin_column(ctx);
             mu_layout_row(ctx, 2, (int[]) { 46, -1 }, 0);
             mu_label(ctx, "Red:");   mu_slider(ctx, &state.bg.r, 0, 255);
             mu_label(ctx, "Green:"); mu_slider(ctx, &state.bg.g, 0, 255);
             mu_label(ctx, "Blue:");  mu_slider(ctx, &state.bg.b, 0, 255);
             mu_layout_end_column(ctx);
-            /* color preview */
+            // color preview
             mu_Rect r = mu_layout_next(ctx);
             mu_draw_rect(ctx, r, mu_color((int)state.bg.r, (int)state.bg.g, (int)state.bg.b, 255));
             char buf[32];
@@ -293,7 +293,7 @@ static void test_window(mu_Context* ctx) {
 static void log_window(mu_Context *ctx) {
   static mu_Container window;
 
-    /* init window manually so we can set its position and size */
+    // init window manually so we can set its position and size
     if (!window.inited) {
         mu_init_window(ctx, &window, 0);
         window.rect = mu_rect(350, 40, 300, 200);
@@ -301,7 +301,7 @@ static void log_window(mu_Context *ctx) {
 
     if (mu_begin_window(ctx, &window, "Log Window")) {
 
-        /* output text panel */
+        // output text panel
         static mu_Container panel;
         mu_layout_row(ctx, 1, (int[]) { -1 }, -28);
         mu_begin_panel(ctx, &panel);
@@ -313,7 +313,7 @@ static void log_window(mu_Context *ctx) {
             state.logbuf_updated = 0;
         }
 
-        /* input textbox + submit button */
+        // input textbox + submit button
         static char buf[128];
         int submitted = 0;
         mu_layout_row(ctx, 2, (int[]) { -70, -1 }, 0);
@@ -343,7 +343,7 @@ static int uint8_slider(mu_Context *ctx, unsigned char *value, int low, int high
 static void style_window(mu_Context *ctx) {
     static mu_Container window;
 
-    /* init window manually so we can set its position and size */
+    // init window manually so we can set its position and size
     if (!window.inited) {
         mu_init_window(ctx, &window, 0);
         window.rect = mu_rect(350, 250, 300, 240);
@@ -397,15 +397,14 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     };
 }
 
-/*== micrui renderer =========================================================*/
+//== micrui renderer ===========================================================
 static sg_image atlas_img;
 static sgl_pipeline pip;
 
 static void r_init(void) {
 
-    /* atlas image data is in atlas.inl file, this only contains alpha
-       values, need to expand this to RGBA8
-    */
+    // atlas image data is in atlas.inl file, this only contains alpha
+    // values, need to expand this to RGBA8
     uint32_t rgba8_size = ATLAS_WIDTH * ATLAS_HEIGHT * 4;
     uint32_t* rgba8_pixels = (uint32_t*) malloc(rgba8_size);
     for (int y = 0; y < ATLAS_HEIGHT; y++) {
@@ -417,9 +416,8 @@ static void r_init(void) {
     atlas_img = sg_make_image(&(sg_image_desc){
         .width = ATLAS_WIDTH,
         .height = ATLAS_HEIGHT,
-        /* LINEAR would be better for text quality in HighDPI, but the
-           atlas texture is "leaking" from neighbouring pixels unfortunately
-        */
+        // LINEAR would be better for text quality in HighDPI, but the
+        // atlas texture is "leaking" from neighbouring pixels unfortunately
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .data = {

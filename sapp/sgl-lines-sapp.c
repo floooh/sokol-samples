@@ -22,12 +22,12 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* setup sokol-gl */
+    // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func,
     });
 
-    /* a pipeline object with less-equal depth-testing */
+    // a pipeline object with less-equal depth-testing
     state.depth_test_pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .depth = {
             .write_enabled = true,
@@ -35,11 +35,11 @@ static void init(void) {
         }
     });
 
-    /* a default pass action */
+    // a default pass action
     state.pass_action = (sg_pass_action) {
         .colors[0] = {
-            .action = SG_ACTION_CLEAR,
-            .value = { 0.0f, 0.0f, 0.0f, 1.0f }
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
 }
@@ -171,7 +171,7 @@ static void frame(void) {
     sgl_pop_matrix();
     sgl_pop_pipeline();
 
-    /* sokol-gfx default pass with the actual sokol-gl drawing */
+    // sokol-gfx default pass with the actual sokol-gl drawing
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sgl_draw();
     __dbgui_draw();

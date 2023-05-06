@@ -97,8 +97,7 @@ static void init(void) {
                 .type = SG_BUFFERTYPE_INDEXBUFFER,
                 .data = index_data[i]
             });
-        }
-        else {
+        } else {
             state.prim[i].ibuf.id = SG_INVALID_ID;
         }
     }
@@ -138,7 +137,7 @@ static void init(void) {
 
     // pass action for clearing the framebuffer
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.2f, 0.4f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.2f, 0.4f, 1.0f } }
     };
 }
 
@@ -255,8 +254,7 @@ void print_status_text(float disp_w, float disp_h) {
     for (int i = 0; i < NUM_PRIMITIVE_TYPES; i++) {
         if (i == state.cur_prim_type) {
             sdtx_puts("==> ");
-        }
-        else {
+        } else {
             sdtx_puts("    ");
         }
         sdtx_puts(items[i]);

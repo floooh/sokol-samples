@@ -17,7 +17,7 @@
 #include "sokol_app.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include <stdlib.h>     /* calloc, free */
+#include <stdlib.h>     // calloc, free
 #include "noentry-dll-sapp.glsl.h"
 #if defined(_WIN32)
 #include <Windows.h>
@@ -29,12 +29,12 @@ typedef struct {
     sg_bindings bind;
 } app_state_t;
 
-/* user-provided callback prototypes */
+// user-provided callback prototypes
 void init(void* user_data);
 void frame(void* user_data);
 void cleanup(void);
 
-/* don't provide a sokol_main() callback, instead the platform's standard main() function */
+// don't provide a sokol_main() callback, instead the platform's standard main() function
 #if defined(_WIN32)
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
@@ -46,14 +46,14 @@ int main() {
         .user_data = state,
         .init_userdata_cb = init,
         .frame_userdata_cb = frame,
-        .cleanup_cb = cleanup,          /* cleanup doesn't need access to the state struct */
+        .cleanup_cb = cleanup, // cleanup doesn't need access to the state struct
         .width = 800,
         .height = 600,
         .sample_count = 4,
         .window_title = "Noentry DLL (sokol-app)",
         .logger.func = slog_func,
     });
-    free(state);    /* NOTE: on some platforms, this isn't reached on exit */
+    free(state);    // NOTE: on some platforms, this isn't reached on exit
     return 0;
 }
 
@@ -64,7 +64,7 @@ void init(void* user_data) {
         .logger.func = slog_func,
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
         -1.0, -1.0, -1.0,   1.0, 0.5, 0.0, 1.0,
          1.0, -1.0, -1.0,   1.0, 0.5, 0.0, 1.0,
@@ -100,7 +100,7 @@ void init(void* user_data) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -114,13 +114,13 @@ void init(void* user_data) {
         .data = SG_RANGE(indices)
     });
 
-    /* create shader */
+    // create shader
     sg_shader shd = sg_make_shader(noentry_shader_desc(sg_query_backend()));
 
-    /* create pipeline object */
+    // create pipeline object
     state->pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* test to provide buffer stride, but no attr offsets */
+            // test to provide buffer stride, but no attr offsets
             .buffers[0].stride = 28,
             .attrs = {
                 [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
@@ -136,7 +136,7 @@ void init(void* user_data) {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* setup resource bindings */
+    // setup resource bindings
     state->bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
@@ -159,7 +159,7 @@ void frame(void* user_data) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.25f, 0.75f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.25f, 0.75f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, (int)w, (int)h);
     sg_apply_pipeline(state->pip);

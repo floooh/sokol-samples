@@ -35,7 +35,10 @@ static struct {
     .icon_mode_changed = false,
     .icon_mode = ICONMODE_NONE,
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.5f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.25f, 0.5f, 1.0f }
+        }
     }
 };
 
@@ -114,8 +117,7 @@ static void fill_arrow_pixels(uint32_t* pixels, uint32_t w, uint32_t h) {
                 if ((x < (h/2-y)) || (x > (h/2+y))) {
                     color = 0;
                 }
-            }
-            else {
+            } else {
                 if ((x < w/4) || (x > (w/4)*3)) {
                     color = 0;
                 }

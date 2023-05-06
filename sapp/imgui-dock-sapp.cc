@@ -30,8 +30,8 @@ void init(void) {
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     // initial clear color
-    pass_action.colors[0].action = SG_ACTION_CLEAR;
-    pass_action.colors[0].value = { 0.3f, 0.7f, 0.5f, 1.0f };
+    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    pass_action.colors[0].clear_value = { 0.3f, 0.7f, 0.5f, 1.0f };
 }
 
 void frame(void) {
@@ -44,7 +44,7 @@ void frame(void) {
     static float f = 0.0f;
     ImGui::Text("Drag windows over one another!");
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    ImGui::ColorEdit3("clear color", &pass_action.colors[0].value.r);
+    ImGui::ColorEdit3("clear color", &pass_action.colors[0].clear_value.r);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

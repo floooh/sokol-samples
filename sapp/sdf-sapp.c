@@ -45,7 +45,7 @@ void init(void) {
 
     // don't need to clear since the whole framebuffer is overwritten
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_DONTCARE }
+        .colors[0] = { .load_action = SG_LOADACTION_DONTCARE }
     };
 }
 

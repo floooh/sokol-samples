@@ -224,12 +224,11 @@ static void frame(void) {
     // when loading has failed, change the clear color to red
     if (state.load_status.failed) {
         state.pass_action = (sg_pass_action){
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f} }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f} }
         };
-    }
-    else {
+    } else {
         state.pass_action = (sg_pass_action){
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f} }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f} }
         };
     }
 
@@ -324,8 +323,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.pending_count == 0) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
     }
 }
@@ -346,8 +344,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.pending_count == 0) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
     }
 }
@@ -368,8 +365,7 @@ static void create_spine_objects(void) {
     sspine_range skel_binary_data = {0};
     if (state.load_status.skel_data_is_binary) {
         skel_binary_data = state.load_status.skel_data;
-    }
-    else {
+    } else {
         skel_json_data = (const char*)state.load_status.skel_data.ptr;
     }
     state.skeleton = sspine_make_skeleton(&(sspine_skeleton_desc){
@@ -401,8 +397,7 @@ static void create_spine_objects(void) {
             sspine_anim anim = sspine_anim_by_name(state.skeleton, queue_anim->name);
             if (anim_index == 0) {
                 sspine_set_animation(state.instance, anim, 0, queue_anim->looping);
-            }
-            else {
+            } else {
                 sspine_add_animation(state.instance, anim, 0, queue_anim->looping, queue_anim->delay);
             }
         }
@@ -460,13 +455,11 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 }
             });
             stbi_image_free(pixels);
-        }
-        else {
+        } else {
             state.load_status.failed = false;
             sg_fail_image(img_info.sgimage);
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
         sg_fail_image(img_info.sgimage);
     }
@@ -563,8 +556,7 @@ static void ui_draw(void) {
         if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
             if (!sspine_atlas_valid(state.atlas)) {
                 igText("No Spine data loaded.");
-            }
-            else {
+            } else {
                 const int num_atlas_pages = sspine_num_atlas_pages(state.atlas);
                 igText("Num Pages: %d", num_atlas_pages);
                 for (int i = 0; i < num_atlas_pages; i++) {
@@ -599,8 +591,7 @@ static void ui_draw(void) {
         if (igBegin("Bones", &state.ui.bones_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
-            }
-            else {
+            } else {
                 const int num_bones = sspine_num_bones(state.skeleton);
                 igText("Num Bones: %d", num_bones);
                 igBeginChild_Str("bones_list", IMVEC2(128, 0), true, 0);
@@ -649,8 +640,7 @@ static void ui_draw(void) {
         if (igBegin("Slots", &state.ui.slots_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
-            }
-            else {
+            } else {
                 const int num_slots = sspine_num_slots(state.skeleton);
                 igText("Num Slots: %d", num_slots);
                 igBeginChild_Str("slot_list", IMVEC2(128, 0), true, 0);
@@ -690,8 +680,7 @@ static void ui_draw(void) {
         if (igBegin("Anims", &state.ui.anims_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
-            }
-            else {
+            } else {
                 const int num_anims = sspine_num_anims(state.skeleton);
                 igText("Num Anims: %d", num_anims);
                 igBeginChild_Str("anim_list", IMVEC2(128, 0), true, 0);
@@ -728,8 +717,7 @@ static void ui_draw(void) {
         if (igBegin("Events", &state.ui.events_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
-            }
-            else {
+            } else {
                 const int num_events = sspine_num_events(state.skeleton);
                 igText("Num Events: %d", num_events);
                 igBeginChild_Str("event_list", IMVEC2(128, 0), true, 0);
@@ -770,8 +758,7 @@ static void ui_draw(void) {
         if (igBegin("Skins", &state.ui.skins_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
-            }
-            else {
+            } else {
                 const int num_skins = sspine_num_skins(state.skeleton);
                 igText("Num Skins: %d", num_skins);
                 igBeginChild_Str("skin_list", IMVEC2(128, 0), true, 0);
@@ -807,8 +794,7 @@ static void ui_draw(void) {
         if (igBegin("IK Targets", &state.ui.iktargets_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
-            }
-            else {
+            } else {
                 const int num_iktargets = sspine_num_iktargets(state.skeleton);
                 igText("Num IK Targets: %d", num_iktargets);
                 igBeginChild_Str("iktarget_list", IMVEC2(128, 0), true, 0);

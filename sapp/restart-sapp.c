@@ -59,7 +59,7 @@ typedef struct {
     int16_t u, v;
 } vertex_t;
 
-/* cube vertices and indices */
+// cube vertices and indices
 static const vertex_t cube_vertices[] = {
     { -1.0f, -1.0f, -1.0f,      0,     0 },
     {  1.0f, -1.0f, -1.0f,  32767,     0 },
@@ -219,7 +219,7 @@ static void init(void) {
     float g = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     float b = (float)((xorshift32() & 0x3F) << 2) / 255.0f;
     state.scene.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR,.value = { r, g, b, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { r, g, b, 1.0f } }
     };
 
     // initialize libmodplug
@@ -272,11 +272,10 @@ static void fetch_img_callback(const sfetch_response_t* response) {
             });
             stbi_image_free(pixels);
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
@@ -284,11 +283,10 @@ static void fetch_img_callback(const sfetch_response_t* response) {
 static void fetch_mod_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         state.mod.mpf = ModPlug_Load(response->data.ptr, (int)response->data.size);
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         // if loading the file failed, set clear color to red
         state.scene.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
         };
     }
 }
@@ -341,9 +339,8 @@ static void frame(void) {
             num_samples = MOD_SRCBUF_SAMPLES;
         }
         if (state.mod.mpf) {
-            /* NOTE: for multi-channel playback, the samples are interleaved
-               (e.g. left/right/left/right/...)
-            */
+            // NOTE: for multi-channel playback, the samples are interleaved
+            // (e.g. left/right/left/right/...)
             int res = ModPlug_Read(state.mod.mpf, (void*)state.mod.int_buf, (int)sizeof(int)*num_samples);
             int samples_in_buffer = res / (int)sizeof(int);
             int i;
@@ -353,9 +350,8 @@ static void frame(void) {
             for (; i < num_samples; i++) {
                 state.mod.flt_buf[i] = 0.0f;
             }
-        }
-        else {
-            /* if file wasn't loaded, fill the output buffer with silence */
+        } else {
+            // if file wasn't loaded, fill the output buffer with silence
             for (int i = 0; i < num_samples; i++) {
                 state.mod.flt_buf[i] = 0.0f;
             }
