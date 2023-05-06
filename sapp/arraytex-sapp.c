@@ -30,12 +30,12 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a default pass action to clear to black */
+    // a default pass action to clear to black
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
-    /* a 16x16 array texture with 3 layers and a checkerboard pattern */
+    // a 16x16 array texture with 3 layers and a checkerboard pattern
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -65,7 +65,7 @@ void init(void) {
         .label = "array-texture"
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
         /* pos                  uvs */
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
@@ -103,7 +103,7 @@ void init(void) {
         .label = "cube-vertices"
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -118,7 +118,7 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    /* a pipeline object */
+    // a pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -136,7 +136,7 @@ void init(void) {
         .label = "cube-pipeline"
     });
 
-    /* populate the resource bindings struct */
+    // populate the resource bindings struct
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
@@ -144,19 +144,8 @@ void init(void) {
     };
 }
 
-/* this is called when GLES3/WebGL2 is not available */
-void draw_gles2_fallback(void) {
-    const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } },
-    };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    __dbgui_draw();
-    sg_end_pass();
-    sg_commit();
-}
-
 void frame(void) {
-    /* rotated model matrix */
+    // rotated model matrix
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -166,16 +155,16 @@ void frame(void) {
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
-    /* model-view-projection matrix for vertex shader */
+    // model-view-projection matrix for vertex shader
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-    /* uv offsets */
+    // uv offsets
     float offset = (float)sapp_frame_count() * 0.0001f * t;
     vs_params.offset0 = HMM_Vec2(-offset, offset);
     vs_params.offset1 = HMM_Vec2(offset, -offset);
     vs_params.offset2 = HMM_Vec2(0.0f, 0.0f);
 
-    /* render the frame */
+    // render the frame
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
