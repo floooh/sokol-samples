@@ -9,7 +9,7 @@
 #include "dbgui/dbgui.h"
 #include "triangle-sapp.glsl.h"
 
-/* application state */
+// application state
 static struct {
     sg_pipeline pip;
     sg_bindings bind;
@@ -23,7 +23,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -35,13 +35,13 @@ static void init(void) {
         .label = "triangle-vertices"
     });
 
-    /* create shader from code-generated sg_shader_desc */
+    // create shader from code-generated sg_shader_desc
     sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
 
-    /* create a pipeline object (default render states are fine for triangle) */
+    // create a pipeline object (default render states are fine for triangle)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
-        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
+        // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
         .layout = {
             .attrs = {
                 [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
@@ -51,9 +51,9 @@ static void init(void) {
         .label = "triangle-pipeline"
     });
 
-    /* a pass action to clear framebuffer to black */
+    // a pass action to clear framebuffer to black
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f } }
     };
 }
 
