@@ -66,15 +66,15 @@ static void init(void) {
     {
         state.offscreen.pass_action = (sg_pass_action) {
             .colors = {
-                [0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 0.0f } },
-                [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 0.0f } },
-                [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+                [0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+                [1] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+                [2] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
             },
         };
 
         // create 3 render target textures with different formats
         sg_image_desc img_desc = {
-            .render_target = true,
+            .render_attachment = true,
             .pixel_format = DEPTH_PIXEL_FORMAT,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
@@ -164,7 +164,7 @@ static void init(void) {
     // setup resources for rendering to the display
     {
         state.display.pass_action = (sg_pass_action) {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.75f, 1.0f } }
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } }
         };
 
         // a vertex buffer for rendering a quad
@@ -185,7 +185,7 @@ static void init(void) {
 
 static void draw_fallback() {
     const sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f }}
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     __dbgui_draw();

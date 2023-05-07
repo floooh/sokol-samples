@@ -13,11 +13,11 @@
 #include "data/mods.h"
 #include <assert.h>
 
-/* select between mono (1) and stereo (2) */
+// select between mono (1) and stereo (2)
 #define MODPLAY_NUM_CHANNELS (2)
-/* use stream callback (0) or push-from-mainthread (1) model */
+// use stream callback (0) or push-from-mainthread (1) model
 #define MODPLAY_USE_PUSH (0)
-/* big enough for packet_size * num_packets * num_channels */
+// big enough for packet_size * num_packets * num_channels
 #define MODPLAY_SRCBUF_SAMPLES (16*1024)
 
 typedef struct {
@@ -29,15 +29,12 @@ typedef struct {
     #endif
 } state_t;
 
-/* integer-to-float conversion buffer */
-
-/* common function to read sample stream from libmodplug and convert to float */
+// common function to read sample stream from libmodplug and convert to float
 static void read_samples(state_t* state, float* buffer, int num_samples) {
     assert(num_samples <= MODPLAY_SRCBUF_SAMPLES);
     if (state->mpf_valid) {
-        /* NOTE: for multi-channel playback, the samples are interleaved
-           (e.g. left/right/left/right/...)
-        */
+        // NOTE: for multi-channel playback, the samples are interleaved
+        // (e.g. left/right/left/right/...)
         int res = ModPlug_Read(state->mpf, (void*)state->int_buf, (int)sizeof(int)*num_samples);
         int samples_in_buffer = res / (int)sizeof(int);
         int i;
@@ -49,16 +46,15 @@ static void read_samples(state_t* state, float* buffer, int num_samples) {
         }
     }
     else {
-        /* if file wasn't loaded, fill the output buffer with silence */
+        // if file wasn't loaded, fill the output buffer with silence
         for (int i = 0; i < num_samples; i++) {
             buffer[i] = 0.0f;
         }
     }
 }
 
-/* stream callback, called by sokol_audio when new samples are needed,
-    on most platforms, this runs on a separate thread
-*/
+// stream callback, called by sokol_audio when new samples are needed,
+// on most platforms, this runs on a separate thread
 #if !MODPLAY_USE_PUSH
 static void stream_cb(float* buffer, int num_frames, int num_channels, void* user_data) {
     state_t* state = (state_t*) user_data;
@@ -69,25 +65,23 @@ static void stream_cb(float* buffer, int num_frames, int num_channels, void* use
 
 void init(void* user_data) {
     state_t* state = (state_t*) user_data;
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
     });
 
-    /* setup sokol_audio (default sample rate is 44100Hz) */
+    // setup sokol_audio (default sample rate is 44100Hz)
     saudio_setup(&(saudio_desc){
         .num_channels = MODPLAY_NUM_CHANNELS,
         #if !MODPLAY_USE_PUSH
         .stream_userdata_cb = stream_cb,
         .user_data = state,
         #endif
-        .logger = {
-            .func = slog_func,
-        }
+        .logger.func = slog_func,
     });
 
-    /* setup libmodplug and load mod from embedded C array */
+    // setup libmodplug and load mod from embedded C array
     ModPlug_Settings mps;
     ModPlug_GetSettings(&mps);
     mps.mChannels = saudio_channels();
@@ -106,16 +100,14 @@ void init(void* user_data) {
 }
 
 void frame(void* user_data) {
-    /* alternative way to get audio data into sokol_audio: push the
-        data from the main thread, this appends the sample data to a ring
-        buffer where the audio thread will pull from
-    */
+    // alternative way to get audio data into sokol_audio: push the
+    // data from the main thread, this appends the sample data to a ring
+    // buffer where the audio thread will pull from
     #if MODPLAY_USE_PUSH
-        /* NOTE: if your application generates new samples at the same
-           rate they are consumed (e.g. a steady 44100 frames per second,
-           you don't need the call to saudio_expect(), instead just call
-           saudio_push() as new sample data gets generated
-        */
+        // NOTE: if your application generates new samples at the same
+        // rate they are consumed (e.g. a steady 44100 frames per second,
+        // you don't need the call to saudio_expect(), instead just call
+        // saudio_push() as new sample data gets generated
         state_t* state = (state_t*) user_data;
         const int num_frames = saudio_expect();
         if (num_frames > 0) {
@@ -127,7 +119,7 @@ void frame(void* user_data) {
         (void)user_data;
     #endif
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.4f, 0.7f, 1.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.4f, 0.7f, 1.0f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_end_pass();
@@ -145,7 +137,7 @@ void cleanup(void* user_data) {
 
 sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc; (void)argv;
-    static state_t state;   /* static structs are implicitely zero-initialized */
+    static state_t state;   // static structs are implicitely zero-initialized
     return (sapp_desc){
         .init_userdata_cb = init,
         .frame_userdata_cb = frame,

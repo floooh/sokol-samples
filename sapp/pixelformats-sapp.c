@@ -23,6 +23,7 @@ static struct {
         sg_image render;
         sg_image blend;
         sg_image msaa;
+        sg_image resolve;
         sg_pipeline cube_render_pip;
         sg_pipeline cube_blend_pip;
         sg_pipeline cube_msaa_pip;
@@ -47,6 +48,7 @@ static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 256,
+        .image_pool_size = 256,
         .pass_pool_size = 128,
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
@@ -57,13 +59,14 @@ static void init(void) {
 
     // create all the textures and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .render_attachment = true,
         .width = 64,
         .height = 64,
-        .pixel_format = SG_PIXELFORMAT_DEPTH
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = 1,
     });
     sg_image msaa_depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .render_attachment = true,
         .width = 64,
         .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -77,6 +80,7 @@ static void init(void) {
         state.fmt[i].render = invalid_img;
         state.fmt[i].blend  = invalid_img;
         state.fmt[i].msaa = invalid_img;
+        state.fmt[i].resolve = invalid_img;
     }
 
     sg_pipeline_desc cube_render_pip_desc = {
@@ -89,6 +93,7 @@ static void init(void) {
         .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = 1,
         .depth = {
             .write_enabled = true,
             .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -99,6 +104,7 @@ static void init(void) {
         .layout.attrs[ATTR_vs_bg_position].format = SG_VERTEXFORMAT_FLOAT2,
         .shader = sg_make_shader(bg_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .sample_count = 1,
         .depth.pixel_format = SG_PIXELFORMAT_DEPTH,
     };
     sg_pipeline_desc cube_blend_pip_desc = cube_render_pip_desc;
@@ -140,10 +146,11 @@ static void init(void) {
             // create non-MSAA render target, pipeline state and pass
             if (sg_query_pixelformat(fmt).render) {
                 state.fmt[i].render = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
+                    .sample_count = 1,
                 });
                 cube_render_pip_desc.colors[0].pixel_format = fmt;
                 bg_render_pip_desc.colors[0].pixel_format = fmt;
@@ -157,10 +164,11 @@ static void init(void) {
             // create non-MSAA blend render target, pipeline states and pass
             if (sg_query_pixelformat(fmt).blend) {
                 state.fmt[i].blend = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
+                    .sample_count = 1,
                 });
                 cube_blend_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
@@ -169,14 +177,21 @@ static void init(void) {
                     .depth_stencil_attachment.image = render_depth_img,
                 });
             }
-            // create MSAA render target and matching pipeline state
+            // create MSAA render target, resolve texture and matching pipeline state
             if (sg_query_pixelformat(fmt).msaa) {
                 state.fmt[i].msaa = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
+                });
+                state.fmt[i].resolve = sg_make_image(&(sg_image_desc){
+                    .render_attachment = true,
+                    .width = 64,
+                    .height = 64,
+                    .pixel_format = fmt,
+                    .sample_count = 1,
                 });
                 cube_msaa_pip_desc.colors[0].pixel_format = fmt;
                 bg_msaa_pip_desc.colors[0].pixel_format = fmt;
@@ -184,6 +199,7 @@ static void init(void) {
                 state.fmt[i].bg_msaa_pip = sg_make_pipeline(&bg_msaa_pip_desc);
                 state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){
                     .color_attachments[0].image = state.fmt[i].msaa,
+                    .resolve_attachments[0].image = state.fmt[i].resolve,
                     .depth_stencil_attachment.image = msaa_depth_img,
                 });
             }
@@ -295,7 +311,7 @@ static void frame(void) {
             sg_end_pass();
         }
         if (fmt_info.msaa) {
-            sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){0});
+            sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){ .colors[0].store_action = SG_STOREACTION_DONTCARE });
             sg_apply_pipeline(state.fmt[i].bg_msaa_pip);
             sg_apply_bindings(&state.bg_bindings);
             sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
@@ -341,7 +357,7 @@ static void frame(void) {
                 igSameLine(0,0);
                 igImage((ImTextureID)(uintptr_t)state.fmt[i].blend.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].msaa.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage((ImTextureID)(uintptr_t)state.fmt[i].resolve.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
@@ -351,7 +367,7 @@ static void frame(void) {
 
     // sokol-gfx rendering...
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
     sg_begin_default_pass(&pass_action, w, h);
     simgui_render();
