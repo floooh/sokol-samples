@@ -21,14 +21,17 @@ static struct {
     sg_bindings bind;
     float ry;
     hmm_mat4 view_proj;
-    /* particle positions and velocity */
+    // particle positions and velocity
     int cur_num_particles;
     hmm_vec3 pos[MAX_PARTICLES];
     hmm_vec3 vel[MAX_PARTICLES];
 } state = {
-    /* a pass-action to clear to black */
+    // a pass-action to clear to black
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
+        }
     }
 };
 
@@ -37,13 +40,13 @@ typedef struct {
 } vs_params_t;
 
 static void init(void) {
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* vertex buffer for static geometry, goes into vertex-buffer-slot 0 */
+    // vertex buffer for static geometry, goes into vertex-buffer-slot 0
     const float r = 0.05f;
     const float vertices[] = {
         // positions            colors
@@ -58,7 +61,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* index buffer for static geometry */
+    // index buffer for static geometry
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
@@ -68,13 +71,13 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1 */
+    // empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1
     state.bind.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     });
 
-    /* a shader */
+    // a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source =
@@ -107,15 +110,15 @@ static void init(void) {
             "}\n"
     });
 
-    /* a pipeline object */
+    // a pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* vertex buffer at slot 1 must step per instance */
+            // vertex buffer at slot 1 must step per instance
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
-                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },  /* position */
-                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },  /* color */
-                [2] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 },  /* instance_pos */
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },  // position
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },  // color
+                [2] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 },  // instance_pos
             }
         },
         .shader = shd,
@@ -127,7 +130,7 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
@@ -136,7 +139,7 @@ static void init(void) {
 static void frame(void) {
     const float frame_time = 1.0f / 60.0f;
 
-    /* emit new particles */
+    // emit new particles
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
         if (state.cur_num_particles < MAX_PARTICLES) {
             state.pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
@@ -145,19 +148,18 @@ static void frame(void) {
                 ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
                 ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
             state.cur_num_particles++;
-        }
-        else {
+        } else {
             break;
         }
     }
 
-    /* update particle positions */
+    // update particle positions
     for (int i = 0; i < state.cur_num_particles; i++) {
         state.vel[i].Y -= 1.0f * frame_time;
         state.pos[i].X += state.vel[i].X * frame_time;
         state.pos[i].Y += state.vel[i].Y * frame_time;
         state.pos[i].Z += state.vel[i].Z * frame_time;
-        /* bounce back from 'ground' */
+        // bounce back from 'ground'
         if (state.pos[i].Y < -2.0f) {
             state.pos[i].Y = -1.8f;
             state.vel[i].Y = -state.vel[i].Y;
@@ -165,18 +167,18 @@ static void frame(void) {
         }
     }
 
-    /* update instance data */
+    // update instance data
     sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range) {
         .ptr = state.pos,
         .size = (size_t)state.cur_num_particles*sizeof(hmm_vec3)
     });
 
-    /* model-view-projection matrix */
+    // model-view-projection matrix
     state.ry += 1.0f;
     vs_params_t vs_params;
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
-    /* ...and draw */
+    // ...and draw
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

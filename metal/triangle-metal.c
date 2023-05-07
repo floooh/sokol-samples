@@ -12,13 +12,13 @@ static struct {
 } state;
 
 static void init(void) {
-    /* setup sokol */
+    // setup sokol
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     float vertices[] = {
         // positions        colors
          0.0f, 0.5f, 0.5f,  1.0f, 0.0f, 0.0f, 1.0f,
@@ -29,7 +29,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader pair, compiled from source code */
+    // a shader pair, compiled from source code
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         /*
             The shader main() function cannot be called 'main' in
@@ -62,7 +62,7 @@ static void init(void) {
             "};\n"
     });
 
-    /* create a pipeline object */
+    // create a pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         /* Metal has explicit attribute locations, and the vertex layout
            has no gaps, so we don't need to provide stride, offsets

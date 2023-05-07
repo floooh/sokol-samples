@@ -33,7 +33,7 @@ typedef struct {
 } vs_params_t;
 
 static void init(void) {
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_desc desc = {
         .context = osx_get_context(),
         .logger = {
@@ -42,9 +42,9 @@ static void init(void) {
     };
     sg_setup(&desc);
 
-    /* create native Metal vertex- and index-buffer */
+    // create native Metal vertex- and index-buffer
     float vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
@@ -90,10 +90,10 @@ static void init(void) {
         newBufferWithBytes:indices length:sizeof(indices)
         options:MTLResourceStorageModeShared];
 
-    /* important to call sg_reset_state_cache() after calling Metal functions directly */
+    // important to call sg_reset_state_cache() after calling Metal functions directly
     sg_reset_state_cache();
 
-    /* create sokol_gfx buffers with injected Metal buffer objects */
+    // create sokol_gfx buffers with injected Metal buffer objects
     sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
@@ -106,10 +106,9 @@ static void init(void) {
     };
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
-    /* create dynamically updated Metal texture objects, these will
-       be rotated through by sokol_gfx as they are updated, so we need
-       to create SG_NUM_INFLIGHT_FRAME textures
-    */
+    // create dynamically updated Metal texture objects, these will
+    // be rotated through by sokol_gfx as they are updated, so we need
+    // to create SG_NUM_INFLIGHT_FRAME textures
     MTLTextureDescriptor* mtl_tex_desc = [[MTLTextureDescriptor alloc] init];
     mtl_tex_desc.textureType = MTLTextureType2D;
     mtl_tex_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
@@ -136,7 +135,7 @@ static void init(void) {
     sg_reset_state_cache();
     state.bind.fs_images[0] = sg_make_image(&img_desc);
 
-    /* a shader */
+    // a shader
     sg_shader_desc shader_desc = {
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
@@ -181,7 +180,7 @@ static void init(void) {
     };
     sg_shader shd = sg_make_shader(&shader_desc);
 
-    /* a pipeline state object */
+    // a pipeline state object
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
@@ -199,14 +198,14 @@ static void init(void) {
     };
     state.pip = sg_make_pipeline(&pip_desc);
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -214,7 +213,7 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
-    /* update texture image with some generated pixel data */
+    // update texture image with some generated pixel data
     for (int y = 0; y < IMG_WIDTH; y++) {
         for (int x = 0; x < IMG_HEIGHT; x++) {
             state.pixels[y * IMG_WIDTH + x] = 0xFF000000 |

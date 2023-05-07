@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  dyntex-metal.c
 //------------------------------------------------------------------------------
-#include <stdlib.h> /* rand */
+#include <stdlib.h> // rand
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -35,13 +35,13 @@ static void game_of_life_init();
 static void game_of_life_update();
 
 static void init(void) {
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* a 128x128 image with streaming update strategy */
+    // a 128x128 image with streaming update strategy
     state.bind.fs_images[0] = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
@@ -53,9 +53,9 @@ static void init(void) {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
         1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
         1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
@@ -102,7 +102,7 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* a shader to render a textured cube */
+    // a shader to render a textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source =
@@ -141,7 +141,7 @@ static void init(void) {
             "};\n"
     });
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -159,17 +159,17 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* initialize the game-of-life state */
+    // initialize the game-of-life state
     game_of_life_init();
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)DISPLAY_WIDTH/(float)DISPLAY_HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    /* compute model-view-projection matrix */
+    // compute model-view-projection matrix
     vs_params_t vs_params;
     state.rx += 0.1f; state.ry += 0.2f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -177,15 +177,15 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
-    /* update game-of-life state */
+    // update game-of-life state
     game_of_life_update();
 
-    /* update the texture */
+    // update the texture
     sg_update_image(state.bind.fs_images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
-    /* render the frame */
+    // render the frame
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -209,8 +209,7 @@ static void game_of_life_init() {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             if ((rand() & 255) > 230) {
                 state.pixels[y][x] = LIVING;
-            }
-            else {
+            } else {
                 state.pixels[y][x] = DEAD;
             }
         }
@@ -231,19 +230,17 @@ static void game_of_life_update() {
                     }
                 }
             }
-            /* any live cell... */
+            // any live cell...
             if (state.pixels[y][x] == LIVING) {
                 if (num_living_neighbours < 2) {
-                    /* ... with fewer than 2 living neighbours dies, as if caused by underpopulation */
+                    // ... with fewer than 2 living neighbours dies, as if caused by underpopulation
+                    state.pixels[y][x] = DEAD;
+                } else if (num_living_neighbours > 3) {
+                    // ... with more than 3 living neighbours dies, as if caused by overpopulation
                     state.pixels[y][x] = DEAD;
                 }
-                else if (num_living_neighbours > 3) {
-                    /* ... with more than 3 living neighbours dies, as if caused by overpopulation */
-                    state.pixels[y][x] = DEAD;
-                }
-            }
-            else if (num_living_neighbours == 3) {
-                /* any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction */
+            } else if (num_living_neighbours == 3) {
+                // any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction
                 state.pixels[y][x] = LIVING;
             }
         }

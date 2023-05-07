@@ -24,27 +24,27 @@ static struct {
     hmm_mat4 view_proj;
     uint32_t mip_colors[9];
     struct {
-        uint32_t mip0[65536];   /* 256x256 */
-        uint32_t mip1[16384];   /* 128x128 */
-        uint32_t mip2[4096];    /* 64*64 */
-        uint32_t mip3[1024];    /* 32*32 */
-        uint32_t mip4[256];     /* 16*16 */
-        uint32_t mip5[64];      /* 8*8 */
-        uint32_t mip6[16];      /* 4*4 */
-        uint32_t mip7[4];       /* 2*2 */
-        uint32_t mip8[1];       /* 1*2 */
+        uint32_t mip0[65536];   // 256x256
+        uint32_t mip1[16384];   // 128x128
+        uint32_t mip2[4096];    // 64*64
+        uint32_t mip3[1024];    // 32*32
+        uint32_t mip4[256];     // 16*16
+        uint32_t mip5[64];      // 8*8
+        uint32_t mip6[16];      // 4*4
+        uint32_t mip7[4];       // 2*2
+        uint32_t mip8[1];       // 1*2
     } pixels;
 } state = {
     .mip_colors = {
-        0xFF0000FF,     /* red */
-        0xFF00FF00,     /* green */
-        0xFFFF0000,     /* blue */
-        0xFFFF00FF,     /* magenta */
-        0xFFFFFF00,     /* cyan */
-        0xFF00FFFF,     /* yellow */
-        0xFFFF00A0,     /* violet */
-        0xFFFFA0FF,     /* orange */
-        0xFFA000FF,     /* purple */
+        0xFF0000FF,     // red
+        0xFF00FF00,     // green
+        0xFFFF0000,     // blue
+        0xFFFF00FF,     // magenta
+        0xFFFFFF00,     // cyan
+        0xFF00FFFF,     // yellow
+        0xFFFF00A0,     // violet
+        0xFFFFA0FF,     // orange
+        0xFFA000FF,     // purple
     }
 };
 
@@ -54,14 +54,14 @@ typedef struct {
 
 
 static void init(void) {
-    /* setup sokol */
+    // setup sokol
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* a plane vertex buffer */
-    float vertices[] = {
+    // a plane vertex buffer
+    const float vertices[] = {
         -1.0, -1.0, 0.0,  0.0, 0.0,
         +1.0, -1.0, 0.0,  1.0, 0.0,
         -1.0, +1.0, 0.0,  0.0, 1.0,
@@ -71,7 +71,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* initialize mipmap content, different colors and checkboard pattern */
+    // initialize mipmap content, different colors and checkboard pattern
     sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
     bool even_odd = false;
@@ -87,8 +87,8 @@ static void init(void) {
             even_odd = !even_odd;
         }
     }
-    /* the first 4 images are just different min-filters, the last
-       4 images are different anistropy levels */
+    // the first 4 images are just different min-filters, the last
+    // 4 images are different anistropy levels
     sg_image_desc img_desc = {
         .width = 256,
         .height = 256,
@@ -114,13 +114,13 @@ static void init(void) {
         state.img[i] = sg_make_image(&img_desc);
     }
     img_desc.min_lod = 0.0f;
-    img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
+    img_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
     for (int i = 8; i < 12; i++) {
         img_desc.max_anisotropy = 1<<(i-7);
         state.img[i] = sg_make_image(&img_desc);
     }
 
-    /* shader */
+    // shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
@@ -164,7 +164,7 @@ static void init(void) {
         }
     });
 
-    /* pipeline state */
+    // pipeline state
     state.pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
@@ -176,7 +176,7 @@ static void init(void) {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);

@@ -25,15 +25,15 @@ typedef struct {
 } vs_params_t;
 
 static void init(void) {
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
@@ -68,7 +68,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -95,7 +95,7 @@ static void init(void) {
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
-    /* a shader */
+    // a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
@@ -143,7 +143,7 @@ static void init(void) {
         }
     });
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -161,14 +161,14 @@ static void init(void) {
         },
     });
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));

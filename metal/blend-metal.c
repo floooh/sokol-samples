@@ -33,11 +33,11 @@ struct {
     vs_params_t vs_params;
     fs_params_t fs_params;
 } state = {
-    /* a pass action which does not clear, since the entire screen is overwritten anyway */
+    // a pass action which does not clear, since the entire screen is overwritten anyway
     .pass_action = {
-        .colors[0].action = SG_ACTION_DONTCARE ,
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE ,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     }
 };
 
@@ -48,7 +48,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a quad vertex buffer */
+    // a quad vertex buffer
     float vertices[] = {
         /* pos               color */
         -1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f,
@@ -60,7 +60,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader for the fullscreen background quad */
+    // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
             .entry = "vs_main",
@@ -95,12 +95,11 @@ static void init(void) {
         }
     });
 
-    /* a pipeline state object for rendering the background quad */
+    // a pipeline state object for rendering the background quad
     state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        /* we use the same vertex buffer as for the colored 3D quads,
-           but only the first two floats from the position, need to
-           provide a stride to skip the gap to the next vertex
-        */
+        // we use the same vertex buffer as for the colored 3D quads,
+        // but only the first two floats from the position, need to
+        // provide a stride to skip the gap to the next vertex
         .layout = {
             .buffers[0].stride = 28,
             .attrs = {
@@ -111,7 +110,7 @@ static void init(void) {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    /* a shader for the blended quads */
+    // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
@@ -151,7 +150,7 @@ static void init(void) {
         }
     });
 
-    /* one pipeline object per blend-factor combination */
+    // one pipeline object per blend-factor combination
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
@@ -177,7 +176,7 @@ static void init(void) {
         }
     }
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
@@ -192,7 +191,7 @@ static void frame(void) {
     sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.fs_params));
     sg_draw(0, 4, 1);
 
-    /* draw the blended quads */
+    // draw the blended quads
     float r0 = state.r;
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
