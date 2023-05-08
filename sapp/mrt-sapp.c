@@ -87,7 +87,7 @@ void create_offscreen_pass(int width, int height) {
 
     // also need to update the fullscreen-quad texture bindings
     for (int i = 0; i < 3; i++) {
-        state.fsq.bind.fs_images[i] = state.offscreen.pass_desc.color_attachments[i].image;
+        state.fsq.bind.fs_images[i] = state.offscreen.pass_desc.resolve_attachments[i].image;
     }
 }
 
