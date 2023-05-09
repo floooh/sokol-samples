@@ -25,7 +25,7 @@ static struct {
     float rx, ry;
     uint32_t counter;
 } state = {
-    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+    .pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
 };
 
 typedef struct {

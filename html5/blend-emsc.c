@@ -47,9 +47,9 @@ int main() {
 
     /* a pass action which does not clear, since the entire screen is overwritten anyway */
     state.pass_action = (sg_pass_action) {
-        .colors[0].action = SG_ACTION_DONTCARE ,
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE ,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
     /* a quad vertex buffer */

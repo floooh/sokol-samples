@@ -33,7 +33,7 @@ static struct {
     float rx, ry;
     int update_count;
 } state = {
-    .pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.2f, 0.3f, 0.4f, 1.0f } }
+    .pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.2f, 0.3f, 0.4f, 1.0f } }
 };
 
 static void game_of_life_init();

@@ -30,9 +30,9 @@ static struct{
     } display;
 } state = {
     /* offscreen: clear to black */
-    .offscreen.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } },
+    .offscreen.pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     /* display: clear to blue-ish */
-    .display.pass_action.colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } },
+    .display.pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f } },
 };
 
 typedef struct {
@@ -50,9 +50,9 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-rendertarget image */
-    const int offscreen_sample_count = 4;
+    const int offscreen_sample_count = 1;
     sg_image_desc img_desc = {
-        .render_target = true,
+        .render_attachment = true,
         .width = 512,
         .height = 512,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

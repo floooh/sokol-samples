@@ -18,7 +18,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action.colors = {
-        [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
+        [0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } }
     }
 };
 
