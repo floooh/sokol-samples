@@ -17,13 +17,13 @@
 /* different clear colors for 3 windows */
 sg_pass_action pass_actions[3] = {
     [0] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 0.5f, 0.5f, 1.0f, 1.0f } }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={ 0.5f, 0.5f, 1.0f, 1.0f } }
     },
     [1] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 1.0f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={ 1.0f, 0.5f, 0.5f, 1.0f } }
     },
     [2] = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={ 0.5f, 1.0f, 0.5f, 1.0f } }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={ 0.5f, 1.0f, 0.5f, 1.0f } }
     }
 };
 

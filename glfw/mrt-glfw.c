@@ -44,25 +44,41 @@ int main() {
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* a render pass with 3 color attachment images, and a depth attachment image */
+    /* a render pass with 3 color attachment images, 3 msaa-resolve images, and a depth attachment image */
     const int offscreen_sample_count = 4;
-    sg_image_desc color_img_desc = {
-        .render_target = true,
+    const sg_image_desc color_img_desc = {
+        .render_attachment = true,
+        .width = WIDTH,
+        .height = HEIGHT,
+        .sample_count = offscreen_sample_count
+    };
+    const sg_image_desc resolve_img_desc = {
+        .render_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .sample_count = 1,
+    };
+    const sg_image_desc depth_img_desc = {
+        .render_attachment = true,
+        .width = WIDTH,
+        .height = HEIGHT,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = offscreen_sample_count
     };
-    sg_image_desc depth_img_desc = color_img_desc;
-    depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     sg_pass_desc offscreen_pass_desc = {
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
+        },
+        .resolve_attachments = {
+            [0].image = sg_make_image(&resolve_img_desc),
+            [1].image = sg_make_image(&resolve_img_desc),
+            [2].image = sg_make_image(&resolve_img_desc)
         },
         .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
     };
@@ -71,9 +87,21 @@ int main() {
     /* a matching pass action with clear colors */
     sg_pass_action offscreen_pass_action = {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f }
+            },
+            [1] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+            },
+            [2] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+            }
         }
     };
 
@@ -199,9 +227,9 @@ int main() {
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_vbuf,
         .fs_images = {
-            [0] = offscreen_pass_desc.color_attachments[0].image,
-            [1] = offscreen_pass_desc.color_attachments[1].image,
-            [2] = offscreen_pass_desc.color_attachments[2].image,
+            [0] = offscreen_pass_desc.resolve_attachments[0].image,
+            [1] = offscreen_pass_desc.resolve_attachments[1].image,
+            [2] = offscreen_pass_desc.resolve_attachments[2].image,
         }
     };
 
@@ -293,13 +321,9 @@ int main() {
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     sg_pass_action default_pass_action = {
-        .colors = {
-            [0].action = SG_ACTION_DONTCARE,
-            [1].action = SG_ACTION_DONTCARE,
-            [2].action = SG_ACTION_DONTCARE
-        },
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
     /* view-projection matrix for the offscreen-rendered cube */
@@ -338,7 +362,7 @@ int main() {
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+            dbg_bind.fs_images[0] = offscreen_pass_desc.resolve_attachments[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }

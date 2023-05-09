@@ -38,9 +38,9 @@ int main() {
     assert(sg_isvalid());
 
     /* create one color- and one depth-buffer render target image */
-    const int offscreen_sample_count = 4;
+    const int offscreen_sample_count = 1;
     sg_image_desc img_desc = {
-        .render_target = true,
+        .render_attachment = true,
         .width = 512,
         .height = 512,
         .min_filter = SG_FILTER_LINEAR,
@@ -59,12 +59,12 @@ int main() {
 
     /* pass action for offscreen pass, clearing to black */
     sg_pass_action offscreen_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     /* pass action for default pass, clearing to blue-ish */
     sg_pass_action default_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
     /* cube vertex buffer with positions, colors and tex coords */
