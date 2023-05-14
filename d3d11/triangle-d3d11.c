@@ -10,21 +10,21 @@
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper */
+    // setup d3d11 app wrapper
     d3d11_init(640, 480, 1, L"Sokol Triangle D3D11");
 
-    /* setup sokol gfx */
+    // setup sokol gfx
     sg_setup(&(sg_desc){
         .context = d3d11_get_context(),
         .logger.func = slog_func,
     });
 
-    /* default pass action (clear to grey) */
+    // default pass action (clear to grey)
     sg_pass_action pass_action = { 0 };
 
-    /* a vertex buffer with the triangle vertices */
+    // a vertex buffer with the triangle vertices
     const float vertices[] = {
-        /* positions            colors */
+        // positions            colors
          0.0f, 0.5f, 0.5f,      1.0f, 0.0f, 0.0f, 1.0f,
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
@@ -33,12 +33,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(vertices)
     });
 
-    /* define resource bindings */
+    // define resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
 
-    /* a shader to render the triangle */
+    // a shader to render the triangle
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POS",
@@ -65,9 +65,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* a pipeline object */
+    // a pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
-        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
+        // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
         .layout = {
             .attrs = {
                 [0].format = SG_VERTEXFORMAT_FLOAT3,
@@ -77,7 +77,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .shader = shd
     });
 
-    /* the draw loop */
+    // the draw loop
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(pip);
@@ -87,7 +87,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_commit();
         d3d11_present();
     }
-    /* shutdown everything */
+    // shutdown everything
     sg_shutdown();
     d3d11_shutdown();
     return 0;

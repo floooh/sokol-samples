@@ -24,7 +24,7 @@ static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int WIDTH = 800;
     const int HEIGHT = 600;
     const int SAMPLE_COUNT = 4;
@@ -35,9 +35,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* a quad vertex buffer */
+    // a quad vertex buffer
     float vertices[] = {
-        /* pos               color */
+        // pos               color
         -1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f,
         +1.0f, -1.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.5f,
         -1.0f, +1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f,
@@ -47,7 +47,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader for the fullscreen background quad */
+    // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
         .attrs[0].sem_name = "POS",
         .vs.source =
@@ -76,7 +76,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* a pipeline state object for rendering the background quad */
+    // a pipeline state object for rendering the background quad
     sg_pipeline bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = 28,
@@ -86,7 +86,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    /* a shader for the blended quads */
+    // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POS",
@@ -117,7 +117,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* one pipeline object per blend-factor combination */
+    // one pipeline object per blend-factor combination
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
@@ -143,19 +143,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     }
 
-    /* a pass action which does not clear, since the entire screen is overwritten anyway */
+    // a pass action which does not clear, since the entire screen is overwritten anyway
     sg_pass_action pass_action = {
-        .colors[0].action = SG_ACTION_DONTCARE ,
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE ,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* resource bindings */
+    // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
@@ -167,17 +167,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
 
-        /* draw a background quad */
+        // draw a background quad
         sg_apply_pipeline(bg_pip);
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_params));
         sg_draw(0, 4, 1);
 
-        /* draw the blended quads */
+        // draw the blended quads
         float r0 = r;
         for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
             for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
-                /* compute new model-view-proj matrix */
+                // compute new model-view-proj matrix
                 hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
                 const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
                 const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;

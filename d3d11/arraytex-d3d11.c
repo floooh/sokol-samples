@@ -19,7 +19,7 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int width = 800;
     const int height = 600;
     const int sample_count = 4;
@@ -29,7 +29,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* a 16x16 array texture with 3 layers and a checkerboard pattern */
+    // a 16x16 array texture with 3 layers and a checkerboard pattern
     uint32_t pixels[3][16][16];
     for (int layer=0, even_odd=0; layer<3; layer++) {
         for (int y = 0; y < 16; y++, even_odd++) {
@@ -40,8 +40,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                         case 1: pixels[layer][y][x] = 0x0000FF00; break;
                         case 2: pixels[layer][y][x] = 0x00FF0000; break;
                     }
-                }
-                else {
+                } else {
                     pixels[layer][y][x] = 0;
                 }
             }
@@ -58,9 +57,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
@@ -95,7 +94,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -109,14 +108,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices)
     });
 
-    /* resource bindings */
+    // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
     };
 
-    /* shader to sample from array texture */
+    // shader to sample from array texture
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -165,7 +164,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* create pipeline object */
+    // create pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -182,12 +181,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* default pass action */
+    // default pass action */
     sg_pass_action pass_action = {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -196,15 +195,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     float rx = 0.0f, ry = 0.0f;
     int frame_index = 0;
     while (d3d11_process_events()) {
-        /* rotated model matrix */
+        // rotated model matrix
         rx += 0.25f; ry += 0.5f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
-        /* model-view-projection matrix for vertex shader */
+        // model-view-projection matrix for vertex shader
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-        /* uv offsets */
+        // uv offsets
         float offset = (float)frame_index * 0.0001f;
         vs_params.offset0 = HMM_Vec2(-offset, offset);
         vs_params.offset1 = HMM_Vec2(offset, -offset);

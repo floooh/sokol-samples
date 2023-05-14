@@ -25,7 +25,7 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int width = 800;
     const int height = 600;
     d3d11_init(width, height, 1, L"Sokol MRT D3D11");
@@ -34,43 +34,70 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-
-    /* a render pass with 3 color attachment images, and a depth attachment image */
+    // a render pass with 3 color attachment images,3 msaa-resolve images and a depth attachment image
     const int offscreen_sample_count = 4;
-    sg_image_desc color_img_desc = {
-        .render_target = true,
+    const sg_image_desc color_img_desc = {
+        .render_attachment = true,
+        .width = width,
+        .height = height,
+        .sample_count = offscreen_sample_count
+    };
+    const sg_image_desc resolve_img_desc = {
+        .render_attachment = true,
         .width = width,
         .height = height,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .sample_count = offscreen_sample_count
+        .sample_count = 1,
     };
-    sg_image_desc depth_img_desc = color_img_desc;
-    depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    const sg_image_desc depth_img_desc = {
+        .render_attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = offscreen_sample_count,
+    };
     sg_pass_desc offscreen_pass_desc = {
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
+        .resolve_attachments = {
+            [0].image = sg_make_image(&resolve_img_desc),
+            [1].image = sg_make_image(&resolve_img_desc),
+            [2].image = sg_make_image(&resolve_img_desc),
+        },
         .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
     };
     sg_pass offscreen_pass = sg_make_pass(&offscreen_pass_desc);
 
-    /* a matching pass action with clear colors */
+    // a matching pass action with clear colors
     sg_pass_action offscreen_pass_action = {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
-        }
+            [0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f },
+            },
+            [1] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+            },
+            [2] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+            },
+        },
     };
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     vertex_t cube_vertices[] = {
-        /* pos + brightness */
+        // pos + brightness
         { -1.0f, -1.0f, -1.0f,   1.0f },
         {  1.0f, -1.0f, -1.0f,   1.0f },
         {  1.0f,  1.0f, -1.0f,   1.0f },
@@ -105,7 +132,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(cube_vertices)
     });
 
-    /* index buffer for the cube */
+    // index buffer for the cube
     uint16_t cube_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -119,7 +146,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(cube_indices)
     });
 
-    /* a shader to render a cube into MRT offscreen render targets */
+    // a shader to render a cube into MRT offscreen render targets
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -159,7 +186,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* pipeline object for the offscreen-rendered cube */
+    // pipeline object for the offscreen-rendered cube
     sg_pipeline offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
@@ -180,20 +207,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .sample_count = offscreen_sample_count
     });
 
-    /* resource bindings for offscreen rendering */
+    // resource bindings for offscreen rendering
     sg_bindings offscreen_bind = {
         .vertex_buffers[0] = cube_vbuf,
         .index_buffer = cube_ibuf
     };
 
-    /* a vertex buffer to render a fullscreen rectangle */
+    // a vertex buffer to render a fullscreen rectangle
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(quad_vertices)
     });
 
-    /* a shader to render a fullscreen rectangle, which 'composes'
-       the 3 offscreen render target images onto the screen */
+    // a shader to render a fullscreen rectangle, which 'composes'
+    // the 3 offscreen render target images onto the screen
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
         .attrs[0].sem_name = "POSITION",
         .vs.uniform_blocks[0].size = sizeof(params_t),
@@ -244,26 +271,25 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* the pipeline object for the fullscreen rectangle */
+    // the pipeline object for the fullscreen rectangle
     sg_pipeline fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format=SG_VERTEXFORMAT_FLOAT2,
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
 
-    /* resource bindings for the fullscreen quad */
+    // resource bindings for the fullscreen quad
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_buf,
         .fs_images = {
-            [0] = offscreen_pass_desc.color_attachments[0].image,
-            [1] = offscreen_pass_desc.color_attachments[1].image,
-            [2] = offscreen_pass_desc.color_attachments[2].image,
+            [0] = offscreen_pass_desc.resolve_attachments[0].image,
+            [1] = offscreen_pass_desc.resolve_attachments[1].image,
+            [2] = offscreen_pass_desc.resolve_attachments[2].image,
         }
     };
 
-    /* pipeline and resource bindings to render a debug visualizations
-       of the offscreen render target contents
-    */
+    // pipeline and resource bindings to render a debug visualizations
+    // of the offscreen render target contents
     sg_pipeline dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -294,21 +320,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
     sg_bindings dbg_bind = {
         .vertex_buffers[0] = quad_buf,
-        /* images will be filled right before rendering */
+        // images will be filled right before rendering
     };
 
-    /* default pass action, no clear needed, since whole screen is overwritten */
+    // default pass action, no clear needed, since whole screen is overwritten
     sg_pass_action default_pass_action = {
-        .colors = {
-            [0].action = SG_ACTION_DONTCARE,
-            [1].action = SG_ACTION_DONTCARE,
-            [2].action = SG_ACTION_DONTCARE
-        },
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    /* view-projection matrix for the offscreen-rendered cube */
+    // view-projection matrix for the offscreen-rendered cube
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -324,7 +346,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         offscreen_params.mvp = HMM_MultiplyMat4(view_proj, model);
         params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
 
-        /* render cube into MRT offscreen render targets */
+        // render cube into MRT offscreen render targets
         sg_begin_pass(offscreen_pass, &offscreen_pass_action);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
@@ -332,8 +354,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_draw(0, 36, 1);
         sg_end_pass();
 
-        /* render fullscreen quad with the 'composed image', plus 3 small
-           debug-views with the content of the offscreen render targets */
+        // render fullscreen quad with the 'composed image', plus 3 small
+        // debug-views with the content of the offscreen render targets
         sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
@@ -342,7 +364,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs_images[0] = offscreen_pass_desc.color_attachments[i].image;
+            dbg_bind.fs_images[0] = offscreen_pass_desc.resolve_attachments[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }

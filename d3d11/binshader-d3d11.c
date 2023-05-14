@@ -13,14 +13,14 @@
 #include "binshader_vs.h"
 #include "binshader_fs.h"
 
-/* a uniform block with a model-view-projection matrix */
+// a uniform block with a model-view-projection matrix
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int sample_count = 4;
     const int width = 800;
     const int height = 600;
@@ -30,9 +30,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* positions        colors */
+        // positions        colors
         -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -67,7 +67,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(vertices)
     });
 
-    /* cube indices */
+    // cube indices
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -81,13 +81,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices)
     });
 
-    /* define resource bindings */
+    // define resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* create shader */
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -102,7 +102,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* a pipeline object */
+    // a pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -119,17 +119,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* default pass action (clear to gray) */
+    // default pass action (clear to gray)
     sg_pass_action pass_action = { 0 };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     float rx = 0.0f, ry = 0.0f;
     while (d3d11_process_events()) {
-        /* model-view-proj matrix for vertex shader */
+        // model-view-proj matrix for vertex shader
         vs_params_t vs_params;
         rx += 1.0f; ry += 2.0f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
