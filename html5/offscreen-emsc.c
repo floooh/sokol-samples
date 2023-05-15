@@ -39,7 +39,7 @@ typedef struct {
     hmm_mat4 mvp;
 } params_t;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL context */
@@ -242,11 +242,12 @@ int main() {
     };
 
     /* hand off control to browser loop */
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     /* prepare the uniform block with the model-view-projection matrix,
         we just use the same matrix for the offscreen- and default-pass */
     state.rx += 1.0f; state.ry += 2.0f;
@@ -278,4 +279,5 @@ void draw() {
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }

@@ -27,7 +27,7 @@ typedef struct {
     float r, g, b;
 } vertex_t;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL context */
@@ -95,11 +95,12 @@ int main() {
         }
     });
 
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
     /* render triangle */
@@ -114,4 +115,5 @@ void draw() {
     sg_draw(0, 6, 1);
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }

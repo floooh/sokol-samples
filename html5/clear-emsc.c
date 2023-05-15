@@ -13,7 +13,7 @@
 
 sg_pass_action pass_action;
 
-void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL1 context, no antialiasing */
@@ -29,11 +29,12 @@ int main() {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
 
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     /* animate clear colors */
     float g = pass_action.colors[0].clear_value.g + 0.01f;
     if (g > 1.0f) g = 0.0f;
@@ -43,4 +44,5 @@ void draw() {
     sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }

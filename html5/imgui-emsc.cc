@@ -37,7 +37,7 @@ typedef struct {
     ImVec2 disp_size;
 } vs_params_t;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 static void draw_imgui(ImDrawData*);
 
 int main() {
@@ -237,12 +237,13 @@ int main() {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 // the main draw loop, this draw the standard ImGui demo windows
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(emsc_width()), float(emsc_height()));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
@@ -294,6 +295,7 @@ void draw() {
     draw_imgui(ImGui::GetDrawData());
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }
 
 // imgui draw callback

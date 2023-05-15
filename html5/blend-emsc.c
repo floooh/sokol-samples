@@ -33,7 +33,7 @@ static struct {
     sg_pass_action pass_action;
 } state;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL context */
@@ -186,11 +186,12 @@ int main() {
     }
 
     /* hand off control to browser loop */
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     /* compute view-proj matrix from current width/height */
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -226,4 +227,5 @@ void draw() {
     sg_commit();
     state.r += 0.6f;
     state.fs_params.tick += 1.0f;
+    return EM_TRUE;
 }

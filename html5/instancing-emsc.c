@@ -36,7 +36,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL context */
@@ -138,12 +138,13 @@ int main() {
     });
 
     /* hand off control to browser loop */
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 /* draw one frame */
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     const float frame_time = 1.0f / 60.0f;
 
     /* emit new particles */
@@ -195,4 +196,5 @@ void draw() {
     sg_draw(0, 24, state.cur_num_particles);
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }

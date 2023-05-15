@@ -31,7 +31,7 @@ typedef struct {
 #define IMG_WIDTH (16)
 #define IMG_HEIGHT (16)
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL2 context */
@@ -201,11 +201,12 @@ int main() {
         .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     /* rotated model matrix */
     state.rx += 0.25f; state.ry += 0.5f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -233,4 +234,5 @@ void draw() {
     sg_end_pass();
     sg_commit();
     state.frame_index++;
+    return EM_TRUE;
 }
