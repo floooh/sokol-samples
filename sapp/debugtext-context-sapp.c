@@ -165,7 +165,7 @@ static void init(void) {
 
         // the render target texture, render pass
         state.passes[i].img = sg_make_image(&(sg_image_desc){
-            .render_attachment = true,
+            .render_target = true,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .pixel_format = OFFSCREEN_PIXELFORMAT,

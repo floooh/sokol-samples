@@ -59,14 +59,14 @@ static void init(void) {
 
     // create all the textures and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
+        .render_target = true,
         .width = 64,
         .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 1,
     });
     sg_image msaa_depth_img = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
+        .render_target = true,
         .width = 64,
         .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -146,7 +146,7 @@ static void init(void) {
             // create non-MSAA render target, pipeline state and pass
             if (sg_query_pixelformat(fmt).render) {
                 state.fmt[i].render = sg_make_image(&(sg_image_desc){
-                    .render_attachment = true,
+                    .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -164,7 +164,7 @@ static void init(void) {
             // create non-MSAA blend render target, pipeline states and pass
             if (sg_query_pixelformat(fmt).blend) {
                 state.fmt[i].blend = sg_make_image(&(sg_image_desc){
-                    .render_attachment = true,
+                    .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -180,14 +180,14 @@ static void init(void) {
             // create MSAA render target, resolve texture and matching pipeline state
             if (sg_query_pixelformat(fmt).msaa) {
                 state.fmt[i].msaa = sg_make_image(&(sg_image_desc){
-                    .render_attachment = true,
+                    .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
                 });
                 state.fmt[i].resolve = sg_make_image(&(sg_image_desc){
-                    .render_attachment = true,
+                    .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,

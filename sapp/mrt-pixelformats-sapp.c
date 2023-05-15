@@ -74,7 +74,7 @@ static void init(void) {
 
         // create 3 render target textures with different formats
         sg_image_desc img_desc = {
-            .render_attachment = true,
+            .render_target = true,
             .pixel_format = DEPTH_PIXEL_FORMAT,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,

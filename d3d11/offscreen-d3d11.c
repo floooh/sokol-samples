@@ -29,7 +29,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // create one color and one depth render target image
     sg_image_desc img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = 512,
         .height = 512,
         .min_filter = SG_FILTER_LINEAR,

@@ -47,13 +47,13 @@ int main() {
     /* a render pass with 3 color attachment images, 3 msaa-resolve images, and a depth attachment image */
     const int offscreen_sample_count = 4;
     const sg_image_desc color_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
         .sample_count = offscreen_sample_count
     };
     const sg_image_desc resolve_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
         .min_filter = SG_FILTER_LINEAR,
@@ -63,7 +63,7 @@ int main() {
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

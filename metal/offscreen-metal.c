@@ -53,14 +53,14 @@ static void init(void) {
 
     // a render pass with one color-, one resolve- and one depth-attachment image
     sg_image color_img = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
+        .render_target = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = SAMPLE_COUNT,
     });
     sg_image resolve_img = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
+        .render_target = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -69,7 +69,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
     });
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .render_attachment = true,
+        .render_target = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

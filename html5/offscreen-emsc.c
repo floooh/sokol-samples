@@ -52,7 +52,7 @@ int main() {
     /* create one color- and one depth-rendertarget image */
     const int offscreen_sample_count = 1;
     sg_image_desc img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = 512,
         .height = 512,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

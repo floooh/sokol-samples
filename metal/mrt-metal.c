@@ -50,7 +50,7 @@ static void init(void) {
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
     sg_image_desc color_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
         .min_filter = SG_FILTER_LINEAR,

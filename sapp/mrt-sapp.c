@@ -53,7 +53,7 @@ void create_offscreen_pass(int width, int height) {
 
     // create offscreen rendertarget images and pass
     sg_image_desc color_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = width,
         .height = height,
         .min_filter = SG_FILTER_LINEAR,

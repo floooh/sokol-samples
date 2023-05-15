@@ -82,7 +82,7 @@ void init(void) {
     // create a cubemap as render target, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_CUBE,
-        .render_attachment = true,
+        .render_target = true,
         .width = 1024,
         .height = 1024,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
@@ -93,7 +93,7 @@ void init(void) {
     // ... and a matching depth-buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
-        .render_attachment = true,
+        .render_target = true,
         .width = 1024,
         .height = 1024,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

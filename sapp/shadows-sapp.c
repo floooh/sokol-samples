@@ -55,7 +55,7 @@ void init(void) {
 
     // a render pass with one color- and one depth-attachment image
     sg_image_desc img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

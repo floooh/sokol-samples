@@ -62,13 +62,13 @@ int main() {
     const int height = 480;
     const int offscreen_sample_count = 4;
     const sg_image_desc color_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = width,
         .height = height,
         .sample_count = offscreen_sample_count
     };
     const sg_image_desc resolve_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = width,
         .height = height,
         .min_filter = SG_FILTER_LINEAR,
@@ -78,7 +78,7 @@ int main() {
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
-        .render_attachment = true,
+        .render_target = true,
         .width = width,
         .height = height,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
