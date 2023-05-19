@@ -179,6 +179,7 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
         .width = width_height,
         .height = width_height,
         .pixel_format = fmt,
+        .sample_count = 1,
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
     });
@@ -186,6 +187,7 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
         .ctx = sspine_make_context(&(sspine_context_desc){
             .color_format = fmt,
             .depth_format = SG_PIXELFORMAT_NONE,
+            .sample_count = 1,
         }),
         .img = img,
         .pass = sg_make_pass(&(sg_pass_desc){
@@ -194,7 +196,9 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
             }
         }),
         .pass_action = {
-            .colors[0] = { .action = SG_ACTION_CLEAR, .value = clear_color },
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = clear_color },
         },
     };
 }

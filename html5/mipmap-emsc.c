@@ -49,7 +49,7 @@ static struct {
     float r;
 } state;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* try to setup WebGL2 context (for the mipmap min/max lod stuff) */
@@ -169,11 +169,12 @@ int main() {
     });
 
     /* hand off control to browser loop */
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     state.r += 0.1f;
 
     /* view-projection matrix */
@@ -199,4 +200,5 @@ void draw() {
     }
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }

@@ -320,7 +320,7 @@ static void init(void) {
 
     // initialize clear color
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     // initialize camera controller
@@ -516,8 +516,7 @@ static void input(const sapp_event* ev) {
 static void skeleton_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz_load_skeleton(state.ozz, response->data.ptr, response->data.size);
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         ozz_set_load_failed(state.ozz);
     }
 }
@@ -525,8 +524,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
 static void animation_data_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         ozz_load_animation(state.ozz, response->data.ptr, response->data.size);
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         ozz_set_load_failed(state.ozz);
     }
 }
@@ -540,8 +538,7 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
                 state.variations[i].bind.index_buffer = ozz_index_buffer(state.ozz);
             }
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         ozz_set_load_failed(state.ozz);
     }
 }
@@ -663,8 +660,7 @@ static void draw_ui(void) {
     if (igBegin("Controls", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
         if (ozz_load_failed(state.ozz)) {
             igText("Failed loading character data!");
-        }
-        else {
+        } else {
             const ImU32 green = 0xFF00FF00;
             igText("Camera Controls:");
             igText("  LMB + Mouse Move: Look");

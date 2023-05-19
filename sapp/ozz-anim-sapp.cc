@@ -107,8 +107,8 @@ static void init(void) {
     simgui_setup(&imdesc);
 
     // initialize pass action for default-pass
-    state.pass_action.colors[0].action = SG_ACTION_CLEAR;
-    state.pass_action.colors[0].value = { 0.0f, 0.1f, 0.2f, 1.0f };
+    state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    state.pass_action.colors[0].clear_value = { 0.0f, 0.1f, 0.2f, 1.0f };
 
     // initialize camera helper
     camera_desc_t camdesc = { };

@@ -29,7 +29,10 @@ static struct {
 } state = {
     .num_windows = 16,
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f }
+        }
     }
 };
 

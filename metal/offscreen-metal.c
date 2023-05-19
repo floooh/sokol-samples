@@ -23,48 +23,67 @@ static struct {
     float rx, ry;
     hmm_mat4 view_proj;
 } state = {
-    /* offscreen: clear to black */
+    // offscreen: clear to black, don't store MSAA surface content
     .offscreen_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .store_action = SG_STOREACTION_DONTCARE,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     },
-    /* display: clear to blue-ish */
+    // display: clear to blue-ish
     .default_pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 1.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f }
+        }
     }
 };
 
-/* vertex-shader params (just a model-view-projection matrix) */
+// vertex-shader params (just a model-view-projection matrix)
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
 static void init(void) {
-    /* setup sokol */
+    // setup sokol
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* a render pass with one color- and one depth-attachment image */
-    sg_image_desc img_desc = {
+    // a render pass with one color-, one resolve- and one depth-attachment image
+    sg_image color_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .sample_count = SAMPLE_COUNT,
+    });
+    sg_image resolve_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 256,
+        .height = 256,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .sample_count = 1,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    sg_image depth_img = sg_make_image(&img_desc);
+    });
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 256,
+        .height = 256,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = SAMPLE_COUNT,
+    });
     state.offscreen_pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = color_img,
+        .resolve_attachments[0].image = resolve_img,
         .depth_stencil_attachment.image = depth_img
     });
 
-    /* cube vertex buffer with positions, colors and tex coords */
+    // cube vertex buffer with positions, colors and tex coords
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.5f, 0.5f, 1.0f,     1.0f, 1.0f,
@@ -99,7 +118,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* an index buffer for the cube */
+    // an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -113,20 +132,20 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* the offscreen resource bindings for rendering a non-textured cube into render target */
+    // the offscreen resource bindings for rendering a non-textured cube into render target
     state.offscreen_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* and the bindings to render a textured cube, using the offscreen render target as texture */
+    // and the bindings to render a textured cube, using the msaa-resolve image as texture
     state.default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = color_img
+        .fs_images[0] = resolve_img
     };
 
-    /* a shader for a non-textured cube, rendered in the offscreen pass */
+    // a shader for a non-textured cube, rendered in the offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source =
@@ -157,8 +176,8 @@ static void init(void) {
             "};\n"
     });
 
-    /* ...and another shader for the display-pass, rendering a textured cube
-       using the offscreen render target as texture */
+    // ...and another shader for the display-pass, rendering a textured cube
+    // using the offscreen render target as texture */
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.source =
@@ -197,7 +216,7 @@ static void init(void) {
             "};\n"
     });
 
-    /* pipeline-state-object for offscreen-rendered cube, don't need texture coord here */
+    // pipeline-state-object for offscreen-rendered cube, don't need texture coord here
     state.offscreen_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             /* need to set stride to skip uv-coords gap */
@@ -210,6 +229,7 @@ static void init(void) {
         .shader = offscreen_shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = SAMPLE_COUNT,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
@@ -218,7 +238,7 @@ static void init(void) {
         .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8
     });
 
-    /* and another pipeline-state-object for the default pass */
+    // and another pipeline-state-object for the default pass
     state.default_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -229,6 +249,7 @@ static void init(void) {
         },
         .shader = default_shd,
         .index_type = SG_INDEXTYPE_UINT16,
+        .sample_count = SAMPLE_COUNT,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
@@ -236,15 +257,15 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    /* compute model-view-projection matrix for vertex shader, this will be
-       used both for the offscreen-pass, and the display-pass */
+    // compute model-view-projection matrix for vertex shader, this will be
+    // used both for the offscreen-pass, and the display-pass
     vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -252,7 +273,7 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
-    /* the offscreen pass, rendering an rotating, untextured cube into a render target image */
+    // the offscreen pass, rendering an rotating, untextured cube into a render target image
     sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
@@ -260,8 +281,8 @@ static void frame(void) {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    /* and the display-pass, rendering a rotating, textured cube, using the
-       previously rendered offscreen render-target as texture */
+    // and the display-pass, rendering a rotating, textured cube, using the
+    // previously rendered offscreen render-target as texture
     sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.default_pip);
     sg_apply_bindings(&state.default_bind);

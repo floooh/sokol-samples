@@ -12,13 +12,13 @@ static struct {
 } state;
 
 static void init(void) {
-    /* setup sokol */
+    // setup sokol
     sg_setup(&(sg_desc){
         .context = osx_get_context(),
         .logger.func = slog_func,
     });
 
-    /* a vertex buffer */
+    // a vertex buffer
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -30,14 +30,14 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* an index buffer with 2 triangles */
+    // an index buffer with 2 triangles
     const uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .data = SG_RANGE(indices)
     });
 
-    /* a shader (use separate shader sources here */
+    // a shader (use separate shader sources here
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#include <metal_stdlib>\n"
@@ -68,12 +68,12 @@ static void init(void) {
             "};\n"
     });
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
-            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
+            // test to provide attr offsets, but no buffer stride, this should compute the stride
             .attrs = {
                 [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }

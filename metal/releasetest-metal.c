@@ -16,7 +16,7 @@ static struct {
 } state;
 
 static void init(void) {
-    /* setup sokol, keep pool size small so the bug would trigger earlier */
+    // setup sokol, keep pool size small so the bug would trigger earlier
     sg_setup(&(sg_desc){
         .buffer_pool_size = 4,
         .image_pool_size = 2,
@@ -29,9 +29,9 @@ static void init(void) {
 }
 
 static void frame(void) {
-    /* create and destroy resource each frame, don't do this in real-world code! */
+    // create and destroy resource each frame, don't do this in real-world code!
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     float vertices[] = {
         // positions        colors
          0.0f, 0.5f, 0.5f,  1.0f, 1.0f, 0.0f, 1.0f,
@@ -42,7 +42,7 @@ static void frame(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader pair, compiled from source code */
+    // a shader pair, compiled from source code
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         /*
             The shader main() function cannot be called 'main' in
@@ -75,7 +75,7 @@ static void frame(void) {
             "};\n"
     });
 
-    /* create a pipeline object */
+    // create a pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -86,7 +86,7 @@ static void frame(void) {
         .shader = shd
     });
 
-    /* draw one frame */
+    // draw one frame
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -94,7 +94,7 @@ static void frame(void) {
     sg_end_pass();
     sg_commit();
 
-    /* release the resource we created above */
+    // release the resource we created above
     sg_destroy_buffer(state.bind.vertex_buffers[0]);
     sg_destroy_pipeline(state.pip);
     sg_destroy_shader(shd);

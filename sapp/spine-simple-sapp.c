@@ -80,7 +80,7 @@ static void init(void) {
     // Setup a sokol-gfx pass action to clear the default framebuffer to black
     // (used in sg_begin_default_pass() down in the frame callback)
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     // Start loading the spine atlas and skeleton file. This happens asynchronously
@@ -120,8 +120,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         // loading the atlas data failed
         state.load_status.failed = true;
     }
@@ -136,8 +135,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
     }
 }
@@ -252,8 +250,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 }
             });
             stbi_image_free(pixels);
-        }
-        else {
+        } else {
             // decoding has failed
             state.load_status.failed = true;
             // image decoding has failed, it's not strictly necessary, but
@@ -262,8 +259,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
             // in the 'alloc' state)
             sg_fail_image(img_info.sgimage);
         }
-    }
-    else {
+    } else {
         state.load_status.failed = true;
         sg_fail_image(img_info.sgimage);
     }

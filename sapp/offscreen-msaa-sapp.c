@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
-//  offscreen-sapp.c
-//  Render to a offscreen rendertarget texture without multisampling, and
-//  use this texture for rendering to the display (with multisampling).
+//  offscreen-msaa-sapp.c
+//  Render to a multisampled offscreen rendertarget texture, resolve into
+//  a separate non-multisampled texture, and use this as sampled texture
+//  in the display render pass.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -13,10 +14,13 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
-#include "offscreen-sapp.glsl.h"
+#include "offscreen-msaa-sapp.glsl.h"
 
-#define OFFSCREEN_PIXEL_FORMAT (SG_PIXELFORMAT_RGBA8)
-#define OFFSCREEN_SAMPLE_COUNT (1)
+#define OFFSCREEN_WIDTH (256)
+#define OFFSCREEN_HEIGHT (256)
+#define OFFSCREEN_COLOR_FORMAT (SG_PIXELFORMAT_RGBA8)
+#define OFFSCREEN_DEPTH_FORMAT (SG_PIXELFORMAT_DEPTH)
+#define OFFSCREEN_SAMPLE_COUNT (4)
 #define DISPLAY_SAMPLE_COUNT (4)
 
 static struct {
@@ -31,8 +35,8 @@ static struct {
         sg_pipeline pip;
         sg_bindings bind;
     } display;
-    sshape_element_range_t donut;
     sshape_element_range_t sphere;
+    sshape_element_range_t donut;
     float rx, ry;
 } state;
 
@@ -43,69 +47,95 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // default pass action: clear to blue-ish
+    // default pass action: clear to green-ish
     state.display.pass_action = (sg_pass_action) {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.25f, 0.45f, 0.65f, 1.0f }
-        }
+            .clear_value = { 0.25f, 0.65f, 0.45f, 1.0f }
+        },
     };
 
     // offscreen pass action: clear to grey
+    // NOTE: we don't need to store the MSAA render target content, because
+    // it will be resolved into a non-MSAA texture at the end of the
+    // offscreen pass
     state.offscreen.pass_action = (sg_pass_action) {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
+            .store_action = SG_STOREACTION_DONTCARE,
             .clear_value = { 0.25f, 0.25f, 0.25f, 1.0f }
         }
     };
 
-    // create a render pass object with one color and one depth render attachment image
-    // NOTE: we need to explicitly set the sample count in the attachment image objects,
-    // because the offscreen pass uses a different sample count than the display render pass
-    // (the display render pass is multi-sampled, the offscreen pass is not)
-    sg_image_desc img_desc = {
+    // create a MSAA render target image, this will be rendered to
+    // in the offscreen render pass
+    const sg_image msaa_image = sg_make_image(&(sg_image_desc){
         .render_target = true,
-        .width = 256,
-        .height = 256,
-        .pixel_format = OFFSCREEN_PIXEL_FORMAT,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_COLOR_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "msaa-image"
+    });
+
+    // create a depth-buffer image for the offscreen pass,
+    // this needs the same dimensions and sample count as the
+    // render target image
+    const sg_image depth_image = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "depth-image",
+    });
+
+    // create a matching resolve-image where the MSAA-rendered content will
+    // be resolved to at the end of the offscreen pass, and which will be
+    // texture-sampled in the display pass
+    const sg_image resolve_image = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_COLOR_FORMAT,
+        .sample_count = 1,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
-        .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .label = "color-image"
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    img_desc.label = "depth-image";
-    sg_image depth_img = sg_make_image(&img_desc);
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img,
-        .label = "offscreen-pass"
+        .label = "resolve-image",
     });
 
-    // a donut shape which is rendered into the offscreen render target, and
-    // a sphere shape which is rendered into the default framebuffer
+    // finally, create the offscreen render pass object, by setting a resolve-attachment,
+    // an MSAA-resolve operation will happen from the color attachment into the
+    // resolve attachment in sg_end_pass()
+    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
+        .color_attachments[0].image = msaa_image,
+        .resolve_attachments[0].image = resolve_image,
+        .depth_stencil_attachment.image = depth_image,
+        .label = "offscreen-pass",
+    });
+
+    // create a couple of meshes
     sshape_vertex_t vertices[4000] = { 0 };
     uint16_t indices[24000] = { 0 };
     sshape_buffer_t buf = {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer  = SSHAPE_RANGE(indices),
     };
-    buf = sshape_build_torus(&buf, &(sshape_torus_t){
-        .radius = 0.5f,
-        .ring_radius = 0.3f,
-        .sides = 20,
-        .rings = 36,
-    });
-    state.donut = sshape_element_range(&buf);
     buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
         .radius = 0.5f,
-        .slices = 72,
-        .stacks = 40
+        .slices = 18,
+        .stacks = 10
     });
     state.sphere = sshape_element_range(&buf);
+    buf = sshape_build_torus(&buf, &(sshape_torus_t) {
+        .radius = 0.3f,
+        .ring_radius = 0.2f,
+        .sides = 40,
+        .rings = 72,
+    });
+    state.donut = sshape_element_range(&buf);
 
     sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
     sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
@@ -114,16 +144,13 @@ static void init(void) {
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
-    // pipeline-state-object for offscreen-rendered donut
-    // NOTE: we need to explicitly set the sample_count here because
-    // the offscreen pass uses a different sample count than the default
-    // pass (the display pass is multi-sampled, but the offscreen pass isn't)
+    // a pipeline object for the offscreen-rendered box
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {
                 [ATTR_vs_offscreen_position] = sshape_position_attr_desc(),
-                [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc()
+                [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc(),
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -131,45 +158,46 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .depth = {
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .pixel_format = OFFSCREEN_DEPTH_FORMAT,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
-        .colors[0].pixel_format = OFFSCREEN_PIXEL_FORMAT,
-        .label = "offscreen-pipeline"
+        .colors[0].pixel_format = OFFSCREEN_COLOR_FORMAT,
+        .label = "offscreen-pipeline",
     });
 
-    // and another pipeline-state-object for the default pass
+    // another pipeline object for the display pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0] = sshape_buffer_layout_desc(),
             .attrs = {
-                [ATTR_vs_default_position] = sshape_position_attr_desc(),
-                [ATTR_vs_default_normal] = sshape_normal_attr_desc(),
-                [ATTR_vs_default_texcoord0] = sshape_texcoord_attr_desc()
-            }
+                [ATTR_vs_display_position] = sshape_position_attr_desc(),
+                [ATTR_vs_display_normal] = sshape_normal_attr_desc(),
+                [ATTR_vs_display_texcoord0] = sshape_texcoord_attr_desc(),
+            },
         },
-        .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
+        .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true
+            .write_enabled = true,
         },
-        .label = "default-pipeline"
+        .label = "display-pipeline",
     });
 
-    // the resource bindings for rendering a non-textured shape into offscreen render target
-    state.offscreen.bind = (sg_bindings){
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf
-    };
-
-    // resource bindings to render a textured shape, using the offscreen render target as texture
-    state.display.bind = (sg_bindings){
+    // the resource bindings for rendering a non-textured shape in the offscreen pass
+    state.offscreen.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_tex] = color_img
+    };
+
+    // the resource bindings for rendering a texture shape in the display pass,
+    // using the msaa-resolved image as texture
+    state.display.bind = (sg_bindings) {
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
+        .fs_images[SLOT_tex] = resolve_image,
     };
 }
 
@@ -191,7 +219,8 @@ static void frame(void) {
     state.ry += 2.0f * t;
     vs_params_t vs_params;
 
-    // the offscreen pass, rendering an rotating, untextured donut into a render target image
+    // the offscreen pass, rendering an rotating, untextured sphere into an msaa render target image,
+    // which is then resolved into a regular non-msaa texture at the end of the pass
     vs_params = (vs_params_t) {
         .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
     };
@@ -199,11 +228,11 @@ static void frame(void) {
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
-    sg_draw(state.donut.base_element, state.donut.num_elements, 1);
+    sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
     sg_end_pass();
 
-    // and the display-pass, rendering a rotating textured sphere which uses the
-    // previously rendered offscreen render-target as texture
+    // and the display-pass, rendering a rotating textured donut which uses the
+    // previously msaa-resolved texture
     int w = sapp_width();
     int h = sapp_height();
     vs_params = (vs_params_t) {
@@ -213,7 +242,7 @@ static void frame(void) {
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
-    sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
+    sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();
 
@@ -235,7 +264,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = DISPLAY_SAMPLE_COUNT,
-        .window_title = "Offscreen Rendering (sokol-app)",
+        .window_title = "Offscreen MSAA Rendering (sokol-app)",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

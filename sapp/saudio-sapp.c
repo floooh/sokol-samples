@@ -24,7 +24,10 @@ void init(void) {
     });
     saudio_setup(&(saudio_desc){ .logger.func = slog_func });
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.5f, 0.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 1.0f, 0.5f, 0.0f, 1.0f }
+        }
     };
 }
 
@@ -35,8 +38,7 @@ void frame(void) {
     for (int i = 0; i < num_frames; i++) {
         if (state.even_odd++ & (1<<5)) {
             s = 0.05f;
-        }
-        else {
+        } else {
             s = -0.05f;
         }
         state.samples[state.sample_pos++] = s;

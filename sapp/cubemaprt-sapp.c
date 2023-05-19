@@ -13,12 +13,7 @@
 #include <stddef.h> /* offsetof */
 #include "cubemaprt-sapp.glsl.h"
 
-/* change the OFFSCREEN_SAMPLE_COUNT between 1 and 4 to test the
-   different cubemap-rendering-paths in sokol (one rendering to a
-   separate MSAA surface, and MSAA-resolve in sg_end_pass(), and
-   the other (without MSAA) rendering directly to the cubemap faces
-*/
-#define OFFSCREEN_SAMPLE_COUNT (4)
+#define OFFSCREEN_SAMPLE_COUNT (1)
 #define DISPLAY_SAMPLE_COUNT (4)
 #define NUM_SHAPES (32)
 
@@ -32,20 +27,20 @@ typedef struct {
     float angular_velocity;
 } shape_t;
 
-/* vertex (normals for simple point lighting) */
+// vertex (normals for simple point lighting)
 typedef struct {
     float pos[3];
     float norm[3];
 } vertex_t;
 
-/* a mesh consists of a vertex- and index-buffer */
+// a mesh consists of a vertex- and index-buffer
 typedef struct {
     sg_buffer vbuf;
     sg_buffer ibuf;
     int num_elements;
 } mesh_t;
 
-/* the entire application state */
+// the entire application state
 typedef struct {
     sg_image cubemap;
     sg_pass offscreen_pass[SG_CUBEFACE_NUM];
@@ -84,7 +79,7 @@ void init(void) {
     });
     __dbgui_setup(DISPLAY_SAMPLE_COUNT);
 
-    /* create a cubemap as render target, and a matching depth-buffer texture */
+    // create a cubemap as render target, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_CUBE,
         .render_target = true,
@@ -95,7 +90,7 @@ void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .label = "cubemap-color-rt"
     });
-    /* ... and a matching depth-buffer image */
+    // ... and a matching depth-buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
         .render_target = true,
@@ -106,7 +101,7 @@ void init(void) {
         .label = "cubemap-depth-rt"
     });
 
-    /* create 6 pass objects, one for each cubemap face */
+    // create 6 pass objects, one for each cubemap face
     for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
         app.offscreen_pass[i] = sg_make_pass(&(sg_pass_desc){
             .color_attachments[0] = {
@@ -118,19 +113,25 @@ void init(void) {
         });
     }
 
-    /* pass action for offscreen pass (clear to black) */
+    // pass action for offscreen pass (clear to black)
     app.offscreen_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 0.5f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.5f, 0.5f, 0.5f, 1.0f }
+        }
     };
-    /* pass action for default pass (clear to grey) */
+    // pass action for default pass (clear to grey)
     app.display_pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.75f, 0.75f, 0.75f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.75f, 0.75f, 0.75f, 1.0f }
+        }
     };
 
-    /* vertex- and index-buffers for cube  */
+    // vertex- and index-buffers for cube
     app.cube = make_cube_mesh();
 
-    /* same vertex layout for all shaders */
+    // same vertex layout for all shaders
     sg_layout_desc layout = {
         .attrs = {
             [ATTR_vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -138,7 +139,7 @@ void init(void) {
         }
     };
 
-    /* shader and pipeline objects for offscreen-rendering */
+    // shader and pipeline objects for offscreen-rendering
     sg_pipeline_desc pip_desc = {
         .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = layout,
@@ -158,7 +159,7 @@ void init(void) {
     pip_desc.label = "display-shapes-pipeline";
     app.display_shapes_pip = sg_make_pipeline(&pip_desc);
 
-    /* shader and pipeline objects for display-rendering */
+    // shader and pipeline objects for display-rendering
     app.display_cube_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
         .layout = layout,
@@ -171,11 +172,11 @@ void init(void) {
         },
     });
 
-    /* 1:1 aspect ration projection matrix for offscreen rendering */
+    // 1:1 aspect ration projection matrix for offscreen rendering
     app.offscreen_proj = HMM_Perspective(90.0f, 1.0f, 0.01f, 100.0f);
     app.light_dir = HMM_Vec4v(HMM_NormalizeVec3(HMM_Vec3(-0.75f, 1.0f, 0.0f)), 0.0f);
 
-    /* setup initial state for the orbiting cubes */
+    // setup initial state for the orbiting cubes
     for (int i = 0; i < NUM_SHAPES; i++) {
         app.shapes[i].color = HMM_Vec4(rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), 1.0f);
         app.shapes[i].axis = HMM_NormalizeVec3(HMM_Vec3(rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f)));
@@ -186,10 +187,10 @@ void init(void) {
 }
 
 void frame(void) {
-    /* compute a frame time multiplier */
+    // compute a frame time multiplier
     const float t = (float)sapp_frame_duration();
 
-    /* update the little cubes that are reflected in the big cube */
+    // update the little cubes that are reflected in the big cube
     for (int i = 0; i < NUM_SHAPES; i++) {
         app.shapes[i].angle += app.shapes[i].angular_velocity * t;
         hmm_mat4 scale = HMM_Scale(HMM_Vec3(0.25f, 0.25f, 0.25f));
@@ -198,10 +199,9 @@ void frame(void) {
         app.shapes[i].model = HMM_MultiplyMat4(rot, HMM_MultiplyMat4(trans, scale));
     }
 
-    /* offscreen pass which renders the environment cubemap */
-    /* FIXME: these values work for Metal and D3D11, not for GL, because
-       of the different handedness of the cubemap coordinate systems
-    */
+    // offscreen pass which renders the environment cubemap
+    // FIXME: these values work for Metal and D3D11, not for GL, because
+    // of the different handedness of the cubemap coordinate systems
     #if defined(SOKOL_METAL) || defined(SOKOL_D3D11)
     hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
         { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
@@ -211,7 +211,7 @@ void frame(void) {
         { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
     };
-    #else /* GL */
+    #else // GL
     hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
         { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
@@ -229,7 +229,7 @@ void frame(void) {
         sg_end_pass();
     }
 
-    /* render the default pass */
+    // render the default pass
     const int w = sapp_width();
     const int h = sapp_height();
     sg_begin_default_pass(&app.display_pass_action, sapp_width(), sapp_height());
@@ -239,10 +239,10 @@ void frame(void) {
     hmm_mat4 view = HMM_LookAt(eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* render the orbiting cubes */
+    // render the orbiting cubes
     draw_cubes(app.display_shapes_pip, eye_pos, view_proj);
 
-    /* render a big cube in the middle with environment mapping */
+    // render a big cube in the middle with environment mapping
     app.rx += 0.1f * 60.0f * t; app.ry += 0.2f * 60.0f * t;
     hmm_mat4 rxm = HMM_Rotate(app.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(app.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));

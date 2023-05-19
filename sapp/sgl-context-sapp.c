@@ -51,7 +51,10 @@ static void init(void) {
 
     // pass action and pipeline for the default render pass
     state.display.pass_action = (sg_pass_action) {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.5f, 0.7f, 1.0f, 1.0f } }
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.5f, 0.7f, 1.0f, 1.0f }
+        }
     };
     state.display.sgl_pip = sgl_context_make_pipeline(sgl_default_context(), &(sg_pipeline_desc){
         .cull_mode = SG_CULLMODE_BACK,
@@ -87,7 +90,10 @@ static void init(void) {
         .color_attachments[0].image = state.offscreen.img
     });
     state.offscreen.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } },
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
+        },
     };
 }
 

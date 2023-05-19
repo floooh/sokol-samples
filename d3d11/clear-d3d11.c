@@ -9,7 +9,7 @@
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup the D3D11 app wrapper */
+    // setup the D3D11 app wrapper
     d3d11_init(640, 480, 1, L"Sokol Clear D3D11");
 
     /* setup sokol */
@@ -18,16 +18,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* initial pass action: clear to red */
+    // initial pass action: clear to red
     sg_pass_action pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 1.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
 
-    /* draw loop */
+    // draw loop
     while (d3d11_process_events()) {
-        float g = pass_action.colors[0].value.g + 0.01f;
+        float g = pass_action.colors[0].clear_value.g + 0.01f;
         if (g > 1.0f) g = 0.0f;
-        pass_action.colors[0].value.g = g;
+        pass_action.colors[0].clear_value.g = g;
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_end_pass();
         sg_commit();

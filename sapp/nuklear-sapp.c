@@ -53,7 +53,7 @@ void frame(void) {
     // the sokol_gfx draw pass
     const sg_pass_action pass_action = {
         .colors[0] = {
-            .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.5f, 0.7f, 1.0f }
+            .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.7f, 1.0f }
         }
     };
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());

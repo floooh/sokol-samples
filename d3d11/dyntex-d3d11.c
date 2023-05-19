@@ -26,7 +26,7 @@ static void game_of_life_update();
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int width = 800;
     const int height = 600;
     const int sample_count = 4;
@@ -36,7 +36,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* a 128x128 image with streaming-update strategy */
+    // a 128x128 image with streaming-update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
@@ -48,9 +48,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE
     });
 
-    /* a cube vertex- and index-buffer */
+    // a cube vertex- and index-buffer
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
@@ -97,14 +97,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices)
     });
 
-    /* resource bindings */
+    // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
     };
 
-    /* a shader to render textured cube */
+    // a shader to render textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -142,7 +142,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* a pipeline-state-object for the textured cube */
+    // a pipeline-state-object for the textured cube
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -160,31 +160,31 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* default pass action (clear to grey) */
+    // default pass action (clear to grey)
     sg_pass_action pass_action = {0};
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* initial game-of-life seed state */
+    // initial game-of-life seed state
     game_of_life_init();
 
     vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
     while (d3d11_process_events()) {
-        /* model-view-projection matrix from rotated model matrix */
+        // model-view-projection matrix from rotated model matrix
         rx += 0.1f; ry += 0.2f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        /* update game-of-life state */
+        // update game-of-life state
         game_of_life_update();
 
-        /* update the dynamic image */
+        // update the dynamic image
         sg_update_image(img, &(sg_image_data){
             .subimage[0][0] = {
                 .ptr=pixels,
@@ -233,19 +233,17 @@ void game_of_life_update() {
                     }
                 }
             }
-            /* any live cell... */
+            // any live cell...
             if (pixels[y][x] == LIVING) {
                 if (num_living_neighbours < 2) {
-                    /* ... with fewer than 2 living neighbours dies, as if caused by underpopulation */
+                    // ... with fewer than 2 living neighbours dies, as if caused by underpopulation
+                    pixels[y][x] = DEAD;
+                } else if (num_living_neighbours > 3) {
+                    // ... with more than 3 living neighbours dies, as if caused by overpopulation
                     pixels[y][x] = DEAD;
                 }
-                else if (num_living_neighbours > 3) {
-                    /* ... with more than 3 living neighbours dies, as if caused by overpopulation */
-                    pixels[y][x] = DEAD;
-                }
-            }
-            else if (num_living_neighbours == 3) {
-                /* any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction */
+            } else if (num_living_neighbours == 3) {
+                // any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction
                 pixels[y][x] = LIVING;
             }
         }

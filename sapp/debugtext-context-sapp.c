@@ -180,8 +180,8 @@ static void init(void) {
         // each render target is cleared to a different background color
         state.passes[i].pass_action = (sg_pass_action){
             .colors[0] = {
-                .action = SG_ACTION_CLEAR,
-                .value = bg[i],
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = bg[i],
             }
         };
     }

@@ -22,7 +22,7 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a vertex buffer */
+    // a vertex buffer
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -35,7 +35,7 @@ void init(void) {
         .label = "quad-vertices"
     });
 
-    /* an index buffer with 2 triangles */
+    // an index buffer with 2 triangles
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
@@ -43,10 +43,10 @@ void init(void) {
         .label = "quad-indices"
     });
 
-    /* a shader (use separate shader sources here */
+    // a shader (use separate shader sources here
     sg_shader shd = sg_make_shader(quad_shader_desc(sg_query_backend()));
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
@@ -59,9 +59,9 @@ void init(void) {
         .label = "quad-pipeline"
     });
 
-    /* default pass action */
+    // default pass action
     state.pass_action = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f } }
     };
 }
 

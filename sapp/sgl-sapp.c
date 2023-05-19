@@ -23,12 +23,12 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* setup sokol-gl */
+    // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func,
     });
 
-    /* a checkerboard texture */
+    // a checkerboard texture
     uint32_t pixels[8][8];
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -54,11 +54,11 @@ static void init(void) {
         },
     });
 
-    /* default pass action */
+    // default pass action
     state.pass_action = (sg_pass_action) {
         .colors[0] = {
-            .action = SG_ACTION_CLEAR,
-            .value = { 0.0f, 0.0f, 0.0f, 1.0f }
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
 }
@@ -87,7 +87,7 @@ static void draw_quad(float t) {
     sgl_end();
 }
 
-/* vertex specification for a cube with colored sides and texture coords */
+// vertex specification for a cube with colored sides and texture coords
 static void cube(void) {
     sgl_begin_quads();
     sgl_c3f(1.0f, 0.0f, 0.0f);
@@ -186,7 +186,7 @@ static void draw_tex_cube(const float t) {
 }
 
 static void frame(void) {
-    /* frame time multiplier (normalized for 60fps) */
+    // frame time multiplier (normalized for 60fps)
     const float t = (float)(sapp_frame_duration() * 60.0);
 
     /* compute viewport rectangles so that the views are horizontally
@@ -194,13 +194,13 @@ static void frame(void) {
     */
     const int dw = sapp_width();
     const int dh = sapp_height();
-    const int ww = dh/2; /* not a bug */
+    const int ww = dh/2; // not a bug
     const int hh = dh/2;
     const int x0 = dw/2 - hh;
     const int x1 = dw/2;
     const int y0 = 0;
     const int y1 = dh/2;
-    /* all sokol-gl functions except sgl_draw() can be called anywhere in the frame */
+    // all sokol-gl functions except sgl_draw() can be called anywhere in the frame
     sgl_viewport(x0, y0, ww, hh, true);
     draw_triangle();
     sgl_viewport(x1, y0, ww, hh, true);

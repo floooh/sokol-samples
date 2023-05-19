@@ -43,7 +43,7 @@ typedef struct {
 } state_t;
 static state_t state;
 
-/* optional memory allocation function overrides (see sfons_create()) */
+// optional memory allocation function overrides (see sfons_create())
 static void* my_alloc(size_t size, void* user_data) {
     (void)user_data;
     return malloc(size);
@@ -54,7 +54,7 @@ static void my_free(void* ptr, void* user_data) {
     free(ptr);
 }
 
-/* sokol-fetch load callbacks */
+// sokol-fetch load callbacks
 static void font_normal_loaded(const sfetch_response_t* response) {
     if (response->fetched) {
         state.font_normal = fonsAddFontMem(state.fons, "sans", (void*)response->data.ptr, (int)response->data.size,  false);
@@ -79,7 +79,7 @@ static void font_japanese_loaded(const sfetch_response_t* response) {
     }
 }
 
-/* round to next power of 2 (see bit-twiddling-hacks) */
+// round to next power of 2 (see bit-twiddling-hacks)
 static int round_pow2(float v) {
     uint32_t vi = ((uint32_t) v) - 1;
     for (uint32_t i = 0; i < 5; i++) {
@@ -99,7 +99,7 @@ static void init(void) {
         .logger.func = slog_func
     });
 
-    /* make sure the fontstash atlas width/height is pow-2 */
+    // make sure the fontstash atlas width/height is pow-2
     const int atlas_dim = round_pow2(512.0f * state.dpi_scale);
     FONScontext* fons_context = sfons_create(&(sfons_desc_t){
         .width = atlas_dim,
@@ -116,7 +116,7 @@ static void init(void) {
     state.font_bold = FONS_INVALID;
     state.font_japanese = FONS_INVALID;
 
-    /* use sokol_fetch for loading the TTF font files */
+    // use sokol_fetch for loading the TTF font files
     sfetch_setup(&(sfetch_desc_t){
         .num_channels = 1,
         .num_lanes = 4,
@@ -157,10 +157,10 @@ static void line(float sx, float sy, float ex, float ey)
 static void frame(void) {
     const float dpis = state.dpi_scale;
 
-    /* pump sokol_fetch message queues */
+    // pump sokol_fetch message queues
     sfetch_dowork();
 
-    /* text rendering via fontstash.h */
+    // text rendering via fontstash.h
     float sx, sy, dx, dy, lh = 0.0f;
     uint32_t white = sfons_rgba(255, 255, 255, 255);
     uint32_t black = sfons_rgba(0, 0, 0, 255);
@@ -233,7 +233,7 @@ static void frame(void) {
         fonsDrawText(fs, dx,dy,"私はガラスを食べられます。それは私を傷つけません。",NULL);
     }
 
-    /* Font alignment */
+    // Font alignment
     if (state.font_normal != FONS_INVALID) {
         fonsSetSize(fs, 18.0f*dpis);
         fonsSetFont(fs, state.font_normal);
@@ -263,7 +263,7 @@ static void frame(void) {
         fonsDrawText(fs, dx,dy,"Right",NULL);
     }
 
-    /* Blur */
+    // Blur
     if (state.font_italic != FONS_INVALID) {
         dx = 500*dpis; dy = 350*dpis;
         fonsSetAlign(fs, FONS_ALIGN_LEFT | FONS_ALIGN_BASELINE);
@@ -288,13 +288,14 @@ static void frame(void) {
         fonsDrawText(fs, dx,dy,"DROP THAT SHADOW",NULL);
     }
 
-    /* flush fontstash's font atlas to sokol-gfx texture */
+    // flush fontstash's font atlas to sokol-gfx texture
     sfons_flush(fs);
 
-    /* render pass */
+    // render pass
     sg_begin_default_pass(&(sg_pass_action){
         .colors[0] = {
-            .action = SG_ACTION_CLEAR, .value = { 0.3f, 0.3f, 0.32f, 1.0f }
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.3f, 0.3f, 0.32f, 1.0f }
         }
     }, sapp_width(), sapp_height());
     sgl_draw();

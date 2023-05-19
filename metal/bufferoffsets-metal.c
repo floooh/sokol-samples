@@ -18,7 +18,7 @@ static struct {
 } state = {
     .pass_action = {
         .colors = {
-            [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
+            [0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } }
         }
     }
 };
@@ -29,14 +29,14 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
+    // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     vertex_t vertices[7] = {
-        /* triangle */
+        // triangle
         {  0.0f,   0.55f,  1.0f, 0.0f, 0.0f },
         {  0.25f,  0.05f,  0.0f, 1.0f, 0.0f },
         { -0.25f,  0.05f,  0.0f, 0.0f, 1.0f },
 
-        /* quad */
+        // quad
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
@@ -54,7 +54,7 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* a shader and pipeline to render 2D shapes */
+    // a shader and pipeline to render 2D shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#include <metal_stdlib>\n"
@@ -96,12 +96,12 @@ static void init(void) {
 static void frame(void) {
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);
-    /* render the triangle */
+    // render the triangle
     state.bind.vertex_buffer_offsets[0] = 0;
     state.bind.index_buffer_offset = 0;
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
-    /* render the quad */
+    // render the quad
     state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
     state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
     sg_apply_bindings(&state.bind);

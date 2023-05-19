@@ -23,7 +23,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a quad vertex buffer */
+    // a quad vertex buffer
     const float quad_vertices[] = {
         -1.0f, +1.0f,
         +1.0f, +1.0f,
@@ -34,7 +34,7 @@ static void init(void) {
         .data = SG_RANGE(quad_vertices)
     });
 
-    /* one test image per UV-wrap mode */
+    // one test image per UV-wrap mode
     const uint32_t o = 0xFF555555;
     const uint32_t W = 0xFFFFFFFF;
     const uint32_t R = 0xFF0000FF;
@@ -61,7 +61,7 @@ static void init(void) {
         });
     }
 
-    /* a pipeline state object */
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(uvwrap_shader_desc(sg_query_backend())),
         .layout = {
@@ -74,9 +74,9 @@ static void init(void) {
         },
     });
 
-    /* pass action to clear to a background color */
+    // pass action to clear to a background color
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value={0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.5f, 0.7f, 1.0f } }
     };
 }
 

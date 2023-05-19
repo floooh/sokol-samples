@@ -30,9 +30,9 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* positions */
+        // positions
         -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
         -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
@@ -40,7 +40,7 @@ void init(void) {
         -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
         -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
-         /* colors */
+        // colors
         1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,
         0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,
         0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,
@@ -52,7 +52,7 @@ void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -66,15 +66,15 @@ void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* a shader and pipeline object */
+    // a shader and pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(noninterleaved_shader_desc(sg_query_backend())),
         .layout = {
-            /* note how the vertex components are pulled from different buffer bind slots */
+            // note how the vertex components are pulled from different buffer bind slots
             .attrs = {
-                /* positions come from vertex buffer slot 0 */
+                // positions come from vertex buffer slot 0
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                /* colors come from vertex buffer slot 1 */
+                // colors come from vertex buffer slot 1
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
@@ -86,19 +86,18 @@ void init(void) {
         },
     });
 
-    /* fill the resource bindings, note how the same vertex
-       buffer is bound to the first two slots, and the vertex-buffer-offsets
-       are used to point to the position- and color-components.
-    */
+    // fill the resource bindings, note how the same vertex
+    // buffer is bound to the first two slots, and the vertex-buffer-offsets
+    // are used to point to the position- and color-components.
     state.bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
         },
         .vertex_buffer_offsets = {
-            /* position components are at start of buffer */
+            // position components are at start of buffer
             [0] = 0,
-            /* byte offset of color components in buffer */
+            // byte offset of color components in buffer
             [1] = 24 * 3 * sizeof(float)
         },
         .index_buffer = ibuf
@@ -106,7 +105,7 @@ void init(void) {
 }
 
 void frame(void) {
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));

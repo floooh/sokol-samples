@@ -167,7 +167,7 @@ static void init(void) {
 
     // pass action to clear to blue-ish
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
     };
 
     // start loading spine atlas file
@@ -199,8 +199,7 @@ static void init(void) {
                 cell->pos = (vec2){ x + ix*dx, y + iy*dy };
                 if (ix == (NUM_INSTANCES_X - 1)) { cell->vec = (vec2){ 0.0f, 1.0f }; }
                 else                             { cell->vec = (vec2){ 1.0f, 0.0f }; }
-            }
-            else {
+            } else {
                 cell->pos = (vec2){ x + (NUM_INSTANCES_X-1-ix)*dx, y + iy*dy };
                 if (ix == (NUM_INSTANCES_X - 1)) { cell->vec = (vec2){ 0.0f, 1.0f }; }
                 else                             { cell->vec = (vec2){ -1.0f, 0.0f }; }
@@ -282,8 +281,7 @@ static void atlas_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
     }
 }
@@ -299,8 +297,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
         if (state.load_status.atlas.loaded && state.load_status.skeleton.loaded) {
             create_spine_objects();
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
     }
 }
@@ -336,13 +333,11 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 }
             });
             stbi_image_free(pixels);
-        }
-        else {
+        } else {
             state.load_status.failed = true;
             sg_fail_image(img_info.sgimage);
         }
-    }
-    else if (response->failed) {
+    } else if (response->failed) {
         state.load_status.failed = true;
         sg_fail_image(img_info.sgimage);
     }

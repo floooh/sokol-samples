@@ -253,10 +253,10 @@ static void init(void) {
 
     // normal background color, and a "load failed" background color
     state.pass_actions.ok = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={0.0f, 0.569f, 0.918f, 1.0f} }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.569f, 0.918f, 1.0f} }
     };
     state.pass_actions.failed = (sg_pass_action) {
-        .colors[0] = { .action=SG_ACTION_CLEAR, .value={1.0f, 0.0f, 0.0f, 1.0f} }
+        .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={1.0f, 0.0f, 0.0f, 1.0f} }
     };
 
     // create shaders
@@ -332,8 +332,7 @@ static void frame(void) {
         sg_begin_default_pass(&state.pass_actions.failed, fb_width, fb_height);
         __dbgui_draw();
         sg_end_pass();
-    }
-    else {
+    } else {
         sg_begin_default_pass(&state.pass_actions.ok, fb_width, fb_height);
         for (int node_index = 0; node_index < state.scene.num_nodes; node_index++) {
             const node_t* node = &state.scene.nodes[node_index];
@@ -379,8 +378,7 @@ static void frame(void) {
                     bind.fs_images[SLOT_occlusion_texture] = occlusion_tex;
                     bind.fs_images[SLOT_emissive_texture] = emissive_tex;
                     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &SG_RANGE(mat->metallic.fs_params));
-                }
-                else {
+                } else {
                 /*
                     sg_apply_uniforms(SG_SHADERSTAGE_VS,
                         SLOT_specular_params,
@@ -420,8 +418,7 @@ static void gltf_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
         // bind buffer to load file into
         sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
-    }
-    else if (response->fetched) {
+    } else if (response->fetched) {
         // file has been loaded, parse as GLTF
         gltf_parse(response->data);
     }
@@ -440,8 +437,7 @@ typedef struct {
 static void gltf_buffer_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
         sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
-    }
-    else if (response->fetched) {
+    } else if (response->fetched) {
         const gltf_buffer_fetch_userdata_t* user_data = (const gltf_buffer_fetch_userdata_t*)response->user_data;
         int gltf_buffer_index = (int)user_data->buffer_index;
         create_sg_buffers_for_gltf_buffer(gltf_buffer_index, (sg_range){response->data.ptr, response->data.size});
@@ -461,8 +457,7 @@ typedef struct {
 static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     if (response->dispatched) {
         sfetch_bind_buffer(response->handle, SFETCH_RANGE(sfetch_buffers[response->channel][response->lane]));
-    }
-    else if (response->fetched) {
+    } else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
         int gltf_image_index = (int)user_data->image_index;
         create_sg_images_for_gltf_image(gltf_image_index, (sg_range){response->data.ptr, response->data.size});
@@ -537,8 +532,7 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
         p->size = (int) gltf_buf_view->size;
         if (gltf_buf_view->type == cgltf_buffer_view_type_indices) {
             p->type = SG_BUFFERTYPE_INDEXBUFFER;
-        }
-        else {
+        } else {
             p->type = SG_BUFFERTYPE_VERTEXBUFFER;
         }
         // allocate a sokol-gfx buffer handle
@@ -648,8 +642,7 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
                 .occlusion = gltf_texture_index(gltf, gltf_mat->occlusion_texture.texture),
                 .emissive = gltf_texture_index(gltf, gltf_mat->emissive_texture.texture)
             };
-        }
-        else {
+        } else {
             /*
             const cgltf_pbr_specular_glossiness* src = &gltf_mat->pbr_specular_glossiness;
             specular_material_t* dst = &scene_mat->specular;
@@ -708,8 +701,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
                 assert(gltf_prim->indices->stride != 0);
                 prim->base_element = 0;
                 prim->num_elements = (int) gltf_prim->indices->count;
-            }
-            else {
+            } else {
                 // hmm... looking up the number of elements to render from
                 // a random vertex component accessor looks a bit shady
                 prim->index_buffer = SCENE_INVALID_INDEX;
@@ -822,12 +814,10 @@ static sg_index_type gltf_to_index_type(const cgltf_primitive* prim) {
     if (prim->indices) {
         if (prim->indices->component_type == cgltf_component_type_r_16u) {
             return SG_INDEXTYPE_UINT16;
-        }
-        else {
+        } else {
             return SG_INDEXTYPE_UINT32;
         }
-    }
-    else {
+    } else {
         return SG_INDEXTYPE_NONE;
     }
 }
@@ -955,8 +945,7 @@ static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cglt
         // needs testing, not sure if the element order is correct
         hmm_mat4 tform = *(hmm_mat4*)node->matrix;
         return tform;
-    }
-    else {
+    } else {
         hmm_mat4 translate = HMM_Mat4d(1);
         hmm_mat4 rotate = HMM_Mat4d(1);
         hmm_mat4 scale = HMM_Mat4d(1);

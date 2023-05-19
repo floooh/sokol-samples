@@ -34,7 +34,7 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int sample_count = 4;
     const int width = 640;
     const int height = 480;
@@ -44,9 +44,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* create native D3D11 vertex and index buffers */
+    // create native D3D11 vertex and index buffers
     float vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
@@ -109,7 +109,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hr = d3d11_dev->lpVtbl->CreateBuffer(d3d11_dev, &d3d11_ibuf_desc, &d3d11_ibuf_data, &d3d11_ibuf);
     assert(SUCCEEDED(hr) && d3d11_ibuf);
 
-    /* create sokol_gfx vertex- and index-buffers with injected D3D11 buffers */
+    // create sokol_gfx vertex- and index-buffers with injected D3D11 buffers
     sg_reset_state_cache();
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(vertices),
@@ -121,11 +121,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .d3d11_buffer = d3d11_ibuf
     });
 
-    /* can release the native D3D11 buffers now, sokol_gfx is holding on to them */
+    // can release the native D3D11 buffers now, sokol_gfx is holding on to them
     d3d11_vbuf->lpVtbl->Release(d3d11_vbuf); d3d11_vbuf = 0;
     d3d11_ibuf->lpVtbl->Release(d3d11_ibuf); d3d11_ibuf = 0;
 
-    /* we can inject either a D3D11 texture, or a shader-resource-view, or both */
+    // we can inject either a D3D11 texture, or a shader-resource-view, or both
     D3D11_TEXTURE2D_DESC d3d11_tex_desc = {
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
         .Width = IMG_WIDTH,
@@ -150,7 +150,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hr = d3d11_dev->lpVtbl->CreateShaderResourceView(d3d11_dev, (ID3D11Resource*)d3d11_tex, &d3d11_srv_desc, &d3d11_srv);
     assert(SUCCEEDED(hr) && d3d11_srv);
 
-    /* and create a sokol_gfx texture with injected D3D11 texture */
+    // and create a sokol_gfx texture with injected D3D11 texture
     sg_reset_state_cache();
     sg_image_desc img_desc = {
         .usage = SG_USAGE_STREAM,
@@ -175,7 +175,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         d3d11_srv = 0;
     }
 
-    /* create shader */
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -209,7 +209,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* pipeline object */
+    // pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -226,17 +226,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* default pass action (clear to gray) */
+    // default pass action (clear to gray)
     sg_pass_action pass_action = { 0 };
 
-    /* resource bindings */
+    // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
         .fs_images[0] = img
     };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -244,7 +244,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     float rx = 0.0f, ry = 0.0f;
     uint32_t counter = 0;
     while (d3d11_process_events()) {
-        /* model-view-proj matrix for vertex shader */
+        // model-view-proj matrix for vertex shader
         vs_params_t vs_params;
         rx += 1.0f; ry += 2.0f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -252,7 +252,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        /* update texture image with some generated pixel data */
+        // update texture image with some generated pixel data
         for (int y = 0; y < IMG_WIDTH; y++) {
             for (int x = 0; x < IMG_HEIGHT; x++) {
                 pixels[y * IMG_WIDTH + x] = 0xFF000000 |
@@ -265,7 +265,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         counter++;
         sg_update_image(img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
-        /* draw frame */
+        // draw frame
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);

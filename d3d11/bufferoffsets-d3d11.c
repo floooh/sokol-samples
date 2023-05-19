@@ -15,7 +15,7 @@ typedef struct {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    /* setup d3d11 app wrapper and sokol_gfx */
+    // setup d3d11 app wrapper and sokol_gfx
     const int sample_count = 4;
     const int width = 800;
     const int height = 600;
@@ -25,14 +25,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
+    // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     vertex_t vertices[7] = {
-        /* triangle */
+        // triangle
         {  0.0f,   0.55f,  1.0f, 0.0f, 0.0f },
         {  0.25f,  0.05f,  0.0f, 1.0f, 0.0f },
         { -0.25f,  0.05f,  0.0f, 0.0f, 1.0f },
 
-        /* quad */
+        // quad
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
@@ -50,7 +50,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices)
     });
 
-    /* a shader to render the 2D shapes */
+    // a shader to render the 2D shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
@@ -77,7 +77,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "}\n"
     });
 
-    /* a pipeline state object, default states are fine */
+    // a pipeline state object, default states are fine
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
@@ -89,28 +89,28 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     });
 
-    /* the resource bindings, before drawing the buffer offsets will be updated */
+    // the resource bindings, before drawing the buffer offsets will be updated
     sg_bindings bind = {
         .vertex_buffers[0] = vb,
         .index_buffer = ib
     };
 
-    /* a pass action to clear to blue-ish */
+    // a pass action to clear to blue-ish
     sg_pass_action pass_action = {
         .colors = {
-            [0] = { .action=SG_ACTION_CLEAR, .value = { 0.5f, 0.5f, 1.0f, 1.0f } }
+            [0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } }
         }
     };
 
     while (d3d11_process_events()) {
         sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
         sg_apply_pipeline(pip);
-        /* render the triangle */
+        // render the triangle
         bind.vertex_buffer_offsets[0] = 0;
         bind.index_buffer_offset = 0;
         sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
-        /* render the quad from the same vertex- and index-buffer */
+        // render the quad from the same vertex- and index-buffer
         bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
         bind.index_buffer_offset = 3 * sizeof(uint16_t);
         sg_apply_bindings(&bind);

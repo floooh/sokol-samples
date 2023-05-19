@@ -44,7 +44,7 @@ typedef struct {
     hmm_vec2 offset;
 } params_t;
 
-static void draw();
+static EM_BOOL draw(double time, void* userdata);
 
 int main() {
     /* setup WebGL context */
@@ -58,35 +58,65 @@ int main() {
     assert(sg_isvalid());
 
     /* a render pass with 3 color attachment images, and a depth attachment image */
+    const int width = 640;
+    const int height = 480;
     const int offscreen_sample_count = 4;
-    sg_image_desc color_img_desc = {
+    const sg_image_desc color_img_desc = {
         .render_target = true,
-        .width = emsc_width(),
-        .height = emsc_height(),
+        .width = width,
+        .height = height,
+        .sample_count = offscreen_sample_count
+    };
+    const sg_image_desc resolve_img_desc = {
+        .render_target = true,
+        .width = width,
+        .height = height,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .sample_count = 1,
+    };
+    const sg_image_desc depth_img_desc = {
+        .render_target = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = offscreen_sample_count
     };
-    sg_image_desc depth_img_desc = color_img_desc;
-    depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     state.offscreen.pass_desc = (sg_pass_desc){
         .color_attachments = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
+        .resolve_attachments = {
+            [0].image = sg_make_image(&resolve_img_desc),
+            [1].image = sg_make_image(&resolve_img_desc),
+            [2].image = sg_make_image(&resolve_img_desc)
+        },
         .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
     };
     state.offscreen.pass = sg_make_pass(&state.offscreen.pass_desc);
 
     /* a matching pass action with clear colors */
-    state.offscreen.pass_action = (sg_pass_action){
+    state.offscreen.pass_action = (sg_pass_action) {
         .colors = {
-            [0] = { .action = SG_ACTION_CLEAR, .value = { 0.25f, 0.0f, 0.0f, 1.0f } },
-            [1] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.25f, 0.0f, 1.0f } },
-            [2] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.25f, 1.0f } }
+            [0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f }
+            },
+            [1] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+            },
+            [2] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_DONTCARE,
+                .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+            }
         }
     };
 
@@ -215,9 +245,9 @@ int main() {
     state.display.fsq_bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
         .fs_images = {
-            [0] = state.offscreen.pass_desc.color_attachments[0].image,
-            [1] = state.offscreen.pass_desc.color_attachments[1].image,
-            [2] = state.offscreen.pass_desc.color_attachments[2].image,
+            [0] = state.offscreen.pass_desc.resolve_attachments[0].image,
+            [1] = state.offscreen.pass_desc.resolve_attachments[1].image,
+            [2] = state.offscreen.pass_desc.resolve_attachments[2].image,
         }
     };
 
@@ -312,21 +342,18 @@ int main() {
 
     /* default pass action, no clear needed, since whole screen is overwritten */
     state.display.pass_action = (sg_pass_action){
-        .colors = {
-            [0].action = SG_ACTION_DONTCARE,
-            [1].action = SG_ACTION_DONTCARE,
-            [2].action = SG_ACTION_DONTCARE
-        },
-        .depth.action = SG_ACTION_DONTCARE,
-        .stencil.action = SG_ACTION_DONTCARE
+        .colors[0].load_action = SG_LOADACTION_DONTCARE,
+        .depth.load_action = SG_LOADACTION_DONTCARE,
+        .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
     /* hand off control to browser-loop */
-    emscripten_set_main_loop(draw, 0, 1);
+    emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-void draw() {
+static EM_BOOL draw(double time, void* userdata) {
+    (void)time; (void)userdata;
     /* compute shader params */
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
@@ -360,10 +387,11 @@ void draw() {
     sg_apply_pipeline(state.display.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.display.dbg_bind.fs_images[0] = state.offscreen.pass_desc.color_attachments[i].image;
+        state.display.dbg_bind.fs_images[0] = state.offscreen.pass_desc.resolve_attachments[i].image;
         sg_apply_bindings(&state.display.dbg_bind);
         sg_draw(0, 4, 1);
     }
     sg_end_pass();
     sg_commit();
+    return EM_TRUE;
 }
