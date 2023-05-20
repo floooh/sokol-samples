@@ -7,6 +7,5 @@ cmake-toolchain: emscripten.toolchain.cmake
 defines:
     FIPS_EMSCRIPTEN_USE_WEBGPU: ON
     FIPS_EMSCRIPTEN_USE_WASM: ON
-    FIPS_EMSCRIPTEN_MEM_INIT_METHOD: 0
     FIPS_EMSCRIPTEN_USE_EMMALLOC: ON
     FIPS_EMSCRIPTEN_RELATIVE_SHELL_HTML: "webpage/shell.html"
