@@ -56,15 +56,17 @@ static void init(void) {
             }
         }
     }
-    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc) {
+    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc) {
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .num_slices = IMG_LAYERS,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc) {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     // cube vertex buffer
@@ -120,49 +122,54 @@ static void init(void) {
 
     // shader to sample from array texture
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float4x4 mvp;\n"
-            "  float2 offset0;\n"
-            "  float2 offset1;\n"
-            "  float2 offset2;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos [[attribute(0)]];\n"
-            "  float2 uv [[attribute(1)]];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float3 uv0;\n"
-            "  float3 uv1;\n"
-            "  float3 uv2;\n"
-            "};\n"
-            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = params.mvp * in.pos;\n"
-            "  out.uv0 = float3(in.uv + params.offset0, 0.0);\n"
-            "  out.uv1 = float3(in.uv + params.offset1, 1.0);\n"
-            "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
-            "  return out;\n"
-            "}\n",
-        .fs.images[0].image_type = SG_IMAGETYPE_ARRAY,
-        .fs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct fs_in {\n"
-            "  float3 uv0;\n"
-            "  float3 uv1;\n"
-            "  float3 uv2;\n"
-            "};\n"
-            "fragment float4 _main(fs_in in [[stage_in]], texture2d_array<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-            "  float4 c0 = tex.sample(smp, in.uv0.xy, int(in.uv0.z));\n"
-            "  float4 c1 = tex.sample(smp, in.uv1.xy, int(in.uv1.z));\n"
-            "  float4 c2 = tex.sample(smp, in.uv2.xy, int(in.uv2.z));\n"
-            "  return float4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct params_t {\n"
+                "  float4x4 mvp;\n"
+                "  float2 offset0;\n"
+                "  float2 offset1;\n"
+                "  float2 offset2;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos [[attribute(0)]];\n"
+                "  float2 uv [[attribute(1)]];\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 pos [[position]];\n"
+                "  float3 uv0;\n"
+                "  float3 uv1;\n"
+                "  float3 uv2;\n"
+                "};\n"
+                "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+                "  vs_out out;\n"
+                "  out.pos = params.mvp * in.pos;\n"
+                "  out.uv0 = float3(in.uv + params.offset0, 0.0);\n"
+                "  out.uv1 = float3(in.uv + params.offset1, 1.0);\n"
+                "  out.uv2 = float3(in.uv + params.offset2, 2.0);\n"
+                "  return out;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_ARRAY,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct fs_in {\n"
+                "  float3 uv0;\n"
+                "  float3 uv1;\n"
+                "  float3 uv2;\n"
+                "};\n"
+                "fragment float4 _main(fs_in in [[stage_in]], texture2d_array<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+                "  float4 c0 = tex.sample(smp, in.uv0.xy, int(in.uv0.z));\n"
+                "  float4 c1 = tex.sample(smp, in.uv1.xy, int(in.uv1.z));\n"
+                "  float4 c2 = tex.sample(smp, in.uv2.xy, int(in.uv2.z));\n"
+                "  return float4(c0.xyz + c1.xyz + c2.xyz, 1.0);\n"
+                "}\n"
+        }
     });
 
     // a pipeline object

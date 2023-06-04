@@ -65,6 +65,8 @@ static void init(void) {
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = 1,
+    });
+    sg_sampler resolve_smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
     });
@@ -142,7 +144,10 @@ static void init(void) {
     state.default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = resolve_img
+        .fs= {
+            .images[0] = resolve_img,
+            .samplers[0] = resolve_smp,
+        }
     };
 
     // a shader for a non-textured cube, rendered in the offscreen pass
@@ -179,41 +184,46 @@ static void init(void) {
     // ...and another shader for the display-pass, rendering a textured cube
     // using the offscreen render target as texture */
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 position [[attribute(0)]];\n"
-            "  float4 color [[attribute(1)]];\n"
-            "  float2 uv [[attribute(2)]];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float4 color;\n"
-            "  float2 uv;\n"
-            "};\n"
-            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = params.mvp * in.position;\n"
-            "  out.color = in.color;\n"
-            "  out.uv = in.uv;\n"
-            "  return out;\n"
-            "}\n",
-        .fs.images[0].image_type = SG_IMAGETYPE_2D,
-        .fs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct fs_in {\n"
-            "  float4 color;\n"
-            "  float2 uv;\n"
-            "};\n"
-            "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-            "  return float4(tex.sample(smp, in.uv).xyz + in.color.xyz * 0.5, 1.0);\n"
-            "};\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct params_t {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 position [[attribute(0)]];\n"
+                "  float4 color [[attribute(1)]];\n"
+                "  float2 uv [[attribute(2)]];\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 pos [[position]];\n"
+                "  float4 color;\n"
+                "  float2 uv;\n"
+                "};\n"
+                "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+                "  vs_out out;\n"
+                "  out.pos = params.mvp * in.position;\n"
+                "  out.color = in.color;\n"
+                "  out.uv = in.uv;\n"
+                "  return out;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_2D,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct fs_in {\n"
+                "  float4 color;\n"
+                "  float2 uv;\n"
+                "};\n"
+                "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+                "  return float4(tex.sample(smp, in.uv).xyz + in.color.xyz * 0.5, 1.0);\n"
+                "};\n"
+        }
     });
 
     // pipeline-state-object for offscreen-rendered cube, don't need texture coord here

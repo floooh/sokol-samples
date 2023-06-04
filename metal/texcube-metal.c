@@ -132,7 +132,7 @@ static void init(void) {
         },
         .fs = {
             .images[0].image_type = SG_IMAGETYPE_2D,
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLER,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"

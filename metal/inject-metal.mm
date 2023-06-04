@@ -124,16 +124,32 @@ static void init(void) {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
     };
     for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         img_desc.mtl_textures[i] = (__bridge const void*) mtl_tex[i];
     }
+
     sg_reset_state_cache();
-    state.bind.fs_images[0] = sg_make_image(&img_desc);
+    state.bind.fs.images[0] = sg_make_image(&img_desc);
+
+    // create a Metal sampler object and inject into a sokol-gfx sampler object
+    MTLSamplerDescriptor* mtl_smp_desc = [[MTLSamplerDescriptor alloc] init];
+    mtl_smp_desc.minFilter = MTLSamplerMinMagFilterLinear;
+    mtl_smp_desc.magFilter = MTLSamplerMinMagFilterLinear;
+    mtl_smp_desc.rAddressMode = MTLSamplerAddressModeRepeat;
+    mtl_smp_desc.sAddressMode = MTLSamplerAddressModeRepeat;
+    id<MTLSamplerState> mtl_smp = [osx_mtl_device() newSamplerStateWithDescriptor:mtl_smp_desc];
+
+    sg_sampler_desc smp_desc = {
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+        .mtl_sampler = mtl_smp,
+    };
+
+    sg_reset_state_cache();
+    state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
 
     // a shader
     sg_shader_desc shader_desc = {
@@ -163,6 +179,7 @@ static void init(void) {
         },
         .fs = {
             .images[0].image_type = SG_IMAGETYPE_2D,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -224,7 +241,7 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.fs_images[0], { .subimage[0][0] = SG_RANGE(state.pixels) });
+    sg_update_image(state.bind.fs.images[0], { .subimage[0][0] = SG_RANGE(state.pixels) });
 
     sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
     sg_apply_pipeline(state.pip);

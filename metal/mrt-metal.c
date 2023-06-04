@@ -53,10 +53,6 @@ static void init(void) {
         .render_target = true,
         .width = WIDTH,
         .height = HEIGHT,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .sample_count = SAMPLE_COUNT,
     };
     sg_image_desc resolve_img_desc = color_img_desc;
@@ -217,6 +213,14 @@ static void init(void) {
         .data = SG_RANGE(quad_vertices)
     });
 
+    // a sampler with linear filtering and clamp-to-edge
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+    });
+
     // a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
@@ -251,6 +255,7 @@ static void init(void) {
                 [1] = { .image_type = SG_IMAGETYPE_2D },
                 [2] = { .image_type = SG_IMAGETYPE_2D }
             },
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
             .source =
                 "#include <metal_stdlib>\n"
                 "using namespace metal;\n"
@@ -260,23 +265,29 @@ static void init(void) {
                 "  float2 uv2;\n"
                 "};\n"
                 "fragment float4 _main(fs_in in [[stage_in]],\n"
-                "  texture2d<float> tex0 [[texture(0)]], sampler smp0 [[sampler(0)]],\n"
-                "  texture2d<float> tex1 [[texture(1)]], sampler smp1 [[sampler(1)]],\n"
-                "  texture2d<float> tex2 [[texture(2)]], sampler smp2 [[sampler(2)]])\n"
+                "  texture2d<float> tex0 [[texture(0)]],\n"
+                "  texture2d<float> tex1 [[texture(1)]],\n"
+                "  texture2d<float> tex2 [[texture(2)]],\n"
+                "  sampler smp [[sampler(0)]])\n"
                 "{\n"
-                "  float3 c0 = tex0.sample(smp0, in.uv0).xyz;\n"
-                "  float3 c1 = tex1.sample(smp1, in.uv1).xyz;\n"
-                "  float3 c2 = tex2.sample(smp2, in.uv2).xyz;\n"
+                "  float3 c0 = tex0.sample(smp, in.uv0).xyz;\n"
+                "  float3 c1 = tex1.sample(smp, in.uv1).xyz;\n"
+                "  float3 c2 = tex2.sample(smp, in.uv2).xyz;\n"
                 "  return float4(c0 + c1 + c2, 1.0);\n"
                 "}\n"
         }
     });
 
     // setup resource binding struct for rendering fullscreen quad
-    state.fsq_bind.vertex_buffers[0] = quad_vbuf;
-    for (int i = 0; i < 3; i++) {
-        state.fsq_bind.fs_images[i] = state.offscreen_pass_desc.resolve_attachments[i].image;
-    }
+    state.fsq_bind = (sg_bindings) {
+        .vertex_buffers[0] = quad_vbuf,
+        .fs = {
+            .images[0] = state.offscreen_pass_desc.resolve_attachments[0].image,
+            .images[1] = state.offscreen_pass_desc.resolve_attachments[1].image,
+            .images[2] = state.offscreen_pass_desc.resolve_attachments[2].image,
+            .samplers[0] = smp
+        }
+    };
 
     // the pipeline object to render the fullscreen quad
     state.fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -290,12 +301,13 @@ static void init(void) {
     // and a pipeline and resources to render debug-visualization quads with the content
     // of the offscreen render targets (images will be filled right before rendering
     state.dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
-            .layout = {
-                .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
-            },
-            .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-            .shader = sg_make_shader(&(sg_shader_desc){
-                .vs.source =
+        .layout = {
+            .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
+        },
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .shader = sg_make_shader(&(sg_shader_desc){
+            .vs = {
+                .source =
                     "#include <metal_stdlib>\n"
                     "using namespace metal;\n"
                     "struct vs_in {\n"
@@ -311,16 +323,23 @@ static void init(void) {
                     "  out.uv = in.pos;\n"
                     "  return out;\n"
                     "}\n",
-                .fs.images[0].image_type = SG_IMAGETYPE_2D,
-                .fs.source =
+            },
+            .fs = {
+                .images[0].image_type = SG_IMAGETYPE_2D,
+                .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+                .source =
                     "#include <metal_stdlib>\n"
                     "using namespace metal;\n"
                     "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
                     "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
                     "}\n"
-            }),
-        });
-    state.dbg_bind.vertex_buffers[0] = quad_vbuf;
+            }
+        }),
+    });
+    state.dbg_bind = (sg_bindings){
+        .vertex_buffers[0] = quad_vbuf,
+        .fs.samplers[0] = smp,
+    };
 
     // default pass action, no clear needed, since whole screen is overwritten
     state.default_pass_action = (sg_pass_action){
@@ -364,7 +383,7 @@ static void frame(void) {
     sg_apply_pipeline(state.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg_bind.fs_images[0] = state.offscreen_pass_desc.resolve_attachments[i].image;
+        state.dbg_bind.fs.images[0] = state.offscreen_pass_desc.resolve_attachments[i].image;
         sg_apply_bindings(&state.dbg_bind);
         sg_draw(0, 4, 1);
     }
