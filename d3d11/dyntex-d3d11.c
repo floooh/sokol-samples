@@ -14,7 +14,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-/* width/height must be 2^N */
+// width/height (keep at 2^n)
 #define IMAGE_WIDTH (64)
 #define IMAGE_HEIGHT (64)
 #define LIVING (0xFFFFFFFF)
@@ -42,6 +42,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage = SG_USAGE_STREAM,
+    });
+
+    // a sampler
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -101,7 +105,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = {
+            .images[0] = img,
+            .samplers[0] = smp,
+        }
     };
 
     // a shader to render textured cube
@@ -111,35 +118,40 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [1].sem_name = "COLOR",
             [2].sem_name = "TEXCOORD"
         },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].image_type=SG_IMAGETYPE_2D,
-        .vs.source =
-            "cbuffer params {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR0;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 color: COLOR0;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.color = inp.color;\n"
-            "  outp.uv = inp.uv;\n"
-            "  return outp;\n"
-            "}\n",
-        .fs.source =
-            "Texture2D<float4> tex: register(t0);\n"
-            "sampler smp: register(s0);\n"
-            "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-            "  return tex.Sample(smp, uv) * color;\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "cbuffer params {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float4 color: COLOR0;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 color: COLOR0;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.color = inp.color;\n"
+                "  outp.uv = inp.uv;\n"
+                "  return outp;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_2D,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "Texture2D<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+                "  return tex.Sample(smp, uv) * color;\n"
+                "}\n"
+        }
     });
 
     // a pipeline-state-object for the textured cube
@@ -210,8 +222,7 @@ void game_of_life_init() {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             if ((rand() & 255) > 230) {
                 pixels[y][x] = LIVING;
-            }
-            else {
+            } else {
                 pixels[y][x] = DEAD;
             }
         }

@@ -34,7 +34,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    // a render pass with 3 color attachment images,3 msaa-resolve images and a depth attachment image
+    // a render pass with 3 color attachment images, 3 msaa-resolve images and a depth attachment image
     const int offscreen_sample_count = 4;
     const sg_image_desc color_img_desc = {
         .render_target = true,
@@ -46,10 +46,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .render_target = true,
         .width = width,
         .height = height,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
@@ -219,56 +215,67 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(quad_vertices)
     });
 
+    // a sampler object with linear filtering and clamp-to-edge
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+    });
+
     // a shader to render a fullscreen rectangle, which 'composes'
     // the 3 offscreen render target images onto the screen
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
         .attrs[0].sem_name = "POSITION",
-        .vs.uniform_blocks[0].size = sizeof(params_t),
-        .fs.images = {
-            [0].image_type=SG_IMAGETYPE_2D,
-            [1].image_type=SG_IMAGETYPE_2D,
-            [2].image_type=SG_IMAGETYPE_2D
+        .vs = {
+            .uniform_blocks[0].size = sizeof(params_t),
+            .source =
+                "cbuffer params {\n"
+                "  float2 offset;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float2 pos: POSITION;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float2 uv0: TEXCOORD0;\n"
+                "  float2 uv1: TEXCOORD1;\n"
+                "  float2 uv2: TEXCOORD2;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = float4(inp.pos*2.0-1.0, 0.5, 1.0);\n"
+                "  outp.uv0 = inp.pos + float2(offset.x, 0.0);\n"
+                "  outp.uv1 = inp.pos + float2(0.0, offset.y);\n"
+                "  outp.uv2 = inp.pos;\n"
+                "  return outp;\n"
+                "}\n",
         },
-        .vs.source =
-            "cbuffer params {\n"
-            "  float2 offset;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float2 pos: POSITION;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float2 uv0: TEXCOORD0;\n"
-            "  float2 uv1: TEXCOORD1;\n"
-            "  float2 uv2: TEXCOORD2;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = float4(inp.pos*2.0-1.0, 0.5, 1.0);\n"
-            "  outp.uv0 = inp.pos + float2(offset.x, 0.0);\n"
-            "  outp.uv1 = inp.pos + float2(0.0, offset.y);\n"
-            "  outp.uv2 = inp.pos;\n"
-            "  return outp;\n"
-            "}\n",
-        .fs.source =
-            "Texture2D<float4> tex0: register(t0);\n"
-            "Texture2D<float4> tex1: register(t1);\n"
-            "Texture2D<float4> tex2: register(t2);\n"
-            "sampler smp0: register(s0);\n"
-            "sampler smp1: register(s1);\n"
-            "sampler smp2: register(s2);\n"
-            "struct fs_in {\n"
-            "  float2 uv0: TEXCOORD0;\n"
-            "  float2 uv1: TEXCOORD1;\n"
-            "  float2 uv2: TEXCOORD2;\n"
-            "};\n"
-            "float4 main(fs_in inp): SV_Target0 {\n"
-            "  float3 c0 = tex0.Sample(smp0, inp.uv0).xyz;\n"
-            "  float3 c1 = tex1.Sample(smp1, inp.uv1).xyz;\n"
-            "  float3 c2 = tex2.Sample(smp2, inp.uv2).xyz;\n"
-            "  float4 c = float4(c0 + c1 + c2, 1.0);\n"
-            "  return c;\n"
-            "}\n"
+        .fs = {
+            .images = {
+                [0].image_type=SG_IMAGETYPE_2D,
+                [1].image_type=SG_IMAGETYPE_2D,
+                [2].image_type=SG_IMAGETYPE_2D
+            },
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "Texture2D<float4> tex0: register(t0);\n"
+                "Texture2D<float4> tex1: register(t1);\n"
+                "Texture2D<float4> tex2: register(t2);\n"
+                "sampler smp0: register(s0);\n"
+                "struct fs_in {\n"
+                "  float2 uv0: TEXCOORD0;\n"
+                "  float2 uv1: TEXCOORD1;\n"
+                "  float2 uv2: TEXCOORD2;\n"
+                "};\n"
+                "float4 main(fs_in inp): SV_Target0 {\n"
+                "  float3 c0 = tex0.Sample(smp0, inp.uv0).xyz;\n"
+                "  float3 c1 = tex1.Sample(smp0, inp.uv1).xyz;\n"
+                "  float3 c2 = tex2.Sample(smp0, inp.uv2).xyz;\n"
+                "  float4 c = float4(c0 + c1 + c2, 1.0);\n"
+                "  return c;\n"
+                "}\n",
+        }
     });
 
     // the pipeline object for the fullscreen rectangle
@@ -281,10 +288,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // resource bindings for the fullscreen quad
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_buf,
-        .fs_images = {
-            [0] = offscreen_pass_desc.resolve_attachments[0].image,
-            [1] = offscreen_pass_desc.resolve_attachments[1].image,
-            [2] = offscreen_pass_desc.resolve_attachments[2].image,
+        .fs = {
+            .images = {
+                [0] = offscreen_pass_desc.resolve_attachments[0].image,
+                [1] = offscreen_pass_desc.resolve_attachments[1].image,
+                [2] = offscreen_pass_desc.resolve_attachments[2].image,
+            },
+            .samplers[0] = smp,
         }
     };
 
@@ -309,7 +319,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  outp.uv = inp.pos;\n"
                 "  return outp;\n"
                 "}\n",
-            .fs.images[0].image_type=SG_IMAGETYPE_2D,
+            .fs.images[0].image_type = SG_IMAGETYPE_2D,
+            .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
             .fs.source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"
@@ -318,9 +329,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "}\n"
         })
     });
+    // images will be filled right before rendering
     sg_bindings dbg_bind = {
         .vertex_buffers[0] = quad_buf,
-        // images will be filled right before rendering
+        .fs.samplers[0] = smp,
     };
 
     // default pass action, no clear needed, since whole screen is overwritten
@@ -364,7 +376,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs_images[0] = offscreen_pass_desc.resolve_attachments[i].image;
+            dbg_bind.fs.images[0] = offscreen_pass_desc.resolve_attachments[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }

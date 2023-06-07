@@ -32,8 +32,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .render_target = true,
         .width = 512,
         .height = 512,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
         .sample_count = offscreen_sample_count,
     };
     sg_image color_img = sg_make_image(&img_desc);
@@ -44,6 +42,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pass offscreen_pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img
+    });
+
+    // a sampler object for when the rendertarget image is used as texture
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
     });
 
     // pass action for offscreen pass, clearing to black
@@ -147,35 +151,40 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [1].sem_name = "COLOR",
             [2].sem_name = "TEXCOORD"
         },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].image_type = SG_IMAGETYPE_2D,
-        .vs.source =
-            "cbuffer params: register(b0) {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR0;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 color: COLOR0;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.color = inp.color;\n"
-            "  outp.uv = inp.uv;\n"
-            "  return outp;\n"
-            "}\n",
-        .fs.source =
-            "Texture2D<float4> tex: register(t0);\n"
-            "sampler smp: register(s0);\n"
-            "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-            "  return tex.Sample(smp, uv) + color * 0.5;\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "cbuffer params: register(b0) {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float4 color: COLOR0;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 color: COLOR0;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.color = inp.color;\n"
+                "  outp.uv = inp.uv;\n"
+                "  return outp;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_2D,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "Texture2D<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+                "  return tex.Sample(smp, uv) + color * 0.5;\n"
+                "}\n"
+        }
     });
 
     // pipeline object for offscreen rendering
@@ -227,7 +236,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = color_img
+        .fs = {
+            .images[0] = color_img,
+            .samplers[0] = smp,
+        }
     };
 
     // view-projection matrix

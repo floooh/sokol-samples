@@ -52,9 +52,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .height = 16,
         .num_slices = 3,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+
+    // ...and a sampler
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     // cube vertex buffer
@@ -112,7 +116,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = {
+            .images[0] = img,
+            .samplers[0] = smp,
+        }
     };
 
     // shader to sample from array texture
@@ -121,47 +128,52 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [0].sem_name = "POSITION",
             [1].sem_name = "TEXCOORD"
         },
-        .vs.uniform_blocks[0].size = sizeof(params_t),
-        .fs.images[0].image_type=SG_IMAGETYPE_ARRAY,
-        .vs.source =
-            "cbuffer params {\n"
-            "  float4x4 mvp;\n"
-            "  float2 offset0;\n"
-            "  float2 offset1;\n"
-            "  float2 offset2;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float3 uv0: TEXCOORD0;\n"
-            "  float3 uv1: TEXCOORD1;\n"
-            "  float3 uv2: TEXCOORD2;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.uv0 = float3(inp.uv + offset0, 0.0);\n"
-            "  outp.uv1 = float3(inp.uv + offset1, 1.0);\n"
-            "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
-            "  return outp;\n"
-            "}\n",
-        .fs.source =
-            "Texture2DArray<float4> tex: register(t0);\n"
-            "sampler smp: register(s0);\n"
-            "struct fs_in {\n"
-            "  float3 uv0: TEXCOORD0;\n"
-            "  float3 uv1: TEXCOORD1;\n"
-            "  float3 uv2: TEXCOORD2;\n"
-            "};\n"
-            "float4 main(fs_in inp): SV_Target0 {\n"
-            "  float3 c0 = tex.Sample(smp, inp.uv0).xyz;\n"
-            "  float3 c1 = tex.Sample(smp, inp.uv1).xyz;\n"
-            "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
-            "  return float4(c0+c1+c2, 1.0);\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(params_t),
+            .source =
+                "cbuffer params {\n"
+                "  float4x4 mvp;\n"
+                "  float2 offset0;\n"
+                "  float2 offset1;\n"
+                "  float2 offset2;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float3 uv0: TEXCOORD0;\n"
+                "  float3 uv1: TEXCOORD1;\n"
+                "  float3 uv2: TEXCOORD2;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.uv0 = float3(inp.uv + offset0, 0.0);\n"
+                "  outp.uv1 = float3(inp.uv + offset1, 1.0);\n"
+                "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
+                "  return outp;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_ARRAY,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "Texture2DArray<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "struct fs_in {\n"
+                "  float3 uv0: TEXCOORD0;\n"
+                "  float3 uv1: TEXCOORD1;\n"
+                "  float3 uv2: TEXCOORD2;\n"
+                "};\n"
+                "float4 main(fs_in inp): SV_Target0 {\n"
+                "  float3 c0 = tex.Sample(smp, inp.uv0).xyz;\n"
+                "  float3 c1 = tex.Sample(smp, inp.uv1).xyz;\n"
+                "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
+                "  return float4(c0+c1+c2, 1.0);\n"
+                "}\n"
+        }
     });
 
     // create pipeline object

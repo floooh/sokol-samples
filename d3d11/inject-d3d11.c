@@ -152,20 +152,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // and create a sokol_gfx texture with injected D3D11 texture
     sg_reset_state_cache();
-    sg_image_desc img_desc = {
+    sg_image img = sg_make_image(&(sg_image_desc){
         .usage = SG_USAGE_STREAM,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
         // out-comment either of the next lines for testing:
         .d3d11_texture = d3d11_tex,
         .d3d11_shader_resource_view = d3d11_srv
-    };
-    sg_image img = sg_make_image(&img_desc);
+    });
     if (d3d11_tex) {
         d3d11_tex->lpVtbl->Release(d3d11_tex);
         d3d11_tex = 0;
@@ -175,38 +170,66 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         d3d11_srv = 0;
     }
 
+    // create a D3D11 sampler and inject into an sg_sampler
+    D3D11_SAMPLER_DESC d3d11_smp_desc = {
+        .Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT,
+        .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+        .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+        .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
+        .MaxAnisotropy = 1,
+        .ComparisonFunc = D3D11_COMPARISON_NEVER,
+        .MaxLOD = D3D11_FLOAT32_MAX,
+    };
+    ID3D11SamplerState* d3d11_smp;
+    hr = d3d11_dev->lpVtbl->CreateSamplerState(d3d11_dev, &d3d11_smp_desc, &d3d11_smp);
+    assert(SUCCEEDED(hr) && d3d11_smp);
+    sg_reset_state_cache();
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+        .d3d11_sampler = d3d11_smp,
+    });
+    d3d11_smp->lpVtbl->Release(d3d11_smp); d3d11_smp = 0;
+
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].sem_name = "POSITION",
             [1].sem_name = "TEXCOORD"
         },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].image_type = SG_IMAGETYPE_2D,
-        .vs.source =
-            "cbuffer params: register(b0) {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.uv = inp.uv;\n"
-            "  return outp;\n"
-            "};\n",
-        .fs.source =
-            "Texture2D<float4> tex: register(t0);\n"
-            "sampler smp: register(s0);\n"
-            "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
-            "  return tex.Sample(smp, uv);\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "cbuffer params: register(b0) {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.uv = inp.uv;\n"
+                "  return outp;\n"
+                "};\n",
+        },
+        .fs = {
+            .images[0].image_type = SG_IMAGETYPE_2D,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .source =
+                "Texture2D<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
+                "  return tex.Sample(smp, uv);\n"
+                "}\n"
+        },
     });
 
     // pipeline object
@@ -233,7 +256,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = {
+            .images[0] = img,
+            .samplers[0] = smp,
+        },
     };
 
     // view-projection matrix
