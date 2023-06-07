@@ -54,7 +54,6 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
@@ -132,7 +131,7 @@ static void init(void) {
     smp_desc.mag_filter = SG_FILTER_NEAREST;
     smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
-        smp_desc.max_anisotropy = 1<<(i-7);
+        smp_desc.max_anisotropy = 1<<i;
         state.smp[smp_index++] = sg_make_sampler(&smp_desc);
     }
     assert(smp_index == 12);

@@ -48,7 +48,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a render pass with 3 color attachment images, and a depth attachment image */
+    // a render pass with 3 color attachment images, and a depth attachment image
     sg_image_desc color_img_desc = {
         .render_target = true,
         .width = WIDTH,
@@ -336,6 +336,7 @@ static void init(void) {
             }
         }),
     });
+    // images will be filled right before rendering
     state.dbg_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .fs.samplers[0] = smp,
