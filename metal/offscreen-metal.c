@@ -212,7 +212,7 @@ static void init(void) {
         },
         .fs = {
             .images[0].image_type = SG_IMAGETYPE_2D,
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
             .source =
                 "#include <metal_stdlib>\n"
                 "using namespace metal;\n"

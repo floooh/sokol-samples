@@ -131,7 +131,7 @@ static void init(void) {
             "  return out;\n"
             "}\n",
         .fs.images[0].image_type = SG_IMAGETYPE_2D,
-        .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+        .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
         .fs.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"

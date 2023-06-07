@@ -101,12 +101,15 @@ void init(void) {
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
     // NOTE: SLOT_tex is provided by shader code generation
-    state.bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
+    state.bind.fs.images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "cube-texture"
     });
+
+    // create a sampler object with default attributes
+    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){0});
 
     // a shader
     sg_shader shd = sg_make_shader(texcube_shader_desc(sg_query_backend()));
