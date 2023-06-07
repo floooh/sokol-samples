@@ -257,7 +257,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 [1].image_type=SG_IMAGETYPE_2D,
                 [2].image_type=SG_IMAGETYPE_2D
             },
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
             .source =
                 "Texture2D<float4> tex0: register(t0);\n"
                 "Texture2D<float4> tex1: register(t1);\n"
@@ -320,7 +320,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  return outp;\n"
                 "}\n",
             .fs.images[0].image_type = SG_IMAGETYPE_2D,
-            .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLING,
+            .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
             .fs.source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"
