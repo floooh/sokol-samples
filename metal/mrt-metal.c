@@ -256,6 +256,11 @@ static void init(void) {
                 [2] = { .image_type = SG_IMAGETYPE_2D }
             },
             .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .image_sampler_pairs = {
+                [0] = { .valid = true, .image_slot = 0, .sampler_slot = 0 },
+                [1] = { .valid = true, .image_slot = 1, .sampler_slot = 0 },
+                [2] = { .valid = true, .image_slot = 2, .sampler_slot = 0 },
+            },
             .source =
                 "#include <metal_stdlib>\n"
                 "using namespace metal;\n"
@@ -327,6 +332,7 @@ static void init(void) {
             .fs = {
                 .images[0].image_type = SG_IMAGETYPE_2D,
                 .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+                .image_sampler_pairs[0] = { .valid = true, .image_slot = 0, .sampler_slot = 0 },
                 .source =
                     "#include <metal_stdlib>\n"
                     "using namespace metal;\n"

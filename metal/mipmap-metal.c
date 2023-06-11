@@ -106,11 +106,15 @@ static void init(void) {
         SG_FILTER_NEAREST,
         SG_FILTER_LINEAR,
     };
+    sg_filter mipmap_filters[] = {
+        SG_FILTER_NEAREST,
+        SG_FILTER_LINEAR,
+    };
     int smp_index = 0;
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             smp_desc.min_filter = filters[i];
-            smp_desc.mipmap_filter = filters[j];
+            smp_desc.mipmap_filter = mipmap_filters[j];
             state.smp[smp_index++] = sg_make_sampler(&smp_desc);
         }
     }
@@ -120,7 +124,7 @@ static void init(void) {
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             smp_desc.min_filter = filters[i];
-            smp_desc.mipmap_filter = filters[j];
+            smp_desc.mipmap_filter = mipmap_filters[j];
             state.smp[smp_index++] = sg_make_sampler(&smp_desc);
         }
     }
@@ -165,6 +169,7 @@ static void init(void) {
         .fs = {
             .images[0].image_type = SG_IMAGETYPE_2D,
             .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .image_sampler_pairs[0] = { .valid = true, .image_slot = 0, .sampler_slot = 0 },
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
