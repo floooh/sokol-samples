@@ -61,7 +61,7 @@ static void draw_quad(void) {
     glEnd();
 }
 
-/* vertex specification for a cube with colored sides and texture coords */
+// vertex specification for a cube with colored sides and texture coords
 static void cube(void) {
     glBegin(GL_QUADS);
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -135,11 +135,11 @@ static void draw_tex_cube(void) {
     frame_count += 1.0f;
     float a = (float) frame_count;
 
-    /* texture matrix rotation and scale */
+    // texture matrix rotation and scale
     float tex_rot = 0.5f * a;
     const float tex_scale = 1.0f + sinf(rad(a)) * 0.5f;
 
-    /* compute an orbiting eye-position for testing sgl_lookat() */
+    // compute an orbiting eye-position for testing sgl_lookat()
     float eye_x = sinf(rad(a)) * 6.0f;
     float eye_z = cosf(rad(a)) * 6.0f;
     float eye_y = sinf(rad(a)) * 3.0f;
@@ -169,7 +169,7 @@ int main() {
     glfwSwapInterval(1);
     flextInit();
 
-    /* a checkerboard texture */
+    // a checkerboard texture
     uint32_t pixels[8][8];
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -188,7 +188,7 @@ int main() {
     while (!glfwWindowShouldClose(w)) {
         int dw, dh;
         glfwGetFramebufferSize(w, &dw, &dh);
-        const int ww = dh/2; /* not a bug */
+        const int ww = dh/2; // not a bug
         const int hh = dh/2;
         const int x0 = dw/2 - hh;
         const int x1 = dw/2;

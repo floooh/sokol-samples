@@ -18,7 +18,7 @@ int main() {
     const int WIDTH = 640;
     const int HEIGHT = 480;
 
-    /* create GLFW window and initialize GL */
+    // create GLFW window and initialize GL
     glfwInit();
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -29,19 +29,19 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_desc desc = { .logger.func = slog_func };
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
+    // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     vertex_t vertices[7] = {
-        /* triangle */
+        // triangle
         {  0.0f,   0.55f,  1.0f, 0.0f, 0.0f },
         {  0.25f,  0.05f,  0.0f, 1.0f, 0.0f },
         { -0.25f,  0.05f,  0.0f, 0.0f, 1.0f },
 
-        /* quad */
+        // quad
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
@@ -59,13 +59,13 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* setup resource bindings struct */
-   sg_bindings bind = {
-       .vertex_buffers[0] = vb,
-       .index_buffer = ib
-   };
+    // setup resource bindings struct */
+    sg_bindings bind = {
+        .vertex_buffers[0] = vb,
+        .index_buffer = ib
+    };
 
-    /* create a shader to render 2D colored shapes */
+    // create a shader to render 2D colored shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#version 330\n"
@@ -85,7 +85,7 @@ int main() {
             "}\n"
     });
 
-    /* a pipeline state object, default states are fine */
+    // a pipeline state object, default states are fine
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
@@ -97,7 +97,7 @@ int main() {
         }
     });
 
-    /* a pass action to clear to blue-ish */
+    // a pass action to clear to blue-ish
     sg_pass_action pass_action = {
         .colors = {
             [0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } }
@@ -109,12 +109,12 @@ int main() {
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
         sg_begin_default_pass(&pass_action, cur_width, cur_height);
         sg_apply_pipeline(pip);
-        /* render the triangle */
+        // render the triangle
         bind.vertex_buffer_offsets[0] = 0;
         bind.index_buffer_offset = 0;
         sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
-        /* render the quad from the same vertex- and index-buffer */
+        // render the quad from the same vertex- and index-buffer
         bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
         bind.index_buffer_offset = 3 * sizeof(uint16_t);
         sg_apply_bindings(&bind);
