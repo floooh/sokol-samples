@@ -21,14 +21,14 @@ static struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     const float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -39,7 +39,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* create a shader */
+    // create a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
@@ -61,9 +61,9 @@ int main() {
             "}\n"
     });
 
-    /* create a pipeline object (default render states are fine for triangle) */
+    // create a pipeline object (default render states are fine for triangle)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
+        // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
         .shader = shd,
         .layout = {
             .attrs = {
@@ -73,12 +73,12 @@ int main() {
         },
     });
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-/* draw one frame */
+// draw one frame
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());

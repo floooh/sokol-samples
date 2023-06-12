@@ -135,7 +135,7 @@ int main() {
         .fs = {
             .images[0].image_type = SG_IMAGETYPE_2D,
             .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
-            .image_samplers[0] = { .name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .image_sampler_pairs[0] = { .valid = true, .name = "tex", .image_slot = 0, .sampler_slot = 0 },
             .source =
                 "precision mediump float;\n"
                 "uniform sampler2D tex;\n"

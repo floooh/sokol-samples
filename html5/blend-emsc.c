@@ -36,23 +36,23 @@ static struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx (need to increase pipeline pool size) */
+    // setup sokol_gfx (need to increase pipeline pool size)
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
         .logger.func = slog_func,
     });
 
-    /* a pass action which does not clear, since the entire screen is overwritten anyway */
+    // a pass action which does not clear, since the entire screen is overwritten anyway
     state.pass_action = (sg_pass_action) {
         .colors[0].load_action = SG_LOADACTION_DONTCARE ,
         .depth.load_action = SG_LOADACTION_DONTCARE,
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    /* a quad vertex buffer */
+    // a quad vertex buffer
     float vertices[] = {
         /* pos               color */
         -1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f,
@@ -64,7 +64,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader for the fullscreen background quad */
+    // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position"
@@ -91,7 +91,7 @@ int main() {
         }
     });
 
-    /* a pipeline state object for rendering the background quad */
+    // a pipeline state object for rendering the background quad
     state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = 28,
@@ -103,7 +103,7 @@ int main() {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    /* a shader for the blended quads */
+    // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
@@ -132,7 +132,7 @@ int main() {
             "}"
     });
 
-    /* one pipeline object per blend-factor combination */
+    // one pipeline object per blend-factor combination
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
@@ -185,27 +185,27 @@ int main() {
         }
     }
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* compute view-proj matrix from current width/height */
+    // compute view-proj matrix from current width/height
     hmm_mat4 proj = HMM_Perspective(90.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 100.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
 
-    /* draw a background quad */
+    // draw a background quad
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.fs_params));
     sg_draw(0, 4, 1);
 
-    /* draw the blended quads */
+    // draw the blended quads
     float r0 = state.r;
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
