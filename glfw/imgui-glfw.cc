@@ -149,10 +149,10 @@ int main() {
         "    uv = texcoord0;\n"
         "    color = color0;\n"
         "}\n";
-    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
-    shd_desc.fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLE;
-    shd_desc.fs.image_sampler_pairs[0].valid = true;
-    shd_desc.fs.image_sampler_pairs[0].name = "tex";
+    shd_desc.fs.images[0].used = true;
+    shd_desc.fs.samplers[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].glsl_name = "tex";
     shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
     shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
     shd_desc.fs.source =

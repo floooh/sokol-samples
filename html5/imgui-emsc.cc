@@ -204,9 +204,9 @@ int main() {
                 "}\n",
         },
         .fs = {
-            .images[0] = { .image_type = SG_IMAGETYPE_2D },
-            .samplers[0] = { .type = SG_SAMPLERTYPE_SAMPLE },
-            .image_sampler_pairs[0] = { .valid = true, .name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .images[0] = { .used = true },
+            .samplers[0] = { .used = true },
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
             .source =
                 "precision mediump float;"
                 "uniform sampler2D tex;\n"

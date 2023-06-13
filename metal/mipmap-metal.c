@@ -167,9 +167,9 @@ static void init(void) {
                 "}\n"
         },
         .fs = {
-            .images[0].image_type = SG_IMAGETYPE_2D,
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
-            .image_sampler_pairs[0] = { .valid = true, .image_slot = 0, .sampler_slot = 0 },
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"

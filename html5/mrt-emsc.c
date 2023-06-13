@@ -284,15 +284,15 @@ int main() {
         },
         .fs = {
             .images = {
-                [0].image_type = SG_IMAGETYPE_2D,
-                [1].image_type = SG_IMAGETYPE_2D,
-                [2].image_type = SG_IMAGETYPE_2D,
+                [0].used = true,
+                [1].used = true,
+                [2].used = true,
             },
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .samplers[0].used = true,
             .image_sampler_pairs = {
-                [0] = { .valid = true, .name = "tex0", .image_slot = 0, .sampler_slot = 0 },
-                [1] = { .valid = true, .name = "tex1", .image_slot = 1, .sampler_slot = 0 },
-                [2] = { .valid = true, .name = "tex2", .image_slot = 2, .sampler_slot = 0 },
+                [0] = { .used = true, .glsl_name = "tex0", .image_slot = 0, .sampler_slot = 0 },
+                [1] = { .used = true, .glsl_name = "tex1", .image_slot = 1, .sampler_slot = 0 },
+                [2] = { .used = true, .glsl_name = "tex2", .image_slot = 2, .sampler_slot = 0 },
             },
             .source =
                 "#version 300 es\n"
@@ -341,9 +341,9 @@ int main() {
                     "}\n",
             },
             .fs = {
-                .images[0].image_type = SG_IMAGETYPE_2D,
-                .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
-                .image_sampler_pairs[0] = { .valid = true, .name = "tex", .image_slot = 0, .sampler_slot = 0 },
+                .images[0].used = true,
+                .samplers[0].used = true,
+                .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
                 .source =
                     "#version 300 es\n"
                     "precision mediump float;\n"
