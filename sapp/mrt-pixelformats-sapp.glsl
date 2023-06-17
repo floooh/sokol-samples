@@ -60,7 +60,8 @@ void main() {
 @end
 
 @fs fs_quad
-uniform sampler2D tex;
+uniform texture2D tex;
+uniform sampler smp;
 
 in vec2 uv;
 out vec4 frag_color;
@@ -71,7 +72,7 @@ uniform quad_params {
 };
 
 void main() {
-    frag_color = vec4((texture(tex, uv).xyz + color_bias) * color_scale, 1.0);
+    frag_color = vec4((texture(sampler2D(tex, smp), uv).xyz + color_bias) * color_scale, 1.0);
 }
 @end
 

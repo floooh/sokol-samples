@@ -59,8 +59,6 @@ void init(void) {
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
         .sample_count = 1,
         .label = "shadow-map-color-image"
     };
@@ -183,11 +181,20 @@ void init(void) {
         .index_buffer = ibuf
     };
 
+    // a sampler object to sample the shadow texture
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+    });
+
     // resource bindings to render the cube, using the shadow map render target as texture
     state.deflt.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_shadowMap] = color_img
+        .fs = {
+            .images[SLOT_shadowMap] = color_img,
+            .samplers[SLOT_smp] = smp,
+        }
     };
 
     state.ry = 0.0f;

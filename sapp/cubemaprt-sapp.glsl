@@ -75,7 +75,8 @@ void main() {
 @include_block lighting
 @include_block fs_inputs
 
-uniform samplerCube tex;
+uniform textureCube tex;
+uniform sampler smp;
 out vec4 frag_color;
 
 void main() {
@@ -83,7 +84,7 @@ void main() {
     vec3 nrm = normalize(world_normal);
     vec3 light_dir = normalize(world_lightdir);
     vec3 refl_vec = normalize(world_position);
-    vec3 refl_color = texture(tex, refl_vec).xyz;
+    vec3 refl_color = texture(samplerCube(tex, smp), refl_vec).xyz;
     frag_color = vec4(light(refl_color * color.xyz, eye_vec, nrm, light_dir), 1.0);
 }
 @end

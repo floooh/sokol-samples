@@ -11,7 +11,8 @@
 
 static struct {
     sg_buffer vbuf;
-    sg_image img[_SG_WRAP_NUM];
+    sg_image img;
+    sg_sampler smp[_SG_WRAP_NUM];
     sg_pipeline pip;
     sg_pass_action pass_action;
 } state;
@@ -34,7 +35,7 @@ static void init(void) {
         .data = SG_RANGE(quad_vertices)
     });
 
-    // one test image per UV-wrap mode
+    // a test image
     const uint32_t o = 0xFF555555;
     const uint32_t W = 0xFFFFFFFF;
     const uint32_t R = 0xFF0000FF;
@@ -50,14 +51,18 @@ static void init(void) {
         { B, o, o, o, o, o, o, R },
         { B, B, B, B, R, R, R, R },
     };
+    state.img = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .data.subimage[0][0] = SG_RANGE(test_pixels)
+    });
+
+    // one sampler per uv wrap mode
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
-        state.img[i] = sg_make_image(&(sg_image_desc){
-            .width = 8,
-            .height = 8,
+        state.smp[i] = sg_make_sampler(&(sg_sampler_desc){
             .wrap_u = (sg_wrap) i,
             .wrap_v = (sg_wrap) i,
             .border_color = SG_BORDERCOLOR_OPAQUE_BLACK,
-            .data.subimage[0][0] = SG_RANGE(test_pixels)
         });
     }
 
@@ -86,7 +91,10 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .fs_images[0] = state.img[i]
+            .fs = {
+                .images[SLOT_tex] = state.img,
+                .samplers[SLOT_smp] = state.smp[i],
+            }
         });
         float x_offset = 0, y_offset = 0;
         switch (i) {

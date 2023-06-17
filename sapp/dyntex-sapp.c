@@ -43,11 +43,15 @@ void init(void) {
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage = SG_USAGE_STREAM,
+        .label = "dynamic-texture"
+    });
+
+    // a sampler object
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .label = "dynamic-texture"
     });
 
     // cube vertex buffer
@@ -127,7 +131,7 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_tex] = img
+        .fs = { .images[SLOT_tex] = img, .samplers[SLOT_smp] = smp },
     };
 
     // initialize the game-of-life state
@@ -151,7 +155,7 @@ void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.fs_images[0], &(sg_image_data){
+    sg_update_image(state.bind.fs.images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 

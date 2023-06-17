@@ -34,7 +34,7 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a pass action for the default render pass */
+    // a pass action for the default render pass
     state.pass_action = (sg_pass_action) {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,

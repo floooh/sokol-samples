@@ -28,7 +28,8 @@ void main() {
 @end
 
 @fs fs
-uniform sampler2DArray tex;
+uniform texture2DArray tex;
+uniform sampler smp;
 
 in vec3 uv0;
 in vec3 uv1;
@@ -37,9 +38,9 @@ in vec3 uv2;
 out vec4 frag_color;
 
 void main() {
-    vec4 c0 = texture(tex, uv0);
-    vec4 c1 = texture(tex, uv1);
-    vec4 c2 = texture(tex, uv2);
+    vec4 c0 = texture(sampler2DArray(tex, smp), uv0);
+    vec4 c1 = texture(sampler2DArray(tex, smp), uv1);
+    vec4 c2 = texture(sampler2DArray(tex, smp), uv2);
     frag_color = vec4(c0.xyz + c1.xyz + c2.xyz, 1.0);
 }
 @end

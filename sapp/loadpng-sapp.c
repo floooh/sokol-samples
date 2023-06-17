@@ -63,7 +63,13 @@ static void init(void) {
        Any draw calls containing such an "incomplete" image handle
        will be silently dropped.
     */
-    state.bind.fs_images[SLOT_tex] = sg_alloc_image();
+    state.bind.fs.images[SLOT_tex] = sg_alloc_image();
+
+    // a sampler object
+    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+    });
 
     // cube vertex buffer with packed texcoords
     const vertex_t vertices[] = {
@@ -167,12 +173,10 @@ static void fetch_callback(const sfetch_response_t* response) {
             &num_channels, desired_channels);
         if (pixels) {
             // ok, time to actually initialize the sokol-gfx texture
-            sg_init_image(state.bind.fs_images[SLOT_tex], &(sg_image_desc){
+            sg_init_image(state.bind.fs.images[SLOT_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = SG_FILTER_LINEAR,
-                .mag_filter = SG_FILTER_LINEAR,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),

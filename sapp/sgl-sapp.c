@@ -13,6 +13,7 @@
 static struct {
     sg_pass_action pass_action;
     sg_image img;
+    sg_sampler smp;
     sgl_pipeline pip_3d;
 } state;
 
@@ -39,6 +40,12 @@ static void init(void) {
         .width = 8,
         .height = 8,
         .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+
+    // ... and a sampler
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
     });
 
     /* create a pipeline object for 3d rendering, with less-equal
@@ -173,7 +180,7 @@ static void draw_tex_cube(const float t) {
     sgl_load_pipeline(state.pip_3d);
 
     sgl_enable_texture();
-    sgl_texture(state.img);
+    sgl_texture(state.img, state.smp);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);

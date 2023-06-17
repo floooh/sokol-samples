@@ -22,6 +22,7 @@ static struct {
     } offscreen;
     struct {
         sg_pass_action pass_action;
+        sg_sampler smp;
         sgl_pipeline sgl_pip;
     } display;
 } state;
@@ -81,10 +82,6 @@ static void init(void) {
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_PIXELFORMAT,
         .sample_count = OFFSCREEN_SAMPLECOUNT,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST
     });
     state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = state.offscreen.img
@@ -95,6 +92,14 @@ static void init(void) {
             .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         },
     };
+
+    // a sampler for sampling the offscreen render target
+    state.display.smp = sg_make_sampler(&(sg_sampler_desc){
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST
+    });
 }
 
 static void frame(void) {
@@ -112,7 +117,7 @@ static void frame(void) {
     sgl_set_context(SGL_DEFAULT_CONTEXT);
     sgl_defaults();
     sgl_enable_texture();
-    sgl_texture(state.offscreen.img);
+    sgl_texture(state.offscreen.img, state.display.smp);
     sgl_load_pipeline(state.display.sgl_pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), sapp_widthf()/sapp_heightf(), 0.1f, 100.0f);

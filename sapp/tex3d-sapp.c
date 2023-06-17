@@ -94,17 +94,21 @@ static void init(void) {
             }
         }
     }
-    state.bind.fs_images[SLOT_tex] = sg_make_image(&(sg_image_desc){
+    state.bind.fs.images[SLOT_tex] = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_3D,
         .width = TEX3D_DIM,
         .height = TEX3D_DIM,
         .num_slices = TEX3D_DIM,
         .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
         .label = "3d texture",
         .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+
+    // ...and a sampler object
+    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
     });
 }
 
