@@ -68,10 +68,6 @@ static void init(void) {
         .width = 256,
         .height = 256,
         .pixel_format = OFFSCREEN_PIXEL_FORMAT,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "color-image"
     };
@@ -120,10 +116,10 @@ static void init(void) {
     // pass (the display pass is multi-sampled, but the offscreen pass isn't)
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_buffer_layout_desc(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_offscreen_position] = sshape_position_attr_desc(),
-                [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc()
+                [ATTR_vs_offscreen_position] = sshape_position_vertex_attr_state(),
+                [ATTR_vs_offscreen_normal] = sshape_normal_vertex_attr_state()
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -142,11 +138,11 @@ static void init(void) {
     // and another pipeline-state-object for the default pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_buffer_layout_desc(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_default_position] = sshape_position_attr_desc(),
-                [ATTR_vs_default_normal] = sshape_normal_attr_desc(),
-                [ATTR_vs_default_texcoord0] = sshape_texcoord_attr_desc()
+                [ATTR_vs_default_position] = sshape_position_vertex_attr_state(),
+                [ATTR_vs_default_normal] = sshape_normal_vertex_attr_state(),
+                [ATTR_vs_default_texcoord0] = sshape_texcoord_vertex_attr_state()
             }
         },
         .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
@@ -159,6 +155,14 @@ static void init(void) {
         .label = "default-pipeline"
     });
 
+    // a sampler object for sampling the render target texture
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+    });
+
     // the resource bindings for rendering a non-textured shape into offscreen render target
     state.offscreen.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
@@ -169,7 +173,10 @@ static void init(void) {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_tex] = color_img
+        .fs = {
+            .images[SLOT_tex] = color_img,
+            .samplers[SLOT_smp] = smp,
+        }
     };
 }
 
