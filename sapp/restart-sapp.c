@@ -123,7 +123,6 @@ static void init(void) {
         .pipeline_pool_size = 8,
         .pass_pool_size = 1,
         .context_pool_size = 1,
-        .sampler_cache_size = 4,
         .context = sapp_sgcontext(),
         .allocator = {
             .alloc = smemtrack_alloc,
@@ -184,7 +183,7 @@ static void init(void) {
     });
 
     // setup rendering resources
-    state.scene.bind.fs_images[0] = sg_alloc_image();
+    state.scene.bind.fs.images[0] = sg_alloc_image();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
@@ -195,6 +194,11 @@ static void init(void) {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .data = SG_RANGE(cube_indices),
         .label = "cube-indices"
+    });
+
+    state.scene.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
     });
 
     state.scene.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -259,12 +263,10 @@ static void fetch_img_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            sg_init_image(state.scene.bind.fs_images[SLOT_tex], &(sg_image_desc){
+            sg_init_image(state.scene.bind.fs.images[SLOT_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = SG_FILTER_LINEAR,
-                .mag_filter = SG_FILTER_LINEAR,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),
