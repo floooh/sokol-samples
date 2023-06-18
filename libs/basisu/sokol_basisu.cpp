@@ -44,23 +44,17 @@ void sbasisu_shutdown(void) {
 static basist::transcoder_texture_format select_basis_textureformat(bool has_alpha) {
     if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC3_RGBA).sample) {
         return basist::transcoder_texture_format::cTFBC3_RGBA;
-    }
-    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
+    } else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_BC1_RGBA).sample) {
         return basist::transcoder_texture_format::cTFBC1_RGB;
-    }
-    else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGBA8).sample) {
+    } else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGBA8).sample) {
         return basist::transcoder_texture_format::cTFETC2_RGBA;
-    }
-    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGB8).sample) {
+    } else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_ETC2_RGB8).sample) {
         return basist::transcoder_texture_format::cTFETC1_RGB;
-    }
-    else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGBA_4BPP).sample) {
+    } else if (has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGBA_4BPP).sample) {
         return basist::transcoder_texture_format::cTFPVRTC1_4_RGBA;
-    }
-    else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).sample) {
+    } else if (!has_alpha && sg_query_pixelformat(SG_PIXELFORMAT_PVRTC_RGB_4BPP).sample) {
         return basist::transcoder_texture_format::cTFPVRTC1_4_RGB;
-    }
-    else {
+    } else {
         // UGH...
         return basist::transcoder_texture_format::cTFRGBA32;
     }
@@ -105,9 +99,6 @@ sg_image_desc sbasisu_transcode(sg_range basisu_data) {
     desc.num_mipmaps = (int) img_info.m_total_levels;
     assert(desc.num_mipmaps <= SG_MAX_MIPMAPS);
     desc.usage = SG_USAGE_IMMUTABLE;
-    desc.min_filter = (desc.num_mipmaps > 1) ? SG_FILTER_LINEAR_MIPMAP_LINEAR : SG_FILTER_LINEAR;
-    desc.mag_filter = SG_FILTER_LINEAR;
-    desc.max_anisotropy = 8;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
     for (int i = 0; i < desc.num_mipmaps; i++) {
         const uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);

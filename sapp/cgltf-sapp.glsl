@@ -65,11 +65,17 @@ uniform light_params {
     float light_intensity;
 };
 
-uniform sampler2D base_color_texture;
-uniform sampler2D metallic_roughness_texture;
-uniform sampler2D normal_texture;
-uniform sampler2D occlusion_texture;
-uniform sampler2D emissive_texture;
+uniform texture2D base_color_tex;
+uniform texture2D metallic_roughness_tex;
+uniform texture2D normal_tex;
+uniform texture2D occlusion_tex;
+uniform texture2D emissive_tex;
+
+uniform sampler base_color_smp;
+uniform sampler metallic_roughness_smp;
+uniform sampler normal_smp;
+uniform sampler occlusion_smp;
+uniform sampler emissive_smp;
 
 vec3 linear_to_srgb(vec3 linear) {
     return pow(linear, vec3(1.0/2.2));
@@ -89,7 +95,7 @@ vec3 get_normal() {
     t = normalize(t - ng * dot(ng, t));
     vec3 b = normalize(cross(ng, t));
     mat3 tbn = mat3(t, b, ng);
-    vec2 n_xy = texture(normal_texture, v_uv).xw * 2.0 - 1.0;
+    vec2 n_xy = texture(sampler2D(normal_tex, normal_smp), v_uv).xw * 2.0 - 1.0;
     vec3 n = vec3(n_xy.x, n_xy.y, sqrt(1.0 - n_xy.x*n_xy.x - n_xy.y*n_xy.y));
     n = normalize(tbn * n);
     return n;
@@ -232,11 +238,11 @@ void main() {
 
     // Roughness is stored in the 'a' channel, metallic is stored in the 'r' channel.
     // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
-    vec4 mr_sample = texture(metallic_roughness_texture, v_uv);
+    vec4 mr_sample = texture(sampler2D(metallic_roughness_tex, metallic_roughness_smp), v_uv);
     float perceptual_roughness = clamp(mr_sample.w * roughness_factor, 0.0, 1.0);
     float metallic = clamp(mr_sample.x * metallic_factor, 0.0, 1.0);
 
-    vec4 base_color = srgb_to_linear(texture(base_color_texture, v_uv)) * base_color_factor;
+    vec4 base_color = srgb_to_linear(texture(sampler2D(base_color_tex, base_color_smp), v_uv)) * base_color_factor;
     vec3 diffuse_color = base_color.rgb * (vec3(1.0)-f0) * (1.0 - metallic);
     vec3 specular_color = mix(f0, base_color.rgb, metallic);
 
@@ -262,40 +268,11 @@ void main() {
     vec3 normal = get_normal();
     vec3 view = normalize(v_eye_pos - v_pos);
     vec3 color = apply_point_light(material_info, normal, view);
-    color *= texture(occlusion_texture, v_uv).r;
-    color += srgb_to_linear(texture(emissive_texture, v_uv)).rgb * emissive_factor;
+    color *= texture(sampler2D(occlusion_tex, occlusion_smp), v_uv).r;
+    color += srgb_to_linear(texture(sampler2D(emissive_tex, emissive_smp), v_uv)).rgb * emissive_factor;
     frag_color = vec4(tone_map(color), 1.0);
 }
 @end
 
-/*
-@fs specular_fs
-in vec3 nrm;
-in vec2 uv;
-out vec4 frag_color;
-
-uniform specular_params {
-    vec4 diffuse_factor;
-    vec3 specular_factor;
-    vec3 emissive_factor;
-    float glossiness_factor;
-};
-
-uniform sampler2D diffuse_texture;
-uniform sampler2D specular_glossiness_texture;
-uniform sampler2D normal_texture;
-uniform sampler2D occlusion_texture;
-uniform sampler2D emissive_texture;
-
-void main() {
-    vec3 nrm = texture(normal_texture, uv).xyz;
-    vec3 occl = texture(occlusion_texture, uv).xyz;
-    //vec3 diff = texture(diffuse_texture, uv);
-    frag_color = vec4(occl * nrm, 1.0) * diffuse_factor;
-}
-@end
-*/
-
 @program cgltf_metallic vs metallic_fs
-//@program cgltf_specular vs specular_fs
 

@@ -47,12 +47,12 @@ static void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = {
-            .buffers[0] = sshape_buffer_layout_desc(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [0] = sshape_position_attr_desc(),
-                [1] = sshape_normal_attr_desc(),
-                [2] = sshape_texcoord_attr_desc(),
-                [3] = sshape_color_attr_desc()
+                [0] = sshape_position_vertex_attr_state(),
+                [1] = sshape_normal_vertex_attr_state(),
+                [2] = sshape_texcoord_vertex_attr_state(),
+                [3] = sshape_color_vertex_attr_state()
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
