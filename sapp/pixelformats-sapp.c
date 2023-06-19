@@ -18,8 +18,7 @@
 static struct {
     struct {
         bool valid;
-        sg_image sample;
-        sg_image filter;
+        sg_image texture;
         sg_image render;
         sg_image blend;
         sg_image msaa;
@@ -33,6 +32,8 @@ static struct {
         sg_pass blend_pass;
         sg_pass msaa_pass;
     } fmt[_SG_PIXELFORMAT_NUM];
+    sg_sampler smp_nearest;
+    sg_sampler smp_linear;
     sg_bindings cube_bindings;
     sg_bindings bg_bindings;
     float rx, ry;
@@ -57,7 +58,7 @@ static void init(void) {
     // setup cimgui
     simgui_setup(&(simgui_desc_t){0});
 
-    // create all the textures and render targets
+    // create all the textures, samplers and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = 64,
@@ -75,13 +76,22 @@ static void init(void) {
     sg_image invalid_img = setup_invalid_texture();
 
     for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
-        state.fmt[i].sample = invalid_img;
-        state.fmt[i].filter = invalid_img;
+        state.fmt[i].texture = invalid_img;
         state.fmt[i].render = invalid_img;
         state.fmt[i].blend  = invalid_img;
         state.fmt[i].msaa = invalid_img;
         state.fmt[i].resolve = invalid_img;
     }
+
+    state.smp_nearest = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+    });
+
+    state.smp_linear = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+    });
 
     sg_pipeline_desc cube_render_pip_desc = {
         .layout = {
@@ -123,23 +133,12 @@ static void init(void) {
         sg_range img_data = gen_pixels(fmt);
         if (img_data.ptr) {
             state.fmt[i].valid = true;
-            // create unfiltered texture
+            // create unfiltered and filtered texture
             if (sg_query_pixelformat(fmt).sample) {
-                state.fmt[i].sample = sg_make_image(&(sg_image_desc){
+                state.fmt[i].texture = sg_make_image(&(sg_image_desc){
                     .width = 8,
                     .height = 8,
                     .pixel_format = fmt,
-                    .data.subimage[0][0] = img_data,
-                });
-            }
-            // create filtered texture
-            if (sg_query_pixelformat(fmt).filter) {
-                state.fmt[i].filter = sg_make_image(&(sg_image_desc){
-                    .width = 8,
-                    .height = 8,
-                    .pixel_format = fmt,
-                    .min_filter = SG_FILTER_LINEAR,
-                    .mag_filter = SG_FILTER_LINEAR,
                     .data.subimage[0][0] = img_data,
                 });
             }
@@ -349,15 +348,15 @@ static void frame(void) {
             if (igBeginChild_Str(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLine(256, 0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].sample.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].texture, state.smp_nearest), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].filter.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].texture, state.smp_linear), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].render.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].render, state.smp_nearest), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].blend.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].blend, state.smp_nearest), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage((ImTextureID)(uintptr_t)state.fmt[i].resolve.id, (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].resolve, state.smp_nearest), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
