@@ -95,6 +95,7 @@ static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_image joint_texture;
+    sg_sampler smp;
     sg_bindings bind;
     int num_instances;          // current number of character instances
     int num_triangle_indices;
@@ -211,7 +212,7 @@ static void init(void) {
     pip_desc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
     state.pip = sg_make_pipeline(&pip_desc);
 
-    // create a dynamic joint-palette texture
+    // create a dynamic joint-palette texture and sampler
     state.joint_texture_width = MAX_PALETTE_JOINTS * 3;
     state.joint_texture_height = MAX_INSTANCES;
     state.joint_texture_pitch = state.joint_texture_width * 4;
@@ -221,12 +222,16 @@ static void init(void) {
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
     img_desc.usage = SG_USAGE_STREAM;
-    img_desc.min_filter = SG_FILTER_NEAREST;
-    img_desc.mag_filter = SG_FILTER_NEAREST;
-    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     state.joint_texture = sg_make_image(&img_desc);
-    state.bind.vs_images[SLOT_joint_tex] = state.joint_texture;
+    state.bind.vs.images[SLOT_joint_tex] = state.joint_texture;
+
+    sg_sampler_desc smp_desc = { };
+    smp_desc.min_filter = SG_FILTER_NEAREST;
+    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    state.smp = sg_make_sampler(&smp_desc);
+    state.bind.vs.samplers[SLOT_smp] = state.smp;
 
     // create a static instance-data buffer, in this demo, character instances
     // don't move around and also are not clipped against the view volume,
