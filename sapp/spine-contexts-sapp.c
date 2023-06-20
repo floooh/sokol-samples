@@ -31,6 +31,7 @@ typedef struct {
 
 static struct {
     offscreen_t offscreen[2];
+    sg_sampler smp;
     sspine_atlas atlas;
     sspine_skeleton skeleton;
     sspine_instance instances[2];
@@ -58,6 +59,7 @@ typedef struct {
     struct { float x; float y; } scale;
     float rot;
     sg_image img;
+    sg_sampler smp;
 } quad_params_t;
 static void draw_quad(quad_params_t params);
 
@@ -83,6 +85,12 @@ static void init(void) {
     // create 2 sspine contexts for rendering into offscreen render targets
     state.offscreen[0] = setup_offscreen(SG_PIXELFORMAT_RGBA8, 512, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });
     state.offscreen[1] = setup_offscreen(SG_PIXELFORMAT_RG8, 64, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });
+
+    // create a texture sampler for sampling the offscreen render targets as texture
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+    });
 
     // common fixed-size spine layer transform
     state.layer_transform = (sspine_layer_transform){
@@ -134,12 +142,14 @@ static void frame(void) {
         .scale = { 0.4f, 0.4f },
         .rot = sgl_rad((float)state.angle_deg),
         .img = state.offscreen[0].img,
+        .smp = state.smp,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = -sgl_rad((float)state.angle_deg),
         .img = state.offscreen[1].img,
+        .smp = state.smp,
     });
 
     // do all the sokol-gfx rendering:
@@ -180,8 +190,6 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
         .height = width_height,
         .pixel_format = fmt,
         .sample_count = 1,
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
     });
     return (offscreen_t){
         .ctx = sspine_make_context(&(sspine_context_desc){
@@ -298,19 +306,25 @@ static void image_data_loaded(const sfetch_response_t* response) {
             &img_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // sokol-spine has already allocated a sokol-gfx image handle for use,
-            // now "populate" the handle with an actual image
+            // sokol-spine has already allocated a sokol-gfx image and sampler handle for us,
+            // now "populate" the handles with an actual image and sampler
             sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info.min_filter,
-                .mag_filter = img_info.mag_filter,
                 .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }
+            });
+            sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .mipmap_filter = img_info.mipmap_filter,
+                .wrap_u = img_info.wrap_u,
+                .wrap_v = img_info.wrap_v,
+                .label = img_info.filename.cstr,
             });
             stbi_image_free(pixels);
         }
@@ -327,7 +341,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 // draw a rotating quad via sokol-gl
 static void draw_quad(quad_params_t params) {
-    sgl_texture(params.img);
+    sgl_texture(params.img, params.smp);
     sgl_push_matrix();
     sgl_translate(params.pos.x, params.pos.y, 0.0f);
     sgl_scale(params.scale.x, params.scale.y, 0.0f);

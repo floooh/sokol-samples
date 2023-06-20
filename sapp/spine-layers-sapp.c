@@ -244,20 +244,26 @@ static void image_data_loaded(const sfetch_response_t* response) {
             &img_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // sokol-spine has already allocated a sokol-gfx image handle for use,
-            // now "populate" the handle with an actual image
+            // sokol-spine has already allocated a sokol-gfx image and sampler handle for use,
+            // now "populate" the handles with an actual image and sampler
             sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info.min_filter,
-                .mag_filter = img_info.mag_filter,
                 .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }
             });
+            sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .mipmap_filter = img_info.mipmap_filter,
+                .wrap_u = img_info.wrap_u,
+                .wrap_v = img_info.wrap_v,
+                .label = img_info.filename.cstr,
+            });            
             stbi_image_free(pixels);
         } else {
             state.load_status.failed = true;
