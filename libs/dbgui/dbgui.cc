@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //  dbgui.cc
-//  Implementation file for the generic debug UI overlay, using 
+//  Implementation file for the generic debug UI overlay, using
 //  the sokol_imgui.h utility header which implements the Dear ImGui
 //  glue code.
 //------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ void __dbgui_setup(int sample_count) {
     // setup debug inspection header(s)
     const sg_imgui_desc_t desc = { };
     sg_imgui_init(&sg_imgui, &desc);
-    
+
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
     simgui_desc.sample_count = sample_count;
@@ -39,6 +39,7 @@ void __dbgui_draw(void) {
             ImGui::MenuItem("Capabilities", 0, &sg_imgui.caps.open);
             ImGui::MenuItem("Buffers", 0, &sg_imgui.buffers.open);
             ImGui::MenuItem("Images", 0, &sg_imgui.images.open);
+            ImGui::MenuItem("Samplers", 0, &sg_imgui.samplers.open);
             ImGui::MenuItem("Shaders", 0, &sg_imgui.shaders.open);
             ImGui::MenuItem("Pipelines", 0, &sg_imgui.pipelines.open);
             ImGui::MenuItem("Passes", 0, &sg_imgui.passes.open);
