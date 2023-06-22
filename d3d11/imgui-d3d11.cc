@@ -128,8 +128,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         "  outp.color = inp.color;\n"
         "  return outp;\n"
         "}\n";
-    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
-    shd_desc.fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+    shd_desc.fs.images[0].used = true;
+    shd_desc.fs.samplers[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
     shd_desc.fs.source =
         "Texture2D<float4> tex: register(t0);\n"
         "sampler smp: register(s0);\n"

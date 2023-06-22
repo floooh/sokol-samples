@@ -253,11 +253,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .fs = {
             .images = {
-                [0].image_type=SG_IMAGETYPE_2D,
-                [1].image_type=SG_IMAGETYPE_2D,
-                [2].image_type=SG_IMAGETYPE_2D
+                [0].used = true,
+                [1].used = true,
+                [2].used = true,
             },
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .samplers[0].used = true,
+            .image_sampler_pairs = {
+                [0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+                [1] = { .used = true, .image_slot = 1, .sampler_slot = 0 },
+                [2] = { .used = true, .image_slot = 2, .sampler_slot = 0 },
+            },
             .source =
                 "Texture2D<float4> tex0: register(t0);\n"
                 "Texture2D<float4> tex1: register(t1);\n"
@@ -319,8 +324,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  outp.uv = inp.pos;\n"
                 "  return outp;\n"
                 "}\n",
-            .fs.images[0].image_type = SG_IMAGETYPE_2D,
-            .fs.samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .fs.images[0].used = true,
+            .fs.samplers[0].used = true,
+            .fs.image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .fs.source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"

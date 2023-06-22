@@ -157,8 +157,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "}\n",
         },
         .fs = {
-            .images[0].image_type = SG_IMAGETYPE_ARRAY,
-            .samplers[0].type = SG_SAMPLERTYPE_SAMPLE,
+            .images[0] = { .used = true, .image_type = SG_IMAGETYPE_ARRAY },
+            .samplers[0] = { .used = true },
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .source =
                 "Texture2DArray<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"
