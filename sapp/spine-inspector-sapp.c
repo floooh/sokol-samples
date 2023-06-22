@@ -440,19 +440,25 @@ static void image_data_loaded(const sfetch_response_t* response) {
             &img_width, &img_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // sokol-spine has already allocated a sokol-gfx image handle for use,
-            // now "populate" the handle with an actual image
+            // sokol-spine has already allocated a sokol-gfx image and sampler handle for use,
+            // now "populate" the handles with the actual objects
             sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info.min_filter,
-                .mag_filter = img_info.mag_filter,
                 .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }
+            });
+            sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .mipmap_filter = img_info.mipmap_filter,
+                .wrap_u = img_info.wrap_u,
+                .wrap_v = img_info.wrap_v,
+                .label = img_info.filename.cstr,
             });
             stbi_image_free(pixels);
         } else {
@@ -479,12 +485,9 @@ static void ui_shutdown(void) {
 static const char* ui_sgfilter_name(sg_filter f) {
     switch (f) {
         case _SG_FILTER_DEFAULT: return "DEFAULT";
+        case SG_FILTER_NONE: return "NONE";
         case SG_FILTER_NEAREST: return "NEAREST";
         case SG_FILTER_LINEAR: return "LINEAR";
-        case SG_FILTER_NEAREST_MIPMAP_NEAREST: return "NEAREST_MIPMAP_NEAREST";
-        case SG_FILTER_NEAREST_MIPMAP_LINEAR: return "NEAREST_MIPMAP_LINEAR";
-        case SG_FILTER_LINEAR_MIPMAP_NEAREST: return "LINEAR_MIPMAP_NEAREST";
-        case SG_FILTER_LINEAR_MIPMAP_LINEAR: return "LINEAR_MIPMAP_LINEAR";
         default: return "???";
     }
 }
@@ -527,6 +530,7 @@ static void ui_draw(void) {
             igMenuItem_BoolPtr("Capabilities...", 0, &state.ui.sgimgui.caps.open, true);
             igMenuItem_BoolPtr("Buffers...", 0, &state.ui.sgimgui.buffers.open, true);
             igMenuItem_BoolPtr("Images...", 0, &state.ui.sgimgui.images.open, true);
+            igMenuItem_BoolPtr("Samplers...", 0, &state.ui.sgimgui.samplers.open, true);
             igMenuItem_BoolPtr("Shaders...", 0, &state.ui.sgimgui.shaders.open, true);
             igMenuItem_BoolPtr("Pipelines...", 0, &state.ui.sgimgui.pipelines.open, true);
             igMenuItem_BoolPtr("Passes...", 0, &state.ui.sgimgui.passes.open, true);
@@ -570,11 +574,13 @@ static void ui_draw(void) {
                     igText("Original Spine params:");
                     igText("  Min Filter: %s", ui_sgfilter_name(info.image.min_filter));
                     igText("  Mag Filter: %s", ui_sgfilter_name(info.image.mag_filter));
+                    igText("  Mipmap Filter: %s", ui_sgfilter_name(info.image.mipmap_filter));
                     igText("  Wrap U: %s", ui_sgwrap_name(info.image.wrap_u));
                     igText("  Wrap V: %s", ui_sgwrap_name(info.image.wrap_v));
                     igText("Overrides:");
                     igText("  Min Filter: %s", ui_sgfilter_name(info.overrides.min_filter));
                     igText("  Mag Filter: %s", ui_sgfilter_name(info.overrides.mag_filter));
+                    igText("  Mipmap Filter: %s", ui_sgfilter_name(info.overrides.mipmap_filter));
                     igText("  Wrap U: %s", ui_sgwrap_name(info.overrides.wrap_u));
                     igText("  Wrap V: %s", ui_sgwrap_name(info.overrides.wrap_v));
                     igText("  Premul Alpha Enabled: %s", info.overrides.premul_alpha_enabled ? "YES" : "NO");
