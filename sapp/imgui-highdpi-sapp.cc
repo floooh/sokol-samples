@@ -52,13 +52,7 @@ void init(void) {
     img_desc.data.subimage[0][0].ptr = font_pixels;
     img_desc.data.subimage[0][0].size = font_width * font_height * 4;
     sg_image font_img = sg_make_image(&img_desc);
-    sg_sampler_desc smp_desc = { };
-    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    smp_desc.min_filter = SG_FILTER_LINEAR;
-    smp_desc.mag_filter = SG_FILTER_LINEAR;
-    sg_sampler font_smp = sg_make_sampler(&smp_desc);
-    io.Fonts->TexID = simgui_imtextureid(font_img, font_smp);
+    io.Fonts->TexID = simgui_imtextureid(font_img);
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;

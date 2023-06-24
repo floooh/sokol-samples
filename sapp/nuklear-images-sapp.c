@@ -36,8 +36,8 @@ static struct {
 #define YELLOW (0xFF03DAFF)
 
 // helper function to create a sokol-gfx image wrapped in a Nuklear image handle
-struct nk_image make_image_handle(const sg_image_desc* img_desc, const sg_sampler_desc* smp_desc) {
-    return nk_image_handle(snk_nkhandle(sg_make_image(img_desc), sg_make_sampler(smp_desc)));
+struct nk_image make_image_handle(const sg_image_desc* img_desc) {
+    return nk_image_handle(snk_nkhandle(sg_make_image(img_desc)));
 }
 
 static void init(void) {
@@ -64,9 +64,6 @@ static void init(void) {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .data.subimage[0][0] = SG_RANGE(pixels)
-    }, &(sg_sampler_desc){
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
     });
 
     // blue/yellow checkerboard
@@ -79,9 +76,6 @@ static void init(void) {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .data.subimage[0][0] = SG_RANGE(pixels)
-    }, &(sg_sampler_desc){
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
     });
 
     // pass action for clearing background
