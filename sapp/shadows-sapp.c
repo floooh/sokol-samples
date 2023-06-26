@@ -183,8 +183,8 @@ void init(void) {
 
     // a sampler object to sample the shadow texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
     });
 
     // resource bindings to render the cube, using the shadow map render target as texture
