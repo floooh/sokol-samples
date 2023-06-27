@@ -189,7 +189,7 @@ static void init(void) {
     };
 
     // resource bindings to render display scene
-    state.shadow.bind = (sg_bindings) {
+    state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
         .fs = {
@@ -231,8 +231,7 @@ static void frame(void) {
     const hmm_mat4 view = HMM_LookAt(HMM_Vec3(5.0f, 5.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-
-    // the shadow map pass, render scene into shadow map texture
+    // the shadow map pass, render scene from light source into shadow map texture
     sg_begin_pass(state.shadow.pass, &state.shadow.pass_action);
     sg_apply_pipeline(state.shadow.pip);
     sg_apply_bindings(&state.shadow.bind);
@@ -240,7 +239,7 @@ static void frame(void) {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    // FIXME
+    // the display pass, render scene from camera, compare-sample shadow map texture
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();

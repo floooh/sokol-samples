@@ -15,9 +15,7 @@ void main() {
 @end
 
 @fs fs_shadow
-void main() {
-    discard;
-}
+void main() { }
 @end
 
 @program shadow vs_shadow fs_shadow
