@@ -1,7 +1,14 @@
 //------------------------------------------------------------------------------
 //  shadows-sapp.c
-//  Render to an offscreen rendertarget texture, and use this texture
-//  for rendering shadows to the screen.
+//
+//  Shadow mapping via a regular RGBA8 texture as shadow map. The depth value
+//  is encoded to RGBA8 in the shadow pass fragment shader, and decoded
+//  from RGBA8 in the display-pass fragment shader (this encoding was required for
+//  WebGL compatibility across all devices, but is probably no longer needed
+//  in WebGL2 and could be replaced with a regular R32F texture instead.
+//
+//  Also see shadows-depthtex-sapp for a similar sample using a depth-only
+//  pass and depth-buffer as shadow map.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -13,21 +20,27 @@
 #include "dbgui/dbgui.h"
 #include "shadows-sapp.glsl.h"
 
-#define SCREEN_SAMPLE_COUNT (4)
-
 static struct {
+    sg_image shadow_map;
+    sg_sampler shadow_sampler;
+    sg_buffer vbuf;
+    sg_buffer ibuf;
+    float ry;
     struct {
         sg_pass_action pass_action;
         sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
-    } shadows;
+    } shadow;
     struct {
         sg_pass_action pass_action;
         sg_pipeline pip;
         sg_bindings bind;
-    } deflt;
-    float ry;
+    } display;
+    struct {
+        sg_pipeline pip;
+        sg_bindings bind;
+    } dbg;
 } state;
 
 void init(void) {
@@ -37,43 +50,8 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // default pass action: clear to blue-ish
-    state.deflt.pass_action = (sg_pass_action) {
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f }
-        }
-    };
-
-    // shadow pass action: clear to white
-    state.shadows.pass_action = (sg_pass_action) {
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f }
-        }
-    };
-
-    // a render pass with one color- and one depth-attachment image
-    sg_image_desc img_desc = {
-        .render_target = true,
-        .width = 2048,
-        .height = 2048,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .sample_count = 1,
-        .label = "shadow-map-color-image"
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    img_desc.label = "shadow-map-depth-image";
-    sg_image depth_img = sg_make_image(&img_desc);
-    state.shadows.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img,
-        .label = "shadow-map-pass"
-    });
-
-    // cube vertex buffer with positions & normals
-    float vertices[] = {
+    // vertex buffer for a cube and place
+    const float scene_vertices[] = {
         // pos                  normals
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,  //CUBE BACK FACE
          1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,
@@ -105,18 +83,18 @@ void init(void) {
          1.0f,  1.0f,  1.0f,    0.0f, 1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    0.0f, 1.0f, 0.0f,
 
-        -1.0f,  0.0f, -1.0f,    0.0f, 1.0f, 0.0f,   //PLANE GEOMETRY
-        -1.0f,  0.0f,  1.0f,    0.0f, 1.0f, 0.0f,
-         1.0f,  0.0f,  1.0f,    0.0f, 1.0f, 0.0f,
-         1.0f,  0.0f, -1.0f,    0.0f, 1.0f, 0.0f,
+        -5.0f,  0.0f, -5.0f,    0.0f, 1.0f, 0.0f,   //PLANE GEOMETRY
+        -5.0f,  0.0f,  5.0f,    0.0f, 1.0f, 0.0f,
+         5.0f,  0.0f,  5.0f,    0.0f, 1.0f, 0.0f,
+         5.0f,  0.0f, -5.0f,    0.0f, 1.0f, 0.0f,
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = SG_RANGE(vertices),
+    state.vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(scene_vertices),
         .label = "cube-vertices"
     });
 
-    // an index buffer for the cube
-    uint16_t indices[] = {
+    // ...and a matching index buffer for the scene
+    const uint16_t scene_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -125,162 +103,223 @@ void init(void) {
         22, 21, 20,  23, 22, 20,
         26, 25, 24,  27, 26, 24
     };
-    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
+    state.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = SG_RANGE(indices),
+        .data = SG_RANGE(scene_indices),
         .label = "cube-indices"
     });
 
-    // pipeline-state-object for shadows-rendered cube, don't need texture coord here
-    state.shadows.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    // shadow map pass action: clear the shadow map to (1,1,1,1)
+    state.shadow.pass_action = (sg_pass_action){
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f },
+        }
+    };
+
+    // display pass action
+    state.display.pass_action = (sg_pass_action){
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.25f, 0.5f, 0.25f, 1.0f}
+        },
+    };
+
+    // a regular RGBA8 render target image as shadow map
+    state.shadow_map = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 2048,
+        .height = 2048,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .sample_count = 1,
+        .label = "shadow-map",
+    });
+
+    // ...we also need a separate depth-buffer image for the shadow pass
+    sg_image shadow_depth_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = 2048,
+        .height = 2048,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = 1,
+        .label = "shadow-depth-buffer",
+    });
+
+    // a regular sampler with nearest filtering to sample the shadow map
+    state.shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "shadow-sampler",
+    });
+
+    // the render pass object for the shadow pass
+    state.shadow.pass = sg_make_pass(&(sg_pass_desc){
+        .color_attachments[0].image = state.shadow_map,
+        .depth_stencil_attachment.image = shadow_depth_img,
+        .label = "shadow-pass",
+    });
+
+    // a pipeline object for the shadow pass
+    state.shadow.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            // need to provide stride, because the buffer's normal vector is skipped
+            // need to provide vertex stride, because normal component is skipped in shadow pass
             .buffers[0].stride = 6 * sizeof(float),
-            // but don't need to provide attr offsets, because pos and normal are continuous
             .attrs = {
-                [ATTR_shadowVS_position].format = SG_VERTEXFORMAT_FLOAT3
-            }
+                [ATTR_vs_shadow_pos].format = SG_VERTEXFORMAT_FLOAT3,
+            },
         },
         .shader = sg_make_shader(shadow_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        // Cull front faces in the shadow map pass
+        // render back-faces in shadow pass to prevent shadow acne on front-faces
         .cull_mode = SG_CULLMODE_FRONT,
         .sample_count = 1,
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
-        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
-        .label = "shadow-map-pipeline"
+        .label = "shadow-pipeline"
     });
 
-    // and another pipeline-state-object for the default pass
-    state.deflt.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    // resource bindings to render shadow scene
+    state.shadow.bind = (sg_bindings) {
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+    };
+
+    // a pipeline object for the display pass
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            // don't need to provide buffer stride or attr offsets, no gaps here
             .attrs = {
-                [ATTR_colorVS_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_colorVS_normal].format = SG_VERTEXFORMAT_FLOAT3
+                [ATTR_vs_display_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_vs_display_norm].format = SG_VERTEXFORMAT_FLOAT3,
             }
         },
-        .shader = sg_make_shader(color_shader_desc(sg_query_backend())),
+        .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        // Cull back faces when rendering to the screen
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true
+            .write_enabled = true,
         },
-        .label = "default-pipeline"
+        .label = "display-pipeline",
     });
 
-    // the resource bindings for rendering the cube into the shadow map render target
-    state.shadows.bind = (sg_bindings){
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf
+    // resource bindings to render display scene
+    state.display.bind = (sg_bindings) {
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+        .fs = {
+            .images[SLOT_shadow_map] = state.shadow_map,
+            .samplers[SLOT_shadow_sampler] = state.shadow_sampler,
+        },
     };
 
-    // a sampler object to sample the shadow texture
-    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+    // a vertex buffer, pipeline and sampler to render a debug visualization of the shadow map
+    float dbg_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
+    sg_buffer dbg_vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(dbg_vertices),
+        .label = "debug-vertices"
+    });
+    state.dbg.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[ATTR_vs_dbg_pos].format = SG_VERTEXFORMAT_FLOAT2,
+        },
+        .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .label = "debug-pipeline",
+    });
+    sg_sampler dbg_smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "debug-sampler"
     });
-
-    // resource bindings to render the cube, using the shadow map render target as texture
-    state.deflt.bind = (sg_bindings){
-        .vertex_buffers[0] = vbuf,
-        .index_buffer = ibuf,
+    state.dbg.bind = (sg_bindings){
+        .vertex_buffers[0] = dbg_vbuf,
         .fs = {
-            .images[SLOT_shadowMap] = color_img,
-            .samplers[SLOT_smp] = smp,
+            .images[SLOT_dbg_tex] = state.shadow_map,
+            .samplers[SLOT_dbg_smp] = dbg_smp,
         }
     };
-
-    state.ry = 0.0f;
 }
 
 void frame(void) {
-
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.ry += 0.2f * t;
 
-    // Calculate matrices for shadow pass
-    const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f,1.0f,0.0f));
-    const hmm_vec4 light_dir = HMM_MultiplyMat4ByVec4(rym, HMM_Vec4(50.0f,50.0f,-50.0f,0.0f));
-    const hmm_mat4 light_view = HMM_LookAt(light_dir.XYZ, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_vec3 eye_pos = HMM_Vec3(5.0f, 5.0f, 5.0f);
+    const hmm_mat4 plane_model = HMM_Mat4d(1.0f);
+    const hmm_mat4 cube_model = HMM_Translate(HMM_Vec3(0.0f, 1.5f, 0.0f));
+    const hmm_vec3 plane_color = HMM_Vec3(1.0f, 0.5f, 0.0f);
+    const hmm_vec3 cube_color = HMM_Vec3(0.5f, 0.5f, 1.0f);
 
-    // Configure a bias matrix for converting view-space coordinates into uv coordinates
-    hmm_mat4 light_proj = { {
-        { 0.5f, 0.0f, 0.0f, 0 },
-        { 0.0f, 0.5f, 0.0f, 0 },
-        { 0.0f, 0.0f, 0.5f, 0 },
-        { 0.5f, 0.5f, 0.5f, 1 }
-    } };
-    light_proj = HMM_MultiplyMat4(light_proj, HMM_Orthographic(-4.0f, 4.0f, -4.0f, 4.0f, 0, 200.0f));
+    // calculate matrices for shadow pass
+    const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_vec4 light_pos = HMM_MultiplyMat4ByVec4(rym, HMM_Vec4(50.0f, 50.0f, -50.0f, 1.0f));
+    const hmm_mat4 light_view = HMM_LookAt(light_pos.XYZ, HMM_Vec3(0.0f, 1.5f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_mat4 light_proj = HMM_Orthographic(-5.0f, 5.0f, -5.0f, 5.0f, 0, 100.0f);
     const hmm_mat4 light_view_proj = HMM_MultiplyMat4(light_proj, light_view);
 
-    // Calculate matrices for camera pass
-    const hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
-    const hmm_mat4 view = HMM_LookAt(HMM_Vec3(5.0f, 5.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
-    // Calculate transform matrices for plane and cube
-    const hmm_mat4 scale = HMM_Scale(HMM_Vec3(5,0,5));
-    const hmm_mat4 translate = HMM_Translate(HMM_Vec3(0,1.5f,0));
-
-    // Initialise fragment uniforms for light shader
-    const fs_light_params_t fs_light_params = {
-        .lightDir = HMM_NormalizeVec3(light_dir.XYZ),
-        .shadowMapSize = HMM_Vec2(2048,2048),
-        .eyePos = HMM_Vec3(5.0f,5.0f,5.0f)
+    const vs_shadow_params_t cube_vs_shadow_params = {
+        .mvp = HMM_MultiplyMat4(light_view_proj, cube_model)
     };
 
-    // the shadow map pass, render the vertices into the depth image
-    sg_begin_pass(state.shadows.pass, &state.shadows.pass_action);
-    sg_apply_pipeline(state.shadows.pip);
-    sg_apply_bindings(&state.shadows.bind);
-    {
-        // Render the cube into the shadow map
-        const vs_shadow_params_t vs_shadow_params = {
-            .mvp = HMM_MultiplyMat4(light_view_proj,translate)
-        };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(vs_shadow_params));
-        sg_draw(0, 36, 1);
-    }
+    // calculate matrices for display pass
+    const hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
+    const hmm_mat4 view = HMM_LookAt(eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
+    const fs_display_params_t fs_display_params = {
+        .light_dir = HMM_NormalizeVec3(light_pos.XYZ),
+        .eye_pos = eye_pos,
+        .sm_size = HMM_Vec2(2048.0f, 2048.0f),
+    };
+
+    const vs_display_params_t plane_vs_display_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, plane_model),
+        .model = plane_model,
+        .light_mvp = HMM_MultiplyMat4(light_view_proj, plane_model),
+        .diff_color = plane_color,
+    };
+
+    const vs_display_params_t cube_vs_display_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, cube_model),
+        .model = cube_model,
+        .light_mvp = HMM_MultiplyMat4(light_view_proj, cube_model),
+        .diff_color = cube_color,
+    };
+
+    // the shadow map pass, render scene from light source into shadow map texture
+    sg_begin_pass(state.shadow.pass, &state.shadow.pass_action);
+    sg_apply_pipeline(state.shadow.pip);
+    sg_apply_bindings(&state.shadow.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));
+    sg_draw(0, 36, 1);
     sg_end_pass();
 
-    // and the display-pass, rendering the scene, using the previously rendered shadow map as a texture
-    sg_begin_default_pass(&state.deflt.pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(state.deflt.pip);
-    sg_apply_bindings(&state.deflt.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_light_params, &SG_RANGE(fs_light_params));
-    {
-        // Render the plane in the light pass
-        const vs_light_params_t vs_light_params = {
-            .mvp = HMM_MultiplyMat4(view_proj,scale),
-            .lightMVP = HMM_MultiplyMat4(light_view_proj,scale),
-            .model = HMM_Mat4d(1.0f),
-            .diffColor = HMM_Vec3(0.5f,0.5f,0.5f)
-        };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &SG_RANGE(vs_light_params));
-        sg_draw(36, 6, 1);
-    }
-    {
-        // Render the cube in the light pass
-        const vs_light_params_t vs_light_params = {
-            .lightMVP = HMM_MultiplyMat4(light_view_proj,translate),
-            .model = translate,
-            .mvp = HMM_MultiplyMat4(view_proj,translate),
-            .diffColor = HMM_Vec3(1.0f,1.0f,1.0f)
-        };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_light_params, &SG_RANGE(vs_light_params));
-        sg_draw(0, 36, 1);
-    }
-
+    // the display pass, render scene from camera and sample the shadow map
+    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&state.display.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_display_params, &SG_RANGE(fs_display_params));
+    // render plane
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_display_params, &SG_RANGE(plane_vs_display_params));
+    sg_draw(36, 6, 1);
+    // render cube
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(cube_vs_display_params));
+    sg_draw(0, 36, 1);
+    // render debug visualization of shadow-map
+    sg_apply_pipeline(state.dbg.pip);
+    sg_apply_bindings(&state.dbg.bind);
+    sg_apply_viewport(sapp_width() - 150, 0, 150, 150, false);
+    sg_draw(0, 4, 1);
     __dbgui_draw();
     sg_end_pass();
-
     sg_commit();
 }
 
@@ -298,8 +337,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = SCREEN_SAMPLE_COUNT,
-        .window_title = "Shadow Rendering (sokol-app)",
+        .sample_count = 4,
+        .window_title = "shadows-sapp",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

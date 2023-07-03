@@ -10,6 +10,7 @@ uniform vs_shadow_params {
 };
 
 in vec4 pos;
+
 void main() {
     gl_Position = mvp * pos;
 }

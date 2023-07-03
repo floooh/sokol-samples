@@ -5,11 +5,13 @@
 //
 //  http://aras-p.info/blog/2009/07/30/encoding-floats-to-rgba-the-final/
 //
-#pragma sokol @ctype mat4 hmm_mat4
-#pragma sokol @ctype vec3 hmm_vec3
-#pragma sokol @ctype vec2 hmm_vec2
-#pragma sokol @block util
-vec4 encodeDepth(float v) {
+@ctype mat4 hmm_mat4
+@ctype vec3 hmm_vec3
+@ctype vec2 hmm_vec2
+
+@block util
+
+vec4 encode_depth(float v) {
     vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * v;
     enc = fract(enc);
     enc -= enc.yzww * vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);
@@ -20,150 +22,161 @@ float decodeDepth(vec4 rgba) {
     return dot(rgba, vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/16581375.0));
 }
 
-//------------------------------------------------------------------------------
-//  perform simple shadow map lookup returns 0.0 (unlit) or 1.0 (lit)
-//
-float sampleShadow(texture2D shadowMap, sampler smp, vec2 uv, float compare) {
-    #if !SOKOL_GLSL
-    uv.y = 1.0-uv.y;
-    #endif
-    float depth = decodeDepth(texture(sampler2D(shadowMap, smp), vec2(uv.x, uv.y)));
-    depth += 0.001;
+float sample_shadow(texture2D tex, sampler smp, vec2 uv, float compare) {
+    float depth = decodeDepth(texture(sampler2D(tex, smp), vec2(uv.x, uv.y)));
     return step(compare, depth);
 }
 
-//------------------------------------------------------------------------------
-//  perform percentage-closer shadow map lookup
-//
-float sampleShadowPCF(texture2D shadowMap, sampler smp, vec2 uv, vec2 smSize, float compare) {
+float sample_shadow_pcf(texture2D tex, sampler smp, vec3 uv_depth, vec2 sm_size) {
     float result = 0.0;
-    for (int x=-2; x<=2; x++) {
-        for (int y=-2; y<=2; y++) {
-            vec2 off = vec2(x,y)/smSize;
-            result += sampleShadow(shadowMap, smp, uv+off, compare);
+    for (int x = -2; x <= 2; x++) {
+        for (int y =- 2; y <= 2; y++) {
+            vec2 offset = vec2(x, y) / sm_size;
+            result += sample_shadow(tex, smp, uv_depth.xy + offset, uv_depth.z);
         }
     }
     return result / 25.0;
 }
 
-//------------------------------------------------------------------------------
-//  perform gamma correction
-//
-vec4 gamma(vec4 c) {
-    float p = 1.0/2.2;
-    return vec4(pow(c.xyz, vec3(p, p, p)), c.w);
-}
-#pragma sokol @end
+@end
 
-#pragma sokol @block uniforms
+//=== shadow pass
+@vs vs_shadow
+
 uniform vs_shadow_params {
     mat4 mvp;
 };
-#pragma sokol @end
-//------------------------------------------------------------------------------
-//  Shadowmap pass shaders
-//
-#pragma sokol @vs shadowVS
-#pragma sokol @include_block uniforms
 
-in vec4 position;
-out vec2 projZW;
+in vec4 pos;
+out vec2 proj_zw;
 
 void main() {
-    gl_Position = mvp * position;
-    projZW = gl_Position.zw;
+    gl_Position = mvp * pos;
+    proj_zw = gl_Position.zw;
 }
-#pragma sokol @end
+@end
 
-#pragma sokol @fs shadowFS
-#pragma sokol @include_block util
-in vec2 projZW;
-out vec4 fragColor;
+@fs fs_shadow
+@include_block util
+
+in vec2 proj_zw;
+out vec4 frag_color;
 
 void main() {
-    float depth = projZW.x / projZW.y;
-    fragColor = encodeDepth(depth);
+    float depth = proj_zw.x / proj_zw.y;
+    frag_color = encode_depth(depth);
 }
-#pragma sokol @end
+@end
 
-#pragma sokol @program shadow shadowVS shadowFS
+@program shadow vs_shadow fs_shadow
 
-//------------------------------------------------------------------------------
-//  Color pass shaders
-//
-#pragma sokol @block colorUniforms
-uniform vs_light_params {
-    mat4 model;
+//=== display pass
+@vs vs_display
+
+uniform vs_display_params {
     mat4 mvp;
-    mat4 lightMVP;
-    vec3 diffColor;
+    mat4 model;
+    mat4 light_mvp;
+    vec3 diff_color;
 };
-#pragma sokol @end
 
-#pragma sokol @vs colorVS
-#pragma sokol @include_block colorUniforms
-in vec4 position;
-in vec3 normal;
+in vec4 pos;
+in vec3 norm;
 out vec3 color;
-out vec4 lightProjPos;
-out vec4 P;
-out vec3 N;
+out vec4 light_proj_pos;
+out vec4 world_pos;
+out vec3 world_norm;
 
 void main() {
-    gl_Position = mvp * position;
-    lightProjPos = lightMVP * position;
-    P = (model * position);
-    N = (model * vec4(normal, 0.0)).xyz;
-    color = diffColor;
+    gl_Position = mvp * pos;
+    light_proj_pos = light_mvp * pos;
+    #if !SOKOL_GLSL
+        light_proj_pos.y = -light_proj_pos.y;
+    #endif
+    world_pos = model * pos;
+    world_norm = normalize((model * vec4(norm, 0.0)).xyz);
+    color = diff_color;
 }
-#pragma sokol @end
+@end
 
-#pragma sokol @fs colorFS
-#pragma sokol @include_block util
+@fs fs_display
+@include_block util
 
-uniform fs_light_params {
-    vec2 shadowMapSize;
-    vec3 lightDir;
-    vec3 eyePos;
+uniform fs_display_params {
+    vec3 light_dir;
+    vec3 eye_pos;
+    vec2 sm_size;
 };
-uniform texture2D shadowMap;
-uniform sampler smp;
+
+uniform texture2D shadow_map;
+uniform sampler shadow_sampler;
 
 in vec3 color;
-in vec4 lightProjPos;
-in vec4 P;
-in vec3 N;
-out vec4 fragColor;
+in vec4 light_proj_pos;
+in vec4 world_pos;
+in vec3 world_norm;
+
+out vec4 frag_color;
+
+vec4 gamma(vec4 c) {
+    float p = 1.0 / 2.2;
+    return vec4(pow(c.xyz, vec3(p)), c.w);
+}
 
 void main() {
-    float specPower = 2.2;
-    float ambientIntensity = 0.25;
-
-    // diffuse lighting
-    vec3 l = normalize(lightDir);
-    vec3 n = normalize(N);
-    float n_dot_l = dot(n,l);
+    float spec_power = 2.2;
+    float ambient_intensity = 0.25;
+    vec3 l = normalize(light_dir);
+    vec3 n = normalize(world_norm);
+    float n_dot_l = dot(n, l);
     if (n_dot_l > 0.0) {
 
-        vec3 lightPos = lightProjPos.xyz / lightProjPos.w;
-        vec2 smUV = (lightPos.xy+1.0)*0.5;
-        float depth = lightPos.z;
-        float s = sampleShadowPCF(shadowMap, smp, smUV, shadowMapSize, depth);
+        vec3 light_pos = light_proj_pos.xyz / light_proj_pos.w;
+        vec3 sm_pos = vec3((light_pos.xy + 1.0) * 0.5, light_pos.z);
+        float s = sample_shadow_pcf(shadow_map, shadow_sampler, sm_pos, sm_size);
+        float diff_intensity = max(n_dot_l * s, 0.0);
 
-        float diffIntensity = max(n_dot_l * s, 0.0);
-
-        vec3 v = normalize(eyePos - P.xyz);
+        vec3 v = normalize(eye_pos - world_pos.xyz);
         vec3 r = reflect(-l, n);
         float r_dot_v = max(dot(r, v), 0.0);
-        float specIntensity = pow(r_dot_v, specPower) * n_dot_l * s;
+        float spec_intensity = pow(r_dot_v, spec_power) * n_dot_l * s;
 
-        fragColor = vec4(vec3(specIntensity, specIntensity, specIntensity) + (diffIntensity+ambientIntensity)*color, 1.0);
+        frag_color = vec4(vec3(spec_intensity) + (diff_intensity + ambient_intensity) * color, 1.0);
+    } else {
+        frag_color = vec4(color * ambient_intensity, 1.0);
     }
-    else {
-        fragColor = vec4(color * ambientIntensity, 1.0);
-    }
-    fragColor = gamma(fragColor);
+    frag_color = gamma(frag_color);
 }
-#pragma sokol @end
+@end
 
-#pragma sokol @program color colorVS colorFS
+@program display vs_display fs_display
+
+//=== debug visualization sampler to render shadow map as regular texture
+@vs vs_dbg
+@glsl_options flip_vert_y
+
+in vec2 pos;
+out vec2 uv;
+
+void main() {
+    gl_Position = vec4(pos*2.0 - 1.0, 0.5, 1.0);
+    uv = pos;
+}
+@end
+
+@fs fs_dbg
+@include_block util
+
+uniform texture2D dbg_tex;
+uniform sampler dbg_smp;
+
+in vec2 uv;
+out vec4 frag_color;
+
+void main() {
+    float depth = decodeDepth(texture(sampler2D(dbg_tex, dbg_smp), uv));
+    frag_color = vec4(depth, depth, depth, 1.0);
+}
+@end
+
+@program dbg vs_dbg fs_dbg
