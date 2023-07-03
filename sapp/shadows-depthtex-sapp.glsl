@@ -42,7 +42,7 @@ void main() {
     gl_Position = mvp * pos;
     light_proj_pos = light_mvp * pos;
     #if !SOKOL_GLSL
-    light_proj_pos.y = -light_proj_pos.y;
+        light_proj_pos.y = -light_proj_pos.y;
     #endif
     world_pos = model * pos;
     world_norm = normalize((model * vec4(norm, 0.0)).xyz);
@@ -99,3 +99,30 @@ void main() {
 @end
 
 @program display vs_display fs_display
+
+//=== debug visualization sampler to render shadow map as regular texture
+@vs vs_dbg
+@glsl_options flip_vert_y
+
+in vec2 pos;
+out vec2 uv;
+
+void main() {
+    gl_Position = vec4(pos*2.0 - 1.0, 0.5, 1.0);
+    uv = pos;
+}
+@end
+
+@fs fs_dbg
+uniform texture2D dbg_tex;
+uniform sampler dbg_smp;
+
+in vec2 uv;
+out vec4 frag_color;
+
+void main() {
+    frag_color = vec4(texture(sampler2D(dbg_tex, dbg_smp), uv).xxx, 1.0);
+}
+@end
+
+@program dbg vs_dbg fs_dbg

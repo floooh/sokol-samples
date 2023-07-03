@@ -3,8 +3,9 @@
 //
 //  Shadow mapping via a depth-buffer texture.
 //
-//  - depth-only shadow pass (no color render targets)
+//  - depth-only shadow pass into shadow map (no color render targets)
 //  - display pass samples shadow map with a comparison sampler
+//  - debug visualization samples shadow map with a regular sampler
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -33,6 +34,10 @@ static struct {
         sg_pipeline pip;
         sg_bindings bind;
     } display;
+    struct {
+        sg_pipeline pip;
+        sg_bindings bind;
+    } dbg;
 } state;
 
 static void init(void) {
@@ -42,8 +47,8 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // cube vertex buffer with positions & normals
-    const float vertices[] = {
+    // vertex buffer for a cube and place
+    const float scene_vertices[] = {
         // pos                  normals
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,  //CUBE BACK FACE
          1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,
@@ -81,12 +86,12 @@ static void init(void) {
          5.0f,  0.0f, -5.0f,    0.0f, 1.0f, 0.0f,
     };
     state.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = SG_RANGE(vertices),
+        .data = SG_RANGE(scene_vertices),
         .label = "cube-vertices"
     });
 
-    // an index buffer for the cube
-    const uint16_t indices[] = {
+    // ...and a matching index buffer for the scene
+    const uint16_t scene_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -97,7 +102,7 @@ static void init(void) {
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = SG_RANGE(indices),
+        .data = SG_RANGE(scene_indices),
         .label = "cube-indices"
     });
 
@@ -139,7 +144,7 @@ static void init(void) {
         .label = "shadow-sampler",
     });
 
-    // a pass object for the shadow pass
+    // a depth-only pass object for the shadow pass
     state.shadow.pass = sg_make_pass(&(sg_pass_desc){
         .depth_stencil_attachment.image = state.shadow_map,
         .label = "shadow-pass",
@@ -169,6 +174,12 @@ static void init(void) {
         .label = "shadow-pipeline"
     });
 
+    // resource bindings to render shadow scene
+    state.shadow.bind = (sg_bindings) {
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+    };
+
     // a pipeline object for the display pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
@@ -187,12 +198,6 @@ static void init(void) {
         .label = "display-pipeline",
     });
 
-    // resource bindings to render shadow scene
-    state.shadow.bind = (sg_bindings) {
-        .vertex_buffers[0] = state.vbuf,
-        .index_buffer = state.ibuf,
-    };
-
     // resource bindings to render display scene
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
@@ -201,6 +206,38 @@ static void init(void) {
             .images[SLOT_shadow_map] = state.shadow_map,
             .samplers[SLOT_shadow_sampler] = state.shadow_sampler,
         },
+    };
+
+    // a vertex buffer, pipeline and sampler to render a debug visualization of the shadow map
+    float dbg_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
+    sg_buffer dbg_vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(dbg_vertices),
+        .label = "debug-vertices"
+    });
+    state.dbg.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .layout = {
+            .attrs[ATTR_vs_dbg_pos].format = SG_VERTEXFORMAT_FLOAT2,
+        },
+        .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .label = "debug-pipeline",
+    });
+    // note: use a regular sampling-sampler to render the shadow map,
+    // need to use nearest filtering here because of portability restrictions
+    // (e.g. WebGL2)
+    sg_sampler dbg_smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "debug-sampler"
+    });
+    state.dbg.bind = (sg_bindings){
+        .vertex_buffers[0] = dbg_vbuf,
+        .fs = {
+            .images[SLOT_dbg_tex] = state.shadow_map,
+            .samplers[SLOT_dbg_smp] = dbg_smp,
+        }
     };
 }
 
@@ -268,6 +305,11 @@ static void frame(void) {
     // render cube
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(cube_vs_display_params));
     sg_draw(0, 36, 1);
+    // render debug visualization of shadow-map
+    sg_apply_pipeline(state.dbg.pip);
+    sg_apply_bindings(&state.dbg.bind);
+    sg_apply_viewport(sapp_width() - 150, 0, 150, 150, false);
+    sg_draw(0, 4, 1);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
