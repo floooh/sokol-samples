@@ -277,7 +277,6 @@ void frame(void) {
     const fs_display_params_t fs_display_params = {
         .light_dir = HMM_NormalizeVec3(light_pos.XYZ),
         .eye_pos = eye_pos,
-        .sm_size = HMM_Vec2(2048.0f, 2048.0f),
     };
 
     const vs_display_params_t plane_vs_display_params = {

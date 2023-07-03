@@ -105,7 +105,6 @@ void main() {
 uniform fs_display_params {
     vec3 light_dir;
     vec3 eye_pos;
-    vec2 sm_size;
 };
 
 uniform texture2D shadow_map;
@@ -124,6 +123,7 @@ vec4 gamma(vec4 c) {
 }
 
 void main() {
+    vec2 sm_size = textureSize(sampler2D(shadow_map, shadow_sampler), 0);
     float spec_power = 2.2;
     float ambient_intensity = 0.25;
     vec3 l = normalize(light_dir);
