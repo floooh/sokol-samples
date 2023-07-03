@@ -1,8 +1,9 @@
 @ctype mat4 hmm_mat4
 @ctype vec3 hmm_vec3
 
-// shadow pass
+//=== shadow pass
 @vs vs_shadow
+@glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
 
 uniform vs_shadow_params {
     mat4 mvp;
@@ -20,7 +21,7 @@ void main() { }
 
 @program shadow vs_shadow fs_shadow
 
-// display pass
+//=== display pass
 @vs vs_display
 
 uniform vs_display_params {
@@ -74,8 +75,6 @@ vec4 gamma(vec4 c) {
 void main() {
     float spec_power = 2.2;
     float ambient_intensity = 0.25;
-
-    // diffuse lighting
     vec3 l = normalize(light_dir);
     vec3 n = normalize(world_norm);
     float n_dot_l = dot(n, l);
