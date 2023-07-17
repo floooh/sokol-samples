@@ -50,7 +50,7 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // vertex buffer for a cube and place
+    // vertex buffer for a cube and plane
     const float scene_vertices[] = {
         // pos                  normals
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f, -1.0f,  //CUBE BACK FACE
