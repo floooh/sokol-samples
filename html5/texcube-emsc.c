@@ -28,14 +28,14 @@ typedef struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
         /* pos                  color                       uvs */
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
@@ -72,7 +72,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -86,56 +86,68 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* create a checkerboard texture */
+    // create a checkerboard texture
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
-    /* create shader */
+    // create a sampler
+    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+    });
+
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
             [1].name = "color0",
             [2].name = "texcoord0"
         },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(params_t),
+                .uniforms = {
+                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+                }
+            },
+            .source =
+                "uniform mat4 mvp;\n"
+                "attribute vec4 position;\n"
+                "attribute vec4 color0;\n"
+                "attribute vec2 texcoord0;\n"
+                "varying vec4 color;\n"
+                "varying vec2 uv;"
+                "void main() {\n"
+                "  gl_Position = mvp * position;\n"
+                "  color = color0;\n"
+                "  uv = texcoord0 * 5.0;\n"
+                "}\n",
         },
-        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-        .vs.source =
-            "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "attribute vec2 texcoord0;\n"
-            "varying vec4 color;\n"
-            "varying vec2 uv;"
-            "void main() {\n"
-            "  gl_Position = mvp * position;\n"
-            "  color = color0;\n"
-            "  uv = texcoord0 * 5.0;\n"
-            "}\n",
-        .fs.source =
-            "precision mediump float;\n"
-            "uniform sampler2D tex;\n"
-            "varying vec4 color;\n"
-            "varying vec2 uv;\n"
-            "void main() {\n"
-            "  gl_FragColor = texture2D(tex, uv) * color;\n"
-            "}\n"
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "precision mediump float;\n"
+                "uniform sampler2D tex;\n"
+                "varying vec4 color;\n"
+                "varying vec2 uv;\n"
+                "void main() {\n"
+                "  gl_FragColor = texture2D(tex, uv) * color;\n"
+                "}\n"
+        }
     });
 
-    /* create pipeline object */
+    // create pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -153,19 +165,19 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK
     });
 
-    /* clear to black */
+    // clear to black
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -178,7 +190,7 @@ static EM_BOOL draw(double time, void* userdata) {
         .mvp = HMM_MultiplyMat4(view_proj, model)
     };
 
-    /* ...and draw */
+    // ...and draw
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

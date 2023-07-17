@@ -18,9 +18,10 @@ void main() {
 @end
 
 @fs fs
-uniform sampler2D tex_y;
-uniform sampler2D tex_cb;
-uniform sampler2D tex_cr;
+uniform texture2D tex_y;
+uniform texture2D tex_cb;
+uniform texture2D tex_cr;
+uniform sampler smp;
 
 in vec2 uv;
 out vec4 frag_color;
@@ -33,9 +34,9 @@ mat4 rec601 = mat4(
 );
 
 void main() {
-    float y = texture(tex_y, uv).r;
-    float cb = texture(tex_cb, uv).r;
-    float cr = texture(tex_cr, uv).r;
+    float y = texture(sampler2D(tex_y, smp), uv).r;
+    float cb = texture(sampler2D(tex_cb, smp), uv).r;
+    float cr = texture(sampler2D(tex_cr, smp), uv).r;
     frag_color = vec4(y, cb, cr, 1.0) * rec601;
 }
 @end

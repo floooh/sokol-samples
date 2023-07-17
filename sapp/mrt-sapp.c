@@ -56,10 +56,6 @@ void create_offscreen_pass(int width, int height) {
         .render_target = true,
         .width = width,
         .height = height,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "msaa image"
     };
@@ -87,7 +83,7 @@ void create_offscreen_pass(int width, int height) {
 
     // also need to update the fullscreen-quad texture bindings
     for (int i = 0; i < 3; i++) {
-        state.fsq.bind.fs_images[i] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.fsq.bind.fs.images[i] = state.offscreen.pass_desc.resolve_attachments[i].image;
     }
 }
 
@@ -241,13 +237,24 @@ void init(void) {
         .label = "fullscreen quad pipeline"
     });
 
+    // a sampler object to sample the offscreen render targets as textures
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+    });
+
     // resource bindings to render a fullscreen quad
     state.fsq.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
-        .fs_images = {
-            [SLOT_tex0] = state.offscreen.pass_desc.resolve_attachments[0].image,
-            [SLOT_tex1] = state.offscreen.pass_desc.resolve_attachments[1].image,
-            [SLOT_tex2] = state.offscreen.pass_desc.resolve_attachments[2].image
+        .fs = {
+            .images = {
+                [SLOT_tex0] = state.offscreen.pass_desc.resolve_attachments[0].image,
+                [SLOT_tex1] = state.offscreen.pass_desc.resolve_attachments[1].image,
+                [SLOT_tex2] = state.offscreen.pass_desc.resolve_attachments[2].image
+            },
+            .samplers[SLOT_smp] = smp,
         }
     };
 
@@ -261,7 +268,8 @@ void init(void) {
         .label = "dbgvis quad pipeline"
     }),
     state.dbg.bind = (sg_bindings){
-        .vertex_buffers[0] = quad_vbuf
+        .vertex_buffers[0] = quad_vbuf,
+        .fs.samplers[SLOT_smp] = smp,
         // images will be filled right before rendering
     };
 }
@@ -300,7 +308,7 @@ void frame(void) {
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.fs_images[SLOT_tex] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.dbg.bind.fs.images[SLOT_tex] = state.offscreen.pass_desc.resolve_attachments[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

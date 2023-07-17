@@ -99,10 +99,6 @@ static void init(void) {
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = 1,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
         .label = "resolve-image",
     });
 
@@ -117,16 +113,17 @@ static void init(void) {
     });
 
     // create a couple of meshes
-    sshape_vertex_t vertices[4000] = { 0 };
-    uint16_t indices[24000] = { 0 };
+    sshape_vertex_t vertices[8000] = { 0 };
+    uint16_t indices[48000] = { 0 };
     sshape_buffer_t buf = {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer  = SSHAPE_RANGE(indices),
     };
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
+    buf = sshape_build_torus(&buf, &(sshape_torus_t) {
         .radius = 0.5f,
-        .slices = 18,
-        .stacks = 10
+        .ring_radius = 0.25f,
+        .sides = 40,
+        .rings = 72,
     });
     state.sphere = sshape_element_range(&buf);
     buf = sshape_build_torus(&buf, &(sshape_torus_t) {
@@ -147,10 +144,10 @@ static void init(void) {
     // a pipeline object for the offscreen-rendered box
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_buffer_layout_desc(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_offscreen_position] = sshape_position_attr_desc(),
-                [ATTR_vs_offscreen_normal] = sshape_normal_attr_desc(),
+                [ATTR_vs_offscreen_position] = sshape_position_vertex_attr_state(),
+                [ATTR_vs_offscreen_normal] = sshape_normal_vertex_attr_state(),
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -169,11 +166,11 @@ static void init(void) {
     // another pipeline object for the display pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_buffer_layout_desc(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_display_position] = sshape_position_attr_desc(),
-                [ATTR_vs_display_normal] = sshape_normal_attr_desc(),
-                [ATTR_vs_display_texcoord0] = sshape_texcoord_attr_desc(),
+                [ATTR_vs_display_position] = sshape_position_vertex_attr_state(),
+                [ATTR_vs_display_normal] = sshape_normal_vertex_attr_state(),
+                [ATTR_vs_display_texcoord0] = sshape_texcoord_vertex_attr_state(),
             },
         },
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
@@ -184,6 +181,14 @@ static void init(void) {
             .write_enabled = true,
         },
         .label = "display-pipeline",
+    });
+
+    // a sampler to sample the render target as texture
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
     });
 
     // the resource bindings for rendering a non-textured shape in the offscreen pass
@@ -197,7 +202,10 @@ static void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_tex] = resolve_image,
+        .fs = {
+            .images[SLOT_tex] = resolve_image,
+            .samplers[SLOT_smp] = smp,
+        }
     };
 }
 

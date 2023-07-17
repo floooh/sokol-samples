@@ -30,20 +30,20 @@ typedef struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_NONE);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* a 2D triangle and quad in 1 vertex buffer and 1 index buffer */
+    // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     vertex_t vertices[7] = {
-        /* triangle */
+        // triangle
         {  0.0f,   0.55f,  1.0f, 0.0f, 0.0f },
         {  0.25f,  0.05f,  0.0f, 1.0f, 0.0f },
         { -0.25f,  0.05f,  0.0f, 0.0f, 1.0f },
-        /* quad */
+        // quad
         { -0.25f, -0.05f,  0.0f, 0.0f, 1.0f },
         {  0.25f, -0.05f,  0.0f, 1.0f, 0.0f },
         {  0.25f, -0.55f,  1.0f, 0.0f, 0.0f },
@@ -61,7 +61,7 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* create a shader to render 2D colored shapes */
+    // create a shader to render 2D colored shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "pos",
@@ -83,7 +83,7 @@ int main() {
             "}\n"
     });
 
-    /* a pipeline state object, default states are fine */
+    // a pipeline state object, default states are fine
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
@@ -103,12 +103,12 @@ static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
-    /* render triangle */
+    // render triangle
     state.bind.vertex_buffer_offsets[0] = 0;
     state.bind.index_buffer_offset = 0;
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
-    /* render quad */
+    // render quad
     state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
     state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
     sg_apply_bindings(&state.bind);

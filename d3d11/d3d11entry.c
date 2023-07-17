@@ -51,7 +51,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     state.height = h;
     state.sample_count = sample_count;
 
-    /* register window class */
+    // register window class
     RegisterClassW(&(WNDCLASSW){
         .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
         .lpfnWndProc = (WNDPROC) d3d11_winproc,
@@ -61,7 +61,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         .lpszClassName = L"SOKOLD3D11"
     });
 
-    /* create window */
+    // create window
     state.in_create_window = true;
     RECT rect = { .left = 0, .top = 0, .right = w, .bottom = h };
     AdjustWindowRectEx(&rect, state.win_style, FALSE, state.win_ex_style);
@@ -83,7 +83,7 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     ShowWindow(state.hwnd, SW_SHOW);
     state.in_create_window = false;
 
-    /* create device and swap chain */
+    // create device and swap chain
     state.swap_chain_desc = (DXGI_SWAP_CHAIN_DESC) {
         .BufferDesc = {
             .Width = (UINT)w,
@@ -109,23 +109,32 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         create_flags |= D3D11_CREATE_DEVICE_DEBUG;
     #endif
     D3D_FEATURE_LEVEL feature_level;
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(
-        NULL,                       /* pAdapter (use default) */
-        D3D_DRIVER_TYPE_HARDWARE,   /* DriverType */
-        NULL,                       /* Software */
-        create_flags,               /* Flags */
-        NULL,                       /* pFeatureLevels */
-        0,                          /* FeatureLevels */
-        D3D11_SDK_VERSION,          /* SDKVersion */
-        &state.swap_chain_desc,     /* pSwapChainDesc */
-        &state.swap_chain,          /* ppSwapChain */
-        &state.device,              /* ppDevice */
-        &feature_level,             /* pFeatureLevel */
-        &state.device_context);     /* ppImmediateContext */
-    (void)hr;
+    // NOTE: on some Win10 configs (like my gaming PC), device creation
+    // with the debug flag fails
+    HRESULT hr;
+    for (int i = 0; i < 2; i++) {
+        hr = D3D11CreateDeviceAndSwapChain(
+            NULL,                       // pAdapter (use default)
+            D3D_DRIVER_TYPE_HARDWARE,   // DriverType
+            NULL,                       // Software
+            create_flags,               // Flags
+            NULL,                       // pFeatureLevels
+            0,                          // FeatureLevels
+            D3D11_SDK_VERSION,          // SDKVersion
+            &state.swap_chain_desc,     // pSwapChainDesc
+            &state.swap_chain,          // ppSwapChain
+            &state.device,              // ppDevice
+            &feature_level,             // pFeatureLevel
+            &state.device_context);     // ppImmediateContext
+        if (SUCCEEDED(hr)) {
+            break;
+        } else {
+            create_flags &= ~D3D11_CREATE_DEVICE_DEBUG;
+        }
+    }
     assert(SUCCEEDED(hr) && state.swap_chain && state.device && state.device_context);
 
-    /* default render target and depth-stencil-buffer */
+    // default render target and depth-stencil-buffer
     d3d11_create_default_render_target();
 }
 

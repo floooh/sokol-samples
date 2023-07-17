@@ -11,35 +11,37 @@
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "mipmap-sapp.glsl.h"
+#include <assert.h>
 
 static struct {
     sg_pipeline pip;
     sg_buffer vbuf;
-    sg_image img[12];
+    sg_image img;
+    sg_sampler smp[12];
     float r;
     struct {
-        uint32_t mip0[65536];   /* 256x256 */
-        uint32_t mip1[16384];   /* 128x128 */
-        uint32_t mip2[4096];    /* 64*64 */
-        uint32_t mip3[1024];    /* 32*32 */
-        uint32_t mip4[256];     /* 16*16 */
-        uint32_t mip5[64];      /* 8*8 */
-        uint32_t mip6[16];      /* 4*4 */
-        uint32_t mip7[4];       /* 2*2 */
-        uint32_t mip8[1];       /* 1*2 */
+        uint32_t mip0[65536];   // 256x256
+        uint32_t mip1[16384];   // 128x128
+        uint32_t mip2[4096];    // 64*64
+        uint32_t mip3[1024];    // 32*32
+        uint32_t mip4[256];     // 16*16
+        uint32_t mip5[64];      // 8*8
+        uint32_t mip6[16];      // 4*4
+        uint32_t mip7[4];       // 2*2
+        uint32_t mip8[1];       // 1*2
     } pixels;
 } state;
 
 static const uint32_t mip_colors[9] = {
-    0xFF0000FF,     /* red */
-    0xFF00FF00,     /* green */
-    0xFFFF0000,     /* blue */
-    0xFFFF00FF,     /* magenta */
-    0xFFFFFF00,     /* cyan */
-    0xFF00FFFF,     /* yellow */
-    0xFFFF00A0,     /* violet */
-    0xFFFFA0FF,     /* orange */
-    0xFFA000FF,     /* purple */
+    0xFF0000FF,     // red
+    0xFF00FF00,     // green
+    0xFFFF0000,     // blue
+    0xFFFF00FF,     // magenta
+    0xFFFFFF00,     // cyan
+    0xFF00FFFF,     // yellow
+    0xFFFF00A0,     // violet
+    0xFFFFA0FF,     // orange
+    0xFFA000FF,     // purple
 };
 
 void init(void) {
@@ -49,7 +51,7 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    /* a plane vertex buffer */
+    // a plane vertex buffer
     float vertices[] = {
         -1.0, -1.0, 0.0,  0.0, 0.0,
         +1.0, -1.0, 0.0,  1.0, 0.0,
@@ -60,7 +62,7 @@ void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* initialize mipmap content, different colors and checkboard pattern */
+    // create image with mipmap content, different colors and checkboard pattern
     sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
     bool even_odd = false;
@@ -76,40 +78,57 @@ void init(void) {
             even_odd = !even_odd;
         }
     }
-    /* the first 4 images are just different min-filters, the last
-       4 images are different anistropy levels */
-    sg_image_desc img_desc = {
+    state.img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .mag_filter = SG_FILTER_LINEAR,
         .data = img_data
-    };
-    sg_filter min_filter[] = {
-        SG_FILTER_NEAREST_MIPMAP_NEAREST,
-        SG_FILTER_LINEAR_MIPMAP_NEAREST,
-        SG_FILTER_NEAREST_MIPMAP_LINEAR,
-        SG_FILTER_LINEAR_MIPMAP_LINEAR,
-    };
-    for (int i = 0; i < 4; i++) {
-        img_desc.min_filter = min_filter[i];
-        state.img[i] = sg_make_image(&img_desc);
-    }
-    img_desc.min_lod = 2.0f;
-    img_desc.max_lod = 4.0f;
-    for (int i = 4; i < 8; i++) {
-        img_desc.min_filter = min_filter[i-4];
-        state.img[i] = sg_make_image(&img_desc);
-    }
-    img_desc.min_lod = 0.0f;
-    img_desc.max_lod = 0.0f;    /* for max_lod, zero-initialized means "FLT_MAX" */
-    for (int i = 8; i < 12; i++) {
-        img_desc.max_anisotropy = (uint32_t) (1<<(i-7));
-        state.img[i] = sg_make_image(&img_desc);
-    }
+    });
 
-    /* pipeline state */
+    // the first 4 samplers are just different min-filters
+    sg_sampler_desc smp_desc = {
+        .mag_filter = SG_FILTER_LINEAR,
+    };
+    sg_filter filters[] = {
+        SG_FILTER_NEAREST,
+        SG_FILTER_LINEAR,
+    };
+    sg_filter mipmap_filters[] = {
+        SG_FILTER_NEAREST,
+        SG_FILTER_LINEAR,
+    };
+    int smp_index = 0;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            smp_desc.min_filter = filters[i];
+            smp_desc.mipmap_filter = mipmap_filters[j];
+            state.smp[smp_index++] = sg_make_sampler(&smp_desc);
+        }
+    }
+    // the next 4 samplers use min_lod/max_lod
+    smp_desc.min_lod = 2.0f;
+    smp_desc.max_lod = 4.0f;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            smp_desc.min_filter = filters[i];
+            smp_desc.mipmap_filter = mipmap_filters[j];
+            state.smp[smp_index++] = sg_make_sampler(&smp_desc);
+        }
+    }
+    // the last 4 samplers use different anistropy levels
+    smp_desc.min_lod = 0.0f;
+    smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
+    smp_desc.min_filter = SG_FILTER_NEAREST;
+    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.mipmap_filter = SG_FILTER_LINEAR;
+    for (int i = 0; i < 4; i++) {
+        smp_desc.max_anisotropy = 1<<i;
+        state.smp[smp_index++] = sg_make_sampler(&smp_desc);
+    }
+    assert(smp_index == 12);
+
+    // pipeline state
     state.pip = sg_make_pipeline(&(sg_pipeline_desc) {
         .layout = {
             .attrs = {
@@ -131,7 +150,8 @@ void frame(void) {
     hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
     sg_bindings bind = {
-        .vertex_buffers[0] = state.vbuf
+        .vertex_buffers[0] = state.vbuf,
+        .fs.images[SLOT_tex] = state.img,
     };
     sg_begin_default_pass(&(sg_pass_action){0}, sapp_width(), sapp_height());
     sg_apply_pipeline(state.pip);
@@ -141,7 +161,7 @@ void frame(void) {
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        bind.fs_images[SLOT_tex] = state.img[i];
+        bind.fs.samplers[SLOT_smp] = state.smp[i];
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);

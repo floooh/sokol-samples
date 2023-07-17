@@ -84,7 +84,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
     bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
-    // font texture for imgui's default font
+    // font texture and sampler for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
@@ -92,11 +92,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.data.subimage[0][0].ptr = font_pixels;
     img_desc.data.subimage[0][0].size = font_width * font_height * 4;
-    bind.fs_images[0] = sg_make_image(&img_desc);
+    bind.fs.images[0] = sg_make_image(&img_desc);
+    sg_sampler_desc smp_desc = { };
+    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
@@ -126,7 +128,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         "  outp.color = inp.color;\n"
         "  return outp;\n"
         "}\n";
-    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
+    shd_desc.fs.images[0].used = true;
+    shd_desc.fs.samplers[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
     shd_desc.fs.source =
         "Texture2D<float4> tex: register(t0);\n"
         "sampler smp: register(s0);\n"

@@ -1,24 +1,21 @@
 //------------------------------------------------------------------------------
-//  shadows-sapp.c
+//  shadows-depthtex-sapp.c
 //
-//  Shadow mapping via a regular RGBA8 texture as shadow map. The depth value
-//  is encoded to RGBA8 in the shadow pass fragment shader, and decoded
-//  from RGBA8 in the display-pass fragment shader (this encoding was required for
-//  WebGL compatibility across all devices, but is probably no longer needed
-//  in WebGL2 and could be replaced with a regular R32F texture instead.
+//  Shadow mapping via a depth-buffer texture.
 //
-//  Also see shadows-depthtex-sapp for a similar sample using a depth-only
-//  pass and depth-buffer as shadow map.
+//  - depth-only shadow pass into shadow map (no color render targets)
+//  - display pass samples shadow map with a comparison sampler
+//  - debug visualization samples shadow map with a regular sampler
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
+#include "dbgui/dbgui.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include "dbgui/dbgui.h"
-#include "shadows-sapp.glsl.h"
+#include "shadows-depthtex-sapp.glsl.h"
 
 static struct {
     sg_image shadow_map;
@@ -43,7 +40,7 @@ static struct {
     } dbg;
 } state;
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
@@ -109,55 +106,47 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    // shadow map pass action: clear the shadow map to (1,1,1,1)
+    // shadow map pass action: only clear depth buffer, don't configure color and stencil actions,
+    // because there are no color and stencil targets
     state.shadow.pass_action = (sg_pass_action){
-        .colors[0] = {
+        .depth = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f },
-        }
+            .store_action = SG_STOREACTION_STORE,
+            .clear_value = 1.0f,
+        },
     };
 
     // display pass action
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.25f, 0.5f, 0.25f, 1.0f}
+            .clear_value = { 0.25f, 0.25f, 0.5f, 1.0f}
         },
     };
 
-    // a regular RGBA8 render target image as shadow map
+    // a shadow map render target which will serve as depth buffer in the shadow pass
     state.shadow_map = sg_make_image(&(sg_image_desc){
-        .render_target = true,
-        .width = 2048,
-        .height = 2048,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .sample_count = 1,
-        .label = "shadow-map",
-    });
-
-    // ...we also need a separate depth-buffer image for the shadow pass
-    sg_image shadow_depth_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 1,
-        .label = "shadow-depth-buffer",
+        .label = "shadow-map",
     });
 
-    // a regular sampler with nearest filtering to sample the shadow map
+    // a comparison sampler which is used to sample the shadow map texture in the display pass
     state.shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .compare = SG_COMPAREFUNC_LESS,
         .label = "shadow-sampler",
     });
 
-    // the render pass object for the shadow pass
+    // a depth-only pass object for the shadow pass
     state.shadow.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = state.shadow_map,
-        .depth_stencil_attachment.image = shadow_depth_img,
+        .depth_stencil_attachment.image = state.shadow_map,
         .label = "shadow-pass",
     });
 
@@ -175,12 +164,13 @@ void init(void) {
         // render back-faces in shadow pass to prevent shadow acne on front-faces
         .cull_mode = SG_CULLMODE_FRONT,
         .sample_count = 1,
-        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .depth = {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
+        // important: 'deactivate' the default color target for 'depth-only-rendering'
+        .colors[0].pixel_format = SG_PIXELFORMAT_NONE,
         .label = "shadow-pipeline"
     });
 
@@ -232,6 +222,9 @@ void init(void) {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .label = "debug-pipeline",
     });
+    // note: use a regular sampling-sampler to render the shadow map,
+    // need to use nearest filtering here because of portability restrictions
+    // (e.g. WebGL2)
     sg_sampler dbg_smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
@@ -248,7 +241,7 @@ void init(void) {
     };
 }
 
-void frame(void) {
+static void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.ry += 0.2f * t;
 
@@ -256,7 +249,7 @@ void frame(void) {
     const hmm_mat4 plane_model = HMM_Mat4d(1.0f);
     const hmm_mat4 cube_model = HMM_Translate(HMM_Vec3(0.0f, 1.5f, 0.0f));
     const hmm_vec3 plane_color = HMM_Vec3(1.0f, 0.5f, 0.0f);
-    const hmm_vec3 cube_color = HMM_Vec3(0.5f, 0.5f, 1.0f);
+    const hmm_vec3 cube_color = HMM_Vec3(0.5f, 1.0f, 0.5f);
 
     // calculate matrices for shadow pass
     const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -301,7 +294,7 @@ void frame(void) {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    // the display pass, render scene from camera and sample the shadow map
+    // the display pass, render scene from camera, compare-sample shadow map texture
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
@@ -322,7 +315,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }
@@ -337,7 +330,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "shadows-sapp",
+        .window_title = "shadows-depthtex-sapp",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

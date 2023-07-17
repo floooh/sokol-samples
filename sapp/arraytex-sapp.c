@@ -59,10 +59,14 @@ void init(void) {
         .height = IMG_HEIGHT,
         .num_slices = IMG_LAYERS,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
         .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "array-texture"
+    });
+
+    // a sampler object
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
     });
 
     // cube vertex buffer
@@ -140,7 +144,10 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[SLOT_tex] = img
+        .fs = {
+            .images[SLOT_tex] = img,
+            .samplers[SLOT_smp] = smp,
+        }
     };
 }
 

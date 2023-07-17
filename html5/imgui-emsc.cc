@@ -16,7 +16,7 @@
 #include "sokol_log.h"
 #include "emsc.h"
 
-/* these are fairly recent warnings in clang */
+// these are fairly recent warnings in clang
 #pragma clang diagnostic ignored "-Wc99-designator"
 #pragma clang diagnostic ignored "-Wreorder-init-list"
 
@@ -41,10 +41,10 @@ static EM_BOOL draw(double time, void* userdata);
 static void draw_imgui(ImDrawData*);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_NONE);
 
-    /* setup sokol_gfx and sokol_time */
+    // setup sokol_gfx and sokol_time
     stm_setup();
     sg_setup(sg_desc{
         .logger = {
@@ -158,20 +158,22 @@ int main() {
         .size = MaxIndices * sizeof(ImDrawIdx)
     });
 
-    // font texture for imgui's default font
+    // font texture and sampler for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    bind.fs_images[0] = sg_make_image({
+    bind.fs.images[0] = sg_make_image({
         .width = font_width,
         .height = font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .data.subimage[0][0] = {
             .ptr = font_pixels,
             .size = size_t(font_width * font_height * 4)
         }
+    });
+    bind.fs.samplers[0] = sg_make_sampler({
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
     // shader object for imgui rendering
@@ -181,33 +183,39 @@ int main() {
             [1].name = "texcoord0",
             [2].name = "color0"
         },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="disp_size", .type=SG_UNIFORMTYPE_FLOAT2}
-            }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(vs_params_t),
+                .uniforms = {
+                    [0] = { .name="disp_size", .type=SG_UNIFORMTYPE_FLOAT2}
+                }
+            },
+            .source =
+                "uniform vec2 disp_size;\n"
+                "attribute vec2 position;\n"
+                "attribute vec2 texcoord0;\n"
+                "attribute vec4 color0;\n"
+                "varying vec2 uv;\n"
+                "varying vec4 color;\n"
+                "void main() {\n"
+                "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
+                "    uv = texcoord0;\n"
+                "    color = color0;\n"
+                "}\n",
         },
-        .vs.source =
-            "uniform vec2 disp_size;\n"
-            "attribute vec2 position;\n"
-            "attribute vec2 texcoord0;\n"
-            "attribute vec4 color0;\n"
-            "varying vec2 uv;\n"
-            "varying vec4 color;\n"
-            "void main() {\n"
-            "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
-            "    uv = texcoord0;\n"
-            "    color = color0;\n"
-            "}\n",
-        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-        .fs.source =
-            "precision mediump float;"
-            "uniform sampler2D tex;\n"
-            "varying vec2 uv;\n"
-            "varying vec4 color;\n"
-            "void main() {\n"
-            "    gl_FragColor = texture2D(tex, uv) * color;\n"
-            "}\n"
+        .fs = {
+            .images[0] = { .used = true },
+            .samplers[0] = { .used = true },
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "precision mediump float;"
+                "uniform sampler2D tex;\n"
+                "varying vec2 uv;\n"
+                "varying vec4 color;\n"
+                "void main() {\n"
+                "    gl_FragColor = texture2D(tex, uv) * color;\n"
+                "}\n"
+        }
     });
 
     // pipeline object for imgui rendering
@@ -247,8 +255,7 @@ static EM_BOOL draw(double time, void* userdata) {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(emsc_width()), float(emsc_height()));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
-    // this mouse button handling fixes the problem when down- and up-events
-    // happen in the same frame
+    // this mouse button handling fixes the problem when down- and up-events happen in the same frame
     for (int i = 0; i < 3; i++) {
         if (io.MouseDown[i]) {
             if (btn_up[i]) {

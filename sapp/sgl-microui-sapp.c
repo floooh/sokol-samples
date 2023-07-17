@@ -399,6 +399,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 
 //== micrui renderer ===========================================================
 static sg_image atlas_img;
+static sg_sampler atlas_smp;
 static sgl_pipeline pip;
 
 static void r_init(void) {
@@ -416,16 +417,18 @@ static void r_init(void) {
     atlas_img = sg_make_image(&(sg_image_desc){
         .width = ATLAS_WIDTH,
         .height = ATLAS_HEIGHT,
-        // LINEAR would be better for text quality in HighDPI, but the
-        // atlas texture is "leaking" from neighbouring pixels unfortunately
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
         .data = {
             .subimage[0][0] = {
                 .ptr = rgba8_pixels,
                 .size = rgba8_size
             }
         }
+    });
+    atlas_smp = sg_make_sampler(&(sg_sampler_desc){
+        // LINEAR would be better for text quality in HighDPI, but the
+        // atlas texture is "leaking" from neighbouring pixels unfortunately
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
     });
     pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .colors[0].blend = {
@@ -443,7 +446,7 @@ static void r_begin(int disp_width, int disp_height) {
     sgl_push_pipeline();
     sgl_load_pipeline(pip);
     sgl_enable_texture();
-    sgl_texture(atlas_img);
+    sgl_texture(atlas_img, atlas_smp);
     sgl_matrix_mode_projection();
     sgl_push_matrix();
     sgl_ortho(0.0f, (float) disp_width, (float) disp_height, 0.0f, -1.0f, +1.0f);

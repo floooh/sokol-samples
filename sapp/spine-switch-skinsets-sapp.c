@@ -266,13 +266,19 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 .width = img_width,
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .min_filter = img_info.min_filter,
-                .mag_filter = img_info.mag_filter,
                 .label = img_info.filename.cstr,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }
+            });
+            sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
+                .min_filter = img_info.min_filter,
+                .mag_filter = img_info.mag_filter,
+                .mipmap_filter = img_info.mipmap_filter,
+                .wrap_u = img_info.wrap_u,
+                .wrap_v = img_info.wrap_v,
+                .label = img_info.filename.cstr,
             });
             stbi_image_free(pixels);
         } else {

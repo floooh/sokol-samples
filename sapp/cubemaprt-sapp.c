@@ -43,6 +43,7 @@ typedef struct {
 // the entire application state
 typedef struct {
     sg_image cubemap;
+    sg_sampler smp;
     sg_pass offscreen_pass[SG_CUBEFACE_NUM];
     sg_pass_action offscreen_pass_action;
     sg_pass_action display_pass_action;
@@ -86,8 +87,6 @@ void init(void) {
         .width = 1024,
         .height = 1024,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
         .label = "cubemap-color-rt"
     });
     // ... and a matching depth-buffer image
@@ -132,7 +131,7 @@ void init(void) {
     app.cube = make_cube_mesh();
 
     // same vertex layout for all shaders
-    sg_layout_desc layout = {
+    sg_vertex_layout_state layout = {
         .attrs = {
             [ATTR_vs_pos] = { .offset=offsetof(vertex_t, pos), .format=SG_VERTEXFORMAT_FLOAT3 },
             [ATTR_vs_norm] = { .offset=offsetof(vertex_t, norm), .format=SG_VERTEXFORMAT_FLOAT3 }
@@ -170,6 +169,12 @@ void init(void) {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
+    });
+
+    // a sampler to sample the cubemap render target as texture
+    app.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
     });
 
     // 1:1 aspect ration projection matrix for offscreen rendering
@@ -251,7 +256,7 @@ void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
         .index_buffer = app.cube.ibuf,
-        .fs_images[SLOT_tex] = app.cubemap
+        .fs = { .images[SLOT_tex] = app.cubemap, .samplers[SLOT_smp] = app.smp },
     });
     shape_uniforms_t uniforms = {
         .mvp = HMM_MultiplyMat4(view_proj, model),

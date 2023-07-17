@@ -42,6 +42,7 @@ static struct {
     sg_buffer ibuf;
     sg_pipeline pip;
     sg_pass_action pass_action;     // just keep this default-initialized, which clears to gray
+    sg_sampler smp;
     struct {
         sdtx_context text_context;
         sg_image img;
@@ -170,8 +171,6 @@ static void init(void) {
             .height = OFFSCREEN_HEIGHT,
             .pixel_format = OFFSCREEN_PIXELFORMAT,
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
-            .min_filter = SG_FILTER_NEAREST,
-            .mag_filter = SG_FILTER_NEAREST
         });
         state.passes[i].render_pass = sg_make_pass(&(sg_pass_desc){
             .color_attachments[0].image = state.passes[i].img
@@ -185,6 +184,12 @@ static void init(void) {
             }
         };
     }
+
+    // create a sampler for sampling offscreen render targets as texture
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST
+    });
 }
 
 // compute the model-view-proj matrix for rendering the rotating cube
@@ -244,7 +249,7 @@ static void frame(void) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,
-            .fs_images[0] = state.passes[i].img
+            .fs = { .images[0] = state.passes[i].img, .samplers[0] = state.smp }
         });
         sg_draw(i * 6, 6, 1);
     }

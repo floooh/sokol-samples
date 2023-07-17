@@ -82,17 +82,23 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* create a checkerboard texture */
+    // create a checkerboard texture
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+
+    // ...and a sampler
+    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
     });
 
     // a shader
@@ -125,7 +131,9 @@ static void init(void) {
                 "}\n"
         },
         .fs = {
-            .images[0].image_type = SG_IMAGETYPE_2D,
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"

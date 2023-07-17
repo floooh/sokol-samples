@@ -41,7 +41,7 @@ void init(void) {
     fontCfg.RasterizerMultiply = 1.5f;
     io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
 
-    // create font texture for the custom font
+    // create font texture and sampler for the custom font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
@@ -49,13 +49,10 @@ void init(void) {
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.min_filter = SG_FILTER_LINEAR;
-    img_desc.mag_filter = SG_FILTER_LINEAR;
     img_desc.data.subimage[0][0].ptr = font_pixels;
     img_desc.data.subimage[0][0].size = font_width * font_height * 4;
-    io.Fonts->TexID = (ImTextureID)(uintptr_t) sg_make_image(&img_desc).id;
+    sg_image font_img = sg_make_image(&img_desc);
+    io.Fonts->TexID = simgui_imtextureid(font_img);
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;

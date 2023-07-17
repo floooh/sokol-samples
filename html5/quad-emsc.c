@@ -22,15 +22,15 @@ static struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_NONE);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_desc desc = { .logger.func = slog_func };
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* a vertex buffer */
+    // a vertex buffer
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -42,7 +42,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* an index buffer */
+    // an index buffer
     uint16_t indices[] = {
         0, 1, 2,    // first triangle
         0, 2, 3,    // second triangle
@@ -52,7 +52,7 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* create a shader */
+    // create a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
         .attrs = {
             [0].name = "position",
@@ -74,12 +74,12 @@ int main() {
             "}\n"
     });
 
-    /* a pipeline object (default render state is fine) */
+    // a pipeline object (default render state is fine)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
+            // test to provide attr offsets, but no buffer stride, this should compute the stride
             .attrs = {
-                /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
+                // vertex attrs can also be bound by location instead of name (but not in GLES2)
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT4
             }
@@ -88,12 +88,12 @@ int main() {
         .index_type = SG_INDEXTYPE_UINT16
     });
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-/* draw one frame */
+// draw one frame
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());

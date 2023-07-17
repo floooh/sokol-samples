@@ -32,6 +32,7 @@ static struct {
     sgl_pipeline alpha_pip;
     sg_image opaque_img;
     sg_image alpha_img;
+    sg_sampler smp;
     double angle_deg;
 } state = {
     .pass_action = {
@@ -73,6 +74,14 @@ void init(void) {
     state.opaque_img = sbasisu_make_image(SG_RANGE(embed_testcard_basis));
     state.alpha_img  = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis));
 
+    // create a sampler object
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .mipmap_filter = SG_FILTER_LINEAR,
+        .max_anisotropy = 8,
+    });
+
     // a sokol-gl pipeline object for alpha-blended rendering
     state.alpha_pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .colors[0] = {
@@ -95,7 +104,7 @@ typedef struct {
 } quad_params_t;
 
 static void draw_quad(quad_params_t params) {
-    sgl_texture(params.img);
+    sgl_texture(params.img, state.smp);
     if (params.pip.id) {
         sgl_load_pipeline(params.pip);
     }

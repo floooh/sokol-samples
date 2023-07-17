@@ -95,7 +95,7 @@ typedef struct {
 // helper struct to map sokol-gfx buffer bindslots to scene.buffers indices
 typedef struct {
     int num;
-    int buffer[SG_MAX_SHADERSTAGE_BUFFERS];
+    int buffer[SG_MAX_VERTEX_BUFFERS];
 } vertex_buffer_mapping_t;
 
 // a 'primitive' (aka submesh) contains everything needed to issue a draw call
@@ -121,6 +121,11 @@ typedef struct {
     hmm_mat4 transform;
 } node_t;
 
+typedef struct {
+    sg_image img;
+    sg_sampler smp;
+} image_sampler_t;
+
 // the complete scene
 typedef struct {
     int num_buffers;
@@ -131,7 +136,7 @@ typedef struct {
     int num_meshes;
     int num_nodes;
     sg_buffer buffers[SCENE_MAX_BUFFERS];
-    sg_image images[SCENE_MAX_IMAGES];
+    image_sampler_t image_samplers[SCENE_MAX_IMAGES];
     sg_pipeline pipelines[SCENE_MAX_PIPELINES];
     material_t materials[SCENE_MAX_MATERIALS];
     primitive_t primitives[SCENE_MAX_PRIMITIVES];
@@ -151,14 +156,15 @@ typedef struct {
 typedef struct {
     sg_filter min_filter;
     sg_filter mag_filter;
+    sg_filter mipmap_filter;
     sg_wrap wrap_s;
     sg_wrap wrap_t;
     int gltf_image_index;
-} image_creation_params_t;
+} image_sampler_creation_params_t;
 
 // pipeline cache helper struct to avoid duplicate pipeline-state-objects
 typedef struct {
-    sg_layout_desc layout;
+    sg_vertex_layout_state layout;
     sg_primitive_type prim_type;
     sg_index_type index_type;
     bool alpha;
@@ -175,6 +181,7 @@ static struct {
         sg_shader metallic;
         sg_shader specular;
     } shaders;
+    sg_sampler smp;
     scene_t scene;
     camera_t camera;
     light_params_t point_light;     // code-generated from shader
@@ -182,7 +189,7 @@ static struct {
     float rx, ry;
     struct {
         buffer_creation_params_t buffers[SCENE_MAX_BUFFERS];
-        image_creation_params_t images[SCENE_MAX_IMAGES];
+        image_sampler_creation_params_t images[SCENE_MAX_IMAGES];
     } creation_params;
     struct {
         pipeline_cache_params_t items[SCENE_MAX_PIPELINES];
@@ -191,6 +198,7 @@ static struct {
         sg_image white;
         sg_image normal;
         sg_image black;
+        sg_sampler smp;
     } placeholders;
 } state;
 
@@ -206,7 +214,7 @@ static void gltf_buffer_fetch_callback(const sfetch_response_t*);
 static void gltf_image_fetch_callback(const sfetch_response_t*);
 
 static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range data);
-static void create_sg_images_for_gltf_image(int gltf_image_index, sg_range data);
+static void create_sg_image_samplers_for_gltf_image(int gltf_image_index, sg_range data);
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
 static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
@@ -278,7 +286,7 @@ static void init(void) {
         .callback = gltf_fetch_callback,
     });
 
-    // create placeholder textures
+    // create placeholder textures and sampler
     uint32_t pixels[64];
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFFFFFFFF;
@@ -306,6 +314,11 @@ static void init(void) {
         .height = 8,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data.subimage[0][0] = SG_RANGE(pixels),
+    });
+    state.placeholders.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .mipmap_filter = SG_FILTER_NONE,
     });
 }
 
@@ -352,31 +365,47 @@ static void frame(void) {
                 sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
                 sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &SG_RANGE(state.point_light));
                 if (mat->is_metallic) {
-                    sg_image base_color_tex = state.scene.images[mat->metallic.images.base_color];
-                    sg_image metallic_roughness_tex = state.scene.images[mat->metallic.images.metallic_roughness];
-                    sg_image normal_tex = state.scene.images[mat->metallic.images.normal];
-                    sg_image occlusion_tex = state.scene.images[mat->metallic.images.occlusion];
-                    sg_image emissive_tex = state.scene.images[mat->metallic.images.emissive];
+                    sg_image base_color_tex = state.scene.image_samplers[mat->metallic.images.base_color].img;
+                    sg_image metallic_roughness_tex = state.scene.image_samplers[mat->metallic.images.metallic_roughness].img;
+                    sg_image normal_tex = state.scene.image_samplers[mat->metallic.images.normal].img;
+                    sg_image occlusion_tex = state.scene.image_samplers[mat->metallic.images.occlusion].img;
+                    sg_image emissive_tex = state.scene.image_samplers[mat->metallic.images.emissive].img;
+                    sg_sampler base_color_smp = state.scene.image_samplers[mat->metallic.images.base_color].smp;
+                    sg_sampler metallic_roughness_smp = state.scene.image_samplers[mat->metallic.images.metallic_roughness].smp;
+                    sg_sampler normal_smp = state.scene.image_samplers[mat->metallic.images.normal].smp;
+                    sg_sampler occlusion_smp = state.scene.image_samplers[mat->metallic.images.occlusion].smp;
+                    sg_sampler emissive_smp = state.scene.image_samplers[mat->metallic.images.emissive].smp;
+
                     if (!base_color_tex.id) {
                         base_color_tex = state.placeholders.white;
+                        base_color_smp = state.placeholders.smp;
                     }
                     if (!metallic_roughness_tex.id) {
                         metallic_roughness_tex = state.placeholders.white;
+                        metallic_roughness_smp = state.placeholders.smp;
                     }
                     if (!normal_tex.id) {
                         normal_tex = state.placeholders.normal;
+                        normal_smp = state.placeholders.smp;
                     }
                     if (!occlusion_tex.id) {
                         occlusion_tex = state.placeholders.white;
+                        occlusion_smp = state.placeholders.smp;
                     }
                     if (!emissive_tex.id) {
                         emissive_tex = state.placeholders.black;
+                        emissive_smp = state.placeholders.smp;
                     }
-                    bind.fs_images[SLOT_base_color_texture] = base_color_tex;
-                    bind.fs_images[SLOT_metallic_roughness_texture] = metallic_roughness_tex;
-                    bind.fs_images[SLOT_normal_texture] = normal_tex;
-                    bind.fs_images[SLOT_occlusion_texture] = occlusion_tex;
-                    bind.fs_images[SLOT_emissive_texture] = emissive_tex;
+                    bind.fs.images[SLOT_base_color_tex] = base_color_tex;
+                    bind.fs.images[SLOT_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.fs.images[SLOT_normal_tex] = normal_tex;
+                    bind.fs.images[SLOT_occlusion_tex] = occlusion_tex;
+                    bind.fs.images[SLOT_emissive_tex] = emissive_tex;
+                    bind.fs.samplers[SLOT_base_color_smp] = base_color_smp;
+                    bind.fs.samplers[SLOT_metallic_roughness_smp] = metallic_roughness_smp;
+                    bind.fs.samplers[SLOT_normal_smp] = normal_smp;
+                    bind.fs.samplers[SLOT_occlusion_smp] = occlusion_smp;
+                    bind.fs.samplers[SLOT_emissive_tex] = emissive_smp;
                     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &SG_RANGE(mat->metallic.fs_params));
                 } else {
                 /*
@@ -460,7 +489,7 @@ static void gltf_image_fetch_callback(const sfetch_response_t* response) {
     } else if (response->fetched) {
         const gltf_image_fetch_userdata_t* user_data = (const gltf_image_fetch_userdata_t*)response->user_data;
         int gltf_image_index = (int)user_data->image_index;
-        create_sg_images_for_gltf_image(gltf_image_index, (sg_range){response->data.ptr, response->data.size});
+        create_sg_image_samplers_for_gltf_image(gltf_image_index, (sg_range){response->data.ptr, response->data.size});
     }
     if (response->finished) {
         if (response->failed) {
@@ -557,14 +586,30 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
 // parse all the image-related stuff in the GLTF data
 
 // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#samplerminfilter
-static sg_filter gltf_to_sg_filter(int gltf_filter) {
+static sg_filter gltf_to_sg_min_filter(int gltf_filter) {
     switch (gltf_filter) {
         case 9728: return SG_FILTER_NEAREST;
         case 9729: return SG_FILTER_LINEAR;
-        case 9984: return SG_FILTER_NEAREST_MIPMAP_NEAREST;
-        case 9985: return SG_FILTER_LINEAR_MIPMAP_NEAREST;
-        case 9986: return SG_FILTER_NEAREST_MIPMAP_LINEAR;
-        case 9987: return SG_FILTER_LINEAR_MIPMAP_LINEAR;
+        default: return SG_FILTER_LINEAR;
+    }
+}
+
+static sg_filter gltf_to_sg_mag_filter(int gltf_filter) {
+    switch (gltf_filter) {
+        case 9728: return SG_FILTER_NEAREST;
+        case 9729: return SG_FILTER_LINEAR;
+        default: return SG_FILTER_LINEAR;
+    }
+}
+
+static sg_filter gltf_to_sg_mipmap_filter(int gltf_filter) {
+    switch (gltf_filter) {
+        case 9728: return SG_FILTER_NONE;
+        case 9729: return SG_FILTER_NONE;
+        case 9984: return SG_FILTER_NEAREST;
+        case 9985: return SG_FILTER_NEAREST;
+        case 9986: return SG_FILTER_LINEAR;
+        case 9987: return SG_FILTER_LINEAR;
         default: return SG_FILTER_LINEAR;
     }
 }
@@ -589,13 +634,15 @@ static void gltf_parse_images(const cgltf_data* gltf) {
     state.scene.num_images = (int) gltf->textures_count;
     for (int i = 0; i < state.scene.num_images; i++) {
         const cgltf_texture* gltf_tex = &gltf->textures[i];
-        image_creation_params_t* p = &state.creation_params.images[i];
+        image_sampler_creation_params_t* p = &state.creation_params.images[i];
         p->gltf_image_index = gltf_image_index(gltf, gltf_tex->image);
-        p->min_filter = gltf_to_sg_filter(gltf_tex->sampler->min_filter);
-        p->mag_filter = gltf_to_sg_filter(gltf_tex->sampler->mag_filter);
+        p->min_filter = gltf_to_sg_min_filter(gltf_tex->sampler->min_filter);
+        p->mag_filter = gltf_to_sg_mag_filter(gltf_tex->sampler->mag_filter);
+        p->mipmap_filter = gltf_to_sg_mipmap_filter(gltf_tex->sampler->min_filter);
         p->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
         p->wrap_t = gltf_to_sg_wrap(gltf_tex->sampler->wrap_t);
-        state.scene.images[i].id = SG_INVALID_ID;
+        state.scene.image_samplers[i].img.id = SG_INVALID_ID;
+        state.scene.image_samplers[i].smp.id = SG_INVALID_ID;
     }
 
     // start loading all images
@@ -748,11 +795,16 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range da
 }
 
 // create the sokol-gfx image objects associated with a GLTF image
-static void create_sg_images_for_gltf_image(int gltf_image_index, sg_range data) {
+static void create_sg_image_samplers_for_gltf_image(int gltf_image_index, sg_range data) {
     for (int i = 0; i < state.scene.num_images; i++) {
-        image_creation_params_t* p = &state.creation_params.images[i];
+        image_sampler_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            state.scene.images[i] = sbasisu_make_image(data);
+            state.scene.image_samplers[i].img = sbasisu_make_image(data);
+            state.scene.image_samplers[i].smp = sg_make_sampler(&(sg_sampler_desc){
+                .min_filter = p->min_filter,
+                .mag_filter = p->mag_filter,
+                .mipmap_filter = p->mipmap_filter,
+            });
         }
     }
 }
@@ -825,7 +877,7 @@ static sg_index_type gltf_to_index_type(const cgltf_primitive* prim) {
 // creates a vertex buffer bind slot mapping for a specific GLTF primitive
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim) {
     vertex_buffer_mapping_t map = { 0 };
-    for (int i = 0; i < SG_MAX_SHADERSTAGE_BUFFERS; i++) {
+    for (int i = 0; i < SG_MAX_VERTEX_BUFFERS; i++) {
         map.buffer[i] = SCENE_INVALID_INDEX;
     }
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
@@ -838,17 +890,17 @@ static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(c
                 break;
             }
         }
-        if ((i == map.num) && (map.num < SG_MAX_SHADERSTAGE_BUFFERS)) {
+        if ((i == map.num) && (map.num < SG_MAX_VERTEX_BUFFERS)) {
             map.buffer[map.num++] = buffer_view_index;
         }
-        assert(map.num <= SG_MAX_SHADERSTAGE_BUFFERS);
+        assert(map.num <= SG_MAX_VERTEX_BUFFERS);
     }
     return map;
 }
 
-static sg_layout_desc create_sg_layout_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map) {
+static sg_vertex_layout_state create_sg_layout_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map) {
     assert(prim->attributes_count <= SG_MAX_VERTEX_ATTRIBUTES);
-    sg_layout_desc layout = { 0 };
+    sg_vertex_layout_state layout = { 0 };
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
         const cgltf_attribute* attr = &prim->attributes[attr_index];
         int attr_slot = gltf_attr_type_to_vs_input_slot(attr->type);
@@ -877,8 +929,8 @@ static bool pipelines_equal(const pipeline_cache_params_t* p0, const pipeline_ca
         return false;
     }
     for (int i = 0; i < SG_MAX_VERTEX_ATTRIBUTES; i++) {
-        const sg_vertex_attr_desc* a0 = &p0->layout.attrs[i];
-        const sg_vertex_attr_desc* a1 = &p1->layout.attrs[i];
+        const sg_vertex_attr_state* a0 = &p0->layout.attrs[i];
+        const sg_vertex_attr_state* a1 = &p1->layout.attrs[i];
         if ((a0->buffer_index != a1->buffer_index) ||
             (a0->offset != a1->offset) ||
             (a0->format != a1->format))

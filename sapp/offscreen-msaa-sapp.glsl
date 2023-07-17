@@ -53,7 +53,8 @@ void main() {
 @end
 
 @fs fs_display
-uniform sampler2D tex;
+uniform texture2D tex;
+uniform sampler smp;
 
 in vec4 nrm;
 in vec2 uv;
@@ -61,7 +62,7 @@ in vec2 uv;
 out vec4 frag_color;
 
 void main() {
-    vec4 c = texture(tex, uv * vec2(20.0, 10.0));
+    vec4 c = texture(sampler2D(tex, smp), uv * vec2(20.0, 10.0));
     float l = clamp(dot(nrm.xyz, normalize(vec3(1.0, 1.0, -1.0))), 0.0, 1.0) * 2.0;
     frag_color = vec4(c.xyz * (l + 0.25), 1.0);
 }

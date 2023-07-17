@@ -14,7 +14,7 @@ int main() {
     const int WIDTH = 640;
     const int HEIGHT = 480;
 
-    /* create window and GL context via GLFW */
+    // create window and GL context via GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -24,12 +24,11 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
-    sg_desc desc = { .logger.func = slog_func };
-    sg_setup(&desc);
+    // setup sokol_gfx
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* create a vertex buffer */
+    // create a vertex buffer
     float vertices[] = {
         // positions            colors
         -0.5f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -42,7 +41,7 @@ int main() {
     };
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
 
-    /* create an index buffer */
+    // create an index buffer
     uint16_t indices[] = {
         0, 1, 2,    // first triangle
         0, 2, 3,    // second triangle
@@ -53,13 +52,13 @@ int main() {
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
-    /* define the resource bindings */
+    // define the resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf
     };
 
-    /* create a shader (use vertex attribute locations) */
+    // create a shader (use vertex attribute locations)
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#version 330\n"
@@ -79,24 +78,24 @@ int main() {
             "}\n"
     });
 
-    /* create a pipeline object (default render state is fine) */
+    // create a pipeline object (default render state is fine)
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
-            /* test to provide attr offsets, but no buffer stride, this should compute the stride */
+            // test to provide attr offsets, but no buffer stride, this should compute the stride
             .attrs = {
-                /* vertex attrs can also be bound by location instead of name (but not in GLES2) */
-                [0] = { .offset=0, .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .offset=12, .format=SG_VERTEXFORMAT_FLOAT4 }
+                // vertex attrs can also be bound by location instead of name
+                [0] = { .offset = 0, .format = SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .offset = 12, .format = SG_VERTEXFORMAT_FLOAT4 }
             }
         }
     });
 
-    /* default pass action */
+    // default pass action
     sg_pass_action pass_action = { 0 };
 
-    /* draw loop */
+    // draw loop
     while (!glfwWindowShouldClose(w)) {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);

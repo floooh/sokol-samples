@@ -2,7 +2,7 @@
 //  mrt-emsc.c
 //  Multiple-render-target sample for HTML5, this requires WebGL2.
 //------------------------------------------------------------------------------
-#include <stddef.h>     /* offsetof */
+#include <stddef.h>     // offsetof
 #include <GLES3/gl3.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -47,17 +47,17 @@ typedef struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_desc desc = {
         .logger.func = slog_func,
     };
     sg_setup(&desc);
     assert(sg_isvalid());
 
-    /* a render pass with 3 color attachment images, and a depth attachment image */
+    // a render pass with 3 color attachment images, and a depth attachment image
     const int width = 640;
     const int height = 480;
     const int offscreen_sample_count = 4;
@@ -71,10 +71,6 @@ int main() {
         .render_target = true,
         .width = width,
         .height = height,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
@@ -99,7 +95,7 @@ int main() {
     };
     state.offscreen.pass = sg_make_pass(&state.offscreen.pass_desc);
 
-    /* a matching pass action with clear colors */
+    // a matching pass action with clear colors
     state.offscreen.pass_action = (sg_pass_action) {
         .colors = {
             [0] = {
@@ -120,9 +116,9 @@ int main() {
         }
     };
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     vertex_t cube_vertices[] = {
-        /* pos + brightness */
+        // pos + brightness
         { -1.0f, -1.0f, -1.0f,   1.0f },
         {  1.0f, -1.0f, -1.0f,   1.0f },
         {  1.0f,  1.0f, -1.0f,   1.0f },
@@ -157,7 +153,7 @@ int main() {
         .data = SG_RANGE(cube_vertices)
     });
 
-    /* index buffer for the cube */
+    // index buffer for the cube
     uint16_t cube_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -171,13 +167,13 @@ int main() {
         .data = SG_RANGE(cube_indices)
     });
 
-    /* resource bindings for offscreen rendering */
+    // resource bindings for offscreen rendering
     state.offscreen.bind = (sg_bindings){
         .vertex_buffers[0] = cube_vbuf,
         .index_buffer = cube_ibuf
     };
 
-    /* a shader to render the cube into offscreen MRT render targets */
+    // a shader to render the cube into offscreen MRT render targets
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
@@ -213,7 +209,7 @@ int main() {
             "}\n"
     });
 
-    /* pipeline object for the offscreen-rendered cube */
+    // pipeline object for the offscreen-rendered cube
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
@@ -234,79 +230,98 @@ int main() {
         .sample_count = offscreen_sample_count
     });
 
-    /* a vertex buffer to render a fullscreen rectangle */
-    /* -> FIXME: we should allow bufferless rendering */
+    // a vertex buffer to render a fullscreen rectangle
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
     sg_buffer quad_buf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(quad_vertices)
     });
 
-    /* resource bindings to render the fullscreen quad */
+    // a sampler with linear filtering and clamp-to-edge
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+    });
+
+    // resource bindings to render the fullscreen quad
     state.display.fsq_bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
-        .fs_images = {
-            [0] = state.offscreen.pass_desc.resolve_attachments[0].image,
-            [1] = state.offscreen.pass_desc.resolve_attachments[1].image,
-            [2] = state.offscreen.pass_desc.resolve_attachments[2].image,
+        .fs = {
+            .images = {
+                [0] = state.offscreen.pass_desc.resolve_attachments[0].image,
+                [1] = state.offscreen.pass_desc.resolve_attachments[1].image,
+                [2] = state.offscreen.pass_desc.resolve_attachments[2].image,
+            },
+            .samplers[0] = smp,
         }
     };
 
-    /* a shader to render a fullscreen rectangle, which 'composes'
-       the 3 offscreen render target images onto the screen */
+    // a shader to render a fullscreen rectangle, which 'composes'
+    // the 3 offscreen render target images onto the screen
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
         .attrs[0].name = "pos",
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(params_t),
-            .uniforms = {
-                [0] = { .name="offset", .type=SG_UNIFORMTYPE_FLOAT2}
-            }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(params_t),
+                .uniforms = {
+                    [0] = { .name="offset", .type=SG_UNIFORMTYPE_FLOAT2}
+                }
+            },
+            .source =
+                "#version 300 es\n"
+                "uniform vec2 offset;"
+                "in vec2 pos;\n"
+                "out vec2 uv0;\n"
+                "out vec2 uv1;\n"
+                "out vec2 uv2;\n"
+                "void main() {\n"
+                "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+                "  uv0 = pos + vec2(offset.x, 0.0);\n"
+                "  uv1 = pos + vec2(0.0, offset.y);\n"
+                "  uv2 = pos;\n"
+                "}\n",
         },
-        .fs.images = {
-            [0] = { .name="tex0", .image_type=SG_IMAGETYPE_2D },
-            [1] = { .name="tex1", .image_type=SG_IMAGETYPE_2D },
-            [2] = { .name="tex2", .image_type=SG_IMAGETYPE_2D }
-        },
-        .vs.source =
-            "#version 300 es\n"
-            "uniform vec2 offset;"
-            "in vec2 pos;\n"
-            "out vec2 uv0;\n"
-            "out vec2 uv1;\n"
-            "out vec2 uv2;\n"
-            "void main() {\n"
-            "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-            "  uv0 = pos + vec2(offset.x, 0.0);\n"
-            "  uv1 = pos + vec2(0.0, offset.y);\n"
-            "  uv2 = pos;\n"
-            "}\n",
-        .fs.source =
-            "#version 300 es\n"
-            "precision mediump float;\n"
-            "uniform sampler2D tex0;\n"
-            "uniform sampler2D tex1;\n"
-            "uniform sampler2D tex2;\n"
-            "in vec2 uv0;\n"
-            "in vec2 uv1;\n"
-            "in vec2 uv2;\n"
-            "out vec4 frag_color;\n"
-            "void main() {\n"
-            "  vec3 c0 = texture(tex0, uv0).xyz;\n"
-            "  vec3 c1 = texture(tex1, uv1).xyz;\n"
-            "  vec3 c2 = texture(tex2, uv2).xyz;\n"
-            "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
-            "}\n"
+        .fs = {
+            .images = {
+                [0].used = true,
+                [1].used = true,
+                [2].used = true,
+            },
+            .samplers[0].used = true,
+            .image_sampler_pairs = {
+                [0] = { .used = true, .glsl_name = "tex0", .image_slot = 0, .sampler_slot = 0 },
+                [1] = { .used = true, .glsl_name = "tex1", .image_slot = 1, .sampler_slot = 0 },
+                [2] = { .used = true, .glsl_name = "tex2", .image_slot = 2, .sampler_slot = 0 },
+            },
+            .source =
+                "#version 300 es\n"
+                "precision mediump float;\n"
+                "uniform sampler2D tex0;\n"
+                "uniform sampler2D tex1;\n"
+                "uniform sampler2D tex2;\n"
+                "in vec2 uv0;\n"
+                "in vec2 uv1;\n"
+                "in vec2 uv2;\n"
+                "out vec4 frag_color;\n"
+                "void main() {\n"
+                "  vec3 c0 = texture(tex0, uv0).xyz;\n"
+                "  vec3 c1 = texture(tex1, uv1).xyz;\n"
+                "  vec3 c2 = texture(tex2, uv2).xyz;\n"
+                "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
+                "}\n"
+        }
     });
 
-    /* the pipeline object for the fullscreen rectangle */
+    // the pipeline object for the fullscreen rectangle
     state.display.fsq_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP
     });
 
-    /* and prepare a pipeline and bindings to render a debug visualizations
-       of the offscreen render target contents
-    */
+    // and prepare a pipeline and bindings to render a debug visualizations
+    //  of the offscreen render target contents
     state.display.dbg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0].format=SG_VERTEXFORMAT_FLOAT2
@@ -314,47 +329,54 @@ int main() {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
             .attrs[0].name = "pos",
-            .vs.source =
-                "#version 300 es\n"
-                "uniform vec2 offset;"
-                "in vec2 pos;\n"
-                "out vec2 uv;\n"
-                "void main() {\n"
-                "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-                "  uv = pos;\n"
-                "}\n",
-            .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-            .fs.source =
-                "#version 300 es\n"
-                "precision mediump float;\n"
-                "uniform sampler2D tex;\n"
-                "in vec2 uv;\n"
-                "out vec4 frag_color;\n"
-                "void main() {\n"
-                "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
-                "}\n"
+            .vs = {
+                .source =
+                    "#version 300 es\n"
+                    "uniform vec2 offset;"
+                    "in vec2 pos;\n"
+                    "out vec2 uv;\n"
+                    "void main() {\n"
+                    "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+                    "  uv = pos;\n"
+                    "}\n",
+            },
+            .fs = {
+                .images[0].used = true,
+                .samplers[0].used = true,
+                .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+                .source =
+                    "#version 300 es\n"
+                    "precision mediump float;\n"
+                    "uniform sampler2D tex;\n"
+                    "in vec2 uv;\n"
+                    "out vec4 frag_color;\n"
+                    "void main() {\n"
+                    "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
+                    "}\n"
+            },
         })
     });
     state.display.dbg_bind = (sg_bindings) {
         .vertex_buffers[0] = quad_buf,
-        /* images will be filled right before rendering */
+        .fs.samplers[0] = smp,
+        // images will be filled right before rendering
     };
 
-    /* default pass action, no clear needed, since whole screen is overwritten */
+    // default pass action, no clear needed, since whole screen is overwritten
     state.display.pass_action = (sg_pass_action){
         .colors[0].load_action = SG_LOADACTION_DONTCARE,
         .depth.load_action = SG_LOADACTION_DONTCARE,
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    /* hand off control to browser-loop */
+    // hand off control to browser-loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* compute shader params */
+    // compute shader params
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -369,7 +391,7 @@ static EM_BOOL draw(double time, void* userdata) {
         .offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f)
     };
 
-    /* render cube into MRT offscreen render targets */
+    // render cube into MRT offscreen render targets
     sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
@@ -377,8 +399,8 @@ static EM_BOOL draw(double time, void* userdata) {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    /* render fullscreen quad with the 'composed image', plus 3 small
-        debug-views with the content of the offscreen render targets */
+    // render fullscreen quad with the 'composed image', plus 3 small
+    // debug-views with the content of the offscreen render targets
     sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.display.fsq_pip);
     sg_apply_bindings(&state.display.fsq_bind);
@@ -387,7 +409,7 @@ static EM_BOOL draw(double time, void* userdata) {
     sg_apply_pipeline(state.display.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.display.dbg_bind.fs_images[0] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.display.dbg_bind.fs.images[0] = state.offscreen.pass_desc.resolve_attachments[i].image;
         sg_apply_bindings(&state.display.dbg_bind);
         sg_draw(0, 4, 1);
     }

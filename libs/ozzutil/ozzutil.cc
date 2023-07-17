@@ -21,6 +21,7 @@ static struct {
     int joint_texture_height;   // in number of pixels
     int joint_texture_pitch;    // in number of floats
     sg_image joint_texture;
+    sg_sampler smp;
     float* joint_upload_buffer;
 } state;
 
@@ -61,11 +62,14 @@ void ozz_setup(const ozz_desc_t* desc) {
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
     img_desc.usage = SG_USAGE_STREAM;
-    img_desc.min_filter = SG_FILTER_NEAREST;
-    img_desc.mag_filter = SG_FILTER_NEAREST;
-    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     state.joint_texture = sg_make_image(&img_desc);
+
+    sg_sampler_desc smp_desc = { };
+    smp_desc.min_filter = SG_FILTER_NEAREST;
+    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    state.smp = sg_make_sampler(&smp_desc);
 
     state.joint_upload_buffer = (float*) calloc(state.joint_texture_pitch * state.joint_texture_height, sizeof(float));
 }
@@ -82,6 +86,11 @@ void ozz_shutdown(void) {
 sg_image ozz_joint_texture(void) {
     assert(state.valid);
     return state.joint_texture;
+}
+
+sg_sampler ozz_joint_sampler(void) {
+    assert(state.valid);
+    return state.smp;
 }
 
 ozz_instance_t* ozz_create_instance(int index) {

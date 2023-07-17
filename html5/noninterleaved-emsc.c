@@ -34,16 +34,16 @@ typedef struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
-        /* positions */
+        // positions
         -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
         -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
@@ -51,7 +51,7 @@ int main() {
         -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
         -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
-         /* colors */
+        // colors
         1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,
         0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,
         0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,
@@ -63,7 +63,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -77,7 +77,7 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* create shader */
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
@@ -106,14 +106,14 @@ int main() {
             "}\n"
     });
 
-    /* create pipeline object */
+    // create pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            /* note how the vertex components are pulled from different buffer bind slots */
+            // note how the vertex components are pulled from different buffer bind slots
             .attrs = {
-                /* positions come from vertex buffer slot 0 */
+                // positions come from vertex buffer slot 0
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                /* colors come from vertex buffer slot 1 */
+                // colors come from vertex buffer slot 1
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
@@ -136,23 +136,23 @@ int main() {
             [1] = vbuf
         },
         .vertex_buffer_offsets = {
-            /* position components are at start of buffer */
+            // position components are at start of buffer
             [0] = 0,
-            /* byte offset of color components in buffer */
+            // byte offset of color components in buffer
             [1] = 24 * 3 * sizeof(float)
         },
         .index_buffer = ibuf
     };
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
-/* draw one frame */
+// draw one frame
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     state.rx += 1.0f; state.ry += 2.0f;
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -164,7 +164,7 @@ static EM_BOOL draw(double time, void* userdata) {
         .mvp = HMM_MultiplyMat4(view_proj, model)
     };
 
-    /* ...and draw */
+    // ...and draw
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

@@ -11,7 +11,7 @@
 
 int main() {
 
-    /* create window and GL context via GLFW */
+    // create window and GL context via GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -21,10 +21,10 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
 
-    /* a vertex buffer */
+    // a vertex buffer
     const float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -35,7 +35,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* a shader */
+    // a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "#version 330\n"
@@ -55,7 +55,7 @@ int main() {
             "}\n"
     });
 
-    /* a pipeline state object (default render states are fine for triangle) */
+    // a pipeline state object (default render states are fine for triangle)
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .layout = {
@@ -66,15 +66,15 @@ int main() {
         }
     });
 
-    /* resource bindings */
+    // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
 
-    /* default pass action (clear to grey) */
+    // default pass action (clear to grey)
     sg_pass_action pass_action = {0};
 
-    /* draw loop */
+    // draw loop
     while (!glfwWindowShouldClose(w)) {
         int cur_width, cur_height;
         glfwGetFramebufferSize(w, &cur_width, &cur_height);
@@ -88,7 +88,7 @@ int main() {
         glfwPollEvents();
     }
 
-    /* cleanup */
+    // cleanup
     sg_shutdown();
     glfwTerminate();
     return 0;

@@ -80,39 +80,54 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             even_odd = !even_odd;
         }
     }
-    // the first 4 images are just different min-filters, the last
-    //  4 images are different anistropy levels
-    sg_image img[12];
-    sg_image_desc img_desc = {
+
+    // create a single image and 12 samplers
+    sg_image img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .mag_filter = SG_FILTER_LINEAR,
         .data = img_data
+    });
+
+    // the first 4 samplers are just different min-filters
+    sg_sampler smp[12];
+    sg_sampler_desc smp_desc = {
+        .mag_filter = SG_FILTER_LINEAR,
     };
-    sg_filter min_filter[] = {
-        SG_FILTER_NEAREST_MIPMAP_NEAREST,
-        SG_FILTER_LINEAR_MIPMAP_NEAREST,
-        SG_FILTER_NEAREST_MIPMAP_LINEAR,
-        SG_FILTER_LINEAR_MIPMAP_LINEAR,
+    sg_filter filters[] = {
+        SG_FILTER_NEAREST,
+        SG_FILTER_LINEAR,
     };
+    int smp_index = 0;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            smp_desc.min_filter = filters[i];
+            smp_desc.mipmap_filter = filters[j];
+            smp[smp_index++] = sg_make_sampler(&smp_desc);
+        }
+    }
+    // the next 4 samplers use min_lod/max_lod
+    smp_desc.min_lod = 2.0f;
+    smp_desc.max_lod = 4.0f;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            smp_desc.min_filter = filters[i];
+            smp_desc.mipmap_filter = filters[j];
+            smp[smp_index++] = sg_make_sampler(&smp_desc);
+        }
+    }
+    // the last 4 samplers use different anistropy levels
+    smp_desc.min_lod = 0.0f;
+    smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
+    smp_desc.min_filter = SG_FILTER_NEAREST;
+    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
-        img_desc.min_filter = min_filter[i];
-        img[i] = sg_make_image(&img_desc);
+        smp_desc.max_anisotropy = 1<<i;
+        smp[smp_index++] = sg_make_sampler(&smp_desc);
     }
-    img_desc.min_lod = 2.0f;
-    img_desc.max_lod = 4.0f;
-    for (int i = 4; i < 8; i++) {
-        img_desc.min_filter = min_filter[i-4];
-        img[i] = sg_make_image(&img_desc);
-    }
-    img_desc.min_lod = 0.0f;
-    img_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
-    for (int i = 8; i < 12; i++) {
-        img_desc.max_anisotropy = 1<<(i-7);
-        img[i] = sg_make_image(&img_desc);
-    }
+    assert(smp_index == 12);
 
     // shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
@@ -142,7 +157,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "};\n"
         },
         .fs = {
-            .images[0].image_type = SG_IMAGETYPE_2D,
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .source =
                 "Texture2D<float4> tex: register(t0);\n"
                 "sampler smp: register(s0);\n"
@@ -178,7 +195,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_default_pass(&(sg_pass_action){0}, d3d11_width(), d3d11_height());
         sg_apply_pipeline(pip);
         sg_bindings bind = {
-            .vertex_buffers[0] = vbuf
+            .vertex_buffers[0] = vbuf,
+            .fs.images[0] = img,
         };
         for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;
@@ -186,7 +204,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-            bind.fs_images[0] = img[i];
+            bind.fs.samplers[0] = smp[i];
             sg_apply_bindings(&bind);
             sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
             sg_draw(0, 4, 1);

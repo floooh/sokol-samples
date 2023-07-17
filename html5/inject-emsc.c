@@ -35,13 +35,13 @@ typedef struct {
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
 
-    /* create a native GL vertex and index buffer */
+    // create a native GL vertex and index buffer
     float vertices[] = {
         /* pos                  uvs */
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
@@ -117,10 +117,6 @@ int main() {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
     };
     glGenTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
     glActiveTexture(GL_TEXTURE0);
@@ -133,40 +129,61 @@ int main() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     sg_reset_state_cache();
-    state.bind.fs_images[0] = sg_make_image(&img_desc);
+    state.bind.fs.images[0] = sg_make_image(&img_desc);
 
-    /* create shader */
+    // create a GL sampler object
+    sg_sampler_desc smp_desc = {
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+    };
+    glGenSamplers(1, &smp_desc.gl_sampler);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    sg_reset_state_cache();
+    state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
+
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
             [1].name = "texcoord0"
         },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(vs_params_t),
+                .uniforms = {
+                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+                },
             },
+            .source =
+                "uniform mat4 mvp;\n"
+                "attribute vec4 position;\n"
+                "attribute vec2 texcoord0;\n"
+                "varying vec2 uv;"
+                "void main() {\n"
+                "  gl_Position = mvp * position;\n"
+                "  uv = texcoord0;\n"
+                "}\n",
         },
-        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-        .vs.source =
-            "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec2 texcoord0;\n"
-            "varying vec2 uv;"
-            "void main() {\n"
-            "  gl_Position = mvp * position;\n"
-            "  uv = texcoord0;\n"
-            "}\n",
-        .fs.source =
-            "precision mediump float;\n"
-            "uniform sampler2D tex;\n"
-            "varying vec2 uv;\n"
-            "void main() {\n"
-            "  gl_FragColor = texture2D(tex, uv);\n"
-            "}\n"
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "precision mediump float;\n"
+                "uniform sampler2D tex;\n"
+                "varying vec2 uv;\n"
+                "void main() {\n"
+                "  gl_FragColor = texture2D(tex, uv);\n"
+                "}\n"
+        },
     });
 
-    /* create pipeline object */
+    // create pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -183,14 +200,14 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK
     });
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -202,7 +219,7 @@ static EM_BOOL draw(double time, void* userdata) {
         .mvp = HMM_MultiplyMat4(view_proj, model)
     };
 
-    /* update texture image with some generated pixel data */
+    // update texture image with some generated pixel data
     for (int y = 0; y < IMG_WIDTH; y++) {
         for (int x = 0; x < IMG_HEIGHT; x++) {
             pixels[y * IMG_WIDTH + x] = 0xFF000000 |
@@ -213,9 +230,9 @@ static EM_BOOL draw(double time, void* userdata) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.fs_images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
-    /* ...and draw */
+    // ...and draw
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

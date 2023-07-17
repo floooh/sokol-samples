@@ -120,6 +120,7 @@ typedef struct {
     const sg_shader_desc* (*shader_desc_fn)(sg_backend backend);
     int (*attr_slot_fn)(const char* attr_name);
     int (*image_slot_fn)(sg_shader_stage stage, const char* img_name);
+    int (*sampler_slot_fn)(sg_shader_stage stage, const char* smp_name);
     int (*uniformblock_slot_fn)(sg_shader_stage stage, const char* ub_name);
     size_t (*uniformblock_size_fn)(sg_shader_stage stage, const char* ub_name);
     int (*uniform_offset_fn)(sg_shader_stage stage, const char* ub_name, const char* u_name);
@@ -189,6 +190,7 @@ static struct {
             .shader_desc_fn = none_prog_shader_desc,
             .attr_slot_fn = none_prog_attr_slot,
             .image_slot_fn = none_prog_image_slot,
+            .sampler_slot_fn = none_prog_sampler_slot,
             .uniformblock_slot_fn = none_prog_uniformblock_slot,
             .uniformblock_size_fn = none_prog_uniformblock_size,
             .uniform_offset_fn = none_prog_uniform_offset,
@@ -199,6 +201,7 @@ static struct {
             .shader_desc_fn = slm_prog_shader_desc,
             .attr_slot_fn = slm_prog_attr_slot,
             .image_slot_fn = slm_prog_image_slot,
+            .sampler_slot_fn = slm_prog_sampler_slot,
             .uniformblock_slot_fn = slm_prog_uniformblock_slot,
             .uniformblock_size_fn = slm_prog_uniformblock_size,
             .uniform_offset_fn = slm_prog_uniform_offset,
@@ -209,6 +212,7 @@ static struct {
             .shader_desc_fn = sl_prog_shader_desc,
             .attr_slot_fn = sl_prog_attr_slot,
             .image_slot_fn = sl_prog_image_slot,
+            .sampler_slot_fn = sl_prog_sampler_slot,
             .uniformblock_slot_fn = sl_prog_uniformblock_slot,
             .uniformblock_size_fn = sl_prog_uniformblock_size,
             .uniform_offset_fn = sl_prog_uniform_offset,
@@ -219,6 +223,7 @@ static struct {
             .shader_desc_fn = s_prog_shader_desc,
             .attr_slot_fn = s_prog_attr_slot,
             .image_slot_fn = s_prog_image_slot,
+            .sampler_slot_fn = s_prog_sampler_slot,
             .uniformblock_slot_fn = s_prog_uniformblock_slot,
             .uniformblock_size_fn = s_prog_uniformblock_size,
             .uniform_offset_fn = s_prog_uniform_offset,
@@ -229,6 +234,7 @@ static struct {
             .shader_desc_fn = sm_prog_shader_desc,
             .attr_slot_fn = sm_prog_attr_slot,
             .image_slot_fn = sm_prog_image_slot,
+            .sampler_slot_fn = sm_prog_sampler_slot,
             .uniformblock_slot_fn = sm_prog_uniformblock_slot,
             .uniformblock_size_fn = sm_prog_uniformblock_size,
             .uniform_offset_fn = sm_prog_uniform_offset,
@@ -239,6 +245,7 @@ static struct {
             .shader_desc_fn = lm_prog_shader_desc,
             .attr_slot_fn = lm_prog_attr_slot,
             .image_slot_fn = lm_prog_image_slot,
+            .sampler_slot_fn = lm_prog_sampler_slot,
             .uniformblock_slot_fn = lm_prog_uniformblock_slot,
             .uniformblock_size_fn = lm_prog_uniformblock_size,
             .uniform_offset_fn = lm_prog_uniform_offset,
@@ -249,6 +256,7 @@ static struct {
             .shader_desc_fn = m_prog_shader_desc,
             .attr_slot_fn = m_prog_attr_slot,
             .image_slot_fn = m_prog_image_slot,
+            .sampler_slot_fn = m_prog_sampler_slot,
             .uniformblock_slot_fn = m_prog_uniformblock_slot,
             .uniformblock_size_fn = m_prog_uniformblock_size,
             .uniform_offset_fn = m_prog_uniform_offset,
@@ -259,6 +267,7 @@ static struct {
             .shader_desc_fn = l_prog_shader_desc,
             .attr_slot_fn = l_prog_attr_slot,
             .image_slot_fn = l_prog_image_slot,
+            .sampler_slot_fn = l_prog_sampler_slot,
             .uniformblock_slot_fn = l_prog_uniformblock_slot,
             .uniformblock_size_fn = l_prog_uniformblock_size,
             .uniform_offset_fn = l_prog_uniform_offset,
@@ -286,7 +295,7 @@ static void animation_data_loaded(const sfetch_response_t* response);
 static void mesh_data_loaded(const sfetch_response_t* response);
 static void draw_light_debug(void);
 static void draw_ui(void);
-static sg_layout_desc vertex_layout_for_variation(const shader_variation_t* var);
+static sg_vertex_layout_state vertex_layout_for_variation(const shader_variation_t* var);
 static void fill_vs_params(const shader_variation_t* var);
 static void fill_phong_params(const shader_variation_t* var);
 static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name);
@@ -350,7 +359,9 @@ static void init(void) {
         // check if the shader variation needs the joint texture
         const int tex_slot = var->image_slot_fn(SG_SHADERSTAGE_VS, "joint_tex");
         if (tex_slot >= 0) {
-            var->bind.vs_images[tex_slot] = ozz_joint_texture();
+            const int smp_slot = var->sampler_slot_fn(SG_SHADERSTAGE_VS, "smp");
+            var->bind.vs.images[tex_slot] = ozz_joint_texture();
+            var->bind.vs.samplers[smp_slot] = ozz_joint_sampler();
         }
 
         // fill the pointerized uniform-block structs, a uniform pointer will be null
@@ -560,11 +571,11 @@ static void draw_light_debug(void) {
 }
 
 // helper functions to build a matching vertex layout for a shader variation
-static sg_layout_desc vertex_layout_for_variation(const shader_variation_t* var) {
+static sg_vertex_layout_state vertex_layout_for_variation(const shader_variation_t* var) {
     assert(var);
 
     // buffer stride must be provided, because the vertex layout may have gaps
-    sg_layout_desc desc = {
+    sg_vertex_layout_state lstate = {
         .buffers[0].stride = sizeof(ozz_vertex_t)
     };
 
@@ -575,14 +586,14 @@ static sg_layout_desc vertex_layout_for_variation(const shader_variation_t* var)
         if (comp->name) {
             const int slot = var->attr_slot_fn(comp->name);
             if (slot >= 0) {
-                desc.attrs[slot] = (sg_vertex_attr_desc) {
+                lstate.attrs[slot] = (sg_vertex_attr_state) {
                     .format = comp->format,
                     .offset = comp->offset
                 };
             }
         }
     }
-    return desc;
+    return lstate;
 }
 
 // helper functions to fill uniform block data into generic byte buffer

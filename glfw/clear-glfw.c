@@ -14,7 +14,7 @@ int main() {
     const int WIDTH = 640;
     const int HEIGHT = 480;
 
-    /* create window and GL context via GLFW */
+    // create window and GL context via GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -24,17 +24,16 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
-    sg_desc desc = { .logger.func = slog_func };
-    sg_setup(&desc);
+    // setup sokol_gfx
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* default pass action, clear to red */
+    // default pass action, clear to red
     sg_pass_action pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
     };
 
-    /* draw loop */
+    // draw loop
     while (!glfwWindowShouldClose(w)) {
         float g = (float)(pass_action.colors[0].clear_value.g + 0.01);
         if (g > 1.0f) g = 0.0f;
@@ -48,7 +47,7 @@ int main() {
         glfwPollEvents();
     }
 
-    /* shutdown sokol_gfx and GLFW */
+    // shutdown sokol_gfx and GLFW
     sg_shutdown();
     glfwTerminate();
     return 0;

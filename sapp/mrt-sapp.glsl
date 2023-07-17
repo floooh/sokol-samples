@@ -61,9 +61,10 @@ void main() {
 @end
 
 @fs fs_fsq
-uniform sampler2D tex0;
-uniform sampler2D tex1;
-uniform sampler2D tex2;
+uniform texture2D tex0;
+uniform texture2D tex1;
+uniform texture2D tex2;
+uniform sampler smp;
 
 in vec2 uv0;
 in vec2 uv1;
@@ -72,9 +73,9 @@ in vec2 uv2;
 out vec4 frag_color;
 
 void main() {
-    vec3 c0 = texture(tex0, uv0).xyz;
-    vec3 c1 = texture(tex1, uv1).xyz;
-    vec3 c2 = texture(tex2, uv2).xyz;
+    vec3 c0 = texture(sampler2D(tex0, smp), uv0).xyz;
+    vec3 c1 = texture(sampler2D(tex1, smp), uv1).xyz;
+    vec3 c2 = texture(sampler2D(tex2, smp), uv2).xyz;
     frag_color = vec4(c0 + c1 + c2, 1.0);
 }
 @end
@@ -95,13 +96,14 @@ void main() {
 @end
 
 @fs fs_dbg
-uniform sampler2D tex;
+uniform texture2D tex;
+uniform sampler smp;
 
 in vec2 uv;
 out vec4 frag_color;
 
 void main() {
-    frag_color = vec4(texture(tex,uv).xyz, 1.0);
+    frag_color = vec4(texture(sampler2D(tex, smp) ,uv).xyz, 1.0);
 }
 @end
 

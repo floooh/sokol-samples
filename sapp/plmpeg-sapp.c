@@ -136,7 +136,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // vertex-, index-buffer, shader and pipeline
+    // vertex-, index-buffer, shader, pipeline and a sampler object
     const vertex_t vertices[] = {
         /* pos         normal    uvs */
         { -1, -1, -1,  0, 0,-1,  1, 1 },
@@ -187,6 +187,13 @@ static void init(void) {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
+    });
+
+    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
     state.pass_action = (sg_pass_action) {
@@ -243,7 +250,7 @@ static void frame(void) {
 
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
-    if (state.bind.fs_images[0].id != SG_INVALID_ID) {
+    if (state.bind.fs.images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
@@ -273,16 +280,12 @@ static void validate_texture(int slot, plm_plane_t* plane) {
         state.image_attrs[slot].height = (int)plane->height;
 
         // NOTE: it's ok to call sg_destroy_image() with SG_INVALID_ID
-        sg_destroy_image(state.bind.fs_images[slot]);
-        state.bind.fs_images[slot] = sg_make_image(&(sg_image_desc){
+        sg_destroy_image(state.bind.fs.images[slot]);
+        state.bind.fs.images[slot] = sg_make_image(&(sg_image_desc){
             .width = (int)plane->width,
             .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
             .usage = SG_USAGE_STREAM,
-            .min_filter = SG_FILTER_LINEAR,
-            .mag_filter = SG_FILTER_LINEAR,
-            .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-            .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         });
     }
 
@@ -290,7 +293,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     // sg_update_image() is called more than once per frame
     if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
         state.image_attrs[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.bind.fs_images[slot], &(sg_image_data){
+        sg_update_image(state.bind.fs.images[slot], &(sg_image_data){
             .subimage[0][0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)

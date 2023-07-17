@@ -36,9 +36,8 @@ static struct {
 #define YELLOW (0xFF03DAFF)
 
 // helper function to create a sokol-gfx image wrapped in a Nuklear image handle
-struct nk_image make_image(const sg_image_desc* desc) {
-    sg_image img = sg_make_image(desc);
-    return nk_image_id((int)img.id);
+struct nk_image make_image_handle(const sg_image_desc* img_desc) {
+    return nk_image_handle(snk_nkhandle(sg_make_image(img_desc)));
 }
 
 static void init(void) {
@@ -61,7 +60,7 @@ static void init(void) {
             pixels[y][x] = ((x ^ y) & 1) ? BLACK : WHITE;
         }
     }
-    state.img0 = make_image(&(sg_image_desc){
+    state.img0 = make_image_handle(&(sg_image_desc){
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .data.subimage[0][0] = SG_RANGE(pixels)
@@ -73,7 +72,7 @@ static void init(void) {
             pixels[y][x] = ((x ^ y) & 1) ? BLUE : YELLOW;
         }
     }
-    state.img1 = make_image(&(sg_image_desc){
+    state.img1 = make_image_handle(&(sg_image_desc){
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .data.subimage[0][0] = SG_RANGE(pixels)

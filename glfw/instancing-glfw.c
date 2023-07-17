@@ -20,12 +20,12 @@ enum {
     NUM_PARTICLES_EMITTED_PER_FRAME = 10
 };
 
-/* vertex shader uniform block */
+// vertex shader uniform block
 typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-/* particle positions and velocity */
+// particle positions and velocity
 int cur_num_particles = 0;
 hmm_vec3 pos[MAX_PARTICLES];
 hmm_vec3 vel[MAX_PARTICLES];
@@ -43,12 +43,11 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
-    sg_desc desc = { .logger.func = slog_func };
-    sg_setup(&desc);
+    // setup sokol_gfx
+    sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* vertex buffer for static geometry (goes into vertex buffer bind slot 0) */
+    // vertex buffer for static geometry (goes into vertex buffer bind slot 0)
     const float r = 0.05f;
     const float vertices[] = {
         // positions            colors
@@ -63,7 +62,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
 
-    /* index buffer for static geometry */
+    // index buffer for static geometry
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
@@ -73,13 +72,13 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1) */
+    // empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1)
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
         .usage = SG_USAGE_STREAM
     });
 
-    /* create a shader */
+    // create a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.uniform_blocks[0] = {
             .size = sizeof(vs_params_t),
@@ -108,7 +107,7 @@ int main() {
             "}\n",
     });
 
-    /* pipeline state object, note the vertex layout definition */
+    // pipeline state object, note the vertex layout definition
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers = {
@@ -130,8 +129,7 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK
     });
 
-    /* setup resource bindings, note how the instance-data buffer
-       goes into vertex buffer slot 1 */
+    // setup resource bindings, note how the instance-data buffer goes into vertex buffer slot 1
     sg_bindings bind = {
         .vertex_buffers = {
             [0] = vbuf_geom,
@@ -140,20 +138,20 @@ int main() {
         .index_buffer = ibuf
     };
 
-    /* default pass action (clear to grey) */
+    // default pass action (clear to grey)
     sg_pass_action pass_action = { 0 };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* draw loop */
+    // draw loop
     vs_params_t vs_params;
     float roty = 0.0f;
     const float frame_time = 1.0f / 60.0f;
     while (!glfwWindowShouldClose(w)) {
-        /* emit new particles */
+        // emit new particles
         for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
             if (cur_num_particles < MAX_PARTICLES) {
                 pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
@@ -168,7 +166,7 @@ int main() {
             }
         }
 
-        /* update particle positions */
+        // update particle positions
         for (int i = 0; i < cur_num_particles; i++) {
             vel[i].Y -= 1.0f * frame_time;
             pos[i].X += vel[i].X * frame_time;
@@ -181,13 +179,13 @@ int main() {
             }
         }
 
-        /* update instance data */
+        // update instance data
         sg_update_buffer(bind.vertex_buffers[1], &(sg_range) {
             .ptr = pos,
             .size = (size_t)cur_num_particles * sizeof(hmm_vec3)
         });
 
-        /* model-view-projection matrix */
+        // model-view-projection matrix
         roty += 1.0f;
         vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
@@ -204,7 +202,7 @@ int main() {
         glfwPollEvents();
     }
 
-    /* cleanup */
+    // cleanup
     sg_shutdown();
     glfwTerminate();
 }

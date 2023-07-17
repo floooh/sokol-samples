@@ -113,18 +113,22 @@ int main() {
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
     bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
-    // font texture for imgui's default font
+    // font texture and sampler for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
+
     sg_image_desc img_desc = { };
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    img_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
-    bind.fs_images[0] = sg_make_image(&img_desc);
+    bind.fs.images[0] = sg_make_image(&img_desc);
+
+    sg_sampler_desc smp_desc = { };
+    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
@@ -145,8 +149,12 @@ int main() {
         "    uv = texcoord0;\n"
         "    color = color0;\n"
         "}\n";
-    shd_desc.fs.images[0].name = "tex";
-    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
+    shd_desc.fs.images[0].used = true;
+    shd_desc.fs.samplers[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].used = true;
+    shd_desc.fs.image_sampler_pairs[0].glsl_name = "tex";
+    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
     shd_desc.fs.source =
         "#version 330\n"
         "uniform sampler2D tex;\n"

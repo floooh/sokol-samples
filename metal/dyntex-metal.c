@@ -42,11 +42,13 @@ static void init(void) {
     });
 
     // a 128x128 image with streaming update strategy
-    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage = SG_USAGE_STREAM,
+    });
+    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -128,7 +130,9 @@ static void init(void) {
             "  out.uv = in.uv;\n"
             "  return out;\n"
             "}\n",
-        .fs.images[0].image_type = SG_IMAGETYPE_2D,
+        .fs.images[0].used = true,
+        .fs.samplers[0].used = true,
+        .fs.image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
         .fs.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
@@ -181,7 +185,7 @@ static void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.fs_images[0], &(sg_image_data){
+    sg_update_image(state.bind.fs.images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 

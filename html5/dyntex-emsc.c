@@ -19,7 +19,7 @@ typedef struct {
     hmm_mat4 mvp;
 } vs_params_t;
 
-/* width/height must be 2^N */
+// width/height must be 2^N
 #define IMAGE_WIDTH (64)
 #define IMAGE_HEIGHT (64)
 #define LIVING (0xFFFFFFFF)
@@ -41,28 +41,32 @@ static void game_of_life_update();
 static EM_BOOL draw(double time, void* userdata);
 
 int main() {
-    /* setup WebGL context */
+    // setup WebGL context
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
     assert(sg_isvalid());
 
-    /* a 128x128 image with streaming-update strategy */
+    // a 128x128 image with streaming-update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage = SG_USAGE_STREAM,
+    });
+
+    // an sampler object
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE
     });
 
-    /* a cube vertex- and index-buffer */
+    // a cube vertex- and index-buffer
     float vertices[] = {
-        /* pos                  color                       uvs */
+        // pos                  color                       uvs
         -1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,     1.0f, 1.0f,
@@ -109,50 +113,59 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    /* define the resource bindings */
+    // define the resource bindings
     state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = {
+            .images[0] = img,
+            .samplers[0] = smp,
+        }
     };
 
-    /* a shader to render textured cube */
+    // a shader to render textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .attrs = {
             [0].name = "position",
             [1].name = "color0",
             [2].name = "texcoord0"
         },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(vs_params_t),
+                .uniforms = {
+                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+                }
+            },
+            .source =
+                "uniform mat4 mvp;\n"
+                "attribute vec4 position;\n"
+                "attribute vec4 color0;\n"
+                "attribute vec2 texcoord0;\n"
+                "varying vec2 uv;"
+                "varying vec4 color;"
+                "void main() {\n"
+                "  gl_Position = mvp * position;\n"
+                "  uv = texcoord0;\n"
+                "  color = color0;\n"
+                "}\n",
         },
-        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-        .vs.source =
-            "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "attribute vec2 texcoord0;\n"
-            "varying vec2 uv;"
-            "varying vec4 color;"
-            "void main() {\n"
-            "  gl_Position = mvp * position;\n"
-            "  uv = texcoord0;\n"
-            "  color = color0;\n"
-            "}\n",
-        .fs.source =
-            "precision mediump float;\n"
-            "uniform sampler2D tex;\n"
-            "varying vec4 color;\n"
-            "varying vec2 uv;\n"
-            "void main() {\n"
-            "  gl_FragColor = texture2D(tex, uv) * color;\n"
-            "}\n"
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "precision mediump float;\n"
+                "uniform sampler2D tex;\n"
+                "varying vec4 color;\n"
+                "varying vec2 uv;\n"
+                "void main() {\n"
+                "  gl_FragColor = texture2D(tex, uv) * color;\n"
+                "}\n"
+        }
     });
 
-    /* a pipeline-state-object for the textured cube */
+    // a pipeline-state-object for the textured cube
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -170,17 +183,17 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK
     });
 
-    /* initial game-of-life seed state */
+    // initial game-of-life seed state
     game_of_life_init();
 
-    /* hand off control to browser loop */
+    // hand off control to browser loop
     emscripten_request_animation_frame_loop(draw, 0);
     return 0;
 }
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    /* model-view-projection matrix from rotated model matrix */
+    // model-view-projection matrix from rotated model matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -192,13 +205,13 @@ static EM_BOOL draw(double time, void* userdata) {
         .mvp = HMM_MultiplyMat4(view_proj, model)
     };
 
-    /* update game-of-life state */
+    // update game-of-life state
     game_of_life_update();
 
-    /* update the dynamic image */
-    sg_update_image(state.bind.fs_images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    // update the dynamic image
+    sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
-    /* draw pass */
+    // draw pass
     sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -214,8 +227,7 @@ void game_of_life_init() {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             if ((rand() & 255) > 230) {
                 pixels[y][x] = LIVING;
-            }
-            else {
+            } else {
                 pixels[y][x] = DEAD;
             }
         }
@@ -236,19 +248,17 @@ void game_of_life_update() {
                     }
                 }
             }
-            /* any live cell... */
+            // any live cell...
             if (pixels[y][x] == LIVING) {
                 if (num_living_neighbours < 2) {
-                    /* ... with fewer than 2 living neighbours dies, as if caused by underpopulation */
+                    // ... with fewer than 2 living neighbours dies, as if caused by underpopulation
+                    pixels[y][x] = DEAD;
+                } else if (num_living_neighbours > 3) {
+                    // ... with more than 3 living neighbours dies, as if caused by overpopulation
                     pixels[y][x] = DEAD;
                 }
-                else if (num_living_neighbours > 3) {
-                    /* ... with more than 3 living neighbours dies, as if caused by overpopulation */
-                    pixels[y][x] = DEAD;
-                }
-            }
-            else if (num_living_neighbours == 3) {
-                /* any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction */
+            } else if (num_living_neighbours == 3) {
+                // any dead cell with exactly 3 living neighbours becomes a live cell, as if by reproduction
                 pixels[y][x] = LIVING;
             }
         }

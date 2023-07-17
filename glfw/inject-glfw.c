@@ -39,12 +39,12 @@ int main() {
     glfwMakeContextCurrent(w);
     glfwSwapInterval(1);
 
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){ .logger.func = slog_func });
 
-    /* create a native GL vertex and index buffer */
+    // create a native GL vertex and index buffer
     float vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
@@ -118,10 +118,6 @@ int main() {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
         // testing gl_texture_target, not strictly needed in this case though:
         .gl_texture_target = GL_TEXTURE_2D
     };
@@ -129,52 +125,69 @@ int main() {
     glActiveTexture(GL_TEXTURE0);
     for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         glBindTexture(GL_TEXTURE_2D, img_desc.gl_textures[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     sg_reset_state_cache();
     sg_image img = sg_make_image(&img_desc);
 
-    /* define resource bindings */
+    // create a GL sampler object
+    sg_sampler_desc smp_desc = {
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+    };
+    glGenSamplers(1, &smp_desc.gl_sampler);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    sg_reset_state_cache();
+    sg_sampler smp = sg_make_sampler(&smp_desc);
+
+    // define resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = { .images[0] = img, .samplers[0] = smp },
     };
 
-    /* create shader */
+    // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+        .vs = {
+            .uniform_blocks[0] = {
+                .size = sizeof(vs_params_t),
+                .uniforms = {
+                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
+                },
             },
+            .source =
+                "#version 330\n"
+                "uniform mat4 mvp;\n"
+                "layout(location=0) in vec4 position;\n"
+                "layout(location=1) in vec2 texcoord0;\n"
+                "out vec2 uv;"
+                "void main() {\n"
+                "  gl_Position = mvp * position;\n"
+                "  uv = texcoord0;\n"
+                "}\n",
         },
-        .fs.images[0] = { .name="tex", .image_type=SG_IMAGETYPE_2D },
-        .vs.source =
-            "#version 330\n"
-            "uniform mat4 mvp;\n"
-            "layout(location=0) in vec4 position;\n"
-            "layout(location=1) in vec2 texcoord0;\n"
-            "out vec2 uv;"
-            "void main() {\n"
-            "  gl_Position = mvp * position;\n"
-            "  uv = texcoord0;\n"
-            "}\n",
-        .fs.source =
-            "#version 330\n"
-            "uniform sampler2D tex;"
-            "in vec2 uv;\n"
-            "out vec4 frag_color;\n"
-            "void main() {\n"
-            "  frag_color = texture(tex, uv);\n"
-            "}\n"
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "#version 330\n"
+                "uniform sampler2D tex;"
+                "in vec2 uv;\n"
+                "out vec4 frag_color;\n"
+                "void main() {\n"
+                "  frag_color = texture(tex, uv);\n"
+                "}\n"
+        }
     });
 
-    /* create pipeline object */
+    // create pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -191,10 +204,10 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK
     });
 
-    /* default pass action */
+    // default pass action
     sg_pass_action pass_action = { 0 };
 
-    /* view-projection matrix */
+    // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -203,16 +216,16 @@ int main() {
     float rx = 0.0f, ry = 0.0f;
     uint32_t counter = 0;
     while (!glfwWindowShouldClose(w)) {
-        /* rotated model matrix */
+        // rotated model matrix
         rx += 0.5f; ry += 0.75f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
         hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
 
-        /* model-view-projection matrix for vertex shader */
+        // model-view-projection matrix for vertex shader
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        /* update texture image with some generated pixel data */
+        // update texture image with some generated pixel data
         for (int y = 0; y < IMG_WIDTH; y++) {
             for (int x = 0; x < IMG_HEIGHT; x++) {
                 pixels[y * IMG_WIDTH + x] = 0xFF000000 |
@@ -240,10 +253,11 @@ int main() {
 
     sg_shutdown();
 
-    /* sokol_gfx doesn't destroy any externally created resource object */
+    // sokol_gfx doesn't destroy any externally created resource object
     glDeleteBuffers(1, &gl_vbuf); gl_vbuf = 0;
     glDeleteBuffers(1, &gl_ibuf); gl_ibuf = 0;
     glDeleteTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
+    glDeleteSamplers(1, &smp_desc.gl_sampler);
 
     glfwTerminate();
 }

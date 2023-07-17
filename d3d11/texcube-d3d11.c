@@ -90,9 +90,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .width = 4,
         .height = 4,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .data.subimage[0][0] = SG_RANGE(pixels)
+    });
+
+    // create a sampler
+    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     // create shader
@@ -102,35 +106,41 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             [1] = { .sem_name="COLOR", .sem_index=1 },
             [2] = { .sem_name="TEXCOORD", .sem_index=1 }
         },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .fs.images[0].image_type = SG_IMAGETYPE_2D,
-        .vs.source =
-            "cbuffer params: register(b0) {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float4 pos: POSITION;\n"
-            "  float4 color: COLOR1;\n"
-            "  float2 uv: TEXCOORD1;\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 color: COLOR0;\n"
-            "  float2 uv: TEXCOORD0;\n"
-            "  float4 pos: SV_Position;\n"
-            "};\n"
-            "vs_out main(vs_in inp) {\n"
-            "  vs_out outp;\n"
-            "  outp.pos = mul(mvp, inp.pos);\n"
-            "  outp.color = inp.color;\n"
-            "  outp.uv = inp.uv * 5.0;\n"
-            "  return outp;\n"
-            "};\n",
-        .fs.source =
-            "Texture2D<float4> tex: register(t0);\n"
-            "sampler smp: register(s0);\n"
-            "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-            "  return tex.Sample(smp, uv) * color;\n"
-            "}\n"
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "cbuffer params: register(b0) {\n"
+                "  float4x4 mvp;\n"
+                "};\n"
+                "struct vs_in {\n"
+                "  float4 pos: POSITION;\n"
+                "  float4 color: COLOR1;\n"
+                "  float2 uv: TEXCOORD1;\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 color: COLOR0;\n"
+                "  float2 uv: TEXCOORD0;\n"
+                "  float4 pos: SV_Position;\n"
+                "};\n"
+                "vs_out main(vs_in inp) {\n"
+                "  vs_out outp;\n"
+                "  outp.pos = mul(mvp, inp.pos);\n"
+                "  outp.color = inp.color;\n"
+                "  outp.uv = inp.uv * 5.0;\n"
+                "  return outp;\n"
+                "};\n",
+        },
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "Texture2D<float4> tex: register(t0);\n"
+                "sampler smp: register(s0);\n"
+                "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+                "  return tex.Sample(smp, uv) * color;\n"
+                "}\n"
+        }
     });
 
     // pipeline object
@@ -158,7 +168,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs_images[0] = img
+        .fs = {
+            .images[0] = img,
+            .samplers[0] = smp,
+        },
     };
 
     // view-projection matrix

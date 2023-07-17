@@ -1,71 +1,23 @@
-//------------------------------------------------------------------------------
-//  float/rgba8 encoding/decoding so that we can use an RGBA8
-//  shadow map instead of floating point render targets which might
-//  not be supported everywhere
-//
-//  http://aras-p.info/blog/2009/07/30/encoding-floats-to-rgba-the-final/
-//
 @ctype mat4 hmm_mat4
 @ctype vec3 hmm_vec3
-@ctype vec2 hmm_vec2
-
-@block util
-
-vec4 encode_depth(float v) {
-    vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * v;
-    enc = fract(enc);
-    enc -= enc.yzww * vec4(1.0/255.0,1.0/255.0,1.0/255.0,0.0);
-    return enc;
-}
-
-float decodeDepth(vec4 rgba) {
-    return dot(rgba, vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/16581375.0));
-}
-
-float sample_shadow(texture2D tex, sampler smp, vec2 uv, float compare) {
-    float depth = decodeDepth(texture(sampler2D(tex, smp), vec2(uv.x, uv.y)));
-    return step(compare, depth);
-}
-
-float sample_shadow_pcf(texture2D tex, sampler smp, vec3 uv_depth, vec2 sm_size) {
-    float result = 0.0;
-    for (int x = -2; x <= 2; x++) {
-        for (int y =- 2; y <= 2; y++) {
-            vec2 offset = vec2(x, y) / sm_size;
-            result += sample_shadow(tex, smp, uv_depth.xy + offset, uv_depth.z);
-        }
-    }
-    return result / 25.0;
-}
-
-@end
 
 //=== shadow pass
 @vs vs_shadow
+@glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
 
 uniform vs_shadow_params {
     mat4 mvp;
 };
 
 in vec4 pos;
-out vec2 proj_zw;
 
 void main() {
     gl_Position = mvp * pos;
-    proj_zw = gl_Position.zw;
 }
 @end
 
 @fs fs_shadow
-@include_block util
-
-in vec2 proj_zw;
-out vec4 frag_color;
-
-void main() {
-    float depth = proj_zw.x / proj_zw.y;
-    frag_color = encode_depth(depth);
-}
+void main() { }
 @end
 
 @program shadow vs_shadow fs_shadow
@@ -100,7 +52,6 @@ void main() {
 @end
 
 @fs fs_display
-@include_block util
 
 uniform fs_display_params {
     vec3 light_dir;
@@ -123,7 +74,6 @@ vec4 gamma(vec4 c) {
 }
 
 void main() {
-    vec2 sm_size = textureSize(sampler2D(shadow_map, shadow_sampler), 0);
     float spec_power = 2.2;
     float ambient_intensity = 0.25;
     vec3 l = normalize(light_dir);
@@ -133,7 +83,7 @@ void main() {
 
         vec3 light_pos = light_proj_pos.xyz / light_proj_pos.w;
         vec3 sm_pos = vec3((light_pos.xy + 1.0) * 0.5, light_pos.z);
-        float s = sample_shadow_pcf(shadow_map, shadow_sampler, sm_pos, sm_size);
+        float s = texture(sampler2DShadow(shadow_map, shadow_sampler), sm_pos);
         float diff_intensity = max(n_dot_l * s, 0.0);
 
         vec3 v = normalize(eye_pos - world_pos.xyz);
@@ -165,8 +115,6 @@ void main() {
 @end
 
 @fs fs_dbg
-@include_block util
-
 uniform texture2D dbg_tex;
 uniform sampler dbg_smp;
 
@@ -174,8 +122,7 @@ in vec2 uv;
 out vec4 frag_color;
 
 void main() {
-    float depth = decodeDepth(texture(sampler2D(dbg_tex, dbg_smp), uv));
-    frag_color = vec4(depth, depth, depth, 1.0);
+    frag_color = vec4(texture(sampler2D(dbg_tex, dbg_smp), uv).xxx, 1.0);
 }
 @end
 
