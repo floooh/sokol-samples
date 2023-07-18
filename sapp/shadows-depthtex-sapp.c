@@ -303,7 +303,7 @@ static void frame(void) {
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_display_params, &SG_RANGE(plane_vs_display_params));
     sg_draw(36, 6, 1);
     // render cube
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(cube_vs_display_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_display_params, &SG_RANGE(cube_vs_display_params));
     sg_draw(0, 36, 1);
     // render debug visualization of shadow-map
     sg_apply_pipeline(state.dbg.pip);
