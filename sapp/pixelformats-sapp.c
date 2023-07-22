@@ -18,11 +18,11 @@
 static struct {
     struct {
         bool valid;
-        sg_image texture;
-        sg_image render;
-        sg_image blend;
-        sg_image msaa;
-        sg_image resolve;
+        simgui_image_t unfiltered;
+        simgui_image_t filtered;
+        simgui_image_t render;
+        simgui_image_t blend;
+        simgui_image_t msaa_resolve;
         sg_pipeline cube_render_pip;
         sg_pipeline cube_blend_pip;
         sg_pipeline cube_msaa_pip;
@@ -43,7 +43,7 @@ static struct {
 
 static const char* pixelformat_string(sg_pixel_format fmt);
 static sg_range gen_pixels(sg_pixel_format fmt);
-static sg_image setup_invalid_texture(void);
+static simgui_image_t setup_invalid_texture(void);
 
 static void init(void) {
     // setup sokol-gfx
@@ -56,7 +56,10 @@ static void init(void) {
     });
 
     // setup cimgui
-    simgui_setup(&(simgui_desc_t){0});
+    simgui_setup(&(simgui_desc_t){
+        .image_pool_size = 256,
+        .logger.func = slog_func,
+    });
 
     // create all the textures, samplers and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
@@ -73,14 +76,13 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 4,
     });
-    sg_image invalid_img = setup_invalid_texture();
-
+    simgui_image_t invalid_img = setup_invalid_texture();
     for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
-        state.fmt[i].texture = invalid_img;
+        state.fmt[i].unfiltered = invalid_img;
+        state.fmt[i].filtered = invalid_img;
         state.fmt[i].render = invalid_img;
         state.fmt[i].blend  = invalid_img;
-        state.fmt[i].msaa = invalid_img;
-        state.fmt[i].resolve = invalid_img;
+        state.fmt[i].msaa_resolve = invalid_img;
     }
 
     state.smp_nearest = sg_make_sampler(&(sg_sampler_desc){
@@ -134,71 +136,91 @@ static void init(void) {
         if (img_data.ptr) {
             state.fmt[i].valid = true;
             // create unfiltered and filtered texture
+            sg_image img = sg_make_image(&(sg_image_desc){
+                .width = 8,
+                .height = 8,
+                .pixel_format = fmt,
+                .data.subimage[0][0] = img_data,
+            });
             if (sg_query_pixelformat(fmt).sample) {
-                state.fmt[i].texture = sg_make_image(&(sg_image_desc){
-                    .width = 8,
-                    .height = 8,
-                    .pixel_format = fmt,
-                    .data.subimage[0][0] = img_data,
+                state.fmt[i].unfiltered = simgui_make_image(&(simgui_image_desc_t){
+                    .image = img,
+                    .sampler = state.smp_nearest,
+                });
+                state.fmt[i].filtered = simgui_make_image(&(simgui_image_desc_t){
+                    .image = img,
+                    .sampler = state.smp_linear,
                 });
             }
             // create non-MSAA render target, pipeline state and pass
             if (sg_query_pixelformat(fmt).render) {
-                state.fmt[i].render = sg_make_image(&(sg_image_desc){
+                sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 1,
+                });
+                state.fmt[i].render = simgui_make_image(&(simgui_image_desc_t){
+                    .image = img,
+                    .sampler = state.smp_nearest
                 });
                 cube_render_pip_desc.colors[0].pixel_format = fmt;
                 bg_render_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_render_pip = sg_make_pipeline(&cube_render_pip_desc);
                 state.fmt[i].bg_render_pip = sg_make_pipeline(&bg_render_pip_desc);
                 state.fmt[i].render_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = state.fmt[i].render,
+                    .color_attachments[0].image = img,
                     .depth_stencil_attachment.image = render_depth_img,
                 });
             }
             // create non-MSAA blend render target, pipeline states and pass
             if (sg_query_pixelformat(fmt).blend) {
-                state.fmt[i].blend = sg_make_image(&(sg_image_desc){
+                sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 1,
                 });
+                state.fmt[i].blend = simgui_make_image(&(simgui_image_desc_t){
+                    .image = img,
+                    .sampler = state.smp_nearest,
+                });
                 cube_blend_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
                 state.fmt[i].blend_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = state.fmt[i].blend,
+                    .color_attachments[0].image = img,
                     .depth_stencil_attachment.image = render_depth_img,
                 });
             }
             // create MSAA render target, resolve texture and matching pipeline state
             if (sg_query_pixelformat(fmt).msaa) {
-                state.fmt[i].msaa = sg_make_image(&(sg_image_desc){
+                sg_image msaa_img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
                 });
-                state.fmt[i].resolve = sg_make_image(&(sg_image_desc){
+                sg_image resolve_img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 1,
                 });
+                state.fmt[i].msaa_resolve = simgui_make_image(&(simgui_image_desc_t){
+                    .image = resolve_img,
+                    .sampler = state.smp_nearest,
+                });
                 cube_msaa_pip_desc.colors[0].pixel_format = fmt;
                 bg_msaa_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_msaa_pip = sg_make_pipeline(&cube_msaa_pip_desc);
                 state.fmt[i].bg_msaa_pip = sg_make_pipeline(&bg_msaa_pip_desc);
                 state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = state.fmt[i].msaa,
-                    .resolve_attachments[0].image = state.fmt[i].resolve,
+                    .color_attachments[0].image = msaa_img,
+                    .resolve_attachments[0].image = resolve_img,
                     .depth_stencil_attachment.image = msaa_depth_img,
                 });
             }
@@ -348,15 +370,15 @@ static void frame(void) {
             if (igBeginChild_Str(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLine(256, 0);
-                igImage(simgui_imtextureid(state.fmt[i].texture), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].unfiltered), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].texture), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].filtered), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
                 igImage(simgui_imtextureid(state.fmt[i].render), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
                 igImage(simgui_imtextureid(state.fmt[i].blend), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
                 igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].resolve), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igImage(simgui_imtextureid(state.fmt[i].msaa_resolve), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
             }
             igEndChild();
         }
@@ -414,11 +436,14 @@ static const uint32_t disabled_texture_pixels[8][8] = {
 #undef X
 #undef o
 
-static sg_image setup_invalid_texture(void) {
-    return sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
+static simgui_image_t setup_invalid_texture(void) {
+    return simgui_make_image(&(simgui_image_desc_t){
+        .image = sg_make_image(&(sg_image_desc){
+            .width = 8,
+            .height = 8,
+            .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
+        }),
+        .sampler = state.smp_nearest,
     });
 }
 

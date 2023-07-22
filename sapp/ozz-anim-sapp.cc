@@ -104,6 +104,7 @@ static void init(void) {
 
     // setup sokol-imgui
     simgui_desc_t imdesc = { };
+    imdesc.logger.func = slog_func;
     simgui_setup(&imdesc);
 
     // initialize pass action for default-pass

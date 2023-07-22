@@ -36,6 +36,7 @@ void init() {
     sg_setup(&desc);
     stm_setup();
     simgui_desc_t simgui_desc = { };
+    simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
     // setup the imgui environment

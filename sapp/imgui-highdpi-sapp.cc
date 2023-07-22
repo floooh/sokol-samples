@@ -30,6 +30,7 @@ void init(void) {
     // setup sokol-imgui, but provide our own font
     simgui_desc_t simgui_desc = { };
     simgui_desc.no_default_font = true;
+    simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
     // configure Dear ImGui with our own embedded font
@@ -41,7 +42,9 @@ void init(void) {
     fontCfg.RasterizerMultiply = 1.5f;
     io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
 
-    // create font texture and sampler for the custom font
+    // create font texture and linear-filtering sampler for the custom font
+    // NOTE: linear filtering looks better on low-dpi displays, while
+    // nearest-filtering looks better on high-dpi displays
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
@@ -52,7 +55,16 @@ void init(void) {
     img_desc.data.subimage[0][0].ptr = font_pixels;
     img_desc.data.subimage[0][0].size = font_width * font_height * 4;
     sg_image font_img = sg_make_image(&img_desc);
-    io.Fonts->TexID = simgui_imtextureid(font_img);
+    sg_sampler_desc smp_desc = { };
+    smp_desc.min_filter = SG_FILTER_LINEAR;
+    smp_desc.mag_filter = SG_FILTER_LINEAR;
+    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    sg_sampler font_smp = sg_make_sampler(&smp_desc);
+    simgui_image_desc_t font_desc = { };
+    font_desc.image = font_img;
+    font_desc.sampler = font_smp;
+    io.Fonts->TexID = simgui_imtextureid(simgui_make_image(&font_desc));
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;

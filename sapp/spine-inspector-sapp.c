@@ -473,7 +473,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 //=== UI STUFF =================================================================
 static void ui_setup(void) {
-    simgui_setup(&(simgui_desc_t){0});
+    simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
     sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
 }
 

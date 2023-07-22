@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui/cimgui.h"
 #define SOKOL_IMGUI_IMPL
@@ -21,13 +22,14 @@ void __cdbgui_setup(int sample_count) {
 
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
-        .sample_count = sample_count
+        .sample_count = sample_count,
+        .logger.func = slog_func,
     });
 }
 
 void __cdbgui_shutdown(void) {
-    simgui_shutdown();
     sg_imgui_discard(&sg_imgui);
+    simgui_shutdown();
 }
 
 void __cdbgui_draw(void) {

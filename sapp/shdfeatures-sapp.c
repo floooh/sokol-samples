@@ -325,7 +325,9 @@ static void init(void) {
     });
 
     // setup sokol-imgui
-    simgui_setup(&(simgui_desc_t){0});
+    simgui_setup(&(simgui_desc_t){
+        .logger.func = slog_func,
+    });
 
     // initialize clear color
     state.pass_action = (sg_pass_action) {

@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 #include "sokol_gfx.h"
 #include "sokol_app.h"
+#include "sokol_log.h"
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -24,12 +25,13 @@ void __dbgui_setup(int sample_count) {
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
     simgui_desc.sample_count = sample_count;
+    simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 }
 
 void __dbgui_shutdown(void) {
-    simgui_shutdown();
     sg_imgui_discard(&sg_imgui);
+    simgui_shutdown();
 }
 
 void __dbgui_draw(void) {
