@@ -47,6 +47,7 @@ samples = [
     [ 'imgui-dock', 'imgui-dock-sapp.cc', None ],
     [ 'imgui-highdpi', 'imgui-highdpi-sapp.cc', None ],
     [ 'cimgui', 'cimgui-sapp.c', None ],
+    [ 'imgui-images', 'imgui-images-sapp.c', None ],
     [ 'imgui-usercallback', 'imgui-usercallback-sapp.c', 'imgui-usercallback-sapp.glsl'],
     [ 'nuklear', 'nuklear-sapp.c', None ],
     [ 'nuklear-images', 'nuklear-images-sapp.c', None ],
