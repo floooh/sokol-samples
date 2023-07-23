@@ -4,8 +4,8 @@
 //  Demonstrates how to use sokol-gfx images and sampler with Dear ImGui
 //  via sokol_imgui.h
 //
-//  Uses sokol-gl to render into offscreen render target textures, and then
-//  renders the render target texture with different samplers in Dear ImGui.
+//  Uses sokol-gl to render into a render target texture, and then
+//  render the render target texture with different samplers in Dear ImGui.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -81,7 +81,7 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // a color and depth render target textures for the offscreen pass
+    // color and depth render target textures for the offscreen pass
     state.offscreen.color_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = OFFSCREEN_WIDTH,
@@ -97,7 +97,7 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // a render pass
+    // a render pass object to render into the offscreen render targets
     state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
         .color_attachments[0].image = state.offscreen.color_img,
         .depth_stencil_attachment.image = state.offscreen.depth_img,
@@ -113,7 +113,8 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } },
     };
 
-    // sokol-imgui image-sampler-pair wrappers with different sampler types
+    // sokol-imgui image-sampler-pair wrappers which combine the offscreen
+    // render target texture with different sampler types
     state.ui.img_nearest_clamp = simgui_make_image(&(simgui_image_desc_t){
         .image = state.offscreen.color_img,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
@@ -168,19 +169,19 @@ static void frame(void) {
     sgl_lookat(eye[0], eye[1], eye[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
     draw_cube();
 
-    // specify the Dear ImGui UI (this also just records commands)
+    // specify the Dear ImGui UI (this also just records commands which are
+    // then rendered later in the frame in the sokol-gfx default pass)
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
-
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0, 0});
     igSetNextWindowSize((ImVec2){540, 560}, ImGuiCond_Once);
-    if (igBegin("Dear ImGui with sokol-gfx images and sampler", 0, 0)) {
-        const ImVec4 white = {1, 1, 1, 1};
-        const ImVec2 size = {256, 256};
+    if (igBegin("Dear ImGui with sokol-gfx images and samplers", 0, 0)) {
+        const ImVec4 white = { 1, 1, 1, 1 };
+        const ImVec2 size = { 256, 256 };
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
         const ImVec2 uv2 = { -1.5f, -1.5f };
