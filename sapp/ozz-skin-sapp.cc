@@ -465,7 +465,7 @@ static void draw_ui(void) {
             ImGui::SameLine();
             if (ImGui::Button("4x")) { state.ui.joint_texture_scale = 4; }
             ImGui::BeginChild("##frame", {0,0}, true, ImGuiWindowFlags_HorizontalScrollbar);
-            ImGui::Image((ImTextureID)simgui_imtextureid(state.ui.joint_texture),
+            ImGui::Image(simgui_imtextureid(state.ui.joint_texture),
                 { (float)(state.joint_texture_width * state.ui.joint_texture_scale), (float)(state.joint_texture_height * state.ui.joint_texture_scale) },
                 { 0.0f, 0.0f },
                 { 1.0f, 1.0f });

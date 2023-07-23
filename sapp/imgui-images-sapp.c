@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
 //  imgui-images-sapp.c
 //
-//  Demonstrates how to use sokol-gfx images and sampler with Dear ImGui.
+//  Demonstrates how to use sokol-gfx images and sampler with Dear ImGui
+//  via sokol_imgui.h
 //
-//  Uses sokol-gl to render into offscreen render target textures, and
-//  renders the render target texture with different samplers as Dear ImGui images.
+//  Uses sokol-gl to render into offscreen render target textures, and then
+//  renders the render target texture with different samplers in Dear ImGui.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -80,7 +81,7 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // a color and depth render target texture
+    // a color and depth render target textures for the offscreen pass
     state.offscreen.color_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = OFFSCREEN_WIDTH,
@@ -112,7 +113,7 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } },
     };
 
-    // sokol-imgui image-sampler wrappers with different sampler types
+    // sokol-imgui image-sampler-pair wrappers with different sampler types
     state.ui.img_nearest_clamp = simgui_make_image(&(simgui_image_desc_t){
         .image = state.offscreen.color_img,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
@@ -184,10 +185,10 @@ static void frame(void) {
         const ImVec2 uv1 = { 1, 1 };
         const ImVec2 uv2 = { -1.5f, -1.5f };
         const ImVec2 uv3 = { +2.5f, +2.5f, };
-        igImage((ImTextureID)simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLine(0, 4);
-        igImage((ImTextureID)simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
-        igImage((ImTextureID)simgui_imtextureid(state.ui.img_nearest_repeat), size, uv2, uv3, white, white); igSameLine(0, 4);
-        igImage((ImTextureID)simgui_imtextureid(state.ui.img_linear_mirror), size, uv2, uv3, white, white);
+        igImage(simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLine(0, 4);
+        igImage(simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
+        igImage(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv2, uv3, white, white); igSameLine(0, 4);
+        igImage(simgui_imtextureid(state.ui.img_linear_mirror), size, uv2, uv3, white, white);
     }
     igEnd();
 
