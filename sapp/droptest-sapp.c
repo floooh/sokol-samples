@@ -32,7 +32,9 @@ static void init(void) {
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
     });
-    simgui_setup(&(simgui_desc_t){ 0 });
+    simgui_setup(&(simgui_desc_t){
+        .logger.func = slog_func,
+    });
 
     // on native platforms, use sokol_fetch.h to load the dropped-file content,
     // on web, sokol_app.h has a builtin helper function for this

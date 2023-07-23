@@ -30,7 +30,9 @@ void init(void) {
 
     // use sokol-imgui with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
-    simgui_setup(&(simgui_desc_t){ 0 });
+    simgui_setup(&(simgui_desc_t){
+        .logger.func = slog_func,
+    });
 
     /* initialize application state */
     state = (state_t) {

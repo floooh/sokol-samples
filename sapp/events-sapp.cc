@@ -198,6 +198,7 @@ static void init(void) {
     sg_setup(&desc);
 
     simgui_desc_t simgui_desc = { };
+    simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
     state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;

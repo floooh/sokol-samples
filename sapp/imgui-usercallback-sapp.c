@@ -85,7 +85,9 @@ void init(void) {
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
     });
-    simgui_setup(&(simgui_desc_t){ 0 });
+    simgui_setup(&(simgui_desc_t){
+        .logger.func = slog_func,
+    });
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func
     });

@@ -30,6 +30,7 @@ void init(void) {
     // use sokol-imgui with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
     simgui_desc_t simgui_desc = { };
+    simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
     // initial clear color

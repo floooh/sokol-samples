@@ -50,7 +50,9 @@ static void init(void) {
         .logger.func = slog_func,
     });
     stm_setup();
-    simgui_setup(&(simgui_desc_t){0});
+    simgui_setup(&(simgui_desc_t){
+        .logger.func = slog_func,
+    });
     reset_minmax_frametimes();
 }
 

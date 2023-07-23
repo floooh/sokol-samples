@@ -123,6 +123,7 @@ static struct {
     struct {
         bool joint_texture_shown;
         int joint_texture_scale;
+        simgui_image_t joint_texture;
     } ui;
 } state;
 
@@ -169,6 +170,7 @@ static void init(void) {
 
     // setup sokol-imgui
     simgui_desc_t imdesc = { };
+    imdesc.logger.func = slog_func;
     simgui_setup(&imdesc);
 
     // initialize pass action for default-pass
@@ -232,6 +234,12 @@ static void init(void) {
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     state.smp = sg_make_sampler(&smp_desc);
     state.bind.vs.samplers[SLOT_smp] = state.smp;
+
+    // create an sokol-imgui wrapper for the joint texture
+    simgui_image_desc_t simgui_img_desc = { };
+    simgui_img_desc.image = state.joint_texture;
+    simgui_img_desc.sampler = state.smp;
+    state.ui.joint_texture = simgui_make_image(&simgui_img_desc);
 
     // create a static instance-data buffer, in this demo, character instances
     // don't move around and also are not clipped against the view volume,
@@ -457,7 +465,7 @@ static void draw_ui(void) {
             ImGui::SameLine();
             if (ImGui::Button("4x")) { state.ui.joint_texture_scale = 4; }
             ImGui::BeginChild("##frame", {0,0}, true, ImGuiWindowFlags_HorizontalScrollbar);
-            ImGui::Image((ImTextureID)(uintptr_t)state.joint_texture.id,
+            ImGui::Image(simgui_imtextureid(state.ui.joint_texture),
                 { (float)(state.joint_texture_width * state.ui.joint_texture_scale), (float)(state.joint_texture_height * state.ui.joint_texture_scale) },
                 { 0.0f, 0.0f },
                 { 1.0f, 1.0f });
