@@ -40,7 +40,8 @@ void init(void) {
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
     snk_setup(&(snk_desc_t){
-        .dpi_scale = sapp_dpi_scale()
+        .dpi_scale = sapp_dpi_scale(),
+        .logger.func = slog_func,
     });
 }
 

@@ -49,6 +49,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
     snk_setup(&(snk_desc_t){
         .dpi_scale = sapp_dpi_scale(),
+        .logger.func = slog_func,
     });
 
     // create two simple images
