@@ -179,17 +179,16 @@ static void frame(void) {
     });
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0, 0});
     igSetNextWindowSize((ImVec2){540, 560}, ImGuiCond_Once);
-    if (igBegin("Dear ImGui with sokol-gfx images and samplers", 0, 0)) {
+    if (igBegin("Sokol + Dear ImGui Image Test", 0, 0)) {
         const ImVec4 white = { 1, 1, 1, 1 };
         const ImVec2 size = { 256, 256 };
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
-        const ImVec2 uv2 = { -1.5f, -1.5f };
-        const ImVec2 uv3 = { +2.5f, +2.5f, };
+        const ImVec2 uv2 = { 4, 4 };
         igImage(simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLine(0, 4);
         igImage(simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
-        igImage(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv2, uv3, white, white); igSameLine(0, 4);
-        igImage(simgui_imtextureid(state.ui.img_linear_mirror), size, uv2, uv3, white, white);
+        igImage(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv0, uv2, white, white); igSameLine(0, 4);
+        igImage(simgui_imtextureid(state.ui.img_linear_mirror), size, uv0, uv2, white, white);
     }
     igEnd();
 

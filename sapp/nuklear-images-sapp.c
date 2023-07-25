@@ -177,13 +177,13 @@ static void frame(void) {
     // specific the Nuklear UI (this also just records draw commands which
     // are then rendered later in the frame in the sokol-gfx default pass)
     struct nk_context* ctx = snk_new_frame();
-    if (nk_begin(ctx, "Sokol+Nuklear Image Test", nk_rect(10, 10, 540, 570), NK_WINDOW_BORDER|NK_WINDOW_SCALABLE|NK_WINDOW_MOVABLE|NK_WINDOW_MINIMIZABLE)) {
+    if (nk_begin(ctx, "Sokol + Nuklear Image Test", nk_rect(10, 10, 540, 570), NK_WINDOW_BORDER|NK_WINDOW_SCALABLE|NK_WINDOW_MOVABLE|NK_WINDOW_MINIMIZABLE)) {
         nk_layout_row_static(ctx, 256, 256, 2);
-        const struct nk_rect region = { 0, 0, 1024, 1024 };
+        const struct nk_rect region = { 0, 0, 4, 4 };
         nk_image(ctx, nk_image_handle(snk_nkhandle(state.ui.img_nearest_clamp)));
         nk_image(ctx, nk_image_handle(snk_nkhandle(state.ui.img_linear_clamp)));
-        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_nearest_repeat), 256, 256, region));
-        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_linear_mirror), 256, 256, region));
+        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_nearest_repeat), 1, 1, region));
+        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_linear_mirror), 1, 1, region));
     }
     nk_end(ctx);
 
