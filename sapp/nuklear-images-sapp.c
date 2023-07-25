@@ -9,6 +9,9 @@
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"
+
 // include nuklear.h before the sokol_nuklear.h implementation
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -21,27 +24,36 @@
 #define SOKOL_NUKLEAR_IMPL
 #include "sokol_nuklear.h"
 
+#define OFFSCREEN_WIDTH (32)
+#define OFFSCREEN_HEIGHT (32)
+#define OFFSCREEN_COLOR_FORMAT (SG_PIXELFORMAT_RGBA8)
+#define OFFSCREEN_DEPTH_FORMAT (SG_PIXELFORMAT_DEPTH)
+#define OFFSCREEN_SAMPLE_COUNT (1)
+
 static struct {
-    // NOTE: Nuklear image handles, not sg_image!
-    struct nk_image img0;
-    struct nk_image img1;
-    sg_pass_action pass_action;
+    double angle_deg;
+    struct {
+        sgl_context sgl_ctx;
+        sgl_pipeline sgl_pip;
+        sg_image color_img;
+        sg_image depth_img;
+        sg_pass pass;
+        sg_pass_action pass_action;
+    } offscreen;
+    struct {
+        sg_pass_action pass_action;
+    } display;
+    struct {
+        snk_image_t img_nearest_clamp;
+        snk_image_t img_linear_clamp;
+        snk_image_t img_nearest_repeat;
+        snk_image_t img_linear_mirror;
+    } ui;
 } state;
 
-#define IMG_WIDTH (16)
-#define IMG_HEIGHT (16)
-#define BLACK (0xFF000000)
-#define WHITE (0xFFFFFFFF)
-#define BLUE (0xFFED5532)
-#define YELLOW (0xFF03DAFF)
-
-// helper function to create a sokol-gfx image wrapped in a Nuklear image handle
-struct nk_image make_image_handle(const sg_image_desc* img_desc) {
-    return nk_image_handle(snk_nkhandle(sg_make_image(img_desc)));
-}
+static void draw_cube(void);
 
 static void init(void) {
-    // setup sokok-gfx, sokol_fetch and sokol-nuklear
     sg_setup(&(sg_desc){
         .context = sapp_sgcontext(),
         .logger.func = slog_func,
@@ -51,53 +63,138 @@ static void init(void) {
         .dpi_scale = sapp_dpi_scale(),
         .logger.func = slog_func,
     });
-
-    // create two simple images
-    uint32_t pixels[IMG_WIDTH][IMG_HEIGHT] = { 0 };
-
-    // black/white checkerboard
-    for (int y = 0; y < IMG_HEIGHT; y++) {
-        for (int x = 0; x < IMG_WIDTH; x++) {
-            pixels[y][x] = ((x ^ y) & 1) ? BLACK : WHITE;
-        }
-    }
-    state.img0 = make_image_handle(&(sg_image_desc){
-        .width = IMG_WIDTH,
-        .height = IMG_HEIGHT,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func,
     });
 
-    // blue/yellow checkerboard
-    for (int y = 0; y < IMG_HEIGHT; y++) {
-        for (int x = 0; x < IMG_WIDTH; x++) {
-            pixels[y][x] = ((x ^ y) & 1) ? BLUE : YELLOW;
-        }
-    }
-    state.img1 = make_image_handle(&(sg_image_desc){
-        .width = IMG_WIDTH,
-        .height = IMG_HEIGHT,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    // a sokol-gl context to render into an offscreen pass
+    state.offscreen.sgl_ctx = sgl_make_context(&(sgl_context_desc_t){
+        .color_format = OFFSCREEN_COLOR_FORMAT,
+        .depth_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // pass action for clearing background
-    state.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } }
+    // a sokol-gl pipeline object for 3D rendering
+    state.offscreen.sgl_pip = sgl_context_make_pipeline(state.offscreen.sgl_ctx, &(sg_pipeline_desc){
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .write_enabled = true,
+            .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+        },
+        .colors[0].pixel_format = OFFSCREEN_COLOR_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+    });
+
+    // color and depth render target textures for the offscreen pass
+    state.offscreen.color_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_COLOR_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+    });
+    state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
+        .render_target = true,
+        .width = OFFSCREEN_WIDTH,
+        .height = OFFSCREEN_HEIGHT,
+        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+    });
+
+    // a render pass object to render into the offscreen render targets
+    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
+        .color_attachments[0].image = state.offscreen.color_img,
+        .depth_stencil_attachment.image = state.offscreen.depth_img,
+    });
+
+    // a pass-action for the offscreen pass which clears to black
+    state.offscreen.pass_action = (sg_pass_action){
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     };
+
+    // a pass action for the default pass which clears to blue-ish
+    state.display.pass_action = (sg_pass_action) {
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } },
+    };
+
+    // sokol-nuklear image-sampler-pair wrappers which combine the offscreen
+    // render target texture with different sampler types
+    state.ui.img_nearest_clamp = snk_make_image(&(snk_image_desc_t){
+        .image = state.offscreen.color_img,
+        .sampler = sg_make_sampler(&(sg_sampler_desc){
+            .min_filter = SG_FILTER_NEAREST,
+            .mag_filter = SG_FILTER_NEAREST,
+            .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+            .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        })
+    });
+    state.ui.img_linear_clamp = snk_make_image(&(snk_image_desc_t){
+        .image = state.offscreen.color_img,
+        .sampler = sg_make_sampler(&(sg_sampler_desc){
+            .min_filter = SG_FILTER_LINEAR,
+            .mag_filter = SG_FILTER_LINEAR,
+            .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+            .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        })
+    });
+    state.ui.img_nearest_repeat = snk_make_image(&(snk_image_desc_t){
+        .image = state.offscreen.color_img,
+        .sampler = sg_make_sampler(&(sg_sampler_desc){
+            .min_filter = SG_FILTER_NEAREST,
+            .mag_filter = SG_FILTER_NEAREST,
+            .wrap_u = SG_WRAP_REPEAT,
+            .wrap_v = SG_WRAP_REPEAT,
+        })
+    });
+    state.ui.img_linear_mirror = snk_make_image(&(snk_image_desc_t){
+        .image = state.offscreen.color_img,
+        .sampler = sg_make_sampler(&(sg_sampler_desc){
+            .min_filter = SG_FILTER_LINEAR,
+            .mag_filter = SG_FILTER_LINEAR,
+            .wrap_u = SG_WRAP_MIRRORED_REPEAT,
+            .wrap_v = SG_WRAP_MIRRORED_REPEAT,
+        })
+    });
 }
 
 static void frame(void) {
-    struct nk_context* ctx = snk_new_frame();
+    state.angle_deg += sapp_frame_duration() * 60.0;
+    const float a = sgl_rad((float)state.angle_deg);
 
-    // declare Nuklear UI
-    if (nk_begin(ctx, "Sokol+Nuklear Image Test", nk_rect(10, 25, 460, 300), NK_WINDOW_BORDER|NK_WINDOW_SCALABLE|NK_WINDOW_MOVABLE|NK_WINDOW_MINIMIZABLE)) {
-        nk_layout_row_static(ctx, 192, 192, 2);
-        nk_image(ctx, state.img0);
-        nk_image(ctx, state.img1);
+    // first use sokol-gl to render a rotating cube into the sokol-gl context,
+    // this just records draw command for the later sokol-gfx render pass
+    sgl_set_context(state.offscreen.sgl_ctx);
+    sgl_defaults();
+    sgl_load_pipeline(state.offscreen.sgl_pip);
+    sgl_matrix_mode_projection();
+    sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);
+    const float eye[3] = { sinf(a) * 4.0f, sinf(a) * 2.0f, cosf(a) * 4.0f };
+    sgl_matrix_mode_modelview();
+    sgl_lookat(eye[0], eye[1], eye[2], 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    draw_cube();
+
+    // specific the Nuklear UI (this also just records draw commands which
+    // are then rendered later in the frame in the sokol-gfx default pass)
+    struct nk_context* ctx = snk_new_frame();
+    if (nk_begin(ctx, "Sokol+Nuklear Image Test", nk_rect(10, 10, 540, 570), NK_WINDOW_BORDER|NK_WINDOW_SCALABLE|NK_WINDOW_MOVABLE|NK_WINDOW_MINIMIZABLE)) {
+        nk_layout_row_static(ctx, 256, 256, 2);
+        const struct nk_rect region = { 0, 0, 1024, 1024 };
+        nk_image(ctx, nk_image_handle(snk_nkhandle(state.ui.img_nearest_clamp)));
+        nk_image(ctx, nk_image_handle(snk_nkhandle(state.ui.img_linear_clamp)));
+        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_nearest_repeat), 256, 256, region));
+        nk_image(ctx, nk_subimage_handle(snk_nkhandle(state.ui.img_linear_mirror), 256, 256, region));
     }
     nk_end(ctx);
 
-    // draw sokol-gfx frame
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    // perform sokol-gfx rendering...
+    // ...first the offscreen pass which renders the sokol-gl scene
+    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sgl_context_draw(state.offscreen.sgl_ctx);
+    sg_end_pass();
+
+    // then the display pass with the Dear ImGui scene
+    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();
@@ -112,6 +209,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    sgl_shutdown();
     snk_shutdown();
     sg_shutdown();
 }
@@ -124,10 +222,46 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .event_cb = input,
         .enable_clipboard = true,
-        .width = 800,
+        .width = 580,
         .height = 600,
         .window_title = "nuklear-image-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };
+}
+
+// vertex specification for a cube with colored sides and texture coords
+static void draw_cube(void) {
+    sgl_begin_quads();
+    sgl_c3f(1.0f, 0.0f, 0.0f);
+        sgl_v3f_t2f(-1.0f,  1.0f, -1.0f, -1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f,  1.0f, -1.0f,  1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f, -1.0f, -1.0f,  1.0f, -1.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+    sgl_c3f(0.0f, 1.0f, 0.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f,  1.0f, -1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f, -1.0f,  1.0f,  1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f,  1.0f,  1.0f,  1.0f, -1.0f);
+        sgl_v3f_t2f(-1.0f,  1.0f,  1.0f, -1.0f, -1.0f);
+    sgl_c3f(0.0f, 0.0f, 1.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f,  1.0f, -1.0f,  1.0f);
+        sgl_v3f_t2f(-1.0f,  1.0f,  1.0f,  1.0f,  1.0f);
+        sgl_v3f_t2f(-1.0f,  1.0f, -1.0f,  1.0f, -1.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+    sgl_c3f(1.0f, 0.5f, 0.0f);
+        sgl_v3f_t2f(1.0f, -1.0f,  1.0f, -1.0f,   1.0f);
+        sgl_v3f_t2f(1.0f, -1.0f, -1.0f,  1.0f,   1.0f);
+        sgl_v3f_t2f(1.0f,  1.0f, -1.0f,  1.0f,  -1.0f);
+        sgl_v3f_t2f(1.0f,  1.0f,  1.0f, -1.0f,  -1.0f);
+    sgl_c3f(0.0f, 0.5f, 1.0f);
+        sgl_v3f_t2f( 1.0f, -1.0f, -1.0f, -1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f, -1.0f,  1.0f,  1.0f,  1.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f,  1.0f,  1.0f, -1.0f);
+        sgl_v3f_t2f(-1.0f, -1.0f, -1.0f, -1.0f, -1.0f);
+    sgl_c3f(1.0f, 0.0f, 0.5f);
+        sgl_v3f_t2f(-1.0f,  1.0f, -1.0f, -1.0f,  1.0f);
+        sgl_v3f_t2f(-1.0f,  1.0f,  1.0f,  1.0f,  1.0f);
+        sgl_v3f_t2f( 1.0f,  1.0f,  1.0f,  1.0f, -1.0f);
+        sgl_v3f_t2f( 1.0f,  1.0f, -1.0f, -1.0f, -1.0f);
+    sgl_end();
 }
