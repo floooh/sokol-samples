@@ -2,11 +2,8 @@
 /*
     Platform entry helper code for WebGPU samples.
 */
-#if defined(__EMSCRIPTEN__)
 #include <webgpu/webgpu.h>
-#else
-#include <dawn/webgpu.h>
-#endif
+#include "sokol_gfx.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,8 +1,7 @@
 ---
 platform: osx
-generator: Xcode
-build_tool: xcodebuild
+generator: Ninja
+build_tool: vscode
 build_type: Debug
 defines:
     SOKOL_USE_WGPU_DAWN: ON
-

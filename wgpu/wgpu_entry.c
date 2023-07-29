@@ -58,7 +58,7 @@ static sg_pixel_format wgpu_get_color_format(void) {
     switch (wgpu_state.render_format) {
             case WGPUTextureFormat_RGBA8Unorm:  return SG_PIXELFORMAT_RGBA8;
             case WGPUTextureFormat_BGRA8Unorm:  return SG_PIXELFORMAT_BGRA8;
-            /* this shouldn't happen */
+            // this shouldn't happen
             default: return SG_PIXELFORMAT_NONE;
     }
 }
@@ -72,16 +72,17 @@ sg_context_desc wgpu_get_context(void) {
             .render_view_userdata_cb = wgpu_get_render_view,
             .resolve_view_userdata_cb = wgpu_get_resolve_view,
             .depth_stencil_view_userdata_cb = wgpu_get_depth_stencil_view,
-            .user_data = 0xABADF00D
+            .user_data = (void*)0xABADF00D
         }
     };
 }
 
 void wgpu_swapchain_init(void) {
+/*
     assert(wgpu_state.swapchain);
     assert((wgpu_state.width > 0) && (wgpu_state.height > 0));
 
-    /* create depth-stencil texture and view */
+    // create depth-stencil texture and view
     WGPUTextureDescriptor ds_desc = {
         .usage = WGPUTextureUsage_OutputAttachment,
         .dimension = WGPUTextureDimension_2D,
@@ -98,7 +99,7 @@ void wgpu_swapchain_init(void) {
     wgpu_state.depth_stencil_tex = wgpuDeviceCreateTexture(wgpu_state.dev, &ds_desc);
     wgpu_state.depth_stencil_view = wgpuTextureCreateView(wgpu_state.depth_stencil_tex, 0);
 
-    /* create optional MSAA surface and view */
+    // create optional MSAA surface and view
     if (wgpu_state.desc.sample_count > 1) {
         WGPUTextureDescriptor msaa_desc = {
             .usage = WGPUTextureUsage_OutputAttachment,
@@ -116,16 +117,20 @@ void wgpu_swapchain_init(void) {
         wgpu_state.msaa_tex = wgpuDeviceCreateTexture(wgpu_state.dev, &msaa_desc);
         wgpu_state.msaa_view = wgpuTextureCreateView(wgpu_state.msaa_tex, 0);
     }
+*/
 }
 
 void wgpu_swapchain_next_frame(void) {
+/*
     if (wgpu_state.swapchain_view) {
         wgpuTextureViewRelease(wgpu_state.swapchain_view);
     }
     wgpu_state.swapchain_view = wgpuSwapChainGetCurrentTextureView(wgpu_state.swapchain);
+*/
 }
 
 void wgpu_swapchain_discard(void) {
+/*
     if (wgpu_state.msaa_tex) {
         wgpuTextureRelease(wgpu_state.msaa_tex);
     }
@@ -135,4 +140,5 @@ void wgpu_swapchain_discard(void) {
     wgpuTextureViewRelease(wgpu_state.swapchain_view);
     wgpuTextureViewRelease(wgpu_state.depth_stencil_view);
     wgpuTextureRelease(wgpu_state.depth_stencil_tex);
+*/
 }
