@@ -176,15 +176,16 @@ static const void* wgpu_get_depth_stencil_view(void* user_data) {
 
 static sg_pixel_format wgpu_get_color_format(void) {
     switch (state.render_format) {
-            case WGPUTextureFormat_RGBA8Unorm:  return SG_PIXELFORMAT_RGBA8;
-            case WGPUTextureFormat_BGRA8Unorm:  return SG_PIXELFORMAT_BGRA8;
-            default: return SG_PIXELFORMAT_NONE;
+        case WGPUTextureFormat_RGBA8Unorm:  return SG_PIXELFORMAT_RGBA8;
+        case WGPUTextureFormat_BGRA8Unorm:  return SG_PIXELFORMAT_BGRA8;
+        default: return SG_PIXELFORMAT_NONE;
     }
 }
 
 sg_context_desc wgpu_get_context(void) {
     return (sg_context_desc) {
         .color_format = wgpu_get_color_format(),
+        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
         .sample_count = state.desc.sample_count,
         .wgpu = {
             .device = (const void*) state.device,
