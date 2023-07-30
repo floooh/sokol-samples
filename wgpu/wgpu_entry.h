@@ -39,7 +39,9 @@ typedef struct {
     wgpu_desc_t desc;
     int width;
     int height;
-    WGPUDevice dev;
+    WGPUInstance instance;
+    WGPUAdapter adapter;
+    WGPUDevice device;
     WGPUSwapChain swapchain;
     WGPUTextureFormat render_format;
     WGPUTexture msaa_tex;
@@ -54,12 +56,8 @@ int wgpu_width(void);
 int wgpu_height(void);
 sg_context_desc wgpu_get_context(void);
 
-/* internals, don't use */
-extern wgpu_state_t wgpu_state;
-void wgpu_platform_start(const wgpu_desc_t* desc);
-void wgpu_swapchain_init(void);
-void wgpu_swapchain_next_frame(void);
-void wgpu_swapchain_discard(void);
+// internals, don't use
+WGPUSurface wgpu_glfw_create_surface_for_window(WGPUInstance instance, void* glfw_window);
 
 #ifdef __cplusplus
 } /* extern "C" */
