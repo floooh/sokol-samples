@@ -25,8 +25,19 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
         printf("wgpuInstanceRequestAdapter failed!\n");
         exit(10);
     }
+    state.adapter = adapter;
     wgpuAdapterRequestDevice(adapter, 0, request_device_cb, userdata);
     assert(0 != state.device);
+}
+
+static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
+    (void)type; (void)userdata;
+    printf("ERROR: %s\n", message);
+}
+
+static void logging_cb(WGPULoggingType type, const char* message, void* userdata) {
+    (void)type; (void)userdata;
+    printf("LOG: %s\n", message);
 }
 
 static void swapchain_init(WGPUSurface surface) {
@@ -53,7 +64,7 @@ static void swapchain_init(WGPUSurface surface) {
             .height = (uint32_t) state.height,
             .depthOrArrayLayers = 1,
         },
-        .format = WGPUTextureFormat_Depth32FloatStencil8,
+        .format = WGPUTextureFormat_Depth24PlusStencil8,
         .mipLevelCount = 1,
         .sampleCount = (uint32_t)state.desc.sample_count
     });
@@ -119,25 +130,38 @@ void wgpu_start(const wgpu_desc_t* desc) {
     wgpuInstanceRequestAdapter(state.instance, 0, request_adapter_cb, 0);
     assert(state.device);
 
+    wgpuDeviceSetUncapturedErrorCallback(state.device, error_cb, 0);
+    wgpuDeviceSetLoggingCallback(state.device, logging_cb, 0);
+    wgpuDevicePushErrorScope(state.device, WGPUErrorFilter_Validation);
+
     #if !__EMSCRIPTEN__
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(state.width, state.height, state.desc.title, 0, 0);
     const WGPUSurface surface = wgpu_glfw_create_surface_for_window(state.instance, window);
+    assert(surface);
     #endif
     swapchain_init(surface);
     state.desc.init_cb();
+    wgpuDevicePopErrorScope(state.device, error_cb, 0);
+    wgpuInstanceProcessEvents(state.instance);
 
     #if !__EMSCRIPTEN__
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+        wgpuDevicePushErrorScope(state.device, WGPUErrorFilter_Validation);
         state.swapchain_view = wgpuSwapChainGetCurrentTextureView(state.swapchain);
         state.desc.frame_cb();
         wgpuSwapChainPresent(state.swapchain);
+        wgpuDevicePopErrorScope(state.device, error_cb, 0);
+        wgpuInstanceProcessEvents(state.instance);
     }
     #endif
     state.desc.shutdown_cb();
     swapchain_discard();
+    wgpuDeviceRelease(state.device);
+    wgpuAdapterRelease(state.adapter);
+    wgpuInstanceRelease(state.instance);
 }
 
 int wgpu_width(void) {

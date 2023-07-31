@@ -2,11 +2,11 @@
 //  clear-wgpu.c
 //  Simple draw loop, clear default framebuffer.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
 
 static sg_pass_action pass_action;
 
@@ -26,7 +26,7 @@ static void init(void) {
 static void frame(void) {
     float g = pass_action.colors[0].clear_value.g + 0.01f;
     pass_action.colors[0].clear_value.g = (g > 1.0f) ? 0.0f : g;
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_default_pass(&pass_action, wgpu_width(), wgpu_height());
     sg_end_pass();
     sg_commit();
 }

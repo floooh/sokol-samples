@@ -8,7 +8,10 @@
 #include "wgpu_entry.h"
 
 WGPUSurface wgpu_glfw_create_surface_for_window(WGPUInstance instance, void* glfw_window) {
+    wgpuInstanceReference(instance);
     const auto cppInstance = wgpu::Instance::Acquire(instance);
-    WGPUSurface surface = wgpu::glfw::CreateSurfaceForWindow(instance, (GLFWwindow*)glfw_window).Get();
+    const auto cpp_surface = wgpu::glfw::CreateSurfaceForWindow(instance, (GLFWwindow*)glfw_window);
+    WGPUSurface surface = cpp_surface.Get();
+    wgpuSurfaceReference(surface);
     return surface;
 }
