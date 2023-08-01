@@ -32,7 +32,9 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
 
 static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
     (void)type; (void)userdata;
-    printf("ERROR: %s\n", message);
+    if (type != WGPUErrorType_NoError) {
+        printf("ERROR: %s\n", message);
+    }
 }
 
 static void logging_cb(WGPULoggingType type, const char* message, void* userdata) {
