@@ -11,12 +11,12 @@ fips_begin_app(clear-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(triangle-wgpu windowed)
-#    fips_files(triangle-wgpu.c)
-#    sokol_shader(triangle-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(triangle-wgpu windowed)
+    fips_files(triangle-wgpu.c)
+    sokol_shader(triangle-wgpu.glsl wgsl)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(quad-wgpu windowed)
 #    fips_files(quad-wgpu.c)
 #    sokol_shader(quad-wgpu.glsl wgpu)

@@ -2,11 +2,11 @@
 //  triangle-wgpu.c
 //  Vertex buffer, simple shader, pipeline state object.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
 #include "triangle-wgpu.glsl.h"
 
 static struct {
@@ -15,7 +15,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     }
 };
 
@@ -25,7 +25,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -36,10 +36,10 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create a shader from precompiled SPIRV bytecode */
+    // FIXME: use WGSL directly here, not sokol-shdc
     sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
 
-    /* create a pipeline object (default render states are fine for triangle) */
+    // create a pipeline object (default render states are fine for triangle)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .layout = {
