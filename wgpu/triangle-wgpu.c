@@ -7,7 +7,6 @@
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "triangle-wgpu.glsl.h"
 
 static struct {
     sg_pipeline pip;
@@ -36,8 +35,23 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    // FIXME: use WGSL directly here, not sokol-shdc
-    sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs.source =
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = pos;\n"
+            "  out.color = color;\n"
+            "  return out;\n"
+            "}\n",
+        .fs.source =
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+            "  return color;\n"
+            "}\n",
+    });
 
     // create a pipeline object (default render states are fine for triangle)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -46,7 +60,7 @@ static void init(void) {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT4
-            }
+            },
         },
     });
 }
