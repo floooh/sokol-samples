@@ -134,6 +134,7 @@ void wgpu_start(const wgpu_desc_t* desc) {
 
     wgpuDeviceSetUncapturedErrorCallback(state.device, error_cb, 0);
     wgpuDeviceSetLoggingCallback(state.device, logging_cb, 0);
+    wgpuDeviceSetDeviceLostCallback(state.device, 0, 0);
     wgpuDevicePushErrorScope(state.device, WGPUErrorFilter_Validation);
 
     #if !__EMSCRIPTEN__

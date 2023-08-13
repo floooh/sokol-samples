@@ -26,12 +26,11 @@ fips_begin_app(bufferoffsets-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(cube-wgpu windowed)
-#    fips_files(cube-wgpu.c)
-#    sokol_shader(cube-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(cube-wgpu windowed)
+    fips_files(cube-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(noninterleaved-wgpu windowed)
 #    fips_files(noninterleaved-wgpu.c)
 #    sokol_shader(noninterleaved-wgpu.glsl wgpu)
