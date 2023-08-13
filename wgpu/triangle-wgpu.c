@@ -35,6 +35,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
+    // a shader object with wgsl shader code
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs.source =
             "struct vs_out {\n"
