@@ -36,12 +36,11 @@ fips_begin_app(noninterleaved-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(texcube-wgpu windowed)
-#    fips_files(texcube-wgpu.c)
-#    sokol_shader(texcube-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(texcube-wgpu windowed)
+    fips_files(texcube-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(offscreen-wgpu windowed)
 #    fips_files(offscreen-wgpu.c)
 #    sokol_shader(offscreen-wgpu.glsl wgpu)

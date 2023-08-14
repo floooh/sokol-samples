@@ -89,9 +89,7 @@ void init(void) {
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
-            .uniform_blocks = {
-                [0] = { .size = 16 * 4 },
-            },
+            .uniform_blocks[0] = { .size = 16 * 4 },
             .source =
                 "struct vs_params {\n"
                 "  mvp: mat4x4f,\n"
