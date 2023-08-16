@@ -54,7 +54,7 @@ static void swapchain_init(WGPUSurface surface) {
         .format = state.render_format,
         .width = (uint32_t)state.width,
         .height = (uint32_t)state.height,
-        .presentMode = WGPUPresentMode_Fifo
+        .presentMode = WGPUPresentMode_Fifo,
     });
     assert(state.swapchain);
 
@@ -156,6 +156,8 @@ void wgpu_start(const wgpu_desc_t* desc) {
         state.swapchain_view = wgpuSwapChainGetCurrentTextureView(state.swapchain);
         state.desc.frame_cb();
         wgpuSwapChainPresent(state.swapchain);
+        wgpuTextureViewRelease(state.swapchain_view);
+        state.swapchain_view = 0;
         wgpuDevicePopErrorScope(state.device, error_cb, 0);
         wgpuInstanceProcessEvents(state.instance);
     }
