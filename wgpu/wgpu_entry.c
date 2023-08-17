@@ -178,7 +178,7 @@ int wgpu_height(void) {
 }
 
 static const void* wgpu_get_render_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data);
+    assert((void*)0xABADF00D == user_data); (void)user_data;
     if (state.desc.sample_count > 1) {
         assert(state.msaa_view);
         return (const void*) state.msaa_view;
@@ -189,7 +189,7 @@ static const void* wgpu_get_render_view(void* user_data) {
 }
 
 static const void* wgpu_get_resolve_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data);
+    assert((void*)0xABADF00D == user_data); (void)user_data;
     if (state.desc.sample_count > 1) {
         assert(state.swapchain_view);
         return (const void*) state.swapchain_view;
@@ -199,7 +199,7 @@ static const void* wgpu_get_resolve_view(void* user_data) {
 }
 
 static const void* wgpu_get_depth_stencil_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data);
+    assert((void*)0xABADF00D == user_data); (void)user_data;
     return (const void*) state.depth_stencil_view;
 }
 

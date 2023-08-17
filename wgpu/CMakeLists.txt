@@ -46,12 +46,11 @@ fips_begin_app(offscreen-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(instancing-wgpu windowed)
-#    fips_files(instancing-wgpu.c)
-#    sokol_shader(instancing-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(instancing-wgpu windowed)
+    fips_files(instancing-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(mrt-wgpu windowed)
 #    fips_files(mrt-wgpu.c)
 #    sokol_shader(mrt-wgpu.glsl wgpu)
