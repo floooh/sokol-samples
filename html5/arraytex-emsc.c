@@ -2,7 +2,6 @@
 //  arraytex-glfw.c
 //------------------------------------------------------------------------------
 #include <stddef.h>     /* offsetof */
-#include <GLES3/gl3.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"

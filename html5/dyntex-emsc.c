@@ -3,9 +3,6 @@
 //  update texture per-frame with CPU generated data
 //------------------------------------------------------------------------------
 #include <stddef.h>     /* offsetof */
-#define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"

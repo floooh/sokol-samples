@@ -3,9 +3,6 @@
 //  Render separate geometries in vertex- and index-buffers with
 //  buffer offsets.
 //------------------------------------------------------------------------------
-#define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #define SOKOL_IMPL
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
