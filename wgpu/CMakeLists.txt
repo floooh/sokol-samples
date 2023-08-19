@@ -66,12 +66,11 @@ fips_begin_app(dyntex-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(uvwrap-wgpu windowed)
-#    fips_files(uvwrap-wgpu.c)
-#    sokol_shader(uvwrap-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(uvwrap-wgpu windowed)
+    fips_files(uvwrap-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(mipmap-wgpu windowed)
 #    fips_files(mipmap-wgpu.c)
 #    sokol_shader(mipmap-wgpu.glsl wgpu)
