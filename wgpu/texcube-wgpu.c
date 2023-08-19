@@ -117,7 +117,7 @@ static void init(void) {
     // create shader with WGSL source code
     const sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vs = {
-            .uniform_blocks[0] = { .size = 16 * 4 },
+            .uniform_blocks[0].size = sizeof(vs_params_t),
             .source =
                 "struct vs_params {\n"
                 "  mvp: mat4x4f,\n"
