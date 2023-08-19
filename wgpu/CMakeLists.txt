@@ -71,12 +71,11 @@ fips_begin_app(uvwrap-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(mipmap-wgpu windowed)
-#    fips_files(mipmap-wgpu.c)
-#    sokol_shader(mipmap-wgpu.glsl wgpu)
-#    fips_deps(wgpu_entry)
-#fips_end_app()
-#
+fips_begin_app(mipmap-wgpu windowed)
+    fips_files(mipmap-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
+
 #fips_begin_app(blend-wgpu windowed)
 #    fips_files(blend-wgpu.c)
 #    sokol_shader(blend-wgpu.glsl wgpu)
