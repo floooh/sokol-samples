@@ -42,6 +42,74 @@ static void logging_cb(WGPULoggingType type, const char* message, void* userdata
     printf("LOG: %s\n", message);
 }
 
+void wgpu_key_down(wgpu_key_func fn) {
+    state.key_down_cb = fn;
+}
+
+void wgpu_key_up(wgpu_key_func fn) {
+    state.key_up_cb = fn;
+}
+
+void wgpu_char(wgpu_char_func fn) {
+    state.char_cb = fn;
+}
+
+void wgpu_mouse_btn_down(wgpu_mouse_btn_func fn) {
+    state.mouse_btn_down_cb = fn;
+}
+
+void wgpu_mouse_btn_up(wgpu_mouse_btn_func fn) {
+    state.mouse_btn_up_cb = fn;
+}
+
+void wgpu_mouse_pos(wgpu_mouse_pos_func fn) {
+    state.mouse_pos_cb = fn;
+}
+
+void wgpu_mouse_wheel(wgpu_mouse_wheel_func fn) {
+    state.mouse_wheel_cb = fn;
+}
+#if !defined(__EMSCRIPTEN__)
+static void glfw_key_cb(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    (void)window; (void)scancode; (void)mods;
+    if ((action == GLFW_PRESS) && state.key_down_cb) {
+        state.key_down_cb(key);
+    } else if ((action == GLFW_RELEASE) && state.key_up_cb) {
+        state.key_up_cb(key);
+    }
+}
+
+static void glfw_char_cb(GLFWwindow* window, unsigned int chr) {
+    (void)window;
+    if (state.char_cb) {
+        state.char_cb(chr);
+    }
+}
+
+static void glfw_mousebutton_cb(GLFWwindow* window, int button, int action, int mods) {
+    (void)window; (void)mods;
+    if ((action == GLFW_PRESS) && state.mouse_btn_down_cb) {
+        state.mouse_btn_down_cb(button);
+    } else if ((action == GLFW_RELEASE) && state.mouse_btn_up_cb) {
+        state.mouse_btn_up_cb(button);
+    }
+}
+
+static void glfw_cursorpos_cb(GLFWwindow* window, double xpos, double ypos) {
+    (void)window;
+    if (state.mouse_pos_cb) {
+        state.mouse_pos_cb((float)xpos, (float)ypos);
+    }
+}
+
+static void glfw_scroll_cb(GLFWwindow* window, double xoffset, double yoffset) {
+    (void)window; (void)xoffset;
+    if (state.mouse_wheel_cb) {
+        state.mouse_wheel_cb((float)yoffset);
+    }
+}
+#endif
+
 static void swapchain_init(WGPUSurface surface) {
     assert(0 == state.swapchain);
     assert(0 == state.depth_stencil_tex);
@@ -141,6 +209,12 @@ void wgpu_start(const wgpu_desc_t* desc) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(state.width, state.height, state.desc.title, 0, 0);
+    glfwSetKeyCallback(window, glfw_key_cb);
+    glfwSetCharCallback(window, glfw_char_cb);
+    glfwSetMouseButtonCallback(window, glfw_mousebutton_cb);
+    glfwSetCursorPosCallback(window, glfw_cursorpos_cb);
+    glfwSetScrollCallback(window, glfw_scroll_cb);
+
     const WGPUSurface surface = wgpu_glfw_create_surface_for_window(state.instance, window);
     assert(surface);
     #endif
