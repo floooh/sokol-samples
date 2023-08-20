@@ -81,11 +81,11 @@ fips_begin_app(blend-wgpu windowed)
     fips_deps(wgpu_entry)
 fips_end_app()
 
-#fips_begin_app(imgui-wgpu windowed)
-#    fips_files(imgui-wgpu.cc)
-#    fips_deps(wgpu_entry imgui)
-#fips_end_app()
-#
+fips_begin_app(imgui-wgpu windowed)
+    fips_files(imgui-wgpu.cc)
+    fips_deps(wgpu_entry imgui)
+fips_end_app()
+
 #fips_begin_app(inject-wgpu windowed)
 #    fips_files(inject-wgpu.c)
 #    sokol_shader(inject-wgpu.glsl wgpu)
