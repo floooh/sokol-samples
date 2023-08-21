@@ -24,8 +24,6 @@ static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_bindings bind;
-    sg_range vertices;
-    sg_range indices;
     uint64_t last_time = 0;
     bool show_test_window = true;
     bool show_another_window = false;
@@ -37,10 +35,6 @@ typedef struct {
 
 static void draw_imgui(ImDrawData*);
 
-static size_t roundup4(size_t val) {
-    return (val + 3) & ~3;
-}
-
 static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
@@ -48,12 +42,6 @@ static void init(void) {
     desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
-
-    // allocate a big scratch buffer for indices and vertices
-    state.vertices.size = MaxVertices * sizeof(ImDrawVert);
-    state.vertices.ptr = malloc(state.vertices.size);
-    state.indices.size = roundup4(MaxIndices * sizeof(ImDrawIdx));
-    state.indices.ptr = malloc(state.indices.size);
 
     // input forwarding
     wgpu_mouse_pos([] (float x, float y) { ImGui::GetIO().MousePos = ImVec2(x, y); });
@@ -214,8 +202,6 @@ static void frame(void) {
 }
 
 static void shutdown(void) {
-    free((void*)state.vertices.ptr); state.vertices.ptr = nullptr;
-    free((void*)state.indices.ptr); state.indices.ptr = nullptr;
     sg_shutdown();
 }
 
@@ -226,48 +212,33 @@ void draw_imgui(ImDrawData* draw_data) {
         return;
     }
 
-    // copy vertices and indices into common memory chunk
-    ImDrawVert* vtx_base = (ImDrawVert*) state.vertices.ptr;
-    ImDrawIdx* idx_base = (ImDrawIdx*) state.indices.ptr;
-    size_t vtx_num = 0;
-    size_t idx_num = 0;
-    size_t num_valid_cmdlists = 0;
-    for (size_t cl_index = 0; cl_index < (size_t)draw_data->CmdListsCount; cl_index++) {
-        const ImDrawList* cl = draw_data->CmdLists[cl_index];
-        // copy vertices and indices into an intermediate buffer, so that only
-        // one update happens per frame, and also to round the index buffer
-        // update size to 4
-        if ((vtx_num + cl->VtxBuffer.Size) > MaxVertices) {
-            break;
-        }
-        if ((idx_num + cl->IdxBuffer.Size) > MaxIndices) {
-            break;
-        }
-        num_valid_cmdlists += 1;
-        memcpy(vtx_base + vtx_num, cl->VtxBuffer.Data, cl->VtxBuffer.Size * sizeof(ImDrawVert));
-        memcpy(idx_base + idx_num, cl->IdxBuffer.Data, cl->IdxBuffer.Size * sizeof(ImDrawIdx));
-        vtx_num += cl->VtxBuffer.Size;
-        idx_num += cl->IdxBuffer.Size;
-    }
-    const size_t vtx_size = vtx_num * sizeof(ImDrawVert);
-    const size_t idx_size = roundup4(idx_num * sizeof(ImDrawIdx));
-    sg_update_buffer(state.bind.vertex_buffers[0], { vtx_base, vtx_size });
-    sg_update_buffer(state.bind.index_buffer, { idx_base, idx_size });
-
     // render the command list
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
-    state.bind.vertex_buffer_offsets[0] = 0;
-    state.bind.index_buffer_offset = 0;
-    for (size_t cl_index = 0; cl_index < num_valid_cmdlists; cl_index++) {
+    for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
+        // append vertices and indices to buffers, record start offsets in bindings struct
+        const uint32_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
+        const uint32_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
+        const uint32_t vb_offset = sg_append_buffer(state.bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
+        const uint32_t ib_offset = sg_append_buffer(state.bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
+        /* don't render anything if the buffer is in overflow state (this is also
+            checked internally in sokol_gfx, draw calls that attempt to draw from
+            overflowed buffers will be silently dropped)
+        */
+        if (sg_query_buffer_overflow(state.bind.vertex_buffers[0]) ||
+            sg_query_buffer_overflow(state.bind.index_buffer))
+        {
+            continue;
+        }
+
+        state.bind.vertex_buffer_offsets[0] = vb_offset;
+        state.bind.index_buffer_offset = ib_offset;
         sg_apply_bindings(&state.bind);
-        state.bind.vertex_buffer_offsets[0] += cl->VtxBuffer.Size * sizeof(ImDrawVert);
-        state.bind.index_buffer_offset += cl->IdxBuffer.Size * sizeof(ImDrawIdx);
 
         int base_element = 0;
         for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
