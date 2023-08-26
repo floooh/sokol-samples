@@ -140,11 +140,9 @@ static void init(void) {
             .images[0].used = true,
             .samplers[0].used = true,
             .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            // NOTE: all fragment image and sampler bindings must be in @group(2),
-            // first all textures starting at @binding(0) followed by all samplers
             .source =
-                "@group(2) @binding(0) var tex: texture_2d<f32>;\n"
-                "@group(2) @binding(1) var smp: sampler;\n"
+                "@group(1) @binding(32) var tex: texture_2d<f32>;\n"
+                "@group(1) @binding(48) var smp: sampler;\n"
                 "@fragment fn main(@location(0) color: vec4f, @location(1) uv: vec2f) -> @location(0) vec4f {\n"
                 "  return textureSample(tex, smp, uv) * color;\n"
                 "}\n",

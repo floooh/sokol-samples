@@ -205,8 +205,8 @@ static void init(void) {
             .samplers[0].used = true,
             .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .source =
-                "@group(2) @binding(0) var tex: texture_2d<f32>;\n"
-                "@group(2) @binding(1) var smp: sampler;\n"
+                "@group(1) @binding(32) var tex: texture_2d<f32>;\n"
+                "@group(1) @binding(48) var smp: sampler;\n"
                 "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
                 "  return textureSample(tex, smp, uv);\n"
                 "}\n"
