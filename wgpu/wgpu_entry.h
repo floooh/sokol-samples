@@ -42,6 +42,7 @@ typedef struct {
     WGPUInstance instance;
     WGPUAdapter adapter;
     WGPUDevice device;
+    WGPUSurface surface;
     WGPUSwapChain swapchain;
     WGPUTextureFormat render_format;
     WGPUTexture msaa_tex;
@@ -63,8 +64,10 @@ void wgpu_mouse_btn_up(wgpu_mouse_btn_func fn);
 void wgpu_mouse_pos(wgpu_mouse_pos_func fn);
 void wgpu_mouse_wheel(wgpu_mouse_wheel_func fn);
 
-// internals, don't use
-WGPUSurface wgpu_glfw_create_surface_for_window(WGPUInstance instance, void* glfw_window);
+// internal functions, don't call
+void wgpu_swapchain_init(wgpu_state_t* state);
+void wgpu_swapchain_discard(wgpu_state_t* state);
+void wgpu_platform_start(wgpu_state_t* state);
 
 #ifdef __cplusplus
 } /* extern "C" */
