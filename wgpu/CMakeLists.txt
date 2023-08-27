@@ -1,9 +1,11 @@
 fips_begin_lib(wgpu_entry)
     fips_files(wgpu_entry.c wgpu_entry_swapchain.c wgpu_entry.h)
-    if (NOT FIPS_EMSCRIPTEN)
+    if (FIPS_EMSCRIPTEN)
+        fips_files(wgpu_entry_emsc.c)
+    else()
         fips_files(wgpu_entry_dawn.cc)
+        fips_libs(webgpu_dawn webgpu_glfw webgpu_cpp)
     endif()
-    fips_libs(webgpu_dawn webgpu_glfw webgpu_cpp)
 fips_end_lib()
 
 fips_begin_app(clear-wgpu windowed)

@@ -10,15 +10,12 @@ void wgpu_swapchain_init(wgpu_state_t* state) {
     assert(state->adapter);
     assert(state->device);
     assert(state->surface);
-    assert(state->render_format == WGPUTextureFormat_Undefined);
+    assert(state->render_format != WGPUTextureFormat_Undefined);
     assert(0 == state->swapchain);
     assert(0 == state->depth_stencil_tex);
     assert(0 == state->depth_stencil_view);
     assert(0 == state->msaa_tex);
     assert(0 == state->msaa_view);
-
-    // FIXME: Dawn doesn't support wgpuSurfaceGetPreferredFormat?
-    state->render_format = WGPUTextureFormat_BGRA8Unorm;
 
     state->swapchain = wgpuDeviceCreateSwapChain(state->device, state->surface, &(WGPUSwapChainDescriptor){
         .usage = WGPUTextureUsage_RenderAttachment,

@@ -187,7 +187,7 @@ static void frame(void) {
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
-    sg_draw(0, 24, state.cur_num_particles);
+    sg_draw(0, 24, (int)state.cur_num_particles);
     sg_end_pass();
     sg_commit();
 }

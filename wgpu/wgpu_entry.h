@@ -30,6 +30,8 @@ typedef struct {
 
 typedef struct {
     wgpu_desc_t desc;
+    bool async_setup_failed;
+    bool async_setup_done;
     int width;
     int height;
     wgpu_key_func key_down_cb;

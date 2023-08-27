@@ -90,9 +90,6 @@ static void logging_cb(WGPULoggingType type, const char* message, void* userdata
 void wgpu_platform_start(wgpu_state_t* state) {
     assert(state->instance == 0);
 
-    state->width = state->desc.width;
-    state->height = state->desc.height;
-
     state->instance = wgpuCreateInstance(0);
     assert(state->instance);
     wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
@@ -115,6 +112,8 @@ void wgpu_platform_start(wgpu_state_t* state) {
 
     state->surface = glfw_create_surface_for_window(state->instance, window);
     assert(state->surface);
+    // FIXME: Dawn doesn't support wgpuSurfaceGetPreferredFormat?
+    state->render_format = WGPUTextureFormat_BGRA8Unorm;
 
     wgpu_swapchain_init(state);
     state->desc.init_cb();

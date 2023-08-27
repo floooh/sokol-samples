@@ -17,6 +17,8 @@ void wgpu_start(const wgpu_desc_t* desc) {
     assert(desc->init_cb && desc->frame_cb && desc->shutdown_cb);
 
     state.desc = *desc;
+    state.width = state.desc.width;
+    state.height = state.desc.height;
     state.desc.sample_count = wgpu_def(state.desc.sample_count, 1);
 
     wgpu_platform_start(&state);
