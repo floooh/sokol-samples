@@ -18,10 +18,24 @@ static WGPUSurface glfw_create_surface_for_window(WGPUInstance instance, void* g
 static void glfw_key_cb(GLFWwindow* window, int key, int scancode, int action, int mods) {
     (void)scancode; (void)mods;
     wgpu_state_t* state = (wgpu_state_t*) glfwGetWindowUserPointer(window);
+    wgpu_keycode_t wgpu_key = WGPU_KEY_INVALID;
+    switch (key) {
+        case GLFW_KEY_TAB:          wgpu_key = WGPU_KEY_TAB; break;
+        case GLFW_KEY_LEFT:         wgpu_key = WGPU_KEY_LEFT; break;
+        case GLFW_KEY_RIGHT:        wgpu_key = WGPU_KEY_RIGHT; break;
+        case GLFW_KEY_UP:           wgpu_key = WGPU_KEY_UP; break;
+        case GLFW_KEY_DOWN:         wgpu_key = WGPU_KEY_DOWN; break;
+        case GLFW_KEY_HOME:         wgpu_key = WGPU_KEY_HOME; break;
+        case GLFW_KEY_END:          wgpu_key = WGPU_KEY_END; break;
+        case GLFW_KEY_DELETE:       wgpu_key = WGPU_KEY_DELETE; break;
+        case GLFW_KEY_BACKSPACE:    wgpu_key = WGPU_KEY_BACKSPACE; break;
+        case GLFW_KEY_ENTER:        wgpu_key = WGPU_KEY_ENTER; break;
+        case GLFW_KEY_ESCAPE:       wgpu_key = WGPU_KEY_ESCAPE; break;
+    }
     if ((action == GLFW_PRESS) && state->key_down_cb) {
-        state->key_down_cb(key);
+        state->key_down_cb(wgpu_key);
     } else if ((action == GLFW_RELEASE) && state->key_up_cb) {
-        state->key_up_cb(key);
+        state->key_up_cb(wgpu_key);
     }
 }
 

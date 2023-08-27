@@ -5,6 +5,7 @@
 //------------------------------------------------------------------------------
 #include <stdio.h>
 #include <assert.h>
+#include <memory.h>
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #include "wgpu_entry.h"
@@ -23,6 +24,101 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
     wgpu_state_t* state = userdata;
     emsc_update_canvas_size(state);
     return true;
+}
+
+static struct {
+    const char* str;
+    wgpu_keycode_t code;
+} emsc_keymap[] = {
+    { "Backspace",      WGPU_KEY_BACKSPACE },
+    { "Tab",            WGPU_KEY_TAB },
+    { "Enter",          WGPU_KEY_ENTER },
+    { "Escape",         WGPU_KEY_ESCAPE },
+    { "End",            WGPU_KEY_END },
+    { "Home",           WGPU_KEY_HOME },
+    { "ArrowLeft",      WGPU_KEY_LEFT },
+    { "ArrowUp",        WGPU_KEY_UP },
+    { "ArrowRight",     WGPU_KEY_RIGHT },
+    { "ArrowDown",      WGPU_KEY_DOWN },
+    { "Delete",         WGPU_KEY_DELETE },
+    { 0, WGPU_KEY_INVALID },
+};
+
+static wgpu_keycode_t emsc_translate_key(const char* str) {
+    int i = 0;
+    const char* keystr;
+    while (( keystr = emsc_keymap[i].str )) {
+        if (0 == strcmp(str, keystr)) {
+            return emsc_keymap[i].code;
+        }
+        i += 1;
+    }
+    return WGPU_KEY_INVALID;
+}
+
+static EM_BOOL emsc_keydown_cb(int type, const EmscriptenKeyboardEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    wgpu_keycode_t wgpu_key = emsc_translate_key(ev->code);
+    if ((WGPU_KEY_INVALID != wgpu_key) && (state->key_down_cb)) {
+        state->key_down_cb((int)wgpu_key);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_keyup_cb(int type, const EmscriptenKeyboardEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    wgpu_keycode_t wgpu_key = emsc_translate_key(ev->code);
+    if ((WGPU_KEY_INVALID != wgpu_key) && (state->key_up_cb)) {
+        state->key_up_cb((int)wgpu_key);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_keypress_cb(int type, const EmscriptenKeyboardEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    if (state->char_cb) {
+        state->char_cb(ev->charCode);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_mousedown_cb(int type, const EmscriptenMouseEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    if ((ev->button < 3) && (state->mouse_btn_down_cb)) {
+        state->mouse_btn_down_cb(ev->button);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_mouseup_cb(int type, const EmscriptenMouseEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    if ((ev->button < 3) && (state->mouse_btn_up_cb)) {
+        state->mouse_btn_up_cb(ev->button);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_mousemove_cb(int type, const EmscriptenMouseEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    if (state->mouse_pos_cb) {
+        state->mouse_pos_cb((float) ev->targetX, (float)ev->targetY);
+    }
+    return EM_TRUE;
+}
+
+static EM_BOOL emsc_wheel_cb(int type, const EmscriptenWheelEvent* ev, void* userdata) {
+    (void)type;
+    wgpu_state_t* state = (wgpu_state_t*)userdata;
+    if (state->mouse_wheel_cb) {
+        state->mouse_wheel_cb(-0.1f * (float)ev->deltaY);
+    }
+    return EM_TRUE;
 }
 
 static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
@@ -99,7 +195,14 @@ void wgpu_platform_start(wgpu_state_t* state) {
     assert(state->instance == 0);
 
     emsc_update_canvas_size(state);
-    emscripten_set_resize_callback("canvas", 0, false, emsc_size_changed);
+    emscripten_set_resize_callback("#canvas", 0, false, emsc_size_changed);
+    emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keydown_cb);
+    emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keyup_cb);
+    emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keypress_cb);
+    emscripten_set_mousedown_callback("#canvas", state, true, emsc_mousedown_cb);
+    emscripten_set_mouseup_callback("#canvas", state, true, emsc_mouseup_cb);
+    emscripten_set_mousemove_callback("#canvas", state, true, emsc_mousemove_cb);
+    emscripten_set_wheel_callback("#canvas", state, true, emsc_wheel_cb);
 
     state->instance = wgpuCreateInstance(0);
     assert(state->instance);

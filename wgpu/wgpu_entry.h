@@ -9,6 +9,22 @@
 extern "C" {
 #endif
 
+// just the keys needed for the imgui sample
+typedef enum {
+    WGPU_KEY_INVALID = 0,
+    WGPU_KEY_TAB,
+    WGPU_KEY_LEFT,
+    WGPU_KEY_RIGHT,
+    WGPU_KEY_UP,
+    WGPU_KEY_DOWN,
+    WGPU_KEY_HOME,
+    WGPU_KEY_END,
+    WGPU_KEY_DELETE,
+    WGPU_KEY_BACKSPACE,
+    WGPU_KEY_ENTER,
+    WGPU_KEY_ESCAPE,
+} wgpu_keycode_t;
+
 typedef void (*wgpu_init_func)(void);
 typedef void (*wgpu_frame_func)(void);
 typedef void (*wgpu_shutdown_func)(void);
