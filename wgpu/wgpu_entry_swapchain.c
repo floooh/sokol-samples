@@ -34,7 +34,7 @@ void wgpu_swapchain_init(wgpu_state_t* state) {
             .height = (uint32_t) state->height,
             .depthOrArrayLayers = 1,
         },
-        .format = WGPUTextureFormat_Depth24PlusStencil8,
+        .format = WGPUTextureFormat_Depth32FloatStencil8,
         .mipLevelCount = 1,
         .sampleCount = (uint32_t)state->desc.sample_count
     });

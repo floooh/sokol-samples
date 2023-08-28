@@ -85,7 +85,14 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
         exit(10);
     }
     state->adapter = adapter;
-    wgpuAdapterRequestDevice(adapter, 0, request_device_cb, userdata);
+    WGPUFeatureName requiredFeatures[1] = {
+        WGPUFeatureName_Depth32FloatStencil8
+    };
+    WGPUDeviceDescriptor dev_desc = {
+        .requiredFeaturesCount = 1,
+        .requiredFeatures = requiredFeatures,
+    };
+    wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
     assert(0 != state->device);
 }
 
