@@ -120,7 +120,6 @@ vec3 calc_color(vec3 ro, vec3 rd, float t, vec4 tra) {
     vec3 pos = ro + rd * t;
     vec3 nrm = surface_normal(pos, t);
     vec3 hal = normalize(light1 - rd);
-    vec3 ref = reflect(rd, nrm);
     float occ = clamp(0.05 * log(tra.x), 0.0, 1.0);
     float fac = clamp(1.0 + dot(rd, nrm), 0.0, 1.0);
 
@@ -183,4 +182,3 @@ void main() {
 @end
 
 @program sdf vs fs
-
