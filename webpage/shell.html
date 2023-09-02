@@ -48,12 +48,8 @@
             //canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
             return canvas;
         })(),
-        setStatus: function(text) {
-            console.log("status: " + text);
-        },
-        monitorRunDependencies: function(left) {
-            console.log("monitor run deps: " + left);
-        }
+        setStatus: function(text) { },
+        monitorRunDependencies: function(left) { },
       };
       window.onerror = function() {
         console.log("onerror: " + event.message);
