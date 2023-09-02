@@ -12,7 +12,10 @@ out vec4 color;
 
 void main() {
     gl_Position = mvp * vec4(position.xy, 0, 1);
+    // WebGPU doesn't support point size
+    #ifndef SOKOL_WGSL
     gl_PointSize = point_size;
+    #endif
     color = color0;
 }
 @end
@@ -26,4 +29,3 @@ void main() {
 @end
 
 @program primtypes vs fs
-
