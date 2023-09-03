@@ -6,7 +6,7 @@
 @block skin_utils
 void skinned_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 skin_weights, in vec4 skin_indices, in vec2 joint_uv, out vec4 skin_pos, out vec4 skin_nrm) {
     skin_pos = vec4(0.0, 0.0, 0.0, 1.0);
-    skin_nrm = vec4(0.0, 0.0, 0.0, 0.0);    
+    skin_nrm = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 weights = skin_weights / dot(skin_weights, vec4(1.0));
     vec2 step = vec2(joint_pixel_width, 0.0);
     vec2 uv;
@@ -94,6 +94,8 @@ uniform vs_params {
 in vec4 position;
 in vec3 normal;
 #ifdef SKINNING
+@image_sample_type joint_tex unfilterable_float
+@sampler_type smp nonfiltering
 uniform texture2D joint_tex;
 uniform sampler smp;
 in vec4 jindices;
@@ -143,7 +145,7 @@ void main() {
     #ifdef MATERIAL
     vec3 diffuse = mat_diffuse;
     vec3 specular = mat_specular;
-    float spec_power = mat_spec_power; 
+    float spec_power = mat_spec_power;
     #else
     vec3 diffuse = N * 0.5 + 0.5;
     vec3 specular = vec3(1.0, 1.0, 1.0);
