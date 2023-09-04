@@ -119,8 +119,8 @@ void init(void) {
     // the last 4 samplers use different anistropy levels
     smp_desc.min_lod = 0.0f;
     smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
-    smp_desc.min_filter = SG_FILTER_NEAREST;
-    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.min_filter = SG_FILTER_LINEAR;
+    smp_desc.mag_filter = SG_FILTER_LINEAR;
     smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
         smp_desc.max_anisotropy = 1<<i;
