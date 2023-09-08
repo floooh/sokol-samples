@@ -5,6 +5,7 @@
 */
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #define CAMERA_DEFAULT_MIN_DIST (2.0f)
 #define CAMERA_DEFAULT_MAX_DIST (30.0f)
