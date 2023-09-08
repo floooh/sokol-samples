@@ -1,0 +1,14 @@
+---
+options:
+  src_dir: mountainpath
+  ios:
+    dst_dir: $TARGET_NAME.app
+  macos:
+    dst_dir: $TARGET_NAME.app/Contents/Resources
+files:
+  - negx.jpg
+  - negy.jpg
+  - negz.jpg
+  - posx.jpg
+  - posy.jpg
+  - posz.jpg
