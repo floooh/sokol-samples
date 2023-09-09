@@ -1,6 +1,6 @@
 ---
 options:
-  src_dir: mountainpath
+  src_dir: nissibeach2
   ios:
     dst_dir: $TARGET_NAME.app
   macos:
