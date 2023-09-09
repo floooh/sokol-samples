@@ -53,10 +53,10 @@ static void render_file_content(void) {
     const int num_lines = (state.size + (bytes_per_line - 1)) / bytes_per_line;
 
     igBeginChild_Str("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
-    ImGuiListClipper clipper = { 0 };
-    ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
-    ImGuiListClipper_Step(&clipper);
-    for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
+    ImGuiListClipper* clipper = ImGuiListClipper_ImGuiListClipper();
+    ImGuiListClipper_Begin(clipper, num_lines, igGetTextLineHeight());
+    ImGuiListClipper_Step(clipper);
+    for (int line_i = clipper->DisplayStart; line_i < clipper->DisplayEnd; line_i++) {
         int start_offset = line_i * bytes_per_line;
         int end_offset = start_offset + bytes_per_line;
         if (end_offset >= state.size) {
@@ -80,7 +80,8 @@ static void render_file_content(void) {
         }
     }
     igText("EOF\n");
-    ImGuiListClipper_End(&clipper);
+    ImGuiListClipper_End(clipper);
+    ImGuiListClipper_destroy(clipper);
     igEndChild();
 }
 
