@@ -6,9 +6,9 @@ options:
   macos:
     dst_dir: $TARGET_NAME.app/Contents/Resources
 files:
-  - negx.jpg
-  - negy.jpg
-  - negz.jpg
-  - posx.jpg
-  - posy.jpg
-  - posz.jpg
+  - nb2_negx.jpg
+  - nb2_negy.jpg
+  - nb2_negz.jpg
+  - nb2_posx.jpg
+  - nb2_posy.jpg
+  - nb2_posz.jpg

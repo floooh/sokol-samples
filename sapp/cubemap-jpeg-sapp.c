@@ -161,7 +161,11 @@ static void init(void) {
 
     // load 6 cubemap face image files (note: filenames are in same order as SG_CUBEFACE_*)
     char path_buf[1024];
-    const char* filenames[SG_CUBEFACE_NUM] = { "posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg" };
+    const char* filenames[SG_CUBEFACE_NUM] = {
+        "nb2_posx.jpg", "nb2_negx.jpg",
+        "nb2_posy.jpg", "nb2_negy.jpg",
+        "nb2_posz.jpg", "nb2_negz.jpg"
+    };
     for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(filenames[i], path_buf, sizeof(path_buf)),
