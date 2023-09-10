@@ -559,6 +559,13 @@ fips_begin_app(primtypes-sapp-ui windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(drawcallperf-sapp windowed)
+    fips_files(drawcallperf-sapp.c)
+    sokol_shader(drawcallperf-sapp.glsl ${slang})
+    fips_deps(sokol cimgui)
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(debugtext-sapp windowed)
     fips_files(debugtext-sapp.c)
     fips_deps(sokol)
