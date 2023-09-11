@@ -10,14 +10,14 @@ uniform vs_per_instance {
     vec4 world_pos;
 };
 
-in vec4 in_pos;
+in vec3 in_pos;
 in vec2 in_uv;
 in float in_bright;
 out vec2 uv;
 out float bright;
 
 void main() {
-    gl_Position = viewproj * (world_pos + in_pos * 0.1);
+    gl_Position = viewproj * (world_pos + vec4(in_pos * 0.05, 1.0));
     uv = in_uv;
     bright = in_bright;
 }
