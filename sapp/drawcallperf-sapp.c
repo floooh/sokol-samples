@@ -194,9 +194,9 @@ static void frame(void) {
     igSetNextWindowSize((ImVec2){600,200}, ImGuiCond_Once);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoResize)) {
         igText("Each cube/instance is 1 16-byte uniform update and 1 draw call\n");
-        igText("Bind frequency is the number of adjacent draw calls with the same texture binding\n");
+        igText("DC/texture is the number of adjacent draw calls with the same texture binding\n");
         igSliderInt("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
-        igSliderInt("Bind Frequency", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
+        igSliderInt("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
         igText("Frame duration: %.4fms", frame_measured_time * 1000.0);
         igText("sg_apply_bindings(): %d\n", state.stats.num_binding_updates);
         igText("sg_apply_uniforms(): %d\n", state.stats.num_uniform_updates);
