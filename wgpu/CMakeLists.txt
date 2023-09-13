@@ -92,3 +92,8 @@ fips_begin_app(inject-wgpu windowed)
     fips_files(inject-wgpu.c)
     fips_deps(wgpu_entry)
 fips_end_app()
+
+fips_begin_app(drawcallperf-wgpu windowed)
+    fips_files(drawcallperf-wgpu.c)
+    fips_deps(wgpu_entry cimgui)
+fips_end_app()
