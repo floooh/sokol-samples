@@ -35,6 +35,7 @@ static struct {
         int num_binding_updates;
         int num_draw_calls;
     } stats;
+    const char* backend;
 } state;
 
 static vs_per_instance_t positions[MAX_INSTANCES];
@@ -69,6 +70,18 @@ static void init(void) {
     };
     state.num_instances = 100;
     state.bind_frequency = MAX_BIND_FREQUENCY;
+
+    switch (sg_query_backend()) {
+        case SG_BACKEND_GLCORE33: state.backend = "GLCORE33"; break;
+        case SG_BACKEND_GLES3: state.backend = "GLES3"; break;
+        case SG_BACKEND_D3D11: state.backend = "D3D11"; break;
+        case SG_BACKEND_METAL_IOS: state.backend = "METAL_IOS"; break;
+        case SG_BACKEND_METAL_MACOS: state.backend = "METAL_MACOS"; break;
+        case SG_BACKEND_METAL_SIMULATOR: state.backend = "METAL_SIMULATOR"; break;
+        case SG_BACKEND_WGPU: state.backend = "WGPU"; break;
+        case SG_BACKEND_DUMMY: state.backend = "DUMMY"; break;
+        default: state.backend = "???"; break;
+    }
 
     // vertices and indices for a 2d quad
     static const float vertices[] = {
@@ -197,6 +210,7 @@ static void frame(void) {
         igText("DC/texture is the number of adjacent draw calls with the same texture binding\n");
         igSliderInt("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
         igSliderInt("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
+        igText("Backend: %s", state.backend);
         igText("Frame duration: %.4fms", frame_measured_time * 1000.0);
         igText("sg_apply_bindings(): %d\n", state.stats.num_binding_updates);
         igText("sg_apply_uniforms(): %d\n", state.stats.num_uniform_updates);
