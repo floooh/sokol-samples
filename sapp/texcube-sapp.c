@@ -75,7 +75,7 @@ void init(void) {
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
-        .label = "cube-vertices"
+        .label = "texcube-vertices"
     });
 
     // create an index buffer for the cube
@@ -90,7 +90,7 @@ void init(void) {
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .data = SG_RANGE(indices),
-        .label = "cube-indices"
+        .label = "texcube-indices"
     });
 
     // create a checkerboard texture
@@ -105,11 +105,13 @@ void init(void) {
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels),
-        .label = "cube-texture"
+        .label = "texcube-texture"
     });
 
     // create a sampler object with default attributes
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){0});
+    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+        .label = "texcube-sampler"
+    });
 
     // a shader
     sg_shader shd = sg_make_shader(texcube_shader_desc(sg_query_backend()));
@@ -130,7 +132,7 @@ void init(void) {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
-        .label = "cube-pipeline"
+        .label = "texcube-pipeline"
     });
 
     // default pass action
