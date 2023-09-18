@@ -1,7 +1,7 @@
 #
 # project: sokol-samples
 #
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_STANDARD 99)
 if (FIPS_IOS)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
