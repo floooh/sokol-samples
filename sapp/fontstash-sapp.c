@@ -106,8 +106,8 @@ static void init(void) {
         .height = atlas_dim,
         // allocator functions are optional, just check if it works
         .allocator = {
-            .alloc = my_alloc,
-            .free = my_free,
+            .alloc_fn = my_alloc,
+            .free_fn = my_free,
         }
     });
     state.fons = fons_context;
