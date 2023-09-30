@@ -1,0 +1,21 @@
+---
+platform: emscripten
+generator: Ninja
+build_tool: vscode
+build_type: Debug
+cmake-toolchain: emscripten.toolchain.cmake
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-imgui
+    - fips-cimgui
+defines:
+    USE_SOKOL_APP: ON
+    FIPS_EMSCRIPTEN_USE_WEBGPU: ON
+    FIPS_EMSCRIPTEN_USE_WASM: ON
+    FIPS_EMSCRIPTEN_USE_EMMALLOC: ON
+    FIPS_EMSCRIPTEN_USE_ASAN: ON
+    FIPS_EMSCRIPTEN_RELATIVE_SHELL_HTML: "webpage/shell.html"
