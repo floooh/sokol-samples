@@ -24,6 +24,8 @@
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -121,6 +123,7 @@ static struct {
         bool paused;
     } time;
     struct {
+        sg_imgui_t sgimgui;
         bool joint_texture_shown;
         int joint_texture_scale;
         simgui_image_t joint_texture;
@@ -172,6 +175,8 @@ static void init(void) {
     simgui_desc_t imdesc = { };
     imdesc.logger.func = slog_func;
     simgui_setup(&imdesc);
+    sg_imgui_desc_t sgimgui_desc = { };
+    sg_imgui_init(&state.ui.sgimgui, &sgimgui_desc);
 
     // initialize pass action for default-pass
     state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
@@ -409,6 +414,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    sg_imgui_discard(&state.ui.sgimgui);
     simgui_shutdown();
     sfetch_shutdown();
     sg_shutdown();
@@ -418,6 +424,11 @@ static void cleanup(void) {
 }
 
 static void draw_ui(void) {
+    if (ImGui::BeginMainMenuBar()) {
+        sg_imgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        ImGui::EndMainMenuBar();
+    }
+    sg_imgui_draw(&state.ui.sgimgui);
     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);
