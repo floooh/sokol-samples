@@ -526,17 +526,7 @@ static void ui_draw(void) {
             igMenuItem_BoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
             igEndMenu();
         }
-        if (igBeginMenu("sokol-gfx", true)) {
-            igMenuItem_BoolPtr("Capabilities...", 0, &state.ui.sgimgui.caps.open, true);
-            igMenuItem_BoolPtr("Buffers...", 0, &state.ui.sgimgui.buffers.open, true);
-            igMenuItem_BoolPtr("Images...", 0, &state.ui.sgimgui.images.open, true);
-            igMenuItem_BoolPtr("Samplers...", 0, &state.ui.sgimgui.samplers.open, true);
-            igMenuItem_BoolPtr("Shaders...", 0, &state.ui.sgimgui.shaders.open, true);
-            igMenuItem_BoolPtr("Pipelines...", 0, &state.ui.sgimgui.pipelines.open, true);
-            igMenuItem_BoolPtr("Passes...", 0, &state.ui.sgimgui.passes.open, true);
-            igMenuItem_BoolPtr("Calls...", 0, &state.ui.sgimgui.capture.open, true);
-            igEndMenu();
-        }
+        sg_imgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
         if (igBeginMenu("options", true)) {
             static int theme = 0;
             if (igRadioButton_IntPtr("Dark Theme", &theme, 0)) {

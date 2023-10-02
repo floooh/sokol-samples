@@ -37,17 +37,7 @@ void __dbgui_shutdown(void) {
 void __dbgui_draw(void) {
     simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("sokol-gfx")) {
-            ImGui::MenuItem("Capabilities", 0, &sg_imgui.caps.open);
-            ImGui::MenuItem("Buffers", 0, &sg_imgui.buffers.open);
-            ImGui::MenuItem("Images", 0, &sg_imgui.images.open);
-            ImGui::MenuItem("Samplers", 0, &sg_imgui.samplers.open);
-            ImGui::MenuItem("Shaders", 0, &sg_imgui.shaders.open);
-            ImGui::MenuItem("Pipelines", 0, &sg_imgui.pipelines.open);
-            ImGui::MenuItem("Passes", 0, &sg_imgui.passes.open);
-            ImGui::MenuItem("Calls", 0, &sg_imgui.capture.open);
-            ImGui::EndMenu();
-        }
+        sg_imgui_draw_menu(&sg_imgui, "sokol-gfx");
         ImGui::EndMainMenuBar();
     }
     sg_imgui_draw(&sg_imgui);
