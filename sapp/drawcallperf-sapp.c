@@ -10,6 +10,8 @@
 #include "cimgui/cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -36,6 +38,7 @@ static struct {
         int num_draw_calls;
     } stats;
     const char* backend;
+    sg_imgui_t sgimgui;
 } state;
 
 static vs_per_instance_t positions[MAX_INSTANCES];
@@ -65,6 +68,7 @@ static void init(void) {
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
+    sg_imgui_init(&state.sgimgui, &(sg_imgui_desc_t){0});
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.75f, 1.0f } },
     };
@@ -202,6 +206,13 @@ static void frame(void) {
         .dpi_scale = sapp_dpi_scale(),
     });
 
+    // sokol-gfx debug ui
+    if (igBeginMainMenuBar()) {
+        sg_imgui_draw_menu(&state.sgimgui, "sokol-gfx");
+        sg_imgui_draw(&state.sgimgui);
+        igEndMainMenuBar();
+    }
+
     // control ui
     igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){600,200}, ImGuiCond_Once);
@@ -268,6 +279,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    sg_imgui_discard(&state.sgimgui);
     simgui_shutdown();
     sg_shutdown();
 }
