@@ -125,8 +125,8 @@ static void init(void) {
         .context_pool_size = 1,
         .context = sapp_sgcontext(),
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger = {
             .func = slog_func,
@@ -137,8 +137,8 @@ static void init(void) {
         .num_channels = 2,
         .num_lanes = 1,
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger = {
             .func = slog_func,
@@ -149,8 +149,8 @@ static void init(void) {
         .max_vertices = 16,
         .max_commands = 16,
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger = {
             .func = slog_func,
@@ -164,8 +164,8 @@ static void init(void) {
             .char_buf_size = 128,
         },
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger = {
             .func = slog_func,
@@ -174,8 +174,8 @@ static void init(void) {
     saudio_setup(&(saudio_desc){
         .num_channels = MOD_NUM_CHANNELS,
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger = {
             .func = slog_func,
@@ -424,8 +424,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "Restart Sokol Libs (sokol-app)",
         .icon.sokol_default = true,
         .allocator = {
-            .alloc = smemtrack_alloc,
-            .free = smemtrack_free,
+            .alloc_fn = smemtrack_alloc,
+            .free_fn = smemtrack_free,
         },
         .logger.func = slog_func,
     };
