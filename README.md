@@ -454,6 +454,25 @@ To build one of the sokol-app samples on Linux:
 > cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lasound -lXi -lXcursor
 ```
 
+### Building for WASM / WebGL2
+
+Make sure `emcc` and `emrun` from the Emscripten SDK are in the path.
+
+```sh
+> cd sokol-samples/html5
+> emcc cube-emsc.c -o cube-emsc.html -I../../sokol -sUSE_WEBGL2 --shell-file=../webpage/shell.html
+> emrun cube-emsc.html
+```
+
+...and for the sokol-app samples:
+
+```sh
+> sokol-samples/sapp
+> ../../sokol-tools-bin/bin/[platform]/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl300es
+> emcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp.html -DSOKOL_GLES3 -I../../sokol -I../libs -sUSE_WEBGL2 --shell-file=../webpage/shell.html
+> emrun cube-sapp.html
+```
+
 ## Many Thanks to:
 
 - GLFW: https://github.com/glfw/glfw
