@@ -2,15 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8"/>
-<title>Sokol ${api}</title>
+<title>${title}</title>
 <link rel="icon" type="image/png" href="favicon.png"/>
 <style type="text/css">
 body {
     margin: 0;
-    background-color: #292d3e
+    background-color: ${body_bg_color};
 }
 .title {
-    color: #3dbb87;
+    color: ${text_color};
     text-align: left;
     padding-left: 20px;
     font-family: "Arial Black", Gadget, sans-serif;
@@ -24,7 +24,7 @@ body {
 }
 .main-menu-link {
     text-decoration: none;
-    color: #3dbb87;
+    color: ${text_color};
 }
 .gallery {
     margin-left: 50px;
@@ -41,13 +41,13 @@ body {
     margin-top: 30px;
     padding: 1px;
     float: left;
-    background: #4a4d62;
+    background: ${thumb_bg_color};
     border: 1px solid black;
     border-radius: 8px;
 }
 .thumb-title {
     text-align: center;
-    color: #3dbb87;
+    color: ${text_color};
     font-family: "Arial Black", Gadget, sans-serif;
     font-size: 18px;
     margin-bottom: 7px;
@@ -63,7 +63,7 @@ body {
     width: 24px;
     padding: 2px;
     display: block;
-    background-color: #3dbb87;
+    background-color: ${text_color};
     cursor: pointer;
     border-radius: 4px;
     border: 1px solid black;
@@ -72,8 +72,8 @@ body {
 }
 .img-btn:hover {
     background-color: black;
-    border-color: #3dbb87;
-    color: #3dbb87;
+    border-color ${text_color};
+    color: ${text_color}
 }
 .img-btn-link {
     text-decoration: none;
@@ -92,16 +92,6 @@ body {
     border-radius: 8px;
     border: 1px solid black;
 }
-.thumb-bar {
-    vertical-align: bottom;
-    padding-top: 5px;
-    font-family: monospace;
-    font-size: 14px;
-    width: 100%;
-    color: limegreen;
-    text-align: center;
-    text-decoration: none;
-}
 .gallery-bottom {
     height: 60px;
     clear: both;
@@ -109,7 +99,8 @@ body {
 </style>
 </head>
 <body>
-<div class="title"><a class="main-menu-link" href="https://github.com/floooh/sokol">Sokol ${api}</a>
+<div class="title"><a class="main-menu-link" href="https://github.com/floooh/sokol">${title}</a>
+    <span class="main-menu-item"><a class="main-menu-link" href="${cross_url}">${cross_name}</a></span>
     <span class="main-menu-item"><a class="main-menu-link" href="https://github.com/floooh/sokol-samples">github</a></span>
     <span class="main-menu-item"><a class="main-menu-link" href="https://floooh.github.io">blog</a></span>
     <span class="main-menu-item"><a class="main-menu-link" href="https://floooh.github.io/tiny8bit">tiny8bit</a></span>

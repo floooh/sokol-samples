@@ -12,6 +12,26 @@ from mod import log, util, project
 # webpage template arguments
 GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
 
+# webpage text colors
+Keys = {
+    'webgl': {
+        'title': 'Sokol WebGL',
+        'cross_name': 'webgpu',
+        'cross_url': 'https://floooh.github.io/sokol-webgpu',
+        'body_bg_color': '#292d3e',
+        'thumb_bg_color': '#4a4d62',
+        'text_color': '#1ABC9C',
+    },
+    'webgpu': {
+        'title': 'Sokol WebGPU',
+        'cross_name': 'webgl',
+        'cross_url': 'https://floooh.github.io/sokol-html5',
+        'body_bg_color': '#292d3e',
+        'thumb_bg_color': '#4a4d62',
+        'text_color': '#3498DB',
+    }
+}
+
 # build configuration
 def get_build_config(api):
     if api == 'webgl':
@@ -162,7 +182,16 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
     # populate the html template, and write to the build directory
     with open(proj_dir + '/webpage/index.html', 'r') as f:
         templ = Template(f.read())
-    html = templ.safe_substitute(samples=content, api='WebGL' if api=='webgl' else 'WebGPU')
+    keys = Keys[api]
+    html = templ.safe_substitute(
+        samples = content,
+        title = keys['title'],
+        cross_name = keys['cross_name'],
+        cross_url = keys['cross_url'],
+        body_bg_color = keys['body_bg_color'],
+        thumb_bg_color = keys['thumb_bg_color'],
+        text_color = keys['text_color'])
+
     with open(webpage_dir + '/index.html', 'w') as f :
         f.write(html)
 
