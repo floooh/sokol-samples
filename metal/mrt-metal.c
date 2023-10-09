@@ -330,8 +330,8 @@ static void init(void) {
                     "}\n",
             },
             .fs = {
-                .images[0].used = SG_IMAGETYPE_2D,
-                .samplers[0].used = SG_SAMPLERTYPE_SAMPLE,
+                .images[0].used = true,
+                .samplers[0].used = true,
                 .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
                 .source =
                     "#include <metal_stdlib>\n"

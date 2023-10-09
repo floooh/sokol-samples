@@ -2,6 +2,7 @@
 /*
     Platform entry helper code for WebGPU samples.
 */
+#include <assert.h>
 #include <webgpu/webgpu.h>
 #include "sokol_gfx.h"
 
