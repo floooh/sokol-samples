@@ -40,6 +40,7 @@ samples = [
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
     [ 'basisu', 'basisu-sapp.c', None ],
     [ 'cubemap-jpeg', 'cubemap-jpeg-sapp.c', 'cubemap-jpeg-sapp.glsl' ],
+    [ 'cubemaprt', 'cubemaprt-sapp.c', 'cubemaprt-sapp.glsl' ],
     [ 'primtypes', 'primtypes-sapp.c', 'primtypes-sapp.glsl'],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
