@@ -2,9 +2,10 @@
 
 Sample code for https://github.com/floooh/sokol
 
-asm.js/wasm live demos: https://floooh.github.io/sokol-html5/index.html
+WASM live demos:
 
-Minimal 8-bit emulators using the sokol headers: https://floooh.github.io/tiny8bit
+- for WebGL2: https://floooh.github.io/sokol-html5/index.html
+- for WebGPU: https://floooh.github.io/sokol-webgpu/index.html
 
 ### Build Status:
 
