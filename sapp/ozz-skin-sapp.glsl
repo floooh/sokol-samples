@@ -51,8 +51,8 @@ uniform vs_params {
 };
 
 @image_sample_type joint_tex unfilterable_float
-@sampler_type smp nonfiltering
 uniform texture2D joint_tex;
+@sampler_type smp nonfiltering
 uniform sampler smp;
 
 in vec4 position;
