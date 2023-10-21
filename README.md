@@ -86,73 +86,52 @@ for instance on Linux:
 > ./fips open
 ```
 
-For additional platforms (like iOS/Android/UWP), continue reading the README past the What's New section.
+For additional platforms (like iOS/Android), continue reading the README past the What's New section.
 
 For more information on the fips build system see here: https://floooh.github.io/fips/
 
-## What's New:
+## Building the platform-agnostic sokol_app.h + sokol_gfx.h samples for additional platforms:
 
-- **23-Sep-2020**: samples can now be built for UWP using the ```sapp-uwp-vstudio-debug``` and ```sapp-uwp-vstudio-release``` build configs
-  NOTE that fips support for UWP built apps is incomplete (e.g. ```fips run``` doesn't work, and UWP app bundle creation is also not supported)
+Building the sokol_app.h samples is currently supported for MacOS, Windows,
+Linux, iOS, HTML5 and Android.
 
-- **27-May-2020**: four new test and demonstration samples for the new sokol_debugtext.h header
+Use any of the following custom build configs starting with ```sapp-```
+which matches your platform and build system:
 
-- **30-Apr-2020**: New sokol\_gfx.h WebGPU backend samples, and updated all other samples for the breaking changes in sokol\_gfx.h initialization, see the [Updates](https://github.com/floooh/sokol#updates) section in the sokol\_gfx.h README for details!
+```bash
+> ./fips list configs | grep sapp-
+  sapp-android-make-debug
+  ...
+  sapp-d3d11-win64-vs2017-debug
+  sapp-d3d11-win64-vs2017-release
+  sapp-d3d11-win64-vscode-debug
+  sapp-d3d11-win64-vstudio-debug
+  sapp-d3d11-win64-vstudio-release
+  sapp-ios-xcode-debug
+  ...
+  sapp-win64-vstudio-debug
+  sapp-win64-vstudio-release
+  ...
+  sapp-webgl2-wasm-ninja-debug
+  sapp-webgl2-wasm-ninja-release
+  sapp-webgl2-wasm-vscode-debug
+  sapp-webgl2-wasm-vscode-release
+  ...
+  sapp-wgpu-wasm-ninja-debug
+  sapp-wgpu-wasm-ninja-release
+  sapp-wgpu-wasm-vscode-debug
+  sapp-wgpu-wasm-vscode-release
 
-- **24-Feb-2020**: I have added a [section to the readme](https://github.com/floooh/sokol-samples#how-to-build-without-a-build-system) with examples of how to build (most of) the examples without a build system by invoking the C compiler directly on the command line.
-This might be useful for integration of the sokol headers into your own projects using your
-own preferred build system.
+> ./fips set config sapp-...
+> ./fips build
+> ./fips list targets
+> ./fips run cube-sapp
+```
 
-- **22-Jan-2020**: New sample to demonstrate how to render from inside a Dear ImGui user draw callback: [imgui-usercallback-sapp](https://floooh.github.io/sokol-html5/imgui-usercallback-sapp.html)
-
-- **26-Aug-2019**: New sample: [fontstash-sapp](https://floooh.github.io/sokol-html5/fontstash-sapp.html)
-
-- **06-Jul-2019**: Two new samples for the new [sokol_fetch.h header](https://github.com/floooh/sokol/blob/master/sokol_fetch.h):
-    - [loadpng-sapp](https://floooh.github.io/sokol-html5/loadpng-sapp.html): load an image file into a sokol-gfx texture
-    - [plmpeg-sapp](https://floooh.github.io/sokol-html5/plmpeg-sapp.html): MPEG1 streaming via [pl_mpeg](https://github.com/phoboslab/pl_mpeg)
-
-- **04-Jun-2019**: New sample on how to compile and use the sokol headers as
-DLL (currently only on Windows). This demonstrates the new SOKOL_DLL
-configuration define which annotates public function declarations with
-__declspec(dllexport) or __declspec(dllimport). [See
-here](https://github.com/floooh/sokol-samples/tree/master/libs/sokol) for the
-DLL, [and here](https://github.com/floooh/sokol-samples/blob/master/sapp/noentry-dll-sapp.c)
-for the example code using the DLL.
-
-- **15-May-2019**: the sokol-app samples in the ```sapp``` directory have
-been "ported" to the new shader-cross-compiler solution ([see here for
-details](https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md)).
-Shaders are written as 'annotated GLSL', and cross-compiled to various
-GLSL dialects, HLSL and MSL through a custom-build job which invokes the
-```sokol-shdc``` command line tool.
-
-- **01-Apr-2019**: sample code for the new sokol_gl.h header:
-    - [sapp/sgl-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-sapp.c): triangles, quads, texturing and the matrix stack
-    - [sapp/sgl-lines-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-lines-sapp.c): lines and line strips
-    - [sapp/sgl-microui-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-microui-sapp.c): example [microui](https://github.com/rxi/microui) integration
-    - [glfw/sgl-test-glfw.c](https://github.com/floooh/sokol-samples/blob/master/glfw/sgl-test-glfw.c): a pure GLFW/OpenGL 1.2 program to check whether sokol_gl.h behaves the same as OpenGL 1.2
-
-- **05-Mar-2019**: the sokol-app samples (in the sapp directory) now come with optional
-debugging UIs implemented via the new Dear ImGui based debug-inspection headers, these
-are compiled as separate executables, so the executable-versions without UI are still as
-small as possible.
-
-- **19-Feb-2019**: a new sokol_app.h sample has been added to demonstrate the
-new SOKOL_NO_ENTRY feature (in which sokol_app.h doesn't hijack the main function):
-```sapp/noentry-sapp.c```
-
-- **26-Jan-2019**: The sokol_app.h samples now also work on Android. See below for build instructions.
-
-- **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer-
-and index-buffer-offsets in the sg\_draw\_state struct. Also the location of fips build-system
-files have changed, please update fips with a 'git pull' from the fips directory.
-
-- **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
-https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which
-required some code changes. If you already had checked out sokol-samples, perform the following
-steps to udpate:
-    1. delete the fips-imgui directory
-    2. in the sokol-samples directory, run **./fips fetch**
+Note the following caveats:
+- for HTML5, first install the emscripten SDK as described above in the
+  native HTML5 sample section
+- for iOS, set the developer team id, as described above in the iOS section
 
 ### Building the platform-specific samples
 
@@ -222,18 +201,33 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 > fips run triangle-d3d11
 ```
 
-### To build for emscripten:
+### To build for WebGL2+WASM on Emscripten:
 
 ```
 > cd ~/scratch/sokol-samples
 > ./fips setup emscripten
 [...this will take a while]
-> ./fips set config webgl2-emsc-make-release
+> ./fips set config webgl2-wasm-ninja-release
 > ./fips build
 ...
 > ./fips list targets
 ...
 > ./fips run triangle-emsc
+...
+```
+
+### To build for WebGPU+WASM on Emscripten:
+
+```
+> cd ~/scratch/sokol-samples
+> ./fips setup emscripten
+[...this will take a while]
+> ./fips set config wgpu-wasm-ninja-release
+> ./fips build
+...
+> ./fips list targets
+...
+> ./fips run triangle-wgpu
 ...
 ```
 
@@ -259,46 +253,6 @@ connected Android device.
 To debug Android applications I recommend using Android Studio with
 "Profile or debug APK". You can find the compiled APK files under
 ```../fips-deploy/[project]/[config]```.
-
-## Building the platform-agnostic samples for additional platforms:
-
-Building the sokol_app.h samples is currently supported for MacOS, Windows,
-Linux, iOS, HTML5 and Android (RaspberryPi is planned).
-
-Use any of the following custom build configs starting with ```sapp-```
-which matches your platform and build system:
-
-```bash
-> ./fips list configs | grep sapp-
-  sapp-android-make-debug
-  ...
-  sapp-d3d11-win64-vs2017-debug
-  sapp-d3d11-win64-vs2017-release
-  sapp-d3d11-win64-vscode-debug
-  sapp-d3d11-win64-vstudio-debug
-  sapp-d3d11-win64-vstudio-release
-  sapp-ios-xcode-debug
-  ...
-  sapp-win64-vstudio-debug
-  sapp-win64-vstudio-release
-  sapp-uwp-vstudio-debug
-  sapp-uwp-vstudio-release
-> ./fips set config sapp-...
-> ./fips build
-> ./fips list targets
-> ./fips run cube-sapp
-```
-
-Note the following caveats:
-- for HTML5, first install the emscripten SDK as described above in the
-  native HTML5 sample section
-- for iOS, set the developer team id, as described above in the iOS section
-- for UWP you need a bleeding edge Visual Studio and Windows SDK version
-  (at least VS2019 and SDK 10.0.19041.0)
-- fips build support for UWP is incomplete, you only get "raw" UWP
-  executables out of the build process, but not packaged and signed application
-  bundles. This is enough for running and debugging the samples inside
-  Visual Studio, but not for much else.
 
 ## How to build without a build system
 
@@ -465,3 +419,73 @@ To build one of the sokol-app samples on Linux:
 - Ozz Animation: https://github.com/guillaumeblanc/ozz-animation
 
 Enjoy!
+
+## What's New:
+
+(FIXME: this stuff really needs to go into a separate CHANGELOG.md)
+
+- **21-Oct-2023**: Updated WebGPU support, and new samples .
+
+(lots of stuff missing here)
+
+- **23-Sep-2020**: samples can now be built for UWP using the ```sapp-uwp-vstudio-debug``` and ```sapp-uwp-vstudio-release``` build configs
+  NOTE that fips support for UWP built apps is incomplete (e.g. ```fips run``` doesn't work, and UWP app bundle creation is also not supported)
+
+- **27-May-2020**: four new test and demonstration samples for the new sokol_debugtext.h header
+
+- **30-Apr-2020**: New sokol\_gfx.h WebGPU backend samples, and updated all other samples for the breaking changes in sokol\_gfx.h initialization, see the [Updates](https://github.com/floooh/sokol#updates) section in the sokol\_gfx.h README for details!
+
+- **24-Feb-2020**: I have added a [section to the readme](https://github.com/floooh/sokol-samples#how-to-build-without-a-build-system) with examples of how to build (most of) the examples without a build system by invoking the C compiler directly on the command line.
+This might be useful for integration of the sokol headers into your own projects using your
+own preferred build system.
+
+- **22-Jan-2020**: New sample to demonstrate how to render from inside a Dear ImGui user draw callback: [imgui-usercallback-sapp](https://floooh.github.io/sokol-html5/imgui-usercallback-sapp.html)
+
+- **26-Aug-2019**: New sample: [fontstash-sapp](https://floooh.github.io/sokol-html5/fontstash-sapp.html)
+
+- **06-Jul-2019**: Two new samples for the new [sokol_fetch.h header](https://github.com/floooh/sokol/blob/master/sokol_fetch.h):
+    - [loadpng-sapp](https://floooh.github.io/sokol-html5/loadpng-sapp.html): load an image file into a sokol-gfx texture
+    - [plmpeg-sapp](https://floooh.github.io/sokol-html5/plmpeg-sapp.html): MPEG1 streaming via [pl_mpeg](https://github.com/phoboslab/pl_mpeg)
+
+- **04-Jun-2019**: New sample on how to compile and use the sokol headers as
+DLL (currently only on Windows). This demonstrates the new SOKOL_DLL
+configuration define which annotates public function declarations with
+__declspec(dllexport) or __declspec(dllimport). [See
+here](https://github.com/floooh/sokol-samples/tree/master/libs/sokol) for the
+DLL, [and here](https://github.com/floooh/sokol-samples/blob/master/sapp/noentry-dll-sapp.c)
+for the example code using the DLL.
+
+- **15-May-2019**: the sokol-app samples in the ```sapp``` directory have
+been "ported" to the new shader-cross-compiler solution ([see here for
+details](https://github.com/floooh/sokol-tools/blob/master/docs/sokol-shdc.md)).
+Shaders are written as 'annotated GLSL', and cross-compiled to various
+GLSL dialects, HLSL and MSL through a custom-build job which invokes the
+```sokol-shdc``` command line tool.
+
+- **01-Apr-2019**: sample code for the new sokol_gl.h header:
+    - [sapp/sgl-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-sapp.c): triangles, quads, texturing and the matrix stack
+    - [sapp/sgl-lines-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-lines-sapp.c): lines and line strips
+    - [sapp/sgl-microui-sapp.c](https://github.com/floooh/sokol-samples/blob/master/sapp/sgl-microui-sapp.c): example [microui](https://github.com/rxi/microui) integration
+    - [glfw/sgl-test-glfw.c](https://github.com/floooh/sokol-samples/blob/master/glfw/sgl-test-glfw.c): a pure GLFW/OpenGL 1.2 program to check whether sokol_gl.h behaves the same as OpenGL 1.2
+
+- **05-Mar-2019**: the sokol-app samples (in the sapp directory) now come with optional
+debugging UIs implemented via the new Dear ImGui based debug-inspection headers, these
+are compiled as separate executables, so the executable-versions without UI are still as
+small as possible.
+
+- **19-Feb-2019**: a new sokol_app.h sample has been added to demonstrate the
+new SOKOL_NO_ENTRY feature (in which sokol_app.h doesn't hijack the main function):
+```sapp/noentry-sapp.c```
+
+- **26-Jan-2019**: The sokol_app.h samples now also work on Android. See below for build instructions.
+
+- **12-Apr-2018**: New samples have been added to demonstrate the new optional vertex-buffer-
+and index-buffer-offsets in the sg\_draw\_state struct. Also the location of fips build-system
+files have changed, please update fips with a 'git pull' from the fips directory.
+
+- **27-Mar-2018**: The Dear Imgui fips wrapper has recently been moved to a new repository at
+https://github.com/fips-libs/fips-imgui and updated to the latest ImGui version which
+required some code changes. If you already had checked out sokol-samples, perform the following
+steps to udpate:
+    1. delete the fips-imgui directory
+    2. in the sokol-samples directory, run **./fips fetch**
