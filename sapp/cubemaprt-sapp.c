@@ -207,7 +207,9 @@ void frame(void) {
     // offscreen pass which renders the environment cubemap
     // FIXME: these values work for Metal and D3D11, not for GL, because
     // of the different handedness of the cubemap coordinate systems
-    #if defined(SOKOL_METAL) || defined(SOKOL_D3D11)
+    //
+    // FIXME: is this actually correct???
+    #if defined(SOKOL_METAL) || defined(SOKOL_D3D11) || defined(SOKOL_WGPU)
     hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
         { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
         { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },

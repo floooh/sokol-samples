@@ -2,9 +2,6 @@
 //  blend-emsc.c
 //  Test blend factor combinations.
 //------------------------------------------------------------------------------
-#define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -54,7 +51,7 @@ int main() {
 
     // a quad vertex buffer
     float vertices[] = {
-        /* pos               color */
+        // pos               color
         -1.0f, -1.0f, 0.0f,  1.0f, 0.0f, 0.0f, 0.5f,
         +1.0f, -1.0f, 0.0f,  0.0f, 1.0f, 0.0f, 0.5f,
         -1.0f, +1.0f, 0.0f,  0.0f, 0.0f, 1.0f, 0.5f,

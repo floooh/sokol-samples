@@ -80,7 +80,7 @@ jobs:
           run:  python3 fips build sapp-egl-gles3-linux-make-debug
         - name: sapp-egl-gles3-linux-make-release
           run:  python3 fips build sapp-egl-gles3-linux-make-release
-    emscripten:
+    webgl2:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v3
@@ -96,6 +96,22 @@ jobs:
           run:  python3 fips build webgl2-wasm-ninja-debug
         - name: webgl2-wasm-ninja-release
           run:  python3 fips build webgl2-wasm-ninja-release
+    wgpu:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v3
+        - name: prepare
+          run: |
+            sudo apt-get install ninja-build
+            python3 fips emsdk install latest
+        - name: sapp-wgpu-wasm-ninja-debug
+          run:  python3 fips build sapp-wgpu-wasm-ninja-debug
+        - name: sapp-wgpu-wasm-ninja-release
+          run:  python3 fips build sapp-wgpu-wasm-ninja-release
+        - name: wgpu-wasm-ninja-debug
+          run:  python3 fips build wgpu-wasm-ninja-debug
+        - name: wgpu-wasm-ninja-release
+          run:  python3 fips build wgpu-wasm-ninja-release
     android:
         runs-on: ubuntu-latest
         steps:

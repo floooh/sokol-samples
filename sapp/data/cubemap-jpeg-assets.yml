@@ -1,0 +1,14 @@
+---
+options:
+  src_dir: nissibeach2
+  ios:
+    dst_dir: $TARGET_NAME.app
+  macos:
+    dst_dir: $TARGET_NAME.app/Contents/Resources
+files:
+  - nb2_negx.jpg
+  - nb2_negy.jpg
+  - nb2_negz.jpg
+  - nb2_posx.jpg
+  - nb2_posy.jpg
+  - nb2_posz.jpg

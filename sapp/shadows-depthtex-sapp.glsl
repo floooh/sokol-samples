@@ -115,6 +115,8 @@ void main() {
 @end
 
 @fs fs_dbg
+@image_sample_type dbg_tex unfilterable_float
+@sampler_type dbg_smp nonfiltering
 uniform texture2D dbg_tex;
 uniform sampler dbg_smp;
 

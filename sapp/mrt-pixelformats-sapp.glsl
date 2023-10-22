@@ -60,6 +60,8 @@ void main() {
 @end
 
 @fs fs_quad
+@image_sample_type tex unfilterable_float
+@sampler_type smp nonfiltering
 uniform texture2D tex;
 uniform sampler smp;
 

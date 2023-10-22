@@ -3,6 +3,7 @@
 //
 //  Demonstrates injection of native WebGPU buffers and textures into sokol-gfx.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -10,10 +11,10 @@
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
-#include "inject-wgpu.glsl.h"
 
-/* NOTE: webgpu.h is already included by sokol_gfx.h */
+// technically webgpu.h was already included by the sokol_gfx.h implementation, but
+// this won't be the case when sokol_gfx.h is included without SOKOL_IMPL
+#include <webgpu/webgpu.h>
 
 #define WIDTH (640)
 #define HEIGHT (480)
@@ -27,28 +28,37 @@ static struct {
     sg_bindings bind;
     float rx, ry;
     uint32_t counter;
-    hmm_mat4 view_proj;
     uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
-    WGPUBuffer wgpu_vertex_buffer;
-    WGPUBuffer wgpu_index_buffer;
-    WGPUTexture wgpu_texture;
-} state = {
-    .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
-    }
-};
+    WGPUBuffer wgpu_vbuf;
+    WGPUBuffer wgpu_ibuf;
+    WGPUTexture wgpu_tex;
+    WGPUSampler wgpu_smp;
+} state;
+
+typedef struct {
+    hmm_mat4 mvp;
+} vs_params_t;
+
+static size_t roundup(size_t val, size_t to) {
+    return (val + (to - 1)) & ~(to - 1);
+}
 
 static void init(void) {
-    /* setup sokol_gfx */
+    // setup sokol_gfx
     sg_setup(&(sg_desc){
         .context = wgpu_get_context(),
         .logger.func = slog_func,
     });
-    WGPUDevice wgpu_dev = (WGPUDevice) wgpu_get_context().wgpu.device;
+    WGPUDevice wgpu_dev = (WGPUDevice) sg_wgpu_device();
 
-    /* create native WebGPU vertex- and index-buffer */
+    // pass action to clear to black
+    state.pass_action = (sg_pass_action){
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } }
+    };
+
+    // WebGPU vertex and index buffer
     float vertices[] = {
-        /* pos                  uvs */
+        // pos                  uvs
         -1.0f, -1.0f, -1.0f,    0.0f, 0.0f,
          1.0f, -1.0f, -1.0f,    1.0f, 0.0f,
          1.0f,  1.0f, -1.0f,    1.0f, 1.0f,
@@ -88,78 +98,130 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
 
-    WGPUCreateBufferMappedResult buf_res = wgpuDeviceCreateBufferMapped(wgpu_dev,
-        &(WGPUBufferDescriptor) {
-            .size = sizeof(vertices),
-            .usage = WGPUBufferUsage_Vertex
-        });
-    state.wgpu_vertex_buffer = buf_res.buffer;
-    memcpy(buf_res.data, vertices, sizeof(vertices));
-    wgpuBufferUnmap(state.wgpu_vertex_buffer);
+    state.wgpu_vbuf = wgpuDeviceCreateBuffer(wgpu_dev, &(WGPUBufferDescriptor){
+        .label = "wgpu-vertex-buffer",
+        .size = sizeof(vertices),
+        .usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst,
+        .mappedAtCreation = true,
+    });
+    void* vbuf_ptr = wgpuBufferGetMappedRange(state.wgpu_vbuf, 0, sizeof(vertices));
+    assert(vbuf_ptr);
+    memcpy(vbuf_ptr, vertices, sizeof(vertices));
+    wgpuBufferUnmap(state.wgpu_vbuf);
 
-    buf_res = wgpuDeviceCreateBufferMapped(wgpu_dev,
-        &(WGPUBufferDescriptor) {
-            .size = sizeof(indices),
-            .usage = WGPUBufferUsage_Index
-        });
-    state.wgpu_index_buffer = buf_res.buffer;
-    memcpy(buf_res.data, indices, sizeof(indices));
-    wgpuBufferUnmap(state.wgpu_index_buffer);
+    state.wgpu_ibuf = wgpuDeviceCreateBuffer(wgpu_dev, &(WGPUBufferDescriptor){
+        .label = "wgpu-index-buffer",
+        .size = roundup(sizeof(indices), 4),
+        .usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst,
+        .mappedAtCreation = true,
+    });
+    void* ibuf_ptr = wgpuBufferGetMappedRange(state.wgpu_ibuf, 0, roundup(sizeof(indices), 4));
+    assert(ibuf_ptr);
+    memcpy(ibuf_ptr, indices, sizeof(indices));
+    wgpuBufferUnmap(state.wgpu_ibuf);
 
-    /* important to call sg_reset_state_cache() after calling WebGPU functions directly */
+    // important to call sg_reset_state_cache() after calling WebGPU functions directly
     sg_reset_state_cache();
 
-    /* create sokol_gfx buffers with injected WebGPU buffer objects */
+    // create sokol_gfx buffers with inject WebGPU buffer object
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_VERTEXBUFFER,
         .size = sizeof(vertices),
-        .wgpu_buffer = state.wgpu_vertex_buffer
+        .wgpu_buffer = state.wgpu_vbuf,
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
-        .wgpu_buffer = state.wgpu_index_buffer
+        .wgpu_buffer = state.wgpu_ibuf,
     });
 
-    /* create dynamically updated WebGPU texture object */
-    state.wgpu_texture = wgpuDeviceCreateTexture(wgpu_dev,
-        &(WGPUTextureDescriptor) {
-            .usage = WGPUTextureUsage_Sampled|WGPUTextureUsage_CopyDst,
-            .dimension = WGPUTextureDimension_2D,
-            .size = {
-                .width = IMG_WIDTH,
-                .height = IMG_HEIGHT,
-                .depth = 1
-            },
-            .arrayLayerCount = 1,
-            .format = WGPUTextureFormat_RGBA8Unorm,
-            .mipLevelCount = 1,
-            .sampleCount = 1,
-        });
+    // create dynamically updated WebGPU texture object
+    state.wgpu_tex = wgpuDeviceCreateTexture(wgpu_dev, &(WGPUTextureDescriptor) {
+        .label = "wgpu-texture",
+        .usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst,
+        .dimension = WGPUTextureDimension_2D,
+        .size = {
+            .width = IMG_WIDTH,
+            .height = IMG_HEIGHT,
+            .depthOrArrayLayers = 1,
+        },
+        .format = WGPUTextureFormat_RGBA8Unorm,
+        .mipLevelCount = 1,
+        .sampleCount = 1,
+    });
     sg_reset_state_cache();
 
-    /* ... and the sokol-gfx texture object with the injected WGPU texture */
-    state.bind.fs_images[0] = sg_make_image(&(sg_image_desc){
+    // ... and the sokol-gfx texture object with the injected WGPU texture
+    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
         .usage = SG_USAGE_STREAM,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_REPEAT,
-        .wrap_v = SG_WRAP_REPEAT,
-        .wgpu_texture = state.wgpu_texture
+        .wgpu_texture = state.wgpu_tex
     });
 
-    /* a pipeline state object and shader */
+    // a WebGPU sampler object...
+    state.wgpu_smp = wgpuDeviceCreateSampler(wgpu_dev, &(WGPUSamplerDescriptor){
+        .label = "wgpu-sampler",
+        .addressModeU = WGPUAddressMode_Repeat,
+        .addressModeV = WGPUAddressMode_Repeat,
+        .magFilter = WGPUFilterMode_Linear,
+        .minFilter = WGPUFilterMode_Linear,
+        .maxAnisotropy = 1,
+    });
+    sg_reset_state_cache();
+
+    // ...and a matching sokol-gfx sampler with injected WebGPU sampler
+    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wgpu_sampler = state.wgpu_smp,
+    });
+
+    // a sokol-gfx shader object
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "struct vs_params {\n"
+                "  mvp: mat4x4f,\n"
+                "}\n"
+                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+                "struct vs_out {\n"
+                "  @builtin(position) pos: vec4f,\n"
+                "  @location(0) uv: vec2f,\n"
+                "}\n"
+                "@vertex fn main(@location(0) pos: vec4f, @location(1) uv: vec2f) -> vs_out {\n"
+                "  var out: vs_out;\n"
+                "  out.pos = in.mvp * pos;\n"
+                "  out.uv = uv;\n"
+                "  return out;\n"
+                "}\n"
+        },
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "@group(1) @binding(32) var tex: texture_2d<f32>;\n"
+                "@group(1) @binding(48) var smp: sampler;\n"
+                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+                "  return textureSample(tex, smp, uv);\n"
+                "}\n"
+        },
+    });
+
+    // a pipeline state object
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
-                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
-                [1] = { .format=SG_VERTEXFORMAT_FLOAT2 }
+                [0] = { .format = SG_VERTEXFORMAT_FLOAT3 },
+                [1] = { .format = SG_VERTEXFORMAT_FLOAT2 }
             },
         },
-        .shader = sg_make_shader(inject_shader_desc(sg_query_backend())),
+        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
@@ -168,23 +230,24 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
-
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 void frame() {
-    /* compute model-view-projection matrix for vertex shader */
-    vs_params_t vs_params;
-    state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+    // view-projection matrix
+    const hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
+    const hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    /* update texture image with some generated pixel data */
+    // model-view-projection matrix for vertex shader
+    state.rx += 1.0f; state.ry += 2.0f;
+    const hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    const vs_params_t vs_params = {
+        .mvp = HMM_MultiplyMat4(view_proj, model)
+    };
+
+    // update texture image with some generated pixel data
     for (int y = 0; y < IMG_WIDTH; y++) {
         for (int x = 0; x < IMG_HEIGHT; x++) {
             state.pixels[y * IMG_WIDTH + x] = 0xFF000000 |
@@ -196,7 +259,7 @@ void frame() {
     }
     state.counter++;
     sg_image_data content = { .subimage[0][0] = SG_RANGE(state.pixels) };
-    sg_update_image(state.bind.fs_images[0], &content);
+    sg_update_image(state.bind.fs.images[0], &content);
 
     sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.pip);
@@ -209,9 +272,10 @@ void frame() {
 
 void shutdown() {
     sg_shutdown();
-    wgpuBufferRelease(state.wgpu_vertex_buffer);
-    wgpuBufferRelease(state.wgpu_index_buffer);
-    wgpuTextureRelease(state.wgpu_texture);
+    wgpuBufferRelease(state.wgpu_vbuf);
+    wgpuBufferRelease(state.wgpu_ibuf);
+    wgpuTextureRelease(state.wgpu_tex);
+    wgpuSamplerRelease(state.wgpu_smp);
 }
 
 int main() {

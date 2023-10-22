@@ -6,9 +6,6 @@
 //  initializers even though this is C++.
 //------------------------------------------------------------------------------
 #include "imgui.h"
-#define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
 #define SOKOL_IMPL
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
@@ -18,6 +15,7 @@
 
 // these are fairly recent warnings in clang
 #pragma clang diagnostic ignored "-Wc99-designator"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #pragma clang diagnostic ignored "-Wreorder-init-list"
 
 static const int MaxVertices = (1<<16);

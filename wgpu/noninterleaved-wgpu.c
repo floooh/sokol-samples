@@ -6,6 +6,7 @@
 //  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -13,8 +14,6 @@
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
-#include "noninterleaved-wgpu.glsl.h"
 
 #define SAMPLE_COUNT (4)
 
@@ -25,15 +24,19 @@ static struct {
     float rx, ry;
 } state;
 
+typedef struct {
+    hmm_mat4 mvp;
+} vs_params_t;
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .context = wgpu_get_context(),
         .logger.func = slog_func,
     });
 
-    /* cube vertex buffer */
-    float vertices[] = {
-        /* positions */
+    // cube vertex buffer
+    static const float vertices[] = {
+        // positions
         -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,
         -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0,  1.0,  1.0,  -1.0,  1.0,  1.0,
         -1.0, -1.0, -1.0,  -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,  -1.0, -1.0,  1.0,
@@ -41,7 +44,7 @@ static void init(void) {
         -1.0, -1.0, -1.0,  -1.0, -1.0,  1.0,   1.0, -1.0,  1.0,   1.0, -1.0, -1.0,
         -1.0,  1.0, -1.0,  -1.0,  1.0,  1.0,   1.0,  1.0,  1.0,   1.0,  1.0, -1.0,
 
-         /* colors */
+        // colors
         1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,  1.0, 0.5, 0.0, 1.0,
         0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,  0.5, 1.0, 0.0, 1.0,
         0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,  0.5, 0.0, 1.0, 1.0,
@@ -53,8 +56,8 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
-    uint16_t indices[] = {
+    // create an index buffer for the cube
+    static const uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
         8, 9, 10,  8, 10, 11,
@@ -67,18 +70,43 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /*
-        a pipeline object, note that we need to provide the
-        MSAA sample count of the default framebuffer
-    */
+    // create shader
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs = {
+            .uniform_blocks = {
+                [0] = { .size = 16 * 4 },
+            },
+            .source =
+                "struct vs_params {\n"
+                "  mvp: mat4x4f,\n"
+                "};\n"
+                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+                "struct vs_out {\n"
+                "  @builtin(position) pos: vec4f,\n"
+                "  @location(0) color: vec4f,\n"
+                "};\n"
+                "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
+                "  var out: vs_out;\n"
+                "  out.pos = in.mvp * pos;\n"
+                "  out.color = color;\n"
+                "  return out;\n"
+                "}\n",
+        },
+        .fs.source =
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+            "  return color;\n"
+            "}\n",
+    });
+
+    // a pipeline object, note that we don't need to provide the MSAA sample count of the default framebuffer
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(noninterleaved_shader_desc(sg_query_backend())),
+        .shader = shd,
         .layout = {
-            /* note how the vertex components are pulled from different buffer bind slots */
+            // note how the vertex components are pulled from different buffer bind slots
             .attrs = {
-                /* positions come from vertex buffer slot 0 */
+                // positions come from vertex buffer slot 0
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                /* colors come from vertex buffer slot 1 */
+                // colors come from vertex buffer slot 1
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
@@ -90,19 +118,18 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    /* fill the resource bindings, note how the same vertex
-       buffer is bound to the first two slots, and the vertex-buffer-offsets
-       are used to point to the position- and color-components.
-    */
+    // fill the resource bindings, note how the same vertex
+    // buffer is bound to the first two slots, and the vertex-buffer-offsets
+    // are used to point to the position- and color-components.
     state.bind = (sg_bindings){
         .vertex_buffers = {
             [0] = vbuf,
             [1] = vbuf
         },
         .vertex_buffer_offsets = {
-            /* position components are at start of buffer */
+            // position components are at start of buffer
             [0] = 0,
-            /* byte offset of color components in buffer */
+            // byte offset of color components in buffer
             [1] = 24 * 3 * sizeof(float)
         },
         .index_buffer = ibuf
@@ -110,7 +137,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    /* compute model-view-projection matrix for vertex shader */
+    // compute model-view-projection matrix for vertex shader
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)wgpu_width()/(float)wgpu_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
@@ -124,7 +151,7 @@ static void frame(void) {
     sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -12,8 +12,32 @@ from mod import log, util, project
 # webpage template arguments
 GitHubSamplesURL = 'https://github.com/floooh/sokol-samples/tree/master/sapp/'
 
+# webpage text colors
+Keys = {
+    'webgl': {
+        'title': 'Sokol WebGL',
+        'cross_name': 'webgpu',
+        'cross_url': 'https://floooh.github.io/sokol-webgpu',
+        'body_bg_color': '#292d3e',
+        'thumb_bg_color': '#4a4d62',
+        'text_color': '#1ABC9C',
+    },
+    'webgpu': {
+        'title': 'Sokol WebGPU',
+        'cross_name': 'webgl',
+        'cross_url': 'https://floooh.github.io/sokol-html5',
+        'body_bg_color': '#292d3e',
+        'thumb_bg_color': '#4a4d62',
+        'text_color': '#3498DB',
+    }
+}
+
 # build configuration
-BuildConfig = 'sapp-webgl2-wasm-ninja-release'
+def get_build_config(api):
+    if api == 'webgl':
+        return 'sapp-webgl2-wasm-ninja-release'
+    else:
+        return 'sapp-wgpu-wasm-ninja-release'
 
 # sample attributes
 samples = [
@@ -35,6 +59,8 @@ samples = [
     [ 'tex3d', 'tex3d-sapp.c', 'tex3d-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
     [ 'basisu', 'basisu-sapp.c', None ],
+    [ 'cubemap-jpeg', 'cubemap-jpeg-sapp.c', 'cubemap-jpeg-sapp.glsl' ],
+    [ 'cubemaprt', 'cubemaprt-sapp.c', 'cubemaprt-sapp.glsl' ],
     [ 'primtypes', 'primtypes-sapp.c', 'primtypes-sapp.glsl'],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
@@ -63,6 +89,7 @@ samples = [
     [ 'icon', 'icon-sapp.c', None ],
     [ 'droptest', 'droptest-sapp.c', None],
     [ 'pixelformats', 'pixelformats-sapp.c', None],
+    [ 'drawcallperf', 'drawcallperf-sapp.c', 'drawcallperf-sapp.glsl'],
     [ 'saudio', 'saudio-sapp.c', None],
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
@@ -121,11 +148,17 @@ assets = [
     "mix-and-match-pma.atlas",
     "mix-and-match-pma.png",
     "mix-and-match-pro.skel",
+    "nb2_posx.jpg",
+    "nb2_negx.jpg",
+    "nb2_posy.jpg",
+    "nb2_negy.jpg",
+    "nb2_posz.jpg",
+    "nb2_negz.jpg",
 ]
 
 #-------------------------------------------------------------------------------
-def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
-    wasm_deploy_dir = util.get_deploy_dir(fips_dir, 'sokol-samples', BuildConfig)
+def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
+    wasm_deploy_dir = util.get_deploy_dir(fips_dir, 'sokol-samples', get_build_config(api))
 
     # build the thumbnail gallery
     content = ''
@@ -149,7 +182,16 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
     # populate the html template, and write to the build directory
     with open(proj_dir + '/webpage/index.html', 'r') as f:
         templ = Template(f.read())
-    html = templ.safe_substitute(samples=content)
+    keys = Keys[api]
+    html = templ.safe_substitute(
+        samples = content,
+        title = keys['title'],
+        cross_name = keys['cross_name'],
+        cross_url = keys['cross_url'],
+        body_bg_color = keys['body_bg_color'],
+        thumb_bg_color = keys['thumb_bg_color'],
+        text_color = keys['text_color'])
+
     with open(webpage_dir + '/index.html', 'w') as f :
         f.write(html)
 
@@ -200,10 +242,11 @@ def deploy_webpage(fips_dir, proj_dir, webpage_dir) :
             shutil.copy(img_path, webpage_dir + '/' + img_name)
 
 #-------------------------------------------------------------------------------
-def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
+def build_deploy_webpage(fips_dir, proj_dir, api, rebuild) :
     # if webpage dir exists, clear it first
+    build_config = get_build_config(api)
     proj_build_dir = util.get_deploy_root_dir(fips_dir, 'sokol-samples')
-    webpage_dir = '{}/sokol-webpage'.format(proj_build_dir)
+    webpage_dir = '{}/sokol-webpage-{}'.format(proj_build_dir, api)
     if rebuild :
         if os.path.isdir(webpage_dir) :
             shutil.rmtree(webpage_dir)
@@ -211,18 +254,18 @@ def build_deploy_webpage(fips_dir, proj_dir, rebuild) :
         os.makedirs(webpage_dir)
 
     # compile samples
-    project.gen(fips_dir, proj_dir, BuildConfig)
-    project.build(fips_dir, proj_dir, BuildConfig)
+    project.gen(fips_dir, proj_dir, build_config)
+    project.build(fips_dir, proj_dir, build_config)
 
     # deploy the webpage
-    deploy_webpage(fips_dir, proj_dir, webpage_dir)
+    deploy_webpage(fips_dir, proj_dir, api, webpage_dir)
 
     log.colored(log.GREEN, 'Generated Samples web page under {}.'.format(webpage_dir))
 
 #-------------------------------------------------------------------------------
-def serve_webpage(fips_dir, proj_dir) :
+def serve_webpage(fips_dir, proj_dir, api) :
     proj_build_dir = util.get_deploy_root_dir(fips_dir, 'sokol-samples')
-    webpage_dir = '{}/sokol-webpage'.format(proj_build_dir)
+    webpage_dir = '{}/sokol-webpage-{}'.format(proj_build_dir, api)
     p = util.get_host_platform()
     if p == 'osx' :
         try :
@@ -249,22 +292,28 @@ def serve_webpage(fips_dir, proj_dir) :
 #-------------------------------------------------------------------------------
 def run(fips_dir, proj_dir, args) :
     if len(args) > 0 :
-        if args[0] == 'build' :
-            build_deploy_webpage(fips_dir, proj_dir, False)
-        elif args[0] == 'rebuild' :
-            build_deploy_webpage(fips_dir, proj_dir, True)
-        elif args[0] == 'serve' :
-            serve_webpage(fips_dir, proj_dir)
+        action = args[0]
+        api = 'webgl'
+        if len(args) > 1:
+            api = args[1]
+        if api not in ['webgl', 'webgpu']:
+            log.error("Invalid param '{}', expected 'webgl' or 'webgpu'".format(api))
+        if action == 'build' :
+            build_deploy_webpage(fips_dir, proj_dir, api, False)
+        elif action == 'rebuild' :
+            build_deploy_webpage(fips_dir, proj_dir, api,  True)
+        elif action == 'serve' :
+            serve_webpage(fips_dir, proj_dir, api)
         else :
-            log.error("Invalid param '{}', expected 'build' or 'serve'".format(args[0]))
+            log.error("Invalid param '{}', expected 'build' or 'serve'".format(action))
     else :
-        log.error("Param 'build' or 'serve' expected")
+        log.error("Params 'build|rebuild|serve [webgl|webgpu]' expected")
 
 #-------------------------------------------------------------------------------
 def help() :
     log.info(log.YELLOW +
-             'fips webpage build\n' +
-             'fips webpage rebuild\n' +
-             'fips webpage serve\n' +
+             'fips webpage build [webgl|webgpu]\n' +
+             'fips webpage rebuild [webgl|webgpu]\n' +
+             'fips webpage serve [webgl|webgpu]\n' +
              log.DEF +
              '    build sokol samples webpage')

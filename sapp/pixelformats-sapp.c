@@ -135,25 +135,31 @@ static void init(void) {
         sg_range img_data = gen_pixels(fmt);
         if (img_data.ptr) {
             state.fmt[i].valid = true;
+            const sg_pixelformat_info fmt_info = sg_query_pixelformat(fmt);
             // create unfiltered and filtered texture
-            sg_image img = sg_make_image(&(sg_image_desc){
-                .width = 8,
-                .height = 8,
-                .pixel_format = fmt,
-                .data.subimage[0][0] = img_data,
-            });
-            if (sg_query_pixelformat(fmt).sample) {
-                state.fmt[i].unfiltered = simgui_make_image(&(simgui_image_desc_t){
-                    .image = img,
-                    .sampler = state.smp_nearest,
+            if (fmt_info.sample) {
+                sg_image img = sg_make_image(&(sg_image_desc){
+                    .width = 8,
+                    .height = 8,
+                    .pixel_format = fmt,
+                    .data.subimage[0][0] = img_data,
                 });
-                state.fmt[i].filtered = simgui_make_image(&(simgui_image_desc_t){
-                    .image = img,
-                    .sampler = state.smp_linear,
-                });
+                if (fmt_info.sample) {
+                    state.fmt[i].unfiltered = simgui_make_image(&(simgui_image_desc_t){
+                        .image = img,
+                        .sampler = state.smp_nearest,
+                    });
+                    if (fmt_info.filter) {
+                        state.fmt[i].filtered = simgui_make_image(&(simgui_image_desc_t){
+                            .image = img,
+                            .sampler = state.smp_linear,
+                        });
+                    }
+                }
             }
+
             // create non-MSAA render target, pipeline state and pass
-            if (sg_query_pixelformat(fmt).render) {
+            if (fmt_info.render) {
                 sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
@@ -175,7 +181,7 @@ static void init(void) {
                 });
             }
             // create non-MSAA blend render target, pipeline states and pass
-            if (sg_query_pixelformat(fmt).blend) {
+            if (fmt_info.blend) {
                 sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,
@@ -195,7 +201,7 @@ static void init(void) {
                 });
             }
             // create MSAA render target, resolve texture and matching pipeline state
-            if (sg_query_pixelformat(fmt).msaa) {
+            if (fmt_info.msaa) {
                 sg_image msaa_img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
                     .width = 64,

@@ -2,25 +2,30 @@
 //  uvwrap-wgpu.c
 //  Demonstrates and tests texture coordinate wrapping modes.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
-#include "uvwrap-wgpu.glsl.h"
 
 #define SAMPLE_COUNT (4)
 
 static struct {
     sg_buffer vbuf;
-    sg_image img[_SG_WRAP_NUM];
+    sg_image img;
+    sg_sampler smp[_SG_WRAP_NUM];
     sg_pipeline pip;
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = {0.0f, 0.5f, 0.7f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = {0.0f, 0.5f, 0.7f, 1.0f } }
     }
 };
+
+typedef struct {
+    float offset[2];
+    float scale[2];
+} vs_params_t;
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -28,7 +33,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a quad vertex buffer with "oversized" texture coords */
+    // a quad vertex buffer with "oversized" texture coords
     const float quad_vertices[] = {
         -1.0f, +1.0f,
         +1.0f, +1.0f,
@@ -39,7 +44,7 @@ static void init(void) {
         .data = SG_RANGE(quad_vertices)
     });
 
-    /* one test image per UV-wrap mode */
+    // an image object with a test pattern
     const uint32_t o = 0xFF555555;
     const uint32_t W = 0xFFFFFFFF;
     const uint32_t R = 0xFF0000FF;
@@ -55,28 +60,70 @@ static void init(void) {
         { B, o, o, o, o, o, o, R },
         { B, B, B, B, R, R, R, R },
     };
+    state.img = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .data.subimage[0][0] = SG_RANGE(test_pixels),
+        .label = "uvwrap-img",
+    });
+
+    // one sampler object per uv-wrap mode
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
-        state.img[i] = sg_make_image(&(sg_image_desc){
-            .width = 8,
-            .height = 8,
+        state.smp[i] = sg_make_sampler(&(sg_sampler_desc){
             .wrap_u = (sg_wrap) i,
             .wrap_v = (sg_wrap) i,
             .border_color = SG_BORDERCOLOR_OPAQUE_BLACK,
-            .data.subimage[0][0] = SG_RANGE(test_pixels)
+            .label = "uvwrap-sampler",
         });
     }
 
-    /* a pipeline state object */
+    // a shader object
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs = {
+            .uniform_blocks[0].size = sizeof(vs_params_t),
+            .source =
+                "struct vs_params {\n"
+                "  offset: vec2f,\n"
+                "  scale: vec2f,\n"
+                "}\n"
+                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+                "struct vs_out {\n"
+                "  @builtin(position) pos: vec4f,\n"
+                "  @location(0) uv: vec2f,\n"
+                "}\n"
+                "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
+                "  var out: vs_out;\n"
+                "  out.pos = vec4(pos * in.scale + in.offset, 0.5, 1.0);\n"
+                "  out.uv = (pos + 1.0) - 0.5;\n"
+                "  return out;\n"
+                "}\n",
+        },
+        .fs = {
+            .images[0].used = true,
+            .samplers[0].used = true,
+            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+            .source =
+                "@group(1) @binding(32) var tex: texture_2d<f32>;\n"
+                "@group(1) @binding(48) var smp: sampler;\n"
+                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+                "  return textureSample(tex, smp, uv);\n"
+                "}\n",
+        },
+        .label = "uvwrap-shader",
+    });
+
+    // a pipeline state object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(uvwrap_shader_desc(sg_query_backend())),
+        .shader = shd,
         .layout = {
-            .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT2
+            .attrs[0].format = SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true
         },
+        .label = "uvwrap-pipeline",
     });
 }
 
@@ -86,7 +133,10 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .fs_images[0] = state.img[i]
+            .fs = {
+                .images[0] = state.img,
+                .samplers[0] = state.smp[i],
+            }
         });
         float x_offset = 0, y_offset = 0;
         switch (i) {
@@ -99,7 +149,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

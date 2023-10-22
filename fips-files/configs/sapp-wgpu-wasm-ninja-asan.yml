@@ -1,0 +1,13 @@
+---
+platform: emscripten
+generator: Ninja
+build_tool: ninja
+build_type: Debug
+cmake-toolchain: emscripten.toolchain.cmake
+defines:
+    USE_SOKOL_APP: ON
+    FIPS_EMSCRIPTEN_USE_WEBGPU: ON
+    FIPS_EMSCRIPTEN_USE_WASM: ON
+    FIPS_EMSCRIPTEN_USE_EMMALLOC: ON
+    FIPS_EMSCRIPTEN_USE_ASAN: ON
+    FIPS_EMSCRIPTEN_RELATIVE_SHELL_HTML: "webpage/shell.html"

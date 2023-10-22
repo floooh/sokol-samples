@@ -40,17 +40,7 @@ void __cdbgui_draw(void) {
         .dpi_scale = sapp_dpi_scale()
     });
     if (igBeginMainMenuBar()) {
-        if (igBeginMenu("sokol-gfx", true)) {
-            igMenuItem_BoolPtr("Capabilities", 0, &sg_imgui.caps.open, true);
-            igMenuItem_BoolPtr("Buffers", 0, &sg_imgui.buffers.open, true);
-            igMenuItem_BoolPtr("Images", 0, &sg_imgui.images.open, true);
-            igMenuItem_BoolPtr("Samplers", 0, &sg_imgui.samplers.open, true);
-            igMenuItem_BoolPtr("Shaders", 0, &sg_imgui.shaders.open, true);
-            igMenuItem_BoolPtr("Pipelines", 0, &sg_imgui.pipelines.open, true);
-            igMenuItem_BoolPtr("Passes", 0, &sg_imgui.passes.open, true);
-            igMenuItem_BoolPtr("Calls", 0, &sg_imgui.capture.open, true);
-            igEndMenu();
-        }
+        sg_imgui_draw_menu(&sg_imgui, "sokol-gfx");
         igEndMainMenuBar();
     }
     sg_imgui_draw(&sg_imgui);

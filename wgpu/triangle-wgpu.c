@@ -2,12 +2,11 @@
 //  triangle-wgpu.c
 //  Vertex buffer, simple shader, pipeline state object.
 //------------------------------------------------------------------------------
+#include "wgpu_entry.h"
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#include "wgpu_entry.h"
-#include "triangle-wgpu.glsl.h"
 
 static struct {
     sg_pipeline pip;
@@ -15,7 +14,7 @@ static struct {
     sg_pass_action pass_action;
 } state = {
     .pass_action = {
-        .colors[0] = { .action = SG_ACTION_CLEAR, .value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     }
 };
 
@@ -25,7 +24,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* a vertex buffer with 3 vertices */
+    // a vertex buffer with 3 vertices
     float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -36,17 +35,33 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create a shader from precompiled SPIRV bytecode */
-    sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
+    // a shader object with wgsl shader code
+    sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vs.source =
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = pos;\n"
+            "  out.color = color;\n"
+            "  return out;\n"
+            "}\n",
+        .fs.source =
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+            "  return color;\n"
+            "}\n",
+    });
 
-    /* create a pipeline object (default render states are fine for triangle) */
+    // create a pipeline object (default render states are fine for triangle)
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = shd,
         .layout = {
             .attrs = {
                 [0].format=SG_VERTEXFORMAT_FLOAT3,
                 [1].format=SG_VERTEXFORMAT_FLOAT4
-            }
+            },
         },
     });
 }

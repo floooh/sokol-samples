@@ -2,7 +2,8 @@ name: Deploy Webpage
 on: workflow_dispatch
 
 jobs:
-  build:
+
+  build_webgl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -12,24 +13,62 @@ jobs:
       - name: build
         run: |
           python3 fips set local on
-          python3 fips webpage build
+          python3 fips webpage build webgl
       - name: upload-artifact
         uses: actions/upload-artifact@v3
         with:
-          name: webpage
-          path: fips-files/deploy/sokol-webpage
+          name: webpage_webgl
+          path: fips-files/deploy/sokol-webpage-webgl
           retention-days: 1
-  deploy:
-    needs: build
+
+  build_webgpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: seanmiddleditch/gha-setup-ninja@master
+      - name: prepare
+        run:  python3 fips emsdk install latest
+      - name: build
+        run: |
+          python3 fips set local on
+          python3 fips webpage build webgpu
+      - name: upload-artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: webpage_webgpu
+          path: fips-files/deploy/sokol-webpage-webgpu
+          retention-days: 1
+
+  deploy_webgl:
+    needs: build_webgl
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           repository: floooh/sokol-html5
-          ssh-key: ${{ secrets.GHACTION_PUSH }}
+          ssh-key: ${{ secrets.SOKOL_HTML5_DEPLOY }}
       - uses: actions/download-artifact@v3
         with:
-          name: webpage
+          name: webpage_webgl
+      - name: "commit and push"
+        run: |
+          git config user.email "none"
+          git config user.name "GH Action"
+          git add .
+          git commit -m "updated (${{ github.run_number }})"
+          git push
+
+  deploy_webgpu:
+    needs: build_webgpu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: floooh/sokol-webgpu
+          ssh-key: ${{ secrets.SOKOL_WEBGPU_DEPLOY }}
+      - uses: actions/download-artifact@v3
+        with:
+          name: webpage_webgpu
       - name: "commit and push"
         run: |
           git config user.email "none"

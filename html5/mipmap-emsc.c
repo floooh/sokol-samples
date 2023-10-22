@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-//  mipmap-glfw.c
+//  mipmap-emsc.c
 //  Test mipmapping behaviour.
 //  Top row: NEAREST_MIPMAP_NEAREST to LINEAR_MIPMAP_LINEAR
 //  Bottom row: anistropy levels 2, 4, 8 and 16
 //------------------------------------------------------------------------------
-#include <GLES3/gl3.h>
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
