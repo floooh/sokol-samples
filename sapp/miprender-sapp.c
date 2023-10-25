@@ -26,16 +26,17 @@
 
 static struct {
     float rx, ry;
+    double time;
     sg_buffer vbuf;
     sg_buffer ibuf;
     sg_image img;
     sg_sampler smp;
-    sg_pass pass[IMG_NUM_MIPMAPS];
     struct {
         sg_pipeline pip;
         sg_pass_action pass_action;
         sg_bindings bindings;
         sshape_element_range_t shapes[NUM_SHAPES];
+        sg_pass pass[IMG_NUM_MIPMAPS];
     } offscreen;
     struct {
         sg_pipeline pip;
@@ -62,7 +63,7 @@ static void init(void) {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer = SSHAPE_RANGE(indices),
     };
-    buf = sshape_build_box(&buf, &(sshape_box_t){ .width = 1.4f, .height = 2.0f, .depth = 2.0f });
+    buf = sshape_build_box(&buf, &(sshape_box_t){ .width = 1.5f, .height = 1.5f, .depth = 1.5f });
     state.offscreen.shapes[SHAPE_BOX] = sshape_element_range(&buf);
     buf = sshape_build_torus(&buf, &(sshape_torus_t){ .radius = 1.0f, .ring_radius = 0.3f, .rings = 36, .sides = 18 });
     state.offscreen.shapes[SHAPE_DONUT] = sshape_element_range(&buf);
@@ -109,7 +110,7 @@ static void init(void) {
 
     // create render pass objects for offscreen rendering (one pass per mipmap)
     for (int mip_level = 0; mip_level < IMG_NUM_MIPMAPS; mip_level++) {
-        state.pass[mip_level] = sg_make_pass(&(sg_pass_desc){
+        state.offscreen.pass[mip_level] = sg_make_pass(&(sg_pass_desc){
             .color_attachments[0] = {
                 .image = state.img,
                 .mip_level = mip_level
@@ -137,7 +138,9 @@ static void init(void) {
         .depth = {
             .write_enabled = true,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
-        }
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
     });
 
     // ...and a render pipeline object for the display pass
@@ -158,7 +161,7 @@ static void init(void) {
         }
     });
 
-    // setup resource bindings
+    // initialize resource bindings
     state.offscreen.bindings = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
@@ -171,20 +174,42 @@ static void init(void) {
             .samplers[SLOT_smp] = state.smp,
         }
     };
+
+    // initialize pass actions
+    state.offscreen.pass_action = (sg_pass_action) {
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 0.5f, 1.0f } },
+    };
+    state.display.pass_action = (sg_pass_action) {
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
+    };
 }
 
 static void frame(void) {
+    double dt = sapp_frame_duration();
+    state.time += dt;
+    state.rx += (float)(dt * 20.0f);
+    state.ry += (float)(dt * 40.0f);
 
     const vs_params_t offscreen_vsparams = compute_offscreen_vsparams();
     const vs_params_t display_vsparams = compute_display_vsparams();
 
+    // render different shapes into each mipmap level
+    for (int i = 0; i < IMG_NUM_MIPMAPS; i++) {
+        sg_begin_pass(state.offscreen.pass[i], &state.offscreen.pass_action);
+        sg_apply_pipeline(state.offscreen.pip);
+        sg_apply_bindings(&state.offscreen.bindings);
+        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(offscreen_vsparams));
+        const sshape_element_range_t shape = state.offscreen.shapes[i % NUM_SHAPES];
+        sg_draw(shape.base_element, shape.num_elements, 1);
+        sg_end_pass();
+    }
+
+    // default pass: render a textured plane that moves back and forth to use different mipmap levels
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
-    // FIXME FIXME FIXME
-    sg_apply_pipeline(state.offscreen.pip);
-    sg_apply_bindings(&state.offscreen.bindings);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(offscreen_vsparams));
-    const sshape_element_range_t shape = state.offscreen.shapes[SHAPE_SPHERE];
-    sg_draw(shape.base_element, shape.num_elements, 1);
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&state.display.bindings);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(display_vsparams));
+    sg_draw(state.display.plane.base_element, state.display.plane.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -197,11 +222,9 @@ static void cleanup(void) {
 
 // compute a model-view-projection matrix for offscreen rendering (aspect ratio 1:1)
 static vs_params_t compute_offscreen_vsparams(void) {
-    const float t = (float)(sapp_frame_duration() * 60.0);
     hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 3.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.rx += 1.0f * t; state.ry += 2.0f * t;
     hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
     hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 0.0f, 1.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
@@ -212,14 +235,12 @@ static vs_params_t compute_offscreen_vsparams(void) {
 static vs_params_t compute_display_vsparams(void) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
-    const float t = (float)(sapp_frame_duration() * 60.0);
-    hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    const float scale = (HMM_SinF((float)state.time) + 1.0f) * 0.5f;
+    hmm_mat4 proj = HMM_Perspective(40.0f, w/h, 0.01f, 10.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 3.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.rx += 1.0f * t; state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    hmm_mat4 model = HMM_Rotate(90.0f, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    model = HMM_MultiplyMat4(HMM_Scale(HMM_Vec3(scale, scale, 1.0f)), model);
     return (vs_params_t){ .mvp = HMM_MultiplyMat4(view_proj, model) };
 }
 
