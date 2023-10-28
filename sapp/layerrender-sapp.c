@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
-//  miprender-sapp.c
+//  layerrender-sapp.c
 //
-// Rendering into into texture mipmaps.
+//  Rendering into texture-array layers.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -13,15 +13,15 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
-#include "miprender-sapp.glsl.h"
+#include "layerrender-sapp.glsl.h"
 
 #define IMG_WIDTH (512)
 #define IMG_HEIGHT (512)
-#define IMG_NUM_MIPMAPS (9)
+#define IMG_NUM_LAYERS (3)
 
 #define SHAPE_BOX (0)
 #define SHAPE_DONUT (1)
-#define SHAPE_SPHERE (2)
+#define SHAPE_CYLINDER (2)
 #define NUM_SHAPES (3)
 
 static struct {
@@ -36,7 +36,7 @@ static struct {
         sg_pass_action pass_action;
         sg_bindings bindings;
         sshape_element_range_t shapes[NUM_SHAPES];
-        sg_pass pass[IMG_NUM_MIPMAPS];
+        sg_pass pass[IMG_NUM_LAYERS];
     } offscreen;
     struct {
         sg_pipeline pip;
@@ -46,7 +46,7 @@ static struct {
     } display;
 } state;
 
-static vs_params_t compute_offscreen_vsparams(void);
+static vs_params_t compute_offscreen_vsparams(float rx, float ry);
 static vs_params_t compute_display_vsparams(void);
 
 static void init(void) {
@@ -67,8 +67,8 @@ static void init(void) {
     state.offscreen.shapes[SHAPE_BOX] = sshape_element_range(&buf);
     buf = sshape_build_torus(&buf, &(sshape_torus_t){ .radius = 1.0f, .ring_radius = 0.3f, .rings = 36, .sides = 18 });
     state.offscreen.shapes[SHAPE_DONUT] = sshape_element_range(&buf);
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t){ .radius = 1.0f, .slices = 36, .stacks = 20 });
-    state.offscreen.shapes[SHAPE_SPHERE] = sshape_element_range(&buf);
+    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t){ .radius = 1.0f, .height = 1.5f, .slices = 36, .stacks = 1 });
+    state.offscreen.shapes[SHAPE_CYLINDER] = sshape_element_range(&buf);
     buf = sshape_build_plane(&buf, &(sshape_plane_t){ .width = 2.0f, .depth = 2.0f });
     state.display.plane = sshape_element_range(&buf);
     assert(buf.valid);
@@ -79,50 +79,45 @@ static void init(void) {
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
 
-    // create an offscreen render target with a complete mipmap chain
+    // create an array-texture as render target
     state.img = sg_make_image(&(sg_image_desc){
         .render_target = true,
+        .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
-        .num_mipmaps = IMG_NUM_MIPMAPS,
+        .num_slices = IMG_NUM_LAYERS,
+        .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = 1,
     });
 
-    // we also need a matching depth buffer image
+    // ...and a matching depth buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .render_target = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
-        .num_mipmaps = IMG_NUM_MIPMAPS,
+        .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 1,
     });
 
-    // create a sampler which smoothly blends between mipmaps
+    // a sampler for sampling the array texture
     state.smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
-        .mipmap_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
-    // create render pass objects for offscreen rendering (one pass per mipmap)
-    for (int mip_level = 0; mip_level < IMG_NUM_MIPMAPS; mip_level++) {
-        state.offscreen.pass[mip_level] = sg_make_pass(&(sg_pass_desc){
-            .color_attachments[0] = {
-                .image = state.img,
-                .mip_level = mip_level
-            },
-            .depth_stencil_attachment = {
-                .image = depth_img,
-                .mip_level = mip_level
-            },
+    // one render pass object per texture array layer
+    for (int i = 0; i < IMG_NUM_LAYERS; i++) {
+        state.offscreen.pass[i] = sg_make_pass(&(sg_pass_desc){
+            .color_attachments[0] = { .image = state.img, .slice = i },
+            .depth_stencil_attachment = { .image = depth_img },
         });
     }
 
-    // a pipeline object for the offscreen passes
+    // a pipeline object for the offscreen pass
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .buffers[0].stride = sizeof(sshape_vertex_t),
@@ -154,32 +149,33 @@ static void init(void) {
         },
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
-        .cull_mode = SG_CULLMODE_NONE,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = 1,
         .depth = {
             .write_enabled = true,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
-        }
+        },
     });
 
     // initialize resource bindings
-    state.offscreen.bindings = (sg_bindings) {
+    state.offscreen.bindings = (sg_bindings){
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
     };
-    state.display.bindings = (sg_bindings) {
+    state.display.bindings = (sg_bindings){
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
         .fs = {
             .images[SLOT_tex] = state.img,
             .samplers[SLOT_smp] = state.smp,
-        }
+        },
     };
 
     // initialize pass actions
-    state.offscreen.pass_action = (sg_pass_action) {
+    state.offscreen.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 0.5f, 1.0f } },
     };
-    state.display.pass_action = (sg_pass_action) {
+    state.display.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     };
 }
@@ -190,21 +186,28 @@ static void frame(void) {
     state.rx += (float)(dt * 20.0f);
     state.ry += (float)(dt * 40.0f);
 
-    const vs_params_t offscreen_vsparams = compute_offscreen_vsparams();
     const vs_params_t display_vsparams = compute_display_vsparams();
 
-    // render different shapes into each mipmap level
-    for (int i = 0; i < IMG_NUM_MIPMAPS; i++) {
+    // render different shapes into each texture array layer
+    for (int i = 0; i < IMG_NUM_LAYERS; i++) {
         sg_begin_pass(state.offscreen.pass[i], &state.offscreen.pass_action);
         sg_apply_pipeline(state.offscreen.pip);
         sg_apply_bindings(&state.offscreen.bindings);
+        float rx = state.rx;
+        float ry = state.ry;
+        switch (i) {
+            case 0: break;
+            case 1: rx = -rx; break;
+            default: ry = -ry; break;
+        }
+        const vs_params_t offscreen_vsparams = compute_offscreen_vsparams(rx, ry);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(offscreen_vsparams));
-        const sshape_element_range_t shape = state.offscreen.shapes[i % NUM_SHAPES];
+        const sshape_element_range_t shape = state.offscreen.shapes[i];
         sg_draw(shape.base_element, shape.num_elements, 1);
         sg_end_pass();
     }
 
-    // default pass: render a textured plane that moves back and forth to use different mipmap levels
+    // default pass: render a textured plane which accesses all texture layers in the fragment shader
     sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bindings);
@@ -221,12 +224,12 @@ static void cleanup(void) {
 }
 
 // compute a model-view-projection matrix for offscreen rendering (aspect ratio 1:1)
-static vs_params_t compute_offscreen_vsparams(void) {
+static vs_params_t compute_offscreen_vsparams(float rx, float ry) {
     hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 3.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 0.0f, 1.0f));
+    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 0.0f, 1.0f));
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     return (vs_params_t){ .mvp = HMM_MultiplyMat4(view_proj, model) };
 }
@@ -235,18 +238,16 @@ static vs_params_t compute_offscreen_vsparams(void) {
 static vs_params_t compute_display_vsparams(void) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
-    const float scale = (HMM_SinF((float)state.time) + 1.0f) * 0.5f;
     hmm_mat4 proj = HMM_Perspective(40.0f, w/h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 3.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     hmm_mat4 model = HMM_Rotate(90.0f, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    model = HMM_MultiplyMat4(HMM_Scale(HMM_Vec3(scale, scale, 1.0f)), model);
     return (vs_params_t){ .mvp = HMM_MultiplyMat4(view_proj, model) };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
     (void)argc; (void)argv;
-    return (sapp_desc){
+    return (sapp_desc) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
@@ -254,7 +255,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 1,
-        .window_title = "miprender-sapp.c",
+        .window_title = "layerrender-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };
