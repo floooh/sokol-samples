@@ -62,6 +62,7 @@ samples = [
     [ 'cubemap-jpeg', 'cubemap-jpeg-sapp.c', 'cubemap-jpeg-sapp.glsl' ],
     [ 'cubemaprt', 'cubemaprt-sapp.c', 'cubemaprt-sapp.glsl' ],
     [ 'miprender', 'miprender-sapp.c', 'miprender-sapp.glsl' ],
+    [ 'layerrender', 'layerrender-sapp.c', 'layerrender-sapp.glsl' ],
     [ 'primtypes', 'primtypes-sapp.c', 'primtypes-sapp.glsl'],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
