@@ -99,12 +99,16 @@ static void init(void) {
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
+    assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[0]) == mtl_vbuf);
+    assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[1]) == nil);
     sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
     };
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
+    assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.index_buffer).buf[0]) == mtl_ibuf);
+    assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.index_buffer).buf[1]) == nil);
 
     // create dynamically updated Metal texture objects, these will
     // be rotated through by sokol_gfx as they are updated, so we need
@@ -131,6 +135,8 @@ static void init(void) {
 
     sg_reset_state_cache();
     state.bind.fs.images[0] = sg_make_image(&img_desc);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.fs.images[0]).tex[0]) == mtl_tex[0]);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.fs.images[0]).tex[1]) == mtl_tex[1]);
 
     // create a Metal sampler object and inject into a sokol-gfx sampler object
     MTLSamplerDescriptor* mtl_smp_desc = [[MTLSamplerDescriptor alloc] init];
@@ -150,6 +156,7 @@ static void init(void) {
 
     sg_reset_state_cache();
     state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
+    assert(((__bridge id<MTLSamplerState>) sg_mtl_query_sampler_info(state.bind.fs.samplers[0]).smp) == mtl_smp);
 
     // a shader
     sg_shader_desc shader_desc = {
@@ -197,6 +204,10 @@ static void init(void) {
         }
     };
     sg_shader shd = sg_make_shader(&shader_desc);
+    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).vs_lib) != nil);
+    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).fs_lib) != nil);
+    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).vs_func) != nil);
+    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).fs_func) != nil);
 
     // a pipeline state object
     sg_pipeline_desc pip_desc = {
@@ -215,6 +226,8 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
+    assert(((__bridge id<MTLRenderPipelineState>) sg_mtl_query_pipeline_info(state.pip).rps) != nil);
+    assert(((__bridge id<MTLDepthStencilState>) sg_mtl_query_pipeline_info(state.pip).dss) != nil);
 
     // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
