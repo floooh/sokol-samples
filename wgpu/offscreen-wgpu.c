@@ -72,6 +72,10 @@ static void init(void) {
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img
     });
+    assert(sg_wgpu_query_pass_info(state.offscreen.pass).color_view[0] != 0);
+    assert(sg_wgpu_query_pass_info(state.offscreen.pass).color_view[1] == 0);
+    assert(sg_wgpu_query_pass_info(state.offscreen.pass).resolve_view[0] == 0);
+    assert(sg_wgpu_query_pass_info(state.offscreen.pass).ds_view != 0);
 
     // a sampler object for when the render target is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){

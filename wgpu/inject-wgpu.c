@@ -32,6 +32,7 @@ static struct {
     WGPUBuffer wgpu_vbuf;
     WGPUBuffer wgpu_ibuf;
     WGPUTexture wgpu_tex;
+    WGPUTextureView wgpu_tex_view;
     WGPUSampler wgpu_smp;
 } state;
 
@@ -129,11 +130,13 @@ static void init(void) {
         .size = sizeof(vertices),
         .wgpu_buffer = state.wgpu_vbuf,
     });
+    assert(sg_wgpu_query_buffer_info(state.bind.vertex_buffers[0]).buf == state.wgpu_vbuf);
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .wgpu_buffer = state.wgpu_ibuf,
     });
+    assert(sg_wgpu_query_buffer_info(state.bind.index_buffer).buf == state.wgpu_ibuf);
 
     // create dynamically updated WebGPU texture object
     state.wgpu_tex = wgpuDeviceCreateTexture(wgpu_dev, &(WGPUTextureDescriptor) {
@@ -149,6 +152,10 @@ static void init(void) {
         .mipLevelCount = 1,
         .sampleCount = 1,
     });
+    state.wgpu_tex_view = wgpuTextureCreateView(state.wgpu_tex, &(WGPUTextureViewDescriptor) {
+        .mipLevelCount = 1,
+        .arrayLayerCount = 1,
+    });
     sg_reset_state_cache();
 
     // ... and the sokol-gfx texture object with the injected WGPU texture
@@ -157,8 +164,11 @@ static void init(void) {
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .wgpu_texture = state.wgpu_tex
+        .wgpu_texture = state.wgpu_tex,
+        .wgpu_texture_view = state.wgpu_tex_view,
     });
+    assert(sg_wgpu_query_image_info(state.bind.fs.images[0]).tex == state.wgpu_tex);
+    assert(sg_wgpu_query_image_info(state.bind.fs.images[0]).view == state.wgpu_tex_view);
 
     // a WebGPU sampler object...
     state.wgpu_smp = wgpuDeviceCreateSampler(wgpu_dev, &(WGPUSamplerDescriptor){
@@ -179,6 +189,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wgpu_sampler = state.wgpu_smp,
     });
+    assert(sg_wgpu_query_sampler_info(state.bind.fs.samplers[0]).smp == state.wgpu_smp);
 
     // a sokol-gfx shader object
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
@@ -212,6 +223,9 @@ static void init(void) {
                 "}\n"
         },
     });
+    assert(sg_wgpu_query_shader_info(shd).vs_mod != 0);
+    assert(sg_wgpu_query_shader_info(shd).fs_mod != 0);
+    assert(sg_wgpu_query_shader_info(shd).bgl != 0);
 
     // a pipeline state object
     sg_pipeline_desc pip_desc = {
@@ -230,6 +244,7 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
+    assert(sg_wgpu_query_pipeline_info(state.pip).pip != 0);
 }
 
 void frame() {

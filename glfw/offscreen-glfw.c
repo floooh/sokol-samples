@@ -53,6 +53,8 @@ int main() {
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img
     });
+    assert(sg_gl_query_pass_info(offscreen_pass).frame_buffer != 0);
+    assert(sg_gl_query_pass_info(offscreen_pass).msaa_resolve_framebuffer[0] == 0);
 
     // pass action for offscreen pass, clearing to black
     sg_pass_action offscreen_pass_action = {
