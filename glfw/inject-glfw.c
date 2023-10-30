@@ -102,12 +102,18 @@ int main() {
         .size = sizeof(vertices),
         .gl_buffers[0] = gl_vbuf
     });
+    assert(sg_gl_query_buffer_info(vbuf).buf[0] == gl_vbuf);
+    assert(sg_gl_query_buffer_info(vbuf).buf[1] == 0);
+    assert(sg_gl_query_buffer_info(vbuf).active_slot == 0);
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .usage = SG_USAGE_IMMUTABLE,
         .size = sizeof(indices),
         .gl_buffers[0] = gl_ibuf
     });
+    assert(sg_gl_query_buffer_info(ibuf).buf[0] == gl_ibuf);
+    assert(sg_gl_query_buffer_info(ibuf).buf[1] == 0);
+    assert(sg_gl_query_buffer_info(ibuf).active_slot == 0);
 
     /* create dynamically updated textures, in the GL backend
        dynamic textures are rotated through, so need to create
@@ -129,6 +135,11 @@ int main() {
     }
     sg_reset_state_cache();
     sg_image img = sg_make_image(&img_desc);
+    assert(sg_gl_query_image_info(img).tex[0] == img_desc.gl_textures[0]);
+    assert(sg_gl_query_image_info(img).tex[1] == img_desc.gl_textures[1]);
+    assert(sg_gl_query_image_info(img).active_slot == 0);
+    assert(sg_gl_query_image_info(img).tex_target == GL_TEXTURE_2D);
+    assert(sg_gl_query_image_info(img).msaa_render_buffer == 0);
 
     // create a GL sampler object
     sg_sampler_desc smp_desc = {
@@ -144,6 +155,7 @@ int main() {
     glSamplerParameteri(smp_desc.gl_sampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
     sg_reset_state_cache();
     sg_sampler smp = sg_make_sampler(&smp_desc);
+    assert(sg_gl_query_sampler_info(smp).smp == smp_desc.gl_sampler);
 
     // define resource bindings
     sg_bindings bind = {
@@ -186,6 +198,7 @@ int main() {
                 "}\n"
         }
     });
+    assert(sg_gl_query_shader_info(shd).prog != 0);
 
     // create pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
