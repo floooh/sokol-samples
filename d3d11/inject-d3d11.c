@@ -85,7 +85,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    ID3D11Device* d3d11_dev = (ID3D11Device*) d3d11_get_context().d3d11.device;
+    ID3D11Device* d3d11_dev = (ID3D11Device*) sg_d3d11_device();
     D3D11_BUFFER_DESC d3d11_vbuf_desc = {
         .ByteWidth = sizeof(vertices),
         .Usage = D3D11_USAGE_IMMUTABLE,
@@ -115,11 +115,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .size = sizeof(vertices),
         .d3d11_buffer = d3d11_vbuf
     });
+    assert(sg_d3d11_query_buffer_info(vbuf).buf == d3d11_vbuf);
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .size = sizeof(indices),
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .d3d11_buffer = d3d11_ibuf
     });
+    assert(sg_d3d11_query_buffer_info(ibuf).buf == d3d11_ibuf);
 
     // can release the native D3D11 buffers now, sokol_gfx is holding on to them
     d3d11_vbuf->lpVtbl->Release(d3d11_vbuf); d3d11_vbuf = 0;
@@ -161,6 +163,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .d3d11_texture = d3d11_tex,
         .d3d11_shader_resource_view = d3d11_srv
     });
+    assert(sg_d3d11_query_image_info(img).tex2d == d3d11_tex);
+    assert(sg_d3d11_query_image_info(img).tex3d == 0);
+    assert(sg_d3d11_query_image_info(img).res == d3d11_tex);
+    assert(sg_d3d11_query_image_info(img).srv == d3d11_srv);
     if (d3d11_tex) {
         d3d11_tex->lpVtbl->Release(d3d11_tex);
         d3d11_tex = 0;
@@ -191,6 +197,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .wrap_v = SG_WRAP_REPEAT,
         .d3d11_sampler = d3d11_smp,
     });
+    assert(sg_d3d11_query_sampler_info(smp).smp == d3d11_smp);
     d3d11_smp->lpVtbl->Release(d3d11_smp); d3d11_smp = 0;
 
     // create shader
@@ -232,6 +239,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "}\n"
         },
     });
+    assert(sg_d3d11_query_shader_info(shd).vs != 0);
+    assert(sg_d3d11_query_shader_info(shd).fs != 0);
+    assert(sg_d3d11_query_shader_info(shd).vs_cbufs[0] != 0);
+    assert(sg_d3d11_query_shader_info(shd).vs_cbufs[1] == 0);
+    assert(sg_d3d11_query_shader_info(shd).fs_cbufs[0] == 0);
 
     // pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -249,6 +261,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .cull_mode = SG_CULLMODE_BACK,
     });
+    assert(sg_d3d11_query_pipeline_info(pip).il != 0);
+    assert(sg_d3d11_query_pipeline_info(pip).rs != 0);
+    assert(sg_d3d11_query_pipeline_info(pip).dss != 0);
+    assert(sg_d3d11_query_pipeline_info(pip).bs != 0);
 
     // default pass action (clear to gray)
     sg_pass_action pass_action = { 0 };

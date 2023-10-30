@@ -43,6 +43,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .color_attachments[0].image = color_img,
         .depth_stencil_attachment.image = depth_img
     });
+    assert(sg_d3d11_query_pass_info(offscreen_pass).color_rtv[0] != 0);
+    assert(sg_d3d11_query_pass_info(offscreen_pass).color_rtv[1] == 0);
+    assert(sg_d3d11_query_pass_info(offscreen_pass).resolve_rtv[0] == 0);
+    assert(sg_d3d11_query_pass_info(offscreen_pass).dsv != 0);
 
     // a sampler object for when the rendertarget image is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
