@@ -135,6 +135,11 @@ export const project: fibs.ProjectDesc = {
     name: 'sokol-samples',
     imports: [
         {
+            name: 'platforms',
+            url: 'https://github.com/floooh/fibs-platforms',
+            import: [ 'emscripten.ts' ],
+        },
+        {
             name: 'libs',
             url: 'https://github.com/floooh/fibs-libs',
             import: [
