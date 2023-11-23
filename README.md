@@ -22,13 +22,13 @@ command line):
 ```sh
 > git --version
 2.x.x (any version should do)
-> python --version
-Python 3.x or 2.x
+> python3 --version
+Python 3.x
 > cmake --version
-cmake version 3.8.x or later
+cmake version 3.21.x or later
 # on OSX (on Windows you just need a recent VS)
 > xcodebuild -version
-Xcode 10.x (or later)
+Xcode xx.x (newer is better, older version are no longer tested)
 # make is only needed on Linux or when building the WASM samples
 > make --version
 GNU Make 3.81
