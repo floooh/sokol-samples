@@ -133,6 +133,8 @@ static void event(const sapp_event* ev) {
             break;
         case SAPP_EVENTTYPE_CHAR:
             {
+                // don't input Backspace as character (required to make Backspace work in text input fields)
+                if (ev->char_code == 127) { break; }
                 char txt[2] = { (char)(ev->char_code & 255), 0 };
                 mu_input_text(&state.mu_ctx, txt);
             }
