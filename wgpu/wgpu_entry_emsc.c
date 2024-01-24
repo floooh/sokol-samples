@@ -175,7 +175,7 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
         WGPUFeatureName_Depth32FloatStencil8
     };
     WGPUDeviceDescriptor dev_desc = {
-        .requiredFeaturesCount = 1,
+        .requiredFeatureCount = 1,
         .requiredFeatures = requiredFeatures,
     };
     wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
