@@ -21,7 +21,6 @@
 
 static struct {
     struct {
-        sg_pass_action pass_action;
         sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
@@ -52,7 +51,7 @@ static void init(void) {
     };
 
     // offscreen pass action: clear to grey
-    state.offscreen.pass_action = (sg_pass_action) {
+    state.offscreen.pass.action = (sg_pass_action) {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
             .clear_value = { 0.25f, 0.25f, 0.25f, 1.0f }
@@ -75,9 +74,9 @@ static void init(void) {
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img,
+    state.offscreen.pass.attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .depth_stencil.image = depth_img,
         .label = "offscreen-pass"
     });
 
@@ -202,7 +201,7 @@ static void frame(void) {
     vs_params = (vs_params_t) {
         .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
     };
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
