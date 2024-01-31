@@ -215,7 +215,7 @@ static void frame(void) {
     vs_params = (vs_params_t) {
         .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 2.0f)
     };
-    sg_begin_default_pass(&state.display.pass_action, w, h);
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sapp_sgswapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
