@@ -11,7 +11,7 @@ sg_pass_action pass_action;
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sapp_sgenvironment(),
         .logger.func = slog_func,
     });
     pass_action = (sg_pass_action) {
