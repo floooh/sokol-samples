@@ -29,7 +29,7 @@ typedef struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -76,7 +76,7 @@ void init(void) {
 }
 
 void frame(void) {
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     // render the triangle
     state.bind.vertex_buffer_offsets[0] = 0;

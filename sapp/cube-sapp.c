@@ -19,7 +19,7 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -127,7 +127,7 @@ void frame(void) {
                 .load_action = SG_LOADACTION_CLEAR,
                 .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } },
         },
-        .swapchain = sapp_sgswapchain()
+        .swapchain = sglue_swapchain()
     });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

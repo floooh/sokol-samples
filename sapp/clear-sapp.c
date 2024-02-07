@@ -11,7 +11,7 @@ sg_pass_action pass_action;
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .environment = sapp_sgenvironment(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     pass_action = (sg_pass_action) {
@@ -26,7 +26,7 @@ void init(void) {
 void frame(void) {
     float g = pass_action.colors[0].clear_value.g + 0.01f;
     pass_action.colors[0].clear_value.g = (g > 1.0f) ? 0.0f : g;
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sapp_sgswapchain() });
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     __dbgui_draw();
     sg_end_pass();
     sg_commit();

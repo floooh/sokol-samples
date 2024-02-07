@@ -18,7 +18,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .environment = sapp_sgenvironment(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -58,7 +58,7 @@ static void init(void) {
 }
 
 void frame(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sapp_sgswapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
