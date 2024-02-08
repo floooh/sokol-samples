@@ -193,7 +193,7 @@ static state_t state;
 
 static void init(void) {
     sg_desc desc = { };
-    desc.context = sapp_sgcontext();
+    desc.environment = sglue_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
 
@@ -373,7 +373,10 @@ static void frame(void) {
     }
     ImGui::End();
 
-    sg_begin_default_pass(&state.pass_action, w, h);
+    sg_pass pass = { };
+    pass.action = state.pass_action;
+    pass.swapchain = sglue_swapchain();
+    sg_begin_pass(&pass);
     simgui_render();
     sg_end_pass();
     sg_commit();

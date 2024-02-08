@@ -82,7 +82,7 @@ static uint16_t cube_indices[] = {
 void init(void) {
     // setup sokol-gfx, sokol-imgui and sokol-gl
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     simgui_setup(&(simgui_desc_t){
@@ -301,7 +301,10 @@ void frame(void) {
     igEnd();
 
     // actual UI rendering, the user draw callbacks are called from inside simgui_render()
-    sg_begin_default_pass(&state.default_pass_action, w, h);
+    sg_begin_pass(&(sg_pass){
+        .action = state.default_pass_action,
+        .swapchain = sglue_swapchain()
+    });
     simgui_render();
     sg_end_pass();
     sg_commit();

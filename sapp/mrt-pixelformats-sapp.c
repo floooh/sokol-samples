@@ -33,7 +33,7 @@ static struct {
         sg_image normal_img;
         sg_image color_img;
         sg_pass_action pass_action;
-        sg_pass pass;
+        sg_attachments attachments;
         sg_pipeline pip;
         sg_bindings bind;
         hmm_mat4 view_proj;
@@ -50,7 +50,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -90,13 +90,13 @@ static void init(void) {
         sg_image zbuffer_img = sg_make_image(&img_desc);
 
         // create pass object for MRT offscreen rendering
-        state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-            .color_attachments = {
+        state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
+            .colors = {
                 [0].image = state.offscreen.depth_img,
                 [1].image = state.offscreen.normal_img,
                 [2].image = state.offscreen.color_img,
             },
-            .depth_stencil_attachment.image = zbuffer_img
+            .depth_stencil.image = zbuffer_img
         });
 
         // create a shape to render into the offscreen render target
@@ -192,7 +192,7 @@ static void draw_fallback() {
     const sg_pass_action pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -218,7 +218,10 @@ static void frame(void) {
 
     // render donut shape into MRT offscreen render targets
     const offscreen_params_t offscreen_params = compute_offscreen_params();
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen.pass_action,
+        .attachments = state.offscreen.attachments,
+    });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &SG_RANGE(offscreen_params));
@@ -238,7 +241,7 @@ static void frame(void) {
         .fs.samplers[SLOT_smp] = state.display.smp,
     };
 
-    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     quad_params_t quad_params = { .color_bias = 0.0f, .color_scale = 1.0f };
     for (int i = 0; i < 3; i++) {

@@ -19,8 +19,8 @@
 static struct {
     struct {
         sg_pass_action pass_action;
-        sg_pass_desc pass_desc;
-        sg_pass pass;
+        sg_attachments_desc atts_desc;
+        sg_attachments atts;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -42,14 +42,14 @@ typedef struct {
 
 
 // called initially and when window size changes
-void create_offscreen_pass(int width, int height) {
+void create_offscreen_attachments(int width, int height) {
     // destroy previous resource (can be called for invalid id)
-    sg_destroy_pass(state.offscreen.pass);
+    sg_destroy_attachments(state.offscreen.atts);
     for (int i = 0; i < 3; i++) {
-        sg_destroy_image(state.offscreen.pass_desc.color_attachments[i].image);
-        sg_destroy_image(state.offscreen.pass_desc.resolve_attachments[i].image);
+        sg_destroy_image(state.offscreen.atts_desc.colors[i].image);
+        sg_destroy_image(state.offscreen.atts_desc.resolves[i].image);
     }
-    sg_destroy_image(state.offscreen.pass_desc.depth_stencil_attachment.image);
+    sg_destroy_image(state.offscreen.atts_desc.depth_stencil.image);
 
     // create offscreen rendertarget images and pass
     sg_image_desc color_img_desc = {
@@ -65,39 +65,39 @@ void create_offscreen_pass(int width, int height) {
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     depth_img_desc.label = "depth image";
-    state.offscreen.pass_desc = (sg_pass_desc){
-        .color_attachments = {
+    state.offscreen.atts_desc = (sg_attachments_desc){
+        .colors = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .resolve_attachments = {
+        .resolves = {
             [0].image = sg_make_image(&resolve_img_desc),
             [1].image = sg_make_image(&resolve_img_desc),
             [2].image = sg_make_image(&resolve_img_desc),
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc),
+        .depth_stencil.image = sg_make_image(&depth_img_desc),
         .label = "offscreen pass"
     };
-    state.offscreen.pass = sg_make_pass(&state.offscreen.pass_desc);
+    state.offscreen.atts = sg_make_attachments(&state.offscreen.atts_desc);
 
     // also need to update the fullscreen-quad texture bindings
     for (int i = 0; i < 3; i++) {
-        state.fsq.bind.fs.images[i] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.fsq.bind.fs.images[i] = state.offscreen.atts_desc.resolves[i].image;
     }
 }
 
 // listen for window-resize events and recreate offscreen rendertargets
 void event(const sapp_event* e) {
     if (e->type == SAPP_EVENTTYPE_RESIZED) {
-        create_offscreen_pass(e->framebuffer_width, e->framebuffer_height);
+        create_offscreen_attachments(e->framebuffer_width, e->framebuffer_height);
     }
     __dbgui_event(e);
 }
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -109,8 +109,8 @@ void init(void) {
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // a render pass with 3 color attachment images, and a depth attachment image
-    create_offscreen_pass(sapp_width(), sapp_height());
+    // render pass attachments with 3 color images, and a depth image
+    create_offscreen_attachments(sapp_width(), sapp_height());
 
     // cube vertex buffer
     vertex_t cube_vertices[] = {
@@ -250,9 +250,9 @@ void init(void) {
         .vertex_buffers[0] = quad_vbuf,
         .fs = {
             .images = {
-                [SLOT_tex0] = state.offscreen.pass_desc.resolve_attachments[0].image,
-                [SLOT_tex1] = state.offscreen.pass_desc.resolve_attachments[1].image,
-                [SLOT_tex2] = state.offscreen.pass_desc.resolve_attachments[2].image
+                [SLOT_tex0] = state.offscreen.atts_desc.resolves[0].image,
+                [SLOT_tex1] = state.offscreen.atts_desc.resolves[1].image,
+                [SLOT_tex2] = state.offscreen.atts_desc.resolves[2].image
             },
             .samplers[SLOT_smp] = smp,
         }
@@ -292,7 +292,7 @@ void frame(void) {
     fsq_params.offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f);
 
     // render cube into MRT offscreen render targets
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &SG_RANGE(offscreen_params));
@@ -300,7 +300,7 @@ void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, &SG_RANGE(fsq_params));
@@ -308,7 +308,7 @@ void frame(void) {
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[SLOT_tex] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.dbg.bind.fs.images[SLOT_tex] = state.offscreen.atts_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

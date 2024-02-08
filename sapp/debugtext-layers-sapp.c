@@ -21,7 +21,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -88,7 +88,7 @@ static void frame(void) {
     }
 
     // actually render everything in an sokol-gfx render pass
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int i = 0; i < NUM_LAYERS; i++) {
         sgl_draw_layer(i);
         sdtx_draw_layer(i);

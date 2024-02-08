@@ -67,7 +67,7 @@ void init(void* user_data) {
     state_t* state = (state_t*) user_data;
     // setup sokol_gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
 
@@ -121,7 +121,7 @@ void frame(void* user_data) {
     sg_pass_action pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.4f, 0.7f, 1.0f, 1.0f } }
     };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     sg_end_pass();
     sg_commit();
 }

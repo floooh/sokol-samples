@@ -40,7 +40,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -78,7 +78,7 @@ static void frame(void) {
         sdtx_putr("\nRange Test 2\n", 32);
         sdtx_move_y(2);
     }
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();

@@ -46,7 +46,7 @@ static const uint32_t mip_colors[9] = {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -153,7 +153,7 @@ void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .fs.images[SLOT_tex] = state.img,
     };
-    sg_begin_default_pass(&(sg_pass_action){0}, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
