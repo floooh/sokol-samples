@@ -156,7 +156,7 @@ static void init(void) {
 
     // setup sokol-gfx
     sg_desc sgdesc = { };
-    sgdesc.context = sapp_sgcontext();
+    sgdesc.environment = sglue_environment();
     sgdesc.logger.func = slog_func;
     sg_setup(&sgdesc);
 
@@ -384,7 +384,10 @@ static void frame(void) {
     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     draw_ui();
 
-    sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
+    sg_pass pass = {};
+    pass.action = state.pass_action;
+    pass.swapchain = sglue_swapchain();
+    sg_begin_default_pass(&pass);
     if (state.loaded.animation && state.loaded.skeleton && state.loaded.mesh) {
         if (!state.time.paused) {
             state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;

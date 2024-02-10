@@ -28,9 +28,9 @@ static struct {
         sg_pipeline cube_msaa_pip;
         sg_pipeline bg_render_pip;
         sg_pipeline bg_msaa_pip;
-        sg_pass render_pass;
-        sg_pass blend_pass;
-        sg_pass msaa_pass;
+        sg_attachments render_atts;
+        sg_attachments blend_atts;
+        sg_attachments msaa_atts;
     } fmt[_SG_PIXELFORMAT_NUM];
     sg_sampler smp_nearest;
     sg_sampler smp_linear;
@@ -50,8 +50,8 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = 256,
         .image_pool_size = 256,
-        .pass_pool_size = 128,
-        .context = sapp_sgcontext(),
+        .attachments_pool_size = 128,
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
 
@@ -158,7 +158,7 @@ static void init(void) {
                 }
             }
 
-            // create non-MSAA render target, pipeline state and pass
+            // create non-MSAA render target, pipeline state and pass-attachments
             if (fmt_info.render) {
                 sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
@@ -175,12 +175,12 @@ static void init(void) {
                 bg_render_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_render_pip = sg_make_pipeline(&cube_render_pip_desc);
                 state.fmt[i].bg_render_pip = sg_make_pipeline(&bg_render_pip_desc);
-                state.fmt[i].render_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = img,
-                    .depth_stencil_attachment.image = render_depth_img,
+                state.fmt[i].render_atts = sg_make_attachments(&(sg_attachments_desc){
+                    .colors[0].image = img,
+                    .depth_stencil.image = render_depth_img,
                 });
             }
-            // create non-MSAA blend render target, pipeline states and pass
+            // create non-MSAA blend render target, pipeline states and pass-attachments
             if (fmt_info.blend) {
                 sg_image img = sg_make_image(&(sg_image_desc){
                     .render_target = true,
@@ -195,9 +195,9 @@ static void init(void) {
                 });
                 cube_blend_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
-                state.fmt[i].blend_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = img,
-                    .depth_stencil_attachment.image = render_depth_img,
+                state.fmt[i].blend_atts = sg_make_attachments(&(sg_attachments_desc){
+                    .colors[0].image = img,
+                    .depth_stencil.image = render_depth_img,
                 });
             }
             // create MSAA render target, resolve texture and matching pipeline state
@@ -224,10 +224,10 @@ static void init(void) {
                 bg_msaa_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_msaa_pip = sg_make_pipeline(&cube_msaa_pip_desc);
                 state.fmt[i].bg_msaa_pip = sg_make_pipeline(&bg_msaa_pip_desc);
-                state.fmt[i].msaa_pass = sg_make_pass(&(sg_pass_desc){
-                    .color_attachments[0].image = msaa_img,
-                    .resolve_attachments[0].image = resolve_img,
-                    .depth_stencil_attachment.image = msaa_depth_img,
+                state.fmt[i].msaa_atts = sg_make_attachments(&(sg_attachments_desc){
+                    .colors[0].image = msaa_img,
+                    .resolves[0].image = resolve_img,
+                    .depth_stencil.image = msaa_depth_img,
                 });
             }
         }
@@ -314,7 +314,7 @@ static void frame(void) {
         sg_pixel_format fmt = (sg_pixel_format)i;
         sg_pixelformat_info fmt_info = sg_query_pixelformat(fmt);
         if (fmt_info.render) {
-            sg_begin_pass(state.fmt[i].render_pass, &(sg_pass_action){0});
+            sg_begin_pass(&(sg_pass){ .attachments = state.fmt[i].render_atts });
             sg_apply_pipeline(state.fmt[i].bg_render_pip);
             sg_apply_bindings(&state.bg_bindings);
             sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
@@ -326,7 +326,7 @@ static void frame(void) {
             sg_end_pass();
         }
         if (fmt_info.blend) {
-            sg_begin_pass(state.fmt[i].blend_pass, &(sg_pass_action){0});
+            sg_begin_pass(&(sg_pass){ .attachments = state.fmt[i].blend_atts });
             sg_apply_pipeline(state.fmt[i].bg_render_pip);  // not a bug
             sg_apply_bindings(&state.bg_bindings); // not a bug
             sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
@@ -338,7 +338,7 @@ static void frame(void) {
             sg_end_pass();
         }
         if (fmt_info.msaa) {
-            sg_begin_pass(state.fmt[i].msaa_pass, &(sg_pass_action){ .colors[0].store_action = SG_STOREACTION_DONTCARE });
+            sg_begin_pass(&(sg_pass){ .attachments = state.fmt[i].msaa_atts, .action = { .colors[0].store_action = SG_STOREACTION_DONTCARE } });
             sg_apply_pipeline(state.fmt[i].bg_msaa_pip);
             sg_apply_bindings(&state.bg_bindings);
             sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
@@ -393,10 +393,12 @@ static void frame(void) {
     igEnd();
 
     // sokol-gfx rendering...
-    sg_pass_action pass_action = {
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
-    };
-    sg_begin_default_pass(&pass_action, w, h);
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
+        },
+        .swapchain = sglue_swapchain()
+    });
     simgui_render();
     sg_end_pass();
     sg_commit();
