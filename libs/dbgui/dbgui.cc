@@ -15,12 +15,12 @@
 
 extern "C" {
 
-static sg_imgui_t sg_imgui;
+static sgimgui_t sgimgui;
 
 void __dbgui_setup(int sample_count) {
     // setup debug inspection header(s)
-    const sg_imgui_desc_t desc = { };
-    sg_imgui_init(&sg_imgui, &desc);
+    const sgimgui_desc_t desc = { };
+    sgimgui_init(&sgimgui, &desc);
 
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
@@ -30,17 +30,17 @@ void __dbgui_setup(int sample_count) {
 }
 
 void __dbgui_shutdown(void) {
-    sg_imgui_discard(&sg_imgui);
+    sgimgui_discard(&sgimgui);
     simgui_shutdown();
 }
 
 void __dbgui_draw(void) {
     simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
     if (ImGui::BeginMainMenuBar()) {
-        sg_imgui_draw_menu(&sg_imgui, "sokol-gfx");
+        sgimgui_draw_menu(&sgimgui, "sokol-gfx");
         ImGui::EndMainMenuBar();
     }
-    sg_imgui_draw(&sg_imgui);
+    sgimgui_draw(&sgimgui);
     simgui_render();
 }
 
