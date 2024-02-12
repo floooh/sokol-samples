@@ -19,7 +19,7 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     saudio_setup(&(saudio_desc){ .logger.func = slog_func });
@@ -32,7 +32,7 @@ void init(void) {
 }
 
 void frame(void) {
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     int num_frames = saudio_expect();
     float s;
     for (int i = 0; i < num_frames; i++) {

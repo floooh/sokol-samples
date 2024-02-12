@@ -25,7 +25,7 @@ static struct {
     float ry;
     struct {
         sg_pass_action pass_action;
-        sg_pass pass;
+        sg_attachments atts;
         sg_pipeline pip;
         sg_bindings bind;
     } shadow;
@@ -42,7 +42,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -145,8 +145,8 @@ static void init(void) {
     });
 
     // a depth-only pass object for the shadow pass
-    state.shadow.pass = sg_make_pass(&(sg_pass_desc){
-        .depth_stencil_attachment.image = state.shadow_map,
+    state.shadow.atts = sg_make_attachments(&(sg_attachments_desc){
+        .depth_stencil.image = state.shadow_map,
         .label = "shadow-pass",
     });
 
@@ -287,7 +287,7 @@ static void frame(void) {
     };
 
     // the shadow map pass, render scene from light source into shadow map texture
-    sg_begin_pass(state.shadow.pass, &state.shadow.pass_action);
+    sg_begin_pass(&(sg_pass){ .action = state.shadow.pass_action, .attachments = state.shadow.atts });
     sg_apply_pipeline(state.shadow.pip);
     sg_apply_bindings(&state.shadow.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));
@@ -295,7 +295,7 @@ static void frame(void) {
     sg_end_pass();
 
     // the display pass, render scene from camera, compare-sample shadow map texture
-    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_fs_display_params, &SG_RANGE(fs_display_params));

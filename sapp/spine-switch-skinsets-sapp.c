@@ -81,7 +81,7 @@ static const char* skins[NUM_SKINSETS][NUM_SKINS_PER_SKINSET] = {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     sdtx_setup(&(sdtx_desc_t){
@@ -134,7 +134,7 @@ static void frame(void) {
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
-    sg_begin_default_passf(&state.pass_action, w, h);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
     __dbgui_draw();

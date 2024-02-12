@@ -121,9 +121,8 @@ static void init(void) {
         .image_pool_size = 4,
         .shader_pool_size = 4,
         .pipeline_pool_size = 8,
-        .pass_pool_size = 1,
-        .context_pool_size = 1,
-        .context = sapp_sgcontext(),
+        .attachments_pool_size = 1,
+        .environment = sglue_environment(),
         .allocator = {
             .alloc_fn = smemtrack_alloc,
             .free_fn = smemtrack_free,
@@ -391,7 +390,7 @@ static void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
     // and finally the actual sokol-gfx render pass
-    sg_begin_default_pass(&state.scene.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.scene.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.scene.pip);
     sg_apply_bindings(&state.scene.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));

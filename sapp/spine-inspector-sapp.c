@@ -40,7 +40,7 @@ static struct {
         bool skel_data_is_binary;
     } load_status;
     struct {
-        sg_imgui_t sgimgui;
+        sgimgui_t sgimgui;
         bool draw_bones_enabled;
         bool atlas_open;
         bool bones_open;
@@ -158,7 +158,7 @@ static void ui_draw(void);
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     // setup sokol-gl
@@ -233,7 +233,7 @@ static void frame(void) {
     }
 
     // the actual sokol-gfx render pass
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     // NOTE: using the display width/height here means the Spine rendering
     // is mapped to pixels and doesn't scale with window size
     sspine_draw_layer(0, &state.layer_transform);
@@ -474,11 +474,11 @@ static void image_data_loaded(const sfetch_response_t* response) {
 //=== UI STUFF =================================================================
 static void ui_setup(void) {
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
-    sg_imgui_init(&state.ui.sgimgui, &(sg_imgui_desc_t){0});
+    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
 }
 
 static void ui_shutdown(void) {
-    sg_imgui_discard(&state.ui.sgimgui);
+    sgimgui_discard(&state.ui.sgimgui);
     simgui_shutdown();
 }
 
@@ -526,7 +526,7 @@ static void ui_draw(void) {
             igMenuItem_BoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
             igEndMenu();
         }
-        sg_imgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
         if (igBeginMenu("options", true)) {
             static int theme = 0;
             if (igRadioButton_IntPtr("Dark Theme", &theme, 0)) {
@@ -837,7 +837,7 @@ static void ui_draw(void) {
             igPopStyleColor(1);
         }
     }
-    sg_imgui_draw(&state.ui.sgimgui);
+    sgimgui_draw(&state.ui.sgimgui);
 }
 
 static void draw_bones(void) {

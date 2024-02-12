@@ -123,7 +123,7 @@ static struct {
         bool paused;
     } time;
     struct {
-        sg_imgui_t sgimgui;
+        sgimgui_t sgimgui;
         bool joint_texture_shown;
         int joint_texture_scale;
         simgui_image_t joint_texture;
@@ -175,8 +175,8 @@ static void init(void) {
     simgui_desc_t imdesc = { };
     imdesc.logger.func = slog_func;
     simgui_setup(&imdesc);
-    sg_imgui_desc_t sgimgui_desc = { };
-    sg_imgui_init(&state.ui.sgimgui, &sgimgui_desc);
+    sgimgui_desc_t sgimgui_desc = { };
+    sgimgui_init(&state.ui.sgimgui, &sgimgui_desc);
 
     // initialize pass action for default-pass
     state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
@@ -387,7 +387,7 @@ static void frame(void) {
     sg_pass pass = {};
     pass.action = state.pass_action;
     pass.swapchain = sglue_swapchain();
-    sg_begin_default_pass(&pass);
+    sg_begin_pass(&pass);
     if (state.loaded.animation && state.loaded.skeleton && state.loaded.mesh) {
         if (!state.time.paused) {
             state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
@@ -417,7 +417,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
-    sg_imgui_discard(&state.ui.sgimgui);
+    sgimgui_discard(&state.ui.sgimgui);
     simgui_shutdown();
     sfetch_shutdown();
     sg_shutdown();
@@ -428,10 +428,10 @@ static void cleanup(void) {
 
 static void draw_ui(void) {
     if (ImGui::BeginMainMenuBar()) {
-        sg_imgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
         ImGui::EndMainMenuBar();
     }
-    sg_imgui_draw(&state.ui.sgimgui);
+    sgimgui_draw(&state.ui.sgimgui);
     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);
