@@ -70,6 +70,7 @@ static void init(void) {
         .attachments = sg_make_attachments(&(sg_attachments_desc){
             .colors[0].image = color_img,
             .depth_stencil.image = depth_img,
+            .label = "offscreen-attachments",
         }),
         .action = {
             .colors[0] = {
