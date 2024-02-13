@@ -17,7 +17,10 @@ int main() {
     emsc_init("#canvas", EMSC_NONE);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = emsc_environment(),
+        .logger.func = slog_func
+    });
     assert(sg_isvalid());
 
     // setup pass action to clear to red
@@ -37,7 +40,7 @@ static EM_BOOL draw(double time, void* userdata) {
     pass_action.colors[0].clear_value.g = g;
 
     // draw one frame
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = emsc_swapchain() });
     sg_end_pass();
     sg_commit();
     return EM_TRUE;

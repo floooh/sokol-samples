@@ -15,7 +15,7 @@ static struct{
     float rx, ry;
     struct {
         sg_pass_action pass_action;
-        sg_pass pass;
+        sg_attachments attachments;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -43,7 +43,10 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = emsc_environment(),
+        .logger.func = slog_func
+    });
     assert(sg_isvalid());
 
     // create one color- and one depth-rendertarget image
@@ -60,9 +63,9 @@ int main() {
     sg_image depth_img = sg_make_image(&img_desc);
 
     // an offscreen render pass into those images
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img
+    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .depth_stencil.image = depth_img
     });
 
     // a sampler for using the render target as texture
@@ -273,7 +276,10 @@ static EM_BOOL draw(double time, void* userdata) {
 
     // offscreen pass, this renders a rotating, untextured cube to the
     // offscreen render target
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen.pass_action,
+        .attachments = state.offscreen.attachments,
+    });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -282,7 +288,10 @@ static EM_BOOL draw(double time, void* userdata) {
 
     // and the default pass, this renders a textured cube, using the
     // offscreen render target as texture image
-    sg_begin_default_pass(&state.display.pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){
+        .action = state.display.pass_action,
+        .swapchain = emsc_swapchain(),
+    });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

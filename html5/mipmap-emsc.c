@@ -56,6 +56,7 @@ int main() {
 
     // setup sokol_gfx
     sg_desc desc = {
+        .environment = emsc_environment(),
         .logger.func = slog_func,
     };
     sg_setup(&desc);
@@ -130,8 +131,8 @@ int main() {
     // the last 4 samplers use different anistropy levels
     smp_desc.min_lod = 0.0f;
     smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
-    smp_desc.min_filter = SG_FILTER_NEAREST;
-    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.min_filter = SG_FILTER_LINEAR;
+    smp_desc.mag_filter = SG_FILTER_LINEAR;
     smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
         smp_desc.max_anisotropy = 1<<i;
@@ -205,7 +206,7 @@ static EM_BOOL draw(double time, void* userdata) {
     vs_params_t vs_params;
     hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-    sg_begin_default_pass(&(sg_pass_action){0}, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;

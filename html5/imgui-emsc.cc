@@ -45,6 +45,7 @@ int main() {
     // setup sokol_gfx and sokol_time
     stm_setup();
     sg_setup(sg_desc{
+        .environment = emsc_environment(),
         .logger = {
             .func = slog_func
         }
@@ -295,7 +296,7 @@ static EM_BOOL draw(double time, void* userdata) {
     }
 
     // the sokol_gfx draw pass
-    sg_begin_default_pass(&pass_action, emsc_width(), emsc_height());
+    sg_begin_pass({ .action = pass_action, .swapchain = emsc_swapchain() });
     ImGui::Render();
     draw_imgui(ImGui::GetDrawData());
     sg_end_pass();

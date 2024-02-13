@@ -31,7 +31,10 @@ int main() {
     emsc_init("#canvas", EMSC_NONE);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = emsc_environment(),
+        .logger.func = slog_func
+    });
     assert(sg_isvalid());
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
@@ -98,7 +101,7 @@ int main() {
 
 static EM_BOOL draw(double time, void* userdata) {
     (void)time; (void)userdata;
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     // render triangle
     state.bind.vertex_buffer_offsets[0] = 0;
