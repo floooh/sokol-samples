@@ -93,7 +93,7 @@ fips_begin_app(blend-metal windowed)
 fips_end_app()
 
 fips_begin_app(inject-metal windowed)
-    fips_files(inject-metal.mm)
+    fips_files(inject-metal.m)
     fips_deps(osxentry)
 fips_end_app()
 

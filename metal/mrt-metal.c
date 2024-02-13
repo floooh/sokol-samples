@@ -14,10 +14,10 @@
 #define SAMPLE_COUNT (4)
 
 static struct {
-    sg_pass_desc offscreen_pass_desc;
+    sg_attachments_desc offscreen_attachments_desc;
     sg_pass_action offscreen_pass_action;
     sg_pass_action default_pass_action;
-    sg_pass offscreen_pass;
+    sg_attachments offscreen_attachments;
     sg_pipeline offscreen_pip;
     sg_bindings offscreen_bind;
     sg_pipeline fsq_pip;
@@ -44,7 +44,7 @@ typedef struct {
 static void init(void) {
     /* setup sokol */
     sg_setup(&(sg_desc){
-        .context = osx_get_context(),
+        .environment = osx_get_environment(),
         .logger.func = slog_func,
     });
 
@@ -59,20 +59,20 @@ static void init(void) {
     resolve_img_desc.sample_count = 1;
     sg_image_desc depth_img_desc = color_img_desc;
     depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    state.offscreen_pass_desc = (sg_pass_desc){
-        .color_attachments = {
+    state.offscreen_attachments_desc = (sg_attachments_desc){
+        .colors = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .resolve_attachments = {
+        .resolves = {
             [0].image = sg_make_image(&resolve_img_desc),
             [1].image = sg_make_image(&resolve_img_desc),
             [2].image = sg_make_image(&resolve_img_desc)
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+        .depth_stencil.image = sg_make_image(&depth_img_desc)
     };
-    state.offscreen_pass = sg_make_pass(&state.offscreen_pass_desc);
+    state.offscreen_attachments = sg_make_attachments(&state.offscreen_attachments_desc);
 
     // a matching pass action with clear colors
     state.offscreen_pass_action = (sg_pass_action){
@@ -287,9 +287,9 @@ static void init(void) {
     state.fsq_bind = (sg_bindings) {
         .vertex_buffers[0] = quad_vbuf,
         .fs = {
-            .images[0] = state.offscreen_pass_desc.resolve_attachments[0].image,
-            .images[1] = state.offscreen_pass_desc.resolve_attachments[1].image,
-            .images[2] = state.offscreen_pass_desc.resolve_attachments[2].image,
+            .images[0] = state.offscreen_attachments_desc.resolves[0].image,
+            .images[1] = state.offscreen_attachments_desc.resolves[1].image,
+            .images[2] = state.offscreen_attachments_desc.resolves[2].image,
             .samplers[0] = smp
         }
     };
@@ -372,7 +372,10 @@ static void frame(void) {
     params.offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f);
 
     // render cube into MRT offscreen render targets
-    sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen_pass_action,
+        .attachments = state.offscreen_attachments
+    });
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
@@ -380,7 +383,10 @@ static void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image'
-    sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){
+        .action = state.default_pass_action,
+        .swapchain = osx_get_swapchain()
+    });
     sg_apply_pipeline(state.fsq_pip);
     sg_apply_bindings(&state.fsq_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
@@ -390,7 +396,7 @@ static void frame(void) {
     sg_apply_pipeline(state.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg_bind.fs.images[0] = state.offscreen_pass_desc.resolve_attachments[i].image;
+        state.dbg_bind.fs.images[0] = state.offscreen_attachments_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg_bind);
         sg_draw(0, 4, 1);
     }

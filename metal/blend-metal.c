@@ -44,7 +44,7 @@ struct {
 static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = osx_get_context(),
+        .environment = osx_get_environment(),
         .logger.func = slog_func,
     });
 
@@ -183,7 +183,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_default_pass(&(sg_pass_action){0}, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = osx_get_swapchain() });
 
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);

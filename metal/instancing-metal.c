@@ -42,7 +42,7 @@ typedef struct {
 static void init(void) {
     // setup sokol_gfx
     sg_setup(&(sg_desc){
-        .context = osx_get_context(),
+        .environment = osx_get_environment(),
         .logger.func = slog_func,
     });
 
@@ -179,7 +179,7 @@ static void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
     // ...and draw
-    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

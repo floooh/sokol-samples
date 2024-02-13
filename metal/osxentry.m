@@ -116,6 +116,8 @@ static id mtk_view_controller;
         CGSize drawable_size = { (CGFloat) width, (CGFloat) height };
         [mtk_view setDrawableSize:drawable_size];
         [[mtk_view layer] setMagnificationFilter:kCAFilterNearest];
+        NSApp.activationPolicy = NSApplicationActivationPolicyRegular;
+        [NSApp activateIgnoringOtherApps:YES];
         [window makeKeyAndOrderFront:nil];
     #else
         [mtk_view setContentScaleFactor:1.0f];
@@ -323,7 +325,6 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     id delg = [[SokolAppDelegate alloc] init];
     [NSApp setDelegate:delg];
-    [NSApp activateIgnoringOtherApps:YES];
     [NSApp run];
     #else
     @autoreleasepool {
@@ -334,26 +335,30 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     #endif
 }
 
-static const void* osx_mtk_get_render_pass_descriptor(void* user_data) {
-    assert(user_data == (void*)0xABCDABCD);
-    (void)user_data;
-    return (__bridge const void*) [mtk_view currentRenderPassDescriptor];
-}
-
-static const void* osx_mtk_get_drawable(void* user_data) {
-    assert(user_data == (void*)0xABCDABCD);
-    (void)user_data;
-    return (__bridge const void*) [mtk_view currentDrawable];
-}
-
-sg_context_desc osx_get_context(void) {
-    return (sg_context_desc) {
-        .sample_count = sample_count,
+sg_environment osx_get_environment(void) {
+    return (sg_environment) {
+        .defaults = {
+            .sample_count = sample_count,
+            .color_format = SG_PIXELFORMAT_BGRA8,
+            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        },
         .metal = {
             .device = (__bridge const void*) mtl_device,
-            .renderpass_descriptor_userdata_cb = osx_mtk_get_render_pass_descriptor,
-            .drawable_userdata_cb = osx_mtk_get_drawable,
-            .user_data = (void*)0xABCDABCD
+        }
+    };
+}
+
+sg_swapchain osx_get_swapchain(void) {
+    return (sg_swapchain) {
+        .width = (int) [mtk_view drawableSize].width,
+        .height = (int) [mtk_view drawableSize].height,
+        .sample_count = sample_count,
+        .color_format = SG_PIXELFORMAT_BGRA8,
+        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .metal = {
+            .current_drawable = (__bridge const void*) [mtk_view currentDrawable],
+            .depth_stencil_texture = (__bridge const void*) [mtk_view depthStencilTexture],
+            .msaa_color_texture = (__bridge const void*) [mtk_view multisampleColorTexture],
         }
     };
 }

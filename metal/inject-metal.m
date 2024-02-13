@@ -34,13 +34,12 @@ typedef struct {
 
 static void init(void) {
     // setup sokol_gfx
-    sg_desc desc = {
-        .context = osx_get_context(),
+    sg_setup(&(sg_desc){
+        .environment = osx_get_environment(),
         .logger = {
             .func = slog_func,
         }
-    };
-    sg_setup(&desc);
+    });
 
     // create native Metal vertex- and index-buffer
     float vertices[] = {
@@ -94,14 +93,14 @@ static void init(void) {
     sg_reset_state_cache();
 
     // create sokol_gfx buffers with injected Metal buffer objects
-    sg_buffer_desc vbuf_desc = {
+    const sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
         .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[0]) == mtl_vbuf);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[1]) == nil);
-    sg_buffer_desc ibuf_desc = {
+    const sg_buffer_desc ibuf_desc = {
         .type = SG_BUFFERTYPE_INDEXBUFFER,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
@@ -146,20 +145,19 @@ static void init(void) {
     mtl_smp_desc.sAddressMode = MTLSamplerAddressModeRepeat;
     id<MTLSamplerState> mtl_smp = [osx_mtl_device() newSamplerStateWithDescriptor:mtl_smp_desc];
 
-    sg_sampler_desc smp_desc = {
+    const sg_sampler_desc smp_desc = {
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
         .mtl_sampler = mtl_smp,
     };
-
     sg_reset_state_cache();
     state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
     assert(((__bridge id<MTLSamplerState>) sg_mtl_query_sampler_info(state.bind.fs.samplers[0]).smp) == mtl_smp);
 
     // a shader
-    sg_shader_desc shader_desc = {
+    const sg_shader_desc shader_desc = {
         .vs = {
             .uniform_blocks[0].size = sizeof(vs_params_t),
             .entry = "vs_main",
@@ -210,7 +208,7 @@ static void init(void) {
     assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).fs_func) != nil);
 
     // a pipeline state object
-    sg_pipeline_desc pip_desc = {
+    const sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
@@ -255,12 +253,12 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.fs.images[0], { .subimage[0][0] = SG_RANGE(state.pixels) });
+    sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
 
-    sg_begin_default_pass(&state.pass_action, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

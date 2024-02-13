@@ -27,16 +27,17 @@ static sg_pass_action pass_action;
 
 void init() {
     // setup sokol_gfx and sokol_time
-    sg_desc desc = {
-        .context = osx_get_context(),
+    const sg_desc desc = {
+        .environment = osx_get_environment(),
         .logger = {
             .func = slog_func,
         }
     };
     sg_setup(&desc);
     stm_setup();
-    simgui_desc_t simgui_desc = { };
-    simgui_desc.logger.func = slog_func;
+    const simgui_desc_t simgui_desc = {
+        .logger.func = slog_func,
+    };
     simgui_setup(&simgui_desc);
 
     // setup the imgui environment
@@ -104,7 +105,7 @@ void frame() {
     }
 
     // the sokol draw pass
-    sg_begin_default_pass(&pass_action, width, height);
+    sg_begin_pass({ .action = pass_action, .swapchain = osx_get_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();

@@ -57,7 +57,7 @@ typedef struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .context = osx_get_context(),
+        .environment = osx_get_environment(),
         .logger.func = slog_func,
     });
 
@@ -131,8 +131,8 @@ static void init(void) {
     // the last 4 samplers use different anistropy levels
     smp_desc.min_lod = 0.0f;
     smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
-    smp_desc.min_filter = SG_FILTER_NEAREST;
-    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.min_filter = SG_FILTER_LINEAR;
+    smp_desc.mag_filter = SG_FILTER_LINEAR;
     smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
         smp_desc.max_anisotropy = 1<<i;
@@ -213,7 +213,7 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .fs.images[0] = state.img,
     };
-    sg_begin_default_pass(&(sg_pass_action){ }, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = osx_get_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
