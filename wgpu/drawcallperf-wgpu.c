@@ -82,7 +82,7 @@ static void ig_mouse_wheel(float v) {
 static void init(void) {
     stm_setup();
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
         .uniform_buffer_size = MAX_INSTANCES * 256 + 1024,
     });
@@ -293,7 +293,7 @@ static void frame(void) {
     state.stats.num_binding_updates = 0;
     state.stats.num_draw_calls = 0;
 
-    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;

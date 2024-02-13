@@ -74,7 +74,8 @@ typedef struct {
 void wgpu_start(const wgpu_desc_t* desc);
 int wgpu_width(void);
 int wgpu_height(void);
-sg_context_desc wgpu_get_context(void);
+sg_environment wgpu_environment(void);
+sg_swapchain wgpu_swapchain(void);
 void wgpu_key_down(wgpu_key_func fn);
 void wgpu_key_up(wgpu_key_func fn);
 void wgpu_char(wgpu_char_func fn);

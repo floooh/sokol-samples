@@ -20,8 +20,8 @@
 static struct {
     struct {
         sg_pass_action pass_action;
-        sg_pass_desc pass_desc;
-        sg_pass pass;
+        sg_attachments_desc attachments_desc;
+        sg_attachments attachments;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -51,7 +51,7 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -81,20 +81,20 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = offscreen_sample_count,
     };
-    state.offscreen.pass_desc = (sg_pass_desc){
-        .color_attachments = {
+    state.offscreen.attachments_desc = (sg_attachments_desc){
+        .colors = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .resolve_attachments = {
+        .resolves = {
             [0].image = sg_make_image(&resolve_img_desc),
             [1].image = sg_make_image(&resolve_img_desc),
             [2].image = sg_make_image(&resolve_img_desc),
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+        .depth_stencil.image = sg_make_image(&depth_img_desc)
     };
-    state.offscreen.pass = sg_make_pass(&state.offscreen.pass_desc);
+    state.offscreen.attachments = sg_make_attachments(&state.offscreen.attachments_desc);
 
     // a matching pass action with clear colors
     state.offscreen.pass_action = (sg_pass_action){
@@ -324,9 +324,9 @@ static void init(void) {
         .vertex_buffers[0] = quad_buf,
         .fs = {
             .images = {
-                [0] = state.offscreen.pass_desc.resolve_attachments[0].image,
-                [1] = state.offscreen.pass_desc.resolve_attachments[1].image,
-                [2] = state.offscreen.pass_desc.resolve_attachments[2].image,
+                [0] = state.offscreen.attachments_desc.resolves[0].image,
+                [1] = state.offscreen.attachments_desc.resolves[1].image,
+                [2] = state.offscreen.attachments_desc.resolves[2].image,
             },
             .samplers[0] = smp,
         }
@@ -398,7 +398,10 @@ static void frame(void) {
     };
 
     // render cube into MRT offscreen render targets
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen.pass_action,
+        .attachments = state.offscreen.attachments,
+    });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
@@ -406,7 +409,10 @@ static void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
-    sg_begin_default_pass(&state.pass_action, width, height);
+    sg_begin_pass(&(sg_pass){
+        .action = state.pass_action,
+        .swapchain = wgpu_swapchain()
+    });
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(fsq_params));
@@ -414,7 +420,7 @@ static void frame(void) {
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[0] = state.offscreen.pass_desc.resolve_attachments[i].image;
+        state.dbg.bind.fs.images[0] = state.offscreen.attachments_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

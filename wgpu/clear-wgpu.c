@@ -12,7 +12,7 @@ static sg_pass_action pass_action;
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
     pass_action = (sg_pass_action) {
@@ -26,7 +26,7 @@ static void init(void) {
 static void frame(void) {
     float g = pass_action.colors[0].clear_value.g + 0.01f;
     pass_action.colors[0].clear_value.g = (g > 1.0f) ? 0.0f : g;
-    sg_begin_default_pass(&pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = wgpu_swapchain() });
     sg_end_pass();
     sg_commit();
 }
