@@ -32,7 +32,7 @@ typedef struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -155,7 +155,7 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

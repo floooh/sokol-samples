@@ -23,7 +23,7 @@ static void init(void) {
         .shader_pool_size = 4,
         .pipeline_pool_size = 4,
         .attachments_pool_size = 2,
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 }
@@ -87,7 +87,7 @@ static void frame(void) {
     });
 
     // draw one frame
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);

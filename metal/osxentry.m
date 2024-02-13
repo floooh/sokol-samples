@@ -335,7 +335,7 @@ void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifu
     #endif
 }
 
-sg_environment osx_get_environment(void) {
+sg_environment osx_environment(void) {
     return (sg_environment) {
         .defaults = {
             .sample_count = sample_count,
@@ -348,7 +348,7 @@ sg_environment osx_get_environment(void) {
     };
 }
 
-sg_swapchain osx_get_swapchain(void) {
+sg_swapchain osx_swapchain(void) {
     return (sg_swapchain) {
         .width = (int) [mtk_view drawableSize].width,
         .height = (int) [mtk_view drawableSize].height,

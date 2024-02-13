@@ -47,7 +47,7 @@ typedef struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -299,7 +299,7 @@ static void frame(void) {
     // previously rendered offscreen render-target as texture
     sg_begin_pass(&(sg_pass){
         .action = state.default_pass_action,
-        .swapchain = osx_get_swapchain()
+        .swapchain = osx_swapchain()
     });
     sg_apply_pipeline(state.default_pip);
     sg_apply_bindings(&state.default_bind);

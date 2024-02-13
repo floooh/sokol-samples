@@ -25,7 +25,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -94,7 +94,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     // render the triangle
     state.bind.vertex_buffer_offsets[0] = 0;

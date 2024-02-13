@@ -14,7 +14,7 @@ static struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -83,7 +83,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_get_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_draw(0, 6, 1);

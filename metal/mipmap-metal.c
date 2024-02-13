@@ -57,7 +57,7 @@ typedef struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .environment = osx_get_environment(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -213,7 +213,7 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .fs.images[0] = state.img,
     };
-    sg_begin_pass(&(sg_pass){ .swapchain = osx_get_swapchain() });
+    sg_begin_pass(&(sg_pass){ .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
