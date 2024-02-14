@@ -15,7 +15,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // setup sokol gfx
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -79,7 +79,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // the draw loop
     while (d3d11_process_events()) {
-        sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);

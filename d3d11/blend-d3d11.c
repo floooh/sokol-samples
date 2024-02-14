@@ -31,7 +31,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_init(WIDTH, HEIGHT, SAMPLE_COUNT, L"Sokol Blend D3D11");
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -165,7 +165,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     float r = 0.0f;
     fs_params.tick = 0.0f;
     while (d3d11_process_events()) {
-        sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
 
         // draw a background quad
         sg_apply_pipeline(bg_pip);

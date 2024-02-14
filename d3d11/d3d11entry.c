@@ -8,9 +8,9 @@
 #include <dxgi.h>
 
 static LRESULT CALLBACK d3d11_winproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static void d3d11_create_default_render_target(void);
-static void d3d11_destroy_default_render_target(void);
-static void d3d11_update_default_render_target(void);
+static void d3d11_create_default_render_targets(void);
+static void d3d11_destroy_default_render_targets(void);
+static void d3d11_update_default_render_targets(void);
 
 static const IID _d3d11entry_IID_ID3D11Texture2D = { 0x6f15aaf2,0xd208,0x4e89,0x9a,0xb4,0x48,0x95,0x35,0xd3,0x4f,0x9c };
 
@@ -27,10 +27,12 @@ static struct {
     ID3D11Device* device;
     ID3D11DeviceContext* device_context;
     IDXGISwapChain* swap_chain;
-    ID3D11Texture2D* render_target;
-    ID3D11RenderTargetView* render_target_view;
-    ID3D11Texture2D* depth_stencil_buffer;
-    ID3D11DepthStencilView* depth_stencil_view;
+    ID3D11Texture2D* rt_tex;
+    ID3D11RenderTargetView* rt_view;
+    ID3D11Texture2D* msaa_tex;
+    ID3D11RenderTargetView* msaa_view;
+    ID3D11Texture2D* ds_tex;
+    ID3D11DepthStencilView* ds_view;
     d3d11_key_func key_down_func;
     d3d11_key_func key_up_func;
     d3d11_char_func char_func;
@@ -99,8 +101,8 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
         .SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
         .BufferCount = 1,
         .SampleDesc = {
-            .Count = (UINT) state.sample_count,
-            .Quality = (UINT) (state.sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0)
+            .Count = (UINT) 1,
+            .Quality = (UINT) 0,
         },
         .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT
     };
@@ -135,11 +137,11 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     assert(SUCCEEDED(hr) && state.swap_chain && state.device && state.device_context);
 
     // default render target and depth-stencil-buffer
-    d3d11_create_default_render_target();
+    d3d11_create_default_render_targets();
 }
 
 void d3d11_shutdown(void) {
-    d3d11_destroy_default_render_target();
+    d3d11_destroy_default_render_targets();
     SAFE_RELEASE(IDXGISwapChain, state.swap_chain);
     SAFE_RELEASE(ID3D11DeviceContext, state.device_context);
     SAFE_RELEASE(ID3D11Device, state.device);
@@ -147,46 +149,58 @@ void d3d11_shutdown(void) {
     UnregisterClassW(L"SOKOLD3D11", GetModuleHandleW(NULL));
 }
 
-void d3d11_create_default_render_target(void) {
+void d3d11_create_default_render_targets(void) {
     HRESULT hr;
-    hr = IDXGISwapChain_GetBuffer(state.swap_chain, 0, &_d3d11entry_IID_ID3D11Texture2D, (void**)&state.render_target);
-    assert(SUCCEEDED(hr) && state.render_target);
-    hr = ID3D11Device_CreateRenderTargetView(state.device, (ID3D11Resource*)state.render_target, NULL, &state.render_target_view);
-    assert(SUCCEEDED(hr) && state.render_target_view);
+    hr = IDXGISwapChain_GetBuffer(state.swap_chain, 0, &_d3d11entry_IID_ID3D11Texture2D, (void**)&state.rt_tex);
+    assert(SUCCEEDED(hr) && state.rt_tex);
+    hr = ID3D11Device_CreateRenderTargetView(state.device, (ID3D11Resource*)state.rt_tex, NULL, &state.rt_view);
+    assert(SUCCEEDED(hr) && state.rt_view);
 
-    D3D11_TEXTURE2D_DESC ds_desc = {
+    D3D11_TEXTURE2D_DESC tex_desc = {
         .Width = (UINT)state.width,
         .Height = (UINT)state.height,
         .MipLevels = 1,
         .ArraySize = 1,
-        .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+        .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
         .SampleDesc = state.swap_chain_desc.SampleDesc,
         .Usage = D3D11_USAGE_DEFAULT,
-        .BindFlags = D3D11_BIND_DEPTH_STENCIL,
+        .BindFlags = D3D11_BIND_RENDER_TARGET,
+        .SampleDesc = {
+            .Count = (UINT)state.sample_count,
+            .Quality = (UINT) (state.sample_count > 1 ? D3D11_STANDARD_MULTISAMPLE_PATTERN : 0),
+        }
     };
-    hr = ID3D11Device_CreateTexture2D(state.device, &ds_desc, NULL, &state.depth_stencil_buffer);
-    assert(SUCCEEDED(hr) && state.depth_stencil_buffer);
+    // MSAA render target and view
+    if (state.sample_count > 1) {
+        hr = ID3D11Device_CreateTexture2D(state.device, &tex_desc, NULL, &state.msaa_tex);
+        assert(SUCCEEDED(hr) && state.msaa_tex);
+        hr = ID3D11Device_CreateRenderTargetView(state.device, (ID3D11Resource*)state.msaa_tex, NULL, &state.msaa_view);
+        assert(SUCCEEDED(hr) && state.msaa_view);
+    }
 
-    D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc = {
-        .Format = ds_desc.Format,
-        .ViewDimension = state.sample_count > 1 ? D3D11_DSV_DIMENSION_TEXTURE2DMS : D3D11_DSV_DIMENSION_TEXTURE2D
-    };
-    hr = ID3D11Device_CreateDepthStencilView(state.device, (ID3D11Resource*)state.depth_stencil_buffer, &dsv_desc, &state.depth_stencil_view);
-    assert(SUCCEEDED(hr) && state.depth_stencil_view);
+    // depth-stencil render target and view
+    tex_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    tex_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    hr = ID3D11Device_CreateTexture2D(state.device, &tex_desc, NULL, &state.ds_tex);
+    assert(SUCCEEDED(hr) && state.ds_tex);
+    hr = ID3D11Device_CreateDepthStencilView(state.device, (ID3D11Resource*)state.ds_tex, NULL, &state.ds_view);
+    assert(SUCCEEDED(hr) && state.ds_view);
 }
 
-void d3d11_destroy_default_render_target(void) {
-    SAFE_RELEASE(ID3D11Texture2D, state.render_target);
-    SAFE_RELEASE(ID3D11RenderTargetView, state.render_target_view);
-    SAFE_RELEASE(ID3D11Texture2D, state.depth_stencil_buffer);
-    SAFE_RELEASE(ID3D11DepthStencilView, state.depth_stencil_view);
+void d3d11_destroy_default_render_targets(void) {
+    SAFE_RELEASE(ID3D11Texture2D, state.rt_tex);
+    SAFE_RELEASE(ID3D11RenderTargetView, state.rt_view);
+    SAFE_RELEASE(ID3D11Texture2D, state.ds_tex);
+    SAFE_RELEASE(ID3D11DepthStencilView, state.ds_view);
+    SAFE_RELEASE(ID3D11Texture2D, state.msaa_tex);
+    SAFE_RELEASE(ID3D11RenderTargetView, state.msaa_view);
 }
 
-void d3d11_update_default_render_target(void) {
+void d3d11_update_default_render_targets(void) {
     if (state.swap_chain) {
-        d3d11_destroy_default_render_target();
+        d3d11_destroy_default_render_targets();
         IDXGISwapChain_ResizeBuffers(state.swap_chain, 1, state.width, state.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        d3d11_create_default_render_target();
+        d3d11_create_default_render_targets();
     }
 }
 
@@ -217,7 +231,7 @@ void d3d11_present(void) {
             /* need to reallocate the default render target */
             state.width = cur_width;
             state.height = cur_height;
-            d3d11_update_default_render_target();
+            d3d11_update_default_render_targets();
         }
     }
 }
@@ -290,27 +304,31 @@ static const void* d3d11_device_context(void) {
     return (const void*) state.device_context;
 }
 
-static const void* d3d11_render_target_view(void* user_data) {
-    assert(0xDEADBEEF == (uintptr_t) user_data);
-    (void)user_data; // silence unused warning in release mode
-    return (const void*) state.render_target_view;
-}
-
-static const void* d3d11_depth_stencil_view(void* user_data) {
-    assert(0xDEADBEEF == (uintptr_t) user_data);
-    (void)user_data; // silence unused warning in release mode
-    return (const void*) state.depth_stencil_view;
-}
-
-sg_context_desc d3d11_get_context(void) {
-    return (sg_context_desc) {
-        .sample_count = state.sample_count,
+sg_environment d3d11_environment(void) {
+    return (sg_environment){
+        .defaults = {
+            .color_format = SG_PIXELFORMAT_BGRA8,
+            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+            .sample_count = state.sample_count,
+        },
         .d3d11 = {
             .device = d3d11_device(),
             .device_context = d3d11_device_context(),
-            .render_target_view_userdata_cb = d3d11_render_target_view,
-            .depth_stencil_view_userdata_cb = d3d11_depth_stencil_view,
-            .user_data = (void*)(uintptr_t)0xDEADBEEF
+        }
+    };
+}
+
+sg_swapchain d3d11_swapchain(void) {
+    return (sg_swapchain){
+        .width = state.width,
+        .height = state.height,
+        .sample_count = state.sample_count,
+        .color_format = SG_PIXELFORMAT_BGRA8,
+        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .d3d11 = {
+            .render_view = (state.sample_count == 1) ? state.rt_view : state.msaa_view,
+            .resolve_view = (state.sample_count == 1) ? 0 : state.rt_view,
+            .depth_stencil_view = state.ds_view,
         }
     };
 }

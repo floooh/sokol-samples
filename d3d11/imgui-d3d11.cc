@@ -34,7 +34,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // setup d3d11 app wrapper, sokol_gfx, sokol_time
     d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
     sg_desc desc = { };
-    desc.context = d3d11_get_context();
+    desc.environment = d3d11_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
@@ -196,7 +196,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
 
         // the sokol_gfx draw pass
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_pass pass = { };
+        pass.action = pass_action;
+        pass.swapchain = d3d11_swapchain();
+        sg_begin_pass(&pass);
         ImGui::Render();
         draw_imgui(ImGui::GetDrawData());
         sg_end_pass();

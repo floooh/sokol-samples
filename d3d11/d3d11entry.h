@@ -24,8 +24,10 @@ bool d3d11_process_events(void);
 int d3d11_width(void);
 /* get current framebuffer height */
 int d3d11_height(void);
-/* get initialized sg_context_desc struct */
-sg_context_desc d3d11_get_context(void);
+/* get initialized sg_environment struct */
+sg_environment d3d11_environment(void);
+/* get initialized sg_swapchainb struct */
+sg_swapchain d3d11_swapchain(void);
 
 /* input callback typedefs */
 typedef void(*d3d11_key_func)(int key);

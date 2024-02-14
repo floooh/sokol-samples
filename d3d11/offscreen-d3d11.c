@@ -23,7 +23,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int offscreen_sample_count = 1;
     d3d11_init(width, height, display_sample_count, L"Sokol Offscreen D3D11");
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -38,15 +38,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
     sg_image depth_img = sg_make_image(&img_desc);
 
-    // an offscreen render pass into those images
-    sg_pass offscreen_pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img
+    // an offscreen pass attachments object into those images
+    sg_attachments offscreen_attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .depth_stencil.image = depth_img
     });
-    assert(sg_d3d11_query_pass_info(offscreen_pass).color_rtv[0] != 0);
-    assert(sg_d3d11_query_pass_info(offscreen_pass).color_rtv[1] == 0);
-    assert(sg_d3d11_query_pass_info(offscreen_pass).resolve_rtv[0] == 0);
-    assert(sg_d3d11_query_pass_info(offscreen_pass).dsv != 0);
+    assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[0] != 0);
+    assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[1] == 0);
+    assert(sg_d3d11_query_attachments_info(offscreen_attachments).resolve_rtv[0] == 0);
+    assert(sg_d3d11_query_attachments_info(offscreen_attachments).dsv != 0);
 
     // a sampler object for when the rendertarget image is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -265,7 +265,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
         // offscreen pass, rendering an untextured cube
-        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
+        sg_begin_pass(&(sg_pass){ .action = offscreen_pass_action, .attachments = offscreen_attachments });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -273,7 +273,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_end_pass();
 
         // default pass, render cube textured with offscreen render target image
-        sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .action = default_pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
