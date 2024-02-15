@@ -8,8 +8,7 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_debugtext.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 // uniform block C struct
 #define ARRAY_COUNT (8)
@@ -28,16 +27,10 @@ static sg_shader create_shader(void);
 
 int main() {
 
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* win = glfwCreateWindow(640, 480, "GL Uniform Array Test", 0, 0);
-    glfwMakeContextCurrent(win);
-    glfwSwapInterval(1);
+    glfw_init("uniformarrays-glfw.c", 640, 480, 1);
 
     sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
         .logger.func = slog_func,
     });
     sdtx_setup(&(sdtx_desc_t){
@@ -85,12 +78,10 @@ int main() {
         vs_params.f3[idx][2] = v;
     }
 
-    while (!glfwWindowShouldClose(win)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(win, &cur_width, &cur_height);
+    while (!glfwWindowShouldClose(glfw_window())) {
 
-        const float w = (float) cur_width;
-        const float h = (float) cur_height;
+        const float w = (float) glfw_width();
+        const float h = (float) glfw_height();
         const float cw = w * 0.5f;
         const float ch = h * 0.5f;
         const float glyph_w = 8.0f / cw;
@@ -101,7 +92,7 @@ int main() {
         sdtx_color3f(1.0f, 1.0f, 1.0f);
         sdtx_puts("You should see 3 rows of increasing\nbrightness (red, yellow, grey)");
 
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bindings);
         vs_params.scale[0] = 5.0f * glyph_w;
@@ -120,7 +111,7 @@ int main() {
         sg_end_pass();
         sg_commit();
 
-        glfwSwapBuffers(win);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
     sdtx_shutdown();

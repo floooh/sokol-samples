@@ -9,11 +9,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-
-const int DISPLAY_WIDTH = 640;
-const int DISPLAY_HEIGHT = 480;
+#include "glfw_glue.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -31,18 +27,13 @@ void game_of_life_update();
 
 int main() {
     // create GLFW window and initialize GL
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(DISPLAY_WIDTH, DISPLAY_HEIGHT, "Sokol Dynamic Texture GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init("dyntex-glfw.c", 640, 480, 4);
 
     // init sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
 
     // a 128x128 image with streaming-update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
@@ -179,17 +170,17 @@ int main() {
     // default pass action (clear to grey)
     sg_pass_action pass_action = {0};
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)DISPLAY_WIDTH/(float)DISPLAY_HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // initial game-of-life seed state
     game_of_life_init();
 
     vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
+        // view-projection matrix
+        hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 10.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
         // model-view-projection matrix from rotated model matrix
         rx += 0.1f; ry += 0.2f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -208,18 +199,14 @@ int main() {
             }
         });
 
-        // get current window canvas size for the default pass
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
 

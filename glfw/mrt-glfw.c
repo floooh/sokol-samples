@@ -9,8 +9,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 typedef struct {
     float x, y, z;
@@ -26,59 +25,51 @@ typedef struct {
 } params_t;
 
 int main() {
-    const int WIDTH = 640;
-    const int HEIGHT = 480;
-
     // create GLFW window and initialize GL
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol MRT GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init("mrt-glfw.c", 800, 600, 1);
 
     // setup sokol_gfx
-    sg_desc desc = { .logger.func = slog_func };
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // a render pass with 3 color attachment images, 3 msaa-resolve images, and a depth attachment image
     const int offscreen_sample_count = 4;
     const sg_image_desc color_img_desc = {
         .render_target = true,
-        .width = WIDTH,
-        .height = HEIGHT,
+        .width = glfw_width(),
+        .height = glfw_height(),
         .sample_count = offscreen_sample_count
     };
     const sg_image_desc resolve_img_desc = {
         .render_target = true,
-        .width = WIDTH,
-        .height = HEIGHT,
+        .width = glfw_width(),
+        .height = glfw_height(),
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
         .render_target = true,
-        .width = WIDTH,
-        .height = HEIGHT,
+        .width = glfw_width(),
+        .height = glfw_height(),
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = offscreen_sample_count
     };
-    sg_pass_desc offscreen_pass_desc = {
-        .color_attachments = {
+    const sg_attachments_desc offscreen_attachments_desc = {
+        .colors = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .resolve_attachments = {
+        .resolves = {
             [0].image = sg_make_image(&resolve_img_desc),
             [1].image = sg_make_image(&resolve_img_desc),
             [2].image = sg_make_image(&resolve_img_desc)
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+        .depth_stencil.image = sg_make_image(&depth_img_desc)
     };
-    sg_pass offscreen_pass = sg_make_pass(&offscreen_pass_desc);
+    sg_attachments offscreen_attachments = sg_make_attachments(&offscreen_attachments_desc);
 
     // a matching pass action with clear colors
     sg_pass_action offscreen_pass_action = {
@@ -230,9 +221,9 @@ int main() {
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_vbuf,
         .fs.images = {
-            [0] = offscreen_pass_desc.resolve_attachments[0].image,
-            [1] = offscreen_pass_desc.resolve_attachments[1].image,
-            [2] = offscreen_pass_desc.resolve_attachments[2].image,
+            [0] = offscreen_attachments_desc.resolves[0].image,
+            [1] = offscreen_attachments_desc.resolves[1].image,
+            [2] = offscreen_attachments_desc.resolves[2].image,
         },
         .fs.samplers[0] = smp,
     };
@@ -346,15 +337,15 @@ int main() {
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // view-projection matrix for the offscreen-rendered cube
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     offscreen_params_t offscreen_params;
     params_t params;
     float rx = 0.0f, ry = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
+        // view-projection matrix for the offscreen-rendered cube
+        hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 10.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
         rx += 1.0f; ry += 2.0f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
         hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -363,7 +354,10 @@ int main() {
         params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
 
         // render cube into MRT offscreen render targets
-        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
+        sg_begin_pass(&(sg_pass){
+            .action = offscreen_pass_action,
+            .attachments = offscreen_attachments,
+        });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
@@ -372,9 +366,10 @@ int main() {
 
         // render fullscreen quad with the 'composed image', plus 3 small
         // debug-views with the content of the offscreen render targets
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){
+            .action = default_pass_action,
+            .swapchain = glfw_swapchain(),
+        });
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
@@ -382,13 +377,13 @@ int main() {
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs.images[0] = offscreen_pass_desc.resolve_attachments[i].image;
+            dbg_bind.fs.images[0] = offscreen_attachments_desc.resolves[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
     sg_shutdown();

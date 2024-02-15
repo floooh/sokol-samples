@@ -6,26 +6,16 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 int main() {
 
-    const int WIDTH = 640;
-    const int HEIGHT = 480;
-
-    // create window and GL context via GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Clear GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-
-    // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    // setup GLFW and sokol-gfx
+    glfw_init("clear-glfw.c", 640, 460, 1);
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // default pass action, clear to red
@@ -34,16 +24,14 @@ int main() {
     };
 
     // draw loop
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
         float g = (float)(pass_action.colors[0].clear_value.g + 0.01);
         if (g > 1.0f) g = 0.0f;
         pass_action.colors[0].clear_value.g = g;
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
 

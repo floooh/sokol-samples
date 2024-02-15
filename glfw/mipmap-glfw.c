@@ -11,8 +11,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -43,24 +42,14 @@ uint32_t mip_colors[9] = {
 };
 
 int main() {
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
-    const int MSAA_SAMPLES = 4;
-
     // create GLFW window and initialize GL
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, MSAA_SAMPLES);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Mipmapping GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init("mipmap-glfw.c", 800, 600, 4);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
 
     // a plane vertex buffer
     float vertices[] = {
@@ -133,8 +122,8 @@ int main() {
     // the last 4 samplers use different anistropy levels
     smp_desc.min_lod = 0.0f;
     smp_desc.max_lod = 0.0f;    // for max_lod, zero-initialized means "FLT_MAX"
-    smp_desc.min_filter = SG_FILTER_NEAREST;
-    smp_desc.mag_filter = SG_FILTER_NEAREST;
+    smp_desc.min_filter = SG_FILTER_LINEAR;
+    smp_desc.mag_filter = SG_FILTER_LINEAR;
     smp_desc.mipmap_filter = SG_FILTER_LINEAR;
     for (int i = 0; i < 4; i++) {
         smp_desc.max_anisotropy = 1<<i;
@@ -189,24 +178,22 @@ int main() {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .fs.images[0] = img,
     };
     vs_params_t vs_params;
     float r = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
+        // view-projection matrix
+        hmm_mat4 proj = HMM_Perspective(90.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 10.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
         r += 0.1f;
         hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&(sg_pass_action){0}, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){ .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;
@@ -220,7 +207,7 @@ int main() {
         }
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
     sg_shutdown();
