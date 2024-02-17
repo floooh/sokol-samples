@@ -11,12 +11,16 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
+#include "flextgl33/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE33
+#define SOKOL_EXTERNAL_GL_LOADER
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+
+static bool flext_initialized = false;
 
 typedef struct {
     int x;
@@ -64,6 +68,10 @@ static window_t create_window(const window_desc_t* desc) {
     win.glfw = glfwCreateWindow(desc->width, desc->height, desc->title, 0, desc->glfw_main_window);
     glfwSetWindowPos(win.glfw, desc->x, desc->y);
     glfwMakeContextCurrent(win.glfw);
+    if (!flext_initialized) {
+        flextInit();
+        flext_initialized = true;
+    }
     glfwSwapInterval(1);
 
     // create shared render buffers on main context
