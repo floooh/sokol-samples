@@ -27,6 +27,7 @@ typedef struct {
     int y;
     int width;
     int height;
+    int swap_interval;
     const char* title;
     GLFWwindow* glfw_main_window;
     sg_color clear_color;
@@ -72,7 +73,7 @@ static window_t create_window(const window_desc_t* desc) {
         flextInit();
         flext_initialized = true;
     }
-    glfwSwapInterval(1);
+    glfwSwapInterval(desc->swap_interval);
 
     // create shared render buffers on main context
     if (desc->glfw_main_window) {
@@ -150,6 +151,7 @@ int main() {
         .y = 40,
         .width = WIDTH,
         .height = HEIGHT,
+        .swap_interval = 1,
         .title = "Main Window",
         .clear_color = { 0.5f, 0.5f, 1.0f, 1.0f },
     });
@@ -159,6 +161,7 @@ int main() {
         .width = WIDTH,
         .height = HEIGHT,
         .title = "Window 1",
+        .swap_interval = 0,
         .glfw_main_window = win[0].glfw,
         .clear_color = { 1.0f, 0.5f, 0.5f, 1.0f },
     });
@@ -168,6 +171,7 @@ int main() {
         .width = WIDTH,
         .height = HEIGHT,
         .title = "Window 2",
+        .swap_interval = 0,
         .glfw_main_window = win[0].glfw,
         .clear_color = { 0.5f, 1.0f, 0.5f, 1.0f },
     });
@@ -277,8 +281,11 @@ int main() {
     // run until main window is closed
     vs_params_t vs_params = {0};
     float rx = 0.0f, ry = 0.0f;
-    while (win[0].glfw) {
+    bool running = true;
+    while (running) {
         glfwPollEvents();
+        glfwMakeContextCurrent(win[0].glfw);
+        sg_reset_state_cache();
         // rotated model matrix
         rx += 1.0f; ry += 2.0f;
         hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
@@ -312,13 +319,14 @@ int main() {
                 glBlitFramebuffer(0, 0, WIDTH, HEIGHT, 0, 0, dst_width, dst_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
                 glfwSwapBuffers(win[i].glfw);
                 if (glfwWindowShouldClose(win[i].glfw)) {
-                    close_window(&win[i]);
+                    if (i == 0) {
+                        running = false;
+                    } else {
+                        close_window(&win[i]);
+                    }
                 }
             }
         }
-        // switch back to main context and flush the sokol-gfx state cache
-        glfwMakeContextCurrent(win[0].glfw);
-        sg_reset_state_cache();
     }
     sg_shutdown();
     glfwTerminate();
