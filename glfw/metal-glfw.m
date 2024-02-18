@@ -19,19 +19,19 @@
 #import <QuartzCore/CAMetalLayer.h>
 
 static CAMetalLayer* layer;
-static id<CAMetalDrawable> next_drawable;
 
-// callback to obtain MTLRenderPassDescriptor, called from sg_begin_default_pass()
-static const void* get_render_pass_descriptor(void) {
-    next_drawable = [layer nextDrawable];
-    MTLRenderPassDescriptor* pass_desc = [MTLRenderPassDescriptor renderPassDescriptor];
-    pass_desc.colorAttachments[0].texture = next_drawable.texture;
-    return (__bridge const void*) pass_desc;
-}
-
-// callback to obtain next drawable, called from sg_commit()
-static const void* get_next_drawable(void) {
-    return (__bridge const void*) next_drawable;
+static sg_swapchain get_swapchain(void) {
+    id<CAMetalDrawable> next_drawable = [layer nextDrawable];
+    const CGSize fb_size = layer.drawableSize;
+    return (sg_swapchain){
+        .width = (int)fb_size.width,
+        .height = (int)fb_size.height,
+        .sample_count = 1,
+        .depth_format = SG_PIXELFORMAT_NONE,
+        .metal = {
+            .current_drawable = (__bridge const void*) next_drawable,
+        }
+    };
 }
 
 int main(void) {
@@ -54,12 +54,12 @@ int main(void) {
     // setup sokol-gfx, pass relevant Metal objects and callbacks, also tell
     // sokol-gfx that there's no default depth-stencil-buffer
     sg_setup(&(sg_desc){
-        .context = {
-            .depth_format = SG_PIXELFORMAT_NONE,
+        .environment = {
+            .defaults = {
+                .depth_format = SG_PIXELFORMAT_NONE,
+            },
             .metal = {
                 .device = (__bridge const void*) device,
-                .renderpass_descriptor_cb = get_render_pass_descriptor,
-                .drawable_cb = get_next_drawable,
             }
         },
         .logger = {
@@ -139,8 +139,7 @@ int main(void) {
 
         // the sokol-gfx frame needs to run in an autoreleasepool
         @autoreleasepool {
-            const CGSize fb_size = layer.drawableSize;
-            sg_begin_default_pass(&pass_action, fb_size.width, fb_size.height);
+            sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = get_swapchain() });
             sg_apply_pipeline(pip);
             sg_apply_bindings(&bindings);
             sg_draw(0, 3, 1);
