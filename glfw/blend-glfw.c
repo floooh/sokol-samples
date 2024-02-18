@@ -24,7 +24,7 @@ sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("blend-glfw.c", 800, 600, 4);
+    glfw_init(&(glfw_desc_t){ .title = "blend-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
     // setup sokol_gfx (need to increase pipeline pool size)
     sg_desc desc = {
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,

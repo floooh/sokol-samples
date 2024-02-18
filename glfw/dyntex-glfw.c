@@ -27,7 +27,7 @@ void game_of_life_update();
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("dyntex-glfw.c", 640, 480, 4);
+    glfw_init(&(glfw_desc_t){ .title = "dyntex-glfw.c", .width = 640, .height = 480, .sample_count = 4 });
 
     // init sokol_gfx
     sg_setup(&(sg_desc){

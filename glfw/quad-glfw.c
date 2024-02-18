@@ -11,7 +11,7 @@
 int main() {
 
     // create window and GL context via GLFW
-    glfw_init("quad-glfw.c", 640, 480, 1);
+    glfw_init(&(glfw_desc_t){ .title = "quad-glfw.c", .width = 640, .height = 480 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){

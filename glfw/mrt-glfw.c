@@ -26,7 +26,7 @@ typedef struct {
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("mrt-glfw.c", 800, 600, 1);
+    glfw_init(&(glfw_desc_t){ .title = "mrt-glfw.c", .width = 800, .height = 600 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){

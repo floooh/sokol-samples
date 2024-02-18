@@ -27,7 +27,7 @@ static sg_shader create_shader(void);
 
 int main() {
 
-    glfw_init("uniformarrays-glfw.c", 640, 480, 1);
+    glfw_init(&(glfw_desc_t){ .title = "uniformarrays-glfw.c", .width = 640, .height = 480 });
 
     sg_setup(&(sg_desc){
         .environment = glfw_environment(),

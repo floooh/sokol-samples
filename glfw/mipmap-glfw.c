@@ -43,7 +43,7 @@ uint32_t mip_colors[9] = {
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("mipmap-glfw.c", 800, 600, 4);
+    glfw_init(&(glfw_desc_t){ .title = "mipmap-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){

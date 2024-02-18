@@ -33,7 +33,11 @@ static void draw_imgui(ImDrawData*);
 int main() {
 
     // window and GL context via GLFW and flextGL
-    glfw_init("imgui-glfw.cc", Width, Height, 1);
+    glfw_desc_t glfw_desc = {};
+    glfw_desc.title = "imgui-glfw.cc";
+    glfw_desc.width = Width;
+    glfw_desc.height = Height;
+    glfw_init(&glfw_desc);
     GLFWwindow* w = glfw_window();
 
     // GLFW to ImGui input forwarding

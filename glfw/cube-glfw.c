@@ -18,7 +18,7 @@ typedef struct {
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("cube-glfw.c", 800, 600, 4);
+    glfw_init(&(glfw_desc_t){ .title = "cube-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){

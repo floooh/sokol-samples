@@ -25,7 +25,7 @@ enum {
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("arraytex-glfw.c", 800, 600, 1);
+    glfw_init(&(glfw_desc_t){ .title = "arraytex-glfw.c", .width = 800, .height = 600 });
     // setup sokol_gfx
     sg_setup(&(sg_desc){
         .environment = glfw_environment(),

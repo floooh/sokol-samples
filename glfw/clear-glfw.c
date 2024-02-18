@@ -11,7 +11,7 @@
 int main() {
 
     // setup GLFW and sokol-gfx
-    glfw_init("clear-glfw.c", 640, 460, 1);
+    glfw_init(&(glfw_desc_t){ .title = "clear-glfw.c", .width = 640, .height = 460 });
     sg_setup(&(sg_desc){
         .environment = glfw_environment(),
         .logger.func = slog_func,

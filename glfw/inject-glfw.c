@@ -26,7 +26,7 @@ typedef struct {
 int main() {
 
     /* create GLFW window and initialize GL */
-    glfw_init("inject-glfw.c", 640, 480, 4);
+    glfw_init(&(glfw_desc_t){ .title = "inject-glfw.c", .width = 640, .height = 480, .sample_count = 4 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){

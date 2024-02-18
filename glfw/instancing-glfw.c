@@ -30,7 +30,7 @@ hmm_vec3 vel[MAX_PARTICLES];
 int main() {
 
     // create window and GL context via GLFW
-    glfw_init("instancing-glfw.c", 800, 600, 4);
+    glfw_init(&(glfw_desc_t){ .title = "instancing-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
     // setup sokol_gfx
     sg_setup(&(sg_desc){
         .environment = glfw_environment(),

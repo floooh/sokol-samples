@@ -11,7 +11,7 @@
 int main() {
 
     // create window and GL context via GLFW
-    glfw_init("triangle-glfw.c", 640, 480, 1);
+    glfw_init(&(glfw_desc_t){ .title = "triangle-glfw.c", .width = 640, .height = 480, .no_depth_buffer = true });
     // setup sokol_gfx
     sg_setup(&(sg_desc){
         .environment = glfw_environment(),

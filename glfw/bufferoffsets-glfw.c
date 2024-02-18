@@ -15,7 +15,7 @@ typedef struct {
 
 int main() {
     // create GLFW window and initialize GL
-    glfw_init("bufferoffsets-glfw.c", 640, 480, 1);
+    glfw_init(&(glfw_desc_t){ .title = "bufferoffsets-glfw.c", .width = 640, .height = 480 });
 
     // setup sokol_gfx
     sg_setup(&(sg_desc){
