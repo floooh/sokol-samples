@@ -21,7 +21,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     const int height = 600;
     const int display_sample_count = 4;
     const int offscreen_sample_count = 1;
-    d3d11_init(width, height, display_sample_count, L"Sokol Offscreen D3D11");
+    d3d11_init(&(d3d11_desc_t){
+        .width = width,
+        .height = height,
+        .sample_count = display_sample_count,
+        .title = L"offscreen-d3d11.c",
+    });
     sg_setup(&(sg_desc){
         .environment = d3d11_environment(),
         .logger.func = slog_func,

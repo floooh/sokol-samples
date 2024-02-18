@@ -11,7 +11,7 @@
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper and sokol_gfx
-    d3d11_init(640, 480, 1, L"Sokol Quad D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = 640, .height = 480, .title = L"quad-d3d11.c" });
     sg_setup(&(sg_desc){
         .environment = d3d11_environment(),
         .logger.func = slog_func,

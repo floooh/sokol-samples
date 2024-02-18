@@ -11,7 +11,12 @@
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper
-    d3d11_init(640, 480, 1, L"Sokol Triangle D3D11");
+    d3d11_init(&(d3d11_desc_t){
+        .width = 640,
+        .height = 480,
+        .no_depth_buffer = true,
+        .title = L"triangle-d3d11.c"
+    });
 
     // setup sokol gfx
     sg_setup(&(sg_desc){

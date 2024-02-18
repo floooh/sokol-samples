@@ -32,7 +32,11 @@ static void draw_imgui(ImDrawData*);
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper, sokol_gfx, sokol_time
-    d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
+    d3d11_desc_t d3d11_desc = {};
+    d3d11_desc.width = Width;
+    d3d11_desc.height = Height;
+    d3d11_desc.title = L"imgui-d3d11.c";
+    d3d11_init(&d3d11_desc);
     sg_desc desc = { };
     desc.environment = d3d11_environment();
     desc.logger.func = slog_func;

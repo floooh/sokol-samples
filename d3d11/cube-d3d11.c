@@ -19,10 +19,9 @@ typedef struct {
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper and sokol_gfx
-    const int sample_count = 4;
     const int width = 800;
     const int height = 600;
-    d3d11_init(width, height, sample_count, L"Sokol Cube D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = width, .height = height, .sample_count = 4, .title = L"Sokol Cube D3D11" });
     sg_setup(&(sg_desc){
         .environment = d3d11_environment(),
         .logger.func = slog_func,

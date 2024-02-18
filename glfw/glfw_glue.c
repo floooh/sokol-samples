@@ -9,6 +9,7 @@ GLFWwindow* _window;
 #define _glfw_def(val, def) (((val) == 0) ? (def) : (val))
 
 void glfw_init(const glfw_desc_t* desc) {
+    assert(desc);
     assert(desc->width > 0);
     assert(desc->height > 0);
     assert(desc->title);

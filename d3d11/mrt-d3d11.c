@@ -28,7 +28,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // setup d3d11 app wrapper and sokol_gfx
     const int width = 800;
     const int height = 600;
-    d3d11_init(width, height, 1, L"Sokol MRT D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = width, .height = height, .title = L"mrt-d3d11.c" });
     sg_setup(&(sg_desc){
         .environment = d3d11_environment(),
         .logger.func = slog_func,

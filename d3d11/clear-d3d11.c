@@ -10,7 +10,7 @@
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup the D3D11 app wrapper
-    d3d11_init(640, 480, 1, L"Sokol Clear D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = 640, .height = 480, .title = L"clear-d3d11.c" });
 
     // setup sokol
     sg_setup(&(sg_desc){

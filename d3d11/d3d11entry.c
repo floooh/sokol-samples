@@ -14,6 +14,8 @@ static void d3d11_update_default_render_targets(void);
 
 static const IID _d3d11entry_IID_ID3D11Texture2D = { 0x6f15aaf2,0xd208,0x4e89,0x9a,0xb4,0x48,0x95,0x35,0xd3,0x4f,0x9c };
 
+#define _d3d11_def(val, def) (((val) == 0) ? (def) : (val))
+
 static struct {
     bool quit_requested;
     bool in_create_window;
@@ -24,6 +26,7 @@ static struct {
     int width;
     int height;
     int sample_count;
+    bool no_depth_buffer;
     ID3D11Device* device;
     ID3D11DeviceContext* device_context;
     IDXGISwapChain* swap_chain;
@@ -47,11 +50,19 @@ static struct {
 
 #define SAFE_RELEASE(class, obj) if (obj) { class##_Release(obj); obj=0; }
 
-void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
+void d3d11_init(const d3d11_desc_t* desc) {
+    assert(desc);
+    assert(desc->width > 0);
+    assert(desc->height > 0);
+    assert(desc->title);
 
-    state.width = w;
-    state.height = h;
-    state.sample_count = sample_count;
+    d3d11_desc_t desc_def = *desc;
+    desc_def.sample_count = _d3d11_def(desc_def.sample_count, 1);
+
+    state.width = desc_def.width;
+    state.height = desc_def.height;
+    state.sample_count = desc_def.sample_count;
+    state.no_depth_buffer = desc_def.no_depth_buffer;
 
     // register window class
     RegisterClassW(&(WNDCLASSW){
@@ -65,14 +76,14 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
 
     // create window
     state.in_create_window = true;
-    RECT rect = { .left = 0, .top = 0, .right = w, .bottom = h };
+    RECT rect = { .left = 0, .top = 0, .right = state.width, .bottom = state.height };
     AdjustWindowRectEx(&rect, state.win_style, FALSE, state.win_ex_style);
     const int win_width = rect.right - rect.left;
     const int win_height = rect.bottom - rect.top;
     state.hwnd = CreateWindowExW(
         state.win_ex_style, // dwExStyle
         L"SOKOLD3D11",      // lpClassName
-        title,              // lpWindowName
+        desc_def.title,     // lpWindowName
         state.win_style,    // dwStyle
         CW_USEDEFAULT,      // X
         CW_USEDEFAULT,      // Y
@@ -88,8 +99,8 @@ void d3d11_init(int w, int h, int sample_count, const wchar_t* title) {
     // create device and swap chain
     state.swap_chain_desc = (DXGI_SWAP_CHAIN_DESC) {
         .BufferDesc = {
-            .Width = (UINT)w,
-            .Height = (UINT)h,
+            .Width = (UINT)state.width,
+            .Height = (UINT)state.height,
             .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
             .RefreshRate = {
                 .Numerator = 60,
@@ -179,12 +190,14 @@ void d3d11_create_default_render_targets(void) {
     }
 
     // depth-stencil render target and view
-    tex_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    tex_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    hr = ID3D11Device_CreateTexture2D(state.device, &tex_desc, NULL, &state.ds_tex);
-    assert(SUCCEEDED(hr) && state.ds_tex);
-    hr = ID3D11Device_CreateDepthStencilView(state.device, (ID3D11Resource*)state.ds_tex, NULL, &state.ds_view);
-    assert(SUCCEEDED(hr) && state.ds_view);
+    if (!state.no_depth_buffer) {
+        tex_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        tex_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+        hr = ID3D11Device_CreateTexture2D(state.device, &tex_desc, NULL, &state.ds_tex);
+        assert(SUCCEEDED(hr) && state.ds_tex);
+        hr = ID3D11Device_CreateDepthStencilView(state.device, (ID3D11Resource*)state.ds_tex, NULL, &state.ds_view);
+        assert(SUCCEEDED(hr) && state.ds_view);
+    }
 }
 
 void d3d11_destroy_default_render_targets(void) {
@@ -308,7 +321,7 @@ sg_environment d3d11_environment(void) {
     return (sg_environment){
         .defaults = {
             .color_format = SG_PIXELFORMAT_BGRA8,
-            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+            .depth_format = state.no_depth_buffer ? SG_PIXELFORMAT_NONE : SG_PIXELFORMAT_DEPTH_STENCIL,
             .sample_count = state.sample_count,
         },
         .d3d11 = {
@@ -324,7 +337,7 @@ sg_swapchain d3d11_swapchain(void) {
         .height = state.height,
         .sample_count = state.sample_count,
         .color_format = SG_PIXELFORMAT_BGRA8,
-        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .depth_format = state.no_depth_buffer ? SG_PIXELFORMAT_NONE : SG_PIXELFORMAT_DEPTH_STENCIL,
         .d3d11 = {
             .render_view = (state.sample_count == 1) ? state.rt_view : state.msaa_view,
             .resolve_view = (state.sample_count == 1) ? 0 : state.rt_view,

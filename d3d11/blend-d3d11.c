@@ -27,8 +27,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // setup d3d11 app wrapper and sokol_gfx
     const int WIDTH = 800;
     const int HEIGHT = 600;
-    const int SAMPLE_COUNT = 4;
-    d3d11_init(WIDTH, HEIGHT, SAMPLE_COUNT, L"Sokol Blend D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = WIDTH, .height = HEIGHT, .sample_count = 4, .title = L"blend-d3d11.c" });
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
         .environment = d3d11_environment(),

@@ -215,7 +215,9 @@ int main() {
         }
 
         // the sokol_gfx draw pass
-        const sg_pass pass = { .action = pass_action, .swapchain = glfw_swapchain() };
+        sg_pass pass = {};
+        pass.action = pass_action;
+        pass.swapchain = glfw_swapchain();
         sg_begin_pass(pass);
         ImGui::Render();
         draw_imgui(ImGui::GetDrawData());
