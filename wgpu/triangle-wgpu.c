@@ -86,6 +86,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
+        .no_depth_buffer = true,
         .title = "triangle-wgpu"
     });
     return 0;

@@ -91,11 +91,19 @@ static sg_pixel_format wgpu_get_color_format(void) {
     }
 }
 
+static sg_pixel_format wgpu_get_depth_format(void) {
+    if (state.desc.no_depth_buffer) {
+        return SG_PIXELFORMAT_NONE;
+    } else {
+        return SG_PIXELFORMAT_DEPTH_STENCIL;
+    }
+}
+
 sg_environment wgpu_environment(void) {
     return (sg_environment) {
         .defaults = {
             .color_format = wgpu_get_color_format(),
-            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+            .depth_format = wgpu_get_depth_format(),
             .sample_count = state.desc.sample_count,
         },
         .wgpu = {
@@ -110,7 +118,7 @@ sg_swapchain wgpu_swapchain(void) {
         .height = state.height,
         .sample_count = state.desc.sample_count,
         .color_format = wgpu_get_color_format(),
-        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .depth_format = wgpu_get_depth_format(),
         .wgpu = {
             .render_view = wgpu_get_render_view(),
             .resolve_view = wgpu_get_resolve_view(),

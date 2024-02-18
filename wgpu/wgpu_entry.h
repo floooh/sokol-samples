@@ -39,6 +39,7 @@ typedef struct {
     int width;
     int height;
     int sample_count;
+    bool no_depth_buffer;
     const char* title;
     wgpu_init_func init_cb;
     wgpu_frame_func frame_cb;
