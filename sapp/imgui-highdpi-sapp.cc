@@ -45,26 +45,10 @@ void init(void) {
     // create font texture and linear-filtering sampler for the custom font
     // NOTE: linear filtering looks better on low-dpi displays, while
     // nearest-filtering looks better on high-dpi displays
-    unsigned char* font_pixels;
-    int font_width, font_height;
-    io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    sg_image_desc img_desc = { };
-    img_desc.width = font_width;
-    img_desc.height = font_height;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.data.subimage[0][0].ptr = font_pixels;
-    img_desc.data.subimage[0][0].size = font_width * font_height * 4;
-    sg_image font_img = sg_make_image(&img_desc);
-    sg_sampler_desc smp_desc = { };
-    smp_desc.min_filter = SG_FILTER_LINEAR;
-    smp_desc.mag_filter = SG_FILTER_LINEAR;
-    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    sg_sampler font_smp = sg_make_sampler(&smp_desc);
-    simgui_image_desc_t font_desc = { };
-    font_desc.image = font_img;
-    font_desc.sampler = font_smp;
-    io.Fonts->TexID = simgui_imtextureid(simgui_make_image(&font_desc));
+    simgui_font_tex_desc_t font_texture_desc = { };
+    font_texture_desc.min_filter = SG_FILTER_LINEAR;
+    font_texture_desc.mag_filter = SG_FILTER_LINEAR;
+    simgui_create_fonts_texture(&font_texture_desc);
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
