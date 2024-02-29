@@ -7,7 +7,6 @@ policies:
 imports:
   sokol:
     git: https://github.com/floooh/sokol
-    branch: issue904-pass-cleanup
   sokol-tools-bin:
     git: https://github.com/floooh/sokol-tools-bin
   fips-glfw:
