@@ -44,7 +44,7 @@ static void create_spine_objects(void);
 static void init(void) {
     // sokol-gfx must be setup before sokol-spine
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     // optional debugging UI, only active in the spine-simple-sapp-ui sample
@@ -78,7 +78,7 @@ static void init(void) {
     });
 
     // Setup a sokol-gfx pass action to clear the default framebuffer to black
-    // (used in sg_begin_default_pass() down in the frame callback)
+    // (used in sg_begin_pass() down in the frame callback)
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
@@ -300,7 +300,7 @@ static void frame(void) {
     // if the atlas image have already been loaded yet, if the image handles
     // recorded by sokol-spine for rendering are not yet valid, rendering
     // operations will silently be skipped.
-    sg_begin_default_passf(&state.pass_action, w, h);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
     __dbgui_draw();
     sg_end_pass();

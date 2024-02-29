@@ -306,7 +306,7 @@ static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
 
@@ -461,7 +461,7 @@ static void frame(void) {
     }
     draw_ui();
 
-    sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_viewport(vp_x, vp_y, vp_width, vp_height, true);
     if (ozz_all_loaded(state.ozz)) {
 

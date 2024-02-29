@@ -9,8 +9,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -24,24 +23,12 @@ enum { NUM_BLEND_FACTORS = 15 };
 sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 
 int main() {
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
-    const int MSAA_SAMPLES = 4;
-
     // create GLFW window and initialize GL
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, MSAA_SAMPLES);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Blend GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-
+    glfw_init(&(glfw_desc_t){ .title = "blend-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
     // setup sokol_gfx (need to increase pipeline pool size)
     sg_desc desc = {
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
+        .environment = glfw_environment(),
         .logger.func = slog_func,
     };
     sg_setup(&desc);
@@ -156,11 +143,6 @@ int main() {
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
@@ -168,10 +150,13 @@ int main() {
     fs_params_t fs_params;
     float r = 0.0f;
     fs_params.tick = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+    while (!glfwWindowShouldClose(glfw_window())) {
+        // view-projection matrix
+        hmm_mat4 proj = HMM_Perspective(90.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 100.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
 
         // draw a background quad
         sg_apply_pipeline(bg_pip);
@@ -198,7 +183,7 @@ int main() {
         }
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
         r += 0.6f;
         fs_params.tick += 1.0f;

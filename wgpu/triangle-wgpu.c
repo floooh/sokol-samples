@@ -20,7 +20,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -67,7 +67,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_draw(0, 3, 1);
@@ -86,6 +86,7 @@ int main() {
         .shutdown_cb = shutdown,
         .width = 640,
         .height = 480,
+        .no_depth_buffer = true,
         .title = "triangle-wgpu"
     });
     return 0;

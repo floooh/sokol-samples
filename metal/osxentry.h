@@ -24,8 +24,10 @@ typedef void(*osx_mouse_wheel_func)(float v);
 
 /* entry function */
 extern void osx_start(int w, int h, int sample_count, const char* title, osx_init_func, osx_frame_func, osx_shutdown_func);
-/* return an initialized sg_context_desc struct */
-sg_context_desc osx_get_context(void);
+/* return an initialized sg_environment struct */
+sg_environment osx_environment(void);
+/* return an initialized sg_swapchain struct */
+sg_swapchain osx_swapchain(void);
 /* get width and height of drawable */
 extern int osx_width();
 extern int osx_height();

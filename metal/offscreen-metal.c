@@ -13,7 +13,7 @@
 #define SAMPLE_COUNT (4)
 
 static struct {
-    sg_pass offscreen_pass;
+    sg_attachments offscreen_attachments;
     sg_pipeline offscreen_pip;
     sg_bindings offscreen_bind;
     sg_pipeline default_pip;
@@ -47,7 +47,7 @@ typedef struct {
 static void init(void) {
     // setup sokol
     sg_setup(&(sg_desc){
-        .context = osx_get_context(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -77,10 +77,10 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = SAMPLE_COUNT,
     });
-    state.offscreen_pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .resolve_attachments[0].image = resolve_img,
-        .depth_stencil_attachment.image = depth_img
+    state.offscreen_attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .resolves[0].image = resolve_img,
+        .depth_stencil.image = depth_img
     });
 
     // cube vertex buffer with positions, colors and tex coords
@@ -285,7 +285,10 @@ static void frame(void) {
     vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
 
     // the offscreen pass, rendering an rotating, untextured cube into a render target image
-    sg_begin_pass(state.offscreen_pass, &state.offscreen_pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen_pass_action,
+        .attachments = state.offscreen_attachments,
+    });
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -294,7 +297,10 @@ static void frame(void) {
 
     // and the display-pass, rendering a rotating, textured cube, using the
     // previously rendered offscreen render-target as texture
-    sg_begin_default_pass(&state.default_pass_action, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){
+        .action = state.default_pass_action,
+        .swapchain = osx_swapchain()
+    });
     sg_apply_pipeline(state.default_pip);
     sg_apply_bindings(&state.default_bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

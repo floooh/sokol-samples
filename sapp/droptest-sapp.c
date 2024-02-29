@@ -29,7 +29,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     simgui_setup(&(simgui_desc_t){
@@ -121,7 +121,7 @@ static void frame(void) {
     }
     igEnd();
 
-    sg_begin_default_pass(&(sg_pass_action){0}, width, height);
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();

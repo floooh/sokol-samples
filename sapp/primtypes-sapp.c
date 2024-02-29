@@ -69,7 +69,7 @@ static void init(void) {
     state.point_size = 4.0f;
 
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -151,7 +151,7 @@ static void frame(void) {
 
     print_status_text(w, h);
 
-    sg_begin_default_passf(&state.pass_action, w, h);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.prim[state.cur_prim_type].pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = state.vbuf,

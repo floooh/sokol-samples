@@ -28,9 +28,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // setup d3d11 app wrapper and sokol_gfx
     const int width = 800;
     const int height = 600;
-    d3d11_init(width, height, 1, L"Sokol MRT D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = width, .height = height, .title = L"mrt-d3d11.c" });
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -55,20 +55,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = offscreen_sample_count,
     };
-    sg_pass_desc offscreen_pass_desc = {
-        .color_attachments = {
+    sg_attachments_desc offscreen_attachments_desc = {
+        .colors = {
             [0].image = sg_make_image(&color_img_desc),
             [1].image = sg_make_image(&color_img_desc),
             [2].image = sg_make_image(&color_img_desc)
         },
-        .resolve_attachments = {
+        .resolves = {
             [0].image = sg_make_image(&resolve_img_desc),
             [1].image = sg_make_image(&resolve_img_desc),
             [2].image = sg_make_image(&resolve_img_desc),
         },
-        .depth_stencil_attachment.image = sg_make_image(&depth_img_desc)
+        .depth_stencil.image = sg_make_image(&depth_img_desc)
     };
-    sg_pass offscreen_pass = sg_make_pass(&offscreen_pass_desc);
+    sg_attachments offscreen_attachments = sg_make_attachments(&offscreen_attachments_desc);
 
     // a matching pass action with clear colors
     sg_pass_action offscreen_pass_action = {
@@ -295,9 +295,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .vertex_buffers[0] = quad_buf,
         .fs = {
             .images = {
-                [0] = offscreen_pass_desc.resolve_attachments[0].image,
-                [1] = offscreen_pass_desc.resolve_attachments[1].image,
-                [2] = offscreen_pass_desc.resolve_attachments[2].image,
+                [0] = offscreen_attachments_desc.resolves[0].image,
+                [1] = offscreen_attachments_desc.resolves[1].image,
+                [2] = offscreen_attachments_desc.resolves[2].image,
             },
             .samplers[0] = smp,
         }
@@ -365,7 +365,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
 
         // render cube into MRT offscreen render targets
-        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
+        sg_begin_pass(&(sg_pass){
+            .action = offscreen_pass_action,
+            .attachments = offscreen_attachments
+        });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
@@ -374,7 +377,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
         // render fullscreen quad with the 'composed image', plus 3 small
         // debug-views with the content of the offscreen render targets
-        sg_begin_default_pass(&default_pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){
+            .action = default_pass_action,
+            .swapchain = d3d11_swapchain(),
+        });
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
@@ -382,7 +388,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs.images[0] = offscreen_pass_desc.resolve_attachments[i].image;
+            dbg_bind.fs.images[0] = offscreen_attachments_desc.resolves[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }

@@ -19,7 +19,7 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -121,10 +121,14 @@ void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    sg_pass_action pass_action = {
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } }
-    };
-    sg_begin_default_pass(&pass_action, (int)w, (int)h);
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f } },
+        },
+        .swapchain = sglue_swapchain()
+    });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));

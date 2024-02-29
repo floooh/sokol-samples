@@ -44,7 +44,7 @@ typedef struct {
 typedef struct {
     sg_image cubemap;
     sg_sampler smp;
-    sg_pass offscreen_pass[SG_CUBEFACE_NUM];
+    sg_attachments offscreen_attachments[SG_CUBEFACE_NUM];
     sg_pass_action offscreen_pass_action;
     sg_pass_action display_pass_action;
     mesh_t cube;
@@ -75,7 +75,7 @@ static inline float rnd(float min_val, float max_val) {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(DISPLAY_SAMPLE_COUNT);
@@ -102,12 +102,12 @@ void init(void) {
 
     // create 6 pass objects, one for each cubemap face
     for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
-        app.offscreen_pass[i] = sg_make_pass(&(sg_pass_desc){
-            .color_attachments[0] = {
+        app.offscreen_attachments[i] = sg_make_attachments(&(sg_attachments_desc){
+            .colors[0] = {
                 .image = app.cubemap,
                 .slice = i
             },
-            .depth_stencil_attachment.image = depth_img,
+            .depth_stencil.image = depth_img,
             .label = "offscreen-pass"
         });
     }
@@ -229,7 +229,7 @@ void frame(void) {
     };
     #endif
     for (int face = 0; face < SG_CUBEFACE_NUM; face++) {
-        sg_begin_pass(app.offscreen_pass[face], &app.offscreen_pass_action);
+        sg_begin_pass(&(sg_pass){ .action = app.offscreen_pass_action, .attachments = app.offscreen_attachments[face] });
         hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 0.0f), center_and_up[face][0], center_and_up[face][1]);
         hmm_mat4 view_proj = HMM_MultiplyMat4(app.offscreen_proj, view);
         draw_cubes(app.offscreen_shapes_pip, HMM_Vec3(0.0f, 0.0f, 0.0f), view_proj);
@@ -239,7 +239,7 @@ void frame(void) {
     // render the default pass
     const int w = sapp_width();
     const int h = sapp_height();
-    sg_begin_default_pass(&app.display_pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = app.display_pass_action, .swapchain = sglue_swapchain() });
 
     hmm_vec3 eye_pos = HMM_Vec3(0.0f, 0.0f, 30.0f);
     hmm_mat4 proj = HMM_Perspective(45.0f, (float)w/(float)h, 0.01f, 100.0f);

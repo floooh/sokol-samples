@@ -19,7 +19,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -224,7 +224,7 @@ static void frame(void) {
        a sokol-gfx begin/end pass pair.
        sgl_draw() also 'rewinds' sokol-gl for the next frame.
     */
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

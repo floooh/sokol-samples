@@ -84,7 +84,7 @@ static void init(void) {
 
     // setup sokol-gfx
     sg_desc sgdesc = { };
-    sgdesc.context = sapp_sgcontext();
+    sgdesc.environment = sglue_environment(),
     sgdesc.logger.func = slog_func;
     sg_setup(&sgdesc);
 
@@ -158,7 +158,10 @@ static void frame(void) {
         draw_skeleton();
     }
 
-    sg_begin_default_pass(&state.pass_action, fb_width, fb_height);
+    sg_pass pass = { };
+    pass.action = state.pass_action;
+    pass.swapchain = sglue_swapchain();
+    sg_begin_pass(&pass);
     sgl_draw();
     simgui_render();
     sg_end_pass();

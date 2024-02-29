@@ -30,7 +30,7 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -148,7 +148,7 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

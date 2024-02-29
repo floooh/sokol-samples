@@ -36,7 +36,10 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = emsc_environment(),
+        .logger.func = slog_func
+    });
 
     // create a native GL vertex and index buffer
     float vertices[] = {
@@ -230,7 +233,7 @@ static EM_BOOL draw(double time, void* userdata) {
     sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
     // ...and draw
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

@@ -38,7 +38,7 @@ static struct {
         int num_draw_calls;
     } stats;
     const char* backend;
-    sg_imgui_t sgimgui;
+    sgimgui_t sgimgui;
 } state;
 
 static vs_per_instance_t positions[MAX_INSTANCES];
@@ -61,14 +61,14 @@ static hmm_vec4 rand_pos(void) {
 static void init(void) {
     stm_setup();
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
         .uniform_buffer_size = MAX_INSTANCES * 256 + 1024,
     });
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
-    sg_imgui_init(&state.sgimgui, &(sg_imgui_desc_t){0});
+    sgimgui_init(&state.sgimgui, &(sgimgui_desc_t){0});
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.75f, 1.0f } },
     };
@@ -208,8 +208,8 @@ static void frame(void) {
 
     // sokol-gfx debug ui
     if (igBeginMainMenuBar()) {
-        sg_imgui_draw_menu(&state.sgimgui, "sokol-gfx");
-        sg_imgui_draw(&state.sgimgui);
+        sgimgui_draw_menu(&state.sgimgui, "sokol-gfx");
+        sgimgui_draw(&state.sgimgui);
         igEndMainMenuBar();
     }
 
@@ -244,7 +244,7 @@ static void frame(void) {
     state.stats.num_binding_updates = 0;
     state.stats.num_draw_calls = 0;
 
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_per_frame, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;
@@ -279,7 +279,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
-    sg_imgui_discard(&state.sgimgui);
+    sgimgui_discard(&state.sgimgui);
     simgui_shutdown();
     sg_shutdown();
 }

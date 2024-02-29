@@ -9,7 +9,7 @@ static sg_pass_action pass_action;
 
 static void init(void) {
     sg_setup(&(sg_desc) {
-        .context = osx_get_context(),
+        .environment = osx_environment(),
         .logger.func = slog_func,
     });
 
@@ -26,7 +26,7 @@ static void frame(void) {
     pass_action.colors[0].clear_value.g = g;
 
     // draw one frame
-    sg_begin_default_pass(&pass_action, osx_width(), osx_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = osx_swapchain() });
     sg_end_pass();
     sg_commit();
 }

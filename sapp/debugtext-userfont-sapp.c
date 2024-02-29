@@ -53,7 +53,7 @@ static const uint8_t user_font[128 * 8];
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -90,7 +90,7 @@ static void frame(void) {
         sdtx_putc(c);
     }
 
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();

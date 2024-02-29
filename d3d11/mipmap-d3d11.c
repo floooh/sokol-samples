@@ -46,10 +46,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     const int WIDTH = 800;
     const int HEIGHT = 600;
-    const int SAMPLE_COUNT = 4;
-    d3d11_init(WIDTH, HEIGHT, SAMPLE_COUNT, L"Sokol Mipmap D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = WIDTH, .height = HEIGHT, .sample_count = 4, .title = L"mipmap-d3d11.c" });
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -192,7 +191,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         r += 0.1f;
         hmm_mat4 rm = HMM_Rotate(r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-        sg_begin_default_pass(&(sg_pass_action){0}, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_bindings bind = {
             .vertex_buffers[0] = vbuf,

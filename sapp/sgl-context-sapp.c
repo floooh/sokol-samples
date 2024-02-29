@@ -16,7 +16,7 @@ static struct {
     double angle_deg;
     struct {
         sg_pass_action pass_action;
-        sg_pass pass;
+        sg_attachments attachments;
         sg_image img;
         sgl_context sgl_ctx;
     } offscreen;
@@ -38,7 +38,7 @@ static void draw_quad(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -83,8 +83,8 @@ static void init(void) {
         .pixel_format = OFFSCREEN_PIXELFORMAT,
         .sample_count = OFFSCREEN_SAMPLECOUNT,
     });
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = state.offscreen.img
+    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = state.offscreen.img
     });
     state.offscreen.pass_action = (sg_pass_action){
         .colors[0] = {
@@ -127,10 +127,10 @@ static void frame(void) {
     draw_cube();
 
     // do the actual offscreen and display rendering in sokol-gfx passes
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
-    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sgl_context_draw(SGL_DEFAULT_CONTEXT);
     __dbgui_draw();
     sg_end_pass();

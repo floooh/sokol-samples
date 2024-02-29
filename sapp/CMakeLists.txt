@@ -908,7 +908,7 @@ fips_begin_app(shdfeatures-sapp windowed)
     sokol_shader_variant_with_reflection(shdfeatures-sapp.glsl ${slang} "l"   "LIGHTING")
     fips_dir(data)
     fipsutil_copy(ozz-skin-assets.yml)
-    fips_deps(sokol fileutil ozzanim ozzutil cimgui)
+    fips_deps(sokol fileutil ozzutil cimgui)
 fips_end_app()
 
 if (NOT FIPS_ANDROID)

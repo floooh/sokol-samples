@@ -9,11 +9,7 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
-
-const int WIDTH = 640;
-const int HEIGHT = 480;
+#include "glfw_glue.h"
 
 typedef struct {
     hmm_mat4 mvp;
@@ -22,18 +18,13 @@ typedef struct {
 int main() {
 
     // create window and GL context via GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Offscreen GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init(&(glfw_desc_t){ .title = "offscreen-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // create one color- and one depth-buffer render target image
@@ -49,12 +40,12 @@ int main() {
     sg_image depth_img = sg_make_image(&img_desc);
 
     // an offscreen render pass to render into those render target images
-    sg_pass offscreen_pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img
+    sg_attachments offscreen_attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .depth_stencil.image = depth_img
     });
-    assert(sg_gl_query_pass_info(offscreen_pass).frame_buffer != 0);
-    assert(sg_gl_query_pass_info(offscreen_pass).msaa_resolve_framebuffer[0] == 0);
+    assert(sg_gl_query_attachments_info(offscreen_attachments).framebuffer != 0);
+    assert(sg_gl_query_attachments_info(offscreen_attachments).msaa_resolve_framebuffer[0] == 0);
 
     // pass action for offscreen pass, clearing to black
     sg_pass_action offscreen_pass_action = {
@@ -249,15 +240,15 @@ int main() {
         },
     };
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // everything ready, on to the draw loop!
     params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
+
+        // view-projection matrix
+        hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 10.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
         // prepare the uniform block with the model-view-projection matrix,
         // we just use the same matrix for the offscreen- and default-pass
@@ -269,7 +260,10 @@ int main() {
 
         // offscreen pass, this renders a rotating, untextured cube to the
         // offscreen render target
-        sg_begin_pass(offscreen_pass, &offscreen_pass_action);
+        sg_begin_pass(&(sg_pass){
+            .action = offscreen_pass_action,
+            .attachments = offscreen_attachments,
+        });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -278,19 +272,19 @@ int main() {
 
         // and the default pass, this renders a textured cube, using the
         // offscreen render target as texture image
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&default_pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){
+            .action = default_pass_action,
+            .swapchain = glfw_swapchain(),
+        });
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
-
     sg_shutdown();
     glfwTerminate();
 }

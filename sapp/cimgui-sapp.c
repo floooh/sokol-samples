@@ -24,7 +24,7 @@ static state_t state;
 void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
 
@@ -81,7 +81,7 @@ void frame(void) {
     }
 
     // the sokol_gfx draw pass
-    sg_begin_default_pass(&state.pass_action, width, height);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();

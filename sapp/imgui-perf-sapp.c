@@ -46,7 +46,7 @@ static void reset_minmax_frametimes(void) {
 static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     stm_setup();
@@ -121,7 +121,7 @@ static void frame(void) {
     }
 
     // draw everything
-    sg_begin_default_pass(&state.pass_action, width, height);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();

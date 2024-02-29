@@ -20,7 +20,7 @@
 typedef struct {
     sspine_context ctx;
     sg_image img;
-    sg_pass pass;
+    sg_attachments attachments;
     sg_pass_action pass_action;
 } offscreen_t;
 
@@ -65,7 +65,7 @@ static void draw_quad(quad_params_t params);
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     sgl_setup(&(sgl_desc_t){
@@ -158,16 +158,22 @@ static void frame(void) {
     // - the default pass which renders the previously recorded sokol-gl scene using
     //   the two render targets as textures
     //
-    sg_begin_pass(state.offscreen[0].pass, &state.offscreen[0].pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen[0].pass_action,
+        .attachments = state.offscreen[0].attachments
+    });
     sspine_set_context(state.offscreen[0].ctx);
     sspine_draw_layer(0, &state.layer_transform);
     sg_end_pass();
 
-    sg_begin_pass(state.offscreen[1].pass, &state.offscreen[1].pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen[1].pass_action,
+        .attachments = state.offscreen[1].attachments
+    });
     sspine_context_draw_layer(state.offscreen[1].ctx, 0, &state.layer_transform);
     sg_end_pass();
 
-    sg_begin_default_pass(&(sg_pass_action){0}, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();
@@ -198,8 +204,8 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
             .sample_count = 1,
         }),
         .img = img,
-        .pass = sg_make_pass(&(sg_pass_desc){
-            .color_attachments[0] = {
+        .attachments = sg_make_attachments(&(sg_attachments_desc){
+            .colors[0] = {
                 .image = img,
             }
         }),

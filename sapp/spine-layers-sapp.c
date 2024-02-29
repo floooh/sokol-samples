@@ -47,7 +47,7 @@ static void create_spine_objects(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     sspine_setup(&(sspine_desc){
@@ -134,7 +134,7 @@ static void frame(void) {
     sspine_draw_instance_in_layer(state.instances[2], 2);
 
     // sokol-gfx render pass, draw the sokol-gl and sokol-spine layers interleaved
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int layer_index = 0; layer_index < 3; layer_index++) {
         sspine_draw_layer(layer_index, &layer_transform);
         sgl_draw_layer(layer_index);
@@ -263,7 +263,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 .wrap_u = img_info.wrap_u,
                 .wrap_v = img_info.wrap_v,
                 .label = img_info.filename.cstr,
-            });            
+            });
             stbi_image_free(pixels);
         } else {
             state.load_status.failed = true;

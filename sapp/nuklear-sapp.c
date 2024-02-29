@@ -32,7 +32,7 @@ static int draw_demo_ui(struct nk_context* ctx);
 void init(void) {
     // setup sokol-gfx and sokol-nuklear
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -52,12 +52,14 @@ void frame(void) {
     draw_demo_ui(ctx);
 
     // the sokol_gfx draw pass
-    const sg_pass_action pass_action = {
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.7f, 1.0f }
-        }
-    };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.7f, 1.0f }
+            }
+        },
+        .swapchain = sglue_swapchain()
+    });
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();

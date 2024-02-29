@@ -37,7 +37,7 @@ static struct {
         sgl_pipeline sgl_pip;
         sg_image color_img;
         sg_image depth_img;
-        sg_pass pass;
+        sg_attachments atts;
         sg_pass_action pass_action;
     } offscreen;
     struct {
@@ -55,7 +55,7 @@ static void draw_cube(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -103,9 +103,9 @@ static void init(void) {
     });
 
     // a render pass object to render into the offscreen render targets
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = state.offscreen.color_img,
-        .depth_stencil_attachment.image = state.offscreen.depth_img,
+    state.offscreen.atts = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = state.offscreen.color_img,
+        .depth_stencil.image = state.offscreen.depth_img,
     });
 
     // a pass-action for the offscreen pass which clears to black
@@ -189,12 +189,12 @@ static void frame(void) {
 
     // perform sokol-gfx rendering...
     // ...first the offscreen pass which renders the sokol-gl scene
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
 
     // then the display pass with the Dear ImGui scene
-    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();

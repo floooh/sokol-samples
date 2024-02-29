@@ -46,7 +46,7 @@ static struct {
     struct {
         sdtx_context text_context;
         sg_image img;
-        sg_pass render_pass;
+        sg_attachments attachments;
         sg_pass_action pass_action;
     } passes[NUM_FACES];
 } state;
@@ -69,7 +69,7 @@ static const sg_color bg[NUM_FACES] = {
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -172,8 +172,8 @@ static void init(void) {
             .pixel_format = OFFSCREEN_PIXELFORMAT,
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
         });
-        state.passes[i].render_pass = sg_make_pass(&(sg_pass_desc){
-            .color_attachments[0].image = state.passes[i].img
+        state.passes[i].attachments = sg_make_attachments(&(sg_attachments_desc){
+            .colors[0].image = state.passes[i].img
         });
 
         // each render target is cleared to a different background color
@@ -233,14 +233,17 @@ static void frame(void) {
     // right into the loop above, but this shows that the "text definition"
     // can be decoupled from the actual rendering
     for (int i = 0; i < NUM_FACES; i++) {
-        sg_begin_pass(state.passes[i].render_pass, &state.passes[i].pass_action);
+        sg_begin_pass(&(sg_pass){
+            .action = state.passes[i].pass_action,
+            .attachments = state.passes[i].attachments,
+        });
         sdtx_set_context(state.passes[i].text_context);
         sdtx_draw();
         sg_end_pass();
     }
 
     // finally render to the default framebuffer
-    sg_begin_default_pass(&state.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
 
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);

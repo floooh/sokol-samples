@@ -7,31 +7,21 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 typedef struct {
     float x, y, r, g, b;
 } vertex_t;
 
 int main() {
-    const int WIDTH = 640;
-    const int HEIGHT = 480;
-
     // create GLFW window and initialize GL
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Buffer Offsets GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init(&(glfw_desc_t){ .title = "bufferoffsets-glfw.c", .width = 640, .height = 480 });
 
     // setup sokol_gfx
-    sg_desc desc = { .logger.func = slog_func };
-    sg_setup(&desc);
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
@@ -104,10 +94,8 @@ int main() {
         }
     };
 
-    while (!glfwWindowShouldClose(w)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+    while (!glfwWindowShouldClose(glfw_window())) {
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         // render the triangle
         bind.vertex_buffer_offsets[0] = 0;
@@ -121,7 +109,7 @@ int main() {
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
     sg_shutdown();

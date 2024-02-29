@@ -2,10 +2,19 @@
 /* common emscripten platform helper functions */
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
+#include <GLES3/gl3.h>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#endif
 
 static const char* _emsc_canvas_name = 0;
+static int _emsc_sample_count = 0;
 static double _emsc_width = 0;
 static double _emsc_height = 0;
+static GLint _emsc_framebuffer = 0;
 
 enum {
     EMSC_NONE = 0,
@@ -33,14 +42,39 @@ void emsc_init(const char* canvas_name, int flags) {
     emscripten_webgl_init_context_attributes(&attrs);
     attrs.antialias = flags & EMSC_ANTIALIAS;
     attrs.majorVersion = 2;
+    _emsc_sample_count = (flags & EMSC_ANTIALIAS) ? 4 : 1;
     ctx = emscripten_webgl_create_context(canvas_name, &attrs);
     emscripten_webgl_make_context_current(ctx);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&_emsc_framebuffer);
 }
 
-int emsc_width() {
+int emsc_width(void) {
     return (int) _emsc_width;
 }
 
-int emsc_height() {
+int emsc_height(void) {
     return (int) _emsc_height;
+}
+
+sg_environment emsc_environment(void) {
+    return (sg_environment){
+        .defaults = {
+            .color_format = SG_PIXELFORMAT_RGBA8,
+            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+            .sample_count = _emsc_sample_count,
+        }
+    };
+}
+
+sg_swapchain emsc_swapchain(void) {
+    return (sg_swapchain) {
+        .width = (int)_emsc_width,
+        .height = (int)_emsc_height,
+        .sample_count = _emsc_sample_count,
+        .color_format = SG_PIXELFORMAT_RGBA8,
+        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .gl = {
+            .framebuffer = (uint32_t)_emsc_framebuffer,
+        }
+    };
 }

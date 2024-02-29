@@ -26,21 +26,23 @@ void wgpu_swapchain_init(wgpu_state_t* state) {
     });
     assert(state->swapchain);
 
-    state->depth_stencil_tex = wgpuDeviceCreateTexture(state->device, &(WGPUTextureDescriptor){
-        .usage = WGPUTextureUsage_RenderAttachment,
-        .dimension = WGPUTextureDimension_2D,
-        .size = {
-            .width = (uint32_t) state->width,
-            .height = (uint32_t) state->height,
-            .depthOrArrayLayers = 1,
-        },
-        .format = WGPUTextureFormat_Depth32FloatStencil8,
-        .mipLevelCount = 1,
-        .sampleCount = (uint32_t)state->desc.sample_count
-    });
-    assert(state->depth_stencil_tex);
-    state->depth_stencil_view = wgpuTextureCreateView(state->depth_stencil_tex, 0);
-    assert(state->depth_stencil_view);
+    if (!state->desc.no_depth_buffer) {
+        state->depth_stencil_tex = wgpuDeviceCreateTexture(state->device, &(WGPUTextureDescriptor){
+            .usage = WGPUTextureUsage_RenderAttachment,
+            .dimension = WGPUTextureDimension_2D,
+            .size = {
+                .width = (uint32_t) state->width,
+                .height = (uint32_t) state->height,
+                .depthOrArrayLayers = 1,
+            },
+            .format = WGPUTextureFormat_Depth32FloatStencil8,
+            .mipLevelCount = 1,
+            .sampleCount = (uint32_t)state->desc.sample_count
+        });
+        assert(state->depth_stencil_tex);
+        state->depth_stencil_view = wgpuTextureCreateView(state->depth_stencil_tex, 0);
+        assert(state->depth_stencil_view);
+    }
 
     if (state->desc.sample_count > 1) {
         state->msaa_tex = wgpuDeviceCreateTexture(state->device, &(WGPUTextureDescriptor){

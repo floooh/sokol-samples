@@ -6,26 +6,18 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 int main() {
 
-    const int WIDTH = 640;
-    const int HEIGHT = 480;
-
     // create window and GL context via GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Quad GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_init(&(glfw_desc_t){ .title = "quad-glfw.c", .width = 640, .height = 480 });
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // create a vertex buffer
@@ -92,20 +84,15 @@ int main() {
         }
     });
 
-    // default pass action
-    sg_pass_action pass_action = { 0 };
-
     // draw loop
-    while (!glfwWindowShouldClose(w)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+    while (!glfwWindowShouldClose(glfw_window())) {
+        sg_begin_pass(&(sg_pass){ .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_draw(0, 6, 1);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
 

@@ -47,7 +47,7 @@ static size_t roundup(size_t val, size_t to) {
 static void init(void) {
     // setup sokol_gfx
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
     WGPUDevice wgpu_dev = (WGPUDevice) sg_wgpu_device();
@@ -276,7 +276,7 @@ void frame() {
     sg_image_data content = { .subimage[0][0] = SG_RANGE(state.pixels) };
     sg_update_image(state.bind.fs.images[0], &content);
 
-    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

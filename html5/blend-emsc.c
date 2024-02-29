@@ -39,6 +39,7 @@ int main() {
     // setup sokol_gfx (need to increase pipeline pool size)
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
+        .environment = emsc_environment(),
         .logger.func = slog_func,
     });
 
@@ -194,7 +195,7 @@ static EM_BOOL draw(double time, void* userdata) {
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
 
     // draw a background quad
     sg_apply_pipeline(state.bg_pip);

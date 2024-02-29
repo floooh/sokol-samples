@@ -28,7 +28,7 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -89,7 +89,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_default_pass(&state.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     // render the triangle
     state.bind.vertex_buffer_offsets[0] = 0;

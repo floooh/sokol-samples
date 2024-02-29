@@ -32,9 +32,13 @@ static void draw_imgui(ImDrawData*);
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper, sokol_gfx, sokol_time
-    d3d11_init(Width, Height, 1, L"Sokol Dear ImGui D3D11");
+    d3d11_desc_t d3d11_desc = {};
+    d3d11_desc.width = Width;
+    d3d11_desc.height = Height;
+    d3d11_desc.title = L"imgui-d3d11.c";
+    d3d11_init(&d3d11_desc);
     sg_desc desc = { };
-    desc.context = d3d11_get_context();
+    desc.environment = d3d11_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
@@ -196,7 +200,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
 
         // the sokol_gfx draw pass
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_pass pass = { };
+        pass.action = pass_action;
+        pass.swapchain = d3d11_swapchain();
+        sg_begin_pass(&pass);
         ImGui::Render();
         draw_imgui(ImGui::GetDrawData());
         sg_end_pass();

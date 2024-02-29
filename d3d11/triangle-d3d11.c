@@ -11,11 +11,16 @@
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper
-    d3d11_init(640, 480, 1, L"Sokol Triangle D3D11");
+    d3d11_init(&(d3d11_desc_t){
+        .width = 640,
+        .height = 480,
+        .no_depth_buffer = true,
+        .title = L"triangle-d3d11.c"
+    });
 
     // setup sokol gfx
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -79,7 +84,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // the draw loop
     while (d3d11_process_events()) {
-        sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);

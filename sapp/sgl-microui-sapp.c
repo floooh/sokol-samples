@@ -79,7 +79,7 @@ static void write_log(const char* text) {
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __cdbgui_setup(1);
@@ -168,12 +168,15 @@ void frame(void) {
     r_end();
 
     // render the sokol-gfx default pass
-    sg_begin_default_pass(&(sg_pass_action){
+    sg_begin_pass(&(sg_pass) {
+        .action = {
             .colors[0] = {
                 .load_action = SG_LOADACTION_CLEAR,
                 .clear_value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
-        }, sapp_width(), sapp_height());
+        },
+        .swapchain = sglue_swapchain()
+    });
     r_draw();
     __cdbgui_draw();
     sg_end_pass();

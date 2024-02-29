@@ -20,7 +20,7 @@
 static struct {
     struct {
         sg_pass_action pass_action;
-        sg_pass pass;
+        sg_attachments attachments;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -51,7 +51,7 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -68,14 +68,14 @@ static void init(void) {
     sg_image depth_img = sg_make_image(&img_desc);
 
     // an offscreen render pass into those images
-    state.offscreen.pass = sg_make_pass(&(sg_pass_desc){
-        .color_attachments[0].image = color_img,
-        .depth_stencil_attachment.image = depth_img
+    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
+        .colors[0].image = color_img,
+        .depth_stencil.image = depth_img
     });
-    assert(sg_wgpu_query_pass_info(state.offscreen.pass).color_view[0] != 0);
-    assert(sg_wgpu_query_pass_info(state.offscreen.pass).color_view[1] == 0);
-    assert(sg_wgpu_query_pass_info(state.offscreen.pass).resolve_view[0] == 0);
-    assert(sg_wgpu_query_pass_info(state.offscreen.pass).ds_view != 0);
+    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).color_view[0] != 0);
+    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).color_view[1] == 0);
+    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).resolve_view[0] == 0);
+    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).ds_view != 0);
 
     // a sampler object for when the render target is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -274,7 +274,10 @@ static void frame(void) {
     };
 
     // the offscreen pass, rendering an rotating, untextured cube into a render target image
-    sg_begin_pass(state.offscreen.pass, &state.offscreen.pass_action);
+    sg_begin_pass(&(sg_pass){
+        .action = state.offscreen.pass_action,
+        .attachments = state.offscreen.attachments
+    });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -283,7 +286,10 @@ static void frame(void) {
 
     // and the display-pass, rendering a rotating, textured cube, using the
     // previously rendered offscreen render-target as texture
-    sg_begin_default_pass(&state.display.pass_action, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){
+        .action = state.display.pass_action,
+        .swapchain = wgpu_swapchain()
+    });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

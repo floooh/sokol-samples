@@ -91,7 +91,7 @@ static int round_pow2(float v) {
 static void init(void) {
     state.dpi_scale = sapp_dpi_scale();
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -292,12 +292,15 @@ static void frame(void) {
     sfons_flush(fs);
 
     // render pass
-    sg_begin_default_pass(&(sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.3f, 0.3f, 0.32f, 1.0f }
-        }
-    }, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { 0.3f, 0.3f, 0.32f, 1.0f }
+            }
+        },
+        .swapchain = sglue_swapchain()
+    });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

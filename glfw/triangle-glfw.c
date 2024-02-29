@@ -6,23 +6,17 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 int main() {
 
     // create window and GL context via GLFW
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(640, 480, "Sokol Triangle GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-
+    glfw_init(&(glfw_desc_t){ .title = "triangle-glfw.c", .width = 640, .height = 480, .no_depth_buffer = true });
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
 
     // a vertex buffer
     const float vertices[] = {
@@ -71,20 +65,15 @@ int main() {
         .vertex_buffers[0] = vbuf
     };
 
-    // default pass action (clear to grey)
-    sg_pass_action pass_action = {0};
-
     // draw loop
-    while (!glfwWindowShouldClose(w)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+    while (!glfwWindowShouldClose(glfw_window())) {
+        sg_begin_pass(&(sg_pass){ .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_draw(0, 3, 1);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
 

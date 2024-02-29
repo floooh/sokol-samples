@@ -9,8 +9,7 @@
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 const int Width = 1024;
 const int Height = 768;
@@ -34,15 +33,12 @@ static void draw_imgui(ImDrawData*);
 int main() {
 
     // window and GL context via GLFW and flextGL
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
-    GLFWwindow* w = glfwCreateWindow(Width, Height, "Sokol+ImGui+GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
+    glfw_desc_t glfw_desc = {};
+    glfw_desc.title = "imgui-glfw.cc";
+    glfw_desc.width = Width;
+    glfw_desc.height = Height;
+    glfw_init(&glfw_desc);
+    GLFWwindow* w = glfw_window();
 
     // GLFW to ImGui input forwarding
     glfwSetMouseButtonCallback(w, [](GLFWwindow*, int btn, int action, int /*mods*/) {
@@ -73,6 +69,7 @@ int main() {
     // setup sokol_gfx and sokol_time
     stm_setup();
     sg_desc desc = { };
+    desc.environment = glfw_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
     assert(sg_isvalid());
@@ -187,12 +184,9 @@ int main() {
 
     // draw loop
     while (!glfwWindowShouldClose(w)) {
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-
         // this is standard ImGui demo code
         ImGuiIO& io = ImGui::GetIO();
-        io.DisplaySize = ImVec2(float(cur_width), float(cur_height));
+        io.DisplaySize = ImVec2(float(glfw_width()), float(glfw_height()));
         io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();
 
@@ -221,7 +215,10 @@ int main() {
         }
 
         // the sokol_gfx draw pass
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_pass pass = {};
+        pass.action = pass_action;
+        pass.swapchain = glfw_swapchain();
+        sg_begin_pass(pass);
         ImGui::Render();
         draw_imgui(ImGui::GetDrawData());
         sg_end_pass();

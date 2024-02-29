@@ -36,7 +36,7 @@ static struct {
         sg_pass_action pass_action;
         sg_bindings bindings;
         sshape_element_range_t shapes[NUM_SHAPES];
-        sg_pass pass[IMG_NUM_LAYERS];
+        sg_attachments attachments[IMG_NUM_LAYERS];
     } offscreen;
     struct {
         sg_pipeline pip;
@@ -51,7 +51,7 @@ static vs_params_t compute_display_vsparams(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -111,9 +111,9 @@ static void init(void) {
 
     // one render pass object per texture array layer
     for (int i = 0; i < IMG_NUM_LAYERS; i++) {
-        state.offscreen.pass[i] = sg_make_pass(&(sg_pass_desc){
-            .color_attachments[0] = { .image = state.img, .slice = i },
-            .depth_stencil_attachment = { .image = depth_img },
+        state.offscreen.attachments[i] = sg_make_attachments(&(sg_attachments_desc){
+            .colors[0] = { .image = state.img, .slice = i },
+            .depth_stencil = { .image = depth_img },
         });
     }
 
@@ -190,7 +190,10 @@ static void frame(void) {
 
     // render different shapes into each texture array layer
     for (int i = 0; i < IMG_NUM_LAYERS; i++) {
-        sg_begin_pass(state.offscreen.pass[i], &state.offscreen.pass_action);
+        sg_begin_pass(&(sg_pass){
+            .action = state.offscreen.pass_action,
+            .attachments = state.offscreen.attachments[i],
+        });
         sg_apply_pipeline(state.offscreen.pip);
         sg_apply_bindings(&state.offscreen.bindings);
         float rx = state.rx;
@@ -208,7 +211,7 @@ static void frame(void) {
     }
 
     // default pass: render a textured plane which accesses all texture layers in the fragment shader
-    sg_begin_default_pass(&state.display.pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bindings);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(display_vsparams));

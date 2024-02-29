@@ -10,11 +10,11 @@
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup the D3D11 app wrapper
-    d3d11_init(640, 480, 1, L"Sokol Clear D3D11");
+    d3d11_init(&(d3d11_desc_t){ .width = 640, .height = 480, .title = L"clear-d3d11.c" });
 
     // setup sokol
     sg_setup(&(sg_desc){
-        .context = d3d11_get_context(),
+        .environment = d3d11_environment(),
         .logger.func = slog_func,
     });
 
@@ -28,7 +28,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         float g = pass_action.colors[0].clear_value.g + 0.01f;
         if (g > 1.0f) g = 0.0f;
         pass_action.colors[0].clear_value.g = g;
-        sg_begin_default_pass(&pass_action, d3d11_width(), d3d11_height());
+        sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_end_pass();
         sg_commit();
         d3d11_present();

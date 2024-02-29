@@ -139,7 +139,7 @@ static void init(void) {
     stm_setup();
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     // setup sokol-debugtext
@@ -254,7 +254,7 @@ static void frame(void) {
     sdtx_printf("vertices:%d indices:%d draws:%d", ctx_info.num_vertices, ctx_info.num_indices, ctx_info.num_commands);
 
     // actual sokol-gfx render pass
-    sg_begin_default_passf(&state.pass_action, width, height);
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
     __dbgui_draw();

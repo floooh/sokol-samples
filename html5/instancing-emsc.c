@@ -40,7 +40,10 @@ int main() {
     emsc_init("#canvas", EMSC_ANTIALIAS);
 
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = emsc_environment(),
+        .logger.func = slog_func
+    });
     assert(sg_isvalid());
 
     // vertex buffer for static geometry (goes into vertex buffer bind slot 0)
@@ -186,7 +189,7 @@ static EM_BOOL draw(double time, void* userdata) {
     };
 
     // and the actual draw pass...
-    sg_begin_default_pass(&state.pass_action, emsc_width(), emsc_height());
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));

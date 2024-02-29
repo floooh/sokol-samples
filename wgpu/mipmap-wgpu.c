@@ -50,7 +50,7 @@ static struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = wgpu_get_context(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -186,7 +186,7 @@ static void frame(void) {
     state.r += 0.1f;
     hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
 
-    sg_begin_default_pass(&(sg_pass_action){0}, wgpu_width(), wgpu_height());
+    sg_begin_pass(&(sg_pass){ .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;

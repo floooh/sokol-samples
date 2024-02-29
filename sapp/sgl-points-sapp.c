@@ -35,7 +35,7 @@ static const rgb_t palette[16] = {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
@@ -84,7 +84,7 @@ static void frame(void) {
             .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
-    sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     sg_end_pass();
     sg_commit();

@@ -10,12 +10,9 @@
 #define SOKOL_GLCORE33
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"
+#include "glfw_glue.h"
 
 enum {
-    WIDTH = 800,
-    HEIGHT = 600,
     MAX_PARTICLES = 512*1024,
     NUM_PARTICLES_EMITTED_PER_FRAME = 10
 };
@@ -32,19 +29,13 @@ hmm_vec3 vel[MAX_PARTICLES];
 
 int main() {
 
-    /* create window and GL context via GLFW */
-    glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* w = glfwCreateWindow(WIDTH, HEIGHT, "Sokol Instancing GLFW", 0, 0);
-    glfwMakeContextCurrent(w);
-    glfwSwapInterval(1);
-
+    // create window and GL context via GLFW
+    glfw_init(&(glfw_desc_t){ .title = "instancing-glfw.c", .width = 800, .height = 600, .sample_count = 4 });
     // setup sokol_gfx
-    sg_setup(&(sg_desc){ .logger.func = slog_func });
+    sg_setup(&(sg_desc){
+        .environment = glfw_environment(),
+        .logger.func = slog_func,
+    });
     assert(sg_isvalid());
 
     // vertex buffer for static geometry (goes into vertex buffer bind slot 0)
@@ -138,19 +129,16 @@ int main() {
         .index_buffer = ibuf
     };
 
-    // default pass action (clear to grey)
-    sg_pass_action pass_action = { 0 };
-
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // draw loop
     vs_params_t vs_params;
     float roty = 0.0f;
     const float frame_time = 1.0f / 60.0f;
-    while (!glfwWindowShouldClose(w)) {
+    while (!glfwWindowShouldClose(glfw_window())) {
+        // view-projection matrix
+        hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 50.0f);
+        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+
         // emit new particles
         for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
             if (cur_num_particles < MAX_PARTICLES) {
@@ -189,16 +177,14 @@ int main() {
         roty += 1.0f;
         vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
 
-        int cur_width, cur_height;
-        glfwGetFramebufferSize(w, &cur_width, &cur_height);
-        sg_begin_default_pass(&pass_action, cur_width, cur_height);
+        sg_begin_pass(&(sg_pass){ .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
         sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();
-        glfwSwapBuffers(w);
+        glfwSwapBuffers(glfw_window());
         glfwPollEvents();
     }
 

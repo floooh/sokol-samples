@@ -225,7 +225,7 @@ static vs_params_t vs_params_for_node(int node_index);
 static void init(void) {
     // setup sokol-gfx
     sg_setup(&(sg_desc){
-        .context = sapp_sgcontext(),
+        .environment = sglue_environment(),
         .logger.func = slog_func,
     });
     // setup the optional debugging UI
@@ -341,11 +341,11 @@ static void frame(void) {
     // render the scene
     if (state.failed) {
         // if something went wrong during loading, just render a red screen
-        sg_begin_default_pass(&state.pass_actions.failed, fb_width, fb_height);
+        sg_begin_pass(&(sg_pass){ .action = state.pass_actions.failed, .swapchain = sglue_swapchain() });
         __dbgui_draw();
         sg_end_pass();
     } else {
-        sg_begin_default_pass(&state.pass_actions.ok, fb_width, fb_height);
+        sg_begin_pass(&(sg_pass){ .action = state.pass_actions.ok, .swapchain = sglue_swapchain() });
         for (int node_index = 0; node_index < state.scene.num_nodes; node_index++) {
             const node_t* node = &state.scene.nodes[node_index];
             vs_params_t vs_params = vs_params_for_node(node_index);

@@ -60,8 +60,7 @@ void wgpu_mouse_wheel(wgpu_mouse_wheel_func fn) {
     state.mouse_wheel_cb = fn;
 }
 
-static const void* wgpu_get_render_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data); (void)user_data;
+static const void* wgpu_get_render_view(void) {
     if (state.desc.sample_count > 1) {
         assert(state.msaa_view);
         return (const void*) state.msaa_view;
@@ -71,8 +70,7 @@ static const void* wgpu_get_render_view(void* user_data) {
     }
 }
 
-static const void* wgpu_get_resolve_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data); (void)user_data;
+static const void* wgpu_get_resolve_view(void) {
     if (state.desc.sample_count > 1) {
         assert(state.swapchain_view);
         return (const void*) state.swapchain_view;
@@ -81,8 +79,7 @@ static const void* wgpu_get_resolve_view(void* user_data) {
     }
 }
 
-static const void* wgpu_get_depth_stencil_view(void* user_data) {
-    assert((void*)0xABADF00D == user_data); (void)user_data;
+static const void* wgpu_get_depth_stencil_view(void) {
     return (const void*) state.depth_stencil_view;
 }
 
@@ -94,17 +91,38 @@ static sg_pixel_format wgpu_get_color_format(void) {
     }
 }
 
-sg_context_desc wgpu_get_context(void) {
-    return (sg_context_desc) {
-        .color_format = wgpu_get_color_format(),
-        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
-        .sample_count = state.desc.sample_count,
+static sg_pixel_format wgpu_get_depth_format(void) {
+    if (state.desc.no_depth_buffer) {
+        return SG_PIXELFORMAT_NONE;
+    } else {
+        return SG_PIXELFORMAT_DEPTH_STENCIL;
+    }
+}
+
+sg_environment wgpu_environment(void) {
+    return (sg_environment) {
+        .defaults = {
+            .color_format = wgpu_get_color_format(),
+            .depth_format = wgpu_get_depth_format(),
+            .sample_count = state.desc.sample_count,
+        },
         .wgpu = {
             .device = (const void*) state.device,
-            .render_view_userdata_cb = wgpu_get_render_view,
-            .resolve_view_userdata_cb = wgpu_get_resolve_view,
-            .depth_stencil_view_userdata_cb = wgpu_get_depth_stencil_view,
-            .user_data = (void*)0xABADF00D
+        }
+    };
+}
+
+sg_swapchain wgpu_swapchain(void) {
+    return (sg_swapchain) {
+        .width = state.width,
+        .height = state.height,
+        .sample_count = state.desc.sample_count,
+        .color_format = wgpu_get_color_format(),
+        .depth_format = wgpu_get_depth_format(),
+        .wgpu = {
+            .render_view = wgpu_get_render_view(),
+            .resolve_view = wgpu_get_resolve_view(),
+            .depth_stencil_view = wgpu_get_depth_stencil_view(),
         }
     };
 }
