@@ -143,6 +143,6 @@ static void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Shader Bytecode (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "binshader-metal", init, frame, shutdown);
     return 0;
 }

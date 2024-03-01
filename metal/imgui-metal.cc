@@ -117,6 +117,6 @@ void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, 1, "Sokol Dear ImGui (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, 1, SG_PIXELFORMAT_NONE, "Sokol Dear ImGui (Metal)", init, frame, shutdown);
     return 0;
 }

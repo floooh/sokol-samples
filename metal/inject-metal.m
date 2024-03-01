@@ -269,6 +269,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Resource Injection (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH_STENCIL, "inject-metal", init, frame, shutdown);
     return 0;
 }

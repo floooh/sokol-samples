@@ -31,6 +31,7 @@ static UIWindow* window;
 static int width;
 static int height;
 static int sample_count;
+static sg_pixel_format depth_format;
 static const char* window_title;
 static osx_init_func init_func;
 static osx_frame_func frame_func;
@@ -109,7 +110,17 @@ static id mtk_view_controller;
     [mtk_view setDelegate:mtk_view_delegate];
     [mtk_view setDevice: mtl_device];
     [mtk_view setColorPixelFormat:MTLPixelFormatBGRA8Unorm];
-    [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
+    switch (depth_format) {
+        case SG_PIXELFORMAT_DEPTH_STENCIL:
+            [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float_Stencil8];
+            break;
+        case SG_PIXELFORMAT_DEPTH:
+            [mtk_view setDepthStencilPixelFormat:MTLPixelFormatDepth32Float];
+            break;
+        default:
+            [mtk_view setDepthStencilPixelFormat:MTLPixelFormatInvalid];
+            break;
+    }
     [mtk_view setSampleCount:(NSUInteger)sample_count];
     #if !TARGET_OS_IPHONE
         [window setContentView:mtk_view];
@@ -305,10 +316,12 @@ static id mtk_view_controller;
 @end
 
 //------------------------------------------------------------------------------
-void osx_start(int w, int h, int smp_count, const char* title, osx_init_func ifun, osx_frame_func ffun, osx_shutdown_func sfun) {
+void osx_start(int w, int h, int smp_count, sg_pixel_format depth_fmt, const char* title, osx_init_func ifun, osx_frame_func ffun, osx_shutdown_func sfun) {
+    assert((depth_fmt == SG_PIXELFORMAT_DEPTH_STENCIL) || (depth_fmt == SG_PIXELFORMAT_DEPTH) || (depth_fmt == SG_PIXELFORMAT_NONE));
     width = w;
     height = h;
     sample_count = smp_count;
+    depth_format = depth_fmt;
     window_title = title;
     init_func = ifun;
     frame_func = ffun;
@@ -340,7 +353,7 @@ sg_environment osx_environment(void) {
         .defaults = {
             .sample_count = sample_count,
             .color_format = SG_PIXELFORMAT_BGRA8,
-            .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+            .depth_format = depth_format,
         },
         .metal = {
             .device = (__bridge const void*) mtl_device,
@@ -354,7 +367,7 @@ sg_swapchain osx_swapchain(void) {
         .height = (int) [mtk_view drawableSize].height,
         .sample_count = sample_count,
         .color_format = SG_PIXELFORMAT_BGRA8,
-        .depth_format = SG_PIXELFORMAT_DEPTH_STENCIL,
+        .depth_format = depth_format,
         .metal = {
             .current_drawable = (__bridge const void*) [mtk_view currentDrawable],
             .depth_stencil_texture = (__bridge const void*) [mtk_view depthStencilTexture],

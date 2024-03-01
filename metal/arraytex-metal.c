@@ -233,6 +233,6 @@ static void shutdown() {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Array Texture (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "arraytex-metal", init, frame, shutdown);
     return 0;
 }

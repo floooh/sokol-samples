@@ -160,6 +160,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Cube (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "cube-metal", init, frame, shutdown);
     return 0;
 }

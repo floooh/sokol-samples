@@ -409,6 +409,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol MRT (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "mrt-metal", init, frame, shutdown);
     return 0;
 }

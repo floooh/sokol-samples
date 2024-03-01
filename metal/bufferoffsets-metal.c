@@ -115,6 +115,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(640, 480, 1, "Sokol Buffer Offsets (Metal)", init, frame, shutdown);
+    osx_start(640, 480, 1, SG_PIXELFORMAT_NONE, "bufferoffsets-metal", init, frame, shutdown);
     return 0;
 }

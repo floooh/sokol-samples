@@ -234,5 +234,5 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Mipmapping (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "mipmap-metal", init, frame, shutdown);
 }

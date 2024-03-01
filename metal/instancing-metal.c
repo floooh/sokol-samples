@@ -193,6 +193,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, "Sokol Instancing (Metal)", init, frame, shutdown);
+    osx_start(WIDTH, HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "instancing-metal", init, frame, shutdown);
     return 0;
 }

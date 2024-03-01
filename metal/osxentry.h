@@ -23,7 +23,7 @@ typedef void(*osx_mouse_pos_func)(float x, float y);
 typedef void(*osx_mouse_wheel_func)(float v);
 
 /* entry function */
-extern void osx_start(int w, int h, int sample_count, const char* title, osx_init_func, osx_frame_func, osx_shutdown_func);
+extern void osx_start(int w, int h, int sample_count, sg_pixel_format depth_format, const char* title, osx_init_func, osx_frame_func, osx_shutdown_func);
 /* return an initialized sg_environment struct */
 sg_environment osx_environment(void);
 /* return an initialized sg_swapchain struct */

@@ -36,6 +36,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(640, 480, 1, "Sokol Clear (Metal)", init, frame, shutdown);
+    osx_start(640, 480, 1, SG_PIXELFORMAT_NONE, "clear-metal", init, frame, shutdown);
     return 0;
 }

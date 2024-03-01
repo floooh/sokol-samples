@@ -204,7 +204,7 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(DISPLAY_WIDTH, DISPLAY_HEIGHT, SAMPLE_COUNT, "Dynamic Texture (Metal)", init, frame, shutdown);
+    osx_start(DISPLAY_WIDTH, DISPLAY_HEIGHT, SAMPLE_COUNT, SG_PIXELFORMAT_DEPTH, "dyntex-metal", init, frame, shutdown);
     return 0;
 }
 

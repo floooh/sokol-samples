@@ -96,6 +96,6 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(640, 480, 1, "Sokol Quad (Metal)", init, frame, shutdown);
+    osx_start(640, 480, 1, SG_PIXELFORMAT_NONE, "quad-metal", init, frame, shutdown);
     return 0;
 }
