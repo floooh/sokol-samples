@@ -6,7 +6,7 @@ jobs:
   build_webgl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
         run:  python3 fips emsdk install latest
@@ -24,7 +24,7 @@ jobs:
   build_webgpu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
         run:  python3 fips emsdk install latest
@@ -43,7 +43,7 @@ jobs:
     needs: build_webgl
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: floooh/sokol-html5
           ssh-key: ${{ secrets.SOKOL_HTML5_DEPLOY }}
@@ -62,7 +62,7 @@ jobs:
     needs: build_webgpu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: floooh/sokol-webgpu
           ssh-key: ${{ secrets.SOKOL_WEBGPU_DEPLOY }}
