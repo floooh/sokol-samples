@@ -84,7 +84,7 @@ static void init(void) {
         .depth  = 1.0f,
         .tiles  = 10,
         .random_colors = true,
-        .transform = sshape_mat4(&box_transform.Elements[0][0])
+        .transform = sshape_mat4((const float*)&box_transform)
     });
     buf = sshape_build_sphere(&buf, &(sshape_sphere_t){
         .merge = true,
@@ -92,7 +92,7 @@ static void init(void) {
         .slices = 36,
         .stacks = 20,
         .random_colors = true,
-        .transform = sshape_mat4(&sphere_transform.Elements[0][0])
+        .transform = sshape_mat4((const float*)&sphere_transform)
     });
     buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
         .merge = true,
@@ -101,7 +101,7 @@ static void init(void) {
         .slices = 36,
         .stacks = 10,
         .random_colors = true,
-        .transform = sshape_mat4(&cylinder_transform.Elements[0][0])
+        .transform = sshape_mat4((const float*)&cylinder_transform)
     });
     buf = sshape_build_torus(&buf, &(sshape_torus_t) {
         .merge = true,
@@ -110,7 +110,7 @@ static void init(void) {
         .rings = 36,
         .sides = 18,
         .random_colors = true,
-        .transform = sshape_mat4(&torus_transform.Elements[0][0])
+        .transform = sshape_mat4((const float*)&torus_transform)
     });
     assert(buf.valid);
 
