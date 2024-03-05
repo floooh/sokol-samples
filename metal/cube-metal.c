@@ -122,7 +122,8 @@ static void init(void) {
                 [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },
                 [1] = { .format=SG_VERTEXFORMAT_FLOAT4 }
             }
-        },        .shader = shd,
+        },
+        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .depth = {
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
