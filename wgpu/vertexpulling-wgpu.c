@@ -1,9 +1,11 @@
 //------------------------------------------------------------------------------
-//  vertexpulling-metal.c
+//  vertexpulling-wgpu.c
 //
 //  Demonstrates vertex pulling from storage buffers.
 //------------------------------------------------------------------------------
-#include "osxentry.h"
+#include "wgpu_entry.h"
+#define SOKOL_IMPL
+#define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -28,7 +30,7 @@ typedef struct {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .environment = osx_environment(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
 
@@ -89,34 +91,32 @@ static void init(void) {
         .vs.uniform_blocks[0].size = sizeof(vs_params_t),
         .vs.storage_buffers[0] = { .used = true, .readonly = true },
         .vs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vertex_t {\n"
-            "  float4 pos;\n"
-            "  float4 color;\n"
-            "};\n"
-            "struct ssbo_t {\n"
-            "  vertex_t vtx[1];\n" // MSL C++ doesn't have flexible array member support
-            "};\n"
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "struct vertex {\n"
+            "  pos: vec4f,\n"
+            "  color: vec4f,\n"
+            "}\n"
+            "struct sbuf {\n"
+            "  vtx: array<vertex>,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "@group(1) @binding(64) var<storage, read> in_sbuf: sbuf;\n"
             "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float4 color;\n"
-            "};\n"
-            "vertex vs_out _main(constant params_t& params [[buffer(0)]], const device ssbo_t& ssbo [[buffer(12)]], uint vidx [[vertex_id]]) {\n"
-            "  vs_out out;\n"
-            "  out.pos = params.mvp * ssbo.vtx[vidx].pos;\n"
-            "  out.color = ssbo.vtx[vidx].color;\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@builtin(vertex_index) vidx: u32) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * in_sbuf.vtx[vidx].pos;\n"
+            "  out.color = in_sbuf.vtx[vidx].color;\n"
             "  return out;\n"
             "}\n",
         .fs.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "fragment float4 _main(float4 color [[stage_in]]) {\n"
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
     });
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -131,7 +131,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)osx_width()/(float)osx_height(), 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)wgpu_width()/(float)wgpu_height(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
@@ -142,7 +142,7 @@ static void frame(void) {
     hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
     vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
@@ -156,6 +156,13 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(640, 480, 4, SG_PIXELFORMAT_DEPTH, "vertexpulling-metal", init, frame, shutdown);
+    wgpu_start(&(wgpu_desc_t){
+        .init_cb = init,
+        .frame_cb = frame,
+        .shutdown_cb = shutdown,
+        .width = 640,
+        .height = 480,
+        .title = "vertexpulling-wgpu",
+    });
     return 0;
 }
