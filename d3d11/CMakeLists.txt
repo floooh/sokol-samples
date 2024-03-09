@@ -81,3 +81,8 @@ fips_begin_app(bufferoffsets-d3d11 windowed)
     fips_files(bufferoffsets-d3d11.c)
     fips_deps(d3d11entry)
 fips_end_app()
+
+fips_begin_app(vertexpulling-d3d11 windowed)
+    fips_files(vertexpulling-d3d11.c)
+    fips_deps(d3d11entry)
+fips_end_app()
