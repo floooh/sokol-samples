@@ -5,7 +5,7 @@
 //------------------------------------------------------------------------------
 #include "imgui.h"
 #define SOKOL_IMPL
-#define SOKOL_GLCORE33
+#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #include "sokol_log.h"
