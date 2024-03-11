@@ -125,3 +125,11 @@ fips_begin_app(metal-glfw cmdline)
     fips_frameworks_osx(Cocoa QuartzCore Metal MetalKit AudioToolbox)
 fips_end_app()
 endif()
+
+# macOS only goes up to GL 4.1, GL SSBOs need GL 4.3
+if (NOT FIPS_MACOS)
+fips_begin_app(vertexpulling-glfw cmdline)
+    fips_files(vertexpulling-glfw.c)
+    fips_deps(glfw_glue)
+fips_end_app()
+endif()

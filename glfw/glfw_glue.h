@@ -11,8 +11,8 @@ typedef struct glfw_desc_t {
     int sample_count;
     bool no_depth_buffer;
     const char* title;
-    int major;
-    int minor;
+    int version_major;
+    int version_minor;
 } glfw_desc_t;
 
 void glfw_init(const glfw_desc_t* desc);
