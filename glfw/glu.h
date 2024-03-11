@@ -29,7 +29,7 @@ static inline void gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear
     }
     cotangent = cos(radians) / sine;
 
-    __gluMakeIdentityd(&m[0][0]);
+    __gluMakeIdentityd((double*)m);
     m[0][0] = cotangent / aspect;
     m[1][1] = cotangent;
     m[2][2] = -(zFar + zNear) / deltaZ;
@@ -83,7 +83,7 @@ gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
     /* Recompute up as: up = side x forward */
     cross(side, forward, up);
 
-    __gluMakeIdentityf(&m[0][0]);
+    __gluMakeIdentityf((float*)m);
     m[0][0] = side[0];
     m[1][0] = side[1];
     m[2][0] = side[2];
