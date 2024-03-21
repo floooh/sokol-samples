@@ -76,7 +76,7 @@ static void init(void) {
     state.bind_frequency = MAX_BIND_FREQUENCY;
 
     switch (sg_query_backend()) {
-        case SG_BACKEND_GLCORE33: state.backend = "GLCORE33"; break;
+        case SG_BACKEND_GLCORE: state.backend = "GLCORE"; break;
         case SG_BACKEND_GLES3: state.backend = "GLES3"; break;
         case SG_BACKEND_D3D11: state.backend = "D3D11"; break;
         case SG_BACKEND_METAL_IOS: state.backend = "METAL_IOS"; break;
