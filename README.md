@@ -398,7 +398,7 @@ To build one of the GLFW samples on Linux:
 
 ```sh
 > cd sokol-samples/glfw
-> cc cube-glfw.c flextgl/flextGL.c -o cube-glfw -I../../sokol -lGL -ldl -lm -lglfw3
+> cc cube-glfw.c glfw_glue.c flextgl/flextGL.c -o cube-glfw -I../../sokol -lGL -ldl -lm -lglfw3
 ```
 
 To build one of the sokol-app samples on Linux:
