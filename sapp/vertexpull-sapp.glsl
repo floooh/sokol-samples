@@ -30,3 +30,5 @@ void main() {
     frag_color = color;
 }
 @end
+
+@program vertexpull vs fs
