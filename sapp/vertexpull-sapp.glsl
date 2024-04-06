@@ -5,13 +5,14 @@ uniform vs_params {
     mat4 mvp;
 };
 
-struct vertex_t {
+// NOTE: 'vertex' is a reserved name in MSL
+struct sb_vertex {
     vec3 pos;
     vec4 color;
 };
 
 readonly buffer ssbo {
-    vertex_t vtx[];
+    sb_vertex vtx[];
 };
 
 out vec4 color;
