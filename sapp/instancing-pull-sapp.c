@@ -24,7 +24,7 @@ static struct {
     sg_bindings bind;
     float ry;
     int cur_num_particles;
-    hmm_vec3 pos[MAX_PARTICLES];
+    sb_instance_t inst[MAX_PARTICLES];
     hmm_vec3 vel[MAX_PARTICLES];
 } state;
 
@@ -101,7 +101,7 @@ static void frame(void) {
 
     // update instance data storage buffer
     sg_update_buffer(state.bind.vs.storage_buffers[SLOT_instances], &(sg_range){
-        .ptr = state.pos,
+        .ptr = state.inst,
         .size = (size_t)state.cur_num_particles * sizeof(sb_instance_t),
     });
 
@@ -127,7 +127,7 @@ static void cleanup(void) {
 static void emit_particles(void) {
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
         if (state.cur_num_particles < MAX_PARTICLES) {
-            state.pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
+            state.inst[state.cur_num_particles].pos = HMM_Vec3(0.0, 0.0, 0.0);
             state.vel[state.cur_num_particles] = HMM_Vec3(
                 ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f,
                 ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
@@ -142,12 +142,12 @@ static void emit_particles(void) {
 static void update_particles(float frame_time) {
     for (int i = 0; i < state.cur_num_particles; i++) {
         state.vel[i].Y -= 1.0f * frame_time;
-        state.pos[i].X += state.vel[i].X * frame_time;
-        state.pos[i].Y += state.vel[i].Y * frame_time;
-        state.pos[i].Z += state.vel[i].Z * frame_time;
+        state.inst[i].pos.X += state.vel[i].X * frame_time;
+        state.inst[i].pos.Y += state.vel[i].Y * frame_time;
+        state.inst[i].pos.Z += state.vel[i].Z * frame_time;
         // bounce back from 'ground'
-        if (state.pos[i].Y < -2.0f) {
-            state.pos[i].Y = -1.8f;
+        if (state.inst[i].pos.Y < -2.0f) {
+            state.inst[i].pos.Y = -1.8f;
             state.vel[i].Y = -state.vel[i].Y;
             state.vel[i].X *= 0.8f; state.vel[i].Y *= 0.8f; state.vel[i].Z *= 0.8f;
         }
