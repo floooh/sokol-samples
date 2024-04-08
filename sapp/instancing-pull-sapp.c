@@ -39,6 +39,12 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
+    // storage buffers are not supported on the current backend?
+    // (in this case a red fallback screen is rendered to indicate error)
+    if (!sg_query_features().storage_buffer) {
+        return;
+    }
+
     // a pass action for the default render pass
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.1f, 0.2f, 1.0f } }
@@ -47,12 +53,12 @@ static void init(void) {
     // a storage buffer for the static geometry
     const float r = 0.05f;
     const sb_vertex_t vertices[] = {
-        { .pos = { 0.0f,   -r, 0.0f }, .color = { 1.0f, 0.0f, 0.0f, 1.0f } },
-        { .pos = {    r, 0.0f, r    }, .color = { 0.0f, 1.0f, 0.0f, 1.0f } },
-        { .pos = {    r, 0.0f, -r   }, .color = { 0.0f, 0.0f, 1.0f, 1.0f } },
-        { .pos = {   -r, 0.0f, -r   }, .color = { 1.0f, 1.0f, 0.0f, 1.0f } },
-        { .pos = {   -r, 0.0f, r    }, .color = { 0.0f, 1.0f, 1.0f, 1.0f } },
-        { .pos = { 0.0f,    r, 0.0f }, .color = { 1.0f, 0.0f, 1.0f, 1.0f } },
+        { .pos = HMM_Vec3(0.0f,   -r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 0.0f, 1.0f) },
+        { .pos = HMM_Vec3(   r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { .pos = HMM_Vec3(   r, 0.0f, -r  ), .color = HMM_Vec4(0.0f, 0.0f, 1.0f, 1.0f) },
+        { .pos = HMM_Vec3(  -r, 0.0f, -r  ), .color = HMM_Vec4(1.0f, 1.0f, 0.0f, 1.0f) },
+        { .pos = HMM_Vec3(  -r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 1.0f, 1.0f) },
+        { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
     state.bind.vs.storage_buffers[SLOT_vertices] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
@@ -92,7 +98,22 @@ static void init(void) {
     });
 }
 
+static void draw_fallback(void) {
+    // if storage buffers are not supported, draw a red screen instead
+    const sg_pass_action pass_action = {
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
+    };
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
+    sg_end_pass();
+    sg_commit();
+}
+
 static void frame(void) {
+    if (!sg_query_features().storage_buffer) {
+        draw_fallback();
+        return;
+    }
+
     const float frame_time = (float)sapp_frame_duration();
 
     // emit new particles, and update particle positions
