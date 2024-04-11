@@ -72,7 +72,6 @@ static struct {
     int num_skeleton_joints;    // number of joints in the skeleton
     int num_skin_joints;        // number of joints actually used by skinned mesh
     camera_t camera;
-    bool draw_enabled;
     struct {
         bool skeleton;
         bool animation;
@@ -101,10 +100,9 @@ static uint8_t mesh_io_buffer[3 * 1024 * 1024];
 static sb_instance_t instance_data[MAX_INSTANCES];
 
 // joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
-static sb_joint_t joint_upload_buffer[MAX_INSTANCES][MAX_PALETTE_JOINTS];
+static sb_joint_t joint_upload_buffer[MAX_INSTANCES][MAX_JOINTS];
 
 static void init_instances(void);
-static void update_instances(void);
 static void update_joints(void);
 static void draw_ui(void);
 static bool draw_ok(void);
@@ -115,7 +113,6 @@ static void mesh_data_loaded(const sfetch_response_t* respone);
 static void init(void) {
     state.ozz = std::make_unique<ozz_t>();
     state.num_instances = 1;
-    state.draw_enabled = true;
     state.time.factor = 1.0f;
 
     // setup sokol-gfx
@@ -161,9 +158,6 @@ static void init(void) {
     sfdesc.logger.func = slog_func;
     sfetch_setup(&sfdesc);
 
-    // initial instance model matrices
-    init_instances();
-
     // shader and pipeline object for vertex-skinned rendering, note that
     // there's no vertex layout since all data needed for rendering
     // is pulled from storage buffers
@@ -173,14 +167,17 @@ static void init(void) {
     pip_desc.face_winding = SG_FACEWINDING_CCW;
     pip_desc.depth.write_enabled = true;
     pip_desc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
+    pip_desc.label = "pipeline";
     state.pip = sg_make_pipeline(&pip_desc);
 
-    // create a dynamic storage buffer which holds the per-instance model-matrices
+    // create a storage buffer which holds the per-instance model-matrices,
+    // the model matrices never change (FIXME?)
     {
+        init_instances();
         sg_buffer_desc buf_desc = {};
         buf_desc.type = SG_BUFFERTYPE_STORAGEBUFFER;
-        buf_desc.usage = SG_USAGE_STREAM;
-        buf_desc.size = MAX_INSTANCES * sizeof(sb_instance_t);
+        buf_desc.data = SG_RANGE(instance_data);
+        buf_desc.label = "instances";
         state.bind.vs.storage_buffers[SLOT_instances] = sg_make_buffer(&buf_desc);
     }
 
@@ -190,7 +187,8 @@ static void init(void) {
         buf_desc.type = SG_BUFFERTYPE_STORAGEBUFFER;
         buf_desc.usage = SG_USAGE_STREAM;
         buf_desc.size = MAX_INSTANCES * MAX_JOINTS * sizeof(sb_joint_t);
-        state.bind.vs.storage_buffers[SLOT_joints] = sg_make_buffer(&joint_buf_desc);
+        buf_desc.label = "joints";
+        state.bind.vs.storage_buffers[SLOT_joints] = sg_make_buffer(&buf_desc);
     }
 
     // NOTE: the buffers for vertices and indices are created in the async fetch callbacks
@@ -236,7 +234,6 @@ static void frame(void) {
 
     // update instance and joint storage buffers
     if (draw_ok()) {
-        update_instances();
         update_joints();
     }
 
@@ -253,6 +250,7 @@ static void frame(void) {
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
         sg_draw(0, state.num_triangle_indices, state.num_instances);
     }
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
@@ -273,10 +271,63 @@ static void cleanup(void) {
 }
 
 static bool draw_ok(void) {
-    return sg_features().storage_buffer
+    return sg_query_features().storage_buffer
         && state.loaded.animation
         && state.loaded.mesh
         && state.loaded.skeleton;
+}
+
+// compute skinning matrices and upload into joint storage buffer
+static void update_joints(void) {
+    uint64_t start_time = stm_now();
+    const float anim_duration = state.ozz->animation.duration();
+    for (int instance = 0; instance < state.num_instances; instance++) {
+
+        // each character instance evaluates its own animation
+        const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
+
+        // sample animation
+        // NOTE: using one cache per instance versus one cache per animation
+        // makes a small difference, but not much
+        ozz::animation::SamplingJob sampling_job;
+        sampling_job.animation = &state.ozz->animation;
+        sampling_job.cache = &state.ozz->cache;
+        sampling_job.ratio = anim_ratio;
+        sampling_job.output = make_span(state.ozz->local_matrices);
+        sampling_job.Run();
+
+        // convert joint matrices from local to model space
+        ozz::animation::LocalToModelJob ltm_job;
+        ltm_job.skeleton = &state.ozz->skeleton;
+        ltm_job.input = make_span(state.ozz->local_matrices);
+        ltm_job.output = make_span(state.ozz->model_matrices);
+        ltm_job.Run();
+
+        // compute skinning matrices and write to joint texture upload buffer
+        for (int i = 0; i < state.num_skin_joints; i++) {
+            ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
+            const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
+            const ozz::math::SimdFloat4& c1 = skin_matrix.cols[1];
+            const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
+            const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
+
+            sb_joint_t* jptr = &joint_upload_buffer[instance][i];
+            jptr->xxxx.X = ozz::math::GetX(c0);
+            jptr->xxxx.Y = ozz::math::GetX(c1);
+            jptr->xxxx.Z = ozz::math::GetX(c2);
+            jptr->xxxx.W = ozz::math::GetX(c3);
+            jptr->yyyy.X = ozz::math::GetY(c0);
+            jptr->yyyy.Y = ozz::math::GetY(c1);
+            jptr->yyyy.Z = ozz::math::GetY(c2);
+            jptr->yyyy.W = ozz::math::GetY(c3);
+            jptr->zzzz.X = ozz::math::GetZ(c0);
+            jptr->zzzz.Y = ozz::math::GetZ(c1);
+            jptr->zzzz.Z = ozz::math::GetZ(c2);
+            jptr->zzzz.W = ozz::math::GetZ(c3);
+        }
+    }
+    state.time.anim_eval_time = stm_since(start_time);
+    sg_update_buffer(state.bind.vs.storage_buffers[SLOT_joints], SG_RANGE(joint_upload_buffer));
 }
 
 // arrange the character instances into a quad
@@ -306,6 +357,183 @@ static void init_instances(void) {
             }
         }
     }
+}
+
+// sokol-fetch io callback
+static void skel_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        ozz::io::MemoryStream stream;
+        stream.Write(response->data.ptr, response->data.size);
+        stream.Seek(0, ozz::io::Stream::kSet);
+        ozz::io::IArchive archive(&stream);
+        if (archive.TestTag<ozz::animation::Skeleton>()) {
+            archive >> state.ozz->skeleton;
+            state.loaded.skeleton = true;
+            const int num_soa_joints = state.ozz->skeleton.num_soa_joints();
+            const int num_joints = state.ozz->skeleton.num_joints();
+            state.ozz->local_matrices.resize(num_soa_joints);
+            state.ozz->model_matrices.resize(num_joints);
+            state.num_skeleton_joints = num_joints;
+            state.ozz->cache.Resize(num_joints);
+        }
+        else {
+            state.loaded.failed = true;
+        }
+    }
+    else if (response->failed) {
+        state.loaded.failed = true;
+    }
+}
+
+static void anim_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        ozz::io::MemoryStream stream;
+        stream.Write(response->data.ptr, response->data.size);
+        stream.Seek(0, ozz::io::Stream::kSet);
+        ozz::io::IArchive archive(&stream);
+        if (archive.TestTag<ozz::animation::Animation>()) {
+            archive >> state.ozz->animation;
+            state.loaded.animation = true;
+        }
+        else {
+            state.loaded.failed = true;
+        }
+    }
+    else if (response->failed) {
+        state.loaded.failed = true;
+    }
+}
+
+static uint32_t pack_u32(uint8_t x, uint8_t y, uint8_t z, uint8_t w) {
+    return (uint32_t)(((uint32_t)w<<24)|((uint32_t)z<<16)|((uint32_t)y<<8)|x);
+}
+
+static uint32_t pack_f4_byte4n(float x, float y, float z, float w) {
+    int8_t x8 = (int8_t) (x * 127.0f);
+    int8_t y8 = (int8_t) (y * 127.0f);
+    int8_t z8 = (int8_t) (z * 127.0f);
+    int8_t w8 = (int8_t) (w * 127.0f);
+    return pack_u32((uint8_t)x8, (uint8_t)y8, (uint8_t)z8, (uint8_t)w8);
+}
+
+static uint32_t pack_f4_ubyte4n(float x, float y, float z, float w) {
+    uint8_t x8 = (uint8_t) (x * 255.0f);
+    uint8_t y8 = (uint8_t) (y * 255.0f);
+    uint8_t z8 = (uint8_t) (z * 255.0f);
+    uint8_t w8 = (uint8_t) (w * 255.0f);
+    return pack_u32(x8, y8, z8, w8);
+}
+
+static void mesh_data_loaded(const sfetch_response_t* response) {
+    if (response->fetched) {
+        ozz::io::MemoryStream stream;
+        stream.Write(response->data.ptr, response->data.size);
+        stream.Seek(0, ozz::io::Stream::kSet);
+
+        ozz::vector<ozz::sample::Mesh> meshes;
+        ozz::io::IArchive archive(&stream);
+        while (archive.TestTag<ozz::sample::Mesh>()) {
+            meshes.resize(meshes.size() + 1);
+            archive >> meshes.back();
+        }
+        // assume one mesh and one submesh
+        assert((meshes.size() == 1) && (meshes[0].parts.size() == 1));
+        state.loaded.mesh = true;
+        state.num_skin_joints = meshes[0].num_joints();
+        state.num_triangle_indices = (int)meshes[0].triangle_index_count();
+        state.ozz->joint_remaps = std::move(meshes[0].joint_remaps);
+        state.ozz->mesh_inverse_bindposes = std::move(meshes[0].inverse_bind_poses);
+
+        // convert mesh data into packed vertices
+        size_t num_vertices = (meshes[0].parts[0].positions.size() / 3);
+        assert(meshes[0].parts[0].normals.size() == (num_vertices * 3));
+        assert(meshes[0].parts[0].joint_indices.size() == (num_vertices * 4));
+        assert(meshes[0].parts[0].joint_weights.size() == (num_vertices * 3));
+        const float* positions = &meshes[0].parts[0].positions[0];
+        const float* normals = &meshes[0].parts[0].normals[0];
+        const uint16_t* joint_indices = &meshes[0].parts[0].joint_indices[0];
+        const float* joint_weights = &meshes[0].parts[0].joint_weights[0];
+        sb_vertex_t* vertices = (sb_vertex_t*) calloc(num_vertices, sizeof(sb_vertex_t));
+        for (int i = 0; i < (int)num_vertices; i++) {
+            sb_vertex_t* v = &vertices[i];
+            v->pos.X = positions[i * 3 + 0];
+            v->pos.Y = positions[i * 3 + 1];
+            v->pos.Z = positions[i * 3 + 2];
+            const float nx = normals[i * 3 + 0];
+            const float ny = normals[i * 3 + 1];
+            const float nz = normals[i * 3 + 2];
+            v->normal = pack_f4_byte4n(nx, ny, nz, 0.0f);
+            const uint8_t ji0 = (uint8_t) joint_indices[i * 4 + 0];
+            const uint8_t ji1 = (uint8_t) joint_indices[i * 4 + 1];
+            const uint8_t ji2 = (uint8_t) joint_indices[i * 4 + 2];
+            const uint8_t ji3 = (uint8_t) joint_indices[i * 4 + 3];
+            v->joint_indices = pack_u32(ji0, ji1, ji2, ji3);
+            const float jw0 = joint_weights[i * 3 + 0];
+            const float jw1 = joint_weights[i * 3 + 1];
+            const float jw2 = joint_weights[i * 3 + 2];
+            const float jw3 = 1.0f - (jw0 + jw1 + jw2);
+            v->joint_weights = pack_f4_ubyte4n(jw0, jw1, jw2, jw3);
+        }
+
+        // create a storage buffer with the vertex data, and an index buffer
+        sg_buffer_desc vbuf_desc = { };
+        vbuf_desc.type = SG_BUFFERTYPE_STORAGEBUFFER;
+        vbuf_desc.data.ptr = vertices;
+        vbuf_desc.data.size = num_vertices * sizeof(sb_vertex_t);
+        vbuf_desc.label = "vertices";
+        state.bind.vs.storage_buffers[SLOT_vertices] = sg_make_buffer(&vbuf_desc);
+        free(vertices); vertices = nullptr;
+
+        sg_buffer_desc ibuf_desc = { };
+        ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
+        ibuf_desc.data.ptr = &meshes[0].triangle_indices[0];
+        ibuf_desc.data.size = state.num_triangle_indices * sizeof(uint16_t);
+        ibuf_desc.label = "indices";
+        state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
+    }
+    else if (response->failed) {
+        state.loaded.failed = true;
+    }
+}
+
+static void draw_ui(void) {
+    if (ImGui::BeginMainMenuBar()) {
+        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        ImGui::EndMainMenuBar();
+    }
+    sgimgui_draw(&state.ui.sgimgui);
+    ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
+    ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
+    ImGui::SetNextWindowBgAlpha(0.35f);
+    if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (state.loaded.failed) {
+            ImGui::Text("Failed loading character data!");
+        }
+        else {
+            if (ImGui::SliderInt("Num Instances", &state.num_instances, 1, MAX_INSTANCES)) {
+                float dist_step = (state.camera.max_dist - state.camera.min_dist) / MAX_INSTANCES;
+                state.camera.distance = state.camera.min_dist + dist_step * state.num_instances;
+            }
+            ImGui::Text("Frame Time: %.3fms\n", state.time.frame_time_ms);
+            ImGui::Text("Anim Eval Time: %.3fms\n", stm_ms(state.time.anim_eval_time));
+            ImGui::Text("Num Triangles: %d\n", (state.num_triangle_indices/3) * state.num_instances);
+            ImGui::Text("Num Animated Joints: %d\n", state.num_skeleton_joints * state.num_instances);
+            ImGui::Text("Num Skinning Joints: %d\n", state.num_skin_joints * state.num_instances);
+            ImGui::Separator();
+            ImGui::Text("Camera Controls:");
+            ImGui::Text("  LMB + Mouse Move: Look");
+            ImGui::Text("  Mouse Wheel: Zoom");
+            ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
+            ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
+            ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", 1.0f);
+            ImGui::Separator();
+            ImGui::Text("Time Controls:");
+            ImGui::Checkbox("Paused", &state.time.paused);
+            ImGui::SliderFloat("Factor", &state.time.factor, 0.0f, 10.0f, "%.1f", 1.0f);
+            ImGui::Separator();
+        }
+    }
+    ImGui::End();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
