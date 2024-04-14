@@ -145,11 +145,6 @@ static void init(void) {
     camdesc.longitude = 20.0f;
     cam_init(&state.camera, &camdesc);
 
-    // if storage-buffers are not supported, bail out here
-    if (!sg_query_features().storage_buffer) {
-        return;
-    }
-
     // setup sokol-fetch
     sfetch_desc_t sfdesc = {};
     sfdesc.max_requests = 3;
@@ -157,6 +152,11 @@ static void init(void) {
     sfdesc.num_lanes = 3;
     sfdesc.logger.func = slog_func;
     sfetch_setup(&sfdesc);
+
+    // if storage-buffers are not supported, bail out here
+    if (!sg_query_features().storage_buffer) {
+        return;
+    }
 
     // shader and pipeline object for vertex-skinned rendering, note that
     // there's no vertex layout since all data needed for rendering
