@@ -47,7 +47,7 @@
 // are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
 #define MAX_JOINTS (64)
 
-// this defines the size of the instance-buffer and height of the joint-texture
+// the max number of character instances we're going to render
 #define MAX_INSTANCES (512)
 
 // wrapper struct for managed ozz-animation C++ objects, must be deleted
@@ -96,10 +96,10 @@ static uint8_t skel_io_buffer[32 * 1024];
 static uint8_t anim_io_buffer[96 * 1024];
 static uint8_t mesh_io_buffer[3 * 1024 * 1024];
 
-// instance data buffer;
+// per-instance-data
 static sb_instance_t instance_data[MAX_INSTANCES];
 
-// joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
+// joint-matrix data for all character instances, each joint consists of transposed 4x3 matrix
 static sb_joint_t joint_upload_buffer[MAX_INSTANCES][MAX_JOINTS];
 
 static void init_instances(void);
@@ -171,7 +171,7 @@ static void init(void) {
     state.pip = sg_make_pipeline(&pip_desc);
 
     // create a storage buffer which holds the per-instance model-matrices,
-    // the model matrices never change (FIXME?)
+    // the model matrices never change, so we can put them into an immutable buffer
     {
         init_instances();
         sg_buffer_desc buf_desc = {};
@@ -181,7 +181,7 @@ static void init(void) {
         state.bind.vs.storage_buffers[SLOT_instances] = sg_make_buffer(&buf_desc);
     }
 
-    // create another dynamic storage buffer which holds the joint matrices
+    // create another dynamic storage buffer which receives the animated joint matrices
     {
         sg_buffer_desc buf_desc = {};
         buf_desc.type = SG_BUFFERTYPE_STORAGEBUFFER;
@@ -191,7 +191,7 @@ static void init(void) {
         state.bind.vs.storage_buffers[SLOT_joints] = sg_make_buffer(&buf_desc);
     }
 
-    // NOTE: the buffers for vertices and indices are created in the async fetch callbacks
+    // NOTE: the storage buffers for vertices and indices are created in the async fetch callbacks
 
     // start loading data
     char path_buf[512];
@@ -287,8 +287,7 @@ static void update_joints(void) {
         const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
 
         // sample animation
-        // NOTE: using one cache per instance versus one cache per animation
-        // makes a small difference, but not much
+        // NOTE: using one cache per instance versus one cache per animation makes a small difference, but not much
         ozz::animation::SamplingJob sampling_job;
         sampling_job.animation = &state.ozz->animation;
         sampling_job.cache = &state.ozz->cache;
@@ -305,25 +304,8 @@ static void update_joints(void) {
 
         // compute skinning matrices and write to joint texture upload buffer
         for (int i = 0; i < state.num_skin_joints; i++) {
-            ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
-            const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
-            const ozz::math::SimdFloat4& c1 = skin_matrix.cols[1];
-            const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
-            const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
-
-            sb_joint_t* jptr = &joint_upload_buffer[instance][i];
-            jptr->xxxx.X = ozz::math::GetX(c0);
-            jptr->xxxx.Y = ozz::math::GetX(c1);
-            jptr->xxxx.Z = ozz::math::GetX(c2);
-            jptr->xxxx.W = ozz::math::GetX(c3);
-            jptr->yyyy.X = ozz::math::GetY(c0);
-            jptr->yyyy.Y = ozz::math::GetY(c1);
-            jptr->yyyy.Z = ozz::math::GetY(c2);
-            jptr->yyyy.W = ozz::math::GetY(c3);
-            jptr->zzzz.X = ozz::math::GetZ(c0);
-            jptr->zzzz.Y = ozz::math::GetZ(c1);
-            jptr->zzzz.Z = ozz::math::GetZ(c2);
-            jptr->zzzz.W = ozz::math::GetZ(c3);
+            const ozz::math::Float4x4 skin_matrix = ozz::math::Transpose(state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i]);
+            memcpy(&joint_upload_buffer[instance][i], &skin_matrix.cols[0], 3 * sizeof(hmm_mat4));
         }
     }
     state.time.anim_eval_time = stm_since(start_time);

@@ -5,12 +5,13 @@
 @block skin_utils
 void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, out vec4 skin_pos, out vec4 skin_nrm) {
     const uint max_joints = 64;
+    const uint base_joint_index = gl_InstanceIndex * max_joints;
     skin_pos = vec4(0, 0, 0, 1);
     skin_nrm = vec4(0, 0, 0, 0);
     vec4 weights = jweights / dot(jweights, vec4(1.0));
     vec4 xxxx, yyyy, zzzz;
     if (weights.x > 0) {
-        uint jidx = (jindices & 255) * max_joints;
+        uint jidx = (jindices & 255) + base_joint_index;
         xxxx = joint[jidx].xxxx;
         yyyy = joint[jidx].yyyy;
         zzzz = joint[jidx].zzzz;
@@ -18,7 +19,7 @@ void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, 
         skin_nrm.xyz += vec3(dot(nrm, xxxx), dot(nrm, yyyy), dot(nrm, zzzz)) * weights.x;
     }
     if (weights.y > 0) {
-        uint jidx = ((jindices >> 8) & 255) * max_joints;
+        uint jidx = ((jindices >> 8) & 255) + base_joint_index;
         xxxx = joint[jidx].xxxx;
         yyyy = joint[jidx].yyyy;
         zzzz = joint[jidx].zzzz;
@@ -26,7 +27,7 @@ void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, 
         skin_nrm.xyz += vec3(dot(nrm, xxxx), dot(nrm, yyyy), dot(nrm, zzzz)) * weights.y;
     }
     if (weights.z > 0) {
-        uint jidx = ((jindices >> 16) & 255) * max_joints;
+        uint jidx = ((jindices >> 16) & 255) + base_joint_index;
         xxxx = joint[jidx].xxxx;
         yyyy = joint[jidx].yyyy;
         zzzz = joint[jidx].zzzz;
@@ -34,15 +35,13 @@ void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, 
         skin_nrm.xyz += vec3(dot(nrm, xxxx), dot(nrm, yyyy), dot(nrm, zzzz)) * weights.z;
     }
     if (weights.w > 0) {
-        uint jidx = ((jindices >> 24) & 255) * max_joints;
+        uint jidx = ((jindices >> 24) & 255) + base_joint_index;
         xxxx = joint[jidx].xxxx;
         yyyy = joint[jidx].yyyy;
         zzzz = joint[jidx].zzzz;
         skin_pos.xyz += vec3(dot(pos, xxxx), dot(pos, yyyy), dot(pos, zzzz)) * weights.w;
         skin_nrm.xyz += vec3(dot(nrm, xxxx), dot(nrm, yyyy), dot(nrm, zzzz)) * weights.w;
     }
-    skin_pos.xyz = pos.xyz;
-    skin_nrm.xyz = nrm.xyz;
 }
 @end
 
@@ -89,21 +88,24 @@ out vec3 color;
 @include_block skin_utils
 
 void main() {
-    // skinned model-space position and normal
+    // load and unpack current vertex
     vec4 in_pos = vec4(vtx[gl_VertexIndex].pos, 1.0);
     vec4 in_nrm = unpackSnorm4x8(vtx[gl_VertexIndex].normal);
     vec4 jweights = unpackUnorm4x8(vtx[gl_VertexIndex].joint_weights);
     uint jindices = vtx[gl_VertexIndex].joint_indices;
+
+    // compute skinned position and normal in model space
     vec4 pos, nrm;
     skin_pos_nrm(in_pos, in_nrm, jweights, jindices, pos, nrm);
 
-    // transform pos and normal to world space
+    // load per-instance data and transform position and normal to world space
     vec4 ixxxx = inst[gl_InstanceIndex].xxxx;
     vec4 iyyyy = inst[gl_InstanceIndex].yyyy;
     vec4 izzzz = inst[gl_InstanceIndex].zzzz;
     pos = vec4(dot(pos, ixxxx), dot(pos, iyyyy), dot(pos, izzzz), 1.0);
     nrm = vec4(dot(nrm, ixxxx), dot(nrm, iyyyy), dot(nrm, izzzz), 0.0);
 
+    // ...and finally transform to clip space
     gl_Position = view_proj * pos;
     color = (nrm.xyz + 1.0) * 0.5;
 }
