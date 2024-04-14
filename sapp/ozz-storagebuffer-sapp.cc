@@ -302,13 +302,16 @@ static void update_joints(void) {
         ltm_job.output = make_span(state.ozz->model_matrices);
         ltm_job.Run();
 
-        // compute skinning matrices and write to joint texture upload buffer
+        // compute transposed skinning matrices, and copy the xxxx,yyyy,zzzz vectors into the intermediate joint buffer
         for (int i = 0; i < state.num_skin_joints; i++) {
-            const ozz::math::Float4x4 skin_matrix = ozz::math::Transpose(state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i]);
-            memcpy(&joint_upload_buffer[instance][i], &skin_matrix.cols[0], 3 * sizeof(hmm_mat4));
+            const ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
+            const ozz::math::Float4x4 transposed = ozz::math::Transpose(skin_matrix);
+            memcpy(&joint_upload_buffer[instance][i], &transposed.cols[0], 3 * sizeof(hmm_mat4));
         }
     }
     state.time.anim_eval_time = stm_since(start_time);
+
+    // update the sokol-gfx joint storage buffer
     sg_update_buffer(state.bind.vs.storage_buffers[SLOT_joints], SG_RANGE(joint_upload_buffer));
 }
 
@@ -316,13 +319,7 @@ static void update_joints(void) {
 static void init_instances(void) {
     // initialize the character instance model-to-world matrices
     for (int i=0, x=0, y=0, dx=0, dy=0; i < MAX_INSTANCES; i++, x+=dx, y+=dy) {
-        sb_instance_t* inst = &instance_data[i];
-
-        // a 3x4 transposed model-to-world matrix (only the x/z position is set)
-        inst->xxxx.X=1.0f; inst->xxxx.Y=0.0f; inst->xxxx.Z=0.0f; inst->xxxx.W=(float)x * 1.5f;
-        inst->yyyy.X=0.0f; inst->yyyy.Y=1.0f; inst->yyyy.Z=0.0f; inst->yyyy.W=0.0f;
-        inst->zzzz.X=0.0f; inst->zzzz.Y=0.0f; inst->zzzz.Z=1.0f; inst->zzzz.W=(float)y * 1.5f;
-
+        instance_data[i].model = HMM_Translate(HMM_Vec3((float)x * 1.5f, 0.0f, (float)y * 1.5f));
         // at a corner?
         if (abs(x) == abs(y)) {
             if (x >= 0) {
@@ -488,10 +485,11 @@ static void draw_ui(void) {
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (state.loaded.failed) {
+        if (!sg_query_features().storage_buffer) {
+            ImGui::Text("Storage buffers not supported");
+        } else if (state.loaded.failed) {
             ImGui::Text("Failed loading character data!");
-        }
-        else {
+        } else {
             if (ImGui::SliderInt("Num Instances", &state.num_instances, 1, MAX_INSTANCES)) {
                 float dist_step = (state.camera.max_dist - state.camera.min_dist) / MAX_INSTANCES;
                 state.camera.distance = state.camera.min_dist + dist_step * state.num_instances;

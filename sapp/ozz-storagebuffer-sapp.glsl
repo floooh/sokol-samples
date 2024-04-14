@@ -59,9 +59,7 @@ struct sb_vertex {
 
 // FIXME: turn this into a matrix
 struct sb_instance {
-    vec4 xxxx;
-    vec4 yyyy;
-    vec4 zzzz;
+    mat4 model;
 };
 
 // FIXME: turn this into a matrix
@@ -99,11 +97,9 @@ void main() {
     skin_pos_nrm(in_pos, in_nrm, jweights, jindices, pos, nrm);
 
     // load per-instance data and transform position and normal to world space
-    vec4 ixxxx = inst[gl_InstanceIndex].xxxx;
-    vec4 iyyyy = inst[gl_InstanceIndex].yyyy;
-    vec4 izzzz = inst[gl_InstanceIndex].zzzz;
-    pos = vec4(dot(pos, ixxxx), dot(pos, iyyyy), dot(pos, izzzz), 1.0);
-    nrm = vec4(dot(nrm, ixxxx), dot(nrm, iyyyy), dot(nrm, izzzz), 0.0);
+    const mat4 model = inst[gl_InstanceIndex].model;
+    pos = model * pos;
+    nrm = model * nrm;
 
     // ...and finally transform to clip space
     gl_Position = view_proj * pos;
