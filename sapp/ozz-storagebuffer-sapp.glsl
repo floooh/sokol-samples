@@ -57,12 +57,11 @@ struct sb_vertex {
     uint joint_weights;
 };
 
-// FIXME: turn this into a matrix
 struct sb_instance {
     mat4 model;
 };
 
-// FIXME: turn this into a matrix
+// FIXME: turn this into a matrix?
 struct sb_joint {
     vec4 xxxx;
     vec4 yyyy;
