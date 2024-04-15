@@ -102,7 +102,7 @@ static void init(void) {
             "  vtx: array<vertex>,\n"
             "}\n"
             "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-            "@group(1) @binding(64) var<storage, read> in_sbuf: sbuf;\n"
+            "@group(1) @binding(32) var<storage, read> in_sbuf: sbuf;\n"
             "struct vs_out {\n"
             "  @builtin(position) pos: vec4f,\n"
             "  @location(0) color: vec4f,\n"
