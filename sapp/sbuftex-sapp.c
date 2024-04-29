@@ -116,7 +116,7 @@ static void init(void) {
         .label = "color-palette",
     });
 
-    // a greyscale texture which modules the color palette colors
+    // a greyscale texture which modulates the color palette colors
     uint8_t pixels[4][4] = {
         { 0xFF, 0xCC, 0x88, 0x44 },
         { 0xCC, 0x88, 0x44, 0xFF },
