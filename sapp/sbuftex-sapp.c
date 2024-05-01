@@ -140,8 +140,9 @@ static void init(void) {
 
     // ...shader and pipeline object (note: no vertex layout needed because
     // the vertex shader pulls vertices from storage buffer)
+    const sg_shader shd = sg_make_shader(sbuftex_shader_desc(sg_query_backend()));
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(sbuftex_shader_desc(sg_query_backend())),
+        .shader = shd,
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .depth = {
