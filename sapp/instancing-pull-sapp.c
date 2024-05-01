@@ -9,6 +9,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
+#define SOKOL_DEBUGTEXT_IMPL
+#include "sokol_debugtext.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -28,6 +30,7 @@ static struct {
     hmm_vec3 vel[MAX_PARTICLES];
 } state;
 
+static void draw_fallback(void);
 static void emit_particles(void);
 static void update_particles(float frame_time);
 static vs_params_t compute_vsparams(float frame_time);
@@ -40,8 +43,9 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     // storage buffers are not supported on the current backend?
-    // (in this case a red fallback screen is rendered to indicate error)
+    // (in this case a red screen and an error message is rendered)
     if (!sg_query_features().storage_buffer) {
+        sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
         return;
     }
 
@@ -98,16 +102,6 @@ static void init(void) {
     });
 }
 
-static void draw_fallback(void) {
-    // if storage buffers are not supported, draw a red screen instead
-    const sg_pass_action pass_action = {
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
-    };
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
-    sg_end_pass();
-    sg_commit();
-}
-
 static void frame(void) {
     if (!sg_query_features().storage_buffer) {
         draw_fallback();
@@ -142,7 +136,25 @@ static void frame(void) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
+    if (!sg_query_features().storage_buffer) {
+        sdtx_shutdown();
+    }
     sg_shutdown();
+}
+
+static void draw_fallback(void) {
+    sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
+    sdtx_pos(1, 1);
+    sdtx_puts("STORAGE BUFFERS NOT SUPPORTED");
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
+        },
+        .swapchain = sglue_swapchain()
+    });
+    sdtx_draw();
+    sg_end_pass();
+    sg_commit();
 }
 
 static void emit_particles(void) {

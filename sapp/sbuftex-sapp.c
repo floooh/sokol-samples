@@ -14,6 +14,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
+#define SOKOL_DEBUGTEXT_IMPL
+#include "sokol_debugtext.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -28,6 +30,7 @@ static struct {
 } state;
 
 static vs_params_t make_vs_params(void);
+static void draw_fallback(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -36,13 +39,13 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // if no storage buffers supported, just clear the screen to red
+    // if storage buffers are not supported on this platform, render
+    // a red screen and error message via sokol-debugtext
     if (!sg_query_features().storage_buffer) {
-        state.pass_action = (sg_pass_action){
-            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
-        };
+        sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
         return;
     }
+
     // otherwise clear to a regular color
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.75f, 0.25f } },
@@ -154,14 +157,16 @@ static void init(void) {
 }
 
 static void frame(void) {
+    if (!sg_query_features().storage_buffer) {
+        draw_fallback();
+        return;
+    }
     const vs_params_t vs_params = make_vs_params();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    if (sg_query_features().storage_buffer) {
-        sg_apply_pipeline(state.pip);
-        sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
-        sg_draw(0, 36, 1);
-    }
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -179,8 +184,26 @@ static vs_params_t make_vs_params(void) {
     return (vs_params_t){ .mvp = HMM_MultiplyMat4(view_proj, model) };
 }
 
+static void draw_fallback(void) {
+    sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
+    sdtx_pos(1, 1);
+    sdtx_puts("STORAGE BUFFERS NOT SUPPORTED");
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1, 0, 0, 1} },
+        },
+        .swapchain = sglue_swapchain()
+    });
+    sdtx_draw();
+    sg_end_pass();
+    sg_commit();
+}
+
 static void cleanup(void) {
     __dbgui_shutdown();
+    if (!sg_query_features().storage_buffer) {
+        sdtx_shutdown();
+    }
     sg_shutdown();
 }
 
