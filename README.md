@@ -82,7 +82,7 @@ List and run the build targets:
 ...you can also open the project in VSCode (with the MS C/C++ extension),
 for instance on Linux:
 ```sh
-> ./fips set config linux-vsocde-debug
+> ./fips set config linux-vscode-debug
 > ./fips gen
 > ./fips open
 ```
