@@ -18,7 +18,8 @@ readonly buffer ssbo {
 out vec4 color;
 
 void main() {
-    gl_Position = mvp * vec4(vtx[gl_VertexIndex].pos, 1.0);
+    vec4 position = vec4(vtx[gl_VertexIndex].pos, 1.0);
+    gl_Position = mvp * position;
     color = vtx[gl_VertexIndex].color;
 }
 @end
