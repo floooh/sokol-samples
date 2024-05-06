@@ -19,7 +19,9 @@ out vec3 uv_idx;
 
 void main() {
     gl_Position = mvp * vec4(vtx[gl_VertexIndex].pos, 1.0);
-    uv_idx = vec3(vtx[gl_VertexIndex].uv, float(vtx[gl_VertexIndex].idx));
+    // need to add a bit of wiggle room here to prevent a precision problem on NVIDIA
+    // down in the pixel shader
+    uv_idx = vec3(vtx[gl_VertexIndex].uv, float(vtx[gl_VertexIndex].idx) + 0.5);
 }
 @end
 
