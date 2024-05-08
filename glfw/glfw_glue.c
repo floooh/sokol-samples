@@ -63,10 +63,6 @@ sg_environment glfw_environment(void) {
             .depth_format = _no_depth_buffer ? SG_PIXELFORMAT_NONE : SG_PIXELFORMAT_DEPTH_STENCIL,
             .sample_count = _sample_count,
         },
-        .gl = {
-            .major_version = _major_version,
-            .minor_version = _minor_version,
-        }
     };
 }
 
