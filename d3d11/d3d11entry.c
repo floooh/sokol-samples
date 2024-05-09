@@ -109,8 +109,8 @@ void d3d11_init(const d3d11_desc_t* desc) {
         },
         .OutputWindow = state.hwnd,
         .Windowed = true,
-        .SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
-        .BufferCount = 1,
+        .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+        .BufferCount = 2,
         .SampleDesc = {
             .Count = (UINT) 1,
             .Quality = (UINT) 0,

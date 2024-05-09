@@ -111,3 +111,8 @@ fips_begin_app(noninterleaved-metal windowed)
     fips_files(noninterleaved-metal.c)
     fips_deps(osxentry sokol_gfx)
 fips_end_app()
+
+fips_begin_app(vertexpulling-metal windowed)
+    fips_files(vertexpulling-metal.c)
+    fips_deps(osxentry sokol_gfx)
+fips_end_app()

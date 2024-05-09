@@ -294,10 +294,10 @@ static void init(void) {
                 [2] = { .used = true, .image_slot = 2, .sampler_slot = 0 },
             },
             .source =
-                "@group(1) @binding(32) var tex0: texture_2d<f32>;\n"
-                "@group(1) @binding(33) var tex1: texture_2d<f32>;\n"
-                "@group(1) @binding(34) var tex2: texture_2d<f32>;\n"
-                "@group(1) @binding(48) var smp: sampler;\n"
+                "@group(1) @binding(48) var tex0: texture_2d<f32>;\n"
+                "@group(1) @binding(49) var tex1: texture_2d<f32>;\n"
+                "@group(1) @binding(50) var tex2: texture_2d<f32>;\n"
+                "@group(1) @binding(64) var smp: sampler;\n"
                 "@fragment fn main(@location(0) uv0: vec2f, @location(1) uv1: vec2f, @location(2) uv2: vec2f) -> @location(0) vec4f {\n"
                 "  var c0 = textureSample(tex0, smp, uv0).xyz;\n"
                 "  var c1 = textureSample(tex1, smp, uv1).xyz;\n"
@@ -352,8 +352,8 @@ static void init(void) {
             .samplers[0].used = true,
             .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
             .source =
-                "@group(1) @binding(32) var tex0: texture_2d<f32>;\n"
-                "@group(1) @binding(48) var smp: sampler;\n"
+                "@group(1) @binding(48) var tex0: texture_2d<f32>;\n"
+                "@group(1) @binding(64) var smp: sampler;\n"
                 "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
                 "  return vec4f(textureSample(tex0, smp, uv).xyz, 1);\n"
                 "}\n"

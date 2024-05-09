@@ -4,7 +4,7 @@
 //  Tests 'native layout' uniform array handling in the sokol_gfx.h GL backend
 //-----------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_GLCORE33
+#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_debugtext.h"

@@ -52,7 +52,7 @@
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
 // are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
-#define MAX_PALETTE_JOINTS (64)
+#define MAX_JOINTS (64)
 
 // this defines the size of the instance-buffer and height of the joint-texture
 #define MAX_INSTANCES (512)
@@ -139,7 +139,7 @@ static uint8_t mesh_io_buffer[3 * 1024 * 1024];
 static instance_t instance_data[MAX_INSTANCES];
 
 // joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
-static float joint_upload_buffer[MAX_INSTANCES][MAX_PALETTE_JOINTS][3][4];
+static float joint_upload_buffer[MAX_INSTANCES][MAX_JOINTS][3][4];
 
 static void init_instance_data(void);
 static void draw_ui(void);
@@ -220,7 +220,7 @@ static void init(void) {
     state.pip = sg_make_pipeline(&pip_desc);
 
     // create a dynamic joint-palette texture and sampler
-    state.joint_texture_width = MAX_PALETTE_JOINTS * 3;
+    state.joint_texture_width = MAX_JOINTS * 3;
     state.joint_texture_height = MAX_INSTANCES;
     state.joint_texture_pitch = state.joint_texture_width * 4;
     sg_image_desc img_desc = { };
@@ -379,8 +379,10 @@ static void frame(void) {
     const int fb_height = sapp_height();
     state.time.frame_time_sec = sapp_frame_duration();
     state.time.frame_time_ms = sapp_frame_duration() * 1000.0;
+    if (!state.time.paused) {
+        state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
+    }
     cam_update(&state.camera, fb_width, fb_height);
-
     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     draw_ui();
 
@@ -389,9 +391,6 @@ static void frame(void) {
     pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
     if (state.loaded.animation && state.loaded.skeleton && state.loaded.mesh) {
-        if (!state.time.paused) {
-            state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
-        }
         update_joint_texture();
 
         vs_params_t vs_params = { };

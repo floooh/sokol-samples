@@ -3,7 +3,7 @@
 //  Indexed drawing, explicit vertex attr locations.
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_GLCORE33
+#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"

@@ -4,7 +4,10 @@
 
 static int _sample_count;
 static bool _no_depth_buffer;
-GLFWwindow* _window;
+static int _major_version;
+static int _minor_version;
+static GLFWwindow* _window;
+
 
 #define _glfw_def(val, def) (((val) == 0) ? (def) : (val))
 
@@ -15,8 +18,12 @@ void glfw_init(const glfw_desc_t* desc) {
     assert(desc->title);
     glfw_desc_t desc_def = *desc;
     desc_def.sample_count = _glfw_def(desc_def.sample_count, 1);
+    desc_def.version_major = _glfw_def(desc_def.version_major, 4);
+    desc_def.version_minor = _glfw_def(desc_def.version_minor, 1);
     _sample_count = desc_def.sample_count;
     _no_depth_buffer = desc_def.no_depth_buffer;
+    _major_version = desc_def.version_major;
+    _minor_version = desc_def.version_minor;
     glfwInit();
     glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, 0);
     if (desc_def.no_depth_buffer) {
@@ -24,8 +31,8 @@ void glfw_init(const glfw_desc_t* desc) {
         glfwWindowHint(GLFW_STENCIL_BITS, 0);
     }
     glfwWindowHint(GLFW_SAMPLES, (desc_def.sample_count == 1) ? 0 : desc_def.sample_count);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, desc_def.version_major);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, desc_def.version_minor);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     _window = glfwCreateWindow(desc_def.width, desc_def.height, desc_def.title, 0, 0);

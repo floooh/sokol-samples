@@ -320,7 +320,7 @@ To build one of the sokol-app samples for GL on macOS:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
-> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -fobjc-arc -DSOKOL_GLCORE33 -I../../sokol -I../libs -framework OpenGL -framework Cocoa -framework AudioToolbox
+> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -fobjc-arc -DSOKOL_GLCORE -I../../sokol -I../libs -framework OpenGL -framework Cocoa -framework AudioToolbox
 ```
 
 ### Building manually on Windows with MSVC
@@ -348,7 +348,7 @@ To build one of the sokol-app samples for GL on Windows:
 ```sh
 > cd sokol-samples\sapp
 > ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
-> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE33 /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
+> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
 ```
 
 ### Building manually on Windows with MSYS2/mingw gcc:
@@ -365,7 +365,7 @@ From the MSYS2 shell:
 > gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11 -mwin32 -O2 -DSOKOL_D3D11 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -ldxgi -ld3d11 -lole32 -lgdi32
 > ./cube-sapp-d3d11
 # build and run with GL backend:
-> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl -mwin32 -O2 -DSOKOL_GLCORE33 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -lgdi32 -lole32
+> gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl -mwin32 -O2 -DSOKOL_GLCORE -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -lgdi32 -lole32
 > ./cube-sapp-gl
 ```
 
@@ -384,7 +384,7 @@ need to specify the link libraries manually.
 > clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11.exe -O2 -DSOKOL_D3D11 -I ../../sokol -I ../libs
 > cube-sapp-d3d11
 # build and run with GL backend:
-> clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl.exe -O2 -DSOKOL_GLCORE33 -I ../../sokol -I ../libs
+> clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-gl.exe -O2 -DSOKOL_GLCORE -I ../../sokol -I ../libs
 > cube-sapp-gl
 ```
 
@@ -406,7 +406,7 @@ To build one of the sokol-app samples on Linux:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
-> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE33 -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lasound -lXi -lXcursor
+> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lasound -lXi -lXcursor
 ```
 
 ### Building for WASM / WebGL2

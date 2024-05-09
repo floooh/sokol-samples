@@ -43,16 +43,20 @@ def get_build_config(api):
 samples = [
     [ 'clear', 'clear-sapp.c', None],
     [ 'triangle', 'triangle-sapp.c', 'triangle-sapp.glsl'],
+    [ 'triangle-bufferless', 'triangle-bufferless-sapp.c', 'triangle-bufferless-sapp.glsl'],
     [ 'quad', 'quad-sapp.c', 'quad-sapp.glsl'],
     [ 'bufferoffsets', 'bufferoffsets-sapp.c', 'bufferoffsets-sapp.glsl'],
     [ 'cube', 'cube-sapp.c', 'cube-sapp.glsl'],
     [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
     [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
+    [ 'vertexpull', 'vertexpull-sapp.c', 'vertexpull-sapp.glsl' ],
+    [ 'sbuftex', 'sbuftex-sapp.c', 'sbuftex-sapp.glsl' ],
     [ 'shapes', 'shapes-sapp.c', 'shapes-sapp.glsl'],
     [ 'shapes-transform', 'shapes-transform-sapp.c', 'shapes-transform-sapp.glsl'],
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
     [ 'offscreen-msaa', 'offscreen-msaa-sapp.c', 'offscreen-msaa-sapp.glsl' ],
     [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
+    [ 'instancing-pull', 'instancing-pull.c', 'instancing-pull.glsl' ],
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
     [ 'mrt-pixelformats', 'mrt-pixelformats-sapp.c', 'mrt-pixelformats-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
@@ -105,6 +109,7 @@ samples = [
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
+    [ 'ozz-storagebuffer', 'ozz-storagebuffer-sapp.c', 'ozz-storagebuffer-sapp.glsl' ],
     [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
     [ 'spine-simple', 'spine-simple-sapp.c', None ],
     [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
@@ -159,8 +164,16 @@ assets = [
 ]
 
 #-------------------------------------------------------------------------------
+def cwebp(src_path, dst_path):
+    cmd_line = 'cwebp -quiet -q 80 {} -o {}'.format(src_path, dst_path)
+    print('> {}'.format(cmd_line))
+    subprocess.call(cmd_line, shell=True)
+
+#-------------------------------------------------------------------------------
 def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
     wasm_deploy_dir = util.get_deploy_dir(fips_dir, 'sokol-samples', get_build_config(api))
+    src_root_path = proj_dir + '/webpage/'
+    dst_root_path = webpage_dir + '/'
 
     # build the thumbnail gallery
     content = ''
@@ -169,11 +182,9 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
         log.info('> adding thumbnail for {}'.format(name))
         url = "{}-sapp.html".format(name)
         ui_url = "{}-sapp-ui.html".format(name)
-        img_name = name + '.jpg'
-        img_path = proj_dir + '/webpage/' + img_name
-        if not os.path.exists(img_path):
-            img_name = 'dummy.jpg'
-            img_path = proj_dir + 'webpage/dummy.jpg'
+        img_name = name + '.webp'
+        if not os.path.exists(src_root_path + name + '.jpg'):
+            img_name = 'dummy.webp'
         content += '<div class="thumb">'
         content += '  <div class="thumb-title">{}</div>'.format(name)
         if os.path.exists(wasm_deploy_dir + '/' + name + '-sapp-ui.js'):
@@ -182,7 +193,7 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
         content += '</div>\n'
 
     # populate the html template, and write to the build directory
-    with open(proj_dir + '/webpage/index.html', 'r') as f:
+    with open(src_root_path + 'index.html', 'r') as f:
         templ = Template(f.read())
     keys = Keys[api]
     html = templ.safe_substitute(
@@ -194,13 +205,13 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
         thumb_bg_color = keys['thumb_bg_color'],
         text_color = keys['text_color'])
 
-    with open(webpage_dir + '/index.html', 'w') as f :
+    with open(dst_root_path + 'index.html', 'w') as f :
         f.write(html)
 
     # copy other required files
-    for name in ['dummy.jpg', 'favicon.png']:
+    for name in ['favicon.png']:
         log.info('> copy file: {}'.format(name))
-        shutil.copy(proj_dir + '/webpage/' + name, webpage_dir + '/' + name)
+        shutil.copy(src_root_path + name, dst_root_path + name)
 
     # generate WebAssembly HTML pages
     for sample in samples :
@@ -212,8 +223,8 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
             for ext in ['wasm', 'js'] :
                 src_path = '{}/{}-{}.{}'.format(wasm_deploy_dir, name, postfix, ext)
                 if os.path.isfile(src_path) :
-                    shutil.copy(src_path, '{}/'.format(webpage_dir))
-                with open(proj_dir + '/webpage/wasm.html', 'r') as f :
+                    shutil.copy(src_path, dst_root_path)
+                with open(src_root_path + 'wasm.html', 'r') as f :
                     templ = Template(f.read())
                 src_url = GitHubSamplesURL + source
                 if glsl is None:
@@ -223,7 +234,7 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
                     glsl_url = GitHubSamplesURL + glsl
                     glsl_hidden = ""
                 html = templ.safe_substitute(name=name, prog=name+'-'+postfix, source=src_url, glsl=glsl_url, hidden=glsl_hidden)
-                with open('{}/{}-{}.html'.format(webpage_dir, name, postfix), 'w') as f :
+                with open('{}{}-{}.html'.format(dst_root_path, name, postfix), 'w') as f :
                     f.write(html)
 
     # copy assets from deploy directory
@@ -231,17 +242,17 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
         log.info('> copy asset file: {}'.format(asset))
         src_path = '{}/{}'.format(wasm_deploy_dir, asset)
         if os.path.isfile(src_path):
-            shutil.copy(src_path, webpage_dir)
+            shutil.copy(src_path, dst_root_path)
         else:
             log.warn('!!! file {} not found!'.format(src_path))
 
     # copy the screenshots
+    cwebp(src_root_path + 'dummy.jpg', dst_root_path + 'dummy.webp')
     for sample in samples :
-        img_name = sample[0] + '.jpg'
-        img_path = proj_dir + '/webpage/' + img_name
-        if os.path.exists(img_path):
-            log.info('> copy screenshot: {}'.format(img_name))
-            shutil.copy(img_path, webpage_dir + '/' + img_name)
+        src_img_path = src_root_path + sample[0] + '.jpg'
+        dst_img_path = dst_root_path + sample[0] + '.webp'
+        if os.path.exists(src_img_path):
+            cwebp(src_img_path, dst_img_path)
 
 #-------------------------------------------------------------------------------
 def build_deploy_webpage(fips_dir, proj_dir, api, rebuild) :

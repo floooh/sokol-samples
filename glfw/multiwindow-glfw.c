@@ -13,7 +13,7 @@
 #include "HandmadeMath.h"
 #include "flextgl33/flextGL.h"
 #define SOKOL_IMPL
-#define SOKOL_GLCORE33
+#define SOKOL_GLCORE
 #define SOKOL_EXTERNAL_GL_LOADER
 #include "sokol_gfx.h"
 #include "sokol_log.h"

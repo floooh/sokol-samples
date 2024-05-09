@@ -97,3 +97,8 @@ fips_begin_app(drawcallperf-wgpu windowed)
     fips_files(drawcallperf-wgpu.c)
     fips_deps(wgpu_entry cimgui)
 fips_end_app()
+
+fips_begin_app(vertexpulling-wgpu windowed)
+    fips_files(vertexpulling-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()
