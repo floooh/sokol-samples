@@ -7,6 +7,7 @@
 #include "webgpu/webgpu_cpp.h"
 #include "webgpu/webgpu_glfw.h"
 #include "wgpu_entry.h"
+#include "stdio.h"
 
 static WGPUSurface glfw_create_surface_for_window(WGPUInstance instance, void* glfw_window) {
     wgpuInstanceReference(instance);
