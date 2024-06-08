@@ -29,15 +29,12 @@ cmake version 3.21.x or later
 # on OSX (on Windows you just need a recent VS)
 > xcodebuild -version
 Xcode xx.x (newer is better, older version are no longer tested)
-# make is only needed on Linux or when building the WASM samples
-> make --version
-GNU Make 3.81
-# ninja is only needed for VSCode support on macOS and Linux
+# ninja is recommended for cmdline builds, faster and also cleaner terminal output
 > ninja --version
 1.x.y
 ```
 
-> NOTE: on Linux you'll also need to install the OpenGL, X11 and ALSA development packages (e.g. mesa-common-dev, libx11-dev and libasound2-dev).
+> NOTE in Linux you'll also need to install the OpenGL, X11 and ALSA development packages (e.g. mesa-common-dev, libx11-dev and libasound2-dev).
 
 Create a scratch/workspace dir and clone the project:
 ```sh
@@ -58,7 +55,7 @@ Select a build config for your platform and 3D backend combination:
 # Windows with OpenGL:
 > ./fips set config sapp-win64-vstudio-debug
 # Linux:
-> ./fips set config sapp-linux-make-debug
+> ./fips set config sapp-linux-ninja-debug
 ```
 
 Build the project (this will also fetch additional dependencies):
@@ -101,7 +98,7 @@ which matches your platform and build system:
 
 ```bash
 > ./fips list configs | grep sapp-
-  sapp-android-make-debug
+  sapp-android-ninja-debug
   ...
   sapp-d3d11-win64-vs2017-debug
   sapp-d3d11-win64-vs2017-release
@@ -240,7 +237,7 @@ Plug an Android device into your computer, and then:
 > cd ~/scratch/sokol-samples
 > ./fips setup android
 [...this will install a local Android SDK/NDK under ../fips-sdks/android]
-> ./fips set config sapp-android-make-debug
+> ./fips set config sapp-android-ninja-debug
 > ./fips build
 ...
 > ./fips list targets
