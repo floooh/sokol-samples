@@ -50,9 +50,9 @@ Create a scratch/workspace dir and clone the project:
 Select a build config for your platform and 3D backend combination:
 ```sh
 # macOS with Metal:
-> ./fips set config sapp-metal-osx-xcode-debug
+> ./fips set config sapp-metal-osx-ninja-debug
 # macOS with OpenGL:
-> ./fips set config sapp-osx-xcode-debug
+> ./fips set config sapp-osx-ninja-debug
 # Windows with D3D11:
 > ./fips set config sapp-d3d11-win64-vstudio-debug
 # Windows with OpenGL:
