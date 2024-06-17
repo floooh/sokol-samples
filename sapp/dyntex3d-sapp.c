@@ -12,8 +12,8 @@
 #include <assert.h> // assert()
 #include <string.h> // memset()
 
-#define WIDTH (32)
-#define HEIGHT (32)
+#define WIDTH (16)
+#define HEIGHT (16)
 #define DEPTH (3)
 #define RED 0xFF0000FF
 #define GREEN 0xFF00FF00
