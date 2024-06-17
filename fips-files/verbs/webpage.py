@@ -61,6 +61,7 @@ samples = [
     [ 'mrt-pixelformats', 'mrt-pixelformats-sapp.c', 'mrt-pixelformats-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
     [ 'tex3d', 'tex3d-sapp.c', 'tex3d-sapp.glsl' ],
+    [ 'dyntex3d', 'dyntex3d-sapp.c', 'dyntex3d-sapp.glsl' ],
     [ 'dyntex', 'dyntex-sapp.c', 'dyntex-sapp.glsl'],
     [ 'basisu', 'basisu-sapp.c', None ],
     [ 'cubemap-jpeg', 'cubemap-jpeg-sapp.c', 'cubemap-jpeg-sapp.glsl' ],
