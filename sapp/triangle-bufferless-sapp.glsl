@@ -14,8 +14,8 @@ const vec3 positions[3] = {
 out vec4 color;
 
 void main() {
-    gl_Position = vec4(positions[gl_VertexIndex & 3], 1.0);
-    color = colors[gl_VertexIndex & 3];
+    gl_Position = vec4(positions[gl_VertexIndex], 1.0);
+    color = colors[gl_VertexIndex];
 }
 @end
 

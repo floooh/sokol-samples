@@ -281,6 +281,13 @@ fips_begin_app(tex3d-sapp-ui windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(dyntex3d-sapp windowed)
+    fips_files(dyntex3d-sapp.c)
+    sokol_shader(dyntex3d-sapp.glsl ${slang})
+    fips_deps(sokol cimgui)
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(dyntex-sapp windowed)
     fips_files(dyntex-sapp.c)
     sokol_shader(dyntex-sapp.glsl ${slang})
