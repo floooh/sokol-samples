@@ -1,19 +1,23 @@
 //------------------------------------------------------------------------------
 //  dyntex3d-sapp.c
 //
-//  Test/demo dynamocally updated 3D texture.
+//  Test/demo immutable and dynamically updated 3D texture for various
+//  texture sizes.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "dbgui/dbgui.h"
 #include "dyntex3d-sapp.glsl.h"
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui/cimgui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol_imgui.h"
 #include <assert.h> // assert()
 #include <string.h> // memset()
 
-#define WIDTH (16)
-#define HEIGHT (16)
+#define MIN_WIDTH_HEIGHT (16)
+#define MAX_WIDTH_HEIGHT (256)
 #define DEPTH (3)
 #define RED 0xFF0000FF
 #define GREEN 0xFF00FF00
@@ -24,26 +28,32 @@ static struct {
     sg_pipeline pip;
     sg_image img;
     sg_bindings bind;
-} state;
+    int width_height;
+    bool immutable;
+} state = {
+    .width_height = 16,
+    .immutable = false,
+};
 
-static uint32_t pixels[DEPTH][HEIGHT][WIDTH];
+static uint32_t pixels[DEPTH * MAX_WIDTH_HEIGHT * MAX_WIDTH_HEIGHT];
 
-static void update_pixels(void);
+static void recreate_image(void);
+static void update_pixels(uint64_t frame_count);
+static void draw_ui(void);
+static sg_range pixels_as_range(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
+        .wgpu_disable_bindgroups_cache = true,
     });
-    __dbgui_setup(sapp_sample_count());
+    simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     };
 
-    // don't need a vertex and index buffer, we'll just render a simple rectangle
-
-    // create shader and pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(dyntex3d_shader_desc(sg_query_backend())),
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -54,23 +64,12 @@ static void init(void) {
                 .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
             },
         },
-        .label = "pipeline",
     });
 
-    // create a dynamically updated 3D texture
-    state.img = sg_make_image(&(sg_image_desc){
-        .type = SG_IMAGETYPE_3D,
-        .usage = SG_USAGE_STREAM,
-        .width = WIDTH,
-        .height = HEIGHT,
-        .num_slices = DEPTH,
-        .num_mipmaps = 1,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .label = "3d texture",
-    });
+    state.img = sg_alloc_image();
     state.bind.fs.images[SLOT_tex] = state.img;
+    recreate_image();
 
-    // ... and a matching sampler
     state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
@@ -81,8 +80,11 @@ static void init(void) {
 }
 
 static void frame(void) {
-    update_pixels();
-    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    draw_ui();
+    if (!state.immutable) {
+        update_pixels(sapp_frame_count());
+        sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = pixels_as_range() });
+    }
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
@@ -92,59 +94,113 @@ static void frame(void) {
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 6, 1);
     }
-    __dbgui_draw();
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
+static void input(const sapp_event* ev) {
+    simgui_handle_event(ev);
+}
+
 static void cleanup(void) {
-    __dbgui_shutdown();
     sg_shutdown();
 }
 
+static void draw_ui(void) {
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale(),
+    });
+    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowSize((ImVec2){220, 150}, ImGuiCond_Once);
+    igSetNextWindowBgAlpha(0.35f);
+    if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (igSliderInt("Size", &state.width_height, MIN_WIDTH_HEIGHT, MAX_WIDTH_HEIGHT, "%d", ImGuiSliderFlags_Logarithmic)) {
+            recreate_image();
+        }
+        if (igCheckbox("Immutable", &state.immutable)) {
+            recreate_image();
+        }
+    }
+    igEnd();
+}
+
+static sg_range pixels_as_range(void) {
+    return (sg_range){
+        .ptr = pixels,
+        .size = DEPTH * (size_t)(state.width_height * state.width_height) * sizeof(uint32_t)
+    };
+}
+
+static void recreate_image(void) {
+    if (sg_query_image_state(state.img) == SG_RESOURCESTATE_VALID) {
+        sg_uninit_image(state.img);
+    }
+    update_pixels(sapp_frame_count());
+    sg_init_image(state.img, &(sg_image_desc){
+        .type = SG_IMAGETYPE_3D,
+        .usage = state.immutable ? SG_USAGE_IMMUTABLE : SG_USAGE_STREAM,
+        .width = state.width_height,
+        .height = state.width_height,
+        .num_slices = DEPTH,
+        .num_mipmaps = 1,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .data.subimage[0][0] = state.immutable ? pixels_as_range() : (sg_range){0},
+    });
+}
+
 // put these into macros instead of functions so we don't get an unused warning in release mode
-#define valid_x(x) ((x >= 0) && (x < WIDTH))
-#define valid_y(y) ((y >= 0) && (y < HEIGHT))
+#define valid_x(x) ((x >= 0) && (x < state.width_height))
+#define valid_y(y) ((y >= 0) && (y < state.width_height))
 #define valid_z(z) ((z >= 0) && (z < DEPTH))
+
+static inline void set_pixel(int x, int y, int z, uint32_t color) {
+    const int wh = state.width_height;
+    pixels[z * wh * wh + y * wh + x] = color;
+}
 
 static void hori_line(int x0, int y, int z, int len, uint32_t color) {
     assert(valid_x(x0) && valid_y(y) && valid_z(z) && valid_x((x0 + len) - 1));
     for (int x = x0; x < (x0 + len); x++) {
-        pixels[z][y][x] = color;
+        set_pixel(x, y, z, color);
     }
 }
 
 static void vert_line(int x, int y0, int z, int len, uint32_t color) {
     assert(valid_x(x) && valid_y(y0) && valid_z(z) && valid_y((y0 + len) - 1));
     for (int y = y0; y < (y0 + len); y++) {
-        pixels[z][y][x] = color;
+        set_pixel(x, y, z, color);
     }
 }
 
 static void border(int offset, int z, uint32_t color) {
-    hori_line(offset, offset, z, WIDTH - 2 * offset, color);
-    hori_line(offset, HEIGHT - 1 - offset, z, WIDTH - 2 * offset, color);
-    vert_line(offset, offset, z, HEIGHT - 2 * offset, color);
-    vert_line(WIDTH - 1 - offset, offset, z, HEIGHT - 2 * offset, color);
+    const int wh = state.width_height;
+    hori_line(offset, offset, z, wh - 2 * offset, color);
+    hori_line(offset, wh - 1 - offset, z, wh - 2 * offset, color);
+    vert_line(offset, offset, z, wh - 2 * offset, color);
+    vert_line(wh - 1 - offset, offset, z, wh - 2 * offset, color);
 }
 
-static void update_pixels(void) {
+static void update_pixels(uint64_t frame_count) {
     memset(pixels, 0, sizeof(pixels));
-
     static const uint32_t colors[3] = { RED, GREEN, BLUE };
+    const int wh = state.width_height;
     for (int i = 0; i < DEPTH; i++) {
         border(i, i, colors[i]);
         int z = i;
         {
             int x = i;
-            int len = WIDTH - 2 * i;
-            int y = ((int)((sapp_frame_count() / 16) % (uint64_t)(HEIGHT - 2 * i)) + i);
+            int len = wh - 2 * i;
+            int y = ((int)((frame_count / 8) % (uint64_t)(wh - 2 * i)) + i);
             hori_line(x, y, z, len, colors[i]);
         }
         {
             int y = i;
-            int len = HEIGHT - 2 * i;
-            int x = ((int)((sapp_frame_count() / 16) % (uint64_t)(WIDTH - 2 * i)) + i);
+            int len = wh - 2 * i;
+            int x = ((int)((frame_count / 8) % (uint64_t)(wh - 2 * i)) + i);
             vert_line(x, y, z, len, colors[i]);
         }
     }
@@ -156,7 +212,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = input,
         .width = 800,
         .height = 600,
         .window_title = "dyntex3d-sapp.c",
