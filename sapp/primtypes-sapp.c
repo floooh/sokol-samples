@@ -22,7 +22,7 @@
 #define NUM_LINE_INDICES (NUM_X * (NUM_Y-1) * 2)
 #define NUM_LINE_STRIP_INDICES (NUM_X * (NUM_Y-1))
 #define NUM_TRIANGLE_INDICES ((NUM_X-1) * (NUM_Y-1) * 3)
-#define NUM_TRIANGLE_STRIP_INDICES ((NUM_X-1) * (NUM_Y-1) * 2 + (NUM_Y-1) * 2)
+#define NUM_TRIANGLE_STRIP_INDICES (NUM_X * (NUM_Y-1) * 2 + (NUM_Y-1) * 2)
 
 // primitive type array indices
 #define POINTS (0)
@@ -330,8 +330,8 @@ void setup_vertex_and_index_data(void) {
         int ii = 0;
         for (int y = 0; y < (NUM_Y - 1); y++) {
             uint16_t i0, i1;
-            for (int x = 0; x < (NUM_X - 1); x++) {
-                i0 = x + y * NUM_Y;
+            for (int x = 0; x < NUM_X; x++) {
+                i0 = x + y * NUM_X;
                 i1 = i0 + NUM_X;
                 assert((ii < (NUM_TRIANGLE_STRIP_INDICES-1)) && (i0 < NUM_VERTS) && (i1 < NUM_VERTS));
                 state.indices.triangle_strip[ii++] = i0;
