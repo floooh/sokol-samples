@@ -6,7 +6,7 @@ jobs:
   build_webgl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
         run:  |
@@ -18,7 +18,7 @@ jobs:
           python3 fips set local on
           python3 fips webpage build webgl
       - name: upload-artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: webpage_webgl
           path: fips-files/deploy/sokol-webpage-webgl
@@ -27,7 +27,7 @@ jobs:
   build_webgpu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - uses: seanmiddleditch/gha-setup-ninja@master
       - name: prepare
         run:  |
@@ -39,7 +39,7 @@ jobs:
           python3 fips set local on
           python3 fips webpage build webgpu
       - name: upload-artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: webpage_webgpu
           path: fips-files/deploy/sokol-webpage-webgpu
@@ -49,11 +49,11 @@ jobs:
     needs: build_webgl
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
         with:
           repository: floooh/sokol-html5
           ssh-key: ${{ secrets.SOKOL_HTML5_DEPLOY }}
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@main
         with:
           name: webpage_webgl
       - name: "commit and push"
@@ -68,11 +68,11 @@ jobs:
     needs: build_webgpu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
         with:
           repository: floooh/sokol-webgpu
           ssh-key: ${{ secrets.SOKOL_WEBGPU_DEPLOY }}
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@main
         with:
           name: webpage_webgpu
       - name: "commit and push"
