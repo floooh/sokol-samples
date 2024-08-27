@@ -46,8 +46,6 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
-        // see https://github.com/floooh/sokol/issues/1066
-        .wgpu_disable_bindgroups_cache = true,
     });
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
 
