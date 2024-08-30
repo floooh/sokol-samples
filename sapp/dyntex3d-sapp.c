@@ -32,7 +32,6 @@ static struct {
     sg_bindings bind;
     int width_height;
     bool immutable;
-    bool img_dirty;
     sgimgui_t sgimgui;
 } state = {
     .width_height = 16,
@@ -84,10 +83,6 @@ static void init(void) {
 }
 
 static void frame(void) {
-    if (state.img_dirty) {
-        recreate_image();
-        state.img_dirty = false;
-    }
     if (!state.immutable) {
         update_pixels(sapp_frame_count());
         sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = pixels_as_range() });
@@ -131,10 +126,10 @@ static void draw_ui(void) {
     igSetNextWindowBgAlpha(0.35f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         if (igSliderInt("Size", &state.width_height, MIN_WIDTH_HEIGHT, MAX_WIDTH_HEIGHT, "%d", ImGuiSliderFlags_Logarithmic)) {
-            state.img_dirty = true;
+            recreate_image();
         }
         if (igCheckbox("Immutable", &state.immutable)) {
-            state.img_dirty = true;
+            recreate_image();
         }
     }
     igEnd();
