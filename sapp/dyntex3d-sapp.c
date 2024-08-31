@@ -13,6 +13,8 @@
 #include "cimgui/cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 #include <assert.h> // assert()
 #include <string.h> // memset()
 
@@ -30,6 +32,7 @@ static struct {
     sg_bindings bind;
     int width_height;
     bool immutable;
+    sgimgui_t sgimgui;
 } state = {
     .width_height = 16,
     .immutable = false,
@@ -46,10 +49,9 @@ static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
-        // see https://github.com/floooh/sokol/issues/1066
-        .wgpu_disable_bindgroups_cache = true,
     });
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
+    sgimgui_init(&state.sgimgui, &(sgimgui_desc_t){0});
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
@@ -81,12 +83,10 @@ static void init(void) {
 }
 
 static void frame(void) {
-    draw_ui();
     if (!state.immutable) {
         update_pixels(sapp_frame_count());
         sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = pixels_as_range() });
     }
-
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -95,7 +95,7 @@ static void frame(void) {
         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 6, 1);
     }
-    simgui_render();
+    draw_ui();
     sg_end_pass();
     sg_commit();
 }
@@ -105,6 +105,8 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    sgimgui_discard(&state.sgimgui);
+    simgui_shutdown();
     sg_shutdown();
 }
 
@@ -115,7 +117,11 @@ static void draw_ui(void) {
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
-    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0,0});
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu(&state.sgimgui, "sokol-gfx");
+        igEndMainMenuBar();
+    }
+    igSetNextWindowPos((ImVec2){20, 40}, ImGuiCond_Once, (ImVec2){0,0});
     igSetNextWindowSize((ImVec2){220, 150}, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.35f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -127,6 +133,8 @@ static void draw_ui(void) {
         }
     }
     igEnd();
+    sgimgui_draw(&state.sgimgui);
+    simgui_render();
 }
 
 static sg_range pixels_as_range(void) {
