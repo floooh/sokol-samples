@@ -485,7 +485,6 @@ static void ui_shutdown(void) {
 static const char* ui_sgfilter_name(sg_filter f) {
     switch (f) {
         case _SG_FILTER_DEFAULT: return "DEFAULT";
-        case SG_FILTER_NONE: return "NONE";
         case SG_FILTER_NEAREST: return "NEAREST";
         case SG_FILTER_LINEAR: return "LINEAR";
         default: return "???";

@@ -317,7 +317,6 @@ static void init(void) {
     state.placeholders.smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
-        .mipmap_filter = SG_FILTER_NONE,
     });
 }
 
@@ -603,12 +602,14 @@ static sg_filter gltf_to_sg_mag_filter(int gltf_filter) {
 
 static sg_filter gltf_to_sg_mipmap_filter(int gltf_filter) {
     switch (gltf_filter) {
-        case 9728: return SG_FILTER_NONE;
-        case 9729: return SG_FILTER_NONE;
-        case 9984: return SG_FILTER_NEAREST;
-        case 9985: return SG_FILTER_NEAREST;
-        case 9986: return SG_FILTER_LINEAR;
-        case 9987: return SG_FILTER_LINEAR;
+        case 9728:
+        case 9729:
+        case 9984:
+        case 9985:
+            return SG_FILTER_NEAREST;
+        case 9986:
+        case 9987:
+            return SG_FILTER_LINEAR;
         default: return SG_FILTER_LINEAR;
     }
 }
