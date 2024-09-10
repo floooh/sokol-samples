@@ -84,16 +84,12 @@ static void init(void) {
     // a shader, note that Metal only needs to know uniform block sizes, but
     // not their internal layout
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vertex_attrs = {
-            [0] = { .used = true, .msl_attribute_n = 0 },
-            [1] = { .used = true, .msl_attribute_n = 1 },
-        },
         .uniform_blocks[0] = {
             .stage = SG_SHADERBINDSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .vertex_function.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
@@ -113,7 +109,7 @@ static void init(void) {
             "  out.color = in.color;\n"
             "  return out;\n"
             "}\n",
-        .fragment_function.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "fragment float4 _main(float4 color [[stage_in]]) {\n"
