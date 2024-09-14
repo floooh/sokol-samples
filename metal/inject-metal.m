@@ -133,9 +133,9 @@ static void init(void) {
     }
 
     sg_reset_state_cache();
-    state.bind.fs.images[0] = sg_make_image(&img_desc);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.fs.images[0]).tex[0]) == mtl_tex[0]);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.fs.images[0]).tex[1]) == mtl_tex[1]);
+    state.bind.images[0] = sg_make_image(&img_desc);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.images[0]).tex[0]) == mtl_tex[0]);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.images[0]).tex[1]) == mtl_tex[1]);
 
     // create a Metal sampler object and inject into a sokol-gfx sampler object
     MTLSamplerDescriptor* mtl_smp_desc = [[MTLSamplerDescriptor alloc] init];
@@ -153,13 +153,12 @@ static void init(void) {
         .mtl_sampler = mtl_smp,
     };
     sg_reset_state_cache();
-    state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
-    assert(((__bridge id<MTLSamplerState>) sg_mtl_query_sampler_info(state.bind.fs.samplers[0]).smp) == mtl_smp);
+    state.bind.samplers[0] = sg_make_sampler(&smp_desc);
+    assert(((__bridge id<MTLSamplerState>) sg_mtl_query_sampler_info(state.bind.samplers[0]).smp) == mtl_smp);
 
     // a shader
     const sg_shader_desc shader_desc = {
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
+        .vertex_func = {
             .entry = "vs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -182,10 +181,7 @@ static void init(void) {
                 "  return out;\n"
                 "}\n"
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+        .fragment_func = {
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -199,13 +195,31 @@ static void init(void) {
                 "{\n"
                 "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
                 "};\n"
-        }
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
+        .images[0] = {
+            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .msl_texture_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .msl_sampler_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     };
     sg_shader shd = sg_make_shader(&shader_desc);
-    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).vs_lib) != nil);
-    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).fs_lib) != nil);
-    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).vs_func) != nil);
-    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).fs_func) != nil);
+    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).vertex_lib) != nil);
+    assert(((__bridge id<MTLLibrary>) sg_mtl_query_shader_info(shd).fragment_lib) != nil);
+    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).vertex_func) != nil);
+    assert(((__bridge id<MTLFunction>) sg_mtl_query_shader_info(shd).fragment_func) != nil);
 
     // a pipeline state object
     const sg_pipeline_desc pip_desc = {
@@ -253,12 +267,12 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
+    sg_update_image(state.bind.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

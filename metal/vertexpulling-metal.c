@@ -67,7 +67,7 @@ static void init(void) {
         { .pos = {  1.0,  1.0,  1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } },
         { .pos = {  1.0,  1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } }
     };
-    state.bind.vs.storage_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.storage_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .data = SG_RANGE(vertices),
     });
@@ -86,9 +86,7 @@ static void init(void) {
     });
 
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.storage_buffers[0] = { .used = true, .readonly = true },
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
@@ -105,18 +103,28 @@ static void init(void) {
             "  float4 pos [[position]];\n"
             "  float4 color;\n"
             "};\n"
-            "vertex vs_out _main(constant params_t& params [[buffer(0)]], const device ssbo_t& ssbo [[buffer(12)]], uint vidx [[vertex_id]]) {\n"
+            "vertex vs_out _main(constant params_t& params [[buffer(0)]], const device ssbo_t& ssbo [[buffer(1)]], uint vidx [[vertex_id]]) {\n"
             "  vs_out out;\n"
             "  out.pos = params.mvp * ssbo.vtx[vidx].pos;\n"
             "  out.color = ssbo.vtx[vidx].color;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "fragment float4 _main(float4 color [[stage_in]]) {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
+        .storage_buffers[0] = {
+            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .readonly = true,
+            .msl_buffer_n = 1,
+        },
     });
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -145,7 +153,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

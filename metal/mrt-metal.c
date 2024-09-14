@@ -148,8 +148,7 @@ static void init(void) {
 
     // a shader to render the cube into offscreen MRT render targest
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(offscreen_params_t),
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
@@ -169,7 +168,7 @@ static void init(void) {
             "  out.bright = in.bright;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct fs_out {\n"
@@ -183,7 +182,12 @@ static void init(void) {
             "  out.color1 = float4(0.0, bright, 0.0, 1.0);\n"
             "  out.color2 = float4(0.0, 0.0, bright, 1.0);\n"
             "  return out;\n"
-            "}\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .size = sizeof(offscreen_params_t),
+            .msl_buffer_n = 0,
+        },
     });
 
     // pipeline object for the offscreen-rendered cube
@@ -223,75 +227,75 @@ static void init(void) {
 
     // a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(params_t),
-            .source =
-                "#include <metal_stdlib>\n"
-                "using namespace metal;\n"
-                "struct params_t {\n"
-                "  float2 offset;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float2 pos [[attribute(0)]];\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float4 pos [[position]];\n"
-                "  float2 uv0;\n"
-                "  float2 uv1;\n"
-                "  float2 uv2;\n"
-                "};\n"
-                "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-                "  vs_out out;\n"
-                "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
-                "  out.uv0 = in.pos + float2(params.offset.x, 0.0);\n"
-                "  out.uv1 = in.pos + float2(0.0, params.offset.y);\n"
-                "  out.uv2 = in.pos;\n"
-                "  return out;\n"
-                "}\n"
+        .vertex_func.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct params_t {\n"
+            "  float2 offset;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float2 pos [[attribute(0)]];\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 pos [[position]];\n"
+            "  float2 uv0;\n"
+            "  float2 uv1;\n"
+            "  float2 uv2;\n"
+            "};\n"
+            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+            "  vs_out out;\n"
+            "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
+            "  out.uv0 = in.pos + float2(params.offset.x, 0.0);\n"
+            "  out.uv1 = in.pos + float2(0.0, params.offset.y);\n"
+            "  out.uv2 = in.pos;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct fs_in {\n"
+            "  float2 uv0;\n"
+            "  float2 uv1;\n"
+            "  float2 uv2;\n"
+            "};\n"
+            "fragment float4 _main(fs_in in [[stage_in]],\n"
+            "  texture2d<float> tex0 [[texture(0)]],\n"
+            "  texture2d<float> tex1 [[texture(1)]],\n"
+            "  texture2d<float> tex2 [[texture(2)]],\n"
+            "  sampler smp [[sampler(0)]])\n"
+            "{\n"
+            "  float3 c0 = tex0.sample(smp, in.uv0).xyz;\n"
+            "  float3 c1 = tex1.sample(smp, in.uv1).xyz;\n"
+            "  float3 c2 = tex2.sample(smp, in.uv2).xyz;\n"
+            "  return float4(c0 + c1 + c2, 1.0);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .msl_buffer_n = 0,
         },
-        .fs = {
-            .images = {
-                [0].used = true,
-                [1].used = true,
-                [2].used = true,
-            },
-            .samplers[0].used = true,
-            .image_sampler_pairs = {
-                [0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-                [1] = { .used = true, .image_slot = 1, .sampler_slot = 0 },
-                [2] = { .used = true, .image_slot = 2, .sampler_slot = 0 },
-            },
-            .source =
-                "#include <metal_stdlib>\n"
-                "using namespace metal;\n"
-                "struct fs_in {\n"
-                "  float2 uv0;\n"
-                "  float2 uv1;\n"
-                "  float2 uv2;\n"
-                "};\n"
-                "fragment float4 _main(fs_in in [[stage_in]],\n"
-                "  texture2d<float> tex0 [[texture(0)]],\n"
-                "  texture2d<float> tex1 [[texture(1)]],\n"
-                "  texture2d<float> tex2 [[texture(2)]],\n"
-                "  sampler smp [[sampler(0)]])\n"
-                "{\n"
-                "  float3 c0 = tex0.sample(smp, in.uv0).xyz;\n"
-                "  float3 c1 = tex1.sample(smp, in.uv1).xyz;\n"
-                "  float3 c2 = tex2.sample(smp, in.uv2).xyz;\n"
-                "  return float4(c0 + c1 + c2, 1.0);\n"
-                "}\n"
-        }
+        .images = {
+            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 0 },
+            [1] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 1 },
+            [2] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 2 },
+        },
+        .samplers = {
+            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_sampler_n = 0 },
+        },
+        .image_sampler_pairs = {
+            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
+        },
     });
 
     // setup resource binding struct for rendering fullscreen quad
     state.fsq_bind = (sg_bindings) {
         .vertex_buffers[0] = quad_vbuf,
-        .fs = {
-            .images[0] = state.offscreen_attachments_desc.resolves[0].image,
-            .images[1] = state.offscreen_attachments_desc.resolves[1].image,
-            .images[2] = state.offscreen_attachments_desc.resolves[2].image,
-            .samplers[0] = smp
-        }
+        .images[0] = state.offscreen_attachments_desc.resolves[0].image,
+        .images[1] = state.offscreen_attachments_desc.resolves[1].image,
+        .images[2] = state.offscreen_attachments_desc.resolves[2].image,
+        .samplers[0] = smp,
     };
 
     // the pipeline object to render the fullscreen quad
@@ -311,41 +315,37 @@ static void init(void) {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
-            .vs = {
-                .source =
-                    "#include <metal_stdlib>\n"
-                    "using namespace metal;\n"
-                    "struct vs_in {\n"
-                    "  float2 pos [[attribute(0)]];\n"
-                    "};\n"
-                    "struct vs_out {\n"
-                    "  float4 pos [[position]];\n"
-                    "  float2 uv;\n"
-                    "};\n"
-                    "vertex vs_out _main(vs_in in [[stage_in]]) {\n"
-                    "  vs_out out;\n"
-                    "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
-                    "  out.uv = in.pos;\n"
-                    "  return out;\n"
-                    "}\n",
-            },
-            .fs = {
-                .images[0].used = true,
-                .samplers[0].used = true,
-                .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-                .source =
-                    "#include <metal_stdlib>\n"
-                    "using namespace metal;\n"
-                    "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-                    "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
-                    "}\n"
-            }
+            .vertex_func.source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "struct vs_in {\n"
+                "  float2 pos [[attribute(0)]];\n"
+                "};\n"
+                "struct vs_out {\n"
+                "  float4 pos [[position]];\n"
+                "  float2 uv;\n"
+                "};\n"
+                "vertex vs_out _main(vs_in in [[stage_in]]) {\n"
+                "  vs_out out;\n"
+                "  out.pos = float4(in.pos*2.0-1.0, 0.5, 1.0);\n"
+                "  out.uv = in.pos;\n"
+                "  return out;\n"
+                "}\n",
+            .fragment_func.source =
+                "#include <metal_stdlib>\n"
+                "using namespace metal;\n"
+                "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+                "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
+                "}\n",
+            .images[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 0 },
+            .samplers[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_sampler_n = 0 },
+            .image_sampler_pairs[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
         }),
     });
     // images will be filled right before rendering
     state.dbg_bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
-        .fs.samplers[0] = smp,
+        .samplers[0] = smp,
     };
 
     // default pass action, no clear needed, since whole screen is overwritten
@@ -378,7 +378,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
+    sg_apply_uniforms(0, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -389,14 +389,14 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.fsq_pip);
     sg_apply_bindings(&state.fsq_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
+    sg_apply_uniforms(0, &SG_RANGE(params));
     sg_draw(0, 4, 1);
 
     // render the small debug quads
     sg_apply_pipeline(state.dbg_pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg_bind.fs.images[0] = state.offscreen_attachments_desc.resolves[i].image;
+        state.dbg_bind.images[0] = state.offscreen_attachments_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg_bind);
         sg_draw(0, 4, 1);
     }

@@ -50,7 +50,7 @@ static void frame(void) {
             default function. This can be override with the
             sg_shader_desc.vs.entry and sg_shader_desc.fs.entry fields.
         */
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct vs_in {\n"
@@ -67,7 +67,7 @@ static void frame(void) {
             "  outp.color = inp.color;\n"
             "  return outp;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "fragment float4 _main(float4 color [[stage_in]]) {\n"
