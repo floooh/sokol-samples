@@ -116,12 +116,12 @@ static void init(void) {
             "  return color;\n"
             "}\n",
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
         .storage_buffers[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .msl_buffer_n = 1,
         },

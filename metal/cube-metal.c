@@ -85,7 +85,7 @@ static void init(void) {
     // not their internal layout
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },

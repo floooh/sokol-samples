@@ -184,7 +184,7 @@ static void init(void) {
             "  return out;\n"
             "}\n",
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(offscreen_params_t),
             .msl_buffer_n = 0,
         },
@@ -270,22 +270,22 @@ static void init(void) {
             "  return float4(c0 + c1 + c2, 1.0);\n"
             "}\n",
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(params_t),
             .msl_buffer_n = 0,
         },
         .images = {
-            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 0 },
-            [1] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 1 },
-            [2] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 2 },
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_texture_n = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_texture_n = 1 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_texture_n = 2 },
         },
         .samplers = {
-            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_sampler_n = 0 },
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_sampler_n = 0 },
         },
         .image_sampler_pairs = {
-            [0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
-            [1] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
-            [2] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
         },
     });
 
@@ -337,9 +337,9 @@ static void init(void) {
                 "fragment float4 _main(float2 uv [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
                 "  return float4(tex.sample(smp, uv).xyz, 1.0);\n"
                 "}\n",
-            .images[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_texture_n = 0 },
-            .samplers[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .msl_sampler_n = 0 },
-            .image_sampler_pairs[0] = { .stage = SG_SHADERBINDSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
+            .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_texture_n = 0 },
+            .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .msl_sampler_n = 0 },
+            .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
         }),
     });
     // images will be filled right before rendering

@@ -181,20 +181,20 @@ static void init(void) {
                 "};\n"
         },
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
         .images[0] = {
-            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_texture_n = 0,
         },
         .samplers[0] = {
-            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0,
         },
         .image_sampler_pairs[0] = {
-            .stage = SG_SHADERBINDSTAGE_FRAGMENT,
+            .stage = SG_SHADERSTAGE_FRAGMENT,
             .image_slot = 0,
             .sampler_slot = 0,
         },

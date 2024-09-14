@@ -91,7 +91,7 @@ static void init(void) {
         .vertex_func.bytecode = SG_RANGE(vs_bytecode),
         .fragment_func.bytecode = SG_RANGE(fs_bytecode),
         .uniform_blocks[0] = {
-            .stage = SG_SHADERBINDSTAGE_VERTEX,
+            .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
