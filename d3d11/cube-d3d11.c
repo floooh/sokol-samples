@@ -86,35 +86,37 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0] = { .sem_name = "POSITION" },
-            [1] = { .sem_name = "COLOR", .sem_index=1 }
-        },
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "cbuffer params: register(b0) {\n"
-                "  float4x4 mvp;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float4 pos: POSITION;\n"
-                "  float4 color: COLOR1;\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float4 color: COLOR0;\n"
-                "  float4 pos: SV_Position;\n"
-                "};\n"
-                "vs_out main(vs_in inp) {\n"
-                "  vs_out outp;\n"
-                "  outp.pos = mul(mvp, inp.pos);\n"
-                "  outp.color = inp.color;\n"
-                "  return outp;\n"
-                "};\n",
-        },
-        .fs.source =
+        .vertex_func.source =
+            "cbuffer params: register(b0) {\n"
+            "  float4x4 mvp;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float4 pos: POSITION;\n"
+            "  float4 color: COLOR1;\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 color: COLOR0;\n"
+            "  float4 pos: SV_Position;\n"
+            "};\n"
+            "vs_out main(vs_in inp) {\n"
+            "  vs_out outp;\n"
+            "  outp.pos = mul(mvp, inp.pos);\n"
+            "  outp.color = inp.color;\n"
+            "  return outp;\n"
+            "};\n",
+        .fragment_func.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
+        .vertex_attrs = {
+            [0] = { .hlsl_sem_name = "POSITION" },
+            [1] = { .hlsl_sem_name = "COLOR", .hlsl_sem_index = 1 },
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
+        },
     });
 
     // a pipeline object
@@ -157,7 +159,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
