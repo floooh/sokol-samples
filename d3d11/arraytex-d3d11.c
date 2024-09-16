@@ -115,65 +115,74 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = img,
-            .samplers[0] = smp,
-        }
+        .images[0] = img,
+        .samplers[0] = smp,
     };
 
     // shader to sample from array texture
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "TEXCOORD"
+        .vertex_func.source =
+            "cbuffer params: register(b0) {\n"
+            "  float4x4 mvp;\n"
+            "  float2 offset0;\n"
+            "  float2 offset1;\n"
+            "  float2 offset2;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float4 pos: POSITION;\n"
+            "  float2 uv: TEXCOORD0;\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float3 uv0: TEXCOORD0;\n"
+            "  float3 uv1: TEXCOORD1;\n"
+            "  float3 uv2: TEXCOORD2;\n"
+            "  float4 pos: SV_Position;\n"
+            "};\n"
+            "vs_out main(vs_in inp) {\n"
+            "  vs_out outp;\n"
+            "  outp.pos = mul(mvp, inp.pos);\n"
+            "  outp.uv0 = float3(inp.uv + offset0, 0.0);\n"
+            "  outp.uv1 = float3(inp.uv + offset1, 1.0);\n"
+            "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
+            "  return outp;\n"
+            "}\n",
+        .fragment_func.source =
+            "Texture2DArray<float4> tex: register(t0);\n"
+            "sampler smp: register(s0);\n"
+            "struct fs_in {\n"
+            "  float3 uv0: TEXCOORD0;\n"
+            "  float3 uv1: TEXCOORD1;\n"
+            "  float3 uv2: TEXCOORD2;\n"
+            "};\n"
+            "float4 main(fs_in inp): SV_Target0 {\n"
+            "  float3 c0 = tex.Sample(smp, inp.uv0).xyz;\n"
+            "  float3 c1 = tex.Sample(smp, inp.uv1).xyz;\n"
+            "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
+            "  return float4(c0+c1+c2, 1.0);\n"
+            "}\n",
+        .vertex_attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "TEXCOORD"
         },
-        .vs = {
-            .uniform_blocks[0].size = sizeof(params_t),
-            .source =
-                "cbuffer params {\n"
-                "  float4x4 mvp;\n"
-                "  float2 offset0;\n"
-                "  float2 offset1;\n"
-                "  float2 offset2;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float4 pos: POSITION;\n"
-                "  float2 uv: TEXCOORD0;\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float3 uv0: TEXCOORD0;\n"
-                "  float3 uv1: TEXCOORD1;\n"
-                "  float3 uv2: TEXCOORD2;\n"
-                "  float4 pos: SV_Position;\n"
-                "};\n"
-                "vs_out main(vs_in inp) {\n"
-                "  vs_out outp;\n"
-                "  outp.pos = mul(mvp, inp.pos);\n"
-                "  outp.uv0 = float3(inp.uv + offset0, 0.0);\n"
-                "  outp.uv1 = float3(inp.uv + offset1, 1.0);\n"
-                "  outp.uv2 = float3(inp.uv + offset2, 2.0);\n"
-                "  return outp;\n"
-                "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .hlsl_register_b_n = 0,
         },
-        .fs = {
-            .images[0] = { .used = true, .image_type = SG_IMAGETYPE_ARRAY },
-            .samplers[0] = { .used = true },
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "Texture2DArray<float4> tex: register(t0);\n"
-                "sampler smp: register(s0);\n"
-                "struct fs_in {\n"
-                "  float3 uv0: TEXCOORD0;\n"
-                "  float3 uv1: TEXCOORD1;\n"
-                "  float3 uv2: TEXCOORD2;\n"
-                "};\n"
-                "float4 main(fs_in inp): SV_Target0 {\n"
-                "  float3 c0 = tex.Sample(smp, inp.uv0).xyz;\n"
-                "  float3 c1 = tex.Sample(smp, inp.uv1).xyz;\n"
-                "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
-                "  return float4(c0+c1+c2, 1.0);\n"
-                "}\n"
-        }
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_type = SG_IMAGETYPE_ARRAY,
+            .hlsl_register_t_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .hlsl_register_s_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // create pipeline object
@@ -225,7 +234,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

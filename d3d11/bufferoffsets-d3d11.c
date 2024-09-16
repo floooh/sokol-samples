@@ -51,11 +51,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // a shader to render the 2D shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "COLOR"
-        },
-        .vs.source =
+        .vertex_func.source =
             "struct vs_in {\n"
             "  float2 pos: POSITION;\n"
             "  float3 color: COLOR0;\n"
@@ -70,10 +66,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.color = float4(inp.color, 1.0);\n"
             "  return outp;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
+        .vertex_attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR"
+        },
     });
 
     // a pipeline state object, default states are fine

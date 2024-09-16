@@ -104,54 +104,63 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = img,
-            .samplers[0] = smp,
-        }
+        .images[0] = img,
+        .samplers[0] = smp,
     };
 
     // a shader to render textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "COLOR",
-            [2].sem_name = "TEXCOORD"
+        .vertex_func.source =
+            "cbuffer params: register(b0) {\n"
+            "  float4x4 mvp;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float4 pos: POSITION;\n"
+            "  float4 color: COLOR0;\n"
+            "  float2 uv: TEXCOORD0;\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 color: COLOR0;\n"
+            "  float2 uv: TEXCOORD0;\n"
+            "  float4 pos: SV_Position;\n"
+            "};\n"
+            "vs_out main(vs_in inp) {\n"
+            "  vs_out outp;\n"
+            "  outp.pos = mul(mvp, inp.pos);\n"
+            "  outp.color = inp.color;\n"
+            "  outp.uv = inp.uv;\n"
+            "  return outp;\n"
+            "}\n",
+        .fragment_func.source ={
+            "Texture2D<float4> tex: register(t0);\n"
+            "sampler smp: register(s0);\n"
+            "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+            "  return tex.Sample(smp, uv) * color;\n"
+            "}\n"
         },
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "cbuffer params {\n"
-                "  float4x4 mvp;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float4 pos: POSITION;\n"
-                "  float4 color: COLOR0;\n"
-                "  float2 uv: TEXCOORD0;\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float4 color: COLOR0;\n"
-                "  float2 uv: TEXCOORD0;\n"
-                "  float4 pos: SV_Position;\n"
-                "};\n"
-                "vs_out main(vs_in inp) {\n"
-                "  vs_out outp;\n"
-                "  outp.pos = mul(mvp, inp.pos);\n"
-                "  outp.color = inp.color;\n"
-                "  outp.uv = inp.uv;\n"
-                "  return outp;\n"
-                "}\n",
+        .vertex_attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR",
+            [2].hlsl_sem_name = "TEXCOORD"
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "Texture2D<float4> tex: register(t0);\n"
-                "sampler smp: register(s0);\n"
-                "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-                "  return tex.Sample(smp, uv) * color;\n"
-                "}\n"
-        }
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
+        },
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .hlsl_register_t_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .hlsl_register_s_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // a pipeline-state-object for the textured cube
@@ -207,7 +216,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

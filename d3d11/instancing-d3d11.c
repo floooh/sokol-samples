@@ -70,13 +70,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "COLOR",
-            [2].sem_name = "INSTPOS"
-        },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
+        .vertex_func.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
             "};\n"
@@ -95,10 +89,20 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.color = inp.color;\n"
             "  return outp;\n"
             "};\n",
-        .fs.source =
+        .fragment_func.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
-            "};\n"
+            "};\n",
+        .vertex_attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR",
+            [2].hlsl_sem_name = "INSTPOS"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
+        }
     });
 
     // pipeline object, note the vertex layout description
@@ -189,7 +193,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();
