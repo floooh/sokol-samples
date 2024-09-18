@@ -138,7 +138,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  return tex.Sample(smp, uv) * color;\n"
             "}\n"
         },
-        .vertex_attrs = {
+        .attrs = {
             [0].hlsl_sem_name = "POSITION",
             [1].hlsl_sem_name = "COLOR",
             [2].hlsl_sem_name = "TEXCOORD"

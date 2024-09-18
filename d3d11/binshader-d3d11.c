@@ -90,7 +90,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.bytecode = SG_RANGE(vs_bin),
         .fragment_func.bytecode = SG_RANGE(fs_bin),
-        .vertex_attrs = {
+        .attrs = {
             [0].hlsl_sem_name = "POSITION",
             [1].hlsl_sem_name = "COLOR"
         },

@@ -160,7 +160,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  float3 c2 = tex.Sample(smp, inp.uv2).xyz;\n"
             "  return float4(c0+c1+c2, 1.0);\n"
             "}\n",
-        .vertex_attrs = {
+        .attrs = {
             [0].hlsl_sem_name = "POSITION",
             [1].hlsl_sem_name = "TEXCOORD"
         },

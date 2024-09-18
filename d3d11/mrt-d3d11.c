@@ -175,7 +175,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.c2 = float4(0.0, 0.0, b, 1.0);\n"
             "  return outp;\n"
             "}\n",
-        .vertex_attrs = {
+        .attrs = {
             [0].hlsl_sem_name = "POSITION",
             [1].hlsl_sem_name = "BRIGHT"
         },

@@ -108,7 +108,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
             "}\n",
-        .vertex_attrs = {
+        .attrs = {
             [0] = { .hlsl_sem_name = "POSITION" },
             [1] = { .hlsl_sem_name = "COLOR", .hlsl_sem_index = 1 },
         },
