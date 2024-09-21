@@ -93,14 +93,7 @@ int main() {
 
     // a shader where the vertex shader pulls the vertex data from an SSBO
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
-            },
-        },
-        .vs.storage_buffers[0] = { .used = true, .readonly = true },
-        .vs.source =
+        .vertex_func.source =
             "#version 430\n"
             "uniform mat4 mvp;\n"
             "struct vertex_t {\n"
@@ -115,13 +108,25 @@ int main() {
             "  gl_Position = mvp * vtx[gl_VertexID].pos;\n"
             "  color = vtx[gl_VertexID].color;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#version 430\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
             "  frag_color = color;\n"
-            "}\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = {.glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
+            },
+        },
+        .storage_buffers[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .readonly = true,
+            .glsl_binding_n = 0,
+        },
     });
 
     // a pipeline object, note that there is no vertex layout specification
@@ -139,7 +144,7 @@ int main() {
     // the storage buffer is bound to the vertex stage
     sg_bindings bind = {
         .index_buffer = ibuf,
-        .vs.storage_buffers[0] = sbuf,
+        .storage_buffers[0] = sbuf,
     };
 
     vs_params_t vs_params;
@@ -162,7 +167,7 @@ int main() {
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();
