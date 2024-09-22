@@ -63,23 +63,41 @@ int main() {
 
     // create a shader to render 2D colored shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .attrs = {
+            [0].glsl_name = "pos",
+            [1].glsl_name = "color0",
+        },
         .vertex_func.source =
-            "#version 300 es\n"
-            "layout(location=0) in vec2 pos;"
-            "layout(location=1) in vec3 color0;"
-            "out vec4 color;"
+            "attribute vec2 pos;"
+            "attribute vec3 color0;"
+            "varying vec4 color;"
             "void main() {"
             "  gl_Position = vec4(pos, 0.5, 1.0);\n"
             "  color = vec4(color0, 1.0);\n"
             "}\n",
+            // FIXME: for some reason using WebGL2 shaders causes corruption
+            //"#version 300 es\n"
+            //"in vec2 pos;"
+            //"in vec3 color0;"
+            //"out vec4 color;"
+            //"void main() {"
+            //"  gl_Position = vec4(pos, 0.5, 1.0);\n"
+            //"  color = vec4(color0, 1.0);\n"
+            //"}\n",
         .fragment_func.source =
-            "#version 300 es\n",
             "precision mediump float;\n"
-            "in vec4 color;\n"
-            "out vec4 frag_color;\n"
+            "varying vec4 color;\n"
             "void main() {\n"
-            "  frag_color = color;\n"
-            "}\n"
+            "  gl_FragColor = color;\n"
+            "}\n",
+            // FIXME!
+            //"#version 300 es\n",
+            //"precision mediump float;\n"
+            //"in vec4 color;\n"
+            //"out vec4 frag_color;\n"
+            //"void main() {\n"
+            //"  frag_color = color;\n"
+            //"}\n"
     });
 
     // a pipeline state object, default states are fine

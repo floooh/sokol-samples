@@ -161,7 +161,7 @@ int main() {
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    bind.fs.images[0] = sg_make_image({
+    bind.images[0] = sg_make_image({
         .width = font_width,
         .height = font_height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -170,51 +170,51 @@ int main() {
             .size = size_t(font_width * font_height * 4)
         }
     });
-    bind.fs.samplers[0] = sg_make_sampler({
+    bind.samplers[0] = sg_make_sampler({
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
     // shader object for imgui rendering
     sg_shader shd = sg_make_shader({
+        .vertex_func.source =
+            "#version 300 es\n"
+            "uniform vec2 disp_size;\n"
+            "in vec2 position;\n"
+            "in vec2 texcoord0;\n"
+            "in vec4 color0;\n"
+            "out vec2 uv;\n"
+            "out vec4 color;\n"
+            "void main() {\n"
+            "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
+            "    uv = texcoord0;\n"
+            "    color = color0;\n"
+            "}\n",
+        .fragment_func.source =
+            "#version 300 es\n"
+            "precision mediump float;"
+            "uniform sampler2D tex;\n"
+            "in vec2 uv;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "    frag_color = texture(tex, uv) * color;\n"
+            "}\n",
         .attrs = {
-            [0].name = "position",
-            [1].name = "texcoord0",
-            [2].name = "color0"
+            [0].glsl_name = "position",
+            [1].glsl_name = "texcoord0",
+            [2].glsl_name = "color0"
         },
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(vs_params_t),
-                .uniforms = {
-                    [0] = { .name="disp_size", .type=SG_UNIFORMTYPE_FLOAT2}
-                }
-            },
-            .source =
-                "uniform vec2 disp_size;\n"
-                "attribute vec2 position;\n"
-                "attribute vec2 texcoord0;\n"
-                "attribute vec4 color0;\n"
-                "varying vec2 uv;\n"
-                "varying vec4 color;\n"
-                "void main() {\n"
-                "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
-                "    uv = texcoord0;\n"
-                "    color = color0;\n"
-                "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "disp_size", .type = SG_UNIFORMTYPE_FLOAT2}
+            }
         },
-        .fs = {
-            .images[0] = { .used = true },
-            .samplers[0] = { .used = true },
-            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "precision mediump float;"
-                "uniform sampler2D tex;\n"
-                "varying vec2 uv;\n"
-                "varying vec4 color;\n"
-                "void main() {\n"
-                "    gl_FragColor = texture2D(tex, uv) * color;\n"
-                "}\n"
-        }
+        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for imgui rendering
@@ -316,7 +316,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
+    sg_apply_uniforms(0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

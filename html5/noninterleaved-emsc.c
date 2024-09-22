@@ -79,31 +79,35 @@ int main() {
 
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
+        .vertex_func.source =
+            "#version 300 es\n"
             "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "varying vec4 color;\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
+            "#version 300 es\n"
             "precision mediump float;\n"
-            "varying vec4 color;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
             "void main() {\n"
-            "  gl_FragColor = color;\n"
-            "}\n"
+            "  frag_color = color;\n"
+            "}\n",
+        .attrs = {
+            [0].glsl_name = "position",
+            [1].glsl_name = "color0"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
+        },
     });
 
     // create pipeline object
@@ -168,7 +172,7 @@ static EM_BOOL draw(double time, void* userdata) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

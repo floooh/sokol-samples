@@ -127,17 +127,7 @@ int main() {
 
     // shader for the non-textured cube, rendered in the offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc) {
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
+        .vertex_func.source =
             "uniform mat4 mvp;\n"
             "attribute vec4 position;\n"
             "attribute vec4 color0;\n"
@@ -146,54 +136,100 @@ int main() {
             "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
+    // FIXME: switching to WebGL2 shader causes all sorts of weird errors
+            //"#version 300 es\n",
+            //"uniform mat4 mvp;\n"
+            //"in vec4 position;\n"
+            //"in vec4 color0;\n"
+            //"out vec4 color;\n"
+            //"void main() {\n"
+            //"  gl_Position = mvp * position;\n"
+            //"  color = color0;\n"
+            //"}\n",
+        .fragment_func.source =
             "precision mediump float;\n"
             "varying vec4 color;\n"
             "void main() {\n"
             "  gl_FragColor = color;\n"
-            "}\n"
+            "}\n",
+            //"#version 300 es\n"
+            //"precision mediump float;\n"
+            //"in vec4 color;\n"
+            //"out vec4 frag_color;\n"
+            //"void main() {\n"
+            //"  frag_color = color;\n"
+            //"}\n",
+        .attrs = {
+            [0].glsl_name = "position",
+            [1].glsl_name = "color0"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
+        },
     });
 
     // ...and a second shader for rendering a textured cube in the default pass
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
+        .vertex_func.source =
+            //"uniform mat4 mvp;\n"
+            //"attribute vec4 position;\n"
+            //"attribute vec4 color0;\n"
+            //"attribute vec2 texcoord0;\n"
+            //"varying vec4 color;\n"
+            //"varying vec2 uv;\n"
+            //"void main() {\n"
+            //"  gl_Position = mvp * position;\n"
+            //"  color = color0;\n"
+            //"  uv = texcoord0;\n"
+            //"}\n",
+            "#version 300 es\n"
+            "uniform mat4 mvp;\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "in vec2 texcoord0;\n"
+            "out vec4 color;\n"
+            "out vec2 uv;\n"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  color = color0;\n"
+            "  uv = texcoord0;\n"
+            "}\n",
+        .fragment_func.source =
+            //"precision mediump float;"
+            //"uniform sampler2D tex;\n"
+            //"varying vec4 color;\n"
+            //"varying vec2 uv;\n"
+            //"void main() {\n"
+            //"  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
+            //"}\n",
+            "#version 300 es\n"
+            "precision mediump float;"
+            "uniform sampler2D tex;\n"
+            "in vec4 color;\n"
+            "in vec2 uv;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(tex, uv) + color * 0.5;\n"
+            "}\n",
         .attrs = {
-            [0].name = "position",
-            [1].name = "color0",
-            [2].name = "texcoord0"
+            [0].glsl_name = "position",
+            [1].glsl_name = "color0",
+            [2].glsl_name = "texcoord0"
         },
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(params_t),
-                .uniforms = {
-                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-                }
-            },
-            .source =
-                "uniform mat4 mvp;\n"
-                "attribute vec4 position;\n"
-                "attribute vec4 color0;\n"
-                "attribute vec2 texcoord0;\n"
-                "varying vec4 color;\n"
-                "varying vec2 uv;\n"
-                "void main() {\n"
-                "  gl_Position = mvp * position;\n"
-                "  color = color0;\n"
-                "  uv = texcoord0;\n"
-                "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "precision mediump float;"
-                "uniform sampler2D tex;\n"
-                "varying vec4 color;\n"
-                "varying vec2 uv;\n"
-                "void main() {\n"
-                "  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
-                "}\n"
-        }
+        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for offscreen rendering, don't need texcoords here
@@ -248,10 +284,8 @@ int main() {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = color_img,
-            .samplers[0] = smp,
-        }
+        .images[0] = color_img,
+        .samplers[0] = smp,
     };
 
     // hand off control to browser loop
@@ -282,7 +316,7 @@ static EM_BOOL draw(double time, void* userdata) {
     });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -294,7 +328,7 @@ static EM_BOOL draw(double time, void* userdata) {
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();
