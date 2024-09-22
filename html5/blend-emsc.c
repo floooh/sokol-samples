@@ -64,29 +64,28 @@ int main() {
 
     // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "position"
-        },
-        .vs.source =
-            "attribute vec2 position;\n"
+        .vertex_func.source =
+            "#version 300 es\n"
+            "layout(location=0) in vec2 position;\n"
             "void main() {\n"
             "  gl_Position = vec4(position, 0.5, 1.0);\n"
             "}\n",
-        .fs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(fs_params_t),
-                .uniforms = {
-                    [0] = { .name="tick", .type=SG_UNIFORMTYPE_FLOAT }
-                }
+        .fragment_func.source =
+            "#version 300 es\n"
+            "precision mediump float;\n"
+            "uniform float tick;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  vec2 xy = fract((gl_FragCoord.xy-vec2(tick)) / 50.0);\n"
+            "  frag_color = vec4(vec3(xy.x*xy.y), 1.0);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(fs_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "tick", .type = SG_UNIFORMTYPE_FLOAT }
             },
-            .source =
-                "precision mediump float;\n"
-                "uniform float tick;\n"
-                "void main() {\n"
-                "  vec2 xy = fract((gl_FragCoord.xy-vec2(tick)) / 50.0);\n"
-                "  gl_FragColor = vec4(vec3(xy.x*xy.y), 1.0);\n"
-                "}\n"
-        }
+        },
     });
 
     // a pipeline state object for rendering the background quad
@@ -103,31 +102,31 @@ int main() {
 
     // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
+        .vertex_func.source =
+            "#version 300 es\n"
             "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "varying vec4 color;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp * position;"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
+            "#version 300 es\n"
             "precision mediump float;\n"
-            "varying vec4 color;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
             "void main() {\n"
-            "  gl_FragColor = color;\n"
-            "}"
+            "  frag_color = color;\n"
+            "}",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
+        },
     });
 
     // one pipeline object per blend-factor combination
@@ -200,7 +199,7 @@ static EM_BOOL draw(double time, void* userdata) {
     // draw a background quad
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.fs_params));
+    sg_apply_uniforms(0, &SG_RANGE(state.fs_params));
     sg_draw(0, 4, 1);
 
     // draw the blended quads
@@ -216,7 +215,7 @@ static EM_BOOL draw(double time, void* userdata) {
             if (state.pips[src][dst].id != SG_INVALID_ID) {
                 sg_apply_pipeline(state.pips[src][dst]);
                 sg_apply_bindings(&state.bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(state.vs_params));
+                sg_apply_uniforms(0, &SG_RANGE(state.vs_params));
                 sg_draw(0, 4, 1);
             }
         }

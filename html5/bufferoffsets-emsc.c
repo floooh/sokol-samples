@@ -63,23 +63,22 @@ int main() {
 
     // create a shader to render 2D colored shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "pos",
-            [1].name = "color0"
-        },
-        .vs.source =
-            "attribute vec2 pos;"
-            "attribute vec3 color0;"
-            "varying vec4 color;"
+        .vertex_func.source =
+            "#version 300 es\n"
+            "layout(location=0) in vec2 pos;"
+            "layout(location=1) in vec3 color0;"
+            "out vec4 color;"
             "void main() {"
             "  gl_Position = vec4(pos, 0.5, 1.0);\n"
             "  color = vec4(color0, 1.0);\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
+            "#version 300 es\n",
             "precision mediump float;\n"
-            "varying vec4 color;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
             "void main() {\n"
-            "  gl_FragColor = color;\n"
+            "  frag_color = color;\n"
             "}\n"
     });
 
