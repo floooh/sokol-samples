@@ -128,37 +128,23 @@ int main() {
     // shader for the non-textured cube, rendered in the offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc) {
         .vertex_func.source =
+            "#version 300 es\n"
             "uniform mat4 mvp;\n"
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "varying vec4 color;\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
-    // FIXME: switching to WebGL2 shader causes all sorts of weird errors
-            //"#version 300 es\n",
-            //"uniform mat4 mvp;\n"
-            //"in vec4 position;\n"
-            //"in vec4 color0;\n"
-            //"out vec4 color;\n"
-            //"void main() {\n"
-            //"  gl_Position = mvp * position;\n"
-            //"  color = color0;\n"
-            //"}\n",
         .fragment_func.source =
+            "#version 300 es\n"
             "precision mediump float;\n"
-            "varying vec4 color;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
             "void main() {\n"
-            "  gl_FragColor = color;\n"
+            "  frag_color = color;\n"
             "}\n",
-            //"#version 300 es\n"
-            //"precision mediump float;\n"
-            //"in vec4 color;\n"
-            //"out vec4 frag_color;\n"
-            //"void main() {\n"
-            //"  frag_color = color;\n"
-            //"}\n",
         .attrs = {
             [0].glsl_name = "position",
             [1].glsl_name = "color0"
@@ -175,17 +161,6 @@ int main() {
     // ...and a second shader for rendering a textured cube in the default pass
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
-            //"uniform mat4 mvp;\n"
-            //"attribute vec4 position;\n"
-            //"attribute vec4 color0;\n"
-            //"attribute vec2 texcoord0;\n"
-            //"varying vec4 color;\n"
-            //"varying vec2 uv;\n"
-            //"void main() {\n"
-            //"  gl_Position = mvp * position;\n"
-            //"  color = color0;\n"
-            //"  uv = texcoord0;\n"
-            //"}\n",
             "#version 300 es\n"
             "uniform mat4 mvp;\n"
             "in vec4 position;\n"
@@ -199,13 +174,6 @@ int main() {
             "  uv = texcoord0;\n"
             "}\n",
         .fragment_func.source =
-            //"precision mediump float;"
-            //"uniform sampler2D tex;\n"
-            //"varying vec4 color;\n"
-            //"varying vec2 uv;\n"
-            //"void main() {\n"
-            //"  gl_FragColor = texture2D(tex, uv) + color * 0.5;\n"
-            //"}\n",
             "#version 300 es\n"
             "precision mediump float;"
             "uniform sampler2D tex;\n"
