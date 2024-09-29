@@ -10,7 +10,7 @@
 #include "stdio.h"
 
 static WGPUSurface glfw_create_surface_for_window(WGPUInstance instance, void* glfw_window) {
-    wgpuInstanceReference(instance);
+    wgpuInstanceAddRef(instance);
     const auto cppInstance = wgpu::Instance::Acquire(instance);
     WGPUSurface surface = wgpu::glfw::CreateSurfaceForWindow(instance, (GLFWwindow*)glfw_window).MoveToCHandle();
     return surface;
@@ -90,7 +90,7 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
         WGPUFeatureName_Depth32FloatStencil8
     };
     WGPUDeviceDescriptor dev_desc = {
-        .requiredFeaturesCount = 1,
+        .requiredFeatureCount = 1,
         .requiredFeatures = requiredFeatures,
     };
     wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
