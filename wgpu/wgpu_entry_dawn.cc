@@ -1,7 +1,9 @@
 //------------------------------------------------------------------------------
-//  wgpu_entry_dawn.c
+//  wgpu_entry_dawn.cc
 //
 //  Dawn-specific wgpu entry code.
+//
+// NOTE: we could use https://github.com/eliemichel/glfw3webgpu/ and avoid C++.
 //------------------------------------------------------------------------------
 #include "GLFW/glfw3.h"
 #include "webgpu/webgpu_cpp.h"
@@ -72,10 +74,29 @@ static void glfw_scroll_cb(GLFWwindow* window, double xoffset, double yoffset) {
     }
 }
 
+static void glfw_resize_cb(GLFWwindow* window, int width, int height) {
+    wgpu_state_t* state = (wgpu_state_t*) glfwGetWindowUserPointer(window);
+    state->width = width;
+    state->height = height;
+    wgpu_swapchain_resized(state);
+}
+
 static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, const char* msg, void* userdata) {
     (void)status; (void)msg; (void)userdata;
     wgpu_state_t* state = (wgpu_state_t*) userdata;
     state->device = device;
+}
+
+static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
+    (void)type; (void)userdata;
+    if (type != WGPUErrorType_NoError) {
+        printf("ERROR: %s\n", message);
+    }
+}
+
+static void logging_cb(WGPULoggingType type, const char* message, void* userdata) {
+    (void)type; (void)userdata;
+    printf("LOG: %s\n", message);
 }
 
 static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, const char* msg, void* userdata) {
@@ -92,21 +113,12 @@ static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adap
     WGPUDeviceDescriptor dev_desc = {
         .requiredFeatureCount = 1,
         .requiredFeatures = requiredFeatures,
+        .uncapturedErrorCallbackInfo = {
+            .callback = error_cb,
+        },
     };
     wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
     assert(0 != state->device);
-}
-
-static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
-    (void)type; (void)userdata;
-    if (type != WGPUErrorType_NoError) {
-        printf("ERROR: %s\n", message);
-    }
-}
-
-static void logging_cb(WGPULoggingType type, const char* message, void* userdata) {
-    (void)type; (void)userdata;
-    printf("LOG: %s\n", message);
 }
 
 void wgpu_platform_start(wgpu_state_t* state) {
@@ -117,9 +129,7 @@ void wgpu_platform_start(wgpu_state_t* state) {
     wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
     assert(state->device);
 
-    wgpuDeviceSetUncapturedErrorCallback(state->device, error_cb, 0);
     wgpuDeviceSetLoggingCallback(state->device, logging_cb, 0);
-    wgpuDeviceSetDeviceLostCallback(state->device, 0, 0);
     wgpuDevicePushErrorScope(state->device, WGPUErrorFilter_Validation);
 
     glfwInit();
@@ -131,11 +141,11 @@ void wgpu_platform_start(wgpu_state_t* state) {
     glfwSetMouseButtonCallback(window, glfw_mousebutton_cb);
     glfwSetCursorPosCallback(window, glfw_cursorpos_cb);
     glfwSetScrollCallback(window, glfw_scroll_cb);
+    glfwSetWindowSizeCallback(window, glfw_resize_cb);
 
     state->surface = glfw_create_surface_for_window(state->instance, window);
     assert(state->surface);
-    // FIXME: Dawn doesn't support wgpuSurfaceGetPreferredFormat?
-    state->render_format = WGPUTextureFormat_BGRA8Unorm;
+    state->render_format = wgpuSurfaceGetPreferredFormat(state->surface, state->adapter);
 
     wgpu_swapchain_init(state);
     state->desc.init_cb();
@@ -145,11 +155,13 @@ void wgpu_platform_start(wgpu_state_t* state) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         wgpuDevicePushErrorScope(state->device, WGPUErrorFilter_Validation);
-        state->swapchain_view = wgpuSwapChainGetCurrentTextureView(state->swapchain);
-        state->desc.frame_cb();
-        wgpuSwapChainPresent(state->swapchain);
-        wgpuTextureViewRelease(state->swapchain_view);
-        state->swapchain_view = 0;
+        state->swapchain_view = wgpu_swapchain_next(state);
+        if (state->swapchain_view) {
+            state->desc.frame_cb();
+            wgpuTextureViewRelease(state->swapchain_view);
+            state->swapchain_view = 0;
+            wgpuSurfacePresent(state->surface);
+        }
         wgpuDevicePopErrorScope(state->device, error_cb, 0);
         wgpuInstanceProcessEvents(state->instance);
     }
