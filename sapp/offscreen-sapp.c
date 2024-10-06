@@ -118,8 +118,8 @@ static void init(void) {
         .layout = {
             .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_offscreen_position] = sshape_position_vertex_attr_state(),
-                [ATTR_vs_offscreen_normal] = sshape_normal_vertex_attr_state()
+                [ATTR_offscreen_position] = sshape_position_vertex_attr_state(),
+                [ATTR_offscreen_normal] = sshape_normal_vertex_attr_state()
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -140,9 +140,9 @@ static void init(void) {
         .layout = {
             .buffers[0] = sshape_vertex_buffer_layout_state(),
             .attrs = {
-                [ATTR_vs_default_position] = sshape_position_vertex_attr_state(),
-                [ATTR_vs_default_normal] = sshape_normal_vertex_attr_state(),
-                [ATTR_vs_default_texcoord0] = sshape_texcoord_vertex_attr_state()
+                [ATTR_default_position] = sshape_position_vertex_attr_state(),
+                [ATTR_default_normal] = sshape_normal_vertex_attr_state(),
+                [ATTR_default_texcoord0] = sshape_texcoord_vertex_attr_state()
             }
         },
         .shader = sg_make_shader(default_shader_desc(sg_query_backend())),
@@ -173,10 +173,8 @@ static void init(void) {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[SLOT_tex] = color_img,
-            .samplers[SLOT_smp] = smp,
-        }
+        .images[IMG_default_tex] = color_img,
+        .samplers[SMP_default_smp] = smp,
     };
 }
 
@@ -205,7 +203,7 @@ static void frame(void) {
     sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_offscreen_vs_params, &SG_RANGE(vs_params));
     sg_draw(state.donut.base_element, state.donut.num_elements, 1);
     sg_end_pass();
 
@@ -223,7 +221,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_default_vs_params, &SG_RANGE(vs_params));
     sg_draw(state.sphere.base_element, state.sphere.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();

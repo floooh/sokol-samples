@@ -85,9 +85,9 @@ void init(void) {
             // vertex buffer at slot 1 must step per instance
             .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
-                [ATTR_vs_pos]      = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
-                [ATTR_vs_color0]   = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
-                [ATTR_vs_inst_pos] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
+                [ATTR_instancing_pos]      = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [ATTR_instancing_color0]   = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },
+                [ATTR_instancing_inst_pos] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=1 }
             }
         },
         .shader = shd,
@@ -150,7 +150,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_instancing_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 24, state.cur_num_particles);
     __dbgui_draw();
     sg_end_pass();

@@ -73,9 +73,9 @@ void init(void) {
             // note how the vertex components are pulled from different buffer bind slots
             .attrs = {
                 // positions come from vertex buffer slot 0
-                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
+                [ATTR_noninterleaved_position] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },
                 // colors come from vertex buffer slot 1
-                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
+                [ATTR_noninterleaved_color0] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=1 }
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -120,7 +120,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_noninterleaved_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

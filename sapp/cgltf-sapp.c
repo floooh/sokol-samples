@@ -844,9 +844,9 @@ static sg_vertex_format gltf_to_vertex_format(cgltf_accessor* acc) {
 
 static int gltf_attr_type_to_vs_input_slot(cgltf_attribute_type attr_type) {
     switch (attr_type) {
-        case cgltf_attribute_type_position: return ATTR_vs_position;
-        case cgltf_attribute_type_normal: return ATTR_vs_normal;
-        case cgltf_attribute_type_texcoord: return ATTR_vs_texcoord;
+        case cgltf_attribute_type_position: return ATTR_cgltf_metallic_position;
+        case cgltf_attribute_type_normal: return ATTR_cgltf_metallic_normal;
+        case cgltf_attribute_type_texcoord: return ATTR_cgltf_metallic_texcoord;
         default: return SCENE_INVALID_INDEX;
     }
 }

@@ -85,8 +85,8 @@ void init(void) {
             /* test to provide buffer stride, but no attr offsets */
             .buffers[0].stride = 28,
             .attrs = {
-                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_cube_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_cube_color0].format   = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = shd,
@@ -132,7 +132,7 @@ void frame(void) {
     });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_cube_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

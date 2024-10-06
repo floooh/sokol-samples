@@ -176,9 +176,9 @@ static void init(void) {
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout.attrs = {
-            [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-            [ATTR_vs_normal].format = SG_VERTEXFORMAT_FLOAT3,
-            [ATTR_vs_texcoord].format = SG_VERTEXFORMAT_FLOAT2
+            [ATTR_plmpeg_pos].format = SG_VERTEXFORMAT_FLOAT3,
+            [ATTR_plmpeg_normal].format = SG_VERTEXFORMAT_FLOAT3,
+            [ATTR_plmpeg_texcoord].format = SG_VERTEXFORMAT_FLOAT2
         },
         .shader = sg_make_shader(plmpeg_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
@@ -189,7 +189,7 @@ static void init(void) {
         },
     });
 
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_plmpeg_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -250,10 +250,10 @@ static void frame(void) {
 
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    if (state.bind.fs.images[0].id != SG_INVALID_ID) {
+    if (state.bind.images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+        sg_apply_uniforms(UB_plmpeg_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 24, 1);
     }
     __dbgui_draw();
@@ -280,8 +280,8 @@ static void validate_texture(int slot, plm_plane_t* plane) {
         state.image_attrs[slot].height = (int)plane->height;
 
         // NOTE: it's ok to call sg_destroy_image() with SG_INVALID_ID
-        sg_destroy_image(state.bind.fs.images[slot]);
-        state.bind.fs.images[slot] = sg_make_image(&(sg_image_desc){
+        sg_destroy_image(state.bind.images[slot]);
+        state.bind.images[slot] = sg_make_image(&(sg_image_desc){
             .width = (int)plane->width,
             .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
@@ -293,7 +293,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
     // sg_update_image() is called more than once per frame
     if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
         state.image_attrs[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.bind.fs.images[slot], &(sg_image_data){
+        sg_update_image(state.bind.images[slot], &(sg_image_data){
             .subimage[0][0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)
@@ -305,9 +305,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
     (void)mpeg; (void)user;
-    validate_texture(SLOT_tex_y, &frame->y);
-    validate_texture(SLOT_tex_cb, &frame->cb);
-    validate_texture(SLOT_tex_cr, &frame->cr);
+    validate_texture(IMG_plmpeg_tex_y, &frame->y);
+    validate_texture(IMG_plmpeg_tex_cb, &frame->cb);
+    validate_texture(IMG_plmpeg_tex_cr, &frame->cr);
 }
 
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
