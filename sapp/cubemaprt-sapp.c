@@ -256,8 +256,8 @@ void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
         .index_buffer = app.cube.ibuf,
-        .images[IMG_cube_tex] = app.cubemap,
-        .samplers[SMP_cube_smp] = app.smp,
+        .images[IMG_tex] = app.cubemap,
+        .samplers[SMP_smp] = app.smp,
     });
     shape_uniforms_t uniforms = {
         .mvp = HMM_MultiplyMat4(view_proj, model),
@@ -266,7 +266,7 @@ void frame(void) {
         .light_dir = app.light_dir,
         .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
     };
-    sg_apply_uniforms(UB_cube_shape_uniforms, &SG_RANGE(uniforms));
+    sg_apply_uniforms(UB_shape_uniforms, &SG_RANGE(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
     __dbgui_draw();
@@ -311,7 +311,7 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
             .light_dir = app.light_dir,
             .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
         };
-        sg_apply_uniforms(UB_cube_shape_uniforms, &SG_RANGE(uniforms));
+        sg_apply_uniforms(UB_shape_uniforms, &SG_RANGE(uniforms));
         sg_draw(0, app.cube.num_elements, 1);
     }
 }

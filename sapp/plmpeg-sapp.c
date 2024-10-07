@@ -189,7 +189,7 @@ static void init(void) {
         },
     });
 
-    state.bind.samplers[SMP_plmpeg_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -253,7 +253,7 @@ static void frame(void) {
     if (state.bind.images[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(UB_plmpeg_vs_params, &SG_RANGE(vs_params));
+        sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 24, 1);
     }
     __dbgui_draw();
@@ -305,9 +305,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
     (void)mpeg; (void)user;
-    validate_texture(IMG_plmpeg_tex_y, &frame->y);
-    validate_texture(IMG_plmpeg_tex_cb, &frame->cb);
-    validate_texture(IMG_plmpeg_tex_cr, &frame->cr);
+    validate_texture(IMG_tex_y, &frame->y);
+    validate_texture(IMG_tex_cb, &frame->cb);
+    validate_texture(IMG_tex_cr, &frame->cr);
 }
 
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio

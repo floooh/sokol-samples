@@ -1,7 +1,7 @@
 @ctype mat4 hmm_mat4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 mvp;
 };
 
@@ -11,7 +11,7 @@ struct sb_vertex {
     vec2 uv;
 };
 
-readonly buffer vertices {
+layout(binding=0) readonly buffer vertices {
     sb_vertex vtx[];
 };
 
@@ -26,14 +26,14 @@ void main() {
 @end
 
 @fs fs
-uniform texture2D tex;
-uniform sampler smp;
+layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform sampler smp;
 
 struct sb_color {
     vec4 color;
 };
 
-readonly buffer colors {
+layout(binding=1) readonly buffer colors {
     sb_color clr[];
 };
 

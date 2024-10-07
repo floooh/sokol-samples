@@ -202,8 +202,8 @@ static void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .images[IMG_display_shadow_map] = state.shadow_map,
-        .samplers[SMP_display_shadow_sampler] = state.shadow_sampler,
+        .images[IMG_shadow_map] = state.shadow_map,
+        .samplers[SMP_shadow_sampler] = state.shadow_sampler,
     };
 
     // a vertex buffer, pipeline and sampler to render a debug visualization of the shadow map
@@ -232,8 +232,8 @@ static void init(void) {
     });
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = dbg_vbuf,
-        .images[IMG_dbg_dbg_tex] = state.shadow_map,
-        .samplers[SMP_dbg_dbg_smp] = dbg_smp,
+        .images[IMG_dbg_tex] = state.shadow_map,
+        .samplers[SMP_dbg_smp] = dbg_smp,
     };
 }
 
@@ -286,7 +286,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.shadow.pass_action, .attachments = state.shadow.atts });
     sg_apply_pipeline(state.shadow.pip);
     sg_apply_bindings(&state.shadow.bind);
-    sg_apply_uniforms(UB_shadow_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));
+    sg_apply_uniforms(UB_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -294,12 +294,12 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
-    sg_apply_uniforms(UB_display_fs_display_params, &SG_RANGE(fs_display_params));
+    sg_apply_uniforms(UB_fs_display_params, &SG_RANGE(fs_display_params));
     // render plane
-    sg_apply_uniforms(UB_display_vs_display_params , &SG_RANGE(plane_vs_display_params));
+    sg_apply_uniforms(UB_vs_display_params , &SG_RANGE(plane_vs_display_params));
     sg_draw(36, 6, 1);
     // render cube
-    sg_apply_uniforms(UB_display_vs_display_params, &SG_RANGE(cube_vs_display_params));
+    sg_apply_uniforms(UB_vs_display_params, &SG_RANGE(cube_vs_display_params));
     sg_draw(0, 36, 1);
     // render debug visualization of shadow-map
     sg_apply_pipeline(state.dbg.pip);

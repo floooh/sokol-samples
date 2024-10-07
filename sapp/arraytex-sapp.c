@@ -144,8 +144,8 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[IMG_arraytex_tex] = img,
-        .samplers[SMP_arraytex_smp] = smp,
+        .images[IMG_tex] = img,
+        .samplers[SMP_smp] = smp,
     };
 }
 
@@ -173,7 +173,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(UB_arraytex_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

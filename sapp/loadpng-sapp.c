@@ -63,10 +63,10 @@ static void init(void) {
        Any draw calls containing such an "incomplete" image handle
        will be silently dropped.
     */
-    state.bind.images[IMG_loadpng_tex] = sg_alloc_image();
+    state.bind.images[IMG_tex] = sg_alloc_image();
 
     // a sampler object
-    state.bind.samplers[SMP_loadpng_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
     });
@@ -173,7 +173,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             &num_channels, desired_channels);
         if (pixels) {
             // ok, time to actually initialize the sokol-gfx texture
-            sg_init_image(state.bind.images[IMG_loadpng_tex], &(sg_image_desc){
+            sg_init_image(state.bind.images[IMG_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -216,7 +216,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(UB_loadpng_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

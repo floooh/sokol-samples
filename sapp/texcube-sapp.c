@@ -101,7 +101,7 @@ void init(void) {
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
     // NOTE: SLOT_tex is provided by shader code generation
-    state.bind.images[IMG_texcube_tex] = sg_make_image(&(sg_image_desc){
+    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels),
@@ -109,7 +109,7 @@ void init(void) {
     });
 
     // create a sampler object with default attributes
-    state.bind.samplers[SMP_texcube_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .label = "texcube-sampler"
     });
 
@@ -120,9 +120,9 @@ void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format = SG_VERTEXFORMAT_UBYTE4N,
-                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
+                [ATTR_texcube_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_texcube_color0].format = SG_VERTEXFORMAT_UBYTE4N,
+                [ATTR_texcube_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
             }
         },
         .shader = shd,
@@ -157,7 +157,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass) { .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(UB_texcube_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

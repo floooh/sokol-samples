@@ -249,11 +249,11 @@ void init(void) {
     state.fsq.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .images = {
-            [IMG_fsq_tex0] = state.offscreen.atts_desc.resolves[0].image,
-            [IMG_fsq_tex1] = state.offscreen.atts_desc.resolves[1].image,
-            [IMG_fsq_tex2] = state.offscreen.atts_desc.resolves[2].image
+            [IMG_tex0] = state.offscreen.atts_desc.resolves[0].image,
+            [IMG_tex1] = state.offscreen.atts_desc.resolves[1].image,
+            [IMG_tex2] = state.offscreen.atts_desc.resolves[2].image
         },
-        .samplers[SMP_fsq_smp] = smp,
+        .samplers[SMP_smp] = smp,
     };
 
     // pipeline and resource bindings to render debug-visualization quads
@@ -267,7 +267,7 @@ void init(void) {
     }),
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
-        .samplers[SMP_dbg_smp] = smp,
+        .samplers[SMP_smp] = smp,
         // images will be filled right before rendering
     };
 }
@@ -293,7 +293,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(UB_offscreen_offscreen_params, &SG_RANGE(offscreen_params));
+    sg_apply_uniforms(UB_offscreen_params, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -301,12 +301,12 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
-    sg_apply_uniforms(UB_fsq_fsq_params, &SG_RANGE(fsq_params));
+    sg_apply_uniforms(UB_fsq_params, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.images[IMG_dbg_tex] = state.offscreen.atts_desc.resolves[i].image;
+        state.dbg.bind.images[IMG_tex] = state.offscreen.atts_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

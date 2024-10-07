@@ -151,7 +151,7 @@ void frame(void) {
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
-        .images[IMG_mipmap_tex] = state.img,
+        .images[IMG_tex] = state.img,
     };
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
@@ -161,9 +161,9 @@ void frame(void) {
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
-        bind.samplers[SMP_mipmap_smp] = state.smp[i];
+        bind.samplers[SMP_smp] = state.smp[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(UB_mipmap_vs_params, &SG_RANGE(vs_params));
+        sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

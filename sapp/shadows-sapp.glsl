@@ -43,7 +43,7 @@ float sample_shadow_pcf(texture2D tex, sampler smp, vec3 uv_depth, vec2 sm_size)
 //=== shadow pass
 @vs vs_shadow
 
-uniform vs_shadow_params {
+layout(binding=0) uniform vs_shadow_params {
     mat4 mvp;
 };
 
@@ -73,7 +73,7 @@ void main() {
 //=== display pass
 @vs vs_display
 
-uniform vs_display_params {
+layout(binding=0) uniform vs_display_params {
     mat4 mvp;
     mat4 model;
     mat4 light_mvp;
@@ -102,13 +102,13 @@ void main() {
 @fs fs_display
 @include_block util
 
-uniform fs_display_params {
+layout(binding=1) uniform fs_display_params {
     vec3 light_dir;
     vec3 eye_pos;
 };
 
-uniform texture2D shadow_map;
-uniform sampler shadow_sampler;
+layout(binding=0) uniform texture2D shadow_map;
+layout(binding=0) uniform sampler shadow_sampler;
 
 in vec3 color;
 in vec4 light_proj_pos;
@@ -167,8 +167,8 @@ void main() {
 @fs fs_dbg
 @include_block util
 
-uniform texture2D dbg_tex;
-uniform sampler dbg_smp;
+layout(binding=0) uniform texture2D dbg_tex;
+layout(binding=0) uniform sampler dbg_smp;
 
 in vec2 uv;
 out vec4 frag_color;

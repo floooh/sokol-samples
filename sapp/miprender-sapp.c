@@ -169,8 +169,8 @@ static void init(void) {
     state.display.bindings = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .images[IMG_display_tex] = state.img,
-        .samplers[SMP_display_smp] = state.smp,
+        .images[IMG_tex] = state.img,
+        .samplers[SMP_smp] = state.smp,
     };
 
     // initialize pass actions
@@ -199,7 +199,7 @@ static void frame(void) {
         });
         sg_apply_pipeline(state.offscreen.pip);
         sg_apply_bindings(&state.offscreen.bindings);
-        sg_apply_uniforms(UB_offscreen_vs_params, &SG_RANGE(offscreen_vsparams));
+        sg_apply_uniforms(UB_vs_params, &SG_RANGE(offscreen_vsparams));
         const sshape_element_range_t shape = state.offscreen.shapes[i % NUM_SHAPES];
         sg_draw(shape.base_element, shape.num_elements, 1);
         sg_end_pass();
@@ -209,7 +209,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bindings);
-    sg_apply_uniforms(UB_display_vs_params, &SG_RANGE(display_vsparams));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(display_vsparams));
     sg_draw(state.display.plane.base_element, state.display.plane.num_elements, 1);
     __dbgui_draw();
     sg_end_pass();
