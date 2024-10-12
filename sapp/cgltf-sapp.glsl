@@ -8,7 +8,7 @@
 @ctype vec3 hmm_vec3
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 model;
     mat4 view_proj;
     vec3 eye_pos;
@@ -51,31 +51,31 @@ struct material_info_t {
     vec3 specular_color;            // color contribution from specular lighting
 };
 
-uniform metallic_params {
+layout(binding=1) uniform metallic_params {
     vec4 base_color_factor;
     vec3 emissive_factor;
     float metallic_factor;
     float roughness_factor;
 };
 
-uniform light_params {
+layout(binding=2) uniform light_params {
     vec3 light_pos;
     float light_range;
     vec3 light_color;
     float light_intensity;
 };
 
-uniform texture2D base_color_tex;
-uniform texture2D metallic_roughness_tex;
-uniform texture2D normal_tex;
-uniform texture2D occlusion_tex;
-uniform texture2D emissive_tex;
+layout(binding=0) uniform texture2D base_color_tex;
+layout(binding=1) uniform texture2D metallic_roughness_tex;
+layout(binding=2) uniform texture2D normal_tex;
+layout(binding=3) uniform texture2D occlusion_tex;
+layout(binding=4) uniform texture2D emissive_tex;
 
-uniform sampler base_color_smp;
-uniform sampler metallic_roughness_smp;
-uniform sampler normal_smp;
-uniform sampler occlusion_smp;
-uniform sampler emissive_smp;
+layout(binding=0) uniform sampler base_color_smp;
+layout(binding=1) uniform sampler metallic_roughness_smp;
+layout(binding=2) uniform sampler normal_smp;
+layout(binding=3) uniform sampler occlusion_smp;
+layout(binding=4) uniform sampler emissive_smp;
 
 vec3 linear_to_srgb(vec3 linear) {
     return pow(linear, vec3(1.0/2.2));
@@ -275,4 +275,3 @@ void main() {
 @end
 
 @program cgltf_metallic vs metallic_fs
-
