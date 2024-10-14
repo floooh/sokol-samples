@@ -104,8 +104,8 @@ static void init(void) {
         .shader = sg_make_shader(triangle_shader_desc(sg_query_backend())),
         .layout = {
             .attrs = {
-                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format = SG_VERTEXFORMAT_FLOAT4,
+                [ATTR_triangle_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_triangle_color0].format = SG_VERTEXFORMAT_FLOAT4,
             }
         },
         .colors[0] = {

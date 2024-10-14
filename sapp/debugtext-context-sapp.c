@@ -136,8 +136,8 @@ static void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
+                [ATTR_debugtext_context_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_debugtext_context_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
             }
         },
         .shader = sg_make_shader(debugtext_context_shader_desc(sg_query_backend())),
@@ -247,12 +247,13 @@ static void frame(void) {
 
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     for (int i = 0; i < NUM_FACES; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,
-            .fs = { .images[0] = state.passes[i].img, .samplers[0] = state.smp }
+            .images[IMG_tex] = state.passes[i].img,
+            .samplers[SMP_smp] = state.smp
         });
         sg_draw(i * 6, 6, 1);
     }

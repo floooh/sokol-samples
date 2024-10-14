@@ -118,7 +118,7 @@ static void frame(void) {
         state.vs_params.sel = i;
         state.vs_params.offset[0] = x0;
         state.vs_params.offset[1] = y0;
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(state.vs_params));
+        sg_apply_uniforms(UB_vs_params, &SG_RANGE(state.vs_params));
         sg_draw(0, 6, 1);
         y0 -= 4.0f * glyph_h;
     }

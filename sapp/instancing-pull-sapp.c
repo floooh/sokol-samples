@@ -64,7 +64,7 @@ static void init(void) {
         { .pos = HMM_Vec3(  -r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 1.0f, 1.0f) },
         { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
-    state.bind.vs.storage_buffers[SLOT_vertices] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .data = SG_RANGE(vertices),
         .label = "geometry-vertices",
@@ -82,7 +82,7 @@ static void init(void) {
     });
 
     // a dynamic storage buffer for the per-instance data
-    state.bind.vs.storage_buffers[SLOT_instances] = sg_make_buffer(&(sg_buffer_desc) {
+    state.bind.storage_buffers[SBUF_instances] = sg_make_buffer(&(sg_buffer_desc) {
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .usage = SG_USAGE_STREAM,
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
@@ -115,7 +115,7 @@ static void frame(void) {
     update_particles(frame_time);
 
     // update instance data storage buffer
-    sg_update_buffer(state.bind.vs.storage_buffers[SLOT_instances], &(sg_range){
+    sg_update_buffer(state.bind.storage_buffers[SBUF_instances], &(sg_range){
         .ptr = state.inst,
         .size = (size_t)state.cur_num_particles * sizeof(sb_instance_t),
     });
@@ -127,7 +127,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 24, state.cur_num_particles);
     __dbgui_draw();
     sg_end_pass();
