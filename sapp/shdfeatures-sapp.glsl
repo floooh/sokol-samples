@@ -49,7 +49,7 @@ void skinned_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 skin_weights, in vec4 ski
 @block light_utils
 
 #if defined(LIGHTING) || defined(MATERIAL)
-uniform phong_params {
+layout(binding=1) uniform phong_params {
     #ifdef LIGHTING
     vec3 light_dir;
     vec3 eye_pos;
@@ -82,7 +82,7 @@ vec4 phong(vec3 pos, vec3 nrm, vec3 l, vec3 eye, vec3 lcolor, vec3 diffuse, vec3
 @end
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 mvp;
     mat4 model;
     #ifdef SKINNING
@@ -96,8 +96,8 @@ in vec3 normal;
 #ifdef SKINNING
 @image_sample_type joint_tex unfilterable_float
 @sampler_type smp nonfiltering
-uniform texture2D joint_tex;
-uniform sampler smp;
+layout(binding=0) uniform texture2D joint_tex;
+layout(binding=0) uniform sampler smp;
 in vec4 jindices;
 in vec4 jweights;
 @include_block skin_utils
