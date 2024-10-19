@@ -105,8 +105,8 @@ static void init(void) {
     // create pipeline state objects for each primitive type
     sg_pipeline_desc pip_desc = {
         .layout = {
-            .attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT2,
-            .attrs[ATTR_vs_color0].format = SG_VERTEXFORMAT_UBYTE4N,
+            .attrs[ATTR_primtypes_position].format = SG_VERTEXFORMAT_FLOAT2,
+            .attrs[ATTR_primtypes_color0].format = SG_VERTEXFORMAT_UBYTE4N,
         },
         .shader = sg_make_shader(primtypes_shader_desc(sg_query_backend())),
         .depth = {
@@ -157,7 +157,7 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.prim[state.cur_prim_type].ibuf,
     });
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, state.prim[state.cur_prim_type].num_elements, 1);
     sdtx_draw();
     __dbgui_draw();

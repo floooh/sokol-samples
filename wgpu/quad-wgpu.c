@@ -47,7 +47,7 @@ void init(void) {
 
     // a shader object with wgsl shader code
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.source =
+        .vertex_func.source =
             "struct vs_out {\n"
             "  @builtin(position) pos: vec4f,\n"
             "  @location(0) color: vec4f,\n"
@@ -58,10 +58,10 @@ void init(void) {
             "  out.color = color;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
-            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
-            "  return color;\n"
-            "}\n",
+        .fragment_func.source =
+        "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+        "  return color;\n"
+        "}\n",
     });
 
     // a pipeline state object

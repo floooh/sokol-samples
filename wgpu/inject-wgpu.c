@@ -22,6 +22,17 @@
 #define IMG_WIDTH (32)
 #define IMG_HEIGHT (32)
 
+// FIXME: temp workaround until emsdk webgpu.h catches up
+#if defined(__EMSCRIPTEN__)
+static const char* strview(const char* str) {
+    return str;
+}
+#else
+static WGPUStringView strview(const char* str) {
+    return (WGPUStringView){ .data = str, .length = strlen(str) };
+}
+#endif
+
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
@@ -100,7 +111,7 @@ static void init(void) {
     };
 
     state.wgpu_vbuf = wgpuDeviceCreateBuffer(wgpu_dev, &(WGPUBufferDescriptor){
-        .label = "wgpu-vertex-buffer",
+        .label = strview("wgpu-vertex-buffer"),
         .size = sizeof(vertices),
         .usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst,
         .mappedAtCreation = true,
@@ -111,7 +122,7 @@ static void init(void) {
     wgpuBufferUnmap(state.wgpu_vbuf);
 
     state.wgpu_ibuf = wgpuDeviceCreateBuffer(wgpu_dev, &(WGPUBufferDescriptor){
-        .label = "wgpu-index-buffer",
+        .label = strview("wgpu-index-buffer"),
         .size = roundup(sizeof(indices), 4),
         .usage = WGPUBufferUsage_Index | WGPUBufferUsage_CopyDst,
         .mappedAtCreation = true,
@@ -140,7 +151,7 @@ static void init(void) {
 
     // create dynamically updated WebGPU texture object
     state.wgpu_tex = wgpuDeviceCreateTexture(wgpu_dev, &(WGPUTextureDescriptor) {
-        .label = "wgpu-texture",
+        .label = strview("wgpu-texture"),
         .usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst,
         .dimension = WGPUTextureDimension_2D,
         .size = {
@@ -159,7 +170,7 @@ static void init(void) {
     sg_reset_state_cache();
 
     // ... and the sokol-gfx texture object with the injected WGPU texture
-    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.images[0] = sg_make_image(&(sg_image_desc){
         .usage = SG_USAGE_STREAM,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
@@ -167,12 +178,12 @@ static void init(void) {
         .wgpu_texture = state.wgpu_tex,
         .wgpu_texture_view = state.wgpu_tex_view,
     });
-    assert(sg_wgpu_query_image_info(state.bind.fs.images[0]).tex == state.wgpu_tex);
-    assert(sg_wgpu_query_image_info(state.bind.fs.images[0]).view == state.wgpu_tex_view);
+    assert(sg_wgpu_query_image_info(state.bind.images[0]).tex == state.wgpu_tex);
+    assert(sg_wgpu_query_image_info(state.bind.images[0]).view == state.wgpu_tex_view);
 
     // a WebGPU sampler object...
     state.wgpu_smp = wgpuDeviceCreateSampler(wgpu_dev, &(WGPUSamplerDescriptor){
-        .label = "wgpu-sampler",
+        .label = strview("wgpu-sampler"),
         .addressModeU = WGPUAddressMode_Repeat,
         .addressModeV = WGPUAddressMode_Repeat,
         .magFilter = WGPUFilterMode_Linear,
@@ -182,45 +193,55 @@ static void init(void) {
     sg_reset_state_cache();
 
     // ...and a matching sokol-gfx sampler with injected WebGPU sampler
-    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wgpu_sampler = state.wgpu_smp,
     });
-    assert(sg_wgpu_query_sampler_info(state.bind.fs.samplers[0]).smp == state.wgpu_smp);
+    assert(sg_wgpu_query_sampler_info(state.bind.samplers[0]).smp == state.wgpu_smp);
 
     // a sokol-gfx shader object
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "struct vs_params {\n"
-                "  mvp: mat4x4f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv: vec2f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec4f, @location(1) uv: vec2f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = in.mvp * pos;\n"
-                "  out.uv = uv;\n"
-                "  return out;\n"
-                "}\n"
+        .vertex_func.source =
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv: vec2f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) uv: vec2f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * pos;\n"
+            "  out.uv = uv;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+            "  return textureSample(tex, smp, uv);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "@group(1) @binding(48) var tex: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
-                "  return textureSample(tex, smp, uv);\n"
-                "}\n"
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 1,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
         },
     });
     assert(sg_wgpu_query_shader_info(shd).vs_mod != 0);
@@ -274,12 +295,12 @@ void frame() {
     }
     state.counter++;
     sg_image_data content = { .subimage[0][0] = SG_RANGE(state.pixels) };
-    sg_update_image(state.bind.fs.images[0], &content);
+    sg_update_image(state.bind.images[0], &content);
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -88,28 +88,30 @@ void init(void) {
 
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0] = { .size = 16 * 4 },
-            .source =
-                "struct vs_params {\n"
-                "  mvp: mat4x4f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) color: vec4f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = in.mvp * pos;\n"
-                "  out.color = color;\n"
-                "  return out;\n"
-                "}\n",
-        },
-        .fs.source =
+        .vertex_func.source =
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * pos;\n"
+            "  out.color = color;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
             "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
             "  return color;\n"
             "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
+        },
     });
 
     // create pipeline object
@@ -155,7 +157,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

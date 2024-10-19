@@ -72,7 +72,7 @@ static void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3
+                [ATTR_cube_position].format = SG_VERTEXFORMAT_FLOAT3
             }
         },
         .shader = sg_make_shader(cube_shader_desc(sg_query_backend())),
@@ -94,7 +94,7 @@ static void init(void) {
             }
         }
     }
-    state.bind.fs.images[SLOT_tex] = sg_make_image(&(sg_image_desc){
+    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_3D,
         .width = TEX3D_DIM,
         .height = TEX3D_DIM,
@@ -106,7 +106,7 @@ static void init(void) {
     });
 
     // ...and a sampler object
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
     });
@@ -133,7 +133,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

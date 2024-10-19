@@ -5,7 +5,7 @@
 @ctype vec2 hmm_vec2
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 mvp;
     vec2 offset0;
     vec2 offset1;
@@ -28,8 +28,8 @@ void main() {
 @end
 
 @fs fs
-uniform texture2DArray tex;
-uniform sampler smp;
+layout(binding=0) uniform texture2DArray tex;
+layout(binding=0) uniform sampler smp;
 
 in vec3 uv0;
 in vec3 uv1;

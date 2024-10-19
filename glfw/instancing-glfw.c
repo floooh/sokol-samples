@@ -71,14 +71,8 @@ int main() {
 
     // create a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "uniform mat4 mvp;\n"
             "layout(location=0) in vec3 position;\n"
             "layout(location=1) in vec4 color0;\n"
@@ -89,13 +83,20 @@ int main() {
             "  gl_Position = mvp * pos;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
             "  frag_color = color;\n"
             "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
+            }
+        },
     });
 
     // pipeline state object, note the vertex layout definition
@@ -180,7 +181,7 @@ int main() {
         sg_begin_pass(&(sg_pass){ .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 24, cur_num_particles);
         sg_end_pass();
         sg_commit();

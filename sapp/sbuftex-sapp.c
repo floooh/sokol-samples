@@ -83,7 +83,7 @@ static void init(void) {
         { .pos = {  1.0f,  1.0f,  1.0f },  .idx = 5, .uv = { 1.0f, 1.0f } },
         { .pos = {  1.0f,  1.0f, -1.0f },  .idx = 5, .uv = { 0.0f, 1.0f } },
     };
-    state.bind.vs.storage_buffers[SLOT_vertices] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .data = SG_RANGE(vertices),
         .label = "cube-vertices",
@@ -113,7 +113,7 @@ static void init(void) {
         { .color = { 0.0f, 0.5f, 1.0f, 1.0f } },
         { .color = { 1.0f, 0.5f, 0.0f, 1.0f } },
     };
-    state.bind.fs.storage_buffers[SLOT_colors] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.storage_buffers[SBUF_colors] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .data = SG_RANGE(colors),
         .label = "color-palette",
@@ -126,7 +126,7 @@ static void init(void) {
         { 0x88, 0x44, 0xFF, 0xCC },
         { 0x44, 0xFF, 0xCC, 0x88 },
     };
-    state.bind.fs.images[SLOT_tex] = sg_make_image(&(sg_image_desc){
+    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .pixel_format = SG_PIXELFORMAT_R8,
@@ -135,7 +135,7 @@ static void init(void) {
     });
 
     // ...and a matching sampler
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .label = "sampler",
@@ -165,7 +165,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

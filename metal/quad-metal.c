@@ -39,7 +39,7 @@ static void init(void) {
 
     // a shader (use separate shader sources here
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct vs_in {\n"
@@ -56,7 +56,7 @@ static void init(void) {
             "  out.color = in.color;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "#include <simd/simd.h>\n"
             "using namespace metal;\n"

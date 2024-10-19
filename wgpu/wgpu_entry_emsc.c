@@ -23,6 +23,7 @@ static EM_BOOL emsc_size_changed(int event_type, const EmscriptenUiEvent* ui_eve
     (void)event_type; (void)ui_event;
     wgpu_state_t* state = userdata;
     emsc_update_canvas_size(state);
+    wgpu_swapchain_resized(state);
     return true;
 }
 
@@ -191,10 +192,12 @@ static EM_BOOL emsc_frame(double time, void* userdata) {
         return EM_TRUE;
     }
     wgpuDevicePushErrorScope(state->device, WGPUErrorFilter_Validation);
-    state->swapchain_view = wgpuSwapChainGetCurrentTextureView(state->swapchain);
-    state->desc.frame_cb();
-    wgpuTextureViewRelease(state->swapchain_view);
-    state->swapchain_view = 0;
+    state->swapchain_view = wgpu_swapchain_next(state);
+    if (state->swapchain_view) {
+        state->desc.frame_cb();
+        wgpuTextureViewRelease(state->swapchain_view);
+        state->swapchain_view = 0;
+    }
     wgpuDevicePopErrorScope(state->device, error_cb, 0);
     return EM_TRUE;
 }
@@ -202,8 +205,12 @@ static EM_BOOL emsc_frame(double time, void* userdata) {
 void wgpu_platform_start(wgpu_state_t* state) {
     assert(state->instance == 0);
 
+    state->instance = wgpuCreateInstance(0);
+    assert(state->instance);
+    wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
+
     emsc_update_canvas_size(state);
-    emscripten_set_resize_callback("#canvas", 0, false, emsc_size_changed);
+    emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, false, emsc_size_changed);
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keydown_cb);
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keyup_cb);
     emscripten_set_keypress_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, true, emsc_keypress_cb);
@@ -211,10 +218,6 @@ void wgpu_platform_start(wgpu_state_t* state) {
     emscripten_set_mouseup_callback("#canvas", state, true, emsc_mouseup_cb);
     emscripten_set_mousemove_callback("#canvas", state, true, emsc_mousemove_cb);
     emscripten_set_wheel_callback("#canvas", state, true, emsc_wheel_cb);
-
-    state->instance = wgpuCreateInstance(0);
-    assert(state->instance);
-    wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
 
     emscripten_request_animation_frame_loop(emsc_frame, state);
 }

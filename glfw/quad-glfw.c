@@ -52,8 +52,8 @@ int main() {
 
     // create a shader (use vertex attribute locations)
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "layout(location=0) in vec4 position;\n"
             "layout(location=1) in vec4 color0;\n"
             "out vec4 color;\n"
@@ -61,8 +61,8 @@ int main() {
             "  gl_Position = position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"

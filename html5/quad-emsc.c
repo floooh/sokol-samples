@@ -54,24 +54,27 @@ int main() {
 
     // create a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc) {
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0"
-        },
-        .vs.source =
-            "attribute vec4 position;\n"
-            "attribute vec4 color0;\n"
-            "varying vec4 color;\n"
+        .vertex_func.source =
+            "#version 300 es\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "out vec4 color;\n"
             "void main() {\n"
             "  gl_Position = position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
+            "#version 300 es\n"
             "precision mediump float;\n"
-            "varying vec4 color;\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
             "void main() {\n"
-            "  gl_FragColor = color;\n"
-            "}\n"
+            "  frag_color = color;\n"
+            "}\n",
+        .attrs = {
+            [0].glsl_name = "position",
+            [1].glsl_name = "color0"
+        },
     });
 
     // a pipeline object (default render state is fine)

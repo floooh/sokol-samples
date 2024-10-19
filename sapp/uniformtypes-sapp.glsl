@@ -4,7 +4,7 @@
 // inefficient in the sokol-gfx GL backend, because the uniform
 // block will not be flattened into a single float or int array!
 //
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     vec2 offset;
     vec2 scale;
     // scramble the vector sizes to enforce 'weird' padding
@@ -67,4 +67,3 @@ void main() {
 @end
 
 @program uniformtypes vs fs
-

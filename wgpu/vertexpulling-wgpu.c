@@ -69,7 +69,7 @@ static void init(void) {
         { .pos = {  1.0,  1.0,  1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } },
         { .pos = {  1.0,  1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } }
     };
-    state.bind.vs.storage_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.storage_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_STORAGEBUFFER,
         .data = SG_RANGE(vertices),
     });
@@ -88,9 +88,7 @@ static void init(void) {
     });
 
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.storage_buffers[0] = { .used = true, .readonly = true },
-        .vs.source =
+        .vertex_func.source =
             "struct vs_params {\n"
             "  mvp: mat4x4f,\n"
             "}\n"
@@ -102,7 +100,7 @@ static void init(void) {
             "  vtx: array<vertex>,\n"
             "}\n"
             "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-            "@group(1) @binding(32) var<storage, read> in_sbuf: sbuf;\n"
+            "@group(1) @binding(0) var<storage, read> in_sbuf: sbuf;\n"
             "struct vs_out {\n"
             "  @builtin(position) pos: vec4f,\n"
             "  @location(0) color: vec4f,\n"
@@ -113,10 +111,20 @@ static void init(void) {
             "  out.color = in_sbuf.vtx[vidx].color;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
             "  return color;\n"
             "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
+        },
+        .storage_buffers[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .readonly = true,
+            .wgsl_group1_binding_n = 0,
+        }
     });
 
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -145,7 +153,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

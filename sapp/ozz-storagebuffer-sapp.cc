@@ -178,7 +178,7 @@ static void init(void) {
         buf_desc.type = SG_BUFFERTYPE_STORAGEBUFFER;
         buf_desc.data = SG_RANGE(instance_data);
         buf_desc.label = "instances";
-        state.bind.vs.storage_buffers[SLOT_instances] = sg_make_buffer(&buf_desc);
+        state.bind.storage_buffers[SBUF_instances] = sg_make_buffer(&buf_desc);
     }
 
     // create another dynamic storage buffer which receives the animated joint matrices
@@ -188,7 +188,7 @@ static void init(void) {
         buf_desc.usage = SG_USAGE_STREAM;
         buf_desc.size = MAX_INSTANCES * MAX_JOINTS * sizeof(sb_joint_t);
         buf_desc.label = "joints";
-        state.bind.vs.storage_buffers[SLOT_joints] = sg_make_buffer(&buf_desc);
+        state.bind.storage_buffers[SBUF_joints] = sg_make_buffer(&buf_desc);
     }
 
     // NOTE: the storage buffers for vertices and indices are created in the async fetch callbacks
@@ -247,7 +247,7 @@ static void frame(void) {
         vs_params.view_proj = state.camera.view_proj;
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(UB_vs_params, SG_RANGE_REF(vs_params));
         sg_draw(0, state.num_triangle_indices, state.num_instances);
     }
     simgui_render();
@@ -312,7 +312,7 @@ static void update_joints(void) {
     state.time.anim_eval_time = stm_since(start_time);
 
     // update the sokol-gfx joint storage buffer
-    sg_update_buffer(state.bind.vs.storage_buffers[SLOT_joints], SG_RANGE(joint_upload_buffer));
+    sg_update_buffer(state.bind.storage_buffers[SBUF_joints], SG_RANGE(joint_upload_buffer));
 }
 
 // arrange the character instances into a quad
@@ -460,7 +460,7 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         vbuf_desc.data.ptr = vertices;
         vbuf_desc.data.size = num_vertices * sizeof(sb_vertex_t);
         vbuf_desc.label = "vertices";
-        state.bind.vs.storage_buffers[SLOT_vertices] = sg_make_buffer(&vbuf_desc);
+        state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&vbuf_desc);
         free(vertices); vertices = nullptr;
 
         sg_buffer_desc ibuf_desc = { };

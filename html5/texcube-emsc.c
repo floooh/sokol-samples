@@ -93,58 +93,58 @@ int main() {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     // create a sampler
-    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
     });
 
     // create shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].name = "position",
-            [1].name = "color0",
-            [2].name = "texcoord0"
+        .vertex_func.source =
+            "#version 300 es\n"
+            "uniform mat4 mvp;\n"
+            "layout(location = 0) in vec4 position;\n"
+            "layout(location = 1) in vec4 color0;\n"
+            "layout(location = 2) in vec2 texcoord0;\n"
+            "out vec4 color;\n"
+            "out vec2 uv;"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  color = color0;\n"
+            "  uv = texcoord0 * 5.0;\n"
+            "}\n",
+        .fragment_func.source =
+            "#version 300 es\n"
+            "precision mediump float;\n"
+            "uniform sampler2D tex;\n"
+            "in vec4 color;\n"
+            "in vec2 uv;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(tex, uv) * color;\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
         },
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(params_t),
-                .uniforms = {
-                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-                }
-            },
-            .source =
-                "uniform mat4 mvp;\n"
-                "attribute vec4 position;\n"
-                "attribute vec4 color0;\n"
-                "attribute vec2 texcoord0;\n"
-                "varying vec4 color;\n"
-                "varying vec2 uv;"
-                "void main() {\n"
-                "  gl_Position = mvp * position;\n"
-                "  color = color0;\n"
-                "  uv = texcoord0 * 5.0;\n"
-                "}\n",
+        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+            .glsl_name = "tex",
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "precision mediump float;\n"
-                "uniform sampler2D tex;\n"
-                "varying vec4 color;\n"
-                "varying vec2 uv;\n"
-                "void main() {\n"
-                "  gl_FragColor = texture2D(tex, uv) * color;\n"
-                "}\n"
-        }
     });
 
     // create pipeline object
@@ -194,7 +194,7 @@ static EM_BOOL draw(double time, void* userdata) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

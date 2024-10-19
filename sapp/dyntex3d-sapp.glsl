@@ -4,7 +4,7 @@
 @ctype mat4 hmm_mat4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     float w;
 };
 
@@ -21,8 +21,8 @@ void main() {
 @end
 
 @fs fs
-uniform texture3D tex;
-uniform sampler smp;
+layout(binding=0) uniform texture3D tex;
+layout(binding=0) uniform sampler smp;
 in vec3 uvw;
 out vec4 frag_color;
 

@@ -156,7 +156,7 @@ static void init(void) {
             .data.subimage[0][0] = SG_RANGE(pixels),
         });
     }
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
     });
@@ -165,9 +165,9 @@ static void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [ATTR_vs_in_pos] = { .format = SG_VERTEXFORMAT_FLOAT3 },
-                [ATTR_vs_in_uv] = { .format = SG_VERTEXFORMAT_FLOAT2 },
-                [ATTR_vs_in_bright] = { .format = SG_VERTEXFORMAT_FLOAT },
+                [ATTR_drawcallperf_in_pos] = { .format = SG_VERTEXFORMAT_FLOAT3 },
+                [ATTR_drawcallperf_in_uv] = { .format = SG_VERTEXFORMAT_FLOAT2 },
+                [ATTR_drawcallperf_in_bright] = { .format = SG_VERTEXFORMAT_FLOAT },
             }
         },
         .shader = sg_make_shader(drawcallperf_shader_desc(sg_query_backend())),
@@ -246,10 +246,10 @@ static void frame(void) {
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_per_frame, &SG_RANGE(vs_per_frame));
+    sg_apply_uniforms(UB_vs_per_frame, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;
 
-    state.bind.fs.images[SLOT_tex] = state.img[0];
+    state.bind.images[IMG_tex] = state.img[0];
     sg_apply_bindings(&state.bind);
     state.stats.num_binding_updates++;
     int cur_bind_count = 0;
@@ -260,11 +260,11 @@ static void frame(void) {
             if (cur_img == NUM_IMAGES) {
                 cur_img = 0;
             }
-            state.bind.fs.images[SLOT_tex] = state.img[cur_img++];
+            state.bind.images[IMG_tex] = state.img[cur_img++];
             sg_apply_bindings(&state.bind);
             state.stats.num_binding_updates++;
         }
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_per_instance, &SG_RANGE(positions[i]));
+        sg_apply_uniforms(UB_vs_per_instance, &SG_RANGE(positions[i]));
         state.stats.num_uniform_updates++;
         sg_draw(0, 36, 1);
         state.stats.num_draw_calls++;

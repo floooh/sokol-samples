@@ -79,35 +79,45 @@ static void init(void) {
 
     // a shader object
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "struct vs_params {\n"
-                "  offset: vec2f,\n"
-                "  scale: vec2f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv: vec2f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = vec4(pos * in.scale + in.offset, 0.5, 1.0);\n"
-                "  out.uv = (pos + 1.0) - 0.5;\n"
-                "  return out;\n"
-                "}\n",
+        .vertex_func.source =
+            "struct vs_params {\n"
+            "  offset: vec2f,\n"
+            "  scale: vec2f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv: vec2f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = vec4(pos * in.scale + in.offset, 0.5, 1.0);\n"
+            "  out.uv = (pos + 1.0) - 0.5;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+            "  return textureSample(tex, smp, uv);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "@group(1) @binding(48) var tex: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
-                "  return textureSample(tex, smp, uv);\n"
-                "}\n",
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 1,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
         },
         .label = "uvwrap-shader",
     });
@@ -133,10 +143,8 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .fs = {
-                .images[0] = state.img,
-                .samplers[0] = state.smp[i],
-            }
+            .images[0] = state.img,
+            .samplers[0] = state.smp[i],
         });
         float x_offset = 0, y_offset = 0;
         switch (i) {
@@ -149,7 +157,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

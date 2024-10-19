@@ -171,50 +171,64 @@ static void init(void) {
             .data.subimage[0][0] = SG_RANGE(pixels),
         });
     }
-    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
     });
 
     // a shader object
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks = {
-                [0].size = sizeof(vs_per_frame_t),
-                [1].size = sizeof(vs_per_instance_t),
+        .vertex_func.source =
+            "struct vs_per_frame {\n"
+            "  viewproj: mat4x4f,\n"
+            "}\n"
+            "struct vs_per_instance {\n"
+            "  world_pos: vec4f,\n"
+            "}\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv: vec2f,\n"
+            "  @location(1) bright: f32,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> per_frame: vs_per_frame;\n"
+            "@group(0) @binding(1) var<uniform> per_instance: vs_per_instance;\n"
+            "@vertex fn main(@location(0) pos: vec3f, @location(1) uv: vec2f, @location(2) bright: f32) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = per_frame.viewproj * (per_instance.world_pos + vec4f(pos * 0.05, 1.0));\n"
+            "  out.uv = uv;\n"
+            "  out.bright = bright;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv: vec2f, @location(1) bright: f32) -> @location(0) vec4f {\n"
+            "  return vec4f(textureSample(tex, smp, uv).xyz * bright, 1.0);\n"
+            "}\n",
+        .uniform_blocks = {
+            [0] = {
+                .stage = SG_SHADERSTAGE_VERTEX,
+                .size = sizeof(vs_per_frame_t),
+                .wgsl_group0_binding_n = 0,
             },
-            .source =
-                "struct vs_per_frame {\n"
-                "  viewproj: mat4x4f,\n"
-                "}\n"
-                "struct vs_per_instance {\n"
-                "  world_pos: vec4f,\n"
-                "}\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv: vec2f,\n"
-                "  @location(1) bright: f32,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> per_frame: vs_per_frame;\n"
-                "@group(0) @binding(1) var<uniform> per_instance: vs_per_instance;\n"
-                "@vertex fn main(@location(0) pos: vec3f, @location(1) uv: vec2f, @location(2) bright: f32) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = per_frame.viewproj * (per_instance.world_pos + vec4f(pos * 0.05, 1.0));\n"
-                "  out.uv = uv;\n"
-                "  out.bright = bright;\n"
-                "  return out;\n"
-                "}\n",
+            [1] = {
+                .stage = SG_SHADERSTAGE_VERTEX,
+                .size = sizeof(vs_per_instance_t),
+                .wgsl_group0_binding_n = 1,
+            }
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "@group(1) @binding(48) var tex: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv: vec2f, @location(1) bright: f32) -> @location(0) vec4f {\n"
-                "  return vec4f(textureSample(tex, smp, uv).xyz * bright, 1.0);\n"
-                "}\n",
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 1,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0
         },
     });
 
@@ -295,10 +309,10 @@ static void frame(void) {
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_per_frame));
+    sg_apply_uniforms(0, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;
 
-    state.bind.fs.images[0] = state.img[0];
+    state.bind.images[0] = state.img[0];
     sg_apply_bindings(&state.bind);
     state.stats.num_binding_updates++;
     int cur_bind_count = 0;
@@ -309,11 +323,11 @@ static void frame(void) {
             if (cur_img == NUM_IMAGES) {
                 cur_img = 0;
             }
-            state.bind.fs.images[0] = state.img[cur_img++];
+            state.bind.images[0] = state.img[cur_img++];
             sg_apply_bindings(&state.bind);
             state.stats.num_binding_updates++;
         }
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 1, &SG_RANGE(positions[i]));
+        sg_apply_uniforms(1, &SG_RANGE(positions[i]));
         state.stats.num_uniform_updates++;
         sg_draw(0, 36, 1);
         state.stats.num_draw_calls++;

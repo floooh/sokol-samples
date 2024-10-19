@@ -54,23 +54,23 @@ static void init(void) {
 
     // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .source =
-                "@vertex fn main(@location(0) pos: vec2f) -> @builtin(position) vec4f {\n"
-                "  return vec4f(pos, 0.5, 1.0);\n"
-                "}\n",
-        },
-        .fs = {
-            .uniform_blocks[0].size = sizeof(fs_params_t),
-            .source =
-                "struct fs_params {\n"
-                "  tick: f32,\n"
-                "}\n"
-                "@group(0) @binding(4) var<uniform> in: fs_params;\n"
-                "@fragment fn main(@builtin(position) frag_coord: vec4f) -> @location(0) vec4f {\n"
-                "  let xy: vec2f = fract((frag_coord.xy - vec2f(in.tick)) / 50.0);\n"
-                "  return vec4f(vec3f(xy.x * xy.y), 1.0);\n"
-                "}\n"
+        .vertex_func.source =
+            "@vertex fn main(@location(0) pos: vec2f) -> @builtin(position) vec4f {\n"
+            "  return vec4f(pos, 0.5, 1.0);\n"
+            "}\n",
+        .fragment_func.source =
+            "struct fs_params {\n"
+            "  tick: f32,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: fs_params;\n"
+            "@fragment fn main(@builtin(position) frag_coord: vec4f) -> @location(0) vec4f {\n"
+            "  let xy: vec2f = fract((frag_coord.xy - vec2f(in.tick)) / 50.0);\n"
+            "  return vec4f(vec3f(xy.x * xy.y), 1.0);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(fs_params_t),
+            .wgsl_group0_binding_n = 0,
         },
         .label = "bg-shader",
     });
@@ -92,29 +92,29 @@ static void init(void) {
 
     // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "struct vs_params {\n"
-                "  mvp: mat4x4f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) color: vec4f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = in.mvp * pos;\n"
-                "  out.color = color;\n"
-                "  return out;\n"
-                "}\n",
-        },
-        .fs = {
-            .source =
-                "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
-                "  return color;\n"
-                "}\n",
+        .vertex_func.source =
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) color: vec4f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * pos;\n"
+            "  out.color = color;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+            "  return color;\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
         },
     });
 
@@ -182,7 +182,7 @@ static void frame(void) {
     // draw a background quad
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.bg_fs_params));
+    sg_apply_uniforms(0, &SG_RANGE(state.bg_fs_params));
     sg_draw(0, 4, 1);
 
     // draw the blended quads
@@ -198,7 +198,7 @@ static void frame(void) {
                 state.quad_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
                 sg_apply_pipeline(state.pips[src][dst]);
                 sg_apply_bindings(&state.bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(state.quad_vs_params));
+                sg_apply_uniforms(0, &SG_RANGE(state.quad_vs_params));
                 sg_draw(0, 4, 1);
             }
         }

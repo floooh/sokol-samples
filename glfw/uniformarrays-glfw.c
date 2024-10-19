@@ -101,7 +101,7 @@ int main() {
         for (vs_params.sel = 0; vs_params.sel < NUM_ARRAYS; vs_params.sel++) {
             vs_params.offset[0] = -1.0f + (10.0f * glyph_w);
             for (vs_params.idx = 0; vs_params.idx < ARRAY_COUNT; vs_params.idx++) {
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+                sg_apply_uniforms(0, &SG_RANGE(vs_params));
                 sg_draw(0, 6, 1);
                 vs_params.offset[0] += glyph_h * 4.0f;
             }
@@ -123,21 +123,8 @@ int main() {
 // helper function to create shader object
 static sg_shader create_shader(void) {
     return sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(vs_params_t),
-            .layout = SG_UNIFORMLAYOUT_NATIVE,  // this is the default, so not really needed
-            .uniforms = {
-                { .name = "sel",    .type = SG_UNIFORMTYPE_INT },
-                { .name = "idx",    .type = SG_UNIFORMTYPE_INT },
-                { .name = "offset", .type = SG_UNIFORMTYPE_FLOAT2 },
-                { .name = "scale",  .type = SG_UNIFORMTYPE_FLOAT2 },
-                { .name = "f1",     .type = SG_UNIFORMTYPE_FLOAT,  .array_count = ARRAY_COUNT },
-                { .name = "f2",     .type = SG_UNIFORMTYPE_FLOAT2, .array_count = ARRAY_COUNT },
-                { .name = "f3",     .type = SG_UNIFORMTYPE_FLOAT3, .array_count = ARRAY_COUNT },
-            }
-        },
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "#define ARRAY_COUNT (8)\n"
             "uniform int sel;\n"
             "uniform int idx;\n"
@@ -160,12 +147,26 @@ static sg_shader create_shader(void) {
             "    color = vec4(f3[idx], 1.0);\n"
             "  }\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
             "  frag_color = color;\n"
             "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .layout = SG_UNIFORMLAYOUT_NATIVE,  // this is the default, so not really needed
+            .glsl_uniforms = {
+                { .glsl_name = "sel",    .type = SG_UNIFORMTYPE_INT },
+                { .glsl_name = "idx",    .type = SG_UNIFORMTYPE_INT },
+                { .glsl_name = "offset", .type = SG_UNIFORMTYPE_FLOAT2 },
+                { .glsl_name = "scale",  .type = SG_UNIFORMTYPE_FLOAT2 },
+                { .glsl_name = "f1",     .type = SG_UNIFORMTYPE_FLOAT,  .array_count = ARRAY_COUNT },
+                { .glsl_name = "f2",     .type = SG_UNIFORMTYPE_FLOAT2, .array_count = ARRAY_COUNT },
+                { .glsl_name = "f3",     .type = SG_UNIFORMTYPE_FLOAT3, .array_count = ARRAY_COUNT },
+            }
+        }
     });
 }

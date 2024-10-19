@@ -5,7 +5,7 @@
 @vs vs_shadow
 @glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
 
-uniform vs_shadow_params {
+layout(binding=0) uniform vs_shadow_params {
     mat4 mvp;
 };
 
@@ -25,7 +25,7 @@ void main() { }
 //=== display pass
 @vs vs_display
 
-uniform vs_display_params {
+layout(binding=0) uniform vs_display_params {
     mat4 mvp;
     mat4 model;
     mat4 light_mvp;
@@ -53,13 +53,13 @@ void main() {
 
 @fs fs_display
 
-uniform fs_display_params {
+layout(binding=1) uniform fs_display_params {
     vec3 light_dir;
     vec3 eye_pos;
 };
 
-uniform texture2D shadow_map;
-uniform sampler shadow_sampler;
+layout(binding=0) uniform texture2D shadow_map;
+layout(binding=0) uniform sampler shadow_sampler;
 
 in vec3 color;
 in vec4 light_proj_pos;
@@ -117,8 +117,8 @@ void main() {
 @fs fs_dbg
 @image_sample_type dbg_tex unfilterable_float
 @sampler_type dbg_smp nonfiltering
-uniform texture2D dbg_tex;
-uniform sampler dbg_smp;
+layout(binding=0) uniform texture2D dbg_tex;
+layout(binding=0) uniform sampler dbg_smp;
 
 in vec2 uv;
 out vec4 frag_color;

@@ -89,22 +89,21 @@ static void init(void) {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.images[0] = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
 
     // ...and a sampler
-    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
     });
 
     // a shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
+        .vertex_func = {
             .entry = "vs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -130,10 +129,7 @@ static void init(void) {
                 "  return out;\n"
                 "}\n"
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+        .fragment_func = {
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -148,7 +144,25 @@ static void init(void) {
                 "{\n"
                 "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
                 "};\n"
-        }
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_texture_n = 0
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_sampler_n = 0
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0
+        },
     });
 
     // a pipeline state object
@@ -187,7 +201,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

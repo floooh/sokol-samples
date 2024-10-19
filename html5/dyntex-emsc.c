@@ -117,52 +117,50 @@ int main() {
     state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = img,
-            .samplers[0] = smp,
-        }
+        .images[0] = img,
+        .samplers[0] = smp,
     };
 
     // a shader to render textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
+        .vertex_func.source =
+            "#version 300 es\n"
+            "uniform mat4 mvp;\n"
+            "in vec4 position;\n"
+            "in vec4 color0;\n"
+            "in vec2 texcoord0;\n"
+            "out vec2 uv;"
+            "out vec4 color;"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  uv = texcoord0;\n"
+            "  color = color0;\n"
+            "}\n",
+        .fragment_func.source =
+            "#version 300 es\n"
+            "precision mediump float;\n"
+            "uniform sampler2D tex;\n"
+            "in vec4 color;\n"
+            "in vec2 uv;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(tex, uv) * color;\n"
+            "}\n",
         .attrs = {
-            [0].name = "position",
-            [1].name = "color0",
-            [2].name = "texcoord0"
+            [0].glsl_name = "position",
+            [1].glsl_name = "color0",
+            [2].glsl_name = "texcoord0"
         },
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(vs_params_t),
-                .uniforms = {
-                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-                }
-            },
-            .source =
-                "uniform mat4 mvp;\n"
-                "attribute vec4 position;\n"
-                "attribute vec4 color0;\n"
-                "attribute vec2 texcoord0;\n"
-                "varying vec2 uv;"
-                "varying vec4 color;"
-                "void main() {\n"
-                "  gl_Position = mvp * position;\n"
-                "  uv = texcoord0;\n"
-                "  color = color0;\n"
-                "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "precision mediump float;\n"
-                "uniform sampler2D tex;\n"
-                "varying vec4 color;\n"
-                "varying vec2 uv;\n"
-                "void main() {\n"
-                "  gl_FragColor = texture2D(tex, uv) * color;\n"
-                "}\n"
-        }
+        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
     });
 
     // a pipeline-state-object for the textured cube
@@ -209,13 +207,13 @@ static EM_BOOL draw(double time, void* userdata) {
     game_of_life_update();
 
     // update the dynamic image
-    sg_update_image(state.bind.fs.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.bind.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
     // draw pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

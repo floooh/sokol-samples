@@ -94,7 +94,7 @@ typedef struct {
 // helper struct to map sokol-gfx buffer bindslots to scene.buffers indices
 typedef struct {
     int num;
-    int buffer[SG_MAX_VERTEX_BUFFERS];
+    int buffer[SG_MAX_VERTEXBUFFER_BINDSLOTS];
 } vertex_buffer_mapping_t;
 
 // a 'primitive' (aka submesh) contains everything needed to issue a draw call
@@ -360,8 +360,8 @@ static void frame(void) {
                 if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
-                sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_light_params, &SG_RANGE(state.point_light));
+                sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
+                sg_apply_uniforms(UB_light_params, &SG_RANGE(state.point_light));
                 if (mat->is_metallic) {
                     sg_image base_color_tex = state.scene.image_samplers[mat->metallic.images.base_color].img;
                     sg_image metallic_roughness_tex = state.scene.image_samplers[mat->metallic.images.metallic_roughness].img;
@@ -394,17 +394,17 @@ static void frame(void) {
                         emissive_tex = state.placeholders.black;
                         emissive_smp = state.placeholders.smp;
                     }
-                    bind.fs.images[SLOT_base_color_tex] = base_color_tex;
-                    bind.fs.images[SLOT_metallic_roughness_tex] = metallic_roughness_tex;
-                    bind.fs.images[SLOT_normal_tex] = normal_tex;
-                    bind.fs.images[SLOT_occlusion_tex] = occlusion_tex;
-                    bind.fs.images[SLOT_emissive_tex] = emissive_tex;
-                    bind.fs.samplers[SLOT_base_color_smp] = base_color_smp;
-                    bind.fs.samplers[SLOT_metallic_roughness_smp] = metallic_roughness_smp;
-                    bind.fs.samplers[SLOT_normal_smp] = normal_smp;
-                    bind.fs.samplers[SLOT_occlusion_smp] = occlusion_smp;
-                    bind.fs.samplers[SLOT_emissive_tex] = emissive_smp;
-                    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &SG_RANGE(mat->metallic.fs_params));
+                    bind.images[IMG_base_color_tex] = base_color_tex;
+                    bind.images[IMG_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.images[IMG_normal_tex] = normal_tex;
+                    bind.images[IMG_occlusion_tex] = occlusion_tex;
+                    bind.images[IMG_emissive_tex] = emissive_tex;
+                    bind.samplers[SMP_base_color_smp] = base_color_smp;
+                    bind.samplers[SMP_metallic_roughness_smp] = metallic_roughness_smp;
+                    bind.samplers[SMP_normal_smp] = normal_smp;
+                    bind.samplers[SMP_occlusion_smp] = occlusion_smp;
+                    bind.samplers[SMP_emissive_smp] = emissive_smp;
+                    sg_apply_uniforms(UB_metallic_params, &SG_RANGE(mat->metallic.fs_params));
                 } else {
                 /*
                     sg_apply_uniforms(SG_SHADERSTAGE_VS,
@@ -844,9 +844,9 @@ static sg_vertex_format gltf_to_vertex_format(cgltf_accessor* acc) {
 
 static int gltf_attr_type_to_vs_input_slot(cgltf_attribute_type attr_type) {
     switch (attr_type) {
-        case cgltf_attribute_type_position: return ATTR_vs_position;
-        case cgltf_attribute_type_normal: return ATTR_vs_normal;
-        case cgltf_attribute_type_texcoord: return ATTR_vs_texcoord;
+        case cgltf_attribute_type_position: return ATTR_cgltf_metallic_position;
+        case cgltf_attribute_type_normal: return ATTR_cgltf_metallic_normal;
+        case cgltf_attribute_type_texcoord: return ATTR_cgltf_metallic_texcoord;
         default: return SCENE_INVALID_INDEX;
     }
 }
@@ -877,7 +877,7 @@ static sg_index_type gltf_to_index_type(const cgltf_primitive* prim) {
 // creates a vertex buffer bind slot mapping for a specific GLTF primitive
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim) {
     vertex_buffer_mapping_t map = { 0 };
-    for (int i = 0; i < SG_MAX_VERTEX_BUFFERS; i++) {
+    for (int i = 0; i < SG_MAX_VERTEXBUFFER_BINDSLOTS; i++) {
         map.buffer[i] = SCENE_INVALID_INDEX;
     }
     for (cgltf_size attr_index = 0; attr_index < prim->attributes_count; attr_index++) {
@@ -890,10 +890,10 @@ static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(c
                 break;
             }
         }
-        if ((i == map.num) && (map.num < SG_MAX_VERTEX_BUFFERS)) {
+        if ((i == map.num) && (map.num < SG_MAX_VERTEXBUFFER_BINDSLOTS)) {
             map.buffer[map.num++] = buffer_view_index;
         }
-        assert(map.num <= SG_MAX_VERTEX_BUFFERS);
+        assert(map.num <= SG_MAX_VERTEXBUFFER_BINDSLOTS);
     }
     return map;
 }

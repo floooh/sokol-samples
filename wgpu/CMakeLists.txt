@@ -4,7 +4,7 @@ fips_begin_lib(wgpu_entry)
         fips_files(wgpu_entry_emsc.c)
     else()
         fips_files(wgpu_entry_dawn.cc)
-        fips_libs(webgpu_dawn webgpu_glfw webgpu_cpp)
+        fips_libs(webgpu_dawn webgpu_glfw)
     endif()
 fips_end_lib()
 

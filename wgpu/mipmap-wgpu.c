@@ -83,7 +83,7 @@ static void init(void) {
     }
 
     // create a single image and 12 samplers
-    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.images[0] = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
         .num_mipmaps = 9,
@@ -135,35 +135,45 @@ static void init(void) {
 
     // a shader object
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "struct vs_params {\n"
-                "  mvp: mat4x4f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: vs_params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv: vec2f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec4f, @location(1) uv: vec2f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = in.mvp * pos;\n"
-                "  out.uv = uv;\n"
-                "  return out;\n"
-                "}\n"
+        .vertex_func.source =
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv: vec2f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) uv: vec2f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * pos;\n"
+            "  out.uv = uv;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+            "  return textureSample(tex, smp, uv);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .wgsl_group0_binding_n = 0,
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "@group(1) @binding(48) var tex: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
-                "  return textureSample(tex, smp, uv);\n"
-                "}\n"
-        }
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .wgsl_group1_binding_n = 1,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // pipeline state
@@ -192,10 +202,10 @@ static void frame(void) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-        state.bind.fs.samplers[0] = state.smp[i];
+        state.bind.samplers[0] = state.smp[i];
         sg_apply_bindings(&state.bind);
         const vs_params_t vs_params = { .mvp = HMM_MultiplyMat4(view_proj, model) };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

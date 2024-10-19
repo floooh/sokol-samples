@@ -1,7 +1,7 @@
 @ctype mat4 hmm_mat4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 mvp;
 };
 
@@ -18,10 +18,10 @@ void main() {
 @end
 
 @fs fs
-uniform texture2D tex_y;
-uniform texture2D tex_cb;
-uniform texture2D tex_cr;
-uniform sampler smp;
+layout(binding=0) uniform texture2D tex_y;
+layout(binding=1) uniform texture2D tex_cb;
+layout(binding=2) uniform texture2D tex_cr;
+layout(binding=0) uniform sampler smp;
 
 in vec2 uv;
 out vec4 frag_color;

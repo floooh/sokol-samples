@@ -46,7 +46,7 @@ void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, 
 @end
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 view_proj;
 };
 
@@ -67,15 +67,15 @@ struct sb_joint {
     vec4 zzzz;
 };
 
-readonly buffer vertices {
+layout(binding=0) readonly buffer vertices {
     sb_vertex vtx[];
 };
 
-readonly buffer instances {
+layout(binding=1) readonly buffer instances {
     sb_instance inst[];
 };
 
-readonly buffer joints {
+layout(binding=2) readonly buffer joints {
     sb_joint joint[];
 };
 

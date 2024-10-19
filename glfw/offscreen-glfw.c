@@ -118,14 +118,8 @@ int main() {
 
     // shader for the non-textured cube, rendered in the offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "uniform mat4 mvp;\n"
             "layout(location=0) in vec4 position;\n"
             "layout(location=1) in vec4 color0;\n"
@@ -134,52 +128,56 @@ int main() {
             "  gl_Position = mvp * position;\n"
             "  color = color0;\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
             "  frag_color = color;\n"
-            "}\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
+        }
     });
 
     // ...and a second shader for rendering a textured cube in the default pass
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(params_t),
-                .uniforms = {
-                    [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-                }
-            },
-            .source =
-                "#version 330\n"
-                "uniform mat4 mvp;\n"
-                "layout(location=0) in vec4 position;\n"
-                "layout(location=1) in vec4 color0;\n"
-                "layout(location=2) in vec2 texcoord0;\n"
-                "out vec4 color;\n"
-                "out vec2 uv;\n"
-                "void main() {\n"
-                "  gl_Position = mvp * position;\n"
-                "  color = color0;\n"
-                "  uv = texcoord0;\n"
-                "}\n",
+        .vertex_func.source =
+            "#version 330\n"
+            "uniform mat4 mvp;\n"
+            "layout(location=0) in vec4 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "layout(location=2) in vec2 texcoord0;\n"
+            "out vec4 color;\n"
+            "out vec2 uv;\n"
+            "void main() {\n"
+            "  gl_Position = mvp * position;\n"
+            "  color = color0;\n"
+            "  uv = texcoord0;\n"
+            "}\n",
+        .fragment_func.source =
+            "#version 410\n"
+            "uniform sampler2D tex;\n"
+            "in vec4 color;\n"
+            "in vec2 uv;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(tex, uv) + color * 0.5;\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "#version 330\n"
-                "uniform sampler2D tex;\n"
-                "in vec4 color;\n"
-                "in vec2 uv;\n"
-                "out vec4 frag_color;\n"
-                "void main() {\n"
-                "  frag_color = texture(tex, uv) + color * 0.5;\n"
-                "}\n"
-        }
+        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for offscreen rendering, don't need texcoords here
@@ -234,10 +232,8 @@ int main() {
     sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = color_img,
-            .samplers[0] = smp,
-        },
+        .images[0] = color_img,
+        .samplers[0] = smp,
     };
 
     // everything ready, on to the draw loop!
@@ -266,7 +262,7 @@ int main() {
         });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -278,7 +274,7 @@ int main() {
         });
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
         sg_commit();

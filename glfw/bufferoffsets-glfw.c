@@ -57,8 +57,8 @@ int main() {
 
     // create a shader to render 2D colored shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "layout(location=0) in vec2 pos;"
             "layout(location=1) in vec3 color0;"
             "out vec4 color;"
@@ -66,13 +66,13 @@ int main() {
             "  gl_Position = vec4(pos, 0.5, 1.0);\n"
             "  color = vec4(color0, 1.0);\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in vec4 color;\n"
             "out vec4 frag_color;\n"
             "void main() {\n"
             "  frag_color = color;\n"
-            "}\n"
+            "}\n",
     });
 
     // a pipeline state object, default states are fine

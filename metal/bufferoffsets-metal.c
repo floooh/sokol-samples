@@ -56,7 +56,7 @@ static void init(void) {
 
     // a shader and pipeline to render 2D shapes
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct vs_in {\n"
@@ -73,7 +73,7 @@ static void init(void) {
             "  out.color = float4(in.color, 1.0);\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "fragment float4 _main(float4 color [[stage_in]]) {\n"

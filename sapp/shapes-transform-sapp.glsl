@@ -1,7 +1,7 @@
 @ctype mat4 hmm_mat4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     float draw_mode;
     mat4 mvp;
 };

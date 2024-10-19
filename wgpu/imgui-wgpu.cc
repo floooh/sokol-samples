@@ -11,10 +11,6 @@
 #include "sokol_log.h"
 #include "imgui.h"
 
-#if !defined(__EMSCRIPTEN__)
-#include "GLFW/glfw3.h"
-#endif
-
 static const size_t MaxVertices = 64 * 1024;
 static const size_t MaxIndices = MaxVertices * 3;
 static const int Width = 1024;
@@ -98,17 +94,16 @@ static void init(void) {
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
-    state.bind.fs.images[0] = sg_make_image(&img_desc);
+    state.bind.images[0] = sg_make_image(&img_desc);
 
     sg_sampler_desc smp_desc = { };
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    state.bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
+    state.bind.samplers[0] = sg_make_sampler(&smp_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
-    shd_desc.vs.uniform_blocks[0].size = sizeof(vs_params_t);
-    shd_desc.vs.source =
+    shd_desc.vertex_func.source =
         "struct vs_params {\n"
         "  disp_size: vec2f,\n"
         "}\n"
@@ -125,17 +120,22 @@ static void init(void) {
         "  out.color = color;\n"
         "  return out;\n"
         "}\n";
-    shd_desc.fs.images[0].used = true;
-    shd_desc.fs.samplers[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
-    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
-    shd_desc.fs.source =
-        "@group(1) @binding(48) var tex: texture_2d<f32>;\n"
-        "@group(1) @binding(64) var smp: sampler;\n"
+    shd_desc.fragment_func.source =
+        "@group(1) @binding(0) var tex: texture_2d<f32>;\n"
+        "@group(1) @binding(1) var smp: sampler;\n"
         "@fragment fn main(@location(0) uv: vec2f, @location(1) color: vec4f) -> @location(0) vec4f {\n"
         "  return textureSample(tex, smp, uv) * color;\n"
         "}\n";
+    shd_desc.uniform_blocks[0].stage = SG_SHADERSTAGE_VERTEX;
+    shd_desc.uniform_blocks[0].size = sizeof(vs_params_t);
+    shd_desc.uniform_blocks[0].wgsl_group0_binding_n = 0;
+    shd_desc.images[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.images[0].wgsl_group1_binding_n = 0;
+    shd_desc.samplers[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.samplers[0].wgsl_group1_binding_n = 1;
+    shd_desc.image_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.image_sampler_pairs[0].sampler_slot = 0;
     sg_shader shd = sg_make_shader(&shd_desc);
 
     // pipeline object for imgui rendering
@@ -220,7 +220,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(state.pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
+    sg_apply_uniforms(0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

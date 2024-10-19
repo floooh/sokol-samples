@@ -45,15 +45,15 @@ void skinned_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 skin_weights, in vec4 ski
 @end
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 view_proj;
     float joint_pixel_width;
 };
 
 @image_sample_type joint_tex unfilterable_float
-uniform texture2D joint_tex;
+layout(binding=0) uniform texture2D joint_tex;
 @sampler_type smp nonfiltering
-uniform sampler smp;
+layout(binding=0) uniform sampler smp;
 
 in vec4 position;
 in vec4 normal;

@@ -6,7 +6,7 @@
 
 // same vertex shader for offscreen- and default-pass
 @vs vs
-uniform shape_uniforms {
+layout(binding=0) uniform shape_uniforms {
     mat4 mvp;           // model-view-projection matrix
     mat4 model;         // model matrix
     vec4 shape_color;
@@ -75,8 +75,8 @@ void main() {
 @include_block lighting
 @include_block fs_inputs
 
-uniform textureCube tex;
-uniform sampler smp;
+layout(binding=0) uniform textureCube tex;
+layout(binding=0) uniform sampler smp;
 out vec4 frag_color;
 
 void main() {
