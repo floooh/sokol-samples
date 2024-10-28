@@ -103,7 +103,7 @@ static void init(void) {
             "  float4 pos [[position]];\n"
             "  float4 color;\n"
             "};\n"
-            "vertex vs_out _main(constant params_t& params [[buffer(0)]], const device ssbo_t& ssbo [[buffer(1)]], uint vidx [[vertex_id]]) {\n"
+            "vertex vs_out _main(constant params_t& params [[buffer(0)]], const device ssbo_t& ssbo [[buffer(8)]], uint vidx [[vertex_id]]) {\n"
             "  vs_out out;\n"
             "  out.pos = params.mvp * ssbo.vtx[vidx].pos;\n"
             "  out.color = ssbo.vtx[vidx].color;\n"
@@ -123,7 +123,7 @@ static void init(void) {
         .storage_buffers[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
-            .msl_buffer_n = 1,
+            .msl_buffer_n = 8,
         },
     });
 

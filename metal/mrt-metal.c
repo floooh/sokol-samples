@@ -42,7 +42,7 @@ typedef struct {
 } params_t;
 
 static void init(void) {
-    /* setup sokol */
+    // setup sokol
     sg_setup(&(sg_desc){
         .environment = osx_environment(),
         .logger.func = slog_func,
