@@ -133,9 +133,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         "float4 main(float2 uv: TEXCOORD0, float4 color: COLOR0): SV_Target0 {\n"
         "  return tex.Sample(smp, uv) * color;\n"
         "}\n";
-    shd_desc.vertex_attrs[0].hlsl_sem_name = "POSITION";
-    shd_desc.vertex_attrs[1].hlsl_sem_name = "TEXCOORD";
-    shd_desc.vertex_attrs[2].hlsl_sem_name = "COLOR";
+    shd_desc.attrs[0].hlsl_sem_name = "POSITION";
+    shd_desc.attrs[1].hlsl_sem_name = "TEXCOORD";
+    shd_desc.attrs[2].hlsl_sem_name = "COLOR";
     shd_desc.uniform_blocks[0].stage = SG_SHADERSTAGE_VERTEX;
     shd_desc.uniform_blocks[0].size = sizeof(vs_params_t);
     shd_desc.uniform_blocks[0].hlsl_register_b_n = 0;

@@ -69,7 +69,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  float c = xy.x * xy.y;\n"
             "  return float4(c, c, c, 1.0);\n"
             "};\n",
-        .vertex_attrs[0].hlsl_sem_name = "POS",
+        .attrs[0].hlsl_sem_name = "POS",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .size = sizeof(fs_params_t),

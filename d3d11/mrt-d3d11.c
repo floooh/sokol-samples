@@ -268,7 +268,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  float4 c = float4(c0 + c1 + c2, 1.0);\n"
             "  return c;\n"
             "}\n",
-        .vertex_attrs[0].hlsl_sem_name = "POSITION",
+        .attrs[0].hlsl_sem_name = "POSITION",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(params_t),
@@ -331,7 +331,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "float4 main(float2 uv: TEXCOORD0): SV_Target0 {\n"
                 "  return float4(tex.Sample(smp, uv).xyz, 1.0);\n"
                 "}\n",
-            .vertex_attrs[0].hlsl_sem_name = "POSITION",
+            .attrs[0].hlsl_sem_name = "POSITION",
             .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 0 },
             .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_s_n = 0 },
             .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
