@@ -142,8 +142,7 @@ static void init(void) {
 
     // shader
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
+        .vertex_func = {
             .entry = "vs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -166,10 +165,7 @@ static void init(void) {
                 "  return out;\n"
                 "}\n"
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
+        .fragment_func = {
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -183,7 +179,25 @@ static void init(void) {
                 "{\n"
                 "  return float4(tex.sample(smp, in.uv).xyz, 1.0);\n"
                 "};\n"
-        }
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_texture_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_sampler_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // pipeline state
@@ -211,7 +225,7 @@ static void frame(void) {
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
-        .fs.images[0] = state.img,
+        .images[0] = state.img,
     };
     sg_begin_pass(&(sg_pass){ .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
@@ -220,9 +234,9 @@ static void frame(void) {
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
         hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
         vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
-        bind.fs.samplers[0] = state.smp[i];
+        bind.samplers[0] = state.smp[i];
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     sg_end_pass();

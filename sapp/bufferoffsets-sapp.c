@@ -67,8 +67,8 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [0].format=SG_VERTEXFORMAT_FLOAT2,
-                [1].format=SG_VERTEXFORMAT_FLOAT3
+                [ATTR_bufferoffsets_position].format=SG_VERTEXFORMAT_FLOAT2,
+                [ATTR_bufferoffsets_color0].format=SG_VERTEXFORMAT_FLOAT3
             }
         },
         .label = "pipeline",

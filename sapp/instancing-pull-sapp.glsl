@@ -3,7 +3,7 @@
 @ctype vec4 hmm_vec4
 
 @vs vs
-uniform vs_params {
+layout(binding=0) uniform vs_params {
     mat4 mvp;
 };
 
@@ -16,11 +16,11 @@ struct sb_instance {
     vec3 pos;
 };
 
-readonly buffer vertices {
+layout(binding=0) readonly buffer vertices {
     sb_vertex vtx[];
 };
 
-readonly buffer instances {
+layout(binding=1) readonly buffer instances {
     sb_instance inst[];
 };
 

@@ -124,12 +124,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // shader for non-textured cube, rendered in offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "COLOR"
-        },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
+        .vertex_func.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
             "};\n"
@@ -147,54 +142,73 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.color = inp.color;\n"
             "  return outp;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "float4 main(float4 color: COLOR0): SV_Target0 {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
+        .attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
+        }
     });
 
     // ...and a second shader for rendering a textured cube in the default pass
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
+        .vertex_func.source =
+            "cbuffer params: register(b0) {\n"
+            "  float4x4 mvp;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float4 pos: POSITION;\n"
+            "  float4 color: COLOR0;\n"
+            "  float2 uv: TEXCOORD0;\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 color: COLOR0;\n"
+            "  float2 uv: TEXCOORD0;\n"
+            "  float4 pos: SV_Position;\n"
+            "};\n"
+            "vs_out main(vs_in inp) {\n"
+            "  vs_out outp;\n"
+            "  outp.pos = mul(mvp, inp.pos);\n"
+            "  outp.color = inp.color;\n"
+            "  outp.uv = inp.uv;\n"
+            "  return outp;\n"
+            "}\n",
+        .fragment_func.source =
+            "Texture2D<float4> tex: register(t0);\n"
+            "sampler smp: register(s0);\n"
+            "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
+            "  return tex.Sample(smp, uv) + color * 0.5;\n"
+            "}\n",
         .attrs = {
-            [0].sem_name = "POSITION",
-            [1].sem_name = "COLOR",
-            [2].sem_name = "TEXCOORD"
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR",
+            [2].hlsl_sem_name = "TEXCOORD"
         },
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "cbuffer params: register(b0) {\n"
-                "  float4x4 mvp;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float4 pos: POSITION;\n"
-                "  float4 color: COLOR0;\n"
-                "  float2 uv: TEXCOORD0;\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float4 color: COLOR0;\n"
-                "  float2 uv: TEXCOORD0;\n"
-                "  float4 pos: SV_Position;\n"
-                "};\n"
-                "vs_out main(vs_in inp) {\n"
-                "  vs_out outp;\n"
-                "  outp.pos = mul(mvp, inp.pos);\n"
-                "  outp.color = inp.color;\n"
-                "  outp.uv = inp.uv;\n"
-                "  return outp;\n"
-                "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "Texture2D<float4> tex: register(t0);\n"
-                "sampler smp: register(s0);\n"
-                "float4 main(float4 color: COLOR0, float2 uv: TEXCOORD0): SV_Target0 {\n"
-                "  return tex.Sample(smp, uv) + color * 0.5;\n"
-                "}\n"
-        }
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .hlsl_register_t_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .hlsl_register_s_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // pipeline object for offscreen rendering
@@ -246,10 +260,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = {
-            .images[0] = color_img,
-            .samplers[0] = smp,
-        }
+        .images[0] = color_img,
+        .samplers[0] = smp,
     };
 
     // view-projection matrix
@@ -273,7 +285,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = offscreen_pass_action, .attachments = offscreen_attachments });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -281,7 +293,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_begin_pass(&(sg_pass){ .action = default_pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(default_pip);
         sg_apply_bindings(&default_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+        sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 

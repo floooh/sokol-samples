@@ -52,8 +52,8 @@ void init(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .layout = {
             .attrs = {
-                [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
+                [ATTR_quad_position].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_quad_color0].format   = SG_VERTEXFORMAT_FLOAT4
             }
         },
         .label = "quad-pipeline"

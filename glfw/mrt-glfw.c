@@ -145,14 +145,8 @@ int main() {
 
     // a shader to render the cube into offscreen MRT render targets
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0] = {
-            .size = sizeof(offscreen_params_t),
-            .uniforms = {
-                [0] = { .name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
-            }
-        },
-        .vs.source =
-            "#version 330\n"
+        .vertex_func.source =
+            "#version 410\n"
             "uniform mat4 mvp;\n"
             "layout(location=0) in vec4 position;\n"
             "layout(location=1) in float bright0;\n"
@@ -161,8 +155,8 @@ int main() {
             "  gl_Position = mvp * position;\n"
             "  bright = bright0;\n"
             "}\n",
-        .fs.source =
-            "#version 330\n"
+        .fragment_func.source =
+            "#version 410\n"
             "in float bright;\n"
             "layout(location=0) out vec4 frag_color_0;\n"
             "layout(location=1) out vec4 frag_color_1;\n"
@@ -171,7 +165,14 @@ int main() {
             "  frag_color_0 = vec4(bright, 0.0, 0.0, 1.0);\n"
             "  frag_color_1 = vec4(0.0, bright, 0.0, 1.0);\n"
             "  frag_color_2 = vec4(0.0, 0.0, bright, 1.0);\n"
-            "}\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(offscreen_params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
+            }
+        }
     });
 
     // resource bindings for offscreen rendering
@@ -220,66 +221,63 @@ int main() {
     // resource bindings to render the fullscreen quad
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_vbuf,
-        .fs.images = {
+        .images = {
             [0] = offscreen_attachments_desc.resolves[0].image,
             [1] = offscreen_attachments_desc.resolves[1].image,
             [2] = offscreen_attachments_desc.resolves[2].image,
         },
-        .fs.samplers[0] = smp,
+        .samplers[0] = smp,
     };
 
     /* a shader to render a fullscreen rectangle, which 'composes'
        the 3 offscreen render target images onto the screen */
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0] = {
-                .size = sizeof(params_t),
-                .uniforms = {
-                    [0] = { .name="offset", .type=SG_UNIFORMTYPE_FLOAT2}
-                }
-            },
-            .source =
-                "#version 330\n"
-                "uniform vec2 offset;"
-                "layout(location=0) in vec2 pos;\n"
-                "out vec2 uv0;\n"
-                "out vec2 uv1;\n"
-                "out vec2 uv2;\n"
-                "void main() {\n"
-                "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-                "  uv0 = pos + vec2(offset.x, 0.0);\n"
-                "  uv1 = pos + vec2(0.0, offset.y);\n"
-                "  uv2 = pos;\n"
-                "}\n",
+        .vertex_func.source =
+            "#version 410\n"
+            "uniform vec2 offset;"
+            "layout(location=0) in vec2 pos;\n"
+            "out vec2 uv0;\n"
+            "out vec2 uv1;\n"
+            "out vec2 uv2;\n"
+            "void main() {\n"
+            "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+            "  uv0 = pos + vec2(offset.x, 0.0);\n"
+            "  uv1 = pos + vec2(0.0, offset.y);\n"
+            "  uv2 = pos;\n"
+            "}\n",
+        .fragment_func.source =
+            "#version 410\n"
+            "uniform sampler2D tex0;\n"
+            "uniform sampler2D tex1;\n"
+            "uniform sampler2D tex2;\n"
+            "in vec2 uv0;\n"
+            "in vec2 uv1;\n"
+            "in vec2 uv2;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  vec3 c0 = texture(tex0, uv0).xyz;\n"
+            "  vec3 c1 = texture(tex1, uv1).xyz;\n"
+            "  vec3 c2 = texture(tex2, uv2).xyz;\n"
+            "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(params_t),
+            .glsl_uniforms = {
+                [0] = { .glsl_name = "offset", .type = SG_UNIFORMTYPE_FLOAT2 }
+            }
         },
-        .fs = {
-            .images = {
-                [0].used = true,
-                [1].used = true,
-                [2].used = true,
-            },
-            .samplers[0].used = true,
-            .image_sampler_pairs = {
-                [0] = { .used = true, .glsl_name = "tex0", .image_slot = 0, .sampler_slot = 0 },
-                [1] = { .used = true, .glsl_name = "tex1", .image_slot = 1, .sampler_slot = 0 },
-                [2] = { .used = true, .glsl_name = "tex2", .image_slot = 2, .sampler_slot = 0 },
-            },
-            .source =
-                "#version 330\n"
-                "uniform sampler2D tex0;\n"
-                "uniform sampler2D tex1;\n"
-                "uniform sampler2D tex2;\n"
-                "in vec2 uv0;\n"
-                "in vec2 uv1;\n"
-                "in vec2 uv2;\n"
-                "out vec4 frag_color;\n"
-                "void main() {\n"
-                "  vec3 c0 = texture(tex0, uv0).xyz;\n"
-                "  vec3 c1 = texture(tex1, uv1).xyz;\n"
-                "  vec3 c2 = texture(tex2, uv2).xyz;\n"
-                "  frag_color = vec4(c0 + c1 + c2, 1.0);\n"
-                "}\n"
-        }
+        .images = {
+            [0].stage = SG_SHADERSTAGE_FRAGMENT,
+            [1].stage = SG_SHADERSTAGE_FRAGMENT,
+            [2].stage = SG_SHADERSTAGE_FRAGMENT,
+        },
+        .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .image_sampler_pairs = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex0", .image_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex1", .image_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex2", .image_slot = 2, .sampler_slot = 0 },
+        },
     });
 
     // the pipeline object for the fullscreen rectangle
@@ -299,34 +297,30 @@ int main() {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(&(sg_shader_desc){
-            .vs = {
-                .source =
-                    "#version 330\n"
-                    "layout(location=0) in vec2 pos;\n"
-                    "out vec2 uv;\n"
-                    "void main() {\n"
-                    "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
-                    "  uv = pos;\n"
-                    "}\n",
-            },
-            .fs = {
-                .images[0].used = true,
-                .samplers[0].used = true,
-                .image_sampler_pairs[0] = { .used = true, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
-                .source =
-                    "#version 330\n"
-                    "uniform sampler2D tex;\n"
-                    "in vec2 uv;\n"
-                    "out vec4 frag_color;\n"
-                    "void main() {\n"
-                    "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
-                    "}\n"
-            }
+            .vertex_func.source =
+                "#version 410\n"
+                "layout(location=0) in vec2 pos;\n"
+                "out vec2 uv;\n"
+                "void main() {\n"
+                "  gl_Position = vec4(pos*2.0-1.0, 0.5, 1.0);\n"
+                "  uv = pos;\n"
+                "}\n",
+            .fragment_func.source =
+                "#version 330\n"
+                "uniform sampler2D tex;\n"
+                "in vec2 uv;\n"
+                "out vec4 frag_color;\n"
+                "void main() {\n"
+                "  frag_color = vec4(texture(tex,uv).xyz, 1.0);\n"
+                "}\n",
+            .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+            .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
         })
     });
     sg_bindings dbg_bind = {
         .vertex_buffers[0] = quad_vbuf,
-        .fs.samplers[0] = smp,
+        .samplers[0] = smp,
         // images will be filled right before rendering
     };
 
@@ -360,7 +354,7 @@ int main() {
         });
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
+        sg_apply_uniforms(0, &SG_RANGE(offscreen_params));
         sg_draw(0, 36, 1);
         sg_end_pass();
 
@@ -372,12 +366,12 @@ int main() {
         });
         sg_apply_pipeline(fsq_pip);
         sg_apply_bindings(&fsq_bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(params));
+        sg_apply_uniforms(0, &SG_RANGE(params));
         sg_draw(0, 4, 1);
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.fs.images[0] = offscreen_attachments_desc.resolves[i].image;
+            dbg_bind.images[0] = offscreen_attachments_desc.resolves[i].image;
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }

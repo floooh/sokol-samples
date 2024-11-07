@@ -88,13 +88,13 @@ static void init(void) {
 
     /* shader as precompiled metal lib */
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .bytecode = SG_RANGE(vs_bytecode)
+        .vertex_func.bytecode = SG_RANGE(vs_bytecode),
+        .fragment_func.bytecode = SG_RANGE(fs_bytecode),
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
         },
-        .fs = {
-            .bytecode = SG_RANGE(fs_bytecode)
-        }
     });
 
     /* pipeline object for rendering the cube */
@@ -132,7 +132,7 @@ static void frame() {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

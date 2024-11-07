@@ -116,8 +116,8 @@ void init(void) {
         state.scene1.pip = sg_make_pipeline(&(sg_pipeline_desc){
             .layout = {
                 .attrs = {
-                    [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3,
-                    [ATTR_vs_color0].format   = SG_VERTEXFORMAT_FLOAT4
+                    [ATTR_scene_position].format = SG_VERTEXFORMAT_FLOAT3,
+                    [ATTR_scene_color0].format   = SG_VERTEXFORMAT_FLOAT4
                 }
             },
             .shader = sg_make_shader(scene_shader_desc(sg_query_backend())),
@@ -180,7 +180,7 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     */
     sg_apply_pipeline(state.scene1.pip);
     sg_apply_bindings(&state.scene1.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
 }
 

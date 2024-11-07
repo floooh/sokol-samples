@@ -144,16 +144,13 @@ static void init(void) {
     state.default_bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs= {
-            .images[0] = resolve_img,
-            .samplers[0] = resolve_smp,
-        }
+        .images[0] = resolve_img,
+        .samplers[0] = resolve_smp,
     };
 
     // a shader for a non-textured cube, rendered in the offscreen pass
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
@@ -173,58 +170,73 @@ static void init(void) {
             "  out.color = in.color;\n"
             "  return out;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "fragment float4 _main(float4 color [[stage_in]]) {\n"
             "  return color;\n"
-            "};\n"
+            "};\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
     });
 
     // ...and another shader for the display-pass, rendering a textured cube
     // using the offscreen render target as texture */
     sg_shader default_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
-            .source =
-                "#include <metal_stdlib>\n"
-                "using namespace metal;\n"
-                "struct params_t {\n"
-                "  float4x4 mvp;\n"
-                "};\n"
-                "struct vs_in {\n"
-                "  float4 position [[attribute(0)]];\n"
-                "  float4 color [[attribute(1)]];\n"
-                "  float2 uv [[attribute(2)]];\n"
-                "};\n"
-                "struct vs_out {\n"
-                "  float4 pos [[position]];\n"
-                "  float4 color;\n"
-                "  float2 uv;\n"
-                "};\n"
-                "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
-                "  vs_out out;\n"
-                "  out.pos = params.mvp * in.position;\n"
-                "  out.color = in.color;\n"
-                "  out.uv = in.uv;\n"
-                "  return out;\n"
-                "}\n",
+        .vertex_func.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct params_t {\n"
+            "  float4x4 mvp;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float4 position [[attribute(0)]];\n"
+            "  float4 color [[attribute(1)]];\n"
+            "  float2 uv [[attribute(2)]];\n"
+            "};\n"
+            "struct vs_out {\n"
+            "  float4 pos [[position]];\n"
+            "  float4 color;\n"
+            "  float2 uv;\n"
+            "};\n"
+            "vertex vs_out _main(vs_in in [[stage_in]], constant params_t& params [[buffer(0)]]) {\n"
+            "  vs_out out;\n"
+            "  out.pos = params.mvp * in.position;\n"
+            "  out.color = in.color;\n"
+            "  out.uv = in.uv;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "#include <metal_stdlib>\n"
+            "using namespace metal;\n"
+            "struct fs_in {\n"
+            "  float4 color;\n"
+            "  float2 uv;\n"
+            "};\n"
+            "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
+            "  return float4(tex.sample(smp, in.uv).xyz + in.color.xyz * 0.5, 1.0);\n"
+            "};\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
         },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "#include <metal_stdlib>\n"
-                "using namespace metal;\n"
-                "struct fs_in {\n"
-                "  float4 color;\n"
-                "  float2 uv;\n"
-                "};\n"
-                "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
-                "  return float4(tex.sample(smp, in.uv).xyz + in.color.xyz * 0.5, 1.0);\n"
-                "};\n"
-        }
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_texture_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_sampler_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // pipeline-state-object for offscreen-rendered cube, don't need texture coord here
@@ -291,7 +303,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.offscreen_pip);
     sg_apply_bindings(&state.offscreen_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -303,7 +315,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.default_pip);
     sg_apply_bindings(&state.default_bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 

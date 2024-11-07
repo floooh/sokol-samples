@@ -81,7 +81,6 @@ static uint8_t phong_params_buffer[MAX_UNIFORMBLOCK_SIZE];
 // defined above.
 typedef struct {
     bool valid;
-    sg_shader_stage stage;
     int slot;
     size_t num_bytes;
     hmm_mat4* mvp;
@@ -92,7 +91,6 @@ typedef struct {
 
 typedef struct {
     bool valid;
-    sg_shader_stage stage;
     int slot;
     size_t num_bytes;
     hmm_vec3* light_dir;
@@ -119,12 +117,12 @@ typedef struct {
     // function pointers to code-generated runtime-reflection functions
     const sg_shader_desc* (*shader_desc_fn)(sg_backend backend);
     int (*attr_slot_fn)(const char* attr_name);
-    int (*image_slot_fn)(sg_shader_stage stage, const char* img_name);
-    int (*sampler_slot_fn)(sg_shader_stage stage, const char* smp_name);
-    int (*uniformblock_slot_fn)(sg_shader_stage stage, const char* ub_name);
-    size_t (*uniformblock_size_fn)(sg_shader_stage stage, const char* ub_name);
-    int (*uniform_offset_fn)(sg_shader_stage stage, const char* ub_name, const char* u_name);
-    sg_shader_uniform_desc (*uniform_desc_fn)(sg_shader_stage stage, const char* ub_name, const char* u_name);
+    int (*image_slot_fn)(const char* img_name);
+    int (*sampler_slot_fn)(const char* smp_name);
+    int (*uniformblock_slot_fn)(const char* ub_name);
+    size_t (*uniformblock_size_fn)(const char* ub_name);
+    int (*uniform_offset_fn)(const char* ub_name, const char* u_name);
+    sg_glsl_shader_uniform (*uniform_desc_fn)(const char* ub_name, const char* u_name);
 } shader_variation_t;
 
 // a helper struct to describe a dynamically looked up vertex component
@@ -298,10 +296,10 @@ static void draw_ui(void);
 static sg_vertex_layout_state vertex_layout_for_variation(const shader_variation_t* var);
 static void fill_vs_params(const shader_variation_t* var);
 static void fill_phong_params(const shader_variation_t* var);
-static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name);
-static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name);
-static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name);
-static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name);
+static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
 
 static void init(void) {
     // setup sokol-gfx
@@ -359,42 +357,40 @@ static void init(void) {
         }
 
         // check if the shader variation needs the joint texture
-        const int tex_slot = var->image_slot_fn(SG_SHADERSTAGE_VS, "joint_tex");
+        const int tex_slot = var->image_slot_fn("joint_tex");
         if (tex_slot >= 0) {
-            const int smp_slot = var->sampler_slot_fn(SG_SHADERSTAGE_VS, "smp");
-            var->bind.vs.images[tex_slot] = ozz_joint_texture();
-            var->bind.vs.samplers[smp_slot] = ozz_joint_sampler();
+            const int smp_slot = var->sampler_slot_fn("smp");
+            var->bind.images[tex_slot] = ozz_joint_texture();
+            var->bind.samplers[smp_slot] = ozz_joint_sampler();
         }
 
         // fill the pointerized uniform-block structs, a uniform pointer will be null
         // if the shader variation doesn't use a specific uniform
-        if (var->uniformblock_slot_fn(SG_SHADERSTAGE_VS, "vs_params") >= 0) {
+        if (var->uniformblock_slot_fn("vs_params") >= 0) {
             vs_params_ptr_t* p = &var->vs_params;
             uint8_t* base_ptr = vs_params_buffer;
             p->valid = true;
-            p->stage = SG_SHADERSTAGE_VS;
-            p->slot = var->uniformblock_slot_fn(p->stage, "vs_params");
-            p->num_bytes = var->uniformblock_size_fn(p->stage, "vs_params");
+            p->slot = var->uniformblock_slot_fn("vs_params");
+            p->num_bytes = var->uniformblock_size_fn("vs_params");
             assert(p->num_bytes <= MAX_UNIFORMBLOCK_SIZE);
-            p->mvp = uniform_ptr_mat4(var, base_ptr, p->stage, "vs_params", "mvp");
-            p->model = uniform_ptr_mat4(var, base_ptr, p->stage, "vs_params", "model");
-            p->joint_uv = uniform_ptr_vec2(var, base_ptr, p->stage, "vs_params", "joint_uv");
-            p->joint_pixel_width = uniform_ptr_float(var, base_ptr, p->stage, "vs_params", "joint_pixel_width");
+            p->mvp = uniform_ptr_mat4(var, base_ptr, "vs_params", "mvp");
+            p->model = uniform_ptr_mat4(var, base_ptr, "vs_params", "model");
+            p->joint_uv = uniform_ptr_vec2(var, base_ptr, "vs_params", "joint_uv");
+            p->joint_pixel_width = uniform_ptr_float(var, base_ptr, "vs_params", "joint_pixel_width");
         }
-        if (var->uniformblock_slot_fn(SG_SHADERSTAGE_FS, "phong_params") >= 0) {
+        if (var->uniformblock_slot_fn("phong_params") >= 0) {
             phong_params_ptr_t* p = &var->phong_params;
             uint8_t* base_ptr = phong_params_buffer;
             p->valid = true;
-            p->stage = SG_SHADERSTAGE_FS;
-            p->slot = var->uniformblock_slot_fn(p->stage, "phong_params");
-            p->num_bytes = var->uniformblock_size_fn(SG_SHADERSTAGE_FS, "phong_params");
+            p->slot = var->uniformblock_slot_fn("phong_params");
+            p->num_bytes = var->uniformblock_size_fn("phong_params");
             assert(p->num_bytes <= MAX_UNIFORMBLOCK_SIZE);
-            p->light_dir = uniform_ptr_vec3(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "light_dir");
-            p->eye_pos = uniform_ptr_vec3(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "eye_pos");
-            p->light_color = uniform_ptr_vec3(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "light_color");
-            p->mat_diffuse = uniform_ptr_vec3(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "mat_diffuse");
-            p->mat_specular = uniform_ptr_vec3(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "mat_specular");
-            p->mat_spec_power = uniform_ptr_float(var, base_ptr, SG_SHADERSTAGE_FS, "phong_params", "mat_spec_power");
+            p->light_dir = uniform_ptr_vec3(var, base_ptr, "phong_params", "light_dir");
+            p->eye_pos = uniform_ptr_vec3(var, base_ptr, "phong_params", "eye_pos");
+            p->light_color = uniform_ptr_vec3(var, base_ptr, "phong_params", "light_color");
+            p->mat_diffuse = uniform_ptr_vec3(var, base_ptr, "phong_params", "mat_diffuse");
+            p->mat_specular = uniform_ptr_vec3(var, base_ptr, "phong_params", "mat_specular");
+            p->mat_spec_power = uniform_ptr_float(var, base_ptr, "phong_params", "mat_spec_power");
         }
 
         // create shader and pipeline object, note that the shader and
@@ -495,11 +491,11 @@ static void frame(void) {
         // update uniform data as needed by the current shader variation
         if (var->vs_params.valid) {
             fill_vs_params(var);
-            sg_apply_uniforms(var->vs_params.stage, var->vs_params.slot, &(sg_range){vs_params_buffer, var->vs_params.num_bytes});
+            sg_apply_uniforms(var->vs_params.slot, &(sg_range){vs_params_buffer, var->vs_params.num_bytes});
         }
         if (var->phong_params.valid) {
             fill_phong_params(var);
-            sg_apply_uniforms(var->phong_params.stage, var->phong_params.slot, &(sg_range){phong_params_buffer, var->phong_params.num_bytes});
+            sg_apply_uniforms(var->phong_params.slot, &(sg_range){phong_params_buffer, var->phong_params.num_bytes});
         }
 
         sg_draw(0, ozz_num_triangle_indices(state.ozz), 1);
@@ -640,31 +636,31 @@ static void fill_phong_params(const shader_variation_t* var) {
 
 // type-safe helper function to dynamically resolve a pointer to a uniform-block item,
 // returns a nullptr if the item doesn't exist, asserts if the type doesn't match
-static uint8_t* uniform_ptr(const shader_variation_t* var, uint8_t* base_ptr, sg_uniform_type expected_type, sg_shader_stage stage, const char* ub_name, const char* u_name) {
+static uint8_t* uniform_ptr(const shader_variation_t* var, uint8_t* base_ptr, sg_uniform_type expected_type, const char* ub_name, const char* u_name) {
     assert(var && base_ptr);
-    int offset = var->uniform_offset_fn(stage, ub_name, u_name);
+    int offset = var->uniform_offset_fn(ub_name, u_name);
     if (offset < 0) {
         return 0;
     }
-    assert(var->uniform_desc_fn(stage, ub_name, u_name).type == expected_type);
+    assert(var->uniform_desc_fn(ub_name, u_name).type == expected_type);
     (void)expected_type;
     return base_ptr + offset;
 }
 
-static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name) {
-    return (hmm_mat4*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_MAT4, stage, ub_name, u_name);
+static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (hmm_mat4*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_MAT4, ub_name, u_name);
 }
 
-static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name) {
-    return (hmm_vec2*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT2, stage, ub_name, u_name);
+static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (hmm_vec2*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT2, ub_name, u_name);
 }
 
-static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name) {
-    return (hmm_vec3*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT3, stage, ub_name, u_name);
+static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (hmm_vec3*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT3, ub_name, u_name);
 }
 
-static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, sg_shader_stage stage, const char* ub_name, const char* u_name) {
-    return (float*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT, stage, ub_name, u_name);
+static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (float*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT, ub_name, u_name);
 }
 
 static void draw_ui(void) {

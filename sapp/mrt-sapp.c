@@ -83,7 +83,7 @@ void create_offscreen_attachments(int width, int height) {
 
     // also need to update the fullscreen-quad texture bindings
     for (int i = 0; i < 3; i++) {
-        state.fsq.bind.fs.images[i] = state.offscreen.atts_desc.resolves[i].image;
+        state.fsq.bind.images[i] = state.offscreen.atts_desc.resolves[i].image;
     }
 }
 
@@ -194,8 +194,8 @@ void init(void) {
         .layout = {
             .buffers[0].stride = sizeof(vertex_t),
             .attrs = {
-                [ATTR_vs_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [ATTR_vs_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+                [ATTR_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [ATTR_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
             }
         },
         .shader = offscreen_shd,
@@ -230,7 +230,7 @@ void init(void) {
     // the pipeline object to render the fullscreen quad
     state.fsq.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[ATTR_vs_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
@@ -248,20 +248,18 @@ void init(void) {
     // resource bindings to render a fullscreen quad
     state.fsq.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
-        .fs = {
-            .images = {
-                [SLOT_tex0] = state.offscreen.atts_desc.resolves[0].image,
-                [SLOT_tex1] = state.offscreen.atts_desc.resolves[1].image,
-                [SLOT_tex2] = state.offscreen.atts_desc.resolves[2].image
-            },
-            .samplers[SLOT_smp] = smp,
-        }
+        .images = {
+            [IMG_tex0] = state.offscreen.atts_desc.resolves[0].image,
+            [IMG_tex1] = state.offscreen.atts_desc.resolves[1].image,
+            [IMG_tex2] = state.offscreen.atts_desc.resolves[2].image
+        },
+        .samplers[SMP_smp] = smp,
     };
 
     // pipeline and resource bindings to render debug-visualization quads
     state.dbg.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .attrs[ATTR_vs_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
@@ -269,7 +267,7 @@ void init(void) {
     }),
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
-        .fs.samplers[SLOT_smp] = smp,
+        .samplers[SMP_smp] = smp,
         // images will be filled right before rendering
     };
 }
@@ -295,7 +293,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &SG_RANGE(offscreen_params));
+    sg_apply_uniforms(UB_offscreen_params, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -303,12 +301,12 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_fsq_params, &SG_RANGE(fsq_params));
+    sg_apply_uniforms(UB_fsq_params, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[SLOT_tex] = state.offscreen.atts_desc.resolves[i].image;
+        state.dbg.bind.images[IMG_tex] = state.offscreen.atts_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

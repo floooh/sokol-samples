@@ -1,7 +1,7 @@
 @ctype mat4 hmm_mat4
 
 @vs vs_cube
-uniform cube_vs_params {
+layout(binding=0) uniform cube_vs_params {
     mat4 mvp;
 };
 in vec4 pos;
@@ -34,7 +34,7 @@ void main() {
 @end
 
 @fs fs_bg
-uniform bg_fs_params {
+layout(binding=0) uniform bg_fs_params {
     float tick;
 };
 

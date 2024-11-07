@@ -120,21 +120,22 @@ int main() {
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
-    bind.fs.images[0] = sg_make_image(&img_desc);
+    bind.images[0] = sg_make_image(&img_desc);
 
     sg_sampler_desc smp_desc = { };
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
+    bind.samplers[0] = sg_make_sampler(&smp_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
-    auto& ub = shd_desc.vs.uniform_blocks[0];
+    auto& ub = shd_desc.uniform_blocks[0];
+    ub.stage = SG_SHADERSTAGE_VERTEX;
     ub.size = sizeof(vs_params_t);
-    ub.uniforms[0].name = "disp_size";
-    ub.uniforms[0].type = SG_UNIFORMTYPE_FLOAT2;
-    shd_desc.vs.source =
-        "#version 330\n"
+    ub.glsl_uniforms[0].glsl_name = "disp_size";
+    ub.glsl_uniforms[0].type = SG_UNIFORMTYPE_FLOAT2;
+    shd_desc.vertex_func.source =
+        "#version 410\n"
         "uniform vec2 disp_size;\n"
         "layout(location=0) in vec2 position;\n"
         "layout(location=1) in vec2 texcoord0;\n"
@@ -146,14 +147,8 @@ int main() {
         "    uv = texcoord0;\n"
         "    color = color0;\n"
         "}\n";
-    shd_desc.fs.images[0].used = true;
-    shd_desc.fs.samplers[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].glsl_name = "tex";
-    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
-    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
-    shd_desc.fs.source =
-        "#version 330\n"
+    shd_desc.fragment_func.source =
+        "#version 410\n"
         "uniform sampler2D tex;\n"
         "in vec2 uv;\n"
         "in vec4 color;\n"
@@ -161,6 +156,12 @@ int main() {
         "void main() {\n"
         "    frag_color = texture(tex, uv) * color;\n"
         "}\n";
+    shd_desc.images[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.samplers[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.image_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.image_sampler_pairs[0].glsl_name = "tex";
+    shd_desc.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.image_sampler_pairs[0].sampler_slot = 0;
     sg_shader shd = sg_make_shader(&shd_desc);
 
     // pipeline object for imgui rendering
@@ -246,7 +247,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params_t vs_params;
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
+    sg_apply_uniforms(0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

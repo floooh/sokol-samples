@@ -71,6 +71,7 @@ samples = [
     [ 'primtypes', 'primtypes-sapp.c', 'primtypes-sapp.glsl'],
     [ 'uvwrap', 'uvwrap-sapp.c', 'uvwrap-sapp.glsl'],
     [ 'mipmap', 'mipmap-sapp.c', 'mipmap-sapp.glsl'],
+    [ 'shared-bindings', 'shared-bindings-sapp.c', 'shared-bindings-sapp.glsl' ],
     [ 'uniformtypes', 'uniformtypes-sapp.c', 'uniformtypes-sapp.glsl' ],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
     [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],

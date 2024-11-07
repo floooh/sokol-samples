@@ -138,10 +138,10 @@ static void init(void) {
     });
 
     // allocate a texture handle, but initialize the texture later after data is loaded
-    state.bind.fs.images[SLOT_tex] = sg_alloc_image();
+    state.bind.images[IMG_tex] = sg_alloc_image();
 
     // a sampler object
-    state.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .label = "cubemap-sampler"
@@ -149,7 +149,7 @@ static void init(void) {
 
     // a pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout.attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
+        .layout.attrs[ATTR_cubemap_pos].format = SG_VERTEXFORMAT_FLOAT3,
         .shader = sg_make_shader(cubemap_shader_desc(sg_query_backend())),
         .index_type = SG_INDEXTYPE_UINT16,
         .depth = {
@@ -193,7 +193,7 @@ static void fetch_cb(const sfetch_response_t* response) {
             stbi_image_free(decoded_pixels);
             // all 6 faces loaded?
             if (++state.load_count == SG_CUBEFACE_NUM) {
-                sg_init_image(state.bind.fs.images[SLOT_tex], &(sg_image_desc){
+                sg_init_image(state.bind.images[IMG_tex], &(sg_image_desc){
                     .type = SG_IMAGETYPE_CUBE,
                     .width = width,
                     .height = height,
@@ -237,7 +237,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind),
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sdtx_draw();
     __dbgui_draw();

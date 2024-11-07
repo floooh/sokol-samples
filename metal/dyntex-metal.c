@@ -42,13 +42,13 @@ static void init(void) {
     });
 
     // a 128x128 image with streaming update strategy
-    state.bind.fs.images[0] = sg_make_image(&(sg_image_desc){
+    state.bind.images[0] = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage = SG_USAGE_STREAM,
     });
-    state.bind.fs.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
+    state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -106,8 +106,7 @@ static void init(void) {
 
     // a shader to render a textured cube
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
+        .vertex_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct params_t {\n"
@@ -130,10 +129,7 @@ static void init(void) {
             "  out.uv = in.uv;\n"
             "  return out;\n"
             "}\n",
-        .fs.images[0].used = true,
-        .fs.samplers[0].used = true,
-        .fs.image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-        .fs.source =
+        .fragment_func.source =
             "#include <metal_stdlib>\n"
             "using namespace metal;\n"
             "struct fs_in {\n"
@@ -142,7 +138,25 @@ static void init(void) {
             "};\n"
             "fragment float4 _main(fs_in in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {\n"
             "  return float4(tex.sample(smp, in.uv).xyz, 1.0) * in.color;\n"
-            "};\n"
+            "};\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
+        .images[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_texture_n = 0,
+        },
+        .samplers[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .msl_sampler_n = 0,
+        },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
+        },
     });
 
     // a pipeline state object
@@ -185,7 +199,7 @@ static void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.fs.images[0], &(sg_image_data){
+    sg_update_image(state.bind.images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
@@ -193,7 +207,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
     sg_commit();

@@ -48,8 +48,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs[0].sem_name = "POS",
-        .vs.source =
+        .vertex_func.source =
             "struct vs_in {\n"
             "  float2 pos: POS;\n"
             "};\n"
@@ -61,18 +60,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.pos = float4(inp.pos, 0.5, 1.0);\n"
             "  return outp;\n"
             "};\n",
-        .fs = {
-            .uniform_blocks[0].size = sizeof(fs_params_t),
-            .source =
-                "cbuffer params: register(b0) {\n"
-                "  float tick;\n"
-                "};\n"
-                "float4 main(float4 frag_coord: SV_Position): SV_Target0 {\n"
-                "  float2 xy = frac((frag_coord.xy-float2(tick,tick)) / 50.0);\n"
-                "  float c = xy.x * xy.y;\n"
-                "  return float4(c, c, c, 1.0);\n"
-                "};\n"
-        }
+        .fragment_func.source =
+            "cbuffer params: register(b0) {\n"
+            "  float tick;\n"
+            "};\n"
+            "float4 main(float4 frag_coord: SV_Position): SV_Target0 {\n"
+            "  float2 xy = frac((frag_coord.xy-float2(tick,tick)) / 50.0);\n"
+            "  float c = xy.x * xy.y;\n"
+            "  return float4(c, c, c, 1.0);\n"
+            "};\n",
+        .attrs[0].hlsl_sem_name = "POS",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(fs_params_t),
+            .hlsl_register_b_n = 0,
+        },
     });
 
     // a pipeline state object for rendering the background quad
@@ -87,12 +89,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
-        .attrs = {
-            [0].sem_name = "POS",
-            [1].sem_name = "COLOR"
-        },
-        .vs.uniform_blocks[0].size = sizeof(vs_params_t),
-        .vs.source =
+        .vertex_func.source =
             "cbuffer params: register(b0) {\n"
             "  float4x4 mvp;\n"
             "};\n"
@@ -110,10 +107,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  outp.color = inp.color;\n"
             "  return outp;\n"
             "}\n",
-        .fs.source =
+        .fragment_func.source =
             "float4 main(float4 color: COLOR): SV_Target0 {\n"
             "  return color;\n"
-            "}\n"
+            "}\n",
+        .attrs = {
+            [0].hlsl_sem_name = "POS",
+            [1].hlsl_sem_name = "COLOR"
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .hlsl_register_b_n = 0,
+        },
     });
 
     // one pipeline object per blend-factor combination
@@ -169,7 +175,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         // draw a background quad
         sg_apply_pipeline(bg_pip);
         sg_apply_bindings(&bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(fs_params));
+        sg_apply_uniforms(0, &SG_RANGE(fs_params));
         sg_draw(0, 4, 1);
 
         // draw the blended quads
@@ -185,7 +191,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
                 sg_apply_pipeline(pips[src][dst]);
                 sg_apply_bindings(&bind);
-                sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(vs_params));
+                sg_apply_uniforms(0, &SG_RANGE(vs_params));
                 sg_draw(0, 4, 1);
             }
         }

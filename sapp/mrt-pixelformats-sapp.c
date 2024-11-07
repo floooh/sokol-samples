@@ -128,9 +128,9 @@ static void init(void) {
             .layout = {
                 .buffers[0] = sshape_vertex_buffer_layout_state(),
                 .attrs = {
-                    [ATTR_vs_offscreen_in_pos]    = sshape_position_vertex_attr_state(),
-                    [ATTR_vs_offscreen_in_normal] = sshape_normal_vertex_attr_state(),
-                    [ATTR_vs_offscreen_in_color]  = sshape_color_vertex_attr_state()
+                    [ATTR_offscreen_in_pos]    = sshape_position_vertex_attr_state(),
+                    [ATTR_offscreen_in_normal] = sshape_normal_vertex_attr_state(),
+                    [ATTR_offscreen_in_color]  = sshape_color_vertex_attr_state()
                 }
             },
             .depth = {
@@ -174,7 +174,7 @@ static void init(void) {
         state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
             .shader = sg_make_shader(quad_shader_desc(sg_query_backend())),
             .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-            .layout.attrs[ATTR_vs_quad_pos].format = SG_VERTEXFORMAT_FLOAT2,
+            .layout.attrs[ATTR_quad_pos].format = SG_VERTEXFORMAT_FLOAT2,
         });
 
         // a sampler for sampling the offscreen render target as textures
@@ -224,7 +224,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_offscreen_params, &SG_RANGE(offscreen_params));
+    sg_apply_uniforms(UB_offscreen_params, &SG_RANGE(offscreen_params));
     sg_draw(state.offscreen.donut.base_element, state.offscreen.donut.num_elements, 1);
     sg_end_pass();
 
@@ -238,7 +238,7 @@ static void frame(void) {
     const int y0 = (disp_height - quad_height) / 2;
     sg_bindings bindings = {
         .vertex_buffers[0] = state.display.vbuf,
-        .fs.samplers[SLOT_smp] = state.display.smp,
+        .samplers[SMP_smp] = state.display.smp,
     };
 
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
@@ -248,22 +248,22 @@ static void frame(void) {
         sg_apply_viewport(x0 + i*(quad_width+quad_gap), y0, quad_width, quad_height, true);
         switch (i) {
             case 0:
-                bindings.fs.images[0] = state.offscreen.depth_img;
+                bindings.images[IMG_tex] = state.offscreen.depth_img;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 1:
-                bindings.fs.images[0] = state.offscreen.normal_img;
+                bindings.images[IMG_tex] = state.offscreen.normal_img;
                 quad_params.color_bias = 1.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 2:
-                bindings.fs.images[0] = state.offscreen.color_img;
+                bindings.images[IMG_tex] = state.offscreen.color_img;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 1.0f;
                 break;
         }
-        sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_quad_params, &SG_RANGE(quad_params));
+        sg_apply_uniforms(UB_quad_params, &SG_RANGE(quad_params));
         sg_apply_bindings(&bindings);
         sg_draw(0, 4, 1);
     }

@@ -199,18 +199,18 @@ static void init(void) {
     pip_desc.layout.buffers[0].stride = sizeof(vertex_t);
     pip_desc.layout.buffers[1].stride = sizeof(instance_t);
     pip_desc.layout.buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE;
-    pip_desc.layout.attrs[ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3;
-    pip_desc.layout.attrs[ATTR_vs_normal].format = SG_VERTEXFORMAT_BYTE4N;
-    pip_desc.layout.attrs[ATTR_vs_jindices].format = SG_VERTEXFORMAT_UBYTE4N;
-    pip_desc.layout.attrs[ATTR_vs_jweights].format = SG_VERTEXFORMAT_UBYTE4N;
-    pip_desc.layout.attrs[ATTR_vs_inst_xxxx].format = SG_VERTEXFORMAT_FLOAT4;
-    pip_desc.layout.attrs[ATTR_vs_inst_xxxx].buffer_index = 1;
-    pip_desc.layout.attrs[ATTR_vs_inst_yyyy].format = SG_VERTEXFORMAT_FLOAT4;
-    pip_desc.layout.attrs[ATTR_vs_inst_yyyy].buffer_index = 1;
-    pip_desc.layout.attrs[ATTR_vs_inst_zzzz].format = SG_VERTEXFORMAT_FLOAT4;
-    pip_desc.layout.attrs[ATTR_vs_inst_zzzz].buffer_index = 1;
-    pip_desc.layout.attrs[ATTR_vs_inst_joint_uv].format = SG_VERTEXFORMAT_FLOAT2;
-    pip_desc.layout.attrs[ATTR_vs_inst_joint_uv].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_skinned_position].format = SG_VERTEXFORMAT_FLOAT3;
+    pip_desc.layout.attrs[ATTR_skinned_normal].format = SG_VERTEXFORMAT_BYTE4N;
+    pip_desc.layout.attrs[ATTR_skinned_jindices].format = SG_VERTEXFORMAT_UBYTE4N;
+    pip_desc.layout.attrs[ATTR_skinned_jweights].format = SG_VERTEXFORMAT_UBYTE4N;
+    pip_desc.layout.attrs[ATTR_skinned_inst_xxxx].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_skinned_inst_xxxx].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_skinned_inst_yyyy].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_skinned_inst_yyyy].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_skinned_inst_zzzz].format = SG_VERTEXFORMAT_FLOAT4;
+    pip_desc.layout.attrs[ATTR_skinned_inst_zzzz].buffer_index = 1;
+    pip_desc.layout.attrs[ATTR_skinned_inst_joint_uv].format = SG_VERTEXFORMAT_FLOAT2;
+    pip_desc.layout.attrs[ATTR_skinned_inst_joint_uv].buffer_index = 1;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     // ozz mesh data appears to have counter-clock-wise face winding
     pip_desc.face_winding = SG_FACEWINDING_CCW;
@@ -230,7 +230,7 @@ static void init(void) {
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
     img_desc.usage = SG_USAGE_STREAM;
     state.joint_texture = sg_make_image(&img_desc);
-    state.bind.vs.images[SLOT_joint_tex] = state.joint_texture;
+    state.bind.images[IMG_joint_tex] = state.joint_texture;
 
     sg_sampler_desc smp_desc = { };
     smp_desc.min_filter = SG_FILTER_NEAREST;
@@ -238,7 +238,7 @@ static void init(void) {
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
     state.smp = sg_make_sampler(&smp_desc);
-    state.bind.vs.samplers[SLOT_smp] = state.smp;
+    state.bind.samplers[SMP_smp] = state.smp;
 
     // create an sokol-imgui wrapper for the joint texture
     simgui_image_desc_t simgui_img_desc = { };
@@ -398,7 +398,7 @@ static void frame(void) {
         vs_params.joint_pixel_width = 1.0f / (float)state.joint_texture_width;
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+        sg_apply_uniforms(UB_vs_params, SG_RANGE_REF(vs_params));
         if (state.draw_enabled) {
             sg_draw(0, state.num_triangle_indices, state.num_instances);
         }

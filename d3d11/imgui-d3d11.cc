@@ -98,21 +98,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.data.subimage[0][0].ptr = font_pixels;
     img_desc.data.subimage[0][0].size = font_width * font_height * 4;
-    bind.fs.images[0] = sg_make_image(&img_desc);
+    bind.images[0] = sg_make_image(&img_desc);
     sg_sampler_desc smp_desc = { };
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    bind.fs.samplers[0] = sg_make_sampler(&smp_desc);
+    bind.samplers[0] = sg_make_sampler(&smp_desc);
 
     // shader object for imgui rendering
     sg_shader_desc shd_desc = { };
-    auto& ub = shd_desc.vs.uniform_blocks[0];
-    ub.size = sizeof(vs_params_t);
-    shd_desc.attrs[0].sem_name = "POSITION";
-    shd_desc.attrs[1].sem_name = "TEXCOORD";
-    shd_desc.attrs[2].sem_name = "COLOR";
-    shd_desc.vs.source =
-        "cbuffer params {\n"
+    shd_desc.vertex_func.source =
+        "cbuffer params: register(b0) {\n"
         "  float2 disp_size;\n"
         "};\n"
         "struct vs_in {\n"
@@ -132,26 +127,34 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         "  outp.color = inp.color;\n"
         "  return outp;\n"
         "}\n";
-    shd_desc.fs.images[0].used = true;
-    shd_desc.fs.samplers[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].used = true;
-    shd_desc.fs.image_sampler_pairs[0].image_slot = 0;
-    shd_desc.fs.image_sampler_pairs[0].sampler_slot = 0;
-    shd_desc.fs.source =
+    shd_desc.fragment_func.source =
         "Texture2D<float4> tex: register(t0);\n"
         "sampler smp: register(s0);\n"
         "float4 main(float2 uv: TEXCOORD0, float4 color: COLOR0): SV_Target0 {\n"
         "  return tex.Sample(smp, uv) * color;\n"
         "}\n";
+    shd_desc.attrs[0].hlsl_sem_name = "POSITION";
+    shd_desc.attrs[1].hlsl_sem_name = "TEXCOORD";
+    shd_desc.attrs[2].hlsl_sem_name = "COLOR";
+    shd_desc.uniform_blocks[0].stage = SG_SHADERSTAGE_VERTEX;
+    shd_desc.uniform_blocks[0].size = sizeof(vs_params_t);
+    shd_desc.uniform_blocks[0].hlsl_register_b_n = 0;
+    shd_desc.images[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.images[0].hlsl_register_t_n = 0,
+    shd_desc.samplers[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.samplers[0].hlsl_register_s_n = 0;
+    shd_desc.image_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.image_sampler_pairs[0].image_slot = 0;
+    shd_desc.image_sampler_pairs[0].sampler_slot = 0;
     sg_shader shd = sg_make_shader(&shd_desc);
 
     // pipeline object for imgui rendering
     sg_pipeline_desc pip_desc = { };
     pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
     auto& attrs = pip_desc.layout.attrs;
-    attrs[0].offset=offsetof(ImDrawVert, pos); attrs[0].format=SG_VERTEXFORMAT_FLOAT2;
-    attrs[1].offset=offsetof(ImDrawVert, uv); attrs[1].format=SG_VERTEXFORMAT_FLOAT2;
-    attrs[2].offset=offsetof(ImDrawVert, col); attrs[2].format=SG_VERTEXFORMAT_UBYTE4N;
+    attrs[0].offset = offsetof(ImDrawVert, pos); attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[1].offset = offsetof(ImDrawVert, uv);  attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
+    attrs[2].offset = offsetof(ImDrawVert, col); attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.shader = shd;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     pip_desc.colors[0].blend.enabled = true;
@@ -227,7 +230,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, SG_RANGE(vs_params));
+    sg_apply_uniforms(0, SG_RANGE(vs_params));
     for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 

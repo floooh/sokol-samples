@@ -63,7 +63,7 @@ void init(void) {
         .layout = {
             .buffers[0].stride = 28,
             .attrs = {
-                [ATTR_vs_bg_position].format=SG_VERTEXFORMAT_FLOAT2
+                [ATTR_bg_position].format=SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = bg_shd,
@@ -77,8 +77,8 @@ void init(void) {
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
-                [ATTR_vs_quad_position].format=SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_quad_color0].format=SG_VERTEXFORMAT_FLOAT4
+                [ATTR_quad_position].format=SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_quad_color0].format=SG_VERTEXFORMAT_FLOAT4
             }
         },
         .shader = quad_shd,
@@ -114,7 +114,7 @@ void frame(void) {
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_bg_fs_params, &SG_RANGE(state.bg_fs_params));
+    sg_apply_uniforms(UB_bg_fs_params, &SG_RANGE(state.bg_fs_params));
     sg_draw(0, 4, 1);
 
     // draw the blended quads
@@ -130,7 +130,7 @@ void frame(void) {
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_quad_vs_params, &SG_RANGE(state.quad_vs_params));
+            sg_apply_uniforms(UB_quad_vs_params, &SG_RANGE(state.quad_vs_params));
             sg_draw(0, 4, 1);
         }
     }

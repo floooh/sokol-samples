@@ -112,9 +112,9 @@ void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [ATTR_vs_position].format  = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_color0].format    = SG_VERTEXFORMAT_FLOAT4,
-                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
+                [ATTR_dyntex_position].format  = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_dyntex_color0].format    = SG_VERTEXFORMAT_FLOAT4,
+                [ATTR_dyntex_texcoord0].format = SG_VERTEXFORMAT_FLOAT2
             }
         },
         .shader = shd,
@@ -131,7 +131,8 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .fs = { .images[SLOT_tex] = img, .samplers[SLOT_smp] = smp },
+        .images[IMG_tex] = img,
+        .samplers[SMP_smp] = smp,
     };
 
     // initialize the game-of-life state
@@ -155,7 +156,7 @@ void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.fs.images[0], &(sg_image_data){
+    sg_update_image(state.bind.images[0], &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 
@@ -163,7 +164,7 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     __dbgui_draw();
     sg_end_pass();

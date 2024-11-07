@@ -70,7 +70,7 @@ static void init(void) {
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(uvwrap_shader_desc(sg_query_backend())),
         .layout = {
-            .attrs[ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT2
+            .attrs[ATTR_uvwrap_pos].format = SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .depth = {
@@ -91,10 +91,8 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .fs = {
-                .images[SLOT_tex] = state.img,
-                .samplers[SLOT_smp] = state.smp[i],
-            }
+            .images[IMG_tex] = state.img,
+            .samplers[SMP_smp] = state.smp[i],
         });
         float x_offset = 0, y_offset = 0;
         switch (i) {
@@ -107,7 +105,7 @@ static void frame(void) {
             .offset = { x_offset, y_offset },
             .scale = { 0.4f, 0.4f }
         };
-        sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+        sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
     __dbgui_draw();

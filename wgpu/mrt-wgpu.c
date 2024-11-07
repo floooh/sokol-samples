@@ -172,38 +172,38 @@ static void init(void) {
 
     // a shader to render a cube into MRT offscreen render targets
     sg_shader offscreen_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(offscreen_params_t),
-            .source =
-                "struct params {\n"
-                "  mvp: mat4x4f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) bright: f32,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec4f, @location(1) bright: f32) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = in.mvp * pos;\n"
-                "  out.bright = bright;\n"
-                "  return out;\n"
-                "}\n",
-        },
-        .fs = {
-            .source =
-                "struct fs_out {\n"
-                "  @location(0) c0: vec4f,\n"
-                "  @location(1) c1: vec4f,\n"
-                "  @location(2) c2: vec4f,\n"
-                "};\n"
-                "@fragment fn main(@location(0) b: f32) -> fs_out {\n"
-                "  var out: fs_out;\n"
-                "  out.c0 = vec4f(b, 0, 0, 1);\n"
-                "  out.c1 = vec4f(0, b, 0, 1);\n"
-                "  out.c2 = vec4f(0, 0, b, 1);\n"
-                "  return out;\n"
-                "}\n",
+        .vertex_func.source =
+            "struct params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) bright: f32,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec4f, @location(1) bright: f32) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = in.mvp * pos;\n"
+            "  out.bright = bright;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "struct fs_out {\n"
+            "  @location(0) c0: vec4f,\n"
+            "  @location(1) c1: vec4f,\n"
+            "  @location(2) c2: vec4f,\n"
+            "};\n"
+            "@fragment fn main(@location(0) b: f32) -> fs_out {\n"
+            "  var out: fs_out;\n"
+            "  out.c0 = vec4f(b, 0, 0, 1);\n"
+            "  out.c1 = vec4f(0, b, 0, 1);\n"
+            "  out.c2 = vec4f(0, 0, b, 1);\n"
+            "  return out;\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(offscreen_params_t),
+            .wgsl_group0_binding_n = 0,
         },
         .label = "offscreen-shader",
     });
@@ -259,52 +259,54 @@ static void init(void) {
     // a shader to render a fullscreen rectangle, which 'composes'
     // the 3 offscreen render target images onto the screen
     sg_shader fsq_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(fsq_params_t),
-            .source =
-                "struct params {\n"
-                "  offset: vec2f,\n"
-                "}\n"
-                "@group(0) @binding(0) var<uniform> in: params;\n"
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv0: vec2f,\n"
-                "  @location(1) uv1: vec2f,\n"
-                "  @location(2) uv2: vec2f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = vec4f((pos * 2 - 1), 0.5, 1);\n"
-                "  out.uv0 = pos + vec2f(in.offset.x, 0);\n"
-                "  out.uv1 = pos + vec2f(0, in.offset.y);\n"
-                "  out.uv2 = pos;\n"
-                "  return out;\n"
-                "}\n",
+        .vertex_func.source =
+            "struct params {\n"
+            "  offset: vec2f,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: params;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv0: vec2f,\n"
+            "  @location(1) uv1: vec2f,\n"
+            "  @location(2) uv2: vec2f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = vec4f((pos * 2 - 1), 0.5, 1);\n"
+            "  out.uv0 = pos + vec2f(in.offset.x, 0);\n"
+            "  out.uv1 = pos + vec2f(0, in.offset.y);\n"
+            "  out.uv2 = pos;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex0: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var tex1: texture_2d<f32>;\n"
+            "@group(1) @binding(2) var tex2: texture_2d<f32>;\n"
+            "@group(1) @binding(3) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv0: vec2f, @location(1) uv1: vec2f, @location(2) uv2: vec2f) -> @location(0) vec4f {\n"
+            "  var c0 = textureSample(tex0, smp, uv0).xyz;\n"
+            "  var c1 = textureSample(tex1, smp, uv1).xyz;\n"
+            "  var c2 = textureSample(tex2, smp, uv2).xyz;\n"
+            "  var c = vec4f(c0 + c1 + c2, 1);\n"
+            "  return c;\n"
+            "}\n",
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(fsq_params_t),
+            .wgsl_group0_binding_n = 0,
         },
-        .fs = {
-            .images = {
-                [0].used = true,
-                [1].used = true,
-                [2].used = true,
-            },
-            .samplers[0].used = true,
-            .image_sampler_pairs = {
-                [0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-                [1] = { .used = true, .image_slot = 1, .sampler_slot = 0 },
-                [2] = { .used = true, .image_slot = 2, .sampler_slot = 0 },
-            },
-            .source =
-                "@group(1) @binding(48) var tex0: texture_2d<f32>;\n"
-                "@group(1) @binding(49) var tex1: texture_2d<f32>;\n"
-                "@group(1) @binding(50) var tex2: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv0: vec2f, @location(1) uv1: vec2f, @location(2) uv2: vec2f) -> @location(0) vec4f {\n"
-                "  var c0 = textureSample(tex0, smp, uv0).xyz;\n"
-                "  var c1 = textureSample(tex1, smp, uv1).xyz;\n"
-                "  var c2 = textureSample(tex2, smp, uv2).xyz;\n"
-                "  var c = vec4f(c0 + c1 + c2, 1);\n"
-                "  return c;\n"
-                "}\n"
+        .images = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 1 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 2 },
+        },
+        .samplers = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 3 },
+        },
+        .image_sampler_pairs = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
         },
         .label = "fsq-shader",
     });
@@ -322,41 +324,39 @@ static void init(void) {
     // resource bindings for the fullscreen quad
     state.fsq.bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
-        .fs = {
-            .images = {
-                [0] = state.offscreen.attachments_desc.resolves[0].image,
-                [1] = state.offscreen.attachments_desc.resolves[1].image,
-                [2] = state.offscreen.attachments_desc.resolves[2].image,
-            },
-            .samplers[0] = smp,
-        }
+        .images = {
+            [0] = state.offscreen.attachments_desc.resolves[0].image,
+            [1] = state.offscreen.attachments_desc.resolves[1].image,
+            [2] = state.offscreen.attachments_desc.resolves[2].image,
+        },
+        .samplers[0] = smp,
     };
 
     // shader, pipeline and resource bindings for debug-visualization quads
     sg_shader dbg_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .source =
-                "struct vs_out {\n"
-                "  @builtin(position) pos: vec4f,\n"
-                "  @location(0) uv: vec2f,\n"
-                "}\n"
-                "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
-                "  var out: vs_out;\n"
-                "  out.pos = vec4f(pos * 2 - 1, 0.5, 1);\n"
-                "  out.uv = pos;\n"
-                "  return out;\n"
-                "}\n",
-        },
-        .fs = {
-            .images[0].used = true,
-            .samplers[0].used = true,
-            .image_sampler_pairs[0] = { .used = true, .image_slot = 0, .sampler_slot = 0 },
-            .source =
-                "@group(1) @binding(48) var tex0: texture_2d<f32>;\n"
-                "@group(1) @binding(64) var smp: sampler;\n"
-                "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
-                "  return vec4f(textureSample(tex0, smp, uv).xyz, 1);\n"
-                "}\n"
+        .vertex_func.source =
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) uv: vec2f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec2f) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  out.pos = vec4f(pos * 2 - 1, 0.5, 1);\n"
+            "  out.uv = pos;\n"
+            "  return out;\n"
+            "}\n",
+        .fragment_func.source =
+            "@group(1) @binding(0) var tex0: texture_2d<f32>;\n"
+            "@group(1) @binding(1) var smp: sampler;\n"
+            "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
+            "  return vec4f(textureSample(tex0, smp, uv).xyz, 1);\n"
+            "}\n",
+        .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
+        .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 1 },
+        .image_sampler_pairs[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .image_slot = 0,
+            .sampler_slot = 0,
         },
         .label = "dbg-shader",
     });
@@ -371,7 +371,7 @@ static void init(void) {
     // images will be filled right before rendering
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
-        .fs.samplers[0] = smp,
+        .samplers[0] = smp,
     };
 }
 
@@ -404,7 +404,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(offscreen_params));
+    sg_apply_uniforms(0, &SG_RANGE(offscreen_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -415,12 +415,12 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.fsq.pip);
     sg_apply_bindings(&state.fsq.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(fsq_params));
+    sg_apply_uniforms(0, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.fs.images[0] = state.offscreen.attachments_desc.resolves[i].image;
+        state.dbg.bind.images[0] = state.offscreen.attachments_desc.resolves[i].image;
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

@@ -2,11 +2,11 @@
 @ctype vec4 hmm_vec4
 
 @vs vs
-uniform vs_per_frame {
+layout(binding=0) uniform vs_per_frame {
     mat4 viewproj;
 };
 
-uniform vs_per_instance {
+layout(binding=1) uniform vs_per_instance {
     vec4 world_pos;
 };
 
@@ -24,8 +24,8 @@ void main() {
 @end
 
 @fs fs
-uniform texture2D tex;
-uniform sampler smp;
+layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform sampler smp;
 
 in vec2 uv;
 in float bright;

@@ -62,7 +62,7 @@ static void init(void) {
 
     // a shader for the fullscreen background quad
     sg_shader bg_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
+        .vertex_func = {
             .entry = "vs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -79,8 +79,7 @@ static void init(void) {
                 "  return out;\n"
                 "};\n"
         },
-        .fs = {
-            .uniform_blocks[0].size = sizeof(fs_params_t),
+        .fragment_func = {
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -92,7 +91,12 @@ static void init(void) {
                 "  float2 xy = fract((frag_coord.xy-float2(params.tick)) / 50.0);\n"
                 "  return float4(float3(xy.x*xy.y), 1.0);\n"
                 "}\n"
-        }
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_FRAGMENT,
+            .size = sizeof(fs_params_t),
+            .msl_buffer_n = 0,
+        },
     });
 
     // a pipeline state object for rendering the background quad
@@ -112,8 +116,7 @@ static void init(void) {
 
     // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(&(sg_shader_desc){
-        .vs = {
-            .uniform_blocks[0].size = sizeof(vs_params_t),
+        .vertex_func = {
             .entry = "vs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -136,7 +139,7 @@ static void init(void) {
                 "  return out;\n"
                 "}\n"
         },
-        .fs = {
+        .fragment_func = {
             .entry = "fs_main",
             .source =
                 "#include <metal_stdlib>\n"
@@ -147,7 +150,12 @@ static void init(void) {
                 "fragment float4 fs_main(fs_in in [[stage_in]]) {\n"
                 "  return in.color;\n"
                 "};\n"
-        }
+        },
+        .uniform_blocks[0] = {
+            .stage = SG_SHADERSTAGE_VERTEX,
+            .size = sizeof(vs_params_t),
+            .msl_buffer_n = 0,
+        },
     });
 
     // one pipeline object per blend-factor combination
@@ -188,7 +196,7 @@ static void frame(void) {
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);
     sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_FS, 0, &SG_RANGE(state.fs_params));
+    sg_apply_uniforms(0, &SG_RANGE(state.fs_params));
     sg_draw(0, 4, 1);
 
     // draw the blended quads
@@ -204,7 +212,7 @@ static void frame(void) {
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);
-            sg_apply_uniforms(SG_SHADERSTAGE_VS, 0, &SG_RANGE(state.vs_params));
+            sg_apply_uniforms(0, &SG_RANGE(state.vs_params));
             sg_draw(0, 4, 1);
         }
     }

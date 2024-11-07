@@ -182,7 +182,7 @@ static void init(void) {
     });
 
     // setup rendering resources
-    state.scene.bind.fs.images[0] = sg_alloc_image();
+    state.scene.bind.images[IMG_tex] = sg_alloc_image();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
@@ -195,7 +195,7 @@ static void init(void) {
         .label = "cube-indices"
     });
 
-    state.scene.bind.fs.samplers[SLOT_smp] = sg_make_sampler(&(sg_sampler_desc){
+    state.scene.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
     });
@@ -204,8 +204,8 @@ static void init(void) {
         .shader = sg_make_shader(restart_shader_desc(sg_query_backend())),
         .layout = {
             .attrs = {
-                [ATTR_vs_pos].format = SG_VERTEXFORMAT_FLOAT3,
-                [ATTR_vs_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
+                [ATTR_restart_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_restart_texcoord0].format = SG_VERTEXFORMAT_SHORT2N
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -262,7 +262,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            sg_init_image(state.scene.bind.fs.images[SLOT_tex], &(sg_image_desc){
+            sg_init_image(state.scene.bind.images[IMG_tex], &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -393,7 +393,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.scene.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.scene.pip);
     sg_apply_bindings(&state.scene.bind);
-    sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sgl_draw();
     sdtx_draw();
