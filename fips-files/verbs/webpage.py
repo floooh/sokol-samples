@@ -111,7 +111,7 @@ samples = [
     [ 'cgltf', 'cgltf-sapp.c', 'cgltf-sapp.glsl'],
     [ 'ozz-anim', 'ozz-anim-sapp.cc', None ],
     [ 'ozz-skin', 'ozz-skin-sapp.cc', 'ozz-skin-sapp.glsl'],
-    [ 'ozz-storagebuffer', 'ozz-storagebuffer-sapp.c', 'ozz-storagebuffer-sapp.glsl' ],
+    [ 'ozz-storagebuffer', 'ozz-storagebuffer-sapp.cc', 'ozz-storagebuffer-sapp.glsl' ],
     [ 'shdfeatures', 'shdfeatures-sapp.c', 'shdfeatures-sapp.glsl'],
     [ 'spine-simple', 'spine-simple-sapp.c', None ],
     [ 'spine-inspector', 'spine-inspector-sapp.c', None ],
