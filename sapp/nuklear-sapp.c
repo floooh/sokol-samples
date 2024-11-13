@@ -40,6 +40,7 @@ void init(void) {
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
     snk_setup(&(snk_desc_t){
+        .enable_set_mouse_cursor = true,
         .dpi_scale = sapp_dpi_scale(),
         .logger.func = slog_func,
     });
@@ -112,6 +113,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 static int
 draw_demo_ui(struct nk_context *ctx)
 {
+    nk_style_hide_cursor(ctx);
+
     /* window flags */
     static int show_menu = nk_true;
     static int titlebar = nk_true;
