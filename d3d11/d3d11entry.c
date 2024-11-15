@@ -212,7 +212,7 @@ void d3d11_destroy_default_render_targets(void) {
 void d3d11_update_default_render_targets(void) {
     if (state.swap_chain) {
         d3d11_destroy_default_render_targets();
-        IDXGISwapChain_ResizeBuffers(state.swap_chain, 1, state.width, state.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+        IDXGISwapChain_ResizeBuffers(state.swap_chain, 2, state.width, state.height, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
         d3d11_create_default_render_targets();
     }
 }
