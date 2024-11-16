@@ -45,6 +45,13 @@ static struct {
     sg_sampler smp; // a common non-filtering sampler
 } state;
 
+const fs_params_t default_weights = {
+    .weight0 = 0.25f,
+    .weight1 = 0.25f,
+    .weight2 = 0.25f,
+    .weight3 = 0.25f,
+};
+
 static void draw_ui(void);
 
 static void init(void) {
@@ -119,12 +126,7 @@ static void init(void) {
         .images[IMG_texms] = state.msaa.img,
         .samplers[SMP_smp] = state.smp,
     };
-    state.resolve.fs_params = (fs_params_t){
-        .weight0 = 0.25f,
-        .weight1 = 0.25f,
-        .weight2 = 0.25f,
-        .weight3 = 0.25f,
-    };
+    state.resolve.fs_params = default_weights;
 
     // swapchain-render-pass objects
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -185,20 +187,15 @@ static void draw_ui(void) {
         igEndMainMenuBar();
     }
     sgimgui_draw(&state.ui.sgimgui);
-    igSetNextWindowPos((ImVec2){10, 30}, ImGuiCond_Once, (ImVec2){0,0});
-    igSetNextWindowSize((ImVec2){100, 50}, ImGuiCond_Once);
+    igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once, (ImVec2){0,0});
     if (igBegin("Sample Weights", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
-        igSliderFloat("Weight 0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("Weight 1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("Weight 2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("Weight 3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
+        igText("Sample Weights:");
+        igSliderFloat("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
         if (igButton("Reset", (ImVec2){0,0})) {
-            state.resolve.fs_params = (fs_params_t){
-                .weight0 = 0.25,
-                .weight1 = 0.25,
-                .weight2 = 0.25,
-                .weight3 = 0.25,
-            };
+            state.resolve.fs_params = default_weights;
         }
     }
     igEnd();
