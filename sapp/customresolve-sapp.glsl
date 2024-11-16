@@ -51,22 +51,28 @@ void main() {
 @fs resolve_fs
 layout(binding=0) uniform texture2DMS texms;
 layout(binding=0) uniform sampler smp;
+layout(binding=0) uniform fs_params {
+    float weight0;
+    float weight1;
+    float weight2;
+    float weight3;
+};
 
 out vec4 frag_color;
 
 void main() {
     ivec2 uv = ivec2(gl_FragCoord.xy);
-    vec3 s0 = texelFetch(sampler2DMS(texms, smp), uv, 0).xyz;
-    vec3 s1 = texelFetch(sampler2DMS(texms, smp), uv, 1).xyz;
-    vec3 s2 = texelFetch(sampler2DMS(texms, smp), uv, 2).xyz;
-    vec3 s3 = texelFetch(sampler2DMS(texms, smp), uv, 3).xyz;
-    vec4 color = vec4((s0 + s1 + s2 + s3) * 0.25, 1);
-    frag_color = color;
+    vec3 s0 = texelFetch(sampler2DMS(texms, smp), uv, 0).xyz * weight0;
+    vec3 s1 = texelFetch(sampler2DMS(texms, smp), uv, 1).xyz * weight1;
+    vec3 s2 = texelFetch(sampler2DMS(texms, smp), uv, 2).xyz * weight2;
+    vec3 s3 = texelFetch(sampler2DMS(texms, smp), uv, 3).xyz * weight3;
+    frag_color = vec4(s0 + s1 + s2 + s3, 1);
 }
 @end
 
 @program resolve resolve_vs resolve_fs
 
+// the final display pass shader which renders the custom-resolved texture to the display
 @vs display_vs
 @include_block fullscreen_triangle
 

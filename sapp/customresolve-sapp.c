@@ -8,7 +8,12 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "dbgui/dbgui.h"
+#define SOKOL_IMGUI_IMPL
+#define SOKOL_GFX_IMGUI_IMPL
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include "cimgui/cimgui.h"
+#include "sokol_imgui.h"
+#include "sokol_gfx_imgui.h"
 #include "customresolve-sapp.glsl.h"
 
 #define WIDTH (160)
@@ -27,21 +32,28 @@ static struct {
         sg_attachments atts;
         sg_pass_action action;
         sg_bindings bind;
+        fs_params_t fs_params;
     } resolve;
     struct {
         sg_pipeline pip;
         sg_pass_action action;
         sg_bindings bind;
     } display;
+    struct {
+        sgimgui_t sgimgui;
+    } ui;
     sg_sampler smp; // a common non-filtering sampler
 } state;
+
+static void draw_ui(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
+    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
 
     // common objects
     state.smp = sg_make_sampler(&(sg_sampler_desc){
@@ -107,6 +119,12 @@ static void init(void) {
         .images[IMG_texms] = state.msaa.img,
         .samplers[SMP_smp] = state.smp,
     };
+    state.resolve.fs_params = (fs_params_t){
+        .weight0 = 0.25f,
+        .weight1 = 0.25f,
+        .weight2 = 0.25f,
+        .weight3 = 0.25f,
+    };
 
     // swapchain-render-pass objects
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -123,6 +141,7 @@ static void init(void) {
 }
 
 static void frame(void) {
+    draw_ui();
 
     // draw a triangle into an msaa render target
     sg_begin_pass(&(sg_pass){ .action = state.msaa.action, .attachments = state.msaa.atts });
@@ -134,6 +153,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.resolve.action, .attachments = state.resolve.atts });
     sg_apply_pipeline(state.resolve.pip);
     sg_apply_bindings(&state.resolve.bind);
+    sg_apply_uniforms(UB_fs_params, &SG_RANGE(state.resolve.fs_params));
     sg_draw(0, 3, 1);
     sg_end_pass();
 
@@ -142,14 +162,50 @@ static void frame(void) {
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_draw(0, 3, 1);
-    __dbgui_draw();
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    sgimgui_discard(&state.ui.sgimgui);
+    simgui_shutdown();
     sg_shutdown();
+}
+
+static void draw_ui(void) {
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .dpi_scale = sapp_dpi_scale(),
+        .delta_time = sapp_frame_duration(),
+    });
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        igEndMainMenuBar();
+    }
+    sgimgui_draw(&state.ui.sgimgui);
+    igSetNextWindowPos((ImVec2){10, 30}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowSize((ImVec2){100, 50}, ImGuiCond_Once);
+    if (igBegin("Sample Weights", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
+        igSliderFloat("Weight 0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("Weight 1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("Weight 2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
+        igSliderFloat("Weight 3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
+        if (igButton("Reset", (ImVec2){0,0})) {
+            state.resolve.fs_params = (fs_params_t){
+                .weight0 = 0.25,
+                .weight1 = 0.25,
+                .weight2 = 0.25,
+                .weight3 = 0.25,
+            };
+        }
+    }
+    igEnd();
+}
+
+static void input(const sapp_event* ev) {
+    simgui_handle_event(ev);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
@@ -158,7 +214,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = input,
         .width = 640,
         .height = 480,
         .sample_count = 1,
