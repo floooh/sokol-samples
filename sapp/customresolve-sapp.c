@@ -52,6 +52,7 @@ const fs_params_t default_weights = {
     .weight3 = 0.25f,
 };
 
+static void draw_fallback(void);
 static void draw_ui(void);
 
 static void init(void) {
@@ -61,6 +62,11 @@ static void init(void) {
     });
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
     sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
+
+    // catch WebGL2/GLES3
+    if (!sg_query_features().msaa_image_bindings) {
+        return;
+    }
 
     // common objects
     state.smp = sg_make_sampler(&(sg_sampler_desc){
@@ -144,6 +150,10 @@ static void init(void) {
 
 static void frame(void) {
     draw_ui();
+    if (!sg_query_features().msaa_image_bindings) {
+        draw_fallback();
+        return;
+    }
 
     // draw a triangle into an msaa render target
     sg_begin_pass(&(sg_pass){ .action = state.msaa.action, .attachments = state.msaa.atts });
@@ -187,18 +197,35 @@ static void draw_ui(void) {
         igEndMainMenuBar();
     }
     sgimgui_draw(&state.ui.sgimgui);
+
     igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once, (ImVec2){0,0});
-    if (igBegin("Sample Weights", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
-        igText("Sample Weights:");
-        igSliderFloat("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
-        igSliderFloat("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
-        if (igButton("Reset", (ImVec2){0,0})) {
-            state.resolve.fs_params = default_weights;
+    if (igBegin("#window", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
+        if (sg_query_features().msaa_image_bindings) {
+            igText("Sample Weights:");
+            igSliderFloat("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloat("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloat("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloat("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
+            if (igButton("Reset", (ImVec2){0,0})) {
+                state.resolve.fs_params = default_weights;
+            }
+        } else {
+            igText("MSAA TEXTURES NOT SUPPORTED ON WEBGL2/GLES3");
         }
     }
     igEnd();
+}
+
+static void draw_fallback(void) {
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0, 0, 1} },
+        },
+        .swapchain = sglue_swapchain(),
+    });
+    simgui_render();
+    sg_end_pass();
+    sg_commit();
 }
 
 static void input(const sapp_event* ev) {
