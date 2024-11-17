@@ -74,6 +74,7 @@ void main() {
 
 // the final display pass shader which renders the custom-resolved texture to the display
 @vs display_vs
+@glsl_options flip_vert_y
 @include_block fullscreen_triangle
 
 out vec2 uv;
