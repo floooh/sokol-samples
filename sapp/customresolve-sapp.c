@@ -210,7 +210,7 @@ static void draw_ui(void) {
                 state.resolve.fs_params = default_weights;
             }
         } else {
-            igText("MSAA TEXTURES NOT SUPPORTED ON WEBGL2/GLES3");
+            igText("MSAA TEXTURES NOT SUPPORTED ON WEBGL2/GLES3/macOS+GL");
         }
     }
     igEnd();
