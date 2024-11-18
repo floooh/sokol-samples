@@ -206,6 +206,7 @@ static void draw_ui(void) {
             igSliderFloat("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
             igSliderFloat("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
             igSliderFloat("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
+            igCheckboxFlags_IntPtr("show complex pixels", &state.resolve.fs_params.coverage, 1);
             if (igButton("Reset", (ImVec2){0,0})) {
                 state.resolve.fs_params = default_weights;
             }

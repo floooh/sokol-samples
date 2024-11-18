@@ -25,7 +25,11 @@ in vec4 color;
 out vec4 frag_color;
 
 void main() {
-    frag_color = color;
+    float a = 0;
+    if ((gl_SampleMaskIn[0] & 15) == 15) {
+        a = 1;
+    }
+    frag_color = vec4(color.xyz, a);
 }
 @end
 
@@ -56,17 +60,28 @@ layout(binding=0) uniform fs_params {
     float weight1;
     float weight2;
     float weight3;
+    int coverage;
 };
 
 out vec4 frag_color;
 
 void main() {
     ivec2 uv = ivec2(gl_FragCoord.xy);
-    vec3 s0 = texelFetch(sampler2DMS(texms, smp), uv, 0).xyz * weight0;
-    vec3 s1 = texelFetch(sampler2DMS(texms, smp), uv, 1).xyz * weight1;
-    vec3 s2 = texelFetch(sampler2DMS(texms, smp), uv, 2).xyz * weight2;
-    vec3 s3 = texelFetch(sampler2DMS(texms, smp), uv, 3).xyz * weight3;
-    frag_color = vec4(s0 + s1 + s2 + s3, 1);
+    vec4 s0 = texelFetch(sampler2DMS(texms, smp), uv, 0);
+    vec4 s1 = texelFetch(sampler2DMS(texms, smp), uv, 1);
+    vec4 s2 = texelFetch(sampler2DMS(texms, smp), uv, 2);
+    vec4 s3 = texelFetch(sampler2DMS(texms, smp), uv, 3);
+    if (coverage != 0) {
+        if ((s0.w + s1.w + s2.w + s3.w) < 4) {
+            // complex pixel
+            frag_color = vec4(1, 0, 0, 1);
+        } else {
+            // simple pixel
+            frag_color = vec4(0, 0, 0, 0);
+        }
+    } else {
+        frag_color = vec4(s0.xyz*weight0 + s1.xyz*weight1 + s2.xyz*weight2 + s3.xyz*weight3, 1);
+    }
 }
 @end
 
