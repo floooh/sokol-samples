@@ -13,6 +13,7 @@
 #include <stddef.h> /* offsetof */
 #include "cubemaprt-sapp.glsl.h"
 
+// NOTE: cubemaps can't be multisampled, so (OFFSCREEN_SAMPLE_COUNT > 1) will be a validation error
 #define OFFSCREEN_SAMPLE_COUNT (1)
 #define DISPLAY_SAMPLE_COUNT (4)
 #define NUM_SHAPES (32)

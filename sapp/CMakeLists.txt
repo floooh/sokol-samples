@@ -315,6 +315,13 @@ fips_begin_app(shared-bindings-sapp-ui windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(customresolve-sapp windowed)
+    fips_files(customresolve-sapp.c)
+    sokol_shader_debuggable(customresolve-sapp.glsl ${slang})
+    fips_deps(sokol cimgui)
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(mipmap-sapp windowed)
     fips_files(mipmap-sapp.c)
     sokol_shader(mipmap-sapp.glsl ${slang})
