@@ -8,8 +8,7 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
@@ -60,10 +59,10 @@ void frame(void) {
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
     static float f = 0.0f;
     igText("Hello, world!");
-    igSliderFloat("float", &f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
+    igSliderFloatEx("float", &f, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_None);
     igColorEdit3("clear color", (float*)&state.pass_action.colors[0].clear_value, 0);
-    if (igButton("Test Window", (ImVec2) { 0.0f, 0.0f})) state.show_test_window ^= 1;
-    if (igButton("Another Window", (ImVec2) { 0.0f, 0.0f })) state.show_another_window ^= 1;
+    if (igButton("Test Window")) state.show_test_window ^= 1;
+    if (igButton("Another Window")) state.show_another_window ^= 1;
     igText("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / igGetIO()->Framerate, igGetIO()->Framerate);
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
@@ -76,7 +75,7 @@ void frame(void) {
 
     // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowDemoWindow()
     if (state.show_test_window) {
-        igSetNextWindowPos((ImVec2){460,20}, ImGuiCond_FirstUseEver, (ImVec2){0,0});
+        igSetNextWindowPos((ImVec2){460,20}, ImGuiCond_FirstUseEver);
         igShowDemoWindow(0);
     }
 

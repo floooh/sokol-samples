@@ -6,8 +6,7 @@
 #include "sokol_app.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -360,31 +359,31 @@ static void frame(void) {
     });
     igSetNextWindowSize((ImVec2){640, 480}, ImGuiCond_Once);
     if (igBegin("Pixel Formats (without UINT and SINT formats)", 0, 0)) {
-        igText("format"); igSameLine(264, 0);
-        igText("sample"); igSameLine(264 + 1*66, 0);
-        igText("filter"); igSameLine(264 + 2*66, 0);
-        igText("render"); igSameLine(264 + 3*66, 0);
-        igText("blend");  igSameLine(264 + 4*66, 0);
+        igText("format"); igSameLineEx(264, 0);
+        igText("sample"); igSameLineEx(264 + 1*66, 0);
+        igText("filter"); igSameLineEx(264 + 2*66, 0);
+        igText("render"); igSameLineEx(264 + 3*66, 0);
+        igText("blend");  igSameLineEx(264 + 4*66, 0);
         igText("msaa");
         igSeparator();
-        igBeginChild_Str("#scrollregion", (ImVec2){0,0}, false, ImGuiWindowFlags_None);
+        igBeginChild("#scrollregion", (ImVec2){0,0}, false, ImGuiWindowFlags_None);
         for (int i = SG_PIXELFORMAT_NONE+1; i < SG_PIXELFORMAT_DEPTH; i++) {
             if (!state.fmt[i].valid) {
                 continue;
             }
             const char* fmt_string = pixelformat_string((sg_pixel_format)i);
-            if (igBeginChild_Str(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
+            if (igBeginChild(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
-                igSameLine(256, 0);
-                igImage(simgui_imtextureid(state.fmt[i].unfiltered), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
-                igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].filtered), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
-                igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].render), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
-                igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].blend), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
-                igSameLine(0,0);
-                igImage(simgui_imtextureid(state.fmt[i].msaa_resolve), (ImVec2){64,64}, (ImVec2){0,0}, (ImVec2){1,1}, (ImVec4){1,1,1,1}, (ImVec4){1,1,1,1});
+                igSameLineEx(256, 0);
+                igImage(simgui_imtextureid(state.fmt[i].unfiltered), (ImVec2){64,64});
+                igSameLine();
+                igImage(simgui_imtextureid(state.fmt[i].filtered), (ImVec2){64,64});
+                igSameLine();
+                igImage(simgui_imtextureid(state.fmt[i].render), (ImVec2){64,64});
+                igSameLine();
+                igImage(simgui_imtextureid(state.fmt[i].blend), (ImVec2){64,64});
+                igSameLine();
+                igImage(simgui_imtextureid(state.fmt[i].msaa_resolve), (ImVec2){64,64});
             }
             igEndChild();
         }

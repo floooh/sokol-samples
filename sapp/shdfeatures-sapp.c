@@ -39,8 +39,7 @@
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
@@ -664,7 +663,7 @@ static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr
 }
 
 static void draw_ui(void) {
-    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){220,150 }, ImGuiCond_Once);
     if (igBegin("Controls", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
         if (ozz_load_failed(state.ozz)) {
@@ -674,44 +673,44 @@ static void draw_ui(void) {
             igText("Camera Controls:");
             igText("  LMB + Mouse Move: Look");
             igText("  Mouse Wheel: Zoom");
-            igPushID_Str("camera");
-            igSliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", ImGuiSliderFlags_None);
-            igSliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", ImGuiSliderFlags_None);
-            igSliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
+            igPushID("camera");
+            igSliderFloatEx("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", ImGuiSliderFlags_None);
+            igSliderFloatEx("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", ImGuiSliderFlags_None);
+            igSliderFloatEx("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
             igPopID();
             igSeparator();
-            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
+            igPushStyleColor(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Skinning", &state.skinning.enabled);
-            igPopStyleColor(1);
+            igPopStyleColor();
             if (state.skinning.enabled) {
                 igSeparator();
                 igCheckbox("Paused", &state.skinning.paused);
-                igSliderFloat("Time Factor", &state.skinning.time_factor, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
+                igSliderFloatEx("Time Factor", &state.skinning.time_factor, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
             }
             igSeparator();
-            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
+            igPushStyleColor(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Lighting", &state.light.enabled);
-            igPopStyleColor(1);
+            igPopStyleColor();
             if (state.light.enabled) {
-                igPushID_Str("light");
+                igPushID("light");
                 igSeparator();
                 igCheckbox("Draw Light Vector", &state.light.dbg_draw);
-                igSliderFloat("Latitude", &state.light.latitude, -85.0f, 85.0f, "%.1f", ImGuiSliderFlags_None);
-                igSliderFloat("Longitude", &state.light.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
-                igSliderFloat("Intensity", &state.light.intensity, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
+                igSliderFloatEx("Latitude", &state.light.latitude, -85.0f, 85.0f, "%.1f", ImGuiSliderFlags_None);
+                igSliderFloatEx("Longitude", &state.light.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
+                igSliderFloatEx("Intensity", &state.light.intensity, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
                 igColorEdit3("Color", &state.light.color.X, ImGuiColorEditFlags_None);
                 igPopID();
             }
             igSeparator();
-            igPushStyleColor_U32(ImGuiCol_CheckMark, green);
+            igPushStyleColor(ImGuiCol_CheckMark, green);
             igCheckbox("Enable Material", &state.material.enabled);
-            igPopStyleColor(1);
+            igPopStyleColor();
             if (state.material.enabled) {
-                igPushID_Str("material");
+                igPushID("material");
                 igSeparator();
                 igColorEdit3("Diffuse", &state.material.diffuse.X, ImGuiColorEditFlags_None);
                 igColorEdit3("Specular", &state.material.specular.X, ImGuiColorEditFlags_None);
-                igSliderFloat("Spec Pwr", &state.material.spec_power, 1.0f, 64.0f, "%.1f", ImGuiSliderFlags_None);
+                igSliderFloatEx("Spec Pwr", &state.material.spec_power, 1.0f, 64.0f, "%.1f", ImGuiSliderFlags_None);
                 igPopID();
             }
         }

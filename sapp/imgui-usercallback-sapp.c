@@ -14,8 +14,7 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #include "imgui-usercallback-sapp.glsl.h"
@@ -283,18 +282,18 @@ void frame(void) {
         .dpi_scale = sapp_dpi_scale()
     });
 
-    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){800, 400}, ImGuiCond_Once);
     if (igBegin("Dear ImGui", 0, 0)) {
-        if (igBeginChild_Str("sokol-gfx", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
+        if (igBeginChild("sokol-gfx", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
             ImDrawList* dl = igGetWindowDrawList();
-            ImDrawList_AddCallback(dl, draw_scene_1, 0, 0);
+            ImDrawList_AddCallback(dl, draw_scene_1, 0);
         }
         igEndChild();
-        igSameLine(0, 10);
-        if (igBeginChild_Str("sokol-gl", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
+        igSameLineEx(0, 10);
+        if (igBeginChild("sokol-gl", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
             ImDrawList* dl = igGetWindowDrawList();
-            ImDrawList_AddCallback(dl, draw_scene_2, 0, 0);
+            ImDrawList_AddCallback(dl, draw_scene_2, 0);
         }
         igEndChild();
     }

@@ -8,12 +8,12 @@
 #include "sokol_time.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
 #include <math.h> // sinf, cosf
+#include <stdio.h> // snprintf
 
 static const int max_windows = 128;
 
@@ -88,10 +88,10 @@ static void frame(void) {
     });
 
     // controls window
-    igSetNextWindowPos((ImVec2){ 10, 10 }, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){ 10, 10 }, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){ 500, 0 }, ImGuiCond_Once);
     igBegin("Controls", 0, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoScrollbar);
-    igSliderInt("Num Windows", &state.num_windows, 1, max_windows, "%d", ImGuiSliderFlags_None);
+    igSliderInt("Num Windows", &state.num_windows, 1, max_windows);
     igText("raw frame time:     %.3fms (min: %.3f, max: %.3f)",
         raw_frame_time * 1000.0,
         state.min_raw_frame_time * 1000.0,
@@ -100,7 +100,7 @@ static void frame(void) {
         rounded_frame_time * 1000.0,
         state.min_rounded_frame_time * 1000.0,
         state.max_rounded_frame_time * 1000.0);
-    if (igButton("Reset min/max times", (ImVec2){0,0})) {
+    if (igButton("Reset min/max times")) {
         reset_minmax_frametimes();
     }
     igEnd();
@@ -114,7 +114,7 @@ static void frame(void) {
         const float y = fheight * (0.5f + (r * 0.5f * 0.75f * cosf(t * 0.05f)));
         char name[64];
         snprintf(name, sizeof(name), "Hello ImGui %d", i);
-        igSetNextWindowPos((ImVec2){x,y}, ImGuiCond_Always, (ImVec2){0,0});
+        igSetNextWindowPos((ImVec2){x,y}, ImGuiCond_Always);
         igSetNextWindowSize((ImVec2){100, 10}, ImGuiCond_Always);
         igBegin(name, 0, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoFocusOnAppearing);
         igEnd();

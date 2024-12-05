@@ -10,8 +10,7 @@
 #include "sokol_glue.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_GFX_IMGUI_IMPL
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
 #include "customresolve-sapp.glsl.h"
@@ -198,16 +197,16 @@ static void draw_ui(void) {
     }
     sgimgui_draw(&state.ui.sgimgui);
 
-    igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once);
     if (igBegin("#window", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
         if (sg_query_features().msaa_image_bindings) {
             igText("Sample Weights:");
-            igSliderFloat("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
-            igSliderFloat("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
-            igSliderFloat("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
-            igSliderFloat("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
-            igCheckboxFlags_IntPtr("show complex pixels", &state.resolve.fs_params.coverage, 1);
-            if (igButton("Reset", (ImVec2){0,0})) {
+            igSliderFloatEx("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloatEx("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloatEx("2", &state.resolve.fs_params.weight2, 0.0f, 1.0f, "%.2f", 0);
+            igSliderFloatEx("3", &state.resolve.fs_params.weight3, 0.0f, 1.0f, "%.2f", 0);
+            igCheckboxFlagsIntPtr("show complex pixels", &state.resolve.fs_params.coverage, 1);
+            if (igButton("Reset")) {
                 state.resolve.fs_params = default_weights;
             }
         } else {

@@ -9,8 +9,7 @@
 #include "sokol_log.h"
 #include "sokol_glue.h"
 #include "dyntex3d-sapp.glsl.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
@@ -121,11 +120,11 @@ static void draw_ui(void) {
         sgimgui_draw_menu(&state.sgimgui, "sokol-gfx");
         igEndMainMenuBar();
     }
-    igSetNextWindowPos((ImVec2){20, 40}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){20, 40}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){220, 150}, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.35f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (igSliderInt("Size", &state.width_height, MIN_WIDTH_HEIGHT, MAX_WIDTH_HEIGHT, "%d", ImGuiSliderFlags_Logarithmic)) {
+        if (igSliderIntEx("Size", &state.width_height, MIN_WIDTH_HEIGHT, MAX_WIDTH_HEIGHT, "%d", ImGuiSliderFlags_Logarithmic)) {
             recreate_image();
         }
         if (igCheckbox("Immutable", &state.immutable)) {
