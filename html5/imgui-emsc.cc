@@ -28,8 +28,6 @@ static bool show_another_window = false;
 static sg_pass_action pass_action;
 static sg_pipeline pip;
 static sg_bindings bind;
-static bool btn_down[3];
-static bool btn_up[3];
 
 typedef struct {
     ImVec2 disp_size;
@@ -37,6 +35,7 @@ typedef struct {
 
 static EM_BOOL draw(double time, void* userdata);
 static void draw_imgui(ImDrawData*);
+static ImGuiKey as_imgui_key(int keycode);
 
 int main() {
     // setup WebGL context
@@ -58,38 +57,18 @@ int main() {
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.Fonts->AddFontDefault();
-    // emscripten has no clearly defined key code constants
-    io.KeyMap[ImGuiKey_Tab] = 9;
-    io.KeyMap[ImGuiKey_LeftArrow] = 37;
-    io.KeyMap[ImGuiKey_RightArrow] = 39;
-    io.KeyMap[ImGuiKey_UpArrow] = 38;
-    io.KeyMap[ImGuiKey_DownArrow] = 40;
-    io.KeyMap[ImGuiKey_Home] = 36;
-    io.KeyMap[ImGuiKey_End] = 35;
-    io.KeyMap[ImGuiKey_Delete] = 46;
-    io.KeyMap[ImGuiKey_Backspace] = 8;
-    io.KeyMap[ImGuiKey_Enter] = 13;
-    io.KeyMap[ImGuiKey_Escape] = 27;
-    io.KeyMap[ImGuiKey_A] = 65;
-    io.KeyMap[ImGuiKey_C] = 67;
-    io.KeyMap[ImGuiKey_V] = 86;
-    io.KeyMap[ImGuiKey_X] = 88;
-    io.KeyMap[ImGuiKey_Y] = 89;
-    io.KeyMap[ImGuiKey_Z] = 90;
 
     // emscripten to ImGui input forwarding
     emscripten_set_keydown_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, true,
         [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
-            if (e->keyCode < 512) {
-                ImGui::GetIO().KeysDown[e->keyCode] = true;
-            }
+            ImGui::GetIO().AddKeyEvent(as_imgui_key(e->keyCode), true);
             // only forward alpha-numeric keys to browser
             return e->keyCode < 32;
         });
     emscripten_set_keyup_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, nullptr, true,
         [](int, const EmscriptenKeyboardEvent* e, void*)->EM_BOOL {
             if (e->keyCode < 512) {
-                ImGui::GetIO().KeysDown[e->keyCode] = false;
+                ImGui::GetIO().AddKeyEvent(as_imgui_key(e->keyCode), false);
             }
             // only forward alpha-numeric keys to browser
             return e->keyCode < 32;
@@ -101,48 +80,22 @@ int main() {
         });
     emscripten_set_mousedown_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            switch (e->button) {
-                case 0: btn_down[0] = true; break;
-                case 2: btn_down[1] = true; break;
-            }
+            ImGui::GetIO().AddMouseButtonEvent(e->button, true);
             return true;
         });
     emscripten_set_mouseup_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            switch (e->button) {
-                case 0: btn_up[0] = true; break;
-                case 2: btn_up[1] = true; break;
-            }
-            return true;
-        });
-    emscripten_set_mouseenter_callback("canvas", nullptr, true,
-        [](int, const EmscriptenMouseEvent*, void*)->EM_BOOL {
-            auto& io = ImGui::GetIO();
-            for (int i = 0; i < 3; i++) {
-                btn_down[i] = btn_up[i] = false;
-                io.MouseDown[i] = false;
-            }
-            return true;
-        });
-    emscripten_set_mouseleave_callback("canvas", nullptr, true,
-        [](int, const EmscriptenMouseEvent*, void*)->EM_BOOL {
-            auto& io = ImGui::GetIO();
-            for (int i = 0; i < 3; i++) {
-                btn_down[i] = btn_up[i] = false;
-                io.MouseDown[i] = false;
-            }
+            ImGui::GetIO().AddMouseButtonEvent(e->button, false);
             return true;
         });
     emscripten_set_mousemove_callback("canvas", nullptr, true,
         [](int, const EmscriptenMouseEvent* e, void*)->EM_BOOL {
-            ImGui::GetIO().MousePos.x = (float) e->targetX;
-            ImGui::GetIO().MousePos.y = (float) e->targetY;
+            ImGui::GetIO().AddMousePosEvent((float)e->targetX, (float)e->targetY);
             return true;
         });
     emscripten_set_wheel_callback("canvas", nullptr, true,
         [](int, const EmscriptenWheelEvent* e, void*)->EM_BOOL {
-            ImGui::GetIO().MouseWheelH = -0.1f * (float)e->deltaX;
-            ImGui::GetIO().MouseWheel = -0.1f * (float)e->deltaY;
+            ImGui::GetIO().AddMouseWheelEvent(-0.1f * (float)e->deltaX, -0.1f * (float)e->deltaY);
             return true;
         });
 
@@ -254,21 +207,6 @@ static EM_BOOL draw(double time, void* userdata) {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(float(emsc_width()), float(emsc_height()));
     io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
-    // this mouse button handling fixes the problem when down- and up-events happen in the same frame
-    for (int i = 0; i < 3; i++) {
-        if (io.MouseDown[i]) {
-            if (btn_up[i]) {
-                io.MouseDown[i] = false;
-                btn_up[i] = false;
-            }
-        }
-        else {
-            if (btn_down[i]) {
-                io.MouseDown[i] = true;
-                btn_down[i] = false;
-            }
-        }
-    }
     ImGui::NewFrame();
 
     // 1. Show a simple window
@@ -355,4 +293,21 @@ void draw_imgui(ImDrawData* draw_data) {
             base_element += pcmd.ElemCount;
         }
     }
+}
+
+ImGuiKey as_imgui_key(int keycode) {
+    switch (keycode) {
+        case 9: return ImGuiKey_Tab;
+        case 37: return ImGuiKey_LeftArrow;
+        case 39: return ImGuiKey_RightArrow;
+        case 38: return ImGuiKey_UpArrow;
+        case 40: return ImGuiKey_DownArrow;
+        case 36: return ImGuiKey_Home;
+        case 35: return ImGuiKey_End;
+        case 46: return ImGuiKey_Delete;
+        case 8: return ImGuiKey_Backspace;
+        case 13: return ImGuiKey_Enter;
+        case 27: return ImGuiKey_Escape;
+        default: return ImGuiKey_None;
+    };
 }

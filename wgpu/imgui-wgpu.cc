@@ -30,6 +30,7 @@ typedef struct {
 } vs_params_t;
 
 static void draw_imgui(ImDrawData*);
+static ImGuiKey as_imgui_key(uint32_t keycode);
 
 static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
@@ -40,13 +41,13 @@ static void init(void) {
     stm_setup();
 
     // input forwarding
-    wgpu_mouse_pos([] (float x, float y) { ImGui::GetIO().MousePos = ImVec2(x, y); });
-    wgpu_mouse_btn_down([] (int btn)     { ImGui::GetIO().MouseDown[btn] = true; });
-    wgpu_mouse_btn_up([] (int btn)       { ImGui::GetIO().MouseDown[btn] = false; });
-    wgpu_mouse_wheel([](float v)         { ImGui::GetIO().MouseWheel = v; });
+    wgpu_mouse_pos([] (float x, float y) { ImGui::GetIO().AddMousePosEvent(x, y); });
+    wgpu_mouse_btn_down([] (int btn)     { ImGui::GetIO().AddMouseButtonEvent(btn, true); });
+    wgpu_mouse_btn_up([] (int btn)       { ImGui::GetIO().AddMouseButtonEvent(btn, false); });
+    wgpu_mouse_wheel([](float v)         { ImGui::GetIO().AddMouseWheelEvent(0, v); });
     wgpu_char([] (uint32_t c)            { ImGui::GetIO().AddInputCharacter(c); });
-    wgpu_key_down([] (int key)           { if (key < 512) ImGui::GetIO().KeysDown[key] = true; });
-    wgpu_key_up([] (int key)             { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
+    wgpu_key_down([] (int key)           { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), true); });
+    wgpu_key_up([] (int key)             { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), false); });
 
     // setup Dear Imgui
     ImGui::CreateContext();
@@ -54,23 +55,6 @@ static void init(void) {
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.Fonts->AddFontDefault();
-    io.KeyMap[ImGuiKey_Tab] = WGPU_KEY_TAB;
-    io.KeyMap[ImGuiKey_LeftArrow] = WGPU_KEY_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = WGPU_KEY_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = WGPU_KEY_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = WGPU_KEY_DOWN;
-    io.KeyMap[ImGuiKey_Home] = WGPU_KEY_HOME;
-    io.KeyMap[ImGuiKey_End] = WGPU_KEY_END;
-    io.KeyMap[ImGuiKey_Delete] = WGPU_KEY_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = WGPU_KEY_BACKSPACE;
-    io.KeyMap[ImGuiKey_Enter] = WGPU_KEY_ENTER;
-    io.KeyMap[ImGuiKey_Escape] = WGPU_KEY_ESCAPE;
-    io.KeyMap[ImGuiKey_A] = 'A';
-    io.KeyMap[ImGuiKey_C] = 'C';
-    io.KeyMap[ImGuiKey_V] = 'V';
-    io.KeyMap[ImGuiKey_X] = 'X';
-    io.KeyMap[ImGuiKey_Y] = 'Y';
-    io.KeyMap[ImGuiKey_Z] = 'Z';
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
@@ -257,6 +241,23 @@ void draw_imgui(ImDrawData* draw_data) {
             }
             base_element += pcmd.ElemCount;
         }
+    }
+}
+
+static ImGuiKey as_imgui_key(uint32_t keycode) {
+    switch (keycode) {
+        case WGPU_KEY_TAB: return ImGuiKey_Tab;
+        case WGPU_KEY_LEFT: return ImGuiKey_LeftArrow;
+        case WGPU_KEY_RIGHT: return ImGuiKey_RightArrow;
+        case WGPU_KEY_UP: return ImGuiKey_UpArrow;
+        case WGPU_KEY_DOWN: return ImGuiKey_DownArrow;
+        case WGPU_KEY_HOME: return ImGuiKey_Home;
+        case WGPU_KEY_END: return ImGuiKey_End;
+        case WGPU_KEY_DELETE: return ImGuiKey_Delete;
+        case WGPU_KEY_BACKSPACE: return ImGuiKey_Backspace;
+        case WGPU_KEY_ENTER: return ImGuiKey_Enter;
+        case WGPU_KEY_ESCAPE: return ImGuiKey_Escape;
+        default: return ImGuiKey_None;
     }
 }
 
