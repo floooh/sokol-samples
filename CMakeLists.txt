@@ -25,7 +25,6 @@ if (NOT USE_SOKOL_APP AND NOT SOKOL_USE_WGPU_DAWN AND NOT SOKOL_USE_D3D11 AND NO
     fips_import_fips_glfw_glfw3()
 endif()
 fips_import_dcimgui_dcimgui()
-fips_import_fips_imgui_dock_imgui_dock()
 if (NOT FIPS_UWP)
     fips_import_fips_libmodplug_libmodplug()
 endif()
