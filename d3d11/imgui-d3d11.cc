@@ -28,6 +28,7 @@ typedef struct {
 } vs_params_t;
 
 static void draw_imgui(ImDrawData*);
+static ImGuiKey as_imgui_key(int keycode);
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
@@ -44,13 +45,13 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     stm_setup();
 
     // input forwarding
-    d3d11_mouse_pos([] (float x, float y)   { ImGui::GetIO().MousePos = ImVec2(x, y); });
-    d3d11_mouse_btn_down([] (int btn)       { ImGui::GetIO().MouseDown[btn] = true; });
-    d3d11_mouse_btn_up([] (int btn)         { ImGui::GetIO().MouseDown[btn] = false; });
-    d3d11_mouse_wheel([](float v)           { ImGui::GetIO().MouseWheel = v; });
+    d3d11_mouse_pos([] (float x, float y)   { ImGui::GetIO().AddMousePosEvent(x, y); });
+    d3d11_mouse_btn_down([] (int btn)       { ImGui::GetIO().AddMouseButtonEvent(btn, true); });
+    d3d11_mouse_btn_up([] (int btn)         { ImGui::GetIO().AddMouseButtonEvent(btn, false); });
+    d3d11_mouse_wheel([](float v)           { ImGui::GetIO().AddMouseWheelEvent(0, v); });
     d3d11_char([] (wchar_t c)               { ImGui::GetIO().AddInputCharacter(c); });
-    d3d11_key_down([] (int key)             { if (key < 512) ImGui::GetIO().KeysDown[key] = true; });
-    d3d11_key_up([] (int key)               { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
+    d3d11_key_down([] (int key)             { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), true); });
+    d3d11_key_up([] (int key)               { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), false); });
 
     // setup Dear Imgui
     ImGui::CreateContext();
@@ -58,23 +59,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
     io.Fonts->AddFontDefault();
-    io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-    io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-    io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-    io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-    io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-    io.KeyMap[ImGuiKey_Home] = VK_HOME;
-    io.KeyMap[ImGuiKey_End] = VK_END;
-    io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-    io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-    io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-    io.KeyMap[ImGuiKey_A] = 'A';
-    io.KeyMap[ImGuiKey_C] = 'C';
-    io.KeyMap[ImGuiKey_V] = 'V';
-    io.KeyMap[ImGuiKey_X] = 'X';
-    io.KeyMap[ImGuiKey_Y] = 'Y';
-    io.KeyMap[ImGuiKey_Z] = 'Z';
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
@@ -267,5 +251,22 @@ void draw_imgui(ImDrawData* draw_data) {
             }
             base_element += pcmd.ElemCount;
         }
+    }
+}
+
+static ImGuiKey as_imgui_key(int keycode) {
+    switch (keycode) {
+        case VK_TAB: return ImGuiKey_Tab;
+        case VK_LEFT: return ImGuiKey_LeftArrow;
+        case VK_RIGHT: return ImGuiKey_RightArrow;
+        case VK_UP: return ImGuiKey_UpArrow;
+        case VK_DOWN: return ImGuiKey_DownArrow;
+        case VK_HOME: return ImGuiKey_Home;
+        case VK_END: return ImGuiKey_End;
+        case VK_DELETE: return ImGuiKey_Delete;
+        case VK_BACK: return ImGuiKey_Backspace;
+        case VK_RETURN: return ImGuiKey_Enter;
+        case VK_ESCAPE: return ImGuiKey_Escape;
+        default: return ImGuiKey_None;
     }
 }
