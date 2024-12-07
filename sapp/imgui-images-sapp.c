@@ -11,8 +11,7 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define SOKOL_GL_IMPL
@@ -177,7 +176,7 @@ static void frame(void) {
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
-    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once, (ImVec2){0, 0});
+    igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){540, 560}, ImGuiCond_Once);
     if (igBegin("Sokol + Dear ImGui Image Test", 0, 0)) {
         const ImVec4 white = { 1, 1, 1, 1 };
@@ -185,10 +184,10 @@ static void frame(void) {
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
         const ImVec2 uv2 = { 4, 4 };
-        igImage(simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLine(0, 4);
-        igImage(simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
-        igImage(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv0, uv2, white, white); igSameLine(0, 4);
-        igImage(simgui_imtextureid(state.ui.img_linear_mirror), size, uv0, uv2, white, white);
+        igImageEx(simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLineEx(0, 4);
+        igImageEx(simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
+        igImageEx(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv0, uv2, white, white); igSameLineEx(0, 4);
+        igImageEx(simgui_imtextureid(state.ui.img_linear_mirror), size, uv0, uv2, white, white);
     }
     igEnd();
 

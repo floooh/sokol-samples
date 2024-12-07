@@ -7,8 +7,7 @@
 #include "sokol_fetch.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
@@ -52,11 +51,11 @@ static void render_file_content(void) {
     const int bytes_per_line = 16;  // keep this 2^N
     const int num_lines = (state.size + (bytes_per_line - 1)) / bytes_per_line;
 
-    igBeginChild_Str("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
-    ImGuiListClipper* clipper = ImGuiListClipper_ImGuiListClipper();
-    ImGuiListClipper_Begin(clipper, num_lines, igGetTextLineHeight());
-    ImGuiListClipper_Step(clipper);
-    for (int line_i = clipper->DisplayStart; line_i < clipper->DisplayEnd; line_i++) {
+    igBeginChild("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
+    ImGuiListClipper clipper = {0};
+    ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
+    ImGuiListClipper_Step(&clipper);
+    for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) {
         int start_offset = line_i * bytes_per_line;
         int end_offset = start_offset + bytes_per_line;
         if (end_offset >= state.size) {
@@ -64,13 +63,13 @@ static void render_file_content(void) {
         }
         igText("%04X: ", start_offset);
         for (int i = start_offset; i < end_offset; i++) {
-            igSameLine(0.0f, 0.0f);
+            igSameLine();
             igText("%02X ", state.buffer[i]);
         }
-        igSameLine((6 * 7.0f) + (bytes_per_line * 3 * 7.0f) + (2 * 7.0f), 0.0f);
+        igSameLineEx((6 * 7.0f) + (bytes_per_line * 3 * 7.0f) + (2 * 7.0f), 0.0f);
         for (int i = start_offset; i < end_offset; i++) {
             if (i != start_offset) {
-                igSameLine(0.0f, 0.0f);
+                igSameLine();
             }
             uint8_t c = state.buffer[i];
             if ((c < 32) || (c > 127)) {
@@ -80,8 +79,7 @@ static void render_file_content(void) {
         }
     }
     igText("EOF\n");
-    ImGuiListClipper_End(clipper);
-    ImGuiListClipper_destroy(clipper);
+    ImGuiListClipper_End(&clipper);
     igEndChild();
 }
 
@@ -99,7 +97,7 @@ static void frame(void) {
         .dpi_scale = sapp_dpi_scale()
     });
 
-    igSetNextWindowPos((ImVec2){10, 10}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){10, 10}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){600,500}, ImGuiCond_Once);
     igBegin("Drop a file!", 0, 0);
     if (state.load_state != LOADSTATE_UNKNOWN) {

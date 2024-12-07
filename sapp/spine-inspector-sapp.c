@@ -15,8 +15,7 @@
 #include "sokol_gl.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_GFX_IMGUI_IMPL
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
 #include "stb/stb_image.h"
@@ -504,37 +503,37 @@ static const char* ui_sgwrap_name(sg_wrap w) {
 
 static void ui_draw(void) {
     if (igBeginMainMenuBar()) {
-        if (igBeginMenu("sokol-spine", true)) {
-            if (igBeginMenu("Load", true)) {
+        if (igBeginMenu("sokol-spine")) {
+            if (igBeginMenu("Load")) {
                 for (int i = 0; i < MAX_SPINE_SCENES; i++) {
                     if (spine_scenes[i].ui_name) {
-                        if (igMenuItem_Bool(spine_scenes[i].ui_name, 0, (i == state.load_status.scene_index), true)) {
+                        if (igMenuItemEx(spine_scenes[i].ui_name, 0, (i == state.load_status.scene_index), true)) {
                             load_spine_scene(i);
                         }
                     }
                 }
                 igEndMenu();
             }
-            igMenuItem_BoolPtr("Draw Bones", 0, &state.ui.draw_bones_enabled, true);
-            igMenuItem_BoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
-            igMenuItem_BoolPtr("Bones...", 0, &state.ui.bones_open, true);
-            igMenuItem_BoolPtr("Slots...", 0, &state.ui.slots_open, true);
-            igMenuItem_BoolPtr("Anims...", 0, &state.ui.anims_open, true);
-            igMenuItem_BoolPtr("Events...", 0, &state.ui.events_open, true);
-            igMenuItem_BoolPtr("Skins...", 0, &state.ui.skins_open, true);
-            igMenuItem_BoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
+            igMenuItemBoolPtr("Draw Bones", 0, &state.ui.draw_bones_enabled, true);
+            igMenuItemBoolPtr("Atlas...", 0, &state.ui.atlas_open, true);
+            igMenuItemBoolPtr("Bones...", 0, &state.ui.bones_open, true);
+            igMenuItemBoolPtr("Slots...", 0, &state.ui.slots_open, true);
+            igMenuItemBoolPtr("Anims...", 0, &state.ui.anims_open, true);
+            igMenuItemBoolPtr("Events...", 0, &state.ui.events_open, true);
+            igMenuItemBoolPtr("Skins...", 0, &state.ui.skins_open, true);
+            igMenuItemBoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
             igEndMenu();
         }
         sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
-        if (igBeginMenu("options", true)) {
+        if (igBeginMenu("options")) {
             static int theme = 0;
-            if (igRadioButton_IntPtr("Dark Theme", &theme, 0)) {
+            if (igRadioButtonIntPtr("Dark Theme", &theme, 0)) {
                 igStyleColorsDark(0);
             }
-            if (igRadioButton_IntPtr("Light Theme", &theme, 1)) {
+            if (igRadioButtonIntPtr("Light Theme", &theme, 1)) {
                 igStyleColorsLight(0);
             }
-            if (igRadioButton_IntPtr("Classic Theme", &theme, 2)) {
+            if (igRadioButtonIntPtr("Classic Theme", &theme, 2)) {
                 igStyleColorsClassic(0);
             }
             igEndMenu();
@@ -545,7 +544,7 @@ static void ui_draw(void) {
     ImVec2 pos = IMVEC2(30, 30);
     if (state.ui.atlas_open) {
         igSetNextWindowSize(IMVEC2(300, 330), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Spine Atlas", &state.ui.atlas_open, 0)) {
             if (!sspine_atlas_valid(state.atlas)) {
                 igText("No Spine data loaded.");
@@ -582,30 +581,30 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.bones_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Bones", &state.ui.bones_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
             } else {
                 const int num_bones = sspine_num_bones(state.skeleton);
                 igText("Num Bones: %d", num_bones);
-                igBeginChild_Str("bones_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("bones_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_bones; i++) {
                     const sspine_bone bone = sspine_bone_by_index(state.skeleton, i);
                     const sspine_bone_info info = sspine_get_bone_info(bone);
                     assert(info.valid);
-                    igPushID_Int(bone.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_bone_equal(state.ui.selected.bone, bone), 0, IMVEC2(0,0))) {
+                    igPushIDInt(bone.index);
+                    if (igSelectableEx(info.name.cstr, sspine_bone_equal(state.ui.selected.bone, bone), 0, IMVEC2(0,0))) {
                         state.ui.selected.bone = bone;
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_bone_valid(state.ui.selected.bone)) {
                     const sspine_bone_info info = sspine_get_bone_info(state.ui.selected.bone);
                     assert(info.valid);
-                    igBeginChild_Str("bone_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("bone_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Parent Bone: %s", sspine_bone_valid(info.parent_bone) ? sspine_get_bone_info(info.parent_bone).name.cstr : "---");
                     igText("Name: %s", info.name.cstr);
@@ -631,32 +630,32 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.slots_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Slots", &state.ui.slots_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
             } else {
                 const int num_slots = sspine_num_slots(state.skeleton);
                 igText("Num Slots: %d", num_slots);
-                igBeginChild_Str("slot_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("slot_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_slots; i++) {
                     const sspine_slot slot = sspine_slot_by_index(state.skeleton, i);
                     const sspine_slot_info info = sspine_get_slot_info(slot);
                     assert(info.valid);
-                    igPushID_Int(slot.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_slot_equal(state.ui.selected.slot, slot), 0, IMVEC2(0,0))) {
+                    igPushIDInt(slot.index);
+                    if (igSelectableEx(info.name.cstr, sspine_slot_equal(state.ui.selected.slot, slot), 0, IMVEC2(0,0))) {
                         state.ui.selected.slot = slot;
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_slot_valid(state.ui.selected.slot)) {
                     const sspine_slot_info slot_info = sspine_get_slot_info(state.ui.selected.slot);
                     assert(slot_info.valid);
                     const sspine_bone_info bone_info = sspine_get_bone_info(slot_info.bone);
                     assert(bone_info.valid);
-                    igBeginChild_Str("slot_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("slot_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", slot_info.index);
                     igText("Name: %s", slot_info.name.cstr);
                     igText("Attachment: %s", slot_info.attachment_name.valid ? slot_info.attachment_name.cstr : "-");
@@ -671,31 +670,31 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.anims_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Anims", &state.ui.anims_open, 0)) {
             if (!sspine_instance_valid(state.instance)) {
                 igText("No Spine data loaded.");
             } else {
                 const int num_anims = sspine_num_anims(state.skeleton);
                 igText("Num Anims: %d", num_anims);
-                igBeginChild_Str("anim_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("anim_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_anims; i++) {
                     const sspine_anim anim = sspine_anim_by_index(state.skeleton, i);
                     const sspine_anim_info info = sspine_get_anim_info(anim);
                     assert(info.valid);
-                    igPushID_Int(anim.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_anim_equal(state.ui.selected.anim, anim), 0, IMVEC2(0,0))) {
+                    igPushIDInt(anim.index);
+                    if (igSelectableEx(info.name.cstr, sspine_anim_equal(state.ui.selected.anim, anim), 0, IMVEC2(0,0))) {
                         state.ui.selected.anim = anim;
                         sspine_set_animation(state.instance, anim, 0, true);
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_anim_valid(state.ui.selected.anim)) {
                     const sspine_anim_info info = sspine_get_anim_info(state.ui.selected.anim);
                     assert(info.valid);
-                    igBeginChild_Str("anim_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("anim_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Duration: %.3f", info.duration);
@@ -708,30 +707,30 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.events_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Events", &state.ui.events_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
             } else {
                 const int num_events = sspine_num_events(state.skeleton);
                 igText("Num Events: %d", num_events);
-                igBeginChild_Str("event_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("event_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_events; i++) {
                     const sspine_event event = sspine_event_by_index(state.skeleton, i);
                     const sspine_event_info info = sspine_get_event_info(event);
                     assert(info.valid);
-                    igPushID_Int(event.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_event_equal(state.ui.selected.event, event), 0, IMVEC2(0,0))) {
+                    igPushIDInt(event.index);
+                    if (igSelectableEx(info.name.cstr, sspine_event_equal(state.ui.selected.event, event), 0, IMVEC2(0,0))) {
                         state.ui.selected.event = event;
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_event_valid(state.ui.selected.event)) {
                     const sspine_event_info info = sspine_get_event_info(state.ui.selected.event);
                     assert(info.valid);
-                    igBeginChild_Str("event_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("event_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Int Value: %d\n", info.int_value);
@@ -749,31 +748,31 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.skins_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("Skins", &state.ui.skins_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
             } else {
                 const int num_skins = sspine_num_skins(state.skeleton);
                 igText("Num Skins: %d", num_skins);
-                igBeginChild_Str("skin_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("skin_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_skins; i++) {
                     const sspine_skin skin = sspine_skin_by_index(state.skeleton, i);
                     const sspine_skin_info info = sspine_get_skin_info(skin);
                     assert(info.valid);
-                    igPushID_Int(skin.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_skin_equal(state.ui.selected.skin, skin), 0, IMVEC2(0,0))) {
+                    igPushIDInt(skin.index);
+                    if (igSelectableEx(info.name.cstr, sspine_skin_equal(state.ui.selected.skin, skin), 0, IMVEC2(0,0))) {
                         state.ui.selected.skin = skin;
                         sspine_set_skin(state.instance, skin);
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_skin_valid(state.ui.selected.skin)) {
                     const sspine_skin_info info = sspine_get_skin_info(state.ui.selected.skin);
                     assert(info.valid);
-                    igBeginChild_Str("skin_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("skin_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igEndChild();
@@ -785,30 +784,30 @@ static void ui_draw(void) {
     pos.x += 20; pos.y += 20;
     if (state.ui.iktargets_open) {
         igSetNextWindowSize(IMVEC2(300, 300), ImGuiCond_Once);
-        igSetNextWindowPos(pos, ImGuiCond_Once, IMVEC2(0,0));
+        igSetNextWindowPos(pos, ImGuiCond_Once);
         if (igBegin("IK Targets", &state.ui.iktargets_open, 0)) {
             if (!sspine_skeleton_valid(state.skeleton)) {
                 igText("No Spine data loaded");
             } else {
                 const int num_iktargets = sspine_num_iktargets(state.skeleton);
                 igText("Num IK Targets: %d", num_iktargets);
-                igBeginChild_Str("iktarget_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("iktarget_list", IMVEC2(128, 0), true, 0);
                 for (int i = 0; i < num_iktargets; i++) {
                     const sspine_iktarget iktarget = sspine_iktarget_by_index(state.skeleton, i);
                     const sspine_iktarget_info info = sspine_get_iktarget_info(iktarget);
                     assert(info.valid);
-                    igPushID_Int(iktarget.index);
-                    if (igSelectable_Bool(info.name.cstr, sspine_iktarget_equal(state.ui.selected.iktarget, iktarget), 0, IMVEC2(0,0))) {
+                    igPushIDInt(iktarget.index);
+                    if (igSelectableEx(info.name.cstr, sspine_iktarget_equal(state.ui.selected.iktarget, iktarget), 0, IMVEC2(0,0))) {
                         state.ui.selected.iktarget = iktarget;
                     }
                     igPopID();
                 }
                 igEndChild();
-                igSameLine(0, -1);
+                igSameLine();
                 if (sspine_iktarget_valid(state.ui.selected.iktarget)) {
                     const sspine_iktarget_info info = sspine_get_iktarget_info(state.ui.selected.iktarget);
                     assert(info.valid);
-                    igBeginChild_Str("iktarget_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("iktarget_info", IMVEC2(0,0), false, 0);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Target Bone: %s", sspine_get_bone_info(info.target_bone).name.cstr);
@@ -827,13 +826,13 @@ static void ui_draw(void) {
         if (event_info.valid) {
             const float alpha = (float) (1.0 - ((state.ui.cur_time - event_time) / triggered_event_fade_time));
             igSetNextWindowBgAlpha(alpha);
-            igSetNextWindowPos(IMVEC2(sapp_widthf() * 0.5f, sapp_heightf() - 50.0f), ImGuiCond_Always, IMVEC2(0.5f,0.5f));
-            igPushStyleColor_U32(ImGuiCol_WindowBg, 0xFF0000FF);
+            igSetNextWindowPosEx(IMVEC2(sapp_widthf() * 0.5f, sapp_heightf() - 50.0f), ImGuiCond_Always, IMVEC2(0.5f,0.5f));
+            igPushStyleColor(ImGuiCol_WindowBg, 0xFF0000FF);
             if (igBegin("Triggered Events", 0, ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_NoFocusOnAppearing|ImGuiWindowFlags_NoNav)) {
                 igText("%s: %.3f (age: %.3f)", event_info.name.cstr, event_time, state.ui.cur_time - event_time);
             }
             igEnd();
-            igPopStyleColor(1);
+            igPopStyleColor();
         }
     }
     sgimgui_draw(&state.ui.sgimgui);

@@ -6,8 +6,7 @@
 #include "sokol_log.h"
 #include "sokol_time.h"
 #include "sokol_glue.h"
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include "cimgui/cimgui.h"
+#include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
@@ -214,13 +213,13 @@ static void frame(void) {
     }
 
     // control ui
-    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once, (ImVec2){0,0});
+    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){600,200}, ImGuiCond_Once);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoResize)) {
         igText("Each cube/instance is 1 16-byte uniform update and 1 draw call\n");
         igText("DC/texture is the number of adjacent draw calls with the same texture binding\n");
-        igSliderInt("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
-        igSliderInt("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
+        igSliderIntEx("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
+        igSliderIntEx("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
         igText("Backend: %s", state.backend);
         igText("Frame duration: %.4fms", frame_measured_time * 1000.0);
         igText("sg_apply_bindings(): %d\n", state.stats.num_binding_updates);

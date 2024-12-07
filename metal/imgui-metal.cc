@@ -25,6 +25,8 @@ static bool show_test_window = true;
 static bool show_another_window = false;
 static sg_pass_action pass_action;
 
+static ImGuiKey as_imgui_key(int keycode);
+
 void init() {
     // setup sokol_gfx and sokol_time
     const sg_desc desc = {
@@ -40,33 +42,13 @@ void init() {
     };
     simgui_setup(&simgui_desc);
 
-    // setup the imgui environment
-    ImGuiIO& io = ImGui::GetIO();
-    io.KeyMap[ImGuiKey_Tab] = 0x30;
-    io.KeyMap[ImGuiKey_LeftArrow] = 0x7B;
-    io.KeyMap[ImGuiKey_RightArrow] = 0x7C;
-    io.KeyMap[ImGuiKey_DownArrow] = 0x7D;
-    io.KeyMap[ImGuiKey_UpArrow] = 0x7E;
-    io.KeyMap[ImGuiKey_Home] = 0x73;
-    io.KeyMap[ImGuiKey_End] = 0x77;
-    io.KeyMap[ImGuiKey_Delete] = 0x75;
-    io.KeyMap[ImGuiKey_Backspace] = 0x33;
-    io.KeyMap[ImGuiKey_Enter] = 0x24;
-    io.KeyMap[ImGuiKey_Escape] = 0x35;
-    io.KeyMap[ImGuiKey_A] = 0x00;
-    io.KeyMap[ImGuiKey_C] = 0x08;
-    io.KeyMap[ImGuiKey_V] = 0x09;
-    io.KeyMap[ImGuiKey_X] = 0x07;
-    io.KeyMap[ImGuiKey_Y] = 0x10;
-    io.KeyMap[ImGuiKey_Z] = 0x06;
-
     // OSX => ImGui input forwarding
-    osx_mouse_pos([] (float x, float y) { ImGui::GetIO().MousePos = ImVec2(x, y); });
-    osx_mouse_btn_down([] (int btn)     { ImGui::GetIO().MouseDown[btn] = true; });
-    osx_mouse_btn_up([] (int btn)       { ImGui::GetIO().MouseDown[btn] = false; });
-    osx_mouse_wheel([] (float v)        { ImGui::GetIO().MouseWheel = 0.25f * v; });
-    osx_key_down([] (int key)           { if (key < 512) ImGui::GetIO().KeysDown[key] = true; });
-    osx_key_up([] (int key)             { if (key < 512) ImGui::GetIO().KeysDown[key] = false; });
+    osx_mouse_pos([] (float x, float y) { ImGui::GetIO().AddMousePosEvent(x, y); });
+    osx_mouse_btn_down([] (int btn)     { ImGui::GetIO().AddMouseButtonEvent(btn, true); });
+    osx_mouse_btn_up([] (int btn)       { ImGui::GetIO().AddMouseButtonEvent(btn, false); });
+    osx_mouse_wheel([] (float v)        { ImGui::GetIO().AddMouseWheelEvent(0.0f, 0.25f * v); });
+    osx_key_down([] (int key)           { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), true); });
+    osx_key_up([] (int key)             { ImGui::GetIO().AddKeyEvent(as_imgui_key(key), false); });
     osx_char([] (wchar_t c)             { ImGui::GetIO().AddInputCharacter(c); });
 
     // initial clear color
@@ -119,4 +101,21 @@ void shutdown() {
 int main() {
     osx_start(WIDTH, HEIGHT, 1, SG_PIXELFORMAT_NONE, "Sokol Dear ImGui (Metal)", init, frame, shutdown);
     return 0;
+}
+
+static ImGuiKey as_imgui_key(int keycode) {
+    switch (keycode) {
+        case 0x30: return ImGuiKey_Tab;
+        case 0x7B: return ImGuiKey_LeftArrow;
+        case 0x7C: return ImGuiKey_RightArrow;
+        case 0x7D: return ImGuiKey_DownArrow;
+        case 0x7E: return ImGuiKey_UpArrow;
+        case 0x73: return ImGuiKey_Home;
+        case 0x77: return ImGuiKey_End;
+        case 0x75: return ImGuiKey_Delete;
+        case 0x33: return ImGuiKey_Backspace;
+        case 0x24: return ImGuiKey_Enter;
+        case 0x35: return ImGuiKey_Escape;
+        default: return ImGuiKey_None;
+    }
 }
