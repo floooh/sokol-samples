@@ -70,7 +70,7 @@ typedef struct {
 
 // fragment-shader-params and textures for metallic material
 typedef struct {
-    metallic_params_t fs_params;
+    cgltf_metallic_params_t fs_params;
     metallic_images_t images;
 } metallic_material_t;
 
@@ -183,7 +183,7 @@ static struct {
     sg_sampler smp;
     scene_t scene;
     camera_t camera;
-    light_params_t point_light;     // code-generated from shader
+    cgltf_light_params_t point_light;     // code-generated from shader
     hmm_mat4 root_transform;
     float rx, ry;
     struct {
@@ -219,7 +219,7 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
 static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
 
 static void update_scene(void);
-static vs_params_t vs_params_for_node(int node_index);
+static cgltf_vs_params_t vs_params_for_node(int node_index);
 
 // sokol-app init callback, called once at startup
 static void init(void) {
@@ -271,7 +271,7 @@ static void init(void) {
     //state.shaders.specular = sg_make_shader(cgltf_specular_shader_desc());
 
     // setup the point light
-    state.point_light = (light_params_t){
+    state.point_light = (cgltf_light_params_t){
         .light_pos = HMM_Vec3(10.0, 10.0, 10.0),
         .light_range = 200.0,
         .light_color = HMM_Vec3(1.0, 1.5, 2.0),
@@ -347,7 +347,7 @@ static void frame(void) {
         sg_begin_pass(&(sg_pass){ .action = state.pass_actions.ok, .swapchain = sglue_swapchain() });
         for (int node_index = 0; node_index < state.scene.num_nodes; node_index++) {
             const node_t* node = &state.scene.nodes[node_index];
-            vs_params_t vs_params = vs_params_for_node(node_index);
+            cgltf_vs_params_t vs_params = vs_params_for_node(node_index);
             const mesh_t* mesh = &state.scene.meshes[node->mesh];
             for (int i = 0; i < mesh->num_primitives; i++) {
                 const primitive_t* prim = &state.scene.primitives[i + mesh->first_primitive];
@@ -360,8 +360,8 @@ static void frame(void) {
                 if (prim->index_buffer != SCENE_INVALID_INDEX) {
                     bind.index_buffer = state.scene.buffers[prim->index_buffer];
                 }
-                sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
-                sg_apply_uniforms(UB_light_params, &SG_RANGE(state.point_light));
+                sg_apply_uniforms(UB_cgltf_vs_params, &SG_RANGE(vs_params));
+                sg_apply_uniforms(UB_cgltf_light_params, &SG_RANGE(state.point_light));
                 if (mat->is_metallic) {
                     sg_image base_color_tex = state.scene.image_samplers[mat->metallic.images.base_color].img;
                     sg_image metallic_roughness_tex = state.scene.image_samplers[mat->metallic.images.metallic_roughness].img;
@@ -394,17 +394,17 @@ static void frame(void) {
                         emissive_tex = state.placeholders.black;
                         emissive_smp = state.placeholders.smp;
                     }
-                    bind.images[IMG_base_color_tex] = base_color_tex;
-                    bind.images[IMG_metallic_roughness_tex] = metallic_roughness_tex;
-                    bind.images[IMG_normal_tex] = normal_tex;
-                    bind.images[IMG_occlusion_tex] = occlusion_tex;
-                    bind.images[IMG_emissive_tex] = emissive_tex;
-                    bind.samplers[SMP_base_color_smp] = base_color_smp;
-                    bind.samplers[SMP_metallic_roughness_smp] = metallic_roughness_smp;
-                    bind.samplers[SMP_normal_smp] = normal_smp;
-                    bind.samplers[SMP_occlusion_smp] = occlusion_smp;
-                    bind.samplers[SMP_emissive_smp] = emissive_smp;
-                    sg_apply_uniforms(UB_metallic_params, &SG_RANGE(mat->metallic.fs_params));
+                    bind.images[IMG_cgltf_base_color_tex] = base_color_tex;
+                    bind.images[IMG_cgltf_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.images[IMG_cgltf_normal_tex] = normal_tex;
+                    bind.images[IMG_cgltf_occlusion_tex] = occlusion_tex;
+                    bind.images[IMG_cgltf_emissive_tex] = emissive_tex;
+                    bind.samplers[SMP_cgltf_base_color_smp] = base_color_smp;
+                    bind.samplers[SMP_cgltf_metallic_roughness_smp] = metallic_roughness_smp;
+                    bind.samplers[SMP_cgltf_normal_smp] = normal_smp;
+                    bind.samplers[SMP_cgltf_occlusion_smp] = occlusion_smp;
+                    bind.samplers[SMP_cgltf_emissive_smp] = emissive_smp;
+                    sg_apply_uniforms(UB_cgltf_metallic_params, &SG_RANGE(mat->metallic.fs_params));
                 } else {
                 /*
                     sg_apply_uniforms(SG_SHADERSTAGE_VS,
@@ -1023,14 +1023,12 @@ static void update_scene(void) {
     state.root_transform = HMM_Rotate(state.rx, HMM_Vec3(0, 1, 0));
 }
 
-static vs_params_t vs_params_for_node(int node_index) {
-    hmm_mat4 model_transform = HMM_MultiplyMat4(state.root_transform, state.scene.nodes[node_index].transform);
-    vs_params_t vs_params = {
-        .model = model_transform,
+static cgltf_vs_params_t vs_params_for_node(int node_index) {
+    return (cgltf_vs_params_t){
+        .model = HMM_MultiplyMat4(state.root_transform, state.scene.nodes[node_index].transform),
         .view_proj = state.camera.view_proj,
         .eye_pos = state.camera.eye_pos
     };
-    return vs_params;
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

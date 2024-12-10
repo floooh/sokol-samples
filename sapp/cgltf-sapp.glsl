@@ -3,6 +3,11 @@
 
     https://github.com/KhronosGroup/glTF-Sample-Viewer/tree/master/src/shaders
  */
+
+// this is just here to test the `@module` prefix feature of the sokol-shdc
+// C code generator, other then that it's not needed
+@module cgltf
+
 @ctype mat4 hmm_mat4
 @ctype vec4 hmm_vec4
 @ctype vec3 hmm_vec3
@@ -274,4 +279,4 @@ void main() {
 }
 @end
 
-@program cgltf_metallic vs metallic_fs
+@program metallic vs metallic_fs
