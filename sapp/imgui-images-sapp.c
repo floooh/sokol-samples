@@ -40,11 +40,11 @@ static struct {
         sg_pass_action pass_action;
     } display;
     struct {
-        simgui_image_t img_nearest_clamp;
-        simgui_image_t img_linear_clamp;
-        simgui_image_t img_nearest_repeat;
-        simgui_image_t img_linear_mirror;
-    } ui;
+        sg_sampler nearest_clamp;
+        sg_sampler linear_clamp;
+        sg_sampler nearest_repeat;
+        sg_sampler linear_mirror;
+    } smp;
 } state;
 
 static void draw_cube(void);
@@ -112,43 +112,30 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } },
     };
 
-    // sokol-imgui image-sampler-pair wrappers which combine the offscreen
-    // render target texture with different sampler types
-    state.ui.img_nearest_clamp = simgui_make_image(&(simgui_image_desc_t){
-        .image = state.offscreen.color_img,
-        .sampler = sg_make_sampler(&(sg_sampler_desc){
-            .min_filter = SG_FILTER_NEAREST,
-            .mag_filter = SG_FILTER_NEAREST,
-            .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-            .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        })
+    // create various samplers which we'll use later during UI rendering
+    state.smp.nearest_clamp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
-    state.ui.img_linear_clamp = simgui_make_image(&(simgui_image_desc_t){
-        .image = state.offscreen.color_img,
-        .sampler = sg_make_sampler(&(sg_sampler_desc){
-            .min_filter = SG_FILTER_LINEAR,
-            .mag_filter = SG_FILTER_LINEAR,
-            .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-            .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        })
+    state.smp.linear_clamp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
-    state.ui.img_nearest_repeat = simgui_make_image(&(simgui_image_desc_t){
-        .image = state.offscreen.color_img,
-        .sampler = sg_make_sampler(&(sg_sampler_desc){
-            .min_filter = SG_FILTER_NEAREST,
-            .mag_filter = SG_FILTER_NEAREST,
-            .wrap_u = SG_WRAP_REPEAT,
-            .wrap_v = SG_WRAP_REPEAT,
-        })
+    state.smp.nearest_repeat = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_REPEAT,
+        .wrap_v = SG_WRAP_REPEAT,
     });
-    state.ui.img_linear_mirror = simgui_make_image(&(simgui_image_desc_t){
-        .image = state.offscreen.color_img,
-        .sampler = sg_make_sampler(&(sg_sampler_desc){
-            .min_filter = SG_FILTER_LINEAR,
-            .mag_filter = SG_FILTER_LINEAR,
-            .wrap_u = SG_WRAP_MIRRORED_REPEAT,
-            .wrap_v = SG_WRAP_MIRRORED_REPEAT,
-        })
+    state.smp.linear_mirror = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_MIRRORED_REPEAT,
+        .wrap_v = SG_WRAP_MIRRORED_REPEAT,
     });
 }
 
@@ -184,10 +171,15 @@ static void frame(void) {
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
         const ImVec2 uv2 = { 4, 4 };
-        igImageEx(simgui_imtextureid(state.ui.img_nearest_clamp), size, uv0, uv1, white, white); igSameLineEx(0, 4);
-        igImageEx(simgui_imtextureid(state.ui.img_linear_clamp), size, uv0, uv1, white, white);
-        igImageEx(simgui_imtextureid(state.ui.img_nearest_repeat), size, uv0, uv2, white, white); igSameLineEx(0, 4);
-        igImageEx(simgui_imtextureid(state.ui.img_linear_mirror), size, uv0, uv2, white, white);
+        sg_image img = state.offscreen.color_img;
+        ImTextureID texid0 = simgui_imtextureid_with_sampler(img, state.smp.nearest_clamp);
+        ImTextureID texid1 = simgui_imtextureid_with_sampler(img, state.smp.linear_clamp);
+        ImTextureID texid2 = simgui_imtextureid_with_sampler(img, state.smp.nearest_repeat);
+        ImTextureID texid3 = simgui_imtextureid_with_sampler(img, state.smp.linear_mirror);
+        igImageEx(texid0, size, uv0, uv1, white, white); igSameLineEx(0, 4);
+        igImageEx(texid1, size, uv0, uv1, white, white);
+        igImageEx(texid2, size, uv0, uv2, white, white); igSameLineEx(0, 4);
+        igImageEx(texid3, size, uv0, uv2, white, white);
     }
     igEnd();
 

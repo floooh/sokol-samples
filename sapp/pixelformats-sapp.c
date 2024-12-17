@@ -17,11 +17,11 @@
 static struct {
     struct {
         bool valid;
-        simgui_image_t unfiltered;
-        simgui_image_t filtered;
-        simgui_image_t render;
-        simgui_image_t blend;
-        simgui_image_t msaa_resolve;
+        sg_image unfiltered;
+        sg_image filtered;
+        sg_image render;
+        sg_image blend;
+        sg_image msaa_resolve;
         sg_pipeline cube_render_pip;
         sg_pipeline cube_blend_pip;
         sg_pipeline cube_msaa_pip;
@@ -31,7 +31,6 @@ static struct {
         sg_attachments blend_atts;
         sg_attachments msaa_atts;
     } fmt[_SG_PIXELFORMAT_NUM];
-    sg_sampler smp_nearest;
     sg_sampler smp_linear;
     sg_bindings cube_bindings;
     sg_bindings bg_bindings;
@@ -42,7 +41,22 @@ static struct {
 
 static const char* pixelformat_string(sg_pixel_format fmt);
 static sg_range gen_pixels(sg_pixel_format fmt);
-static simgui_image_t setup_invalid_texture(void);
+
+// a 'disabled' texture pattern with a cross
+#define X 0xFF0000FF
+#define o 0xFFCCCCCC
+static const uint32_t disabled_texture_pixels[8][8] = {
+    { X, o, o, o, o, o, o, X },
+    { o, X, o, o, o, o, X, o },
+    { o, o, X, o, o, X, o, o },
+    { o, o, o, X, X, o, o, o },
+    { o, o, o, X, X, o, o, o },
+    { o, o, X, o, o, X, o, o },
+    { o, X, o, o, o, o, X, o },
+    { X, o, o, o, o, o, o, X }
+};
+#undef X
+#undef o
 
 static void init(void) {
     // setup sokol-gfx
@@ -56,7 +70,6 @@ static void init(void) {
 
     // setup cimgui
     simgui_setup(&(simgui_desc_t){
-        .image_pool_size = 256,
         .logger.func = slog_func,
     });
 
@@ -75,7 +88,11 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 4,
     });
-    simgui_image_t invalid_img = setup_invalid_texture();
+    sg_image invalid_img = sg_make_image(&(sg_image_desc){
+        .width = 8,
+        .height = 8,
+        .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
+    });
     for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
         state.fmt[i].unfiltered = invalid_img;
         state.fmt[i].filtered = invalid_img;
@@ -83,11 +100,6 @@ static void init(void) {
         state.fmt[i].blend  = invalid_img;
         state.fmt[i].msaa_resolve = invalid_img;
     }
-
-    state.smp_nearest = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
-    });
 
     state.smp_linear = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
@@ -143,17 +155,9 @@ static void init(void) {
                     .pixel_format = fmt,
                     .data.subimage[0][0] = img_data,
                 });
-                if (fmt_info.sample) {
-                    state.fmt[i].unfiltered = simgui_make_image(&(simgui_image_desc_t){
-                        .image = img,
-                        .sampler = state.smp_nearest,
-                    });
-                    if (fmt_info.filter) {
-                        state.fmt[i].filtered = simgui_make_image(&(simgui_image_desc_t){
-                            .image = img,
-                            .sampler = state.smp_linear,
-                        });
-                    }
+                state.fmt[i].unfiltered = img;
+                if (fmt_info.filter) {
+                    state.fmt[i].filtered = img;
                 }
             }
 
@@ -166,10 +170,7 @@ static void init(void) {
                     .pixel_format = fmt,
                     .sample_count = 1,
                 });
-                state.fmt[i].render = simgui_make_image(&(simgui_image_desc_t){
-                    .image = img,
-                    .sampler = state.smp_nearest
-                });
+                state.fmt[i].render = img;
                 cube_render_pip_desc.colors[0].pixel_format = fmt;
                 bg_render_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_render_pip = sg_make_pipeline(&cube_render_pip_desc);
@@ -188,10 +189,7 @@ static void init(void) {
                     .pixel_format = fmt,
                     .sample_count = 1,
                 });
-                state.fmt[i].blend = simgui_make_image(&(simgui_image_desc_t){
-                    .image = img,
-                    .sampler = state.smp_nearest,
-                });
+                state.fmt[i].blend = img;
                 cube_blend_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_blend_pip = sg_make_pipeline(&cube_blend_pip_desc);
                 state.fmt[i].blend_atts = sg_make_attachments(&(sg_attachments_desc){
@@ -215,10 +213,7 @@ static void init(void) {
                     .pixel_format = fmt,
                     .sample_count = 1,
                 });
-                state.fmt[i].msaa_resolve = simgui_make_image(&(simgui_image_desc_t){
-                    .image = resolve_img,
-                    .sampler = state.smp_nearest,
-                });
+                state.fmt[i].msaa_resolve = resolve_img;
                 cube_msaa_pip_desc.colors[0].pixel_format = fmt;
                 bg_msaa_pip_desc.colors[0].pixel_format = fmt;
                 state.fmt[i].cube_msaa_pip = sg_make_pipeline(&cube_msaa_pip_desc);
@@ -377,7 +372,7 @@ static void frame(void) {
                 igSameLineEx(256, 0);
                 igImage(simgui_imtextureid(state.fmt[i].unfiltered), (ImVec2){64,64});
                 igSameLine();
-                igImage(simgui_imtextureid(state.fmt[i].filtered), (ImVec2){64,64});
+                igImage(simgui_imtextureid_with_sampler(state.fmt[i].filtered, state.smp_linear), (ImVec2){64,64});
                 igSameLine();
                 igImage(simgui_imtextureid(state.fmt[i].render), (ImVec2){64,64});
                 igSameLine();
@@ -425,33 +420,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .window_title = "Pixelformat Test",
         .logger.func = slog_func,
     };
-}
-
-/* create a texture for "feature disabled) */
-#define X 0xFF0000FF
-#define o 0xFFCCCCCC
-static const uint32_t disabled_texture_pixels[8][8] = {
-    { X, o, o, o, o, o, o, X },
-    { o, X, o, o, o, o, X, o },
-    { o, o, X, o, o, X, o, o },
-    { o, o, o, X, X, o, o, o },
-    { o, o, o, X, X, o, o, o },
-    { o, o, X, o, o, X, o, o },
-    { o, X, o, o, o, o, X, o },
-    { X, o, o, o, o, o, o, X }
-};
-#undef X
-#undef o
-
-static simgui_image_t setup_invalid_texture(void) {
-    return simgui_make_image(&(simgui_image_desc_t){
-        .image = sg_make_image(&(sg_image_desc){
-            .width = 8,
-            .height = 8,
-            .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
-        }),
-        .sampler = state.smp_nearest,
-    });
 }
 
 /* generate checkerboard pixel values */
