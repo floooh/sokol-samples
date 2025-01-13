@@ -32,20 +32,10 @@
     <script type='text/javascript'>
       var Module = {
         preRun: [],
-        print: (function() {
-            return function(text) {
-                text = Array.prototype.slice.call(arguments).join(' ');
-                console.log(text);
-            };
-        })(),
-        printErr: function(text) {
-            text = Array.prototype.slice.call(arguments).join(' ');
-            console.error(text);
-        },
+        print: (...args) => console.log('[stdout]: ' + args.join(' ')),
+        printErr: (...args) => console.log('[stderr]: ' + args.join(' ')),
       };
-      window.onerror = function() {
-        console.log("onerror: " + event.message);
-      };
+      window.onerror = (event) => console.log('[onerror]: ' + event.message);
     </script>
     {{{ SCRIPT }}}
   </body>
