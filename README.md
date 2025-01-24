@@ -316,7 +316,7 @@ To build one of the sokol-app samples for GL on macOS:
 
 ```sh
 > cd sokol-samples/sapp
-> ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl430
 > cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -fobjc-arc -DSOKOL_GLCORE -I../../sokol -I../libs -framework OpenGL -framework Cocoa -framework AudioToolbox
 ```
 
@@ -344,7 +344,7 @@ To build one of the sokol-app samples for GL on Windows:
 
 ```sh
 > cd sokol-samples\sapp
-> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl430
 > cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
 ```
 
@@ -357,7 +357,7 @@ From the MSYS2 shell:
 ```sh
 > cd sokol-samples/sapp
 # compile shaders for HLSL and GLSL:
-> ../../sokol-tools-bin/bin/win32/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl330
+> ../../sokol-tools-bin/bin/win32/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl430
 # build and run with D3D11 backend:
 > gcc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11 -mwin32 -O2 -DSOKOL_D3D11 -I../../sokol -I ../libs -lkernel32 -luser32 -lshell32 -ldxgi -ld3d11 -lole32 -lgdi32
 > ./cube-sapp-d3d11
@@ -376,7 +376,7 @@ need to specify the link libraries manually.
 ```sh
 > cd sokol-samples/sapp
 # compile shaders for HLSL and GLSL:
-> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl330
+> ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5:glsl430
 # build and run with D3D11 backend:
 > clang cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp-d3d11.exe -O2 -DSOKOL_D3D11 -I ../../sokol -I ../libs
 > cube-sapp-d3d11
@@ -402,7 +402,7 @@ To build one of the sokol-app samples on Linux:
 
 ```sh
 > cd sokol-samples/sapp
-> ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl330
+> ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl430
 > cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lasound -lXi -lXcursor
 ```
 
