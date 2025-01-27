@@ -3,6 +3,7 @@
 //------------------------------------------------------------------------------
 #include "osxentry.h"
 #include "sokol_gfx.h"
+#include "sokol_time.h"
 #include "sokol_log.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
@@ -13,9 +14,10 @@
 
 static struct {
     struct {
-        sg_buffer buffers[2];
+        sg_buffer buf;
         sg_pipeline pip;
     } compute;
+    uint64_t last_time;
     struct {
         sg_pass_action pass_action;
     } display;
@@ -36,29 +38,37 @@ typedef struct {
     float vel[4];
 } particle_t;
 
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = osx_environment(),
         .logger.func = slog_func,
     });
+    stm_setup();
 
-    // create two ping-pong storage buffers with random initial particle velocities
+    // a storage buffer which holds the particle positions and velocities,
+    // updated by a compute shader
     {
         particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
         for (size_t i = 0; i < MAX_PARTICLES; i++) {
-            p[i].vel[0] = ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f;
-            p[i].vel[1] = ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f;
-            p[i].vel[2] = ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f;
+            p[i].vel[0] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
+            p[i].vel[1] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f;
+            p[i].vel[2] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
         }
-        for (size_t i = 0; i < 2; i++) {
-            state.compute.buffers[i] = sg_make_buffer(&(sg_buffer_desc){
-                .type = SG_BUFFERTYPE_STORAGEBUFFER,
-                .data = {
-                    .ptr = p,
-                    .size = MAX_PARTICLES * sizeof(particle_t),
-                },
-            });
-        }
+        state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
+            .type = SG_BUFFERTYPE_STORAGEBUFFER,
+            .data = {
+                .ptr = p,
+                .size = MAX_PARTICLES * sizeof(particle_t),
+            },
+        });
         free(p);
     }
 
@@ -79,12 +89,11 @@ static void init(void) {
             "};\n"
             "kernel void _main(\n"
             "  constant params_t& params [[buffer(0)]],\n"
-            "  const device ssbo_t& inp [[buffer(8)]],\n"
-            "  device ssbo_t& out [[buffer(9)]],\n"
+            "  device ssbo_t& buf [[buffer(8)]],\n"
             "  uint idx [[thread_position_in_grid]])\n"
             "{\n"
-            "  float4 pos = inp.prt[idx].pos;\n"
-            "  float4 vel = inp.prt[idx].vel;\n"
+            "  float4 pos = buf.prt[idx].pos;\n"
+            "  float4 vel = buf.prt[idx].vel;\n"
             "  float dt = params.dt;\n"
             "  vel.y -= 1.0 * dt;\n"
             "  pos += vel * dt;\n"
@@ -92,8 +101,8 @@ static void init(void) {
             "    pos.y = -1.8f;\n"
             "    vel *= float4(0.8, -0.8, 0.8, 0);\n"
             "  }\n"
-            "  out.prt[idx].pos = pos;\n"
-            "  out.prt[idx].vel = vel;\n"
+            "  buf.prt[idx].pos = pos;\n"
+            "  buf.prt[idx].vel = vel;\n"
             "}\n",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
@@ -122,6 +131,19 @@ static void init(void) {
 }
 
 static void frame(void) {
+    const params_t params = {
+        .dt = (float)stm_sec(stm_laptime(&state.last_time)),
+    };
+
+    // compute pass to update the particle positions
+    sg_begin_pass(&(sg_pass){ .compute = true });
+    sg_apply_pipeline(state.compute.pip);
+    sg_apply_bindings(&(sg_bindings){ .storage_buffers[0] = state.compute.buf });
+    sg_apply_uniforms(0, &SG_RANGE(params));
+    sg_dispatch(128, 1, 1);
+    sg_end_pass();
+
+
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = osx_swapchain() });
     sg_end_pass();
     sg_commit();
