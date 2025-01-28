@@ -112,13 +112,8 @@ static void init(void) {
         .storage_buffers = {
             [0] = {
                 .stage = SG_SHADERSTAGE_COMPUTE,
-                .readonly = true,
-                .msl_buffer_n = 8,
-            },
-            [1] = {
-                .stage = SG_SHADERSTAGE_COMPUTE,
                 .readonly = false,
-                .msl_buffer_n = 9,
+                .msl_buffer_n = 8,
             },
         },
     });
