@@ -1,17 +1,13 @@
 # sokol-samples
 
+[![Build Status](https://github.com/floooh/sokol-samples/actions/workflows/build.yml/badge.svg)](https://github.com/floooh/sokol-samples/actions/workflows/build.yml)
+
 Sample code for https://github.com/floooh/sokol
 
 WASM live demos:
 
 - for WebGL2: https://floooh.github.io/sokol-html5/index.html
 - for WebGPU: https://floooh.github.io/sokol-webgpu/index.html
-
-### Build Status:
-
-|Platform|Build Status|
-|--------|------|
-|GH Actions (OSX/Linux/Win+VS2019/iOS/WASM/Android)|[![Build Status](https://github.com/floooh/sokol-samples/workflows/build_and_test/badge.svg)](https://github.com/floooh/sokol-samples/actions)|
 
 ## How to Build on Windows, Linux and macOS
 
