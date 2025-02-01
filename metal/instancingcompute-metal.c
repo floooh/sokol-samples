@@ -78,6 +78,7 @@ static void init(void) {
                 .ptr = p,
                 .size = MAX_PARTICLES * sizeof(particle_t),
             },
+            .label = "particle-buffer",
         });
         free(p);
     }
@@ -124,12 +125,14 @@ static void init(void) {
             .readonly = false,
             .msl_buffer_n = 8,
         },
+        .label = "compute-shader",
     });
 
     // create a compute pipeline object
     state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = compute_shd,
+        .label = "compute-pipeline",
     });
 
     // vertex buffer for static geometry, goes into vertex-buffer-slot 0
@@ -144,7 +147,8 @@ static void init(void) {
         0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
     };
     state.display.vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .data = SG_RANGE(vertices)
+        .data = SG_RANGE(vertices),
+        .label = "geometry-vbuf",
     });
 
     // index buffer for static geometry
@@ -154,7 +158,8 @@ static void init(void) {
     };
     state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .data = SG_RANGE(indices)
+        .data = SG_RANGE(indices),
+        .label = "geometry-ibuf",
     });
 
     // shader for rendering with instance position pulled from the storage buffer
@@ -208,6 +213,7 @@ static void init(void) {
             .readonly = true,
             .msl_buffer_n = 8,
         },
+        .label = "render-shader",
     });
 
     // a pipeline object for rendering, this uses geometry from
@@ -227,6 +233,7 @@ static void init(void) {
             .write_enabled = true,
         },
         .cull_mode = SG_CULLMODE_BACK,
+        .label = "render-pipeline",
     });
 }
 
@@ -240,7 +247,7 @@ static void frame(void) {
     const cs_params_t cs_params = {
         .dt = (float)stm_sec(stm_laptime(&state.last_time)),
     };
-    sg_begin_pass(&(sg_pass){ .compute = true });
+    sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
         .storage_buffers[0] = state.compute.buf
@@ -258,7 +265,11 @@ static void frame(void) {
     const vs_params_t vs_params = {
         .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)))
     };
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = osx_swapchain() });
+    sg_begin_pass(&(sg_pass){
+        .action = state.display.pass_action,
+        .swapchain = osx_swapchain(),
+        .label = "render-pass",
+    });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = state.display.vbuf,
