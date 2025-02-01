@@ -1,14 +1,15 @@
 //------------------------------------------------------------------------------
-//  instancingcompute-metal.c
+//  instancing-compute-wgpu.c
 //------------------------------------------------------------------------------
-#include "osxentry.h"
-#include "sokol_gfx.h"
-#include "sokol_time.h"
-#include "sokol_log.h"
+#include "wgpu_entry.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
-#include <stdlib.h> // calloc, free
+#define SOKOL_IMPL
+#define SOKOL_WGPU
+#include "sokol_gfx.h"
+#include "sokol_log.h"
+#include "sokol_time.h"
 
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
@@ -58,7 +59,7 @@ static inline uint32_t xorshift32(void) {
 
 static void init(void) {
     sg_setup(&(sg_desc){
-        .environment = osx_environment(),
+        .environment = wgpu_environment(),
         .logger.func = slog_func,
     });
     stm_setup();
@@ -86,44 +87,16 @@ static void init(void) {
     // create compute shader
     sg_shader compute_shd = sg_make_shader(&(sg_shader_desc){
         .compute_func.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float dt;\n"
-            "};\n"
-            "struct particle_t {\n"
-            "  float4 pos;\n"
-            "  float4 vel;\n"
-            "};\n"
-            "struct ssbo_t {\n"
-            "  particle_t prt[1];\n"
-            "};\n"
-            "kernel void _main(\n"
-            "  constant params_t& params [[buffer(0)]],\n"
-            "  device ssbo_t& buf [[buffer(8)]],\n"
-            "  uint idx [[thread_position_in_grid]])\n"
-            "{\n"
-            "  float4 pos = buf.prt[idx].pos;\n"
-            "  float4 vel = buf.prt[idx].vel;\n"
-            "  float dt = params.dt;\n"
-            "  vel.y -= 1.0 * dt;\n"
-            "  pos += vel * dt;\n"
-            "  if (pos.y < -2.0) {\n"
-            "    pos.y = -1.8f;\n"
-            "    vel *= float4(0.8, -0.8, 0.8, 0);\n"
-            "  }\n"
-            "  buf.prt[idx].pos = pos;\n"
-            "  buf.prt[idx].vel = vel;\n"
-            "}\n",
+            "FIXME",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
-            .msl_buffer_n = 0,
+            .wgsl_group0_binding_n = 0,
         },
         .storage_buffers[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .readonly = false,
-            .msl_buffer_n = 8,
+            .wgsl_group1_binding_n = 0,
         },
         .label = "compute-shader",
     });
@@ -162,56 +135,21 @@ static void init(void) {
         .label = "geometry-ibuf",
     });
 
-    // shader for rendering with instance position pulled from the storage buffer
+    // shader for rendering with instance positions pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "struct params_t {\n"
-            "  float4x4 mvp;\n"
-            "};\n"
-            "struct vs_in {\n"
-            "  float3 pos [[attribute(0)]];\n"
-            "  float4 color [[attribute(1)]];\n"
-            "};\n"
-            "struct particle_t {\n"
-            "  float4 pos;\n"
-            "  float4 vel;\n"
-            "};\n"
-            "struct ssbo_t {\n"
-            "  particle_t prt[1];\n"
-            "};\n"
-            "struct vs_out {\n"
-            "  float4 pos [[position]];\n"
-            "  float4 color;\n"
-            "};\n"
-            "vertex vs_out _main(\n"
-            "  vs_in in [[stage_in]],\n"
-            "  const device ssbo_t& sbuf [[buffer(8)]],\n"
-            "  constant params_t& params [[buffer(0)]],\n"
-            "  uint inst_idx [[instance_id]])\n"
-            "{\n"
-            "  vs_out out;\n"
-            "  float4 pos = float4(in.pos + sbuf.prt[inst_idx].pos.xyz, 1.0);\n"
-            "  out.pos = params.mvp * pos;\n"
-            "  out.color = in.color;\n"
-            "  return out;\n"
-            "}\n",
+            "FIXME",
         .fragment_func.source =
-            "#include <metal_stdlib>\n"
-            "using namespace metal;\n"
-            "fragment float4 _main(float4 color [[stage_in]]) {\n"
-            "  return color;\n"
-            "}\n",
+            "FIXME",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
-            .msl_buffer_n = 0,
+            .wgsl_group0_binding_n = 0,
         },
         .storage_buffers[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
-            .msl_buffer_n = 8,
+            .wgsl_group1_binding_n = 1,
         },
         .label = "render-shader",
     });
@@ -222,8 +160,8 @@ static void init(void) {
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
-                [0] = { .format=SG_VERTEXFORMAT_FLOAT3, .buffer_index=0 },  // position
-                [1] = { .format=SG_VERTEXFORMAT_FLOAT4, .buffer_index=0 },  // color
+                [0] = { .format=SG_VERTEXFORMAT_FLOAT3 },  // position
+                [1] = { .format=SG_VERTEXFORMAT_FLOAT4 },  // color
             }
         },
         .shader = display_shd,
@@ -243,14 +181,14 @@ static void frame(void) {
         state.num_particles = MAX_PARTICLES;
     }
 
-    // compute pass to update the particle positions
+    // compute pass to update particle positions
     const cs_params_t cs_params = {
         .dt = (float)stm_sec(stm_laptime(&state.last_time)),
     };
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[0] = state.compute.buf
+        .storage_buffers[0] = state.compute.buf,
     });
     sg_apply_uniforms(0, &SG_RANGE(cs_params));
     sg_dispatch(state.num_particles, 1, 1);
@@ -259,7 +197,7 @@ static void frame(void) {
     // render pass to render instanced geometry, with the instance-positions
     // pulled from the compute-updated storage buffer
     state.ry += 1;
-    const hmm_mat4 proj = HMM_Perspective(60.0f, (float)osx_width()/(float)osx_height(), 0.01f, 50.0f);
+    const hmm_mat4 proj = HMM_Perspective(60.0f, (float)wgpu_width()/(float)wgpu_height(), 0.01f, 50.0f);
     const hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     const vs_params_t vs_params = {
@@ -267,7 +205,7 @@ static void frame(void) {
     };
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
-        .swapchain = osx_swapchain(),
+        .swapchain = wgpu_swapchain(),
         .label = "render-pass",
     });
     sg_apply_pipeline(state.display.pip);
@@ -287,5 +225,13 @@ static void shutdown(void) {
 }
 
 int main() {
-    osx_start(640, 480, 1, SG_PIXELFORMAT_DEPTH, "instancingcompute-metal", init, frame, shutdown);
+    wgpu_start(&(wgpu_desc_t){
+        .init_cb = init,
+        .frame_cb = frame,
+        .shutdown_cb = shutdown,
+        .width = 640,
+        .height = 480,
+        .sample_count = 1,
+        .title = "instancing-compute-wgpu",
+    });
 }
