@@ -115,6 +115,7 @@ static void init(void) {
             "  buf.prt[idx].pos = pos;\n"
             "  buf.prt[idx].vel = vel;\n"
             "}\n",
+        // FIXME: compute_workgroup_size!
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
@@ -253,6 +254,7 @@ static void frame(void) {
         .storage_buffers[0] = state.compute.buf
     });
     sg_apply_uniforms(0, &SG_RANGE(cs_params));
+    // FIXME: dispatch is 'number of workgroups' not number of threads!
     sg_dispatch(state.num_particles, 1, 1);
     sg_end_pass();
 

@@ -87,7 +87,33 @@ static void init(void) {
     // create compute shader
     sg_shader compute_shd = sg_make_shader(&(sg_shader_desc){
         .compute_func.source =
-            "FIXME",
+            "struct params_t {\n"
+            "  dt: f32,\n"
+            "}\n"
+            "struct particle_t {\n"
+            "  pos: vec4f,\n"
+            "  vel: vec4f,\n"
+            "}\n"
+            "struct particles_t {\n"
+            "  prt: array<particle_t>,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: params_t;\n"
+            "@group(1) @binding(1) var<storage, read_write> pbuf: particles_t;\n"
+            "@compute @workgroup_size(64)\n"
+            "fn main(@builtin(global_invocation_id) gid : vec3u) {\n"
+            "  let idx = gid.x;\n"
+            "  var pos = pbuf.prt[idx].pos;\n"
+            "  var vel = pbuf.prt[idx].vel;\n"
+            "  vel.y -= 1.0 * in.dt;\n"
+            "  pos += vel * in.dt;\n"
+            "  if (pos.y < -2.0) {\n"
+            "    pos.y = -1.8;\n"
+            "    vel *= vec4f(0.8, -0.8, 0.8, 0);\n"
+            "  }\n"
+            "  pbuf.prt[idx].pos = pos;\n"
+            "  pbuf.prt[idx].vel = vel;\n"
+            "}\n",
+        .compute_workgroup_size = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
@@ -191,7 +217,7 @@ static void frame(void) {
         .storage_buffers[0] = state.compute.buf,
     });
     sg_apply_uniforms(0, &SG_RANGE(cs_params));
-    sg_dispatch(state.num_particles, 1, 1);
+    sg_dispatch((state.num_particles + 63)/ 64, 1, 1);
     sg_end_pass();
 
     // render pass to render instanced geometry, with the instance-positions
