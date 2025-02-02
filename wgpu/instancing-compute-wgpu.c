@@ -98,7 +98,7 @@ static void init(void) {
             "  prt: array<particle_t>,\n"
             "}\n"
             "@group(0) @binding(0) var<uniform> in: params_t;\n"
-            "@group(1) @binding(1) var<storage, read_write> pbuf: particles_t;\n"
+            "@group(1) @binding(0) var<storage, read_write> pbuf: particles_t;\n"
             "@compute @workgroup_size(64)\n"
             "fn main(@builtin(global_invocation_id) gid : vec3u) {\n"
             "  let idx = gid.x;\n"
@@ -164,9 +164,33 @@ static void init(void) {
     // shader for rendering with instance positions pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
-            "FIXME",
+            "struct vs_params {\n"
+            "  mvp: mat4x4f,\n"
+            "}\n"
+            "struct particle_t {\n"
+            "  pos: vec4f,\n"
+            "  vel: vec4f,\n"
+            "}\n"
+            "struct particles_t {\n"
+            "  prt: array<particle_t>,\n"
+            "}\n"
+            "@group(0) @binding(0) var<uniform> in: vs_params;\n"
+            "@group(1) @binding(0) var<storage, read> pbuf: particles_t;\n"
+            "struct vs_out {\n"
+            "  @builtin(position) pos: vec4f,\n"
+            "  @location(0) color: vec4f,\n"
+            "}\n"
+            "@vertex fn main(@location(0) pos: vec3f, @location(1) color: vec4f, @builtin(instance_index) iidx: u32) -> vs_out {\n"
+            "  var out: vs_out;\n"
+            "  let inst_pos = pbuf.prt[iidx].pos.xyz;\n"
+            "  out.pos = in.mvp * vec4f(pos + inst_pos, 1.0);\n"
+            "  out.color = color;\n"
+            "  return out;\n"
+            "}\n",
         .fragment_func.source =
-            "FIXME",
+            "@fragment fn main(@location(0) color: vec4f) -> @location(0) vec4f {\n"
+            "  return color;\n"
+            "}\n",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
@@ -175,7 +199,7 @@ static void init(void) {
         .storage_buffers[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
-            .wgsl_group1_binding_n = 1,
+            .wgsl_group1_binding_n = 0,
         },
         .label = "render-shader",
     });
