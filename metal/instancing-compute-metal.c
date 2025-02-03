@@ -37,6 +37,7 @@ static struct {
 
 typedef struct {
     float dt;
+    uint32_t num_particles;
 } cs_params_t;
 
 typedef struct {
@@ -90,6 +91,7 @@ static void init(void) {
             "using namespace metal;\n"
             "struct params_t {\n"
             "  float dt;\n"
+            "  uint num_particles;\n"
             "};\n"
             "struct particle_t {\n"
             "  float4 pos;\n"
@@ -103,6 +105,9 @@ static void init(void) {
             "  device ssbo_t& buf [[buffer(8)]],\n"
             "  uint idx [[thread_position_in_grid]])\n"
             "{\n"
+            "  if (idx >= params.num_particles) {\n"
+            "    return;"
+            "  }\n"
             "  float4 pos = buf.prt[idx].pos;\n"
             "  float4 vel = buf.prt[idx].vel;\n"
             "  float dt = params.dt;\n"
@@ -115,7 +120,7 @@ static void init(void) {
             "  buf.prt[idx].pos = pos;\n"
             "  buf.prt[idx].vel = vel;\n"
             "}\n",
-        // FIXME: compute_workgroup_size!
+        .compute_workgroup_size = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
@@ -247,6 +252,7 @@ static void frame(void) {
     // compute pass to update the particle positions
     const cs_params_t cs_params = {
         .dt = (float)stm_sec(stm_laptime(&state.last_time)),
+        .num_particles = (uint32_t)state.num_particles,
     };
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
@@ -254,8 +260,7 @@ static void frame(void) {
         .storage_buffers[0] = state.compute.buf
     });
     sg_apply_uniforms(0, &SG_RANGE(cs_params));
-    // FIXME: dispatch is 'number of workgroups' not number of threads!
-    sg_dispatch(state.num_particles, 1, 1);
+    sg_dispatch((state.num_particles + 63)/64, 1, 1);
     sg_end_pass();
 
     // render pass to render instanced geometry, with the instance-positions
