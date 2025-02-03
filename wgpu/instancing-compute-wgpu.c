@@ -38,6 +38,7 @@ static struct {
 
 typedef struct {
     float dt;
+    uint32_t num_particles;
 } cs_params_t;
 
 typedef struct {
@@ -89,6 +90,7 @@ static void init(void) {
         .compute_func.source =
             "struct params_t {\n"
             "  dt: f32,\n"
+            "  num_particles: u32,\n"
             "}\n"
             "struct particle_t {\n"
             "  pos: vec4f,\n"
@@ -102,6 +104,9 @@ static void init(void) {
             "@compute @workgroup_size(64)\n"
             "fn main(@builtin(global_invocation_id) gid : vec3u) {\n"
             "  let idx = gid.x;\n"
+            "  if (idx >= in.num_particles) {\n"
+            "    return;\n"
+            "  }\n"
             "  var pos = pbuf.prt[idx].pos;\n"
             "  var vel = pbuf.prt[idx].vel;\n"
             "  vel.y -= 1.0 * in.dt;\n"
@@ -234,6 +239,7 @@ static void frame(void) {
     // compute pass to update particle positions
     const cs_params_t cs_params = {
         .dt = (float)stm_sec(stm_laptime(&state.last_time)),
+        .num_particles = (uint32_t)state.num_particles,
     };
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
