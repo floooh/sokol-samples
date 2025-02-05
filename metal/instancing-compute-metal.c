@@ -114,7 +114,7 @@ static void init(void) {
             "  vel.y -= 1.0 * dt;\n"
             "  pos += vel * dt;\n"
             "  if (pos.y < -2.0) {\n"
-            "    pos.y = -1.8f;\n"
+            "    pos.y = -1.8;\n"
             "    vel *= float4(0.8, -0.8, 0.8, 0);\n"
             "  }\n"
             "  buf.prt[idx].pos = pos;\n"

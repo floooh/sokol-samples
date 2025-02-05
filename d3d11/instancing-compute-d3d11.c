@@ -97,7 +97,29 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // create compute shader
     sg_shader compute_shd = sg_make_shader(&(sg_shader_desc){
         .compute_func.source =
-            "FIXME",
+            "cbuffer params: register(b0) {\n"
+            "  float dt;\n"
+            "  uint num_particles;\n"
+            "};\n"
+            "RWByteAddressBuffer particles: register(u0);\n"
+            "[numthreads(64,1,1)] void main(uint3 dtid: SV_DispatchThreadID) {\n"
+            "  uint idx = dtid.x;\n"
+            "  if (idx >= num_particles) {\n"
+            "    return;\n"
+            "  }\n"
+            "  uint pos_offset = idx * 32 + 0;\n"
+            "  uint vel_offset = idx * 32 + 16;\n"
+            "  float4 pos = asfloat(particles.Load4(pos_offset));\n"
+            "  float4 vel = asfloat(particles.Load4(vel_offset));\n"
+            "  vel.y -= 1.0 * dt;\n"
+            "  pos += vel * dt;\n"
+            "  if (pos.y < 2.0) {\n"
+            "    pos.y = 1.8;\n"
+            "    vel *= float4(0.8, -0.8, 0.8, 0);\n"
+            "  }\n"
+            "  particles.Store4(pos_offset, asuint(pos));\n"
+            "  particles.Store4(vel_offset, asuint(vel));\n"
+            "}\n",
         .compute_workgroup_size = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
