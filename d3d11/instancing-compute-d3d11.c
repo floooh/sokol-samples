@@ -129,7 +129,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .storage_buffers[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .readonly = false,
-            .hlsl_register_t_n = 0,
+            .hlsl_register_u_n = 0,
         },
         .label = "compute-shader",
     });
