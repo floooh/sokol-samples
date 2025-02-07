@@ -75,6 +75,7 @@ samples = [
     [ 'customresolve', 'customresolve-sapp.c', 'customresolve-sapp.glsl' ],
     [ 'uniformtypes', 'uniformtypes-sapp.c', 'uniformtypes-sapp.glsl' ],
     [ 'blend', 'blend-sapp.c', 'blend-sapp.glsl' ],
+    [ 'blend-op', 'blend-op-sapp.c', 'blend-op-sapp.glsl' ],
     [ 'sdf', 'sdf-sapp.c', 'sdf-sapp.glsl'],
     [ 'shadows', 'shadows-sapp.c', 'shadows-sapp.glsl'],
     [ 'shadows-depthtex', 'shadows-depthtex-sapp.c', 'shadows-depthtex-sapp.glsl'],
