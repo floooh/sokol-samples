@@ -171,9 +171,33 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // shader for rendering with instance position pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
-            "FIXME",
+            "cbuffer params: register(b0) {\n"
+            "  float4x4 mvp;\n"
+            "};\n"
+            "struct vs_in {\n"
+            "  float3 pos: POSITION;\n"
+            "  float4 color: COLOR0;\n"
+            "};\n"
+            "ByteAddressBuffer particles: register(t0);\n"
+            "struct vs_out {\n"
+            "  float4 color: COLOR0;\n"
+            "  float4 pos: SV_Position;\n"
+            "};\n"
+            "vs_out main(vs_in inp, uint iidx: SV_InstanceID) {\n"
+            "  vs_out outp;\n"
+            "  float4 inst_pos = asfloat(particles.Load4(iidx * 32 + 0));\n"
+            "  outp.pos = mul(mvp, float4(inp.pos + inst_pos.xyz, 1.0));\n"
+            "  outp.color = inp.color;\n"
+            "  return outp;\n"
+            "}\n",
         .fragment_func.source =
-            "FIXME",
+            "float4 main(float4 color: COLOR0): SV_Target0 {\n"
+            "  return color;\n"
+            "};\n",
+        .attrs = {
+            [0].hlsl_sem_name = "POSITION",
+            [1].hlsl_sem_name = "COLOR",
+        },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
