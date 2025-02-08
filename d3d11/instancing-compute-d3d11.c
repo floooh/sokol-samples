@@ -78,6 +78,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // updated by a compute shader
     {
         particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
+        assert(p);
         for (size_t i = 0; i < MAX_PARTICLES; i++) {
             p[i].vel[0] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
             p[i].vel[1] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f;
@@ -113,8 +114,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  float4 vel = asfloat(particles.Load4(vel_offset));\n"
             "  vel.y -= 1.0 * dt;\n"
             "  pos += vel * dt;\n"
-            "  if (pos.y < 2.0) {\n"
-            "    pos.y = 1.8;\n"
+            "  if (pos.y < -2.0) {\n"
+            "    pos.y = -1.8;\n"
             "    vel *= float4(0.8, -0.8, 0.8, 0);\n"
             "  }\n"
             "  particles.Store4(pos_offset, asuint(pos));\n"
@@ -133,7 +134,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .label = "compute-shader",
     });
-    
+
     // create a compute pipeline object
     state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
@@ -276,6 +277,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_draw(0, 24, state.num_particles);
         sg_end_pass();
         sg_commit();
+        d3d11_present();
     }
     sg_shutdown();
+    d3d11_shutdown();
 }
