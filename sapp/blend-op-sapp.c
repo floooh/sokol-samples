@@ -98,6 +98,17 @@ void init(void) {
                 .op_rgb = rgb_op,
                 .op_alpha = alpha_op,
             };
+            // blend-op MIN/MAX requires blend-factors to be ONE
+            // (just not initializing the blend factors would also work, in that
+            // case sokol-gfx will use blend factor ONE as the defaults)
+            if ((rgb_op == SG_BLENDOP_MIN) || (rgb_op == SG_BLENDOP_MAX)) {
+                pip_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
+                pip_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE;
+            }
+            if ((alpha_op == SG_BLENDOP_MIN) || (alpha_op == SG_BLENDOP_MAX)) {
+                pip_desc.colors[0].blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
+                pip_desc.colors[0].blend.dst_factor_alpha = SG_BLENDFACTOR_ONE;
+            }
             state.pips[rgb][alpha] = sg_make_pipeline(&pip_desc);
             assert(state.pips[rgb][alpha].id != SG_INVALID_ID);
         }
