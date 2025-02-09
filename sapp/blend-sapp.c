@@ -89,6 +89,18 @@ void init(void) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
             const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
             const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
+            // WebGL2 specific exceptions (not handled by the sokol-gfx validation layer
+            // since it is specifically a WebGL2 quirk caused by ANGLE's D3D11 backend)
+            if ((src_blend == SG_BLENDFACTOR_BLEND_COLOR) || (src_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_COLOR)) {
+                if ((dst_blend == SG_BLENDFACTOR_BLEND_ALPHA) || (dst_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_ALPHA)) {
+                    continue;
+                }
+            }
+            else if ((src_blend == SG_BLENDFACTOR_BLEND_ALPHA) || (src_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_ALPHA)) {
+                if ((dst_blend == SG_BLENDFACTOR_BLEND_COLOR) || (dst_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_COLOR)) {
+                    continue;
+                }
+            }
             pip_desc.colors[0].blend = (sg_blend_state){
                 .enabled = true,
                 .src_factor_rgb = src_blend,
@@ -121,6 +133,9 @@ void frame(void) {
     float r0 = state.r;
     for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
         for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
+            if (state.pips[src][dst].id == SG_INVALID_ID) {
+                continue;
+            }
             // compute new model-view-proj matrix
             hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
             const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
