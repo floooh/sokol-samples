@@ -45,8 +45,6 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
     switch (fmt) {
         case SG_PIXELFORMAT_BC3_RGBA:       return "BC3 RGBA";
         case SG_PIXELFORMAT_BC1_RGBA:       return "BC1 RGBA";
-        case SG_PIXELFORMAT_PVRTC_RGB_4BPP: return "PVRTC RGB 4BPP";
-        case SG_PIXELFORMAT_PVRTC_RGBA_4BPP: return "PVRTC RGBA 4BPP";
         case SG_PIXELFORMAT_ETC2_RGBA8:     return "ETC2 RGBA8";
         case SG_PIXELFORMAT_ETC2_RGB8:      return "ETC2 RGB8";
         default:                            return "???";
