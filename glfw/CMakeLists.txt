@@ -53,6 +53,11 @@ fips_begin_app(instancing-glfw cmdline)
     fips_deps(glfw_glue)
 fips_end_app()
 
+fips_begin_app(instancing-compute-glfw cmdline)
+    fips_files(instancing-compute-glfw.c)
+    fips_deps(glfw_glue)
+fips_end_app()
+
 fips_begin_app(offscreen-glfw cmdline)
     fips_files(offscreen-glfw.c)
     fips_deps(glfw_glue)
