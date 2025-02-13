@@ -178,9 +178,31 @@ int main() {
     // shader for rendering with instance-positions pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
-            "FIXME",
+            "#version 430\n"
+            "uniform mat4 mvp;\n"
+            "struct particle_t {\n"
+            "  vec4 pos;\n"
+            "  vec4 vel;\n"
+            "};\n"
+            "layout(std430, binding=0) readonly buffer ssbo {\n"
+            "  particle_t prt[];\n"
+            "};\n"
+            "layout(location=0) in vec3 position;\n"
+            "layout(location=1) in vec4 color0;\n"
+            "out vec4 color;\n"
+            "void main() {\n"
+            "  vec3 inst_pos = prt[gl_InstanceID].pos.xyz;\n"
+            "  vec4 pos = vec4(position + inst_pos, 1.0);\n"
+            "  gl_Position = mvp * pos;\n"
+            "  color = color0;\n"
+            "}\n",
         .fragment_func.source =
-            "FIXME",
+            "#version 430\n"
+            "in vec4 color;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = color;\n"
+            "}\n",
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .size = sizeof(vs_params_t),
