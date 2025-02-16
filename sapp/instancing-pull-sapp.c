@@ -44,7 +44,7 @@ static void init(void) {
 
     // storage buffers are not supported on the current backend?
     // (in this case a red screen and an error message is rendered)
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
         return;
     }
@@ -103,7 +103,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         draw_fallback();
         return;
     }
@@ -136,7 +136,7 @@ static void frame(void) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_shutdown();
     }
     sg_shutdown();
