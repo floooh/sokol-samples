@@ -4,7 +4,6 @@
 //  Same as instancing-sapp.c, but pull both vertex and instance data
 //  from storage buffers.
 //------------------------------------------------------------------------------
-#include <stdlib.h> // rand()
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -34,6 +33,14 @@ static void draw_fallback(void);
 static void emit_particles(void);
 static void update_particles(float frame_time);
 static vs_params_t compute_vsparams(float frame_time);
+
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -162,9 +169,9 @@ static void emit_particles(void) {
         if (state.cur_num_particles < MAX_PARTICLES) {
             state.inst[state.cur_num_particles].pos = HMM_Vec3(0.0, 0.0, 0.0);
             state.vel[state.cur_num_particles] = HMM_Vec3(
-                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f,
-                ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
-                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f);
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f);
             state.cur_num_particles++;
         } else {
             break;
