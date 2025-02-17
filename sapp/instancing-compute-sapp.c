@@ -65,6 +65,7 @@ static void init(void) {
     // if compute feature not available, draw a fallback screen, need debug-text for that
     if (!sg_query_features().compute) {
         sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
+        return;
     }
 
     // create a storage buffer for the particle state, with pre-initialized random velocities
