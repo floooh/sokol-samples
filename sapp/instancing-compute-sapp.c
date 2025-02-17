@@ -17,11 +17,12 @@
 #include "instancing-compute-sapp.glsl.h"
 
 #define MAX_PARTICLES (512 * 1024)
-#define MAX_PARTICLES_EMITTED_PER_FRAME (10)
+#define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
 static struct {
     uint64_t last_time;
     int num_particles;
+    float ry;
     struct {
         sg_buffer buf;
         sg_pipeline pip;
@@ -55,15 +56,168 @@ static inline uint32_t xorshift32(void) {
 }
 
 static void init(void) {
+    sg_setup(&(sg_desc){
+        .environment = sglue_environment(),
+        .logger.func = slog_func,
+    });
+    __dbgui_setup(sapp_sample_count());
 
+    // if compute feature not available, draw a fallback screen, need debug-text for that
+    if (!sg_query_features().compute) {
+        sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
+    }
+
+    // create a storage buffer for the particle state, with pre-initialized random velocities
+    {
+        particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
+        for (size_t i = 0; i < MAX_PARTICLES; i++) {
+            p[i].vel = HMM_Vec4(
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
+                0.0f);
+        }
+        state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
+            .type = SG_BUFFERTYPE_STORAGEBUFFER,
+            .data = {
+                .ptr = p,
+                .size = MAX_PARTICLES * sizeof(particle_t),
+            },
+            .label = "particle-buffer",
+        });
+        free(p);
+    }
+
+    // a compute shader and pipeline object
+    state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
+        .label = "compute-pipeline",
+    });
+
+    // vertex and index buffer for the particle geometry
+    const float r = 0.05f;
+    const float vertices[] = {
+        // positions            colors
+        0.0f,   -r, 0.0f,       1.0f, 0.0f, 0.0f, 1.0f,
+           r, 0.0f, r,          0.0f, 1.0f, 0.0f, 1.0f,
+           r, 0.0f, -r,         0.0f, 0.0f, 1.0f, 1.0f,
+          -r, 0.0f, -r,         1.0f, 1.0f, 0.0f, 1.0f,
+          -r, 0.0f, r,          0.0f, 1.0f, 1.0f, 1.0f,
+        0.0f,    r, 0.0f,       1.0f, 0.0f, 1.0f, 1.0f
+    };
+    const uint16_t indices[] = {
+        0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
+        5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
+    };
+    state.display.vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices),
+        .label = "geometry-vbuf",
+    });
+    state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
+        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .data = SG_RANGE(indices),
+        .label = "geometry-ibuf",
+    });
+
+    // shader and pipeline for rendering the particles, this uses
+    // the compute-updated storage buffer to provide the particle positions
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
+        .layout = {
+            .attrs = {
+                [0] = { .format = SG_VERTEXFORMAT_FLOAT3 }, // position
+                [1] = { .format = SG_VERTEXFORMAT_FLOAT4 }, // color
+            },
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .cull_mode = SG_CULLMODE_BACK,
+        .label = "render-pipeline",
+    });
 }
 
 static void frame(void) {
+    if (!sg_query_features().compute) {
+        draw_fallback();
+        return;
+    }
 
+    state.num_particles += NUM_PARTICLES_EMITTED_PER_FRAME;
+    if (state.num_particles > MAX_PARTICLES) {
+        state.num_particles = MAX_PARTICLES;
+    }
+    const float dt = (float)sapp_frame_duration();
+
+    // compute pass to update particle positions
+    const cs_params_t cs_params = {
+        .dt = dt,
+        .num_particles = state.num_particles,
+    };
+    sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
+    sg_apply_pipeline(state.compute.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .storage_buffers[SBUF_cs_ssbo] = state.compute.buf,
+    });
+    sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+    sg_dispatch((state.num_particles+63)/64, 1, 1);
+    sg_end_pass();
+
+    // render pass to render the particles via instancing, with the
+    // instance positions coming from the storage buffer
+    const vs_params_t vs_params = compute_vsparams(dt);
+    sg_begin_pass(&(sg_pass){
+        .action = state.display.pass_action,
+        .swapchain = sglue_swapchain(),
+        .label = "render-pass",
+    });
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.display.vbuf,
+        .index_buffer = state.display.ibuf,
+        .storage_buffers[SBUF_vs_ssbo] = state.compute.buf,
+    });
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
+    sg_draw(0, 24, state.num_particles);
+    __dbgui_draw();
+    sg_end_pass();
+    sg_commit();
 }
 
 static void cleanup(void) {
+    __dbgui_shutdown();
+    if (!sg_query_features().compute) {
+        sdtx_shutdown();
+    }
+    sg_shutdown();
+}
 
+static void draw_fallback(void) {
+    sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
+    sdtx_pos(1, 1);
+    sdtx_puts("COMPUTE SHADERS NOT SUPPORTED");
+    sg_begin_pass(&(sg_pass){
+        .action = {
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
+        },
+        .swapchain = sglue_swapchain()
+    });
+    sdtx_draw();
+    sg_end_pass();
+    sg_commit();
+}
+
+static vs_params_t compute_vsparams(float frame_time) {
+    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    state.ry += 60.0f * frame_time;
+    return (vs_params_t) {
+        .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f))),
+    };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
