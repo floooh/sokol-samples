@@ -54,13 +54,13 @@ static inline uint32_t xorshift32(void) {
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
-    
+
     state_t state = {
         .display.pass_action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1} },
         },
     };
-    
+
     d3d11_init(&(d3d11_desc_t){
         .width = 640,
         .height = 480,
@@ -121,7 +121,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             "  particles.Store4(pos_offset, asuint(pos));\n"
             "  particles.Store4(vel_offset, asuint(vel));\n"
             "}\n",
-        .compute_workgroup_size = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
@@ -168,7 +167,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices),
         .label = "geometry-ibuf",
     });
-    
+
     // shader for rendering with instance position pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
@@ -211,7 +210,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         },
         .label = "render-shader",
     });
-    
+
     // a pipeline object for rendering, this uses geometry from
     // traditional vertex buffer, but pull per-instance positions
     // from the compute-update storage buffer
@@ -231,14 +230,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
         .label = "render-pipeline",
     });
-    
+
     // frame loop
     while (d3d11_process_events()) {
         state.num_particles += NUM_PARTICLES_EMITTED_PER_FRAME;
         if (state.num_particles > MAX_PARTICLES) {
             state.num_particles = MAX_PARTICLES;
         }
-    
+
         // compute pass to update the particle positions
         const cs_params_t cs_params = {
             .dt = (float)stm_sec(stm_laptime(&state.last_time)),

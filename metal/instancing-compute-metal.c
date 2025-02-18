@@ -120,7 +120,7 @@ static void init(void) {
             "  buf.prt[idx].pos = pos;\n"
             "  buf.prt[idx].vel = vel;\n"
             "}\n",
-        .compute_workgroup_size = { .x = 64 },
+        .mtl_threads_per_threadgroup = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),

@@ -53,7 +53,7 @@ static inline uint32_t xorshift32(void) {
 }
 
 int main() {
-    
+
     state_t state = {
         .display.pass_action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1} },
@@ -93,7 +93,7 @@ int main() {
         });
         free(p);
     }
-    
+
     // create compute shader to update particle position and velocity
     sg_shader compute_shd = sg_make_shader(&(sg_shader_desc){
         .compute_func.source =
@@ -124,7 +124,6 @@ int main() {
             "  prt[idx].pos = pos;\n"
             "  prt[idx].vel = vel;\n"
             "}\n",
-        .compute_workgroup_size = { .x = 64 },
         .uniform_blocks[0] = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .size = sizeof(cs_params_t),
@@ -140,14 +139,14 @@ int main() {
         },
         .label = "compute-shader",
     });
-    
+
     // create a compute-pipeline object
     state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = compute_shd,
         .label = "compute-pipeline",
     });
-    
+
     // vertex buffer for static per-particle geometry
     const float r = 0.05f;
     const float vertices[] = {
@@ -163,7 +162,7 @@ int main() {
         .data = SG_RANGE(vertices),
         .label = "geometry-vbuf",
     });
-    
+
     // index buffer for static per-particle geometry
     const uint16_t indices[] = {
         0, 1, 2,    0, 2, 3,    0, 3, 4,    0, 4, 1,
@@ -174,7 +173,7 @@ int main() {
         .data = SG_RANGE(indices),
         .label = "geometry-ibuf",
     });
-    
+
     // shader for rendering with instance-positions pulled from the storage buffer
     sg_shader display_shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.source =
@@ -258,7 +257,7 @@ int main() {
         sg_apply_uniforms(0, &SG_RANGE(cs_params));
         sg_dispatch((state.num_particles + 63)/64, 1, 1);
         sg_end_pass();
-        
+
         // render pass to render the instanced particles, with the
         // instance-positions pulled from the compute-updated storage buffer
         state.ry += 1;
