@@ -1006,6 +1006,12 @@ fips_begin_app(ozz-storagebuffer-sapp windowed)
     fips_deps(sokol fileutil ozzanim imgui)
 fips_end_app()
 
+fips_begin_app(computeboids-sapp windowed)
+    fips_files(computeboids-sapp.c)
+    sokol_shader(computeboids-sapp.glsl ${slang})
+    fips_deps(sokol imgui)
+fips_end_app()
+
 fips_begin_app(shdfeatures-sapp windowed)
     fips_files(shdfeatures-sapp.c)
     sokol_shader_variant_with_reflection(shdfeatures-sapp.glsl ${slang} "none" "NONE")
