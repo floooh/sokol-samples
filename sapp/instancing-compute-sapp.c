@@ -47,14 +47,6 @@ static struct {
 static void draw_fallback(void);
 static vs_params_t compute_vsparams(float frame_time);
 
-static inline uint32_t xorshift32(void) {
-    static uint32_t x = 0x12345678;
-    x ^= x<<13;
-    x ^= x>>17;
-    x ^= x<<5;
-    return x;
-}
-
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -68,32 +60,18 @@ static void init(void) {
         return;
     }
 
-    // create a storage buffer for the particle state, with pre-initialized random velocities
-    {
-        particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
-        for (size_t i = 0; i < MAX_PARTICLES; i++) {
-            p[i].vel = HMM_Vec4(
-                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
-                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
-                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
-                0.0f);
-        }
-        state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
-            .type = SG_BUFFERTYPE_STORAGEBUFFER,
-            .data = {
-                .ptr = p,
-                .size = MAX_PARTICLES * sizeof(particle_t),
-            },
-            .label = "particle-buffer",
-        });
-        free(p);
-    }
+    // create a zero-initialized storage buffer for the particle state
+    state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
+        .size = MAX_PARTICLES * sizeof(particle_t),
+        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .label = "particle-buffer",
+    });
 
-    // a compute shader and pipeline object
+    // a compute shader and pipeline object for updating particle positions
     state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
-        .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
-        .label = "compute-pipeline",
+        .shader = sg_make_shader(update_shader_desc(sg_query_backend())),
+        .label = "update-pipeline",
     });
 
     // vertex and index buffer for the particle geometry
@@ -139,6 +117,18 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
         .label = "render-pipeline",
     });
+
+    // one-time init of particle velocities in a compute shader
+    sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(init_shader_desc(sg_query_backend())),
+    });
+    sg_begin_pass(&(sg_pass){ .compute = true });
+    sg_apply_pipeline(pip);
+    sg_apply_bindings(&(sg_bindings){ .storage_buffers[SBUF_vs_ssbo] = state.compute.buf });
+    sg_dispatch(MAX_PARTICLES / 64, 1, 1);
+    sg_end_pass();
+    sg_destroy_pipeline(pip);
 }
 
 static void frame(void) {

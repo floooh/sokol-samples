@@ -10,8 +10,39 @@ struct particle {
 };
 @end
 
+// compute-shader for initializing pseudo-random particle velocities
+@cs cs_init
+@include_block common
+
+layout(binding=0) buffer cs_ssbo {
+    particle prt[];
+};
+
+layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+
+uint xorshift32(uint x) {
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    uint x = xorshift32(0x12345678 ^ idx);
+    uint y = xorshift32(x);
+    uint z = xorshift32(y);
+    prt[idx].vel = vec4(
+        (float(x & 0x7FFF) / 0x7FFF) - 0.5f,
+        (float(y & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+        (float(z & 0x7FFF) / 0x7FFF) - 0.5f,
+        0);
+}
+@end
+@program init cs_init
+
 // compute-shader for updating particle positions
-@cs cs
+@cs cs_update
 @include_block common
 
 layout(binding=0) uniform cs_params {
@@ -42,9 +73,7 @@ void main() {
     prt[idx].vel = vel;
 }
 @end
-
-@program compute cs
-
+@program update cs_update
 
 // vertex- and fragment-shader for rendering the particles
 @vs vs
