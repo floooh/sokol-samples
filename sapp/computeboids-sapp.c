@@ -11,8 +11,13 @@
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#include "computeboids-sapp.glsl.h"
+
+// keep this in sync with the same constant in the GLSL
+#define NUM_PARTICLES (1500)
 
 static struct {
+    sg_buffer particle_buffer[2];
     struct {
         sg_pass_action pass_action;
     } display;
@@ -26,6 +31,19 @@ static struct {
 
 static void draw_ui(void);
 
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
+// return a random float value between -1.0f and +1.0
+static inline float rnd(void) {
+    return (((float)(xorshift32() & 0xFFFF) / (float)0xFFFF) - 0.5f) * 2.0f;
+}
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -36,6 +54,28 @@ static void init(void) {
     });
     if (!sg_query_features().compute) {
         // compute not supported: early out
+        return;
+    }
+
+    {
+        const size_t initial_data_size = NUM_PARTICLES * sizeof(particle_t);
+        particle_t* initial_data = calloc(1, initial_data_size);
+        for (size_t i = 0; i < NUM_PARTICLES; i++) {
+            initial_data[i] = (particle_t){
+                .pos = { rnd(), rnd() },
+                .vel = { rnd() * 0.1f, rnd() * 0.1f },
+            };
+        }
+        for (size_t i = 0; i < 2; i++) {
+            state.particle_buffer[i] = sg_make_buffer(&(sg_buffer_desc){
+                .type = SG_BUFFERTYPE_STORAGEBUFFER,
+                .data = {
+                    .ptr = initial_data,
+                    .size = initial_data_size
+                },
+            });
+        }
+        free(initial_data);
     }
 }
 
