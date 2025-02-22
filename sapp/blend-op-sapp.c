@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
-//  blend-sapp.c
-//  Test/demonstrate blend modes.
+//  blend-op-sapp.c
+//  Test/demonstrate blend ops.
 //------------------------------------------------------------------------------
 #include <assert.h>
 #include "sokol_app.h"
@@ -13,12 +13,12 @@
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 
-#define NUM_BLEND_FACTORS (15)
+#define NUM_BLEND_OPS (5)
 
 static struct {
     sg_pass_action pass_action;
     sg_bindings bind;
-    sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
+    sg_pipeline pips[NUM_BLEND_OPS][NUM_BLEND_OPS];
     sg_pipeline bg_pip;
     float r;
     quad_vs_params_t quad_vs_params;
@@ -27,7 +27,7 @@ static struct {
 
 void init(void) {
     sg_setup(&(sg_desc){
-        .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 16,
+        .pipeline_pool_size = NUM_BLEND_OPS * NUM_BLEND_OPS + 16,
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
@@ -73,7 +73,7 @@ void init(void) {
     // a shader for the blended quads
     sg_shader quad_shd = sg_make_shader(quad_shader_desc(sg_query_backend()));
 
-    // one pipeline object per blend-factor combination
+    // one pipeline object per blend-op combination
     sg_pipeline_desc pip_desc = {
         .layout = {
             .attrs = {
@@ -85,31 +85,32 @@ void init(void) {
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .blend_color = { 1.0f, 0.0f, 0.0f, 1.0f },
     };
-    for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
-        for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++) {
-            const sg_blend_factor src_blend = (sg_blend_factor) (src+1);
-            const sg_blend_factor dst_blend = (sg_blend_factor) (dst+1);
-            // WebGL2 specific exceptions (not handled by the sokol-gfx validation layer
-            // since it is specifically a WebGL2 quirk caused by ANGLE's D3D11 backend)
-            if ((src_blend == SG_BLENDFACTOR_BLEND_COLOR) || (src_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_COLOR)) {
-                if ((dst_blend == SG_BLENDFACTOR_BLEND_ALPHA) || (dst_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_ALPHA)) {
-                    continue;
-                }
-            }
-            else if ((src_blend == SG_BLENDFACTOR_BLEND_ALPHA) || (src_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_ALPHA)) {
-                if ((dst_blend == SG_BLENDFACTOR_BLEND_COLOR) || (dst_blend == SG_BLENDFACTOR_ONE_MINUS_BLEND_COLOR)) {
-                    continue;
-                }
-            }
+    for (int rgb = 0; rgb < NUM_BLEND_OPS; rgb++) {
+        for (int alpha = 0; alpha < NUM_BLEND_OPS; alpha++) {
+            const sg_blend_op rgb_op = (sg_blend_op) (rgb+1);
+            const sg_blend_op alpha_op = (sg_blend_op) (alpha+1);
             pip_desc.colors[0].blend = (sg_blend_state){
                 .enabled = true,
-                .src_factor_rgb = src_blend,
-                .dst_factor_rgb = dst_blend,
-                .src_factor_alpha = SG_BLENDFACTOR_ONE,
-                .dst_factor_alpha = SG_BLENDFACTOR_ZERO
+                .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+                .src_factor_alpha = SG_BLENDFACTOR_SRC_ALPHA,
+                .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                .dst_factor_alpha = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+                .op_rgb = rgb_op,
+                .op_alpha = alpha_op,
             };
-            state.pips[src][dst] = sg_make_pipeline(&pip_desc);
-            assert(state.pips[src][dst].id != SG_INVALID_ID);
+            // blend-op MIN/MAX requires blend-factors to be ONE
+            // (just not initializing the blend factors would also work, in that
+            // case sokol-gfx will use blend factor ONE as the defaults)
+            if ((rgb_op == SG_BLENDOP_MIN) || (rgb_op == SG_BLENDOP_MAX)) {
+                pip_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
+                pip_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE;
+            }
+            if ((alpha_op == SG_BLENDOP_MIN) || (alpha_op == SG_BLENDOP_MAX)) {
+                pip_desc.colors[0].blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
+                pip_desc.colors[0].blend.dst_factor_alpha = SG_BLENDFACTOR_ONE;
+            }
+            state.pips[rgb][alpha] = sg_make_pipeline(&pip_desc);
+            assert(state.pips[rgb][alpha].id != SG_INVALID_ID);
         }
     }
 }
@@ -117,7 +118,7 @@ void init(void) {
 void frame(void) {
     // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(90.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
+    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 10.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
     // start rendering
@@ -131,15 +132,12 @@ void frame(void) {
 
     // draw the blended quads
     float r0 = state.r;
-    for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
-        for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
-            if (state.pips[src][dst].id == SG_INVALID_ID) {
-                continue;
-            }
+    for (int src = 0; src < NUM_BLEND_OPS; src++) {
+        for (int dst = 0; dst < NUM_BLEND_OPS; dst++, r0+=0.6f) {
             // compute new model-view-proj matrix
             hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
-            const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
-            const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;
+            const float x = ((float)(dst - NUM_BLEND_OPS/2)) * 3.0f;
+            const float y = ((float)(src - NUM_BLEND_OPS/2)) * 2.2f;
             hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
             state.quad_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
@@ -173,7 +171,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Blend Modes (sokol-app)",
+        .window_title = "Blend Ops (sokol-app)",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };
