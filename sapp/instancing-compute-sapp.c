@@ -20,7 +20,6 @@
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
 static struct {
-    uint64_t last_time;
     int num_particles;
     float ry;
     struct {
