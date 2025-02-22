@@ -154,7 +154,7 @@ static void init(void) {
     sfetch_setup(&sfdesc);
 
     // if storage-buffers are not supported, bail out here
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         return;
     }
 
@@ -271,7 +271,7 @@ static void cleanup(void) {
 }
 
 static bool draw_ok(void) {
-    return sg_query_features().storage_buffer
+    return sg_query_features().compute
         && state.loaded.animation
         && state.loaded.mesh
         && state.loaded.skeleton;
@@ -485,7 +485,7 @@ static void draw_ui(void) {
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);
     if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-        if (!sg_query_features().storage_buffer) {
+        if (!sg_query_features().compute) {
             ImGui::Text("Storage buffers not supported");
         } else if (state.loaded.failed) {
             ImGui::Text("Failed loading character data!");

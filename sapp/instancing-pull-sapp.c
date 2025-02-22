@@ -4,7 +4,6 @@
 //  Same as instancing-sapp.c, but pull both vertex and instance data
 //  from storage buffers.
 //------------------------------------------------------------------------------
-#include <stdlib.h> // rand()
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -35,6 +34,14 @@ static void emit_particles(void);
 static void update_particles(float frame_time);
 static vs_params_t compute_vsparams(float frame_time);
 
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -44,7 +51,7 @@ static void init(void) {
 
     // storage buffers are not supported on the current backend?
     // (in this case a red screen and an error message is rendered)
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
         return;
     }
@@ -103,7 +110,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         draw_fallback();
         return;
     }
@@ -136,7 +143,7 @@ static void frame(void) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_shutdown();
     }
     sg_shutdown();
@@ -162,9 +169,9 @@ static void emit_particles(void) {
         if (state.cur_num_particles < MAX_PARTICLES) {
             state.inst[state.cur_num_particles].pos = HMM_Vec3(0.0, 0.0, 0.0);
             state.vel[state.cur_num_particles] = HMM_Vec3(
-                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f,
-                ((float)(rand() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
-                ((float)(rand() & 0x7FFF) / 0x7FFF) - 0.5f);
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
+                ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f);
             state.cur_num_particles++;
         } else {
             break;
