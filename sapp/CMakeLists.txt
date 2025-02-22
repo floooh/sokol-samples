@@ -331,7 +331,7 @@ fips_end_app()
 fips_ide_group(Samples)
 fips_begin_app(customresolve-sapp windowed)
     fips_files(customresolve-sapp.c)
-    sokol_shader_debuggable(customresolve-sapp.glsl ${slang})
+    sokol_shader(customresolve-sapp.glsl ${slang})
     fips_deps(sokol imgui)
 fips_end_app()
 
