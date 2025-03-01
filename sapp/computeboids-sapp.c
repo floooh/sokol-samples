@@ -11,6 +11,8 @@
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 #include "computeboids-sapp.glsl.h"
 
 #define MAX_PARTICLES (10000)
@@ -45,6 +47,7 @@ static struct {
         }
     }
 };
+static sgimgui_t sgimgui;
 
 static void draw_ui(void);
 static void draw_fallback(void);
@@ -67,11 +70,10 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sgimgui_init(&sgimgui, &(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
-    igGetStyle()->WindowBorderSize = 0;
-    igGetStyle()->WindowRounding = 8.0f;
     if (!sg_query_features().compute) {
         // compute not supported: early out
         return;
@@ -160,6 +162,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
+    sgimgui_discard(&sgimgui);
     simgui_shutdown();
     sg_shutdown();
 }
@@ -182,8 +185,12 @@ static void draw_ui(void) {
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu(&sgimgui, "sokol-gfx");
+        igEndMainMenuBar();
+    }
     igSetNextWindowBgAlpha(0.8f);
-    igSetNextWindowPos((ImVec2){10,10}, ImGuiCond_Once);
+    igSetNextWindowPos((ImVec2){10,30}, ImGuiCond_Once);
     const ImGuiWindowFlags flags =
         ImGuiWindowFlags_NoDecoration |
         ImGuiWindowFlags_AlwaysAutoResize |
@@ -204,6 +211,7 @@ static void draw_ui(void) {
         }
     }
     igEnd();
+    sgimgui_draw(&sgimgui);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
