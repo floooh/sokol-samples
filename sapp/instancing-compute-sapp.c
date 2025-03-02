@@ -8,8 +8,6 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define SOKOL_DEBUGTEXT_IMPL
-#include "sokol_debugtext.h"
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
@@ -43,7 +41,6 @@ static struct {
     }
 };
 
-static void draw_fallback(void);
 static vs_params_t compute_vsparams(float frame_time);
 
 static void init(void) {
@@ -52,12 +49,6 @@ static void init(void) {
         .logger.func = slog_func,
     });
     __dbgui_setup(sapp_sample_count());
-
-    // if compute feature not available, draw a fallback screen, need debug-text for that
-    if (!sg_query_features().compute) {
-        sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
-        return;
-    }
 
     // create a zero-initialized storage buffer for the particle state
     state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
@@ -131,11 +122,6 @@ static void init(void) {
 }
 
 static void frame(void) {
-    if (!sg_query_features().compute) {
-        draw_fallback();
-        return;
-    }
-
     state.num_particles += NUM_PARTICLES_EMITTED_PER_FRAME;
     if (state.num_particles > MAX_PARTICLES) {
         state.num_particles = MAX_PARTICLES;
@@ -179,25 +165,7 @@ static void frame(void) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
-    if (!sg_query_features().compute) {
-        sdtx_shutdown();
-    }
     sg_shutdown();
-}
-
-static void draw_fallback(void) {
-    sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
-    sdtx_pos(1, 1);
-    sdtx_puts("COMPUTE SHADERS NOT SUPPORTED");
-    sg_begin_pass(&(sg_pass){
-        .action = {
-            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
-        },
-        .swapchain = sglue_swapchain()
-    });
-    sdtx_draw();
-    sg_end_pass();
-    sg_commit();
 }
 
 static vs_params_t compute_vsparams(float frame_time) {

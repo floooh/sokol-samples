@@ -50,7 +50,6 @@ static struct {
 static sgimgui_t sgimgui;
 
 static void draw_ui(void);
-static void draw_fallback(void);
 
 static inline uint32_t xorshift32(void) {
     static uint32_t x = 0x12345678;
@@ -74,10 +73,6 @@ static void init(void) {
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
-    if (!sg_query_features().compute) {
-        // compute not supported: early out
-        return;
-    }
 
     // two storage buffers with pre-initialized positions and velocities
     {
@@ -120,12 +115,6 @@ static void init(void) {
 
 static void frame(void) {
     draw_ui();
-
-    // fallback if compute is not supported
-    if (!sg_query_features().compute) {
-        draw_fallback();
-        return;
-    }
 
     // input- and output- storage-buffers for this frame
     const sg_buffer in_buf = state.compute.buf[sapp_frame_count() & 1];
@@ -197,18 +186,14 @@ static void draw_ui(void) {
         ImGuiWindowFlags_NoBringToFrontOnFocus |
         ImGuiWindowFlags_NoFocusOnAppearing;
     if (igBegin("controls", 0, flags)) {
-        if (!sg_query_features().compute) {
-            igText("Compute shaders not supported!");
-        } else {
-            igSliderFloat("Delta T", &state.sim_params.dt, 0.01, 0.1);
-            igSliderFloat("Rule1 Distance", &state.sim_params.rule1_distance, 0.0f, 0.2f);
-            igSliderFloat("Rule2 Distance", &state.sim_params.rule2_distance, 0.0f, 0.1f);
-            igSliderFloat("Rule3 Distance", &state.sim_params.rule3_distance, 0.0f, 0.1f);
-            igSliderFloat("Rule1 Scale", &state.sim_params.rule1_scale, 0.0f, 0.1f);
-            igSliderFloat("Rule2 Scale", &state.sim_params.rule2_scale, 0.0f, 0.1f);
-            igSliderFloat("Rule3 Scale", &state.sim_params.rule3_scale, 0.0f, 0.1f);
-            igSliderInt("Num Boids", &state.sim_params.num_particles, 0, MAX_PARTICLES);
-        }
+        igSliderFloat("Delta T", &state.sim_params.dt, 0.01, 0.1);
+        igSliderFloat("Rule1 Distance", &state.sim_params.rule1_distance, 0.0f, 0.2f);
+        igSliderFloat("Rule2 Distance", &state.sim_params.rule2_distance, 0.0f, 0.1f);
+        igSliderFloat("Rule3 Distance", &state.sim_params.rule3_distance, 0.0f, 0.1f);
+        igSliderFloat("Rule1 Scale", &state.sim_params.rule1_scale, 0.0f, 0.1f);
+        igSliderFloat("Rule2 Scale", &state.sim_params.rule2_scale, 0.0f, 0.1f);
+        igSliderFloat("Rule3 Scale", &state.sim_params.rule3_scale, 0.0f, 0.1f);
+        igSliderInt("Num Boids", &state.sim_params.num_particles, 0, MAX_PARTICLES);
     }
     igEnd();
     sgimgui_draw(&sgimgui);
