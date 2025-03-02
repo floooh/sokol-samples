@@ -56,7 +56,7 @@ samples = [
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
     [ 'offscreen-msaa', 'offscreen-msaa-sapp.c', 'offscreen-msaa-sapp.glsl' ],
     [ 'instancing', 'instancing-sapp.c', 'instancing-sapp.glsl' ],
-    [ 'instancing-pull', 'instancing-pull.c', 'instancing-pull.glsl' ],
+    [ 'instancing-pull', 'instancing-pull-sapp.c', 'instancing-pull-sapp.glsl' ],
     [ 'mrt', 'mrt-sapp.c', 'mrt-sapp.glsl' ],
     [ 'mrt-pixelformats', 'mrt-pixelformats-sapp.c', 'mrt-pixelformats-sapp.glsl' ],
     [ 'arraytex', 'arraytex-sapp.c', 'arraytex-sapp.glsl' ],
