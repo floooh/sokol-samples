@@ -102,3 +102,8 @@ fips_begin_app(vertexpulling-wgpu windowed)
     fips_files(vertexpulling-wgpu.c)
     fips_deps(wgpu_entry)
 fips_end_app()
+
+fips_begin_app(instancing-compute-wgpu windowed)
+    fips_files(instancing-compute-wgpu.c)
+    fips_deps(wgpu_entry)
+fips_end_app()

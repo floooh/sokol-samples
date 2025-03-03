@@ -123,6 +123,11 @@ samples = [
     [ 'spine-contexts', 'spine-contexts-sapp.c', None ],
 ]
 
+compute_samples = [
+    [ 'instancing-compute', 'instancing-compute-sapp.c', 'instancing-compute-sapp.glsl' ],
+    [ 'computeboids', 'computeboids-sapp.c', 'computeboids-sapp.glsl' ],
+]
+
 # assets that must also be copied
 assets = [
     "comsi.s3m",
@@ -179,9 +184,13 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
     src_root_path = proj_dir + '/webpage/'
     dst_root_path = webpage_dir + '/'
 
+    all_samples = samples
+    if api == 'webgpu':
+        all_samples += compute_samples
+
     # build the thumbnail gallery
     content = ''
-    for sample in samples:
+    for sample in all_samples:
         name = sample[0]
         log.info('> adding thumbnail for {}'.format(name))
         url = "{}-sapp.html".format(name)
@@ -218,7 +227,7 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
         shutil.copy(src_root_path + name, dst_root_path + name)
 
     # generate WebAssembly HTML pages
-    for sample in samples :
+    for sample in all_samples :
         name = sample[0]
         source = sample[1]
         glsl = sample[2]
@@ -252,7 +261,7 @@ def deploy_webpage(fips_dir, proj_dir, api, webpage_dir) :
 
     # copy the screenshots
     cwebp(src_root_path + 'dummy.jpg', dst_root_path + 'dummy.webp')
-    for sample in samples :
+    for sample in all_samples :
         src_img_path = src_root_path + sample[0] + '.jpg'
         dst_img_path = dst_root_path + sample[0] + '.webp'
         if os.path.exists(src_img_path):
