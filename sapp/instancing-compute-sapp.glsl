@@ -13,7 +13,6 @@ struct particle {
 @include_block common
 
 layout(binding=0) buffer cs_ssbo { particle prt[]; };
-
 layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
 
 uint xorshift32(uint x) {
@@ -44,9 +43,7 @@ layout(binding=0) uniform cs_params {
     float dt;
     int num_particles;
 };
-
 layout(binding=0) buffer cs_ssbo { particle prt[]; };
-
 layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
 
 void main() {
@@ -72,13 +69,8 @@ void main() {
 @vs vs
 @include_block common
 
-layout(binding=0) uniform vs_params {
-    mat4 mvp;
-};
-
-layout(binding=0) readonly buffer vs_ssbo {
-    particle prt[];
-};
+layout(binding=0) uniform vs_params { mat4 mvp; };
+layout(binding=0) readonly buffer vs_ssbo { particle prt[]; };
 
 in vec3 pos;
 in vec4 color0;
