@@ -33,7 +33,7 @@ static void init(void) {
 
     // if storage buffers are not supported on this platform, render
     // a red screen and error message via sokol-debugtext
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc() });
         return;
     }
@@ -111,7 +111,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         draw_fallback();
         return;
     }
@@ -155,7 +155,7 @@ static void draw_fallback(void) {
 
 static void cleanup(void) {
     __dbgui_shutdown();
-    if (!sg_query_features().storage_buffer) {
+    if (!sg_query_features().compute) {
         sdtx_shutdown();
     }
     sg_shutdown();

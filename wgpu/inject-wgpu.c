@@ -265,7 +265,7 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
     };
     state.pip = sg_make_pipeline(&pip_desc);
-    assert(sg_wgpu_query_pipeline_info(state.pip).pip != 0);
+    assert(sg_wgpu_query_pipeline_info(state.pip).render_pipeline != 0);
 }
 
 void frame() {

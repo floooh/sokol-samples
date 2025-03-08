@@ -116,3 +116,8 @@ fips_begin_app(vertexpulling-metal windowed)
     fips_files(vertexpulling-metal.c)
     fips_deps(osxentry sokol_gfx)
 fips_end_app()
+
+fips_begin_app(instancing-compute-metal windowed)
+    fips_files(instancing-compute-metal.c)
+    fips_deps(osxentry sokol_gfx)
+fips_end_app()
