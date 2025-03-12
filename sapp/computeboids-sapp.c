@@ -160,13 +160,6 @@ static void input(const sapp_event* ev) {
     simgui_handle_event(ev);
 }
 
-static void draw_fallback(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
-    simgui_render();
-    sg_end_pass();
-    sg_commit();
-}
-
 static void draw_ui(void) {
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
