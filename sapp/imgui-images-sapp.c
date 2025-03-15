@@ -166,7 +166,6 @@ static void frame(void) {
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){540, 560}, ImGuiCond_Once);
     if (igBegin("Sokol + Dear ImGui Image Test", 0, 0)) {
-        const ImVec4 white = { 1, 1, 1, 1 };
         const ImVec2 size = { 256, 256 };
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
@@ -176,10 +175,10 @@ static void frame(void) {
         ImTextureID texid1 = simgui_imtextureid_with_sampler(img, state.smp.linear_clamp);
         ImTextureID texid2 = simgui_imtextureid_with_sampler(img, state.smp.nearest_repeat);
         ImTextureID texid3 = simgui_imtextureid_with_sampler(img, state.smp.linear_mirror);
-        igImageEx(texid0, size, uv0, uv1, white, white); igSameLineEx(0, 4);
-        igImageEx(texid1, size, uv0, uv1, white, white);
-        igImageEx(texid2, size, uv0, uv2, white, white); igSameLineEx(0, 4);
-        igImageEx(texid3, size, uv0, uv2, white, white);
+        igImageEx(texid0, size, uv0, uv1); igSameLineEx(0, 4);
+        igImageEx(texid1, size, uv0, uv1);
+        igImageEx(texid2, size, uv0, uv2); igSameLineEx(0, 4);
+        igImageEx(texid3, size, uv0, uv2);
     }
     igEnd();
 
