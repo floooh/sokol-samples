@@ -71,10 +71,7 @@ typedef struct {
 
 // a skinned-mesh vertex, we don't need the texcoords and tangent
 // in our example renderer so we just drop them. Normals, joint indices
-// and joint weights are packed into BYTE4N and UBYTE4N
-//
-// NOTE: joint indices are packed as UBYTE4N and not UBYTE4 because of
-// D3D11 compatibility (see "A NOTE ON PORTABLE PACKED VERTEX FORMATS" in sokol_gfx.h)
+// and joint weights are packed into BYTE4N, UBYTE4 and UBYTE4N
 typedef struct {
     float position[3];
     uint32_t normal;
@@ -89,7 +86,6 @@ typedef struct {
     float xxxx[4];
     float yyyy[4];
     float zzzz[4];
-    float joint_uv[2];
 } instance_t;
 
 static struct {
@@ -200,7 +196,7 @@ static void init(void) {
     pip_desc.layout.buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE;
     pip_desc.layout.attrs[ATTR_skinned_position].format = SG_VERTEXFORMAT_FLOAT3;
     pip_desc.layout.attrs[ATTR_skinned_normal].format = SG_VERTEXFORMAT_BYTE4N;
-    pip_desc.layout.attrs[ATTR_skinned_jindices].format = SG_VERTEXFORMAT_UBYTE4N;
+    pip_desc.layout.attrs[ATTR_skinned_jindices].format = SG_VERTEXFORMAT_UBYTE4;
     pip_desc.layout.attrs[ATTR_skinned_jweights].format = SG_VERTEXFORMAT_UBYTE4N;
     pip_desc.layout.attrs[ATTR_skinned_inst_xxxx].format = SG_VERTEXFORMAT_FLOAT4;
     pip_desc.layout.attrs[ATTR_skinned_inst_xxxx].buffer_index = 1;
@@ -208,8 +204,6 @@ static void init(void) {
     pip_desc.layout.attrs[ATTR_skinned_inst_yyyy].buffer_index = 1;
     pip_desc.layout.attrs[ATTR_skinned_inst_zzzz].format = SG_VERTEXFORMAT_FLOAT4;
     pip_desc.layout.attrs[ATTR_skinned_inst_zzzz].buffer_index = 1;
-    pip_desc.layout.attrs[ATTR_skinned_inst_joint_uv].format = SG_VERTEXFORMAT_FLOAT2;
-    pip_desc.layout.attrs[ATTR_skinned_inst_joint_uv].buffer_index = 1;
     pip_desc.index_type = SG_INDEXTYPE_UINT16;
     // ozz mesh data appears to have counter-clock-wise face winding
     pip_desc.face_winding = SG_FACEWINDING_CCW;
@@ -304,16 +298,6 @@ static void init_instance_data(void) {
             }
         }
     }
-
-    // the skin_info vertex component contains information about where to find
-    // the joint palette for this character instance in the joint texture
-    const float half_pixel_x = 0.5f / (float)state.joint_texture_width;
-    const float half_pixel_y = 0.5f / (float)state.joint_texture_height;
-    for (int i = 0; i < MAX_INSTANCES; i++) {
-        instance_t* inst = &instance_data[i];
-        inst->joint_uv[0] = half_pixel_x;
-        inst->joint_uv[1] = half_pixel_y + (i / (float)state.joint_texture_height);
-    }
 }
 
 // compute skinning matrices, and upload into joint texture
@@ -360,7 +344,6 @@ static void update_joint_texture(void) {
     state.time.anim_eval_time = stm_since(start_time);
 
     sg_image_data img_data = { };
-    // FIXME: upload partial texture? (needs sokol-gfx fixes)
     img_data.subimage[0][0] = SG_RANGE(joint_upload_buffer);
     sg_update_image(state.joint_texture, img_data);
 }
@@ -388,7 +371,6 @@ static void frame(void) {
 
         vs_params_t vs_params = { };
         vs_params.view_proj = state.camera.view_proj;
-        vs_params.joint_pixel_width = 1.0f / (float)state.joint_texture_width;
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
         sg_apply_uniforms(UB_vs_params, SG_RANGE_REF(vs_params));
