@@ -44,7 +44,7 @@
 typedef struct {
     ozz::animation::Skeleton skeleton;
     ozz::animation::Animation animation;
-    ozz::animation::SamplingCache cache;
+    ozz::animation::SamplingJob::Context context;
     ozz::vector<ozz::math::SoaTransform> local_matrices;
     ozz::vector<ozz::math::Float4x4> model_matrices;
 } ozz_t;
@@ -196,7 +196,7 @@ static void eval_animation(void) {
     // sample animation
     ozz::animation::SamplingJob sampling_job;
     sampling_job.animation = &state.ozz->animation;
-    sampling_job.cache = &state.ozz->cache;
+    sampling_job.context = &state.ozz->context;
     sampling_job.ratio = state.time.anim_ratio;
     sampling_job.output = make_span(state.ozz->local_matrices);
     sampling_job.Run();
@@ -310,7 +310,7 @@ static void skeleton_data_loaded(const sfetch_response_t* response) {
             const int num_joints = state.ozz->skeleton.num_joints();
             state.ozz->local_matrices.resize(num_soa_joints);
             state.ozz->model_matrices.resize(num_joints);
-            state.ozz->cache.Resize(num_joints);
+            state.ozz->context.Resize(num_joints);
         }
         else {
             state.loaded.failed = true;

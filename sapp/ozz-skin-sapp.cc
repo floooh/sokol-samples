@@ -45,7 +45,7 @@
 #include "ozz/base/containers/vector.h"
 #include "ozz/base/maths/soa_transform.h"
 #include "ozz/base/maths/vec_float.h"
-#include "ozz/util/mesh.h"
+#include "framework/mesh.h"
 
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <cmath>    // fmodf
@@ -66,7 +66,7 @@ typedef struct {
     ozz::vector<ozz::math::Float4x4> mesh_inverse_bindposes;
     ozz::vector<ozz::math::SoaTransform> local_matrices;
     ozz::vector<ozz::math::Float4x4> model_matrices;
-    ozz::animation::SamplingCache cache;
+    ozz::animation::SamplingJob::Context context;
 } ozz_t;
 
 // a skinned-mesh vertex, we don't need the texcoords and tangent
@@ -315,7 +315,7 @@ static void update_joint_texture(void) {
         // makes a small difference, but not much
         ozz::animation::SamplingJob sampling_job;
         sampling_job.animation = &state.ozz->animation;
-        sampling_job.cache = &state.ozz->cache;
+        sampling_job.context = &state.ozz->context;
         sampling_job.ratio = anim_ratio;
         sampling_job.output = make_span(state.ozz->local_matrices);
         sampling_job.Run();
@@ -479,7 +479,7 @@ static void skel_data_loaded(const sfetch_response_t* response) {
             state.ozz->local_matrices.resize(num_soa_joints);
             state.ozz->model_matrices.resize(num_joints);
             state.num_skeleton_joints = num_joints;
-            state.ozz->cache.Resize(num_joints);
+            state.ozz->context.Resize(num_joints);
         }
         else {
             state.loaded.failed = true;

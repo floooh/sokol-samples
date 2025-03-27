@@ -46,8 +46,6 @@ endmacro()
 fips_begin_lib(sokol)
     if (FIPS_OSX)
         fips_files(sokol.m)
-    elseif (FIPS_UWP)
-        fips_files(sokol.cc)
     else()
         fips_files(sokol.c)
     endif()
@@ -71,7 +69,7 @@ fips_begin_lib(sokol-cpp)
 fips_end_lib()
 
 # the sokol implementations library with SOKOL_NO_ENTRY support
-if (NOT FIPS_ANDROID AND NOT FIPS_UWP)
+if (NOT FIPS_ANDROID)
 fips_begin_lib(sokol-noentry)
     if (FIPS_OSX)
         fips_files(sokol-noentry.m)
@@ -87,7 +85,7 @@ endif()
 
 # the sokol implementations library as DLL
 # FIXME: implement this also for other platforms
-if ((FIPS_WINDOWS OR FIPS_MACOS OR FIPS_LINUX) AND NOT FIPS_UWP)
+if (FIPS_WINDOWS OR FIPS_MACOS OR FIPS_LINUX)
     fips_begin_sharedlib(sokol-dll)
         fips_files(sokol-dll.c)
         sokol_system_deps()

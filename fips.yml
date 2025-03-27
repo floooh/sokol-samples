@@ -13,6 +13,8 @@ imports:
     git: https://github.com/fips-libs/fips-glfw
   fips-libmodplug:
     git: https://github.com/fips-libs/fips-libmodplug
+  fips-ozz-animation:
+    git: https://github.com/fips-libs/fips-ozz-animation
   fips-utils:
     git: https://github.com/fips-libs/fips-utils
   fips-dawn:
