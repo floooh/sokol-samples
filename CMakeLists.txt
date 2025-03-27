@@ -24,10 +24,9 @@ fips_ide_group("Imports")
 if (NOT USE_SOKOL_APP AND NOT SOKOL_USE_WGPU_DAWN AND NOT SOKOL_USE_D3D11 AND NOT SOKOL_USE_METAL)
     fips_import_fips_glfw_glfw3()
 endif()
+fips_import_fips_ozz_animation_ozzanimation()
 fips_import_dcimgui_dcimgui()
-if (NOT FIPS_UWP)
-    fips_import_fips_libmodplug_libmodplug()
-endif()
+fips_import_fips_libmodplug_libmodplug()
 fips_ide_group("")
 
 # just suppress this pesky "missing field initializer warning" for now

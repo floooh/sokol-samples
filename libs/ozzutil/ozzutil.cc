@@ -10,7 +10,7 @@
 #include "ozz/base/containers/vector.h"
 #include "ozz/base/maths/soa_transform.h"
 #include "ozz/base/maths/vec_float.h"
-#include "ozz/util/mesh.h"
+#include "framework/mesh.h"
 
 #include "ozzutil.h"
 
@@ -33,7 +33,7 @@ struct ozz_private_t {
     ozz::vector<ozz::math::Float4x4> mesh_inverse_bindposes;
     ozz::vector<ozz::math::SoaTransform> local_matrices;
     ozz::vector<ozz::math::Float4x4> model_matrices;
-    ozz::animation::SamplingCache cache;
+    ozz::animation::SamplingJob::Context context;
     sg_buffer vbuf = { };
     sg_buffer ibuf = { };
     int num_skin_joints;
@@ -124,7 +124,7 @@ void ozz_load_skeleton(ozz_instance_t* ozz, const void* data, size_t num_bytes) 
         const int num_joints = self->skel.num_joints();
         self->local_matrices.resize(num_soa_joints);
         self->model_matrices.resize(num_joints);
-        self->cache.Resize(num_joints);
+        self->context.Resize(num_joints);
     }
     else {
         self->load_failed = true;
@@ -272,7 +272,7 @@ void ozz_update_instance(ozz_instance_t* ozz, double seconds) {
 
     ozz::animation::SamplingJob sampling_job;
     sampling_job.animation = &self->anim;
-    sampling_job.cache = &self->cache;
+    sampling_job.context = &self->context;
     sampling_job.ratio = anim_ratio;
     sampling_job.output = make_span(self->local_matrices);
     sampling_job.Run();
