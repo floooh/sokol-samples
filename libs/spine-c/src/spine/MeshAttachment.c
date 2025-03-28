@@ -69,7 +69,7 @@ spAttachment *_spMeshAttachment_copy(spAttachment *attachment) {
 	copy->hullLength = self->hullLength;
 	if (self->edgesCount > 0) {
 		copy->edgesCount = self->edgesCount;
-		copy->edges = MALLOC(int, self->edgesCount);
+		copy->edges = MALLOC(unsigned short, self->edgesCount);
 		memcpy(copy->edges, self->edges, self->edgesCount * sizeof(int));
 	}
 	copy->width = self->width;
@@ -166,7 +166,7 @@ void spMeshAttachment_updateRegion(spMeshAttachment *self) {
 }
 
 void spMeshAttachment_setParentMesh(spMeshAttachment *self, spMeshAttachment *parentMesh) {
-	CONST_CAST(spMeshAttachment *, self->parentMesh) = parentMesh;
+	self->parentMesh = parentMesh;
 	if (parentMesh) {
 		self->super.bones = parentMesh->super.bones;
 		self->super.bonesCount = parentMesh->super.bonesCount;

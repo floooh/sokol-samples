@@ -32,16 +32,19 @@
 
 spBoneData *spBoneData_create(int index, const char *name, spBoneData *parent) {
 	spBoneData *self = NEW(spBoneData);
-	CONST_CAST(int, self->index) = index;
+	self->index = index;
 	MALLOC_STR(self->name, name);
-	CONST_CAST(spBoneData *, self->parent) = parent;
+	self->parent = parent;
 	self->scaleX = 1;
 	self->scaleY = 1;
-	self->transformMode = SP_TRANSFORMMODE_NORMAL;
+	self->inherit = SP_INHERIT_NORMAL;
+	self->icon = NULL;
+	self->visible = -1;
 	return self;
 }
 
 void spBoneData_dispose(spBoneData *self) {
 	FREE(self->name);
+	FREE(self->icon);
 	FREE(self);
 }

@@ -36,7 +36,7 @@ spIkConstraint *spIkConstraint_create(spIkConstraintData *data, const spSkeleton
 	int i;
 
 	spIkConstraint *self = NEW(spIkConstraint);
-	CONST_CAST(spIkConstraintData *, self->data) = data;
+	self->data = data;
 	self->bendDirection = data->bendDirection;
 	self->compress = data->compress;
 	self->stretch = data->stretch;
@@ -71,6 +71,14 @@ void spIkConstraint_update(spIkConstraint *self) {
 	}
 }
 
+void spIkConstraint_setToSetupPose(spIkConstraint *self) {
+	self->bendDirection = self->data->bendDirection;
+	self->compress = self->data->compress;
+	self->stretch = self->data->stretch;
+	self->softness = self->data->softness;
+	self->mix = self->data->mix;
+}
+
 void spIkConstraint_apply1(spBone *bone, float targetX, float targetY, int /*boolean*/ compress, int /*boolean*/ stretch,
 						   int /*boolean*/ uniform, float alpha) {
 	spBone *p = bone->parent;
@@ -78,12 +86,12 @@ void spIkConstraint_apply1(spBone *bone, float targetX, float targetY, int /*boo
 	float rotationIK = -bone->ashearX - bone->arotation;
 	float tx = 0, ty = 0, sx = 0, sy = 0, s = 0, sa = 0, sc = 0;
 
-	switch (bone->data->transformMode) {
-		case SP_TRANSFORMMODE_ONLYTRANSLATION:
+	switch (bone->data->inherit) {
+		case SP_INHERIT_ONLYTRANSLATION:
 			tx = (targetX - bone->worldX) * SIGNUM(bone->skeleton->scaleX);
 			ty = (targetY - bone->worldY) * SIGNUM(bone->skeleton->scaleY);
 			break;
-		case SP_TRANSFORMMODE_NOROTATIONORREFLECTION: {
+		case SP_INHERIT_NOROTATIONORREFLECTION: {
 			s = ABS(pa * pd - pb * pc) / MAX(0.0001f, pa * pa + pc * pc);
 			sa = pa / bone->skeleton->scaleX;
 			sc = pc / bone->skeleton->scaleY;
@@ -113,9 +121,9 @@ void spIkConstraint_apply1(spBone *bone, float targetX, float targetY, int /*boo
 	sy = bone->ascaleY;
 	if (compress || stretch) {
 		float b, dd;
-		switch (bone->data->transformMode) {
-			case SP_TRANSFORMMODE_NOSCALE:
-			case SP_TRANSFORMMODE_NOSCALEORREFLECTION:
+		switch (bone->data->inherit) {
+			case SP_INHERIT_NOSCALE:
+			case SP_INHERIT_NOSCALEORREFLECTION:
 				tx = targetX - bone->worldX;
 				ty = targetY - bone->worldY;
 			default:;
@@ -246,8 +254,9 @@ void spIkConstraint_apply2(spBone *parent, spBone *child, float targetX, float t
 			r0 = q / c2;
 			r1 = c0 / q;
 			r = ABS(r0) < ABS(r1) ? r0 : r1;
-			if (r * r <= dd) {
-				y = SQRT(dd - r * r) * bendDir;
+			y = dd - r * r;
+			if (y > 0) {
+				y = SQRT(y) * bendDir;
 				a1 = ta - ATAN2(y, r);
 				a2 = ATAN2(y / psy, (r - l1) / psx);
 				goto break_outer;

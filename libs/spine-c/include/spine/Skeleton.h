@@ -37,17 +37,18 @@
 #include <spine/IkConstraint.h>
 #include <spine/TransformConstraint.h>
 #include <spine/PathConstraint.h>
+#include <spine/PhysicsConstraint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct spSkeleton {
-	spSkeletonData *const data;
+	spSkeletonData *data;
 
 	int bonesCount;
 	spBone **bones;
-	spBone *const root;
+	spBone *root;
 
 	int slotsCount;
 	spSlot **slots;
@@ -62,10 +63,15 @@ typedef struct spSkeleton {
 	int pathConstraintsCount;
 	spPathConstraint **pathConstraints;
 
-	spSkin *const skin;
+    int physicsConstraintsCount;
+    spPhysicsConstraint **physicsConstraints;
+
+	spSkin *skin;
 	spColor color;
 	float scaleX, scaleY;
 	float x, y;
+
+    float time;
 } spSkeleton;
 
 SP_API spSkeleton *spSkeleton_create(spSkeletonData *data);
@@ -76,7 +82,9 @@ SP_API void spSkeleton_dispose(spSkeleton *self);
  * are added or removed. */
 SP_API void spSkeleton_updateCache(spSkeleton *self);
 
-SP_API void spSkeleton_updateWorldTransform(const spSkeleton *self);
+SP_API void spSkeleton_updateWorldTransform(const spSkeleton *self, spPhysics physics);
+
+SP_API void spSkeleton_update(spSkeleton *self, float delta);
 
 /* Sets the bones, constraints, and slots to their setup pose values. */
 SP_API void spSkeleton_setToSetupPose(const spSkeleton *self);
@@ -118,6 +126,13 @@ SP_API spTransformConstraint *spSkeleton_findTransformConstraint(const spSkeleto
 
 /* Returns 0 if the path constraint was not found. */
 SP_API spPathConstraint *spSkeleton_findPathConstraint(const spSkeleton *self, const char *constraintName);
+
+/* Returns 0 if the physics constraint was not found. */
+SP_API spPhysicsConstraint *spSkeleton_findPhysicsConstraint(const spSkeleton *self, const char *constraintName);
+
+SP_API void spSkeleton_physicsTranslate(spSkeleton *self, float x, float y);
+
+SP_API void spSkeleton_physicsRotate(spSkeleton *self, float x, float y, float degrees);
 
 #ifdef __cplusplus
 }

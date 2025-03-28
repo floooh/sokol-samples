@@ -27,11 +27,27 @@
  * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#ifndef SPINE_VERTEXEFFECT_H_
-#define SPINE_VERTEXEFFECT_H_
+#ifndef SPINE_PHYSICS_H_
+#define SPINE_PHYSICS_H_
 
-#define SPINE_MAJOR_VERSION 4
-#define SPINE_MINOR_VERSION 2
-#define SPINE_VERSION_STRING "4.2"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** Determines how physics and other non-deterministic updates are applied. */
+typedef enum {
+  /** Physics are not updated or applied. */
+  SP_PHYSICS_NONE,
+  /** Physics are reset to the current pose. */
+  SP_PHYSICS_RESET,
+  /** Physics are updated and the pose from physics is applied. */
+  SP_PHYSICS_UPDATE,
+  /** Physics are not updated but the pose from physics is applied. */
+  SP_PHYSICS_POSE
+} spPhysics;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

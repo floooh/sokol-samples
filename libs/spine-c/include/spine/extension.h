@@ -81,9 +81,6 @@
 /* Cast to a sub class. Not type safe, use with care. */
 #define SUB_CAST(TYPE, VALUE) ((TYPE*)VALUE)
 
-/* Casts away const. Can be used as an lvalue. Not type safe, use with care. */
-#define CONST_CAST(TYPE, VALUE) (*(TYPE*)&VALUE)
-
 /* Gets the vtable for the specified type. Not type safe, use with care. */
 #define VTABLE(TYPE, VALUE) ((_##TYPE##Vtable*)((TYPE*)VALUE)->vtable)
 
@@ -91,15 +88,17 @@
 #define FREE(VALUE) _spFree((void*)VALUE)
 
 /* Allocates a new char[], assigns it to TO, and copies FROM to it. Can be used on const types. */
-#define MALLOC_STR(TO, FROM) strcpy(CONST_CAST(char*, TO) = (char*)MALLOC(char, strlen(FROM) + 1), FROM)
+#define MALLOC_STR(TO, FROM) strcpy(TO = (char*)MALLOC(char, strlen(FROM) + 1), FROM)
 
 #define PI 3.1415926535897932385f
 #define PI2 (PI * 2)
+#define INV_PI2 (1 / PI2)
 #define DEG_RAD (PI / 180)
 #define RAD_DEG (180 / PI)
 
 #define ABS(A) ((A) < 0? -(A): (A))
 #define SIGNUM(A) ((A) < 0? -1.0f: (A) > 0 ? 1.0f : 0.0f)
+#define CEIL(a) ((float)ceil(a))
 
 #ifdef __STDC_VERSION__
 #define FMOD(A,B) fmodf(A, B)
@@ -130,6 +129,8 @@
 #ifndef MAX
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #endif
+
+#define ATAN2DEG(A, B)  ((float)ATAN2(A, B) * RAD_DEG)
 
 #define UNUSED(x) (void)(x)
 
@@ -175,7 +176,7 @@ void *_spRealloc(void *ptr, size_t size);
 
 void _spFree(void *ptr);
 
-float _spRandom();
+float _spRandom(void);
 
 SP_API void _spSetMalloc(void *(*_malloc)(size_t size));
 
@@ -185,7 +186,7 @@ SP_API void _spSetRealloc(void *(*_realloc)(void *ptr, size_t size));
 
 SP_API void _spSetFree(void (*_free)(void *ptr));
 
-SP_API void _spSetRandom(float (*_random)());
+SP_API void _spSetRandom(float (*_random)(void));
 
 char *_spReadFile(const char *path, int *length);
 

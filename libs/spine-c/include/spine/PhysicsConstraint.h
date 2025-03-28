@@ -27,11 +27,71 @@
  * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#ifndef SPINE_VERTEXEFFECT_H_
-#define SPINE_VERTEXEFFECT_H_
+#ifndef SPINE_PHYSICSCONSTRAINT_H_
+#define SPINE_PHYSICSCONSTRAINT_H_
 
-#define SPINE_MAJOR_VERSION 4
-#define SPINE_MINOR_VERSION 2
-#define SPINE_VERSION_STRING "4.2"
+#include <spine/dll.h>
+#include <spine/PhysicsConstraintData.h>
+#include <spine/Bone.h>
+#include <spine/Physics.h>
 
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+typedef struct spPhysicsConstraint {
+    spPhysicsConstraintData *data;
+    spBone* bone;
+
+    float inertia;
+    float strength;
+    float damping;
+    float massInverse;
+    float wind;
+    float gravity;
+    float mix;
+
+    int/*bool*/ reset;
+    float ux;
+    float uy;
+    float cx;
+    float cy;
+    float tx;
+    float ty;
+    float xOffset;
+    float xVelocity;
+    float yOffset;
+    float yVelocity;
+    float rotateOffset;
+    float rotateVelocity;
+    float scaleOffset;
+    float scaleVelocity;
+
+    int/*bool*/ active;
+
+    struct spSkeleton *skeleton;
+    float remaining;
+    float lastTime;
+
+} spPhysicsConstraint;
+
+SP_API spPhysicsConstraint *
+spPhysicsConstraint_create(spPhysicsConstraintData *data, struct spSkeleton *skeleton);
+
+SP_API void spPhysicsConstraint_dispose(spPhysicsConstraint *self);
+
+SP_API void spPhysicsConstraint_reset(spPhysicsConstraint *self);
+
+SP_API void spPhysicsConstraint_setToSetupPose(spPhysicsConstraint *self);
+
+SP_API void spPhysicsConstraint_update(spPhysicsConstraint *self, spPhysics physics);
+
+SP_API void spPhysicsConstraint_rotate(spPhysicsConstraint *self, float x, float y, float degrees);
+
+SP_API void spPhysicsConstraint_translate(spPhysicsConstraint *self, float x, float y);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SPINE_PHYSICSCONSTRAINT_H_ */

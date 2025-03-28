@@ -49,7 +49,7 @@ struct spMeshAttachment {
 	spTextureRegion *region;
 	spSequence *sequence;
 
-	const char *path;
+	char *path;
 
 	float *regionUVs;
 	float *uvs;
@@ -61,11 +61,11 @@ struct spMeshAttachment {
 
 	int hullLength;
 
-	spMeshAttachment *const parentMesh;
+	spMeshAttachment *parentMesh;
 
 	/* Nonessential. */
 	int edgesCount;
-	int *edges;
+	unsigned short *edges;
 	float width, height;
 };
 
