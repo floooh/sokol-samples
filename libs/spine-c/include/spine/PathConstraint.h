@@ -43,9 +43,9 @@ extern "C" {
 struct spSkeleton;
 
 typedef struct spPathConstraint {
-	spPathConstraintData *const data;
+	spPathConstraintData *data;
 	int bonesCount;
-	spBone **const bones;
+	spBone **bones;
 	spSlot *target;
 	float position, spacing;
 	float mixRotate, mixX, mixY;
@@ -77,6 +77,8 @@ SP_API spPathConstraint *spPathConstraint_create(spPathConstraintData *data, con
 SP_API void spPathConstraint_dispose(spPathConstraint *self);
 
 SP_API void spPathConstraint_update(spPathConstraint *self);
+
+SP_API void spPathConstraint_setToSetupPose(spPathConstraint *self);
 
 SP_API float *spPathConstraint_computeWorldPositions(spPathConstraint *self, spPathAttachment *path, int spacesCount,
 													 int/*bool*/ tangents);

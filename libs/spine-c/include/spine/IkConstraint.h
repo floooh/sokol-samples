@@ -41,7 +41,7 @@ extern "C" {
 struct spSkeleton;
 
 typedef struct spIkConstraint {
-	spIkConstraintData *const data;
+	spIkConstraintData *data;
 
 	int bonesCount;
 	spBone **bones;
@@ -61,6 +61,8 @@ SP_API spIkConstraint *spIkConstraint_create(spIkConstraintData *data, const str
 SP_API void spIkConstraint_dispose(spIkConstraint *self);
 
 SP_API void spIkConstraint_update(spIkConstraint *self);
+
+SP_API void spIkConstraint_setToSetupPose(spIkConstraint *self);
 
 SP_API void
 spIkConstraint_apply1(spBone *bone, float targetX, float targetY, int /*boolean*/ compress, int /*boolean*/ stretch,

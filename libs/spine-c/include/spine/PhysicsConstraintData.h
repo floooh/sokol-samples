@@ -27,11 +27,32 @@
  * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#ifndef SPINE_VERTEXEFFECT_H_
-#define SPINE_VERTEXEFFECT_H_
+#ifndef SPINE_PHYSICSCONSTRAINTDATA_H_
+#define SPINE_PHYSICSCONSTRAINTDATA_H_
 
-#define SPINE_MAJOR_VERSION 4
-#define SPINE_MINOR_VERSION 2
-#define SPINE_VERSION_STRING "4.2"
+#include <spine/dll.h>
+#include <spine/BoneData.h>
 
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+typedef struct spPhysicsConstraintData {
+	char *name;
+	int order;
+	int/*bool*/ skinRequired;
+    spBoneData *bone;
+    float x, y, rotate, scaleX, shearX, limit;
+    float step, inertia, strength, damping, massInverse, wind, gravity, mix;
+    int/*bool*/ inertiaGlobal, strengthGlobal, dampingGlobal, massGlobal, windGlobal, gravityGlobal, mixGlobal;
+} spPhysicsConstraintData;
+
+SP_API spPhysicsConstraintData *spPhysicsConstraintData_create(const char *name);
+
+SP_API void spPhysicsConstraintData_dispose(spPhysicsConstraintData *self);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SPINE_PHYSICSCONSTRAINTDATA_H_ */

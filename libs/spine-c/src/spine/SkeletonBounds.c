@@ -34,7 +34,7 @@
 spPolygon *spPolygon_create(int capacity) {
 	spPolygon *self = NEW(spPolygon);
 	self->capacity = capacity;
-	CONST_CAST(float *, self->vertices) = MALLOC(float, capacity);
+	self->vertices = MALLOC(float, capacity);
 	return self;
 }
 
@@ -89,7 +89,7 @@ typedef struct {
 	int capacity;
 } _spSkeletonBounds;
 
-spSkeletonBounds *spSkeletonBounds_create() {
+spSkeletonBounds *spSkeletonBounds_create(void) {
 	return SUPER(NEW(_spSkeletonBounds));
 }
 

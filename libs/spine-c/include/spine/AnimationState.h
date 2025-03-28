@@ -69,7 +69,7 @@ struct spTrackEntry {
 	int /*boolean*/ holdPrevious;
 	int /*boolean*/ reverse;
 	int /*boolean*/ shortestRotation;
-	float eventThreshold, attachmentThreshold, drawOrderThreshold;
+	float eventThreshold, mixAttachmentThreshold, alphaAttachmentThreshold, mixDrawOrderThreshold;
 	float animationStart, animationEnd, animationLast, nextAnimationLast;
 	float delay, trackTime, trackLast, nextTrackLast, trackEnd, timeScale;
 	float alpha, mixTime, mixDuration, interruptAlpha, totalAlpha;
@@ -83,7 +83,7 @@ struct spTrackEntry {
 };
 
 struct spAnimationState {
-	spAnimationStateData *const data;
+	spAnimationStateData *data;
 
 	int tracksCount;
 	spTrackEntry **tracks;
@@ -142,12 +142,20 @@ SP_API void spAnimationState_clearListenerNotifications(spAnimationState *self);
 
 SP_API float spTrackEntry_getAnimationTime(spTrackEntry *entry);
 
+SP_API void spTrackEntry_resetRotationDirections(spTrackEntry *entry);
+
 SP_API float spTrackEntry_getTrackComplete(spTrackEntry *entry);
+
+SP_API void spTrackEntry_setMixDuration(spTrackEntry *entry, float mixDuration, float delay);
+
+SP_API int/*bool*/ spTrackEntry_wasApplied(spTrackEntry *entry);
+
+SP_API int/*bool*/ spTrackEntry_isNextReady(spTrackEntry *entry);
 
 SP_API void spAnimationState_clearNext(spAnimationState *self, spTrackEntry *entry);
 
 /** Use this to dispose static memory before your app exits to appease your memory leak detector*/
-SP_API void spAnimationState_disposeStatics();
+SP_API void spAnimationState_disposeStatics(void);
 
 #ifdef __cplusplus
 }

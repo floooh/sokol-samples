@@ -268,6 +268,17 @@ int findPathConstraintIndex(spSkeletonJson *json, const spSkeletonData *skeleton
 	return -1;
 }
 
+int findPhysicsConstraintIndex(spSkeletonJson *json, const spSkeletonData *skeletonData, const spPhysicsConstraintData *constraint, spTimelineArray *timelines) {
+	if (constraint) {
+		int i;
+		for (i = 0; i < skeletonData->physicsConstraintsCount; ++i)
+			if (skeletonData->physicsConstraints[i] == constraint) return i;
+	}
+	cleanUpTimelines(timelines);
+	_spSkeletonJson_setError(json, NULL, "Physics constraint not found: ", constraint->name);
+	return -1;
+}
+
 static spAnimation *_spSkeletonJson_readAnimation(spSkeletonJson *self, Json *root, spSkeletonData *skeletonData) {
 	spTimelineArray *timelines = spTimelineArray_create(8);
 
@@ -277,6 +288,7 @@ static spAnimation *_spSkeletonJson_readAnimation(spSkeletonJson *self, Json *ro
 	Json *ik = Json_getItem(root, "ik");
 	Json *transform = Json_getItem(root, "transform");
 	Json *paths = Json_getItem(root, "path");
+	Json *physics = Json_getItem(root, "physics");
 	Json *attachmentsJson = Json_getItem(root, "attachments");
 	Json *drawOrderJson = Json_getItem(root, "drawOrder");
 	Json *events = Json_getItem(root, "events");
@@ -518,6 +530,27 @@ static spAnimation *_spSkeletonJson_readAnimation(spSkeletonJson *self, Json *ro
 			} else if (strcmp(timelineMap->name, "sheary") == 0) {
 				spShearYTimeline *timeline = spShearYTimeline_create(frames, frames, boneIndex);
 				spTimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 0, 1));
+			} else if (strcmp(timelineMap->name, "inherit") == 0) {
+				spInheritTimeline *timeline = spInheritTimeline_create(frames, boneIndex);
+				keyMap = timelineMap->child;
+				for (frame = 0;; frame++) {
+					float time = Json_getFloat(keyMap, "time", 0);
+					const char *value = Json_getString(keyMap, "inherit", "normal");
+					spInherit inherit = SP_INHERIT_NORMAL;
+					if (strcmp(value, "normal") == 0) inherit = SP_INHERIT_NORMAL;
+					else if (strcmp(value, "onlyTranslation") == 0)
+						inherit = SP_INHERIT_ONLYTRANSLATION;
+					else if (strcmp(value, "noRotationOrReflection") == 0)
+						inherit = SP_INHERIT_NOROTATIONORREFLECTION;
+					else if (strcmp(value, "noScale") == 0)
+						inherit = SP_INHERIT_NOSCALE;
+					else if (strcmp(value, "noScaleOrReflection") == 0)
+						inherit = SP_INHERIT_NOSCALEORREFLECTION;
+					spInheritTimeline_setFrame(timeline, frame, time, inherit);
+					nextMap = keyMap->next;
+					if (!nextMap) break;
+				}
+				spTimelineArray_add(timelines, SUPER(timeline));
 			} else {
 				cleanUpTimelines(timelines);
 				_spSkeletonJson_setError(self, NULL, "Invalid timeline type for a bone: ", timelineMap->name);
@@ -698,6 +731,50 @@ static spAnimation *_spSkeletonJson_readAnimation(spSkeletonJson *self, Json *ro
 				}
 				spTimelineArray_add(timelines, SUPER(SUPER(timeline)));
 			}
+		}
+	}
+
+	/** Physics constraint timelines. */
+	for (constraintMap = physics ? physics->child : 0; constraintMap; constraintMap = constraintMap->next) {
+		int index = -1;
+		if (constraintMap->name && strlen(constraintMap->name) > 0) {
+			spPhysicsConstraintData *constraint = spSkeletonData_findPhysicsConstraint(skeletonData, constraintMap->name);
+			index = findPhysicsConstraintIndex(self, skeletonData, constraint, timelines);
+			if (index == -1) return NULL;
+		}
+		for (timelineMap = constraintMap->child; timelineMap; timelineMap = timelineMap->next) {
+			keyMap = timelineMap->child;
+			if (keyMap == NULL) continue;
+			const char *timelineName = timelineMap->name;
+			int frames = timelineMap->size;
+			if (strcmp(timelineName, "reset") == 0) {
+				spPhysicsConstraintResetTimeline *timeline = spPhysicsConstraintResetTimeline_create(frames, index);
+				for (frame = 0; keyMap != NULL; keyMap = keyMap->next, frame++) {
+					spPhysicsConstraintResetTimeline_setFrame(timeline, frame, Json_getFloat(keyMap, "time", 0));
+				}
+				spTimelineArray_add(timelines, SUPER(timeline));
+				continue;
+			}
+
+			spPhysicsConstraintTimeline *timeline = NULL;
+			if (strcmp(timelineName, "inertia") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA);
+			} else if (strcmp(timelineName, "strength") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH);
+			} else if (strcmp(timelineName, "damping") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING);
+			} else if (strcmp(timelineName, "mass") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_MASS);
+			} else if (strcmp(timelineName, "wind") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_WIND);
+			} else if (strcmp(timelineName, "gravity") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY);
+			} else if (strcmp(timelineName, "mix") == 0) {
+				timeline = spPhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_MIX);
+			} else {
+				continue;
+			}
+			spTimelineArray_add(timelines, readTimeline(keyMap, SUPER(timeline), 0, 1));
 		}
 	}
 
@@ -967,11 +1044,11 @@ static int string_starts_with(const char *str, const char *needle) {
 spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char *json) {
 	int i, ii;
 	spSkeletonData *skeletonData;
-	Json *root, *skeleton, *bones, *boneMap, *ik, *transform, *pathJson, *slots, *skins, *animations, *events;
+	Json *root, *skeleton, *bones, *boneMap, *ik, *transform, *pathJson, *physics, *slots, *skins, *animations, *events;
 	_spSkeletonJson *internal = SUB_CAST(_spSkeletonJson, self);
 
 	FREE(self->error);
-	CONST_CAST(char *, self->error) = 0;
+	self->error = 0;
 	internal->linkedMeshCount = 0;
 
 	root = Json_create(json);
@@ -988,7 +1065,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 		MALLOC_STR(skeletonData->version, Json_getString(skeleton, "spine", "0"));
 		if (!string_starts_with(skeletonData->version, SPINE_VERSION_STRING)) {
 			char errorMsg[255];
-			sprintf(errorMsg, "Skeleton version %s does not match runtime version %s", skeletonData->version, SPINE_VERSION_STRING);
+			snprintf(errorMsg, 255, "Skeleton version %s does not match runtime version %s", skeletonData->version, SPINE_VERSION_STRING);
 			_spSkeletonJson_setError(self, 0, errorMsg, NULL);
 			return NULL;
 		}
@@ -996,6 +1073,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 		skeletonData->y = Json_getFloat(skeleton, "y", 0);
 		skeletonData->width = Json_getFloat(skeleton, "width", 0);
 		skeletonData->height = Json_getFloat(skeleton, "height", 0);
+		skeletonData->referenceScale = Json_getFloat(skeleton, "referenceScale", 100) * self->scale;
 		skeletonData->fps = Json_getFloat(skeleton, "fps", 30);
 		skeletonData->imagesPath = Json_getString(skeleton, "images", 0);
 		if (skeletonData->imagesPath) {
@@ -1016,7 +1094,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 	skeletonData->bones = MALLOC(spBoneData *, bones->size);
 	for (boneMap = bones->child, i = 0; boneMap; boneMap = boneMap->next, ++i) {
 		spBoneData *data;
-		const char *transformMode;
+		const char *inherit;
 		const char *color;
 
 		spBoneData *parent = 0;
@@ -1039,21 +1117,29 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 		data->scaleY = Json_getFloat(boneMap, "scaleY", 1);
 		data->shearX = Json_getFloat(boneMap, "shearX", 0);
 		data->shearY = Json_getFloat(boneMap, "shearY", 0);
-		transformMode = Json_getString(boneMap, "transform", "normal");
-		data->transformMode = SP_TRANSFORMMODE_NORMAL;
-		if (strcmp(transformMode, "normal") == 0) data->transformMode = SP_TRANSFORMMODE_NORMAL;
-		else if (strcmp(transformMode, "onlyTranslation") == 0)
-			data->transformMode = SP_TRANSFORMMODE_ONLYTRANSLATION;
-		else if (strcmp(transformMode, "noRotationOrReflection") == 0)
-			data->transformMode = SP_TRANSFORMMODE_NOROTATIONORREFLECTION;
-		else if (strcmp(transformMode, "noScale") == 0)
-			data->transformMode = SP_TRANSFORMMODE_NOSCALE;
-		else if (strcmp(transformMode, "noScaleOrReflection") == 0)
-			data->transformMode = SP_TRANSFORMMODE_NOSCALEORREFLECTION;
+		inherit = Json_getString(boneMap, "inherit", "normal");
+		data->inherit = SP_INHERIT_NORMAL;
+		if (strcmp(inherit, "normal") == 0) data->inherit = SP_INHERIT_NORMAL;
+		else if (strcmp(inherit, "onlyTranslation") == 0)
+			data->inherit = SP_INHERIT_ONLYTRANSLATION;
+		else if (strcmp(inherit, "noRotationOrReflection") == 0)
+			data->inherit = SP_INHERIT_NOROTATIONORREFLECTION;
+		else if (strcmp(inherit, "noScale") == 0)
+			data->inherit = SP_INHERIT_NOSCALE;
+		else if (strcmp(inherit, "noScaleOrReflection") == 0)
+			data->inherit = SP_INHERIT_NOSCALEORREFLECTION;
 		data->skinRequired = Json_getInt(boneMap, "skin", 0) ? 1 : 0;
 
 		color = Json_getString(boneMap, "color", 0);
 		if (color) toColor2(&data->color, color, -1);
+
+		data->icon = Json_getString(boneMap, "icon", "");
+		if (data->icon) {
+			char *tmp = NULL;
+			MALLOC_STR(tmp, data->icon);
+			data->icon = tmp;
+		}
+		data->visible = Json_getInt(boneMap, "visible", -1) ? -1 : 0;
 
 		skeletonData->bones[i] = data;
 		skeletonData->bonesCount++;
@@ -1063,7 +1149,6 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 	slots = Json_getItem(root, "slots");
 	if (slots) {
 		Json *slotMap;
-		skeletonData->slotsCount = slots->size;
 		skeletonData->slots = MALLOC(spSlotData *, slots->size);
 		for (slotMap = slots->child, i = 0; slotMap; slotMap = slotMap->next, ++i) {
 			spSlotData *data;
@@ -1079,7 +1164,8 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 				return NULL;
 			}
 
-			data = spSlotData_create(i, Json_getString(slotMap, "name", 0), boneData);
+			char *slotName = (char *) Json_getString(slotMap, "name", NULL);
+			data = spSlotData_create(i, slotName, boneData);
 
 			color = Json_getString(slotMap, "color", 0);
 			if (color) {
@@ -1113,7 +1199,9 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 					data->blendMode = SP_BLEND_MODE_SCREEN;
 			}
 
+			data->visible = Json_getInt(slotMap, "visible", -1);
 			skeletonData->slots[i] = data;
+			skeletonData->slotsCount++;
 		}
 	}
 
@@ -1121,7 +1209,6 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 	ik = Json_getItem(root, "ik");
 	if (ik) {
 		Json *constraintMap;
-		skeletonData->ikConstraintsCount = ik->size;
 		skeletonData->ikConstraints = MALLOC(spIkConstraintData *, ik->size);
 		for (constraintMap = ik->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
 			const char *targetName;
@@ -1136,6 +1223,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
 				data->bones[ii] = spSkeletonData_findBone(skeletonData, boneMap->valueString);
 				if (!data->bones[ii]) {
+					spIkConstraintData_dispose(data);
 					spSkeletonData_dispose(skeletonData);
 					_spSkeletonJson_setError(self, root, "IK bone not found: ", boneMap->valueString);
 					return NULL;
@@ -1145,6 +1233,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			targetName = Json_getString(constraintMap, "target", 0);
 			data->target = spSkeletonData_findBone(skeletonData, targetName);
 			if (!data->target) {
+				spIkConstraintData_dispose(data);
 				spSkeletonData_dispose(skeletonData);
 				_spSkeletonJson_setError(self, root, "Target bone not found: ", targetName);
 				return NULL;
@@ -1158,6 +1247,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			data->softness = Json_getFloat(constraintMap, "softness", 0) * self->scale;
 
 			skeletonData->ikConstraints[i] = data;
+			skeletonData->ikConstraintsCount++;
 		}
 	}
 
@@ -1165,7 +1255,6 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 	transform = Json_getItem(root, "transform");
 	if (transform) {
 		Json *constraintMap;
-		skeletonData->transformConstraintsCount = transform->size;
 		skeletonData->transformConstraints = MALLOC(spTransformConstraintData *, transform->size);
 		for (constraintMap = transform->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
 			const char *name;
@@ -1177,10 +1266,11 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 
 			boneMap = Json_getItem(constraintMap, "bones");
 			data->bonesCount = boneMap->size;
-			CONST_CAST(spBoneData **, data->bones) = MALLOC(spBoneData *, boneMap->size);
+			data->bones = MALLOC(spBoneData *, boneMap->size);
 			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
 				data->bones[ii] = spSkeletonData_findBone(skeletonData, boneMap->valueString);
 				if (!data->bones[ii]) {
+					spTransformConstraintData_dispose(data);
 					spSkeletonData_dispose(skeletonData);
 					_spSkeletonJson_setError(self, root, "Transform bone not found: ", boneMap->valueString);
 					return NULL;
@@ -1190,6 +1280,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			name = Json_getString(constraintMap, "target", 0);
 			data->target = spSkeletonData_findBone(skeletonData, name);
 			if (!data->target) {
+				spTransformConstraintData_dispose(data);
 				spSkeletonData_dispose(skeletonData);
 				_spSkeletonJson_setError(self, root, "Target bone not found: ", name);
 				return NULL;
@@ -1212,6 +1303,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			data->mixShearY = Json_getFloat(constraintMap, "mixShearY", 1);
 
 			skeletonData->transformConstraints[i] = data;
+			skeletonData->transformConstraintsCount++;
 		}
 	}
 
@@ -1219,7 +1311,6 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 	pathJson = Json_getItem(root, "path");
 	if (pathJson) {
 		Json *constraintMap;
-		skeletonData->pathConstraintsCount = pathJson->size;
 		skeletonData->pathConstraints = MALLOC(spPathConstraintData *, pathJson->size);
 		for (constraintMap = pathJson->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
 			const char *name;
@@ -1231,10 +1322,11 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 
 			boneMap = Json_getItem(constraintMap, "bones");
 			data->bonesCount = boneMap->size;
-			CONST_CAST(spBoneData **, data->bones) = MALLOC(spBoneData *, boneMap->size);
+			data->bones = MALLOC(spBoneData *, boneMap->size);
 			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
 				data->bones[ii] = spSkeletonData_findBone(skeletonData, boneMap->valueString);
 				if (!data->bones[ii]) {
+					spPathConstraintData_dispose(data);
 					spSkeletonData_dispose(skeletonData);
 					_spSkeletonJson_setError(self, root, "Path bone not found: ", boneMap->valueString);
 					return NULL;
@@ -1244,6 +1336,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			name = Json_getString(constraintMap, "target", 0);
 			data->target = spSkeletonData_findSlot(skeletonData, name);
 			if (!data->target) {
+				spPathConstraintData_dispose(data);
 				spSkeletonData_dispose(skeletonData);
 				_spSkeletonJson_setError(self, root, "Target slot not found: ", name);
 				return NULL;
@@ -1281,6 +1374,55 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			data->mixY = Json_getFloat(constraintMap, "mixY", data->mixX);
 
 			skeletonData->pathConstraints[i] = data;
+			skeletonData->pathConstraintsCount++;
+		}
+	}
+
+	/* Physics constraints */
+	physics = Json_getItem(root, "physics");
+	if (physics) {
+		Json *constraintMap;
+		skeletonData->physicsConstraintsCount = physics->size;
+		skeletonData->physicsConstraints = MALLOC(spPhysicsConstraintData *, physics->size);
+		for (constraintMap = physics->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
+			const char *name;
+
+			spPhysicsConstraintData *data = spPhysicsConstraintData_create(
+					Json_getString(constraintMap, "name", 0));
+			data->order = Json_getInt(constraintMap, "order", 0);
+			data->skinRequired = Json_getInt(constraintMap, "skin", 0);
+
+			name = Json_getString(constraintMap, "bone", 0);
+			data->bone = spSkeletonData_findBone(skeletonData, name);
+			if (!data->bone) {
+				spSkeletonData_dispose(skeletonData);
+				_spSkeletonJson_setError(self, root, "Physics bone not found: ", name);
+				return NULL;
+			}
+
+			data->x = Json_getFloat(constraintMap, "x", 0);
+			data->y = Json_getFloat(constraintMap, "y", 0);
+			data->rotate = Json_getFloat(constraintMap, "rotate", 0);
+			data->scaleX = Json_getFloat(constraintMap, "scaleX", 0);
+			data->shearX = Json_getFloat(constraintMap, "shearX", 0);
+			data->limit = Json_getFloat(constraintMap, "limit", 5000) * self->scale;
+			data->step = 1.0f / Json_getInt(constraintMap, "fps", 60);
+			data->inertia = Json_getFloat(constraintMap, "inertia", 1);
+			data->strength = Json_getFloat(constraintMap, "strength", 100);
+			data->damping = Json_getFloat(constraintMap, "damping", 1);
+			data->massInverse = 1.0f / Json_getFloat(constraintMap, "mass", 1);
+			data->wind = Json_getFloat(constraintMap, "wind", 0);
+			data->gravity = Json_getFloat(constraintMap, "gravity", 0);
+			data->mix = Json_getFloat(constraintMap, "mix", 1);
+			data->inertiaGlobal = Json_getInt(constraintMap, "inertiaGlobal", 0);
+			data->strengthGlobal = Json_getInt(constraintMap, "strengthGlobal", 0);
+			data->dampingGlobal = Json_getInt(constraintMap, "dampingGlobal", 0);
+			data->massGlobal = Json_getInt(constraintMap, "massGlobal", 0);
+			data->windGlobal = Json_getInt(constraintMap, "windGlobal", 0);
+			data->gravityGlobal = Json_getInt(constraintMap, "gravityGlobal", 0);
+			data->mixGlobal = Json_getInt(constraintMap, "mixGlobal", 0);
+
+			skeletonData->physicsConstraints[i] = data;
 		}
 	}
 
@@ -1300,6 +1442,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
 					spBoneData *bone = spSkeletonData_findBone(skeletonData, skinPart->valueString);
 					if (!bone) {
+						spSkin_dispose(skin);
 						spSkeletonData_dispose(skeletonData);
 						_spSkeletonJson_setError(self, root, "Skin bone constraint not found: ", skinPart->valueString);
 						return NULL;
@@ -1314,6 +1457,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 					spIkConstraintData *constraint = spSkeletonData_findIkConstraint(skeletonData,
 																					 skinPart->valueString);
 					if (!constraint) {
+						spSkin_dispose(skin);
 						spSkeletonData_dispose(skeletonData);
 						_spSkeletonJson_setError(self, root, "Skin IK constraint not found: ", skinPart->valueString);
 						return NULL;
@@ -1328,6 +1472,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 					spPathConstraintData *constraint = spSkeletonData_findPathConstraint(skeletonData,
 																						 skinPart->valueString);
 					if (!constraint) {
+						spSkin_dispose(skin);
 						spSkeletonData_dispose(skeletonData);
 						_spSkeletonJson_setError(self, root, "Skin path constraint not found: ", skinPart->valueString);
 						return NULL;
@@ -1342,12 +1487,27 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 					spTransformConstraintData *constraint = spSkeletonData_findTransformConstraint(skeletonData,
 																								   skinPart->valueString);
 					if (!constraint) {
+						spSkin_dispose(skin);
 						spSkeletonData_dispose(skeletonData);
 						_spSkeletonJson_setError(self, root, "Skin transform constraint not found: ",
 												 skinPart->valueString);
 						return NULL;
 					}
 					spTransformConstraintDataArray_add(skin->transformConstraints, constraint);
+				}
+			}
+
+			skinPart = Json_getItem(skinMap, "physics");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					spPhysicsConstraintData *constraint = spSkeletonData_findPhysicsConstraint(skeletonData,
+																							   skinPart->valueString);
+					if (!constraint) {
+						spSkeletonData_dispose(skeletonData);
+						_spSkeletonJson_setError(self, root, "Skin physics constraint not found: ", skinPart->valueString);
+						return NULL;
+					}
+					spPhysicsConstraintDataArray_add(skin->physicsConstraints, constraint);
 				}
 			}
 
@@ -1474,9 +1634,9 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 									entry = Json_getItem(attachmentMap, "edges");
 									if (entry) {
 										mesh->edgesCount = entry->size;
-										mesh->edges = MALLOC(int, entry->size);
+										mesh->edges = MALLOC(unsigned short, entry->size);
 										for (entry = entry->child, ii = 0; entry; entry = entry->next, ++ii)
-											mesh->edges[ii] = entry->valueInt;
+											mesh->edges[ii] = (unsigned short) entry->valueInt;
 									}
 
 									spAttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
@@ -1581,13 +1741,13 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 		spSkin *skin = !linkedMesh->skin ? skeletonData->defaultSkin : spSkeletonData_findSkin(skeletonData, linkedMesh->skin);
 		if (!skin) {
 			spSkeletonData_dispose(skeletonData);
-			_spSkeletonJson_setError(self, 0, "Skin not found: ", linkedMesh->skin);
+			_spSkeletonJson_setError(self, root, "Skin not found: ", linkedMesh->skin);
 			return NULL;
 		}
 		parent = spSkin_getAttachment(skin, linkedMesh->slotIndex, linkedMesh->parent);
 		if (!parent) {
 			spSkeletonData_dispose(skeletonData);
-			_spSkeletonJson_setError(self, 0, "Parent mesh not found: ", linkedMesh->parent);
+			_spSkeletonJson_setError(self, root, "Parent mesh not found: ", linkedMesh->parent);
 			return NULL;
 		}
 		linkedMesh->mesh->super.timelineAttachment = linkedMesh->inheritTimeline ? parent
@@ -1630,6 +1790,7 @@ spSkeletonData *spSkeletonJson_readSkeletonData(spSkeletonJson *self, const char
 			spAnimation *animation = _spSkeletonJson_readAnimation(self, animationMap, skeletonData);
 			if (!animation) {
 				spSkeletonData_dispose(skeletonData);
+				_spSkeletonJson_setError(self, root, "Animation broken: ", animationMap->name);
 				return NULL;
 			}
 			skeletonData->animations[skeletonData->animationsCount++] = animation;

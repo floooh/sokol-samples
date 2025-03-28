@@ -49,7 +49,7 @@ void _spAttachmentLoader_init(spAttachmentLoader *self,
 																const char *path, spSequence *sequence),
 							  void (*configureAttachment)(spAttachmentLoader *self, spAttachment *),
 							  void (*disposeAttachment)(spAttachmentLoader *self, spAttachment *)) {
-	CONST_CAST(_spAttachmentLoaderVtable *, self->vtable) = NEW(_spAttachmentLoaderVtable);
+	self->vtable = NEW(_spAttachmentLoaderVtable);
 	VTABLE(spAttachmentLoader, self)->dispose = dispose;
 	VTABLE(spAttachmentLoader, self)->createAttachment = createAttachment;
 	VTABLE(spAttachmentLoader, self)->configureAttachment = configureAttachment;
@@ -96,6 +96,6 @@ void _spAttachmentLoader_setError(spAttachmentLoader *self, const char *error1, 
 
 void _spAttachmentLoader_setUnknownTypeError(spAttachmentLoader *self, spAttachmentType type) {
 	char buffer[16];
-	sprintf(buffer, "%d", type);
+	snprintf(buffer, 16, "%d", type);
 	_spAttachmentLoader_setError(self, "Unknown attachment type: ", buffer);
 }

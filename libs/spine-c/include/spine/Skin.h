@@ -35,6 +35,7 @@
 #include <spine/IkConstraintData.h>
 #include <spine/TransformConstraintData.h>
 #include <spine/PathConstraintData.h>
+#include <spine/PhysicsConstraintData.h>
 #include <spine/Array.h>
 
 #ifdef __cplusplus
@@ -54,13 +55,17 @@ _SP_ARRAY_DECLARE_TYPE(spTransformConstraintDataArray, spTransformConstraintData
 
 _SP_ARRAY_DECLARE_TYPE(spPathConstraintDataArray, spPathConstraintData*)
 
+_SP_ARRAY_DECLARE_TYPE(spPhysicsConstraintDataArray, spPhysicsConstraintData*)
+
 typedef struct spSkin {
-	const char *const name;
+	char *name;
 
 	spBoneDataArray *bones;
 	spIkConstraintDataArray *ikConstraints;
 	spTransformConstraintDataArray *transformConstraints;
 	spPathConstraintDataArray *pathConstraints;
+    spPhysicsConstraintDataArray *physicsConstraints;
+    spColor color;
 } spSkin;
 
 /* Private structs, needed by Skeleton */
@@ -68,7 +73,7 @@ typedef struct _Entry _Entry;
 typedef struct _Entry spSkinEntry;
 struct _Entry {
 	int slotIndex;
-	const char *name;
+	char *name;
 	spAttachment *attachment;
 	_Entry *next;
 };

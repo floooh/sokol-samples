@@ -298,6 +298,110 @@ float spCurveTimeline1_getCurveValue(spCurveTimeline1 *self, float time) {
 	return _spCurveTimeline_getBezierValue(self, time, i, CURVE1_VALUE, curveType - CURVE_BEZIER);
 }
 
+float spCurveTimeline1_getRelativeValue(spCurveTimeline1 *self, float time, float alpha, spMixBlend blend, float current, float setup) {
+	float *frames = self->super.frames->items;
+	if (time < frames[0]) {
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				return setup;
+			case SP_MIX_BLEND_FIRST:
+				return current + (setup - current) * alpha;
+			default:
+				return current;
+		}
+	}
+	float value = spCurveTimeline1_getCurveValue(self, time);
+	switch (blend) {
+		case SP_MIX_BLEND_SETUP:
+			return setup + value * alpha;
+		case SP_MIX_BLEND_FIRST:
+		case SP_MIX_BLEND_REPLACE:
+			value += setup - current;
+			break;
+		case SP_MIX_BLEND_ADD:
+			break;
+	}
+	return current + value * alpha;
+}
+
+float spCurveTimeline1_getAbsoluteValue(spCurveTimeline1 *self, float time, float alpha, spMixBlend blend, float current, float setup) {
+	float *frames = self->super.frames->items;
+	if (time < frames[0]) {
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				return setup;
+			case SP_MIX_BLEND_FIRST:
+				return current + (setup - current) * alpha;
+			default:
+				return current;
+		}
+	}
+	float value = spCurveTimeline1_getCurveValue(self, time);
+	if (blend == SP_MIX_BLEND_SETUP) return setup + (value - setup) * alpha;
+	return current + (value - current) * alpha;
+}
+
+float spCurveTimeline1_getAbsoluteValue2(spCurveTimeline1 *self, float time, float alpha, spMixBlend blend, float current, float setup, float value) {
+	float *frames = self->super.frames->items;
+	if (time < frames[0]) {
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				return setup;
+			case SP_MIX_BLEND_FIRST:
+				return current + (setup - current) * alpha;
+			default:
+				return current;
+		}
+	}
+	if (blend == SP_MIX_BLEND_SETUP) return setup + (value - setup) * alpha;
+	return current + (value - current) * alpha;
+}
+
+float spCurveTimeline1_getScaleValue(spCurveTimeline1 *self, float time, float alpha, spMixBlend blend, spMixDirection direction, float current, float setup) {
+	float *frames = self->super.frames->items;
+	if (time < frames[0]) {
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				return setup;
+			case SP_MIX_BLEND_FIRST:
+				return current + (setup - current) * alpha;
+			default:
+				return current;
+		}
+	}
+	float value = spCurveTimeline1_getCurveValue(self, time) * setup;
+	if (alpha == 1) {
+		if (blend == SP_MIX_BLEND_ADD) return current + value - setup;
+		return value;
+	}
+	// Mixing out uses sign of setup or current pose, else use sign of key.
+	if (direction == SP_MIX_DIRECTION_OUT) {
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				return setup + (ABS(value) * SIGNUM(setup) - setup) * alpha;
+			case SP_MIX_BLEND_FIRST:
+			case SP_MIX_BLEND_REPLACE:
+				return current + (ABS(value) * SIGNUM(current) - current) * alpha;
+			default:
+				break;
+		}
+	} else {
+		float s;
+		switch (blend) {
+			case SP_MIX_BLEND_SETUP:
+				s = ABS(setup) * SIGNUM(value);
+				return s + (value - s) * alpha;
+			case SP_MIX_BLEND_FIRST:
+			case SP_MIX_BLEND_REPLACE:
+				s = ABS(current) * SIGNUM(value);
+				return s + (value - s) * alpha;
+			default:
+				break;
+		}
+	}
+	return current + (value - setup) * alpha;
+}
+
 #define CURVE2_ENTRIES 3
 #define CURVE2_VALUE1 1
 #define CURVE2_VALUE2 2
@@ -314,38 +418,9 @@ SP_API void spCurveTimeline2_setFrame(spCurveTimeline1 *self, int frame, float t
 
 void _spRotateTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time, spEvent **firedEvents,
 							 int *eventsCount, float alpha, spMixBlend blend, spMixDirection direction) {
-	spBone *bone;
-	float r;
 	spRotateTimeline *self = SUB_CAST(spRotateTimeline, timeline);
-	float *frames = self->super.super.frames->items;
-
-	bone = skeleton->bones[self->boneIndex];
-	if (!bone->active) return;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				bone->rotation = bone->data->rotation;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				bone->rotation += (bone->data->rotation - bone->rotation) * alpha;
-			default: {
-			}
-		}
-		return;
-	}
-
-	r = spCurveTimeline1_getCurveValue(SUPER(self), time);
-	switch (blend) {
-		case SP_MIX_BLEND_SETUP:
-			bone->rotation = bone->data->rotation + r * alpha;
-			break;
-		case SP_MIX_BLEND_FIRST:
-		case SP_MIX_BLEND_REPLACE:
-			r += bone->data->rotation - bone->rotation;
-		case SP_MIX_BLEND_ADD:
-			bone->rotation += r * alpha;
-	}
+	spBone *bone = skeleton->bones[self->boneIndex];
+	if (bone->active) bone->rotation = spCurveTimeline1_getRelativeValue(SUPER(self), time, alpha, blend, bone->rotation, bone->data->rotation);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -709,67 +784,10 @@ void spScaleTimeline_setFrame(spScaleTimeline *self, int frame, float time, floa
 void _spScaleXTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 							 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 							 spMixDirection direction) {
-	spBone *bone;
-	float x;
-
 	spScaleXTimeline *self = SUB_CAST(spScaleXTimeline, timeline);
-	float *frames = self->super.super.frames->items;
+	spBone *bone = skeleton->bones[self->boneIndex];
 
-	bone = skeleton->bones[self->boneIndex];
-	if (!bone->active) return;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				bone->scaleX = bone->data->scaleX;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				bone->scaleX += (bone->data->scaleX - bone->scaleX) * alpha;
-			default: {
-			}
-		}
-		return;
-	}
-
-	x = spCurveTimeline1_getCurveValue(SUPER(self), time) * bone->data->scaleX;
-	if (alpha == 1) {
-		if (blend == SP_MIX_BLEND_ADD)
-			bone->scaleX += x - bone->data->scaleX;
-		else
-			bone->scaleX = x;
-	} else {
-		/* Mixing out uses sign of setup or current pose, else use sign of key. */
-		float bx;
-		if (direction == SP_MIX_DIRECTION_OUT) {
-			switch (blend) {
-				case SP_MIX_BLEND_SETUP:
-					bx = bone->data->scaleX;
-					bone->scaleX = bx + (ABS(x) * SIGNUM(bx) - bx) * alpha;
-					break;
-				case SP_MIX_BLEND_FIRST:
-				case SP_MIX_BLEND_REPLACE:
-					bx = bone->scaleX;
-					bone->scaleX = bx + (ABS(x) * SIGNUM(bx) - bx) * alpha;
-					break;
-				case SP_MIX_BLEND_ADD:
-					bone->scaleX += (x - bone->data->scaleX) * alpha;
-			}
-		} else {
-			switch (blend) {
-				case SP_MIX_BLEND_SETUP:
-					bx = ABS(bone->data->scaleX) * SIGNUM(x);
-					bone->scaleX = bx + (x - bx) * alpha;
-					break;
-				case SP_MIX_BLEND_FIRST:
-				case SP_MIX_BLEND_REPLACE:
-					bx = ABS(bone->scaleX) * SIGNUM(x);
-					bone->scaleX = bx + (x - bx) * alpha;
-					break;
-				case SP_MIX_BLEND_ADD:
-					bone->scaleX += (x - bone->data->scaleX) * alpha;
-			}
-		}
-	}
+	if (bone->active) bone->scaleX = spCurveTimeline1_getScaleValue(SUPER(self), time, alpha, blend, direction, bone->scaleX, bone->data->scaleX);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -795,67 +813,10 @@ void spScaleXTimeline_setFrame(spScaleXTimeline *self, int frame, float time, fl
 void _spScaleYTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 							 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 							 spMixDirection direction) {
-	spBone *bone;
-	float y;
-
 	spScaleYTimeline *self = SUB_CAST(spScaleYTimeline, timeline);
-	float *frames = self->super.super.frames->items;
+	spBone *bone = skeleton->bones[self->boneIndex];
 
-	bone = skeleton->bones[self->boneIndex];
-	if (!bone->active) return;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				bone->scaleY = bone->data->scaleY;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				bone->scaleY += (bone->data->scaleY - bone->scaleY) * alpha;
-			default: {
-			}
-		}
-		return;
-	}
-
-	y = spCurveTimeline1_getCurveValue(SUPER(self), time) * bone->data->scaleY;
-	if (alpha == 1) {
-		if (blend == SP_MIX_BLEND_ADD)
-			bone->scaleY += y - bone->data->scaleY;
-		else
-			bone->scaleY = y;
-	} else {
-		/* Mixing out uses sign of setup or current pose, else use sign of key. */
-		float by = 0;
-		if (direction == SP_MIX_DIRECTION_OUT) {
-			switch (blend) {
-				case SP_MIX_BLEND_SETUP:
-					by = bone->data->scaleY;
-					bone->scaleY = by + (ABS(y) * SIGNUM(by) - by) * alpha;
-					break;
-				case SP_MIX_BLEND_FIRST:
-				case SP_MIX_BLEND_REPLACE:
-					by = bone->scaleY;
-					bone->scaleY = by + (ABS(y) * SIGNUM(by) - by) * alpha;
-					break;
-				case SP_MIX_BLEND_ADD:
-					bone->scaleY += (y - bone->data->scaleY) * alpha;
-			}
-		} else {
-			switch (blend) {
-				case SP_MIX_BLEND_SETUP:
-					by = ABS(bone->data->scaleY) * SIGNUM(y);
-					bone->scaleY = by + (y - by) * alpha;
-					break;
-				case SP_MIX_BLEND_FIRST:
-				case SP_MIX_BLEND_REPLACE:
-					by = ABS(bone->scaleY) * SIGNUM(y);
-					bone->scaleY = by + (y - by) * alpha;
-					break;
-				case SP_MIX_BLEND_ADD:
-					bone->scaleY += (y - bone->data->scaleY) * alpha;
-			}
-		}
-	}
+	if (bone->active) bone->scaleY = spCurveTimeline1_getScaleValue(SUPER(self), time, alpha, blend, direction, bone->scaleX, bone->data->scaleY);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -970,40 +931,11 @@ void spShearTimeline_setFrame(spShearTimeline *self, int frame, float time, floa
 void _spShearXTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 							 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 							 spMixDirection direction) {
-	spBone *bone;
-	float x;
-
 	spShearXTimeline *self = SUB_CAST(spShearXTimeline, timeline);
-	float *frames = self->super.super.frames->items;
+	spBone *bone = skeleton->bones[self->boneIndex];
 
-	bone = skeleton->bones[self->boneIndex];
-	if (!bone->active) return;
+	if (bone->active) bone->shearX = spCurveTimeline1_getRelativeValue(SUPER(self), time, alpha, blend, bone->shearX, bone->data->shearX);
 
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				bone->shearX = bone->data->shearX;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				bone->shearX += (bone->data->shearX - bone->shearX) * alpha;
-			default: {
-			}
-		}
-		return;
-	}
-
-	x = spCurveTimeline1_getCurveValue(SUPER(self), time);
-	switch (blend) {
-		case SP_MIX_BLEND_SETUP:
-			bone->shearX = bone->data->shearX + x * alpha;
-			break;
-		case SP_MIX_BLEND_FIRST:
-		case SP_MIX_BLEND_REPLACE:
-			bone->shearX += (bone->data->shearX + x - bone->shearX) * alpha;
-			break;
-		case SP_MIX_BLEND_ADD:
-			bone->shearX += x * alpha;
-	}
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
 	UNUSED(eventsCount);
@@ -1029,40 +961,10 @@ void spShearXTimeline_setFrame(spShearXTimeline *self, int frame, float time, fl
 void _spShearYTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 							 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 							 spMixDirection direction) {
-	spBone *bone;
-	float y;
-
 	spShearYTimeline *self = SUB_CAST(spShearYTimeline, timeline);
-	float *frames = self->super.super.frames->items;
+	spBone *bone = skeleton->bones[self->boneIndex];
 
-	bone = skeleton->bones[self->boneIndex];
-	if (!bone->active) return;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				bone->shearY = bone->data->shearY;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				bone->shearY += (bone->data->shearY - bone->shearY) * alpha;
-			default: {
-			}
-		}
-		return;
-	}
-
-	y = spCurveTimeline1_getCurveValue(SUPER(self), time);
-	switch (blend) {
-		case SP_MIX_BLEND_SETUP:
-			bone->shearY = bone->data->shearY + y * alpha;
-			break;
-		case SP_MIX_BLEND_FIRST:
-		case SP_MIX_BLEND_REPLACE:
-			bone->shearY += (bone->data->shearY + y - bone->shearY) * alpha;
-			break;
-		case SP_MIX_BLEND_ADD:
-			bone->shearY += y * alpha;
-	}
+	if (bone->active) bone->shearY = spCurveTimeline1_getRelativeValue(SUPER(self), time, alpha, blend, bone->shearY, bone->data->shearY);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -1679,7 +1581,7 @@ spAttachmentTimeline *spAttachmentTimeline_create(int framesCount, int slotIndex
 	ids[0] = ((spPropertyId) SP_PROPERTY_ATTACHMENT << 32) | slotIndex;
 	_spTimeline_init(SUPER(self), framesCount, 1, ids, 1, SP_TIMELINE_ATTACHMENT, _spAttachmentTimeline_dispose,
 					 _spAttachmentTimeline_apply, 0);
-	CONST_CAST(char **, self->attachmentNames) = CALLOC(char *, framesCount);
+	self->attachmentNames = CALLOC(char *, framesCount);
 	self->slotIndex = slotIndex;
 	return self;
 }
@@ -1765,7 +1667,7 @@ void _spDeformTimeline_apply(
 	const float *nextVertices;
 	float *frames;
 	int framesCount;
-	const float **frameVertices;
+	float **frameVertices;
 	float *deformArray;
 	spDeformTimeline *self = (spDeformTimeline *) timeline;
 
@@ -1983,8 +1885,8 @@ spDeformTimeline *spDeformTimeline_create(int framesCount, int frameVerticesCoun
 	ids[0] = ((spPropertyId) SP_PROPERTY_DEFORM << 32) | ((slotIndex << 16 | attachment->id) & 0xffffffff);
 	_spCurveTimeline_init(SUPER(self), framesCount, 1, bezierCount, ids, 1, SP_TIMELINE_DEFORM,
 						  _spDeformTimeline_dispose, _spDeformTimeline_apply, _spDeformTimeline_setBezier);
-	CONST_CAST(float **, self->frameVertices) = CALLOC(float *, framesCount);
-	CONST_CAST(int, self->frameVerticesCount) = frameVerticesCount;
+	self->frameVertices = CALLOC(float *, framesCount);
+	self->frameVerticesCount = frameVerticesCount;
 	self->slotIndex = slotIndex;
 	self->attachment = SUPER(attachment);
 	return self;
@@ -1998,7 +1900,7 @@ void spDeformTimeline_setFrame(spDeformTimeline *self, int frame, float time, fl
 		self->frameVertices[frame] = 0;
 	else {
 		self->frameVertices[frame] = MALLOC(float, self->frameVerticesCount);
-		memcpy(CONST_CAST(float *, self->frameVertices[frame]), vertices, self->frameVerticesCount * sizeof(float));
+		memcpy(self->frameVertices[frame], vertices, self->frameVerticesCount * sizeof(float));
 	}
 }
 
@@ -2035,6 +1937,15 @@ void _spSequenceTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float
 		}
 	}
 
+	if (self->attachment->type == SP_ATTACHMENT_REGION) sequence = ((spRegionAttachment *) self->attachment)->sequence;
+	if (self->attachment->type == SP_ATTACHMENT_MESH) sequence = ((spMeshAttachment *) self->attachment)->sequence;
+	if (!sequence) return;
+
+	if (direction == SP_MIX_DIRECTION_OUT) {
+		if (blend == SP_MIX_BLEND_SETUP) slot->sequenceIndex = -1;
+		return;
+	}
+
 	frames = self->super.frames->items;
 	if (time < frames[0]) { /* Time is before first frame. */
 		if (blend == SP_MIX_BLEND_SETUP || blend == SP_MIX_BLEND_FIRST) slot->sequenceIndex = -1;
@@ -2046,14 +1957,11 @@ void _spSequenceTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float
 	modeAndIndex = (int) frames[i + MODE];
 	delay = frames[i + DELAY];
 
-	if (self->attachment->type == SP_ATTACHMENT_REGION) sequence = ((spRegionAttachment *) self->attachment)->sequence;
-	if (self->attachment->type == SP_ATTACHMENT_MESH) sequence = ((spMeshAttachment *) self->attachment)->sequence;
-	if (!sequence) return;
 	index = modeAndIndex >> 4;
 	count = sequence->regions->size;
 	mode = modeAndIndex & 0xf;
 	if (mode != SP_SEQUENCE_MODE_HOLD) {
-		index += (int) (((time - before) / delay + 0.00001));
+		index += (int) (((time - before) / delay + 0.0001));
 		switch (mode) {
 			case SP_SEQUENCE_MODE_ONCE:
 				index = MIN(count - 1, index);
@@ -2171,7 +2079,7 @@ spEventTimeline *spEventTimeline_create(int framesCount) {
 	ids[0] = (spPropertyId) SP_PROPERTY_EVENT << 32;
 	_spTimeline_init(SUPER(self), framesCount, 1, ids, 1, SP_TIMELINE_EVENT, _spEventTimeline_dispose,
 					 _spEventTimeline_apply, 0);
-	CONST_CAST(spEvent **, self->events) = CALLOC(spEvent *, framesCount);
+	self->events = CALLOC(spEvent *, framesCount);
 	return self;
 }
 
@@ -2234,8 +2142,8 @@ spDrawOrderTimeline *spDrawOrderTimeline_create(int framesCount, int slotsCount)
 	_spTimeline_init(SUPER(self), framesCount, 1, ids, 1, SP_TIMELINE_DRAWORDER, _spDrawOrderTimeline_dispose,
 					 _spDrawOrderTimeline_apply, 0);
 
-	CONST_CAST(int **, self->drawOrders) = CALLOC(int *, framesCount);
-	CONST_CAST(int, self->slotsCount) = slotsCount;
+	self->drawOrders = CALLOC(int *, framesCount);
+	self->slotsCount = slotsCount;
 
 	return self;
 }
@@ -2248,9 +2156,61 @@ void spDrawOrderTimeline_setFrame(spDrawOrderTimeline *self, int frame, float ti
 		self->drawOrders[frame] = 0;
 	else {
 		self->drawOrders[frame] = MALLOC(int, self->slotsCount);
-		memcpy(CONST_CAST(int *, self->drawOrders[frame]), drawOrder, self->slotsCount * sizeof(int));
+		memcpy(self->drawOrders[frame], drawOrder, self->slotsCount * sizeof(int));
 	}
 }
+
+/**/
+void _spInheritTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
+							  spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
+							  spMixDirection direction) {
+	spInheritTimeline *self = (spInheritTimeline *) timeline;
+	spBone *bone = skeleton->bones[self->boneIndex];
+	float *frames = self->super.frames->items;
+	if (!bone->active) return;
+
+	if (direction == SP_MIX_DIRECTION_OUT) {
+		if (blend == SP_MIX_BLEND_SETUP) bone->inherit = bone->data->inherit;
+		return;
+	}
+
+	if (time < frames[0]) {
+		if (blend == SP_MIX_BLEND_SETUP || blend == SP_MIX_BLEND_FIRST) bone->inherit = bone->data->inherit;
+		return;
+	}
+	int idx = search2(self->super.frames, time, 2) + 1;
+	bone->inherit = (spInherit) frames[idx];
+
+	UNUSED(lastTime);
+	UNUSED(firedEvents);
+	UNUSED(eventsCount);
+	UNUSED(alpha);
+	UNUSED(direction);
+}
+
+void _spInheritTimeline_dispose(spTimeline *timeline) {
+	// no-op, spTimeline_dispose disposes frames.
+	UNUSED(timeline);
+}
+
+spInheritTimeline *spInheritTimeline_create(int framesCount, int boneIndex) {
+	spInheritTimeline *self = NEW(spInheritTimeline);
+	spPropertyId ids[1];
+	ids[0] = (spPropertyId) SP_PROPERTY_INHERIT << 32;
+	_spTimeline_init(SUPER(self), framesCount, 2, ids, 1, SP_TIMELINE_INHERIT, _spInheritTimeline_dispose,
+					 _spInheritTimeline_apply, 0);
+
+	self->boneIndex = boneIndex;
+
+	return self;
+}
+
+void spInheritTimeline_setFrame(spInheritTimeline *self, int frame, float time, spInherit inherit) {
+	frame *= 2;
+	self->super.frames->items[frame] = time;
+	self->super.frames->items[frame + 1] = inherit;
+}
+
 
 /**/
 
@@ -2515,35 +2475,9 @@ static const int PATHCONSTRAINTPOSITION_VALUE = 1;
 void _spPathConstraintPositionTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 											 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 											 spMixDirection direction) {
-	float position;
-	spPathConstraint *constraint;
 	spPathConstraintPositionTimeline *self = (spPathConstraintPositionTimeline *) timeline;
-	float *frames;
-
-	constraint = skeleton->pathConstraints[self->pathConstraintIndex];
-	if (!constraint->active) return;
-
-	frames = self->super.super.frames->items;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				constraint->position = constraint->data->position;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				constraint->position += (constraint->data->position - constraint->position) * alpha;
-				return;
-			default:
-				return;
-		}
-	}
-
-	position = spCurveTimeline1_getCurveValue(SUPER(self), time);
-
-	if (blend == SP_MIX_BLEND_SETUP)
-		constraint->position = constraint->data->position + (position - constraint->data->position) * alpha;
-	else
-		constraint->position += (position - constraint->position) * alpha;
+	spPathConstraint *constraint = skeleton->pathConstraints[self->pathConstraintIndex];
+	if (constraint->active) constraint->position = spCurveTimeline1_getAbsoluteValue(SUPER(self), time, alpha, blend, constraint->position, constraint->data->position);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -2577,35 +2511,9 @@ static const int PATHCONSTRAINTSPACING_VALUE = 1;
 void _spPathConstraintSpacingTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
 											spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
 											spMixDirection direction) {
-	float spacing;
-	spPathConstraint *constraint;
 	spPathConstraintSpacingTimeline *self = (spPathConstraintSpacingTimeline *) timeline;
-	float *frames;
-
-	constraint = skeleton->pathConstraints[self->pathConstraintIndex];
-	if (!constraint->active) return;
-
-	frames = self->super.super.frames->items;
-
-	if (time < frames[0]) {
-		switch (blend) {
-			case SP_MIX_BLEND_SETUP:
-				constraint->spacing = constraint->data->spacing;
-				return;
-			case SP_MIX_BLEND_FIRST:
-				constraint->spacing += (constraint->data->spacing - constraint->spacing) * alpha;
-				return;
-			default:
-				return;
-		}
-	}
-
-	spacing = spCurveTimeline1_getCurveValue(SUPER(self), time);
-
-	if (blend == SP_MIX_BLEND_SETUP)
-		constraint->spacing = constraint->data->spacing + (spacing - constraint->data->spacing) * alpha;
-	else
-		constraint->spacing += (spacing - constraint->spacing) * alpha;
+	spPathConstraint *constraint = skeleton->pathConstraints[self->pathConstraintIndex];
+	if (constraint->active) constraint->spacing = spCurveTimeline1_getAbsoluteValue(SUPER(self), time, alpha, blend, constraint->spacing, constraint->data->spacing);
 
 	UNUSED(lastTime);
 	UNUSED(firedEvents);
@@ -2739,4 +2647,227 @@ void spPathConstraintMixTimeline_setFrame(spPathConstraintMixTimeline *self, int
 	frames[frame + PATHCONSTRAINTMIX_ROTATE] = mixRotate;
 	frames[frame + PATHCONSTRAINTMIX_X] = mixX;
 	frames[frame + PATHCONSTRAINTMIX_Y] = mixY;
+}
+
+/**/
+
+int /*bool*/ _spPhysicsConstraintTimeline_global(spPhysicsConstraintData *data, spTimelineType type) {
+	switch (type) {
+		case SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA:
+			return data->inertiaGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH:
+			return data->strengthGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING:
+			return data->dampingGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MASS:
+			return data->massGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_WIND:
+			return data->windGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY:
+			return data->gravityGlobal;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MIX:
+			return data->mixGlobal;
+		default:
+			// should never happen
+			return 0;
+	}
+}
+
+void _spPhysicsConstraintTimeline_set(spPhysicsConstraint *constraint, spTimelineType type, float value) {
+	switch (type) {
+		case SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA:
+			constraint->inertia = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH:
+			constraint->strength = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING:
+			constraint->damping = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MASS:
+			constraint->massInverse = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_WIND:
+			constraint->wind = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY:
+			constraint->gravity = value;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MIX:
+			constraint->mix = value;
+			break;
+		default:
+			// should never happen
+			break;
+	}
+}
+
+float _spPhysicsConstraintTimeline_get(spPhysicsConstraint *constraint, spTimelineType type) {
+	switch (type) {
+		case SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA:
+			return constraint->inertia;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH:
+			return constraint->strength;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING:
+			return constraint->damping;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MASS:
+			return constraint->massInverse;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_WIND:
+			return constraint->wind;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY:
+			return constraint->gravity;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MIX:
+			return constraint->mix;
+		default:
+			// should never happen
+			return 0;
+	}
+}
+
+float _spPhysicsConstraintTimeline_setup(spPhysicsConstraint *constraint, spTimelineType type) {
+	switch (type) {
+		case SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA:
+			return constraint->data->inertia;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH:
+			return constraint->data->strength;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING:
+			return constraint->data->damping;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MASS:
+			return constraint->data->massInverse;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_WIND:
+			return constraint->data->wind;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY:
+			return constraint->data->gravity;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MIX:
+			return constraint->data->mix;
+		default:
+			// should never happen
+			return 0;
+	}
+}
+
+void _spPhysicsConstraintTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
+										spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
+										spMixDirection direction) {
+	spPhysicsConstraintTimeline *self = SUB_CAST(spPhysicsConstraintTimeline, timeline);
+	spTimelineType type = self->super.super.type;
+	float *frames = self->super.super.frames->items;
+	if (self->physicsConstraintIndex == -1) {
+		float value = time >= frames[0] ? spCurveTimeline1_getCurveValue(SUPER(self), time) : 0;
+
+		spPhysicsConstraint **physicsConstraints = skeleton->physicsConstraints;
+		for (int i = 0; i < skeleton->physicsConstraintsCount; i++) {
+			spPhysicsConstraint *constraint = physicsConstraints[i];
+			if (constraint->active && _spPhysicsConstraintTimeline_global(constraint->data, type))
+				_spPhysicsConstraintTimeline_set(constraint, type, spCurveTimeline1_getAbsoluteValue2(SUPER(self), time, alpha, blend, _spPhysicsConstraintTimeline_get(constraint, type), _spPhysicsConstraintTimeline_setup(constraint, type), value));
+		}
+	} else {
+		spPhysicsConstraint *constraint = skeleton->physicsConstraints[self->physicsConstraintIndex];
+		if (constraint->active) _spPhysicsConstraintTimeline_set(constraint, type, spCurveTimeline1_getAbsoluteValue(SUPER(self), time, alpha, blend, _spPhysicsConstraintTimeline_get(constraint, type), _spPhysicsConstraintTimeline_setup(constraint, type)));
+	}
+	UNUSED(lastTime);
+	UNUSED(firedEvents);
+	UNUSED(eventsCount);
+	UNUSED(direction);
+}
+
+spPhysicsConstraintTimeline *
+spPhysicsConstraintTimeline_create(int frameCount, int bezierCount, int physicsConstraintIndex, spTimelineType type) {
+	spPhysicsConstraintTimeline *timeline = NEW(spPhysicsConstraintTimeline);
+	spPropertyId ids[1];
+	spPropertyId id;
+	switch (type) {
+		case SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_INERTIA;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_STRENGTH;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_DAMPING;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MASS:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_MASS;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_WIND:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_WIND;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_GRAVITY;
+			break;
+		case SP_TIMELINE_PHYSICSCONSTRAINT_MIX:
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_MIX;
+			break;
+		default:
+			// should never happen
+			id = SP_PROPERTY_PHYSICSCONSTRAINT_INERTIA;
+	}
+	ids[0] = ((spPropertyId) id << 32) | physicsConstraintIndex;
+	_spCurveTimeline_init(SUPER(timeline), frameCount, CURVE1_ENTRIES, bezierCount, ids, 1, type,
+						  _spCurveTimeline_dispose, _spPhysicsConstraintTimeline_apply, _spCurveTimeline_setBezier);
+	timeline->physicsConstraintIndex = physicsConstraintIndex;
+	return timeline;
+}
+
+void spPhysicsConstraintTimeline_setFrame(spPhysicsConstraintTimeline *self, int frame, float time, float value) {
+	spCurveTimeline1_setFrame(SUPER(self), frame, time, value);
+}
+
+/**/
+void _spPhysicsConstraintResetTimeline_apply(spTimeline *timeline, spSkeleton *skeleton, float lastTime, float time,
+											 spEvent **firedEvents, int *eventsCount, float alpha, spMixBlend blend,
+											 spMixDirection direction) {
+	spPhysicsConstraintResetTimeline *self = (spPhysicsConstraintResetTimeline *) timeline;
+	spPhysicsConstraint *constraint = NULL;
+	if (self->physicsConstraintIndex != -1) {
+		constraint = skeleton->physicsConstraints[self->physicsConstraintIndex];
+		if (!constraint->active) return;
+	}
+
+	float *frames = SUPER(self)->frames->items;
+	if (lastTime > time) {// Apply after lastTime for looped animations.
+		_spPhysicsConstraintResetTimeline_apply(SUPER(self), skeleton, lastTime, INT_MAX, NULL, 0, alpha, blend, direction);
+		lastTime = -1;
+	} else if (lastTime >= frames[SUPER(self)->frameCount - 1])// Last time is after last frame.
+		return;
+	if (time < frames[0]) return;
+
+	if (lastTime < frames[0] || time >= frames[search(self->super.frames, lastTime) + 1]) {
+		if (constraint != NULL)
+			spPhysicsConstraint_reset(constraint);
+		else {
+			spPhysicsConstraint **physicsConstraints = skeleton->physicsConstraints;
+			for (int i = 0; i < skeleton->physicsConstraintsCount; i++) {
+				constraint = physicsConstraints[i];
+				if (constraint->active) spPhysicsConstraint_reset(constraint);
+			}
+		}
+	}
+
+	UNUSED(lastTime);
+	UNUSED(firedEvents);
+	UNUSED(eventsCount);
+	UNUSED(alpha);
+	UNUSED(direction);
+}
+
+void _spPhysicsConstraintResetTimeline_dispose(spTimeline *timeline) {
+	// no-op, spTimeline_dispose disposes frames.
+	UNUSED(timeline);
+}
+
+spPhysicsConstraintResetTimeline *spPhysicsConstraintResetTimeline_create(int framesCount, int physicsConstraintIndex) {
+	spPhysicsConstraintResetTimeline *self = NEW(spPhysicsConstraintResetTimeline);
+	spPropertyId ids[1];
+	ids[0] = (spPropertyId) SP_PROPERTY_PHYSICSCONSTRAINT_RESET << 32;
+	_spTimeline_init(SUPER(self), framesCount, 1, ids, 1, SP_TIMELINE_PHYSICSCONSTRAINT_RESET, _spPhysicsConstraintResetTimeline_dispose,
+					 _spPhysicsConstraintResetTimeline_apply, 0);
+
+	self->physicsConstraintIndex = physicsConstraintIndex;
+
+	return self;
+}
+
+void spPhysicsConstraintResetTimeline_setFrame(spPhysicsConstraintResetTimeline *self, int frame, float time) {
+	self->super.frames->items[frame] = time;
 }

@@ -40,10 +40,10 @@ extern "C" {
 #endif
 
 typedef struct spAttachmentLoader {
-	const char *error1;
-	const char *error2;
+	char *error1;
+	char *error2;
 
-	const void *const vtable;
+	const void *vtable;
 } spAttachmentLoader;
 
 SP_API void spAttachmentLoader_dispose(spAttachmentLoader *self);
