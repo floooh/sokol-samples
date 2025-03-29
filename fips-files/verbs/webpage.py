@@ -50,6 +50,7 @@ samples = [
     [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
     [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
     [ 'vertexpull', 'vertexpull-sapp.c', 'vertexpull-sapp.glsl' ],
+    [ 'vertextexture', 'vertextexture-sapp.c', 'vertextexture-sapp.glsl'],
     [ 'sbuftex', 'sbuftex-sapp.c', 'sbuftex-sapp.glsl' ],
     [ 'shapes', 'shapes-sapp.c', 'shapes-sapp.glsl'],
     [ 'shapes-transform', 'shapes-transform-sapp.c', 'shapes-transform-sapp.glsl'],
