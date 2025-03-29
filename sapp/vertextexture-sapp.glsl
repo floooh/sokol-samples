@@ -139,7 +139,7 @@ out vec4 color;
 
 void main() {
     // restore tile coords from vertex index
-    ivec2 tile_xz = ivec2(gl_VertexIndex & 255, gl_VertexIndex / 256);
+    ivec2 tile_xz = ivec2(gl_VertexIndex & 255, gl_VertexIndex >> 8);
     const float dxz = 2.0 / 256.0;
 
     // fetch plasma value computed in offscreen pass
