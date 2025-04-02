@@ -15,4 +15,4 @@ vscode_exclude_from_workspace:
 defines:
     USE_SOKOL_APP: ON
     ANDROID_ABI: armeabi-v7a
-    ANDROID_PLATFORM: android-28
+    ANDROID_PLATFORM: android-30
