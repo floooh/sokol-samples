@@ -82,7 +82,7 @@ sg_image_desc sbasisu_transcode(sg_range basisu_data) {
     desc.height = (int) img_info.m_height;
     desc.num_mipmaps = (int) img_info.m_total_levels;
     assert(desc.num_mipmaps <= SG_MAX_MIPMAPS);
-    desc.usage = SG_USAGE_IMMUTABLE;
+    desc.usage.immutable = true;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
     for (int i = 0; i < desc.num_mipmaps; i++) {
         const uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);

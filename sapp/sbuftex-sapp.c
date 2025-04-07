@@ -84,7 +84,7 @@ static void init(void) {
         { .pos = {  1.0f,  1.0f, -1.0f },  .idx = 5, .uv = { 0.0f, 1.0f } },
     };
     state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
         .label = "cube-vertices",
     });
@@ -99,7 +99,7 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "cube-indices",
     });
@@ -114,7 +114,7 @@ static void init(void) {
         { .color = { 1.0f, 0.5f, 0.0f, 1.0f } },
     };
     state.bind.storage_buffers[SBUF_colors] = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .usage.storage_buffer = true,
         .data = SG_RANGE(colors),
         .label = "color-palette",
     });

@@ -101,7 +101,7 @@ static void init(void) {
         26, 25, 24,  27, 26, 24
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(scene_indices),
         .label = "cube-indices"
     });
@@ -126,7 +126,7 @@ static void init(void) {
 
     // a shadow map render target which will serve as depth buffer in the shadow pass
     state.shadow_map = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

@@ -58,12 +58,12 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_VERTEXBUFFER,
+        .usage.vertex_buffer = true,
         .data = SG_RANGE(vertices),
         .label = "cube-vertices"
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "cube-indices"
     });

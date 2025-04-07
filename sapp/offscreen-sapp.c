@@ -55,7 +55,7 @@ static void init(void) {
     // because the offscreen pass uses a different sample count than the display render pass
     // (the display render pass is multi-sampled, the offscreen pass is not)
     sg_image_desc img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = OFFSCREEN_PIXEL_FORMAT,
