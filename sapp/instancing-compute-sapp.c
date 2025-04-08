@@ -53,7 +53,7 @@ static void init(void) {
     // create a zero-initialized storage buffer for the particle state
     state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(particle_t),
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .usage.storage_buffer = true,
         .label = "particle-buffer",
     });
 
@@ -84,7 +84,7 @@ static void init(void) {
         .label = "geometry-vbuf",
     });
     state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "geometry-ibuf",
     });
