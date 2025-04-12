@@ -67,19 +67,17 @@ void main() {
 
 // vertex- and fragment-shader for rendering the particles
 @vs vs
-@include_block common
 
 layout(binding=0) uniform vs_params { mat4 mvp; };
-layout(binding=0) readonly buffer vs_ssbo { particle prt[]; };
 
 in vec3 pos;
 in vec4 color0;
+in vec4 inst_pos;
 
 out vec4 color;
 
 void main() {
-    vec3 inst_pos = prt[gl_InstanceIndex].pos.xyz;
-    vec4 pos = vec4(pos +  inst_pos, 1.0);
+    vec4 pos = vec4(pos +  inst_pos.xyz, 1.0);
     gl_Position = mvp * pos;
     color = color0;
 }

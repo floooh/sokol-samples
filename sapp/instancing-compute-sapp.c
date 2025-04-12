@@ -50,10 +50,15 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // create a zero-initialized storage buffer for the particle state
+    // create a zero-initialized storage buffer for the particle state,
+    // this will be updated by a compute shader and then be bound
+    // as vertex buffer
     state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(particle_t),
-        .usage.storage_buffer = true,
+        .usage = {
+            .vertex_buffer = true,
+            .storage_buffer = true,
+        },
         .label = "particle-buffer",
     });
 
@@ -94,9 +99,14 @@ static void init(void) {
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .layout = {
+            .buffers[1] = {
+                .step_func = SG_VERTEXSTEP_PER_INSTANCE,
+                .stride = sizeof(particle_t),
+            },
             .attrs = {
-                [0] = { .format = SG_VERTEXFORMAT_FLOAT3 }, // position
-                [1] = { .format = SG_VERTEXFORMAT_FLOAT4 }, // color
+                [ATTR_display_pos] = { .format = SG_VERTEXFORMAT_FLOAT3 }, // position
+                [ATTR_display_color0] = { .format = SG_VERTEXFORMAT_FLOAT4 }, // color
+                [ATTR_display_inst_pos] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 }, // particle pos
             },
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -115,7 +125,7 @@ static void init(void) {
     });
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(pip);
-    sg_apply_bindings(&(sg_bindings){ .storage_buffers[SBUF_vs_ssbo] = state.compute.buf });
+    sg_apply_bindings(&(sg_bindings){ .storage_buffers[SBUF_cs_ssbo] = state.compute.buf });
     sg_dispatch(MAX_PARTICLES / 64, 1, 1);
     sg_end_pass();
     sg_destroy_pipeline(pip);
@@ -142,8 +152,9 @@ static void frame(void) {
     sg_dispatch((state.num_particles+63)/64, 1, 1);
     sg_end_pass();
 
-    // render pass to render the particles via instancing, with the
-    // instance positions coming from the storage buffer
+    // render pass to render the particles via hardware instancing,
+    // the per-instance positions are provided by the storage buffer
+    // bound as vertex buffer at slot 1
     const vs_params_t vs_params = compute_vsparams(dt);
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
@@ -152,9 +163,11 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
-        .vertex_buffers[0] = state.display.vbuf,
+        .vertex_buffers = {
+            [0] = state.display.vbuf,
+            [1] = state.compute.buf,
+        },
         .index_buffer = state.display.ibuf,
-        .storage_buffers[SBUF_vs_ssbo] = state.compute.buf,
     });
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 24, state.num_particles);
