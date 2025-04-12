@@ -150,7 +150,10 @@ static void recreate_image(void) {
     update_pixels(sapp_frame_count());
     sg_init_image(state.img, &(sg_image_desc){
         .type = SG_IMAGETYPE_3D,
-        .usage = state.immutable ? SG_USAGE_IMMUTABLE : SG_USAGE_STREAM,
+        .usage = {
+            .immutable = state.immutable,
+            .stream_update = !state.immutable,
+        },
         .width = state.width_height,
         .height = state.width_height,
         .num_slices = DEPTH,

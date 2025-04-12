@@ -56,7 +56,7 @@ void init(void) {
         .label = "vertex-buffer",
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .usage.index = true,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "index-buffer",
     });

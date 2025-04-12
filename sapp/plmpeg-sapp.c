@@ -170,7 +170,7 @@ static void init(void) {
         14, 13, 12,  15, 14, 12,
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 
@@ -285,7 +285,7 @@ static void validate_texture(int slot, plm_plane_t* plane) {
             .width = (int)plane->width,
             .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
-            .usage = SG_USAGE_STREAM,
+            .usage.stream_update = true,
         });
     }
 

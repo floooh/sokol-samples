@@ -82,14 +82,14 @@ static void init(void) {
 
     // color and depth render target textures for the offscreen pass
     state.offscreen.color_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
     state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,

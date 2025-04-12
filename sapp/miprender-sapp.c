@@ -81,7 +81,7 @@ static void init(void) {
 
     // create an offscreen render target with a complete mipmap chain
     state.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .num_mipmaps = IMG_NUM_MIPMAPS,
@@ -91,7 +91,7 @@ static void init(void) {
 
     // we also need a matching depth buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .num_mipmaps = IMG_NUM_MIPMAPS,

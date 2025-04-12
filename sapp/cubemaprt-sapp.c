@@ -84,7 +84,7 @@ void init(void) {
     // create a cubemap as render target, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_CUBE,
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 1024,
         .height = 1024,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
@@ -93,7 +93,7 @@ void init(void) {
     // ... and a matching depth-buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 1024,
         .height = 1024,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -363,7 +363,7 @@ static mesh_t make_cube_mesh(void) {
             .label = "cube-vertices"
         }),
         .ibuf = sg_make_buffer(&(sg_buffer_desc){
-            .type = SG_BUFFERTYPE_INDEXBUFFER,
+            .usage.index_buffer = true,
             .data = SG_RANGE(indices),
             .label = "cube-indices"
         }),
