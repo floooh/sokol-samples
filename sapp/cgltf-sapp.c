@@ -146,7 +146,7 @@ typedef struct {
 // resource creation helper params, these are stored until the
 // async-loaded resources (buffers and images) have been loaded
 typedef struct {
-    sg_buffer_type type;
+    sg_buffer_usage usage;
     int offset;
     int size;
     int gltf_buffer_index;
@@ -558,9 +558,9 @@ static void gltf_parse_buffers(const cgltf_data* gltf) {
         p->offset = (int) gltf_buf_view->offset;
         p->size = (int) gltf_buf_view->size;
         if (gltf_buf_view->type == cgltf_buffer_view_type_indices) {
-            p->type = SG_BUFFERTYPE_INDEXBUFFER;
+            p->usage.index_buffer = true;
         } else {
-            p->type = SG_BUFFERTYPE_VERTEXBUFFER;
+            p->usage.vertex_buffer = true;
         }
         // allocate a sokol-gfx buffer handle
         state.scene.buffers[i] = sg_alloc_buffer();
@@ -744,7 +744,7 @@ static void gltf_parse_meshes(const cgltf_data* gltf) {
             // index buffer, base element, num elements
             if (gltf_prim->indices) {
                 prim->index_buffer = gltf_bufferview_index(gltf, gltf_prim->indices->buffer_view);
-                assert(state.creation_params.buffers[prim->index_buffer].type == SG_BUFFERTYPE_INDEXBUFFER);
+                assert(state.creation_params.buffers[prim->index_buffer].usage.index_buffer);
                 assert(gltf_prim->indices->stride != 0);
                 prim->base_element = 0;
                 prim->num_elements = (int) gltf_prim->indices->count;
@@ -784,7 +784,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range da
         if (p->gltf_buffer_index == gltf_buffer_index) {
             assert((size_t)(p->offset + p->size) <= data.size);
             sg_init_buffer(state.scene.buffers[i], &(sg_buffer_desc){
-                .type = p->type,
+                .usage = p->usage,
                 .data = {
                     .ptr = (const uint8_t*)data.ptr + p->offset,
                     .size = (size_t)p->size,

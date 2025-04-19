@@ -191,7 +191,7 @@ static void cleanup(void) {
 // helper function to create an offscreen render target and pass, and matching sokol-spine context
 offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clear_color) {
     const sg_image img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = width_height,
         .height = width_height,
         .pixel_format = fmt,

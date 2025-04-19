@@ -61,7 +61,7 @@ void ozz_setup(const ozz_desc_t* desc) {
     img_desc.height = state.joint_texture_height;
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
-    img_desc.usage = SG_USAGE_STREAM;
+    img_desc.usage.stream_update = true;
     state.joint_texture = sg_make_image(&img_desc);
 
     sg_sampler_desc smp_desc = { };
@@ -104,7 +104,7 @@ ozz_instance_t* ozz_create_instance(int index) {
 void ozz_destroy_instance(ozz_instance_t* ozz) {
     assert(state.valid && ozz);
     ozz_private_t* self = (ozz_private_t*) ozz;
-    // it's ok to call sg_destroy_buffer with an invalid id    
+    // it's ok to call sg_destroy_buffer with an invalid id
     sg_destroy_buffer(self->vbuf);
     sg_destroy_buffer(self->ibuf);
     delete self;
@@ -218,14 +218,14 @@ void ozz_load_mesh(ozz_instance_t* ozz, const void* data, size_t num_bytes) {
 
         // create vertex- and index-buffer
         sg_buffer_desc vbuf_desc = { };
-        vbuf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
+        vbuf_desc.usage.vertex_buffer = true;
         vbuf_desc.data.ptr = vertices;
         vbuf_desc.data.size = num_vertices * sizeof(ozz_vertex_t);
         self->vbuf = sg_make_buffer(&vbuf_desc);
         free(vertices); vertices = nullptr;
 
         sg_buffer_desc ibuf_desc = { };
-        ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
+        ibuf_desc.usage.index_buffer = true;
         ibuf_desc.data.ptr = &mesh.triangle_indices[0];
         ibuf_desc.data.size = self->num_triangle_indices * sizeof(uint16_t);
         self->ibuf = sg_make_buffer(&ibuf_desc);

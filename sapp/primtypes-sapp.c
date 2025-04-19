@@ -94,7 +94,7 @@ static void init(void) {
     for (int i = 0; i < NUM_PRIMITIVE_TYPES; i++) {
         if (index_data[i].ptr) {
             state.prim[i].ibuf = sg_make_buffer(&(sg_buffer_desc){
-                .type = SG_BUFFERTYPE_INDEXBUFFER,
+                .usage.index_buffer = true,
                 .data = index_data[i]
             });
         } else {

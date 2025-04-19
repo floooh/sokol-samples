@@ -53,7 +53,7 @@ void create_offscreen_attachments(int width, int height) {
 
     // create offscreen rendertarget images and pass
     sg_image_desc color_img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = width,
         .height = height,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
@@ -160,7 +160,7 @@ void init(void) {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(cube_indices),
         .label = "cube indices"
     });

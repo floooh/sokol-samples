@@ -42,7 +42,7 @@ void init(void) {
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .label = "dynamic-texture"
     });
 
@@ -100,7 +100,7 @@ void init(void) {
         .label = "cube-vertices"
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "cube-indices"
     });

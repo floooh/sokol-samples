@@ -72,7 +72,7 @@ static void init(void) {
         { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
     state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
         .label = "geometry-vertices",
     });
@@ -83,15 +83,14 @@ static void init(void) {
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "geometry-indices"
     });
 
     // a dynamic storage buffer for the per-instance data
     state.bind.storage_buffers[SBUF_instances] = sg_make_buffer(&(sg_buffer_desc) {
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
-        .usage = SG_USAGE_STREAM,
+        .usage = { .storage_buffer = true, .stream_update = true },
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
         .label = "instance-data",
     });

@@ -46,7 +46,7 @@ static void init(void) {
 
     // render target texture for GPU-rendered plasma
     state.offscreen.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -92,7 +92,7 @@ static void init(void) {
             }
         }
         state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
-            .type = SG_BUFFERTYPE_INDEXBUFFER,
+            .usage.index_buffer = true,
             .data = { .ptr = indices, .size = ibuf_size },
             .label = "plane-indices",
         });

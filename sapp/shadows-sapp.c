@@ -104,7 +104,7 @@ void init(void) {
         26, 25, 24,  27, 26, 24
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(scene_indices),
         .label = "cube-indices"
     });
@@ -127,7 +127,7 @@ void init(void) {
 
     // a regular RGBA8 render target image as shadow map
     state.shadow_map = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -137,7 +137,7 @@ void init(void) {
 
     // ...we also need a separate depth-buffer image for the shadow pass
     sg_image shadow_depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

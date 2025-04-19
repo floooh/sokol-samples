@@ -86,7 +86,7 @@ static void init(void) {
         }
         for (size_t i = 0; i < 2; i++) {
             state.compute.buf[i] = sg_make_buffer(&(sg_buffer_desc){
-                .type = SG_BUFFERTYPE_STORAGEBUFFER,
+                .usage.storage_buffer = true,
                 .data = {
                     .ptr = initial_data,
                     .size = initial_data_size

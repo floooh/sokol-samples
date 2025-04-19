@@ -129,7 +129,7 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "cube-indices"
     });
@@ -166,7 +166,7 @@ static void init(void) {
 
         // the render target texture, render pass
         state.passes[i].img = sg_make_image(&(sg_image_desc){
-            .render_target = true,
+            .usage.render_attachment = true,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .pixel_format = OFFSCREEN_PIXELFORMAT,
