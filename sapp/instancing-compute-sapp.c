@@ -50,9 +50,9 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // create a zero-initialized storage buffer for the particle state,
-    // this will be updated by a compute shader and then be bound
-    // as vertex buffer
+    // create an uninitialized storage buffer for the particle state,
+    // this will be initialized and updated by compute shaders and then
+    // used as vertex buffer to provide per-instance data
     state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(particle_t),
         .usage = {

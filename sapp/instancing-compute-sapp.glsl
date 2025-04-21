@@ -27,10 +27,12 @@ void main() {
     uint x = xorshift32(0x12345678 + idx);
     uint y = xorshift32(x);
     uint z = xorshift32(y);
-    prt[idx].vel.xyz = vec3(
+    prt[idx].pos = vec4(0);
+    prt[idx].vel = vec4(
         (float(x & 0x7FFF) / 0x7FFF) - 0.5f,
         (float(y & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
-        (float(z & 0x7FFF) / 0x7FFF) - 0.5f);
+        (float(z & 0x7FFF) / 0x7FFF) - 0.5f,
+        0.0);
 }
 @end
 @program init cs_init
