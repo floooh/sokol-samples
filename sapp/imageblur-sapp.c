@@ -40,6 +40,10 @@ static struct {
         bool failed;
     } io;
 } state = {
+    .display.pass_action = {
+        // FIXME: SG_LOADACTION_DONTCARE
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } },
+    },
     .ui = {
         .filter_size = 15,
         .iterations = 2,
@@ -74,6 +78,13 @@ static void init(void) {
         .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
         .callback = fetch_callback,
         .buffer = SFETCH_RANGE(file_buffer),
+    });
+
+    // create compute shader and pipeline
+    state.compute.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
+        .label = "compute-pipeline",
     });
 }
 
@@ -134,7 +145,6 @@ static void fetch_callback(const sfetch_response_t* response) {
                 .label = "source-image",
             });
             // the destination image is a storage texture
-            /*
             state.compute.dst_img = sg_make_image(&(sg_image_desc){
                 .usage = {
                     .storage_attachment = true,
@@ -142,8 +152,8 @@ static void fetch_callback(const sfetch_response_t* response) {
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .label = "storage-image",
             });
-            */
             state.io.succeeded = true;
         }
     } else if (response->failed) {

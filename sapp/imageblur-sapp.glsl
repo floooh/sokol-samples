@@ -50,4 +50,4 @@ void main() {
 }
 @end
 
-@program imageblur cs
+@program compute cs
