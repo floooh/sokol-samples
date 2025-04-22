@@ -26,6 +26,7 @@ static struct {
         sg_image src_img;
         sg_image dst_img;
         sg_pipeline pip;
+        sg_attachments atts;
     } compute;
     struct {
         sg_pipeline pip;
@@ -71,8 +72,8 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // start loading source png file, all sokol-gfx image objects
-    // will be created
+    // start loading source png file asynchronously, all sokol-gfx image objects
+    // and an attachments object will be created when loading has finished
     static char path_buf[512];
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
@@ -86,6 +87,7 @@ static void init(void) {
         .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
         .label = "compute-pipeline",
     });
+
 }
 
 static void frame(void) {
@@ -153,6 +155,11 @@ static void fetch_callback(const sfetch_response_t* response) {
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .label = "storage-image",
+            });
+            // an attachments object with the storage texture at the bindslot expected by
+            // the compute shader
+            state.compute.atts = sg_make_attachments(&(sg_attachments_desc){
+                .storages[SIMG_outp_tex] = { .image = state.compute.dst_img },
             });
             state.io.succeeded = true;
         }
