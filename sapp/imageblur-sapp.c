@@ -87,7 +87,6 @@ static void init(void) {
         .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
         .label = "compute-pipeline",
     });
-
 }
 
 static void frame(void) {
