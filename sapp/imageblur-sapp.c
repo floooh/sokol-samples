@@ -27,9 +27,9 @@ static struct {
     sg_sampler smp;
     struct {
         sg_pipeline pip;
-        sg_image src_img;
-        sg_image storage_img[2];
-        sg_attachments atts[2];
+        sg_image src_image;
+        sg_image storage_image[2];
+        sg_attachments attachments[2];
     } compute;
     struct {
         sg_pipeline pip;
@@ -55,6 +55,7 @@ static struct {
 static sgimgui_t sgimgui;
 static uint8_t file_buffer[256 * 1024];
 
+static void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image);
 static void fetch_callback(const sfetch_response_t* response);
 static void draw_ui(void);
 
@@ -76,8 +77,8 @@ static void init(void) {
 
     // create a non-filtering sampler
     state.smp = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
@@ -112,75 +113,12 @@ static void frame(void) {
         return;
     }
 
-    // first blur pass reads src image and writes to first storage image
-    const int batch = 4;
-    const int tile_dim = 128;
-    const int filter_size = state.ui.filter_size * 2;
-    cs_params_t cs_params = {
-        .filter_size = filter_size,
-        .block_dim = tile_dim - (filter_size - 1),
-    };
-    {
-        cs_params.flip = 0;
-        const int num_workgroups_x = (int)ceilf((float)state.src_width / (float)cs_params.block_dim);
-        const int num_workgroups_y = (int)ceilf((float)state.src_height / (float)batch);
-        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[0], .label = "blur-pass-0"});
-        sg_apply_pipeline(state.compute.pip);
-        sg_apply_bindings(&(sg_bindings){
-            .images[IMG_inp_tex] = state.compute.src_img,
-            .samplers[SMP_smp] = state.smp,
-        });
-        sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
-        sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
-        sg_end_pass();
-    }
-    // second blur pass reads first storage image and writes into second storage image
-    {
-        cs_params.flip = 1;
-        const int num_workgroups_x = (int)ceilf((float)state.src_height / (float)cs_params.block_dim);
-        const int num_workgroups_y = (int)ceilf((float)state.src_width / (float)batch);
-        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[1], .label = "blur-pass-1"});
-        sg_apply_pipeline(state.compute.pip);
-        sg_apply_bindings(&(sg_bindings){
-            .images[IMG_inp_tex] = state.compute.storage_img[0],
-            .samplers[SMP_smp] = state.smp,
-        });
-        sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
-        sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
-        sg_end_pass();
-    }
-    // repeat ping-ponging between storage images
+    // ping-pong blur passes starting with the source image
+    blur_pass(0, state.compute.attachments[0], state.compute.src_image);
+    blur_pass(1, state.compute.attachments[1], state.compute.storage_image[0]);
     for (int i = 0; i < state.ui.iterations - 1; i++) {
-        // read from second storage image, write into first storage image
-        {
-            cs_params.flip = 0;
-            const int num_workgroups_x = (int)ceilf((float)state.src_width / (float)cs_params.block_dim);
-            const int num_workgroups_y = (int)ceilf((float)state.src_height / (float)batch);
-            sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[0], .label = "blur-pass-3"});
-            sg_apply_pipeline(state.compute.pip);
-            sg_apply_bindings(&(sg_bindings){
-                .images[IMG_inp_tex] = state.compute.storage_img[1],
-                .samplers[SMP_smp] = state.smp,
-            });
-            sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
-            sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
-            sg_end_pass();
-        }
-        // read from first storage image, write into second storage image
-        {
-            cs_params.flip = 1;
-            const int num_workgroups_x = (int)ceilf((float)state.src_height / (float)cs_params.block_dim);
-            const int num_workgroups_y = (int)ceilf((float)state.src_width / (float)batch);
-            sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[1], .label = "blur-pass-4"});
-            sg_apply_pipeline(state.compute.pip);
-            sg_apply_bindings(&(sg_bindings){
-                .images[IMG_inp_tex] = state.compute.storage_img[0],
-                .samplers[SMP_smp] = state.smp,
-            });
-            sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
-            sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
-            sg_end_pass();
-        }
+        blur_pass(0, state.compute.attachments[0], state.compute.storage_image[1]);
+        blur_pass(1, state.compute.attachments[1], state.compute.storage_image[0]);
     }
 
     // FIXME: display the result
@@ -201,6 +139,32 @@ static void input(const sapp_event* ev) {
     simgui_handle_event(ev);
 }
 
+// perform a horizontal or vertical blur pass in a compute shader
+void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image) {
+    const int batch = 4;        // must match shader
+    const int tile_dim = 128;   // must match shader
+    const int filter_size = state.ui.filter_size | 1;   // must be odd
+    const cs_params_t cs_params = {
+        .flip = flip,
+        .filter_dim = filter_size,
+        .block_dim = tile_dim - (filter_size - 1),
+    };
+    const float src_width = flip ? state.src_height : state.src_width;
+    const float src_height = flip ? state.src_width : state.src_height;
+    const int num_workgroups_x = (int)ceilf(src_width / (float)cs_params.block_dim);
+    const int num_workgroups_y = (int)ceilf(src_height / (float)batch);
+
+    sg_begin_pass(&(sg_pass){ .compute = true, .attachments = pass_attachments, .label = "blur-pass"});
+    sg_apply_pipeline(state.compute.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .images[IMG_inp_tex] = src_image,
+        .samplers[SMP_smp] = state.smp,
+    });
+    sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+    sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
+    sg_end_pass();
+}
+
 // called when texture file has finished loading, this creates a
 // regular image object with the source pixels, and a storage attachment
 // image object which will be written by the compute shader
@@ -216,7 +180,7 @@ static void fetch_callback(const sfetch_response_t* response) {
         );
         if (pixels) {
             // the source image is a regular texture
-            state.compute.src_img = sg_make_image(&(sg_image_desc){
+            state.compute.src_image = sg_make_image(&(sg_image_desc){
                 .width = state.src_width,
                 .height = state.src_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -230,7 +194,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             const char* storage_image_labels[2] = { "storage-image-0", "storage-image-1" };
             const char* compute_pass_labels[2] = { "compute-pass-0", "compute-pass-1" };
             for (int i = 0; i < 2; i++) {
-                state.compute.storage_img[i] = sg_make_image(&(sg_image_desc){
+                state.compute.storage_image[i] = sg_make_image(&(sg_image_desc){
                     .usage = {
                         .storage_attachment = true,
                     },
@@ -239,8 +203,8 @@ static void fetch_callback(const sfetch_response_t* response) {
                     .pixel_format = SG_PIXELFORMAT_RGBA8,
                     .label = storage_image_labels[i],
                 });
-                state.compute.atts[i] = sg_make_attachments(&(sg_attachments_desc){
-                    .storages[SIMG_outp_tex] = { .image = state.compute.storage_img[i] },
+                state.compute.attachments[i] = sg_make_attachments(&(sg_attachments_desc){
+                    .storages[SIMG_outp_tex] = { .image = state.compute.storage_image[i] },
                     .label = compute_pass_labels[i],
                 });
             }
@@ -275,7 +239,7 @@ static void draw_ui(void) {
         } else if (state.io.failed) {
             igText("Failed to load source texture!");
         } else {
-            igSliderInt("Filter Size / 2", &state.ui.filter_size, 1, 17);
+            igSliderInt("Filter Size", &state.ui.filter_size, 1, 33);
             igSliderInt("Iterations", &state.ui.iterations, 1, 10);
         }
     }
