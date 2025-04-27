@@ -48,7 +48,7 @@ static struct {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } },
     },
     .ui = {
-        .filter_size = 15,
+        .filter_size = 1,
         .iterations = 2,
     },
 };
@@ -76,8 +76,10 @@ static void init(void) {
 
     // create a non-filtering sampler
     state.smp = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_NEAREST,
-        .mag_filter = SG_FILTER_NEAREST,
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
     // start loading source png file asynchronously, all sokol-gfx image
@@ -113,9 +115,10 @@ static void frame(void) {
     // first blur pass reads src image and writes to first storage image
     const int batch = 4;
     const int tile_dim = 128;
+    const int filter_size = state.ui.filter_size * 2;
     cs_params_t cs_params = {
-        .filter_size = state.ui.filter_size,
-        .block_dim = tile_dim - (state.ui.filter_size - 1),
+        .filter_size = filter_size,
+        .block_dim = tile_dim - (filter_size - 1),
     };
     {
         cs_params.flip = 0;
@@ -272,7 +275,7 @@ static void draw_ui(void) {
         } else if (state.io.failed) {
             igText("Failed to load source texture!");
         } else {
-            igSliderInt("Filter Size", &state.ui.filter_size, 2, 34);
+            igSliderInt("Filter Size / 2", &state.ui.filter_size, 1, 17);
             igSliderInt("Iterations", &state.ui.iterations, 1, 10);
         }
     }

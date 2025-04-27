@@ -17,9 +17,9 @@ layout(local_size_x=32, local_size_y=1, local_size_z=1) in;
 shared vec3 tile[4][128];
 
 void main() {
-    int filter_offset = (filter_size - 1) / 2;
+    float filter_offset = (float(filter_size) - 1.0) / 2.0;
     ivec2 dims = textureSize(sampler2D(inp_tex, smp), 0);
-    ivec2 base_index = ivec2(gl_WorkGroupID.xy * ivec2(block_dim, 4) + gl_LocalInvocationID.xy * ivec2(4, 1)) - ivec2(filter_offset, 0);
+    ivec2 base_index = ivec2(vec2(gl_WorkGroupID.xy * vec2(block_dim, 4) + gl_LocalInvocationID.xy * vec2(4, 1)) - vec2(filter_offset, 0));
     for (int r = 0; r < 4; r++) {
         for (int c = 0; c < 4; c++) {
             ivec2 load_index = base_index + ivec2(c, r);
@@ -41,7 +41,7 @@ void main() {
             if ((center >= filter_offset) && (center < 128 - filter_offset) && all(lessThan(write_index, dims))) {
                 vec3 acc = vec3(0);
                 for (int f = 0; f < filter_size; f++) {
-                    int i = center + f - filter_offset;
+                    int i = int(center + f - filter_offset);
                     acc = acc + (1.0 / float(filter_size)) * tile[r][i];
                 }
                 imageStore(outp_tex, write_index, vec4(acc, 1));
