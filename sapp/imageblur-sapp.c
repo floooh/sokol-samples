@@ -19,14 +19,17 @@
 #include "stb/stb_image.h"
 #include "util/fileutil.h"
 #include "imageblur-sapp.glsl.h"
+#include <math.h> // ceilf()
 
 static struct {
-    cs_params_t cs_params;
+    int src_width;
+    int src_height;
+    sg_sampler smp;
     struct {
-        sg_image src_img;
-        sg_image dst_img;
         sg_pipeline pip;
-        sg_attachments atts;
+        sg_image src_img;
+        sg_image storage_img[2];
+        sg_attachments atts[2];
     } compute;
     struct {
         sg_pipeline pip;
@@ -72,6 +75,12 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
+    // create a non-filtering sampler
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+    });
+
     // start loading source png file asynchronously, all sokol-gfx image objects
     // and an attachments object will be created when loading has finished
     static char path_buf[512];
@@ -102,8 +111,42 @@ static void frame(void) {
         return;
     }
 
-    // loading has finished
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
+    // loading has finished, run first blur pass, reads src image and writes into first storage image
+    const int batch = 4;
+    cs_params_t cs_params = { .filter_dim = state.ui.filter_size, .block_dim = state.ui.iterations };
+    {
+        cs_params.flip = 0;
+        const int num_workgroups_x = (int)ceilf((float)state.src_width / (float)cs_params.block_dim);
+        const int num_workgroups_y = (int)ceilf((float)state.src_height / (float)batch);
+        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[0], .label = "blur-pass-0"});
+        sg_apply_pipeline(state.compute.pip);
+        sg_apply_bindings(&(sg_bindings){
+            .images[IMG_inp_tex] = state.compute.src_img,
+            .samplers[SMP_smp] = state.smp,
+        });
+        sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+        sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
+        sg_end_pass();
+    }
+
+    // second blur pass, reads first storage image as texture and writes to second storage image
+    {
+        cs_params.flip = 1;
+        const int num_workgroups_x = (int)ceilf((float)state.src_height / (float)cs_params.block_dim);
+        const int num_workgroups_y = (int)ceilf((float)state.src_width / (float)batch);
+        sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[1], .label = "blur-pass-1"});
+        sg_apply_pipeline(state.compute.pip);
+        sg_apply_bindings(&(sg_bindings){
+            .images[IMG_inp_tex] = state.compute.storage_img[0],
+            .samplers[SMP_smp] = state.smp,
+        });
+        sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+        sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
+        sg_end_pass();
+    }
+
+    // FIXME: display the result
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "display-pass" });
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -125,41 +168,44 @@ static void input(const sapp_event* ev) {
 // image object which will be written by the compute shader
 static void fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        int png_width, png_height, num_channels;
+        int num_channels;
         const int desired_channels = 4;
         stbi_uc* pixels = stbi_load_from_memory(
             response->data.ptr,
             (int)response->data.size,
-            &png_width, &png_height,
+            &state.src_width, &state.src_height,
             &num_channels, desired_channels
         );
         if (pixels) {
             // the source image is a regular texture
             state.compute.src_img = sg_make_image(&(sg_image_desc){
-                .width = png_width,
-                .height = png_height,
+                .width = state.src_width,
+                .height = state.src_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
-                    .size = (size_t)(png_width * png_height * 4),
+                    .size = (size_t)(state.src_width * state.src_height * 4),
                 },
                 .label = "source-image",
             });
-            // the destination image is a storage texture
-            state.compute.dst_img = sg_make_image(&(sg_image_desc){
-                .usage = {
-                    .storage_attachment = true,
-                },
-                .width = png_width,
-                .height = png_height,
-                .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .label = "storage-image",
-            });
-            // an attachments object with the storage texture at the bindslot expected by
-            // the compute shader
-            state.compute.atts = sg_make_attachments(&(sg_attachments_desc){
-                .storages[SIMG_outp_tex] = { .image = state.compute.dst_img },
-            });
+            // create two storage textures for the 2-pass blur and two attachments objects
+            const char* storage_image_labels[2] = { "storage-image-0", "storage-image-1" };
+            const char* compute_pass_labels[2] = { "compute-pass-0", "compute-pass-1" };
+            for (int i = 0; i < 2; i++) {
+                state.compute.storage_img[i] = sg_make_image(&(sg_image_desc){
+                    .usage = {
+                        .storage_attachment = true,
+                    },
+                    .width = state.src_width,
+                    .height = state.src_height,
+                    .pixel_format = SG_PIXELFORMAT_RGBA8,
+                    .label = storage_image_labels[i],
+                });
+                state.compute.atts[i] = sg_make_attachments(&(sg_attachments_desc){
+                    .storages[SIMG_outp_tex] = { .image = state.compute.storage_img[i] },
+                    .label = compute_pass_labels[i],
+                });
+            }
             state.io.succeeded = true;
         }
     } else if (response->failed) {
