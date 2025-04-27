@@ -1091,7 +1091,7 @@ fips_end_app()
 
 fips_begin_app(imageblur-sapp windowed)
     fips_files(imageblur-sapp.c)
-    sokol_shader(imageblur-sapp.glsl ${slang})
+    sokol_shader_debuggable(imageblur-sapp.glsl ${slang})
     fips_dir(data)
     fipsutil_copy(loadpng-assets.yml)
     fips_deps(sokol stb fileutil imgui)

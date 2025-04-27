@@ -45,7 +45,6 @@ static struct {
     } io;
 } state = {
     .display.pass_action = {
-        // FIXME: SG_LOADACTION_DONTCARE
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } },
     },
     .ui = {
@@ -81,8 +80,8 @@ static void init(void) {
         .mag_filter = SG_FILTER_NEAREST,
     });
 
-    // start loading source png file asynchronously, all sokol-gfx image objects
-    // and an attachments object will be created when loading has finished
+    // start loading source png file asynchronously, all sokol-gfx image
+    // and attachemnts objects will be created when loading has finished
     static char path_buf[512];
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("baboon.png", path_buf, sizeof(path_buf)),
@@ -111,9 +110,13 @@ static void frame(void) {
         return;
     }
 
-    // loading has finished, run first blur pass, reads src image and writes into first storage image
+    // first blur pass reads src image and writes to first storage image
     const int batch = 4;
-    cs_params_t cs_params = { .filter_dim = state.ui.filter_size, .block_dim = state.ui.iterations };
+    const int tile_dim = 128;
+    cs_params_t cs_params = {
+        .filter_size = state.ui.filter_size,
+        .block_dim = tile_dim - (state.ui.filter_size - 1),
+    };
     {
         cs_params.flip = 0;
         const int num_workgroups_x = (int)ceilf((float)state.src_width / (float)cs_params.block_dim);
@@ -128,8 +131,7 @@ static void frame(void) {
         sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
         sg_end_pass();
     }
-
-    // second blur pass, reads first storage image as texture and writes to second storage image
+    // second blur pass reads first storage image and writes into second storage image
     {
         cs_params.flip = 1;
         const int num_workgroups_x = (int)ceilf((float)state.src_height / (float)cs_params.block_dim);
@@ -143,6 +145,39 @@ static void frame(void) {
         sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
         sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
         sg_end_pass();
+    }
+    // repeat ping-ponging between storage images
+    for (int i = 0; i < state.ui.iterations - 1; i++) {
+        // read from second storage image, write into first storage image
+        {
+            cs_params.flip = 0;
+            const int num_workgroups_x = (int)ceilf((float)state.src_width / (float)cs_params.block_dim);
+            const int num_workgroups_y = (int)ceilf((float)state.src_height / (float)batch);
+            sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[0], .label = "blur-pass-3"});
+            sg_apply_pipeline(state.compute.pip);
+            sg_apply_bindings(&(sg_bindings){
+                .images[IMG_inp_tex] = state.compute.storage_img[1],
+                .samplers[SMP_smp] = state.smp,
+            });
+            sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+            sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
+            sg_end_pass();
+        }
+        // read from first storage image, write into second storage image
+        {
+            cs_params.flip = 1;
+            const int num_workgroups_x = (int)ceilf((float)state.src_height / (float)cs_params.block_dim);
+            const int num_workgroups_y = (int)ceilf((float)state.src_width / (float)batch);
+            sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts[1], .label = "blur-pass-4"});
+            sg_apply_pipeline(state.compute.pip);
+            sg_apply_bindings(&(sg_bindings){
+                .images[IMG_inp_tex] = state.compute.storage_img[0],
+                .samplers[SMP_smp] = state.smp,
+            });
+            sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
+            sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
+            sg_end_pass();
+        }
     }
 
     // FIXME: display the result
