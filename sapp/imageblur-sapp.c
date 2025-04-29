@@ -2,7 +2,7 @@
 //  imageblur-sapp.c
 //
 //  Image-blur running in a compute shader writing to a storage texture. Also
-//  demonstrates using shader-shared memory and control-flow barriers.
+//  demonstrates using shader-shared memory and shader barriers.
 //
 //  Ported from WebGPU sample: https://webgpu.github.io/webgpu-samples/?sample=imageBlur
 //------------------------------------------------------------------------------
@@ -98,6 +98,15 @@ static void init(void) {
         .shader = sg_make_shader(compute_shader_desc(sg_query_backend())),
         .label = "compute-pipeline",
     });
+
+    // a shader and pipeline to display the result (we'll
+    // synthesize the fullscreen vertices in the vertex shader so we
+    // don't need any buffers or a pipeline vertex layout, and default
+    // render state is fine for rendering a 2D triangleb
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
+        .label = "display-pipeline",
+    });
 }
 
 static void frame(void) {
@@ -121,8 +130,14 @@ static void frame(void) {
         blur_pass(1, state.compute.attachments[1], state.compute.storage_image[0]);
     }
 
-    // FIXME: display the result
+    // swapchain render pass to display the result
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "display-pass" });
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .images[IMG_disp_tex] = state.compute.storage_image[1],
+        .samplers[SMP_cs_smp] = state.smp,
+    });
+    sg_draw(0, 3, 1);
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -157,8 +172,8 @@ void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image) {
     sg_begin_pass(&(sg_pass){ .compute = true, .attachments = pass_attachments, .label = "blur-pass"});
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .images[IMG_inp_tex] = src_image,
-        .samplers[SMP_smp] = state.smp,
+        .images[IMG_cs_inp_tex] = src_image,
+        .samplers[SMP_cs_smp] = state.smp,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
@@ -204,7 +219,7 @@ static void fetch_callback(const sfetch_response_t* response) {
                     .label = storage_image_labels[i],
                 });
                 state.compute.attachments[i] = sg_make_attachments(&(sg_attachments_desc){
-                    .storages[SIMG_outp_tex] = { .image = state.compute.storage_image[i] },
+                    .storages[SIMG_cs_outp_tex] = { .image = state.compute.storage_image[i] },
                     .label = compute_pass_labels[i],
                 });
             }
