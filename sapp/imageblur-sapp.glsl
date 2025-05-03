@@ -18,7 +18,7 @@ layout(local_size_x=32, local_size_y=1, local_size_z=1) in;
 shared vec3 tile[4][128];
 
 void main() {
-    int filter_offset = (filter_dim - 1) / 2;
+    uint filter_offset = (uint(filter_dim) - 1) / 2;
     ivec2 dims = textureSize(sampler2D(cs_inp_tex, cs_smp), 0);
     ivec2 base_index = ivec2(vec2(gl_WorkGroupID.xy * vec2(block_dim, 4) + gl_LocalInvocationID.xy * vec2(4, 1)) - vec2(filter_offset, 0));
     for (int r = 0; r < 4; r++) {
