@@ -101,12 +101,14 @@ int main() {
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
     bind.vertex_buffers[0] = sg_make_buffer({
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .size = MaxVertices * sizeof(ImDrawVert)
     });
     bind.index_buffer = sg_make_buffer({
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .usage = SG_USAGE_STREAM,
+        .usage = {
+            .index_buffer = true,
+            .stream_update = true,
+        },
         .size = MaxIndices * sizeof(ImDrawIdx)
     });
 

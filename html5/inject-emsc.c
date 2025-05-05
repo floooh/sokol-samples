@@ -97,13 +97,15 @@ int main() {
     */
     sg_reset_state_cache();
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .usage = SG_USAGE_IMMUTABLE,
+        .usage.immutable = true,
         .size = sizeof(vertices),
         .gl_buffers[0] = gl_vbuf
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
-        .usage = SG_USAGE_IMMUTABLE,
+        .usage = {
+            .index_buffer = true,
+            .immutable = true,
+        },
         .size = sizeof(indices),
         .gl_buffers[0] = gl_ibuf
     });
@@ -113,7 +115,7 @@ int main() {
        SG_NUM_INFLIGHT_FRAMES GL textures
     */
     sg_image_desc img_desc = {
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
