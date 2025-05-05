@@ -43,10 +43,10 @@ static void init(void) {
 
     // a 128x128 image with streaming update strategy
     state.bind.images[0] = sg_make_image(&(sg_image_desc){
+        .usage.stream_update = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .usage = SG_USAGE_STREAM,
     });
     state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
@@ -100,7 +100,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 

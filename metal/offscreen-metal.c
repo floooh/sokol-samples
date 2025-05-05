@@ -53,14 +53,14 @@ static void init(void) {
 
     // a render pass with one color-, one resolve- and one depth-attachment image
     sg_image color_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = SAMPLE_COUNT,
     });
     sg_image resolve_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -71,7 +71,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
     });
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -130,7 +130,7 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 

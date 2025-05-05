@@ -101,7 +101,7 @@ static void init(void) {
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[0]) == mtl_vbuf);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[1]) == nil);
     const sg_buffer_desc ibuf_desc = {
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .size = sizeof(indices),
         .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
     };
@@ -123,7 +123,7 @@ static void init(void) {
         mtl_tex[i] = [osx_mtl_device() newTextureWithDescriptor:mtl_tex_desc];
     }
     sg_image_desc img_desc = {
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
