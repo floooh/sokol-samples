@@ -37,10 +37,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // a 128x128 image with streaming-update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
+        .usage.stream_update = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .usage = SG_USAGE_STREAM,
     });
 
     // a sampler
@@ -96,7 +96,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(vertices)
     });
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 

@@ -66,7 +66,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         { .pos = {  1.0,  1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } }
     };
     sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_STORAGEBUFFER,
+        .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
     });
 
@@ -79,7 +79,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         22, 21, 20,  23, 22, 20
     };
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 
