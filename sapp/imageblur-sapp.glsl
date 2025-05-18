@@ -54,7 +54,7 @@ void main() {
 
 @program compute cs
 
-// a convential vertex/fragment shader pair to display the result
+// a regular vertex/fragment shader pair to display the result
 @vs vs
 const vec2 positions[3] = { vec2(-1, -1), vec2(3, -1), vec2(-1, 3), };
 

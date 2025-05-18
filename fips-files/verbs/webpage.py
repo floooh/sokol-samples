@@ -128,6 +128,7 @@ samples = [
 compute_samples = [
     [ 'instancing-compute', 'instancing-compute-sapp.c', 'instancing-compute-sapp.glsl' ],
     [ 'computeboids', 'computeboids-sapp.c', 'computeboids-sapp.glsl' ],
+    [ 'write-storageimage', 'write-storageimage-sapp.c', 'write-storageimage-sapp.glsl' ],
     [ 'imageblur', 'imageblur-sapp.c', 'imageblur-sapp.glsl' ],
 ]
 
