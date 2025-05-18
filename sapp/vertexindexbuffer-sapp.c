@@ -103,6 +103,7 @@ static void init(void) {
             .index_buffer = true,
         },
         .data = { .ptr = data_ptr, .size = buf_size },
+        .label = "vertex-index-buffer",
     });
     free(data_ptr);
 
@@ -129,6 +130,7 @@ static void init(void) {
             .write_enabled = true,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
         },
+        .label = "render-pipeline",
     });
 }
 
@@ -146,6 +148,7 @@ static void frame(void) {
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
