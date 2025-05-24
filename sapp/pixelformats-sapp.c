@@ -75,14 +75,14 @@ static void init(void) {
 
     // create all the textures, samplers and render targets
     sg_image render_depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 64,
         .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 1,
     });
     sg_image msaa_depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 64,
         .height = 64,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -164,7 +164,7 @@ static void init(void) {
             // create non-MSAA render target, pipeline state and pass-attachments
             if (fmt_info.render) {
                 sg_image img = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .usage.render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -183,7 +183,7 @@ static void init(void) {
             // create non-MSAA blend render target, pipeline states and pass-attachments
             if (fmt_info.blend) {
                 sg_image img = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .usage.render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -200,14 +200,14 @@ static void init(void) {
             // create MSAA render target, resolve texture and matching pipeline state
             if (fmt_info.msaa) {
                 sg_image msaa_img = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .usage.render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
                 });
                 sg_image resolve_img = sg_make_image(&(sg_image_desc){
-                    .render_target = true,
+                    .usage.render_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -272,7 +272,7 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.cube_bindings.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(cube_indices)
     });
 

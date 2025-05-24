@@ -116,8 +116,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
     assert(sg_d3d11_query_buffer_info(vbuf).buf == d3d11_vbuf);
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.index_buffer = true,
         .size = sizeof(indices),
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
         .d3d11_buffer = d3d11_ibuf
     });
     assert(sg_d3d11_query_buffer_info(ibuf).buf == d3d11_ibuf);
@@ -154,7 +154,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // and create a sokol_gfx texture with injected D3D11 texture
     sg_reset_state_cache();
     sg_image img = sg_make_image(&(sg_image_desc){
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

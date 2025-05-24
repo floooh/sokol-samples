@@ -81,7 +81,7 @@ static void init(void) {
 
     // create an array-texture as render target
     state.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
@@ -93,7 +93,7 @@ static void init(void) {
 
     // ...and a matching depth buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .num_mipmaps = 1,

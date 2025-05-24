@@ -37,19 +37,19 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // a render pass with 3 color attachment images, 3 msaa-resolve images and a depth attachment image
     const int offscreen_sample_count = 4;
     const sg_image_desc color_img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = width,
         .height = height,
         .sample_count = offscreen_sample_count
     };
     const sg_image_desc resolve_img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = width,
         .height = height,
         .sample_count = 1,
     };
     const sg_image_desc depth_img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = width,
         .height = height,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -138,7 +138,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         22, 21, 20,  23, 22, 20
     };
     sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(cube_indices)
     });
 

@@ -58,13 +58,13 @@ static void init(void) {
 
     // dynamic vertex- and index-buffers for imgui-generated geometry
     sg_buffer_desc vbuf_desc = { };
-    vbuf_desc.usage = SG_USAGE_STREAM;
+    vbuf_desc.usage.stream_update = true;
     vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
     state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
 
     sg_buffer_desc ibuf_desc = { };
-    ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    ibuf_desc.usage = SG_USAGE_STREAM;
+    ibuf_desc.usage.index_buffer = true;
+    ibuf_desc.usage.stream_update = true;
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
 

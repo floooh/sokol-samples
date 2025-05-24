@@ -27,6 +27,7 @@ static sg_swapchain get_swapchain(void) {
         .width = (int)fb_size.width,
         .height = (int)fb_size.height,
         .sample_count = 1,
+        .color_format = SG_PIXELFORMAT_BGRA8,
         .depth_format = SG_PIXELFORMAT_NONE,
         .metal = {
             .current_drawable = (__bridge const void*) next_drawable,

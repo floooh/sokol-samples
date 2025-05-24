@@ -30,7 +30,7 @@ int main() {
     // create one color- and one depth-buffer render target image
     const int offscreen_sample_count = 1;
     sg_image_desc img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 512,
         .height = 512,
         .sample_count = offscreen_sample_count
@@ -111,7 +111,7 @@ int main() {
         22, 21, 20,  23, 22, 20
     };
     sg_buffer_desc ibuf_desc = {
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);

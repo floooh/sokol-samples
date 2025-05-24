@@ -221,7 +221,7 @@ static void init(void) {
     img_desc.height = state.joint_texture_height;
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
-    img_desc.usage = SG_USAGE_STREAM;
+    img_desc.usage.stream_update = true;
     state.joint_texture = sg_make_image(&img_desc);
     state.bind.images[IMG_joint_tex] = state.joint_texture;
 
@@ -238,7 +238,7 @@ static void init(void) {
     // so we can just initialize a static instance data buffer upfront
     init_instance_data();
     sg_buffer_desc buf_desc = { };
-    buf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
+    buf_desc.usage.vertex_buffer = true;
     buf_desc.data = SG_RANGE(instance_data);
     state.bind.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
@@ -582,14 +582,14 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
 
         // create vertex- and index-buffer
         sg_buffer_desc vbuf_desc = { };
-        vbuf_desc.type = SG_BUFFERTYPE_VERTEXBUFFER;
+        vbuf_desc.usage.vertex_buffer = true;
         vbuf_desc.data.ptr = vertices;
         vbuf_desc.data.size = num_vertices * sizeof(vertex_t);
         state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
         free(vertices); vertices = nullptr;
 
         sg_buffer_desc ibuf_desc = { };
-        ibuf_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
+        ibuf_desc.usage.index_buffer = true;
         ibuf_desc.data.ptr = &meshes[0].triangle_indices[0];
         ibuf_desc.data.size = state.num_triangle_indices * sizeof(uint16_t);
         state.bind.index_buffer = sg_make_buffer(&ibuf_desc);

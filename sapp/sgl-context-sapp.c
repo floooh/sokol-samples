@@ -77,7 +77,7 @@ static void init(void) {
 
     // create an offscreen render target texture, pass, and pass_action
     state.offscreen.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_PIXELFORMAT,

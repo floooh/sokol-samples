@@ -84,7 +84,7 @@ int main() {
             p[i].vel[2] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
         }
         state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
-            .type = SG_BUFFERTYPE_STORAGEBUFFER,
+            .usage.storage_buffer = true,
             .data = {
                 .ptr = p,
                 .size = MAX_PARTICLES * sizeof(particle_t),
@@ -169,7 +169,7 @@ int main() {
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
     state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "geometry-ibuf",
     });

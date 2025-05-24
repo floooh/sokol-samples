@@ -50,6 +50,7 @@ samples = [
     [ 'noninterleaved', 'noninterleaved-sapp.c', 'noninterleaved-sapp.glsl'],
     [ 'texcube', 'texcube-sapp.c', 'texcube-sapp.glsl' ],
     [ 'vertexpull', 'vertexpull-sapp.c', 'vertexpull-sapp.glsl' ],
+    [ 'vertexindexbuffer', 'vertexindexbuffer-sapp.c', 'vertexindexbuffer-sapp.glsl'],
     [ 'vertextexture', 'vertextexture-sapp.c', 'vertextexture-sapp.glsl'],
     [ 'sbuftex', 'sbuftex-sapp.c', 'sbuftex-sapp.glsl' ],
     [ 'shapes', 'shapes-sapp.c', 'shapes-sapp.glsl'],
@@ -127,6 +128,8 @@ samples = [
 compute_samples = [
     [ 'instancing-compute', 'instancing-compute-sapp.c', 'instancing-compute-sapp.glsl' ],
     [ 'computeboids', 'computeboids-sapp.c', 'computeboids-sapp.glsl' ],
+    [ 'write-storageimage', 'write-storageimage-sapp.c', 'write-storageimage-sapp.glsl' ],
+    [ 'imageblur', 'imageblur-sapp.c', 'imageblur-sapp.glsl' ],
 ]
 
 # assets that must also be copied

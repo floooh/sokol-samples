@@ -45,7 +45,7 @@ int main() {
         .data = SG_RANGE(vertices)
     });
     sg_buffer ib = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 

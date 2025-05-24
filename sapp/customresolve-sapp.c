@@ -75,7 +75,7 @@ static void init(void) {
 
     // msaa-render-pass objects
     state.msaa.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -103,7 +103,7 @@ static void init(void) {
 
     // resolve-render-pass objects
     state.resolve.img = sg_make_image(&(sg_image_desc){
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

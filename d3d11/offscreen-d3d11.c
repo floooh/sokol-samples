@@ -34,7 +34,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // create one color and one depth render target image
     sg_image_desc img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = 512,
         .height = 512,
         .sample_count = offscreen_sample_count,
@@ -117,7 +117,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         22, 21, 20,  23, 22, 20
     };
     sg_buffer_desc ibuf_desc = {
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);

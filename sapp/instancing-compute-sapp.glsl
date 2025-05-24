@@ -27,10 +27,12 @@ void main() {
     uint x = xorshift32(0x12345678 + idx);
     uint y = xorshift32(x);
     uint z = xorshift32(y);
-    prt[idx].vel.xyz = vec3(
+    prt[idx].pos = vec4(0);
+    prt[idx].vel = vec4(
         (float(x & 0x7FFF) / 0x7FFF) - 0.5f,
         (float(y & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
-        (float(z & 0x7FFF) / 0x7FFF) - 0.5f);
+        (float(z & 0x7FFF) / 0x7FFF) - 0.5f,
+        0.0);
 }
 @end
 @program init cs_init
@@ -67,19 +69,17 @@ void main() {
 
 // vertex- and fragment-shader for rendering the particles
 @vs vs
-@include_block common
 
 layout(binding=0) uniform vs_params { mat4 mvp; };
-layout(binding=0) readonly buffer vs_ssbo { particle prt[]; };
 
 in vec3 pos;
 in vec4 color0;
+in vec4 inst_pos;
 
 out vec4 color;
 
 void main() {
-    vec3 inst_pos = prt[gl_InstanceIndex].pos.xyz;
-    vec4 pos = vec4(pos +  inst_pos, 1.0);
+    vec4 pos = vec4(pos +  inst_pos.xyz, 1.0);
     gl_Position = mvp * pos;
     color = color0;
 }

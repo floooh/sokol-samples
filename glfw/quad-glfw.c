@@ -39,7 +39,7 @@ int main() {
         0, 2, 3,    // second triangle
     };
     sg_buffer_desc ibuf_desc = {
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     };
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);

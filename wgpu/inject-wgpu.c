@@ -137,13 +137,13 @@ static void init(void) {
 
     // create sokol_gfx buffers with inject WebGPU buffer object
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_VERTEXBUFFER,
+        .usage.vertex_buffer = true,
         .size = sizeof(vertices),
         .wgpu_buffer = state.wgpu_vbuf,
     });
     assert(sg_wgpu_query_buffer_info(state.bind.vertex_buffers[0]).buf == state.wgpu_vbuf);
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .size = sizeof(indices),
         .wgpu_buffer = state.wgpu_ibuf,
     });
@@ -171,7 +171,7 @@ static void init(void) {
 
     // ... and the sokol-gfx texture object with the injected WGPU texture
     state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .usage = SG_USAGE_STREAM,
+        .usage.stream_update = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

@@ -50,7 +50,7 @@ static void init(void) {
 
     // a render pass with 3 color attachment images, and a depth attachment image
     sg_image_desc color_img_desc = {
-        .render_target = true,
+        .usage.render_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .sample_count = SAMPLE_COUNT,
@@ -142,7 +142,7 @@ static void init(void) {
         22, 21, 20,  23, 22, 20
     };
     state.offscreen_bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(cube_indices)
     });
 

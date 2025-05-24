@@ -58,14 +58,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         5, 1, 2,    5, 2, 3,    5, 3, 4,    5, 4, 1
     };
     sg_buffer ibuf_geom = sg_make_buffer(&(sg_buffer_desc){
-        .type = SG_BUFFERTYPE_INDEXBUFFER,
+        .usage.index_buffer = true,
         .data = SG_RANGE(indices)
     });
 
     // dynamic per-instance data, goes into vb slot 1
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
+        .usage.stream_update = true,
         .size = MAX_PARTICLES * sizeof(hmm_vec3),
-        .usage = SG_USAGE_STREAM
     });
 
     // create shader
