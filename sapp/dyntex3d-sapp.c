@@ -201,17 +201,17 @@ static void update_pixels(uint64_t frame_count) {
     const int wh = state.width_height;
     for (int i = 0; i < DEPTH; i++) {
         border(i, i, colors[i]);
+        int len = wh - 2 * i;
+        assert(len > 0);
         int z = i;
         {
             int x = i;
-            int len = wh - 2 * i;
-            int y = ((int)((frame_count / 8) % (uint64_t)(wh - 2 * i)) + i);
+            int y = ((int)((frame_count / 8) % (uint64_t)len) + i);
             hori_line(x, y, z, len, colors[i]);
         }
         {
             int y = i;
-            int len = wh - 2 * i;
-            int x = ((int)((frame_count / 8) % (uint64_t)(wh - 2 * i)) + i);
+            int x = ((int)((frame_count / 8) % (uint64_t)len) + i);
             vert_line(x, y, z, len, colors[i]);
         }
     }
