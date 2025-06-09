@@ -81,44 +81,39 @@ static void glfw_resize_cb(GLFWwindow* window, int width, int height) {
     wgpu_swapchain_resized(state);
 }
 
-static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, const char* msg, void* userdata) {
-    (void)status; (void)msg; (void)userdata;
-    wgpu_state_t* state = (wgpu_state_t*) userdata;
-    state->device = device;
-}
-
-static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
-    (void)type; (void)userdata;
+static void error_cb(const WGPUDevice* dev, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)dev; (void)userdata1; (void)userdata2;
     if (type != WGPUErrorType_NoError) {
-        printf("ERROR: %s\n", message);
+        printf("ERROR: %s\n", message.data);
     }
 }
 
-static void logging_cb(WGPULoggingType type, const char* message, void* userdata) {
-    (void)type; (void)userdata;
-    printf("LOG: %s\n", message);
+static void error_scope_cb(WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)status; (void)userdata1; (void)userdata2;
+    if (type != WGPUErrorType_NoError) {
+        printf("ERROR: %s\n", message.data);
+    }
 }
 
-static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, const char* msg, void* userdata) {
-    (void)msg;
-    wgpu_state_t* state = (wgpu_state_t*) userdata;
+static void logging_cb(WGPULoggingType type, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)type; (void)userdata1; (void)userdata2;
+    printf("LOG: %s\n", message.data);
+}
+
+static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)status; (void)message; (void)userdata2;
+    wgpu_state_t* state = (wgpu_state_t*) userdata1;
+    state->device = device;
+}
+
+static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)message; (void)userdata2;
+    wgpu_state_t* state = (wgpu_state_t*) userdata1;
     if (status != WGPURequestAdapterStatus_Success) {
         printf("wgpuInstanceRequestAdapter failed!\n");
         exit(10);
     }
     state->adapter = adapter;
-    WGPUFeatureName requiredFeatures[1] = {
-        WGPUFeatureName_Depth32FloatStencil8
-    };
-    WGPUDeviceDescriptor dev_desc = {
-        .requiredFeatureCount = 1,
-        .requiredFeatures = requiredFeatures,
-        .uncapturedErrorCallbackInfo = {
-            .callback = error_cb,
-        },
-    };
-    wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
-    assert(0 != state->device);
 }
 
 void wgpu_platform_start(wgpu_state_t* state) {
@@ -126,10 +121,42 @@ void wgpu_platform_start(wgpu_state_t* state) {
 
     state->instance = wgpuCreateInstance(0);
     assert(state->instance);
-    wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
-    assert(state->device);
+    {
+        WGPUFuture future = wgpuInstanceRequestAdapter(state->instance, 0, {
+            .mode = WGPUCallbackMode_WaitAnyOnly,
+            .callback = request_adapter_cb,
+            .userdata1 = state,
+        });
+        WGPUFutureWaitInfo future_info = { .future = future };
+        wgpuInstanceWaitAny(state->instance, 1, &future_info, UINT64_MAX);
+        assert(state->adapter);
+    }
 
-    wgpuDeviceSetLoggingCallback(state->device, logging_cb, 0);
+    {
+        WGPUFeatureName required_features[1] = {
+            WGPUFeatureName_Depth32FloatStencil8
+        };
+        WGPUDeviceDescriptor dev_desc = {
+            .requiredFeatureCount = 1,
+            .requiredFeatures = required_features,
+            .uncapturedErrorCallbackInfo = {
+                .callback = error_cb,
+            },
+        };
+        WGPUFuture future = wgpuAdapterRequestDevice(
+            state->adapter,
+            &dev_desc,
+            {
+                .mode = WGPUCallbackMode_WaitAnyOnly,
+                .callback = request_device_cb,
+                .userdata1 = state,
+            });
+        WGPUFutureWaitInfo future_info = { .future = future };
+        wgpuInstanceWaitAny(state->instance, 1, &future_info, UINT64_MAX);
+        assert(state->device);
+    }
+
+    wgpuDeviceSetLoggingCallback(state->device, { .callback = logging_cb });
     wgpuDevicePushErrorScope(state->device, WGPUErrorFilter_Validation);
 
     glfwInit();
@@ -145,11 +172,13 @@ void wgpu_platform_start(wgpu_state_t* state) {
 
     state->surface = glfw_create_surface_for_window(state->instance, window);
     assert(state->surface);
-    state->render_format = wgpuSurfaceGetPreferredFormat(state->surface, state->adapter);
+    WGPUSurfaceCapabilities surf_caps;
+    wgpuSurfaceGetCapabilities(state->surface, state->adapter, &surf_caps);
+    state->render_format = surf_caps.formats[0];
 
     wgpu_swapchain_init(state);
     state->desc.init_cb();
-    wgpuDevicePopErrorScope(state->device, error_cb, 0);
+    wgpuDevicePopErrorScope(state->device, { .mode = WGPUCallbackMode_AllowProcessEvents, .callback = error_scope_cb });
     wgpuInstanceProcessEvents(state->instance);
 
     while (!glfwWindowShouldClose(window)) {
@@ -162,7 +191,7 @@ void wgpu_platform_start(wgpu_state_t* state) {
             state->swapchain_view = 0;
             wgpuSurfacePresent(state->surface);
         }
-        wgpuDevicePopErrorScope(state->device, error_cb, 0);
+        wgpuDevicePopErrorScope(state->device, { .mode = WGPUCallbackMode_AllowProcessEvents, .callback = error_scope_cb });
         wgpuInstanceProcessEvents(state->instance);
     }
     state->desc.shutdown_cb();
