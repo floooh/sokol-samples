@@ -122,30 +122,45 @@ static EM_BOOL emsc_wheel_cb(int type, const EmscriptenWheelEvent* ev, void* use
     return EM_TRUE;
 }
 
-static void error_cb(WGPUErrorType type, const char* message, void* userdata) {
-    (void)type; (void)userdata;
+static WGPUStringView string_view(const char* str) {
+    return str ? (WGPUStringView){ .data = str, .length = strlen(str) } : (WGPUStringView){0};
+}
+
+static void uncaptured_error_cb(const WGPUDevice* dev, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)dev; (void)userdata1; (void)userdata2;
     if (type != WGPUErrorType_NoError) {
-        printf("ERROR: %s\n", message);
+        printf("UNCAPTURED ERROR: %s\n", message.data);
     }
 }
 
-static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, const char* msg, void* userdata) {
-    (void)status; (void)msg; (void)userdata;
-    wgpu_state_t* state = userdata;
+static void device_lost_cb(const WGPUDevice* dev, WGPUDeviceLostReason reason, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)dev; (void)reason; (void)userdata1; (void)userdata2;
+    printf("DEVICE LOST: %s\n", message.data);
+}
+
+static void error_scope_cb(WGPUPopErrorScopeStatus status, WGPUErrorType type, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)status; (void)userdata1; (void)userdata2;
+    if (type != WGPUErrorType_NoError) {
+        printf("ERROR: %s\n", message.data);
+    }
+}
+
+static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)status; (void)message; (void)userdata2;
+    wgpu_state_t* state = userdata1;
     if (status != WGPURequestDeviceStatus_Success) {
-        printf("wgpuAdapterRequestDevice failed with %s!\n", msg);
+        printf("wgpuAdapterRequestDevice failed with %s!\n", message.data);
         state->async_setup_failed = true;
         return;
     }
     state->device = device;
 
-    wgpuDeviceSetUncapturedErrorCallback(state->device, error_cb, 0);
     wgpuDevicePushErrorScope(state->device, WGPUErrorFilter_Validation);
 
     // setup swapchain
-    WGPUSurfaceDescriptorFromCanvasHTMLSelector canvas_desc = {
-        .chain.sType = WGPUSType_SurfaceDescriptorFromCanvasHTMLSelector,
-        .selector = "#canvas",
+    WGPUEmscriptenSurfaceSourceCanvasHTMLSelector canvas_desc = {
+        .chain.sType = WGPUSType_EmscriptenSurfaceSourceCanvasHTMLSelector,
+        .selector = string_view("#canvas"),
     };
     WGPUSurfaceDescriptor surf_desc = {
         .nextInChain = &canvas_desc.chain,
@@ -156,35 +171,54 @@ static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device,
         state->async_setup_failed = true;
         return;
     }
-    state->render_format = wgpuSurfaceGetPreferredFormat(state->surface, state->adapter);
+    WGPUSurfaceCapabilities surf_caps;
+    wgpuSurfaceGetCapabilities(state->surface, state->adapter, &surf_caps);
+    state->render_format = surf_caps.formats[0];
     wgpu_swapchain_init(state);
     state->desc.init_cb();
-    wgpuDevicePopErrorScope(state->device, error_cb, 0);
+    wgpuDevicePopErrorScope(state->device, (WGPUPopErrorScopeCallbackInfo){
+        .mode = WGPUCallbackMode_AllowProcessEvents,
+        .callback = error_scope_cb
+    });
     state->async_setup_done = true;
 }
 
-static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, const char* msg, void* userdata) {
-    (void)msg;
-    wgpu_state_t* state = userdata;
+static void request_adapter_cb(WGPURequestAdapterStatus status, WGPUAdapter adapter, WGPUStringView message, void* userdata1, void* userdata2) {
+    (void)message; (void)userdata2;
+    wgpu_state_t* state = userdata1;
     if (status != WGPURequestAdapterStatus_Success) {
         printf("wgpuInstanceRequestAdapter failed!\n");
         state->async_setup_failed = true;
     }
     state->adapter = adapter;
 
-    WGPUFeatureName requiredFeatures[1] = {
+    const WGPUFeatureName requiredFeatures[1] = {
         WGPUFeatureName_Depth32FloatStencil8
     };
-    WGPUDeviceDescriptor dev_desc = {
-        .requiredFeatureCount = 1,
-        .requiredFeatures = requiredFeatures,
-    };
-    wgpuAdapterRequestDevice(adapter, &dev_desc, request_device_cb, userdata);
+    wgpuAdapterRequestDevice(adapter,
+        &(WGPUDeviceDescriptor){
+            .requiredFeatureCount = 1,
+            .requiredFeatures = requiredFeatures,
+            .deviceLostCallbackInfo = {
+                .mode = WGPUCallbackMode_AllowProcessEvents,
+                .callback = device_lost_cb,
+            },
+            .uncapturedErrorCallbackInfo = {
+                .callback = uncaptured_error_cb,
+            },
+        },
+        (WGPURequestDeviceCallbackInfo){
+            .mode = WGPUCallbackMode_AllowProcessEvents,
+            .callback = request_device_cb,
+            .userdata1 = userdata1,
+            .userdata2 = userdata2,
+        });
 }
 
 static EM_BOOL emsc_frame(double time, void* userdata) {
     (void)time;
     wgpu_state_t* state = userdata;
+    wgpuInstanceProcessEvents(state->instance);
     if (state->async_setup_failed) {
         return EM_FALSE;
     }
@@ -198,7 +232,10 @@ static EM_BOOL emsc_frame(double time, void* userdata) {
         wgpuTextureViewRelease(state->swapchain_view);
         state->swapchain_view = 0;
     }
-    wgpuDevicePopErrorScope(state->device, error_cb, 0);
+    wgpuDevicePopErrorScope(state->device, (WGPUPopErrorScopeCallbackInfo){
+        .mode = WGPUCallbackMode_AllowProcessEvents,
+        .callback = error_scope_cb
+    });
     return EM_TRUE;
 }
 
@@ -207,7 +244,11 @@ void wgpu_platform_start(wgpu_state_t* state) {
 
     state->instance = wgpuCreateInstance(0);
     assert(state->instance);
-    wgpuInstanceRequestAdapter(state->instance, 0, request_adapter_cb, state);
+    wgpuInstanceRequestAdapter(state->instance, 0, (WGPURequestAdapterCallbackInfo){
+        .mode = WGPUCallbackMode_AllowProcessEvents,
+        .callback = request_adapter_cb,
+        .userdata1 = state,
+    });
 
     emsc_update_canvas_size(state);
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, state, false, emsc_size_changed);

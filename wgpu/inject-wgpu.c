@@ -22,16 +22,9 @@
 #define IMG_WIDTH (32)
 #define IMG_HEIGHT (32)
 
-// FIXME: temp workaround until emsdk webgpu.h catches up
-#if defined(__EMSCRIPTEN__)
-static const char* strview(const char* str) {
-    return str;
-}
-#else
 static WGPUStringView strview(const char* str) {
     return (WGPUStringView){ .data = str, .length = strlen(str) };
 }
-#endif
 
 static struct {
     sg_pass_action pass_action;

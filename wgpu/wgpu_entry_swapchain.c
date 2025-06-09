@@ -85,8 +85,10 @@ void wgpu_swapchain_discard(wgpu_state_t* state) {
 }
 
 void wgpu_swapchain_resized(wgpu_state_t* state) {
-    wgpu_swapchain_discard(state);
-    wgpu_swapchain_init(state);
+    if (state->async_setup_done) {
+        wgpu_swapchain_discard(state);
+        wgpu_swapchain_init(state);
+    }
 }
 
 // may return 0, in that case: skip this frame
