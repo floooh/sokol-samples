@@ -171,7 +171,7 @@ static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device,
         state->async_setup_failed = true;
         return;
     }
-    WGPUSurfaceCapabilities surf_caps;
+    WGPUSurfaceCapabilities surf_caps = {0};
     wgpuSurfaceGetCapabilities(state->surface, state->adapter, &surf_caps);
     state->render_format = surf_caps.formats[0];
     wgpu_swapchain_init(state);
