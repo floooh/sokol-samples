@@ -85,8 +85,10 @@ void wgpu_swapchain_discard(wgpu_state_t* state) {
 }
 
 void wgpu_swapchain_resized(wgpu_state_t* state) {
-    wgpu_swapchain_discard(state);
-    wgpu_swapchain_init(state);
+    if (state->async_setup_done) {
+        wgpu_swapchain_discard(state);
+        wgpu_swapchain_init(state);
+    }
 }
 
 // may return 0, in that case: skip this frame
@@ -94,7 +96,8 @@ WGPUTextureView wgpu_swapchain_next(wgpu_state_t* state) {
     WGPUSurfaceTexture surface_texture = {0};
     wgpuSurfaceGetCurrentTexture(state->surface, &surface_texture);
     switch (surface_texture.status) {
-        case WGPUSurfaceGetCurrentTextureStatus_Success:
+        case WGPUSurfaceGetCurrentTextureStatus_SuccessOptimal:
+        case WGPUSurfaceGetCurrentTextureStatus_SuccessSuboptimal:
             // all ok
             break;
         case WGPUSurfaceGetCurrentTextureStatus_Timeout:
@@ -107,8 +110,7 @@ WGPUTextureView wgpu_swapchain_next(wgpu_state_t* state) {
             wgpu_swapchain_discard(state);
             wgpu_swapchain_init(state);
             return 0;
-        case WGPUSurfaceGetCurrentTextureStatus_OutOfMemory:
-        case WGPUSurfaceGetCurrentTextureStatus_DeviceLost:
+        case WGPUSurfaceGetCurrentTextureStatus_Error:
         default:
             printf("wgpuSurfaceGetCurrentTexture() failed with: %#.8x\n", surface_texture.status);
             abort();
