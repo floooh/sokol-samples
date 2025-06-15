@@ -50,7 +50,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     });
     assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[0] != 0);
     assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[1] == 0);
-    assert(sg_d3d11_query_attachments_info(offscreen_attachments).resolve_rtv[0] == 0);
     assert(sg_d3d11_query_attachments_info(offscreen_attachments).dsv != 0);
 
     // a sampler object for when the rendertarget image is used as texture
