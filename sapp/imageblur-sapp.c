@@ -102,7 +102,7 @@ static void init(void) {
     // a shader and pipeline to display the result (we'll
     // synthesize the fullscreen vertices in the vertex shader so we
     // don't need any buffers or a pipeline vertex layout, and default
-    // render state is fine for rendering a 2D triangleb
+    // render state is fine for rendering a 2D triangle
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .label = "display-pipeline",
@@ -135,7 +135,7 @@ static void frame(void) {
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
         .images[IMG_disp_tex] = state.compute.storage_image[1],
-        .samplers[SMP_cs_smp] = state.smp,
+        .samplers[SMP_disp_smp] = state.smp,
     });
     sg_draw(0, 3, 1);
     simgui_render();
