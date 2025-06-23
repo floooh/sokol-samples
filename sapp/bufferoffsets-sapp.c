@@ -13,7 +13,8 @@
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
-    sg_bindings bind;
+    sg_bindings bind_triangle;
+    sg_bindings bind_quad;
 } state = {
     .pass_action = {
         .colors[0] = {
@@ -51,14 +52,28 @@ void init(void) {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
         .label = "vertex-buffer",
     });
-    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "index-buffer",
+    });
+
+    // setup bindings for the triangle- and quad-data chunks
+    state.bind_triangle.vertex_buffers[0] = sg_make_view(&(sg_view_desc){
+        .vertex_buffer_binding = { .buffer = vbuf, .offset = 0 },
+    });
+    state.bind_triangle.index_buffer = sg_make_view(&(sg_view_desc){
+        .index_buffer_binding = { .buffer = ibuf, .offset = 0 },
+    });
+    state.bind_quad.vertex_buffers[0] = sg_make_view(&(sg_view_desc){
+        .vertex_buffer_binding = { .buffer = vbuf, .offset = 3 * sizeof(vertex_t) },
+    });
+    state.bind_quad.index_buffer = sg_make_view(&(sg_view_desc){
+        .index_buffer_binding = { .buffer = ibuf, .offset = 3 * sizeof(uint16_t) },
     });
 
     // a shader and pipeline to render 2D shapes
@@ -79,14 +94,10 @@ void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     // render the triangle
-    state.bind.vertex_buffer_offsets[0] = 0;
-    state.bind.index_buffer_offset = 0;
-    sg_apply_bindings(&state.bind);
+    sg_apply_bindings(&state.bind_triangle);
     sg_draw(0, 3, 1);
     // render the quad
-    state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_bindings(&state.bind);
+    sg_apply_bindings(&state.bind_quad);
     sg_draw(0, 6, 1);
     __dbgui_draw();
     sg_end_pass();
