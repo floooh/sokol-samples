@@ -21,6 +21,7 @@
 #endif
 #if defined(_MSC_VER)
 #pragma warning(disable:4996)   // sprintf,fopen,localtime: This function or variable may be unsafe
+#pragma warning(disable:4116)   // unnamed type definition in parentheses
 #endif
 #include "nuklear.h"
 
