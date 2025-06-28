@@ -49,6 +49,13 @@ static struct {
 
 static void draw_cube(void);
 
+// helper function to construct ImTextureRef from ImTextureID
+// FIXME: remove when Dear Bindings offers such helper
+static ImTextureRef imtexref(ImTextureID tex_id) {
+    return (ImTextureRef){ ._TexID = tex_id };
+}
+
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -175,10 +182,10 @@ static void frame(void) {
         ImTextureID texid1 = simgui_imtextureid_with_sampler(img, state.smp.linear_clamp);
         ImTextureID texid2 = simgui_imtextureid_with_sampler(img, state.smp.nearest_repeat);
         ImTextureID texid3 = simgui_imtextureid_with_sampler(img, state.smp.linear_mirror);
-        igImageEx(texid0, size, uv0, uv1); igSameLineEx(0, 4);
-        igImageEx(texid1, size, uv0, uv1);
-        igImageEx(texid2, size, uv0, uv2); igSameLineEx(0, 4);
-        igImageEx(texid3, size, uv0, uv2);
+        igImageEx(imtexref(texid0), size, uv0, uv1); igSameLineEx(0, 4);
+        igImageEx(imtexref(texid1), size, uv0, uv1);
+        igImageEx(imtexref(texid2), size, uv0, uv2); igSameLineEx(0, 4);
+        igImageEx(imtexref(texid3), size, uv0, uv2);
     }
     igEnd();
 

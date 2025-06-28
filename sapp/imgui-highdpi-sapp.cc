@@ -42,14 +42,6 @@ void init(void) {
     fontCfg.RasterizerMultiply = 1.5f;
     io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
 
-    // create font texture and linear-filtering sampler for the custom font
-    // NOTE: linear filtering looks better on low-dpi displays, while
-    // nearest-filtering looks better on high-dpi displays
-    simgui_font_tex_desc_t font_texture_desc = { };
-    font_texture_desc.min_filter = SG_FILTER_LINEAR;
-    font_texture_desc.mag_filter = SG_FILTER_LINEAR;
-    simgui_create_fonts_texture(&font_texture_desc);
-
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
     pass_action.colors[0].clear_value = { 0.3f, 0.7f, 0.0f, 1.0f };

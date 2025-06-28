@@ -42,6 +42,12 @@ static struct {
 static const char* pixelformat_string(sg_pixel_format fmt);
 static sg_range gen_pixels(sg_pixel_format fmt);
 
+// helper function to construct ImTextureRef from ImTextureID
+// FIXME: remove when Dear Bindings offers such helper
+static ImTextureRef imtexref(ImTextureID tex_id) {
+    return (ImTextureRef){ ._TexID = tex_id };
+}
+
 // a 'disabled' texture pattern with a cross
 #define X 0xFF0000FF
 #define o 0xFFCCCCCC
@@ -370,15 +376,15 @@ static void frame(void) {
             if (igBeginChild(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLineEx(256, 0);
-                igImage(simgui_imtextureid(state.fmt[i].unfiltered), (ImVec2){64,64});
+                igImage(imtexref(simgui_imtextureid(state.fmt[i].unfiltered)), (ImVec2){64,64});
                 igSameLine();
-                igImage(simgui_imtextureid_with_sampler(state.fmt[i].filtered, state.smp_linear), (ImVec2){64,64});
+                igImage(imtexref(simgui_imtextureid_with_sampler(state.fmt[i].filtered, state.smp_linear)), (ImVec2){64,64});
                 igSameLine();
-                igImage(simgui_imtextureid(state.fmt[i].render), (ImVec2){64,64});
+                igImage(imtexref(simgui_imtextureid(state.fmt[i].render)), (ImVec2){64,64});
                 igSameLine();
-                igImage(simgui_imtextureid(state.fmt[i].blend), (ImVec2){64,64});
+                igImage(imtexref(simgui_imtextureid(state.fmt[i].blend)), (ImVec2){64,64});
                 igSameLine();
-                igImage(simgui_imtextureid(state.fmt[i].msaa_resolve), (ImVec2){64,64});
+                igImage(imtexref(simgui_imtextureid(state.fmt[i].msaa_resolve)), (ImVec2){64,64});
             }
             igEndChild();
         }
