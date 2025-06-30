@@ -30,13 +30,9 @@ static void init(void) {
          0.5f, -0.5f, 0.5f,     0.0f, 1.0f, 0.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
         .label = "vertex-buffer"
-    });
-    state.bind.vertex_buffers[0] = sg_make_view(&(sg_view_desc){
-        .vertex_buffer_binding = { .buffer = vbuf },
-        .label = "vertex-buffer-view",
     });
 
     // create shader from code-generated sg_shader_desc

@@ -101,12 +101,8 @@ void init(void) {
 
     // setup resource bindings
     state.bind = (sg_bindings) {
-        .vertex_buffers[0] = sg_make_view(&(sg_view_desc){
-            .vertex_buffer_binding = { .buffer = vbuf }
-        }),
-        .index_buffer = sg_make_view(&(sg_view_desc){
-            .index_buffer_binding = { .buffer = ibuf }
-        }),
+        .vertex_buffers[0] = vbuf,
+        .index_buffer = ibuf,
     };
 }
 

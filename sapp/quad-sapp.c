@@ -30,25 +30,17 @@ void init(void) {
          0.5f, -0.5f, 0.5f,     0.0f, 0.0f, 1.0f, 1.0f,
         -0.5f, -0.5f, 0.5f,     1.0f, 1.0f, 0.0f, 1.0f,
     };
-    sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
         .label = "quad-vertices"
     });
 
     // an index buffer with 2 triangles
     uint16_t indices[] = { 0, 1, 2,  0, 2, 3 };
-    sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
+    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "quad-indices"
-    });
-
-    // setup bindings for vertex- and index-buffers
-    state.bind.vertex_buffers[0] = sg_make_view(&(sg_view_desc){
-        .vertex_buffer_binding = { .buffer = vbuf }
-    });
-    state.bind.index_buffer = sg_make_view(&(sg_view_desc){
-        .index_buffer_binding = { .buffer = ibuf }
     });
 
     // a shader (use separate shader sources here
