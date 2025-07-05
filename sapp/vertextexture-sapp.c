@@ -46,7 +46,7 @@ static void init(void) {
 
     // render target texture for GPU-rendered plasma
     state.offscreen.img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -56,12 +56,13 @@ static void init(void) {
 
     // render-pass attachments and pass action for the offscreen render pass
     state.offscreen.pass = (sg_pass){
-        .attachments = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0].image = state.offscreen.img,
-            .label = "plasma-attachments",
-        }),
         .action = {
             .colors[0] = { .load_action = SG_LOADACTION_DONTCARE },
+        },
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){
+                .color_attachment = { .image = state.offscreen.img },
+            }),
         },
     };
 
@@ -128,7 +129,9 @@ static void init(void) {
     // bindings for the display-pass
     state.display.bind = (sg_bindings) {
         .index_buffer = state.display.ibuf,
-        .images[IMG_tex] = state.offscreen.img,
+        .textures[TEX_tex] = sg_make_view(&(sg_view_desc){
+            .texture_binding = { .image = state.offscreen.img },
+        }),
         .samplers[SMP_smp] = smp,
     };
 }
