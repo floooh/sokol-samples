@@ -323,12 +323,12 @@ static void reinit_attachments(int width, int height) {
         });
     }
     sg_init_image(state.images.depth, &(sg_image_desc){
-            .usage.attachment = true,
-            .width = width,
-            .height = height,
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .sample_count = OFFSCREEN_SAMPLE_COUNT,
-            .label = "depth image",
+        .usage.attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "depth image",
     });
     sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
         .depth_stencil_attachment = { .image = state.images.depth },
