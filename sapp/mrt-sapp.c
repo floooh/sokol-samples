@@ -45,7 +45,7 @@ typedef struct {
     float x, y, z, b;
 } vertex_t;
 
-static void reinit_offscreen_attachments(int width, int height);
+static void reinit_attachments(int width, int height);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -61,49 +61,25 @@ static void init(void) {
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // note: we're being a convoluted here to test some specific view features:
-    // - we'll first allocate image handles for all offscreen render targets,
-    //   but not actually initialize those images
-    // - then create attachment view objects from those incomplete images,
-    //   which results in 'incomplete' views in ALLOC resource state
-    // - only then the actual render target images are initialized by calling
-    //   reinit_offscreen_attachments()
-    // - ...and that same function will be called when the window resized
-    // - the view objects will track the state of their base image objects
-    //   and will re-initialize themselves automatically as needed
+    // pre-allocate all image and view handles upfront, the actual
+    // initialization will then happen in `reinit_attachments()` which both
+    // called from init() and when the window size changes
     //
+    // NOTE: we could just as well call destroy/make on window resize,
+    // and in reality this wouldn't make much of a difference, in this sample
+    // the pre-allocate + uninit/init is used for better test coverage
     for (int i = 0; i < NUM_MRTS; i++) {
         state.images.color[i] = sg_alloc_image();
         state.images.resolve[i] = sg_alloc_image();
+        state.offscreen.pass.attachments.colors[i] = sg_alloc_view();
+        state.offscreen.pass.attachments.resolves[i] = sg_alloc_view();
+        state.fsq.bind.textures[TEX_tex0 + i] = sg_alloc_view();
     }
     state.images.depth = sg_alloc_image();
+    state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
 
-    // ...now create 'incomplete' attachment views from those image handles
-    for (int i = 0; i < NUM_MRTS; i++) {
-        state.offscreen.pass.attachments.colors[i] = sg_make_view(&(sg_view_desc){
-            .color_attachment = { .image = state.images.color[i] },
-        });
-        assert(sg_query_view_state(state.offscreen.pass.attachments.colors[i]) == SG_RESOURCESTATE_ALLOC);
-        state.offscreen.pass.attachments.resolves[i] = sg_make_view(&(sg_view_desc){
-            .resolve_attachment = { .image = state.images.resolve[i] },
-        });
-        assert(sg_query_view_state(state.offscreen.pass.attachments.resolves[i]) == SG_RESOURCESTATE_ALLOC);
-    }
-    state.offscreen.pass.attachments.depth_stencil = sg_make_view(&(sg_view_desc){
-        .depth_stencil_attachment = { .image = state.images.depth },
-    });
-    assert(sg_query_view_state(state.offscreen.pass.attachments.depth_stencil) == SG_RESOURCESTATE_ALLOC);
-
-    // ...and incomplete texture views for when the resolve images are used as textures
-    for (int i = 0; i < NUM_MRTS; i++) {
-        state.fsq.bind.textures[TEX_tex0 + i] = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = state.images.resolve[i] },
-        });
-        assert(sg_query_view_state(state.fsq.bind.textures[TEX_tex0 + i]) == SG_RESOURCESTATE_ALLOC);
-    }
-
-    // only now initialize the base images
-    reinit_offscreen_attachments(sapp_width(), sapp_height());
+    // initialize pass attachment images and views
+    reinit_attachments(sapp_width(), sapp_height());
 
     // create a vertex buffer for the cube
     vertex_t cube_vertices[] = {
@@ -281,7 +257,7 @@ static void frame(void) {
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.textures[TEX_tex] = state.offscreen.pass.attachments.resolves[i];
+        state.dbg.bind.textures[TEX_tex] = state.fsq.bind.textures[TEX_tex0 + i];
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }
@@ -299,23 +275,28 @@ static void cleanup(void) {
 // listen for window-resize events and recreate offscreen rendertargets
 static void event(const sapp_event* e) {
     if (e->type == SAPP_EVENTTYPE_RESIZED) {
-        reinit_offscreen_attachments(e->framebuffer_width, e->framebuffer_height);
+        reinit_attachments(e->framebuffer_width, e->framebuffer_height);
     }
     __dbgui_event(e);
 }
 
 // called initially and when window size changes, will re-initialize
-// the offscreen render target images to a new size
-static void reinit_offscreen_attachments(int width, int height) {
-    // uninitialize the render target images (NOTE: it's fine to call
-    // uninit on resources in ALLOC state
+// the offscreen render target images to a new size and then re-initialize
+// the associated view objects
+static void reinit_attachments(int width, int height) {
+    // uninitialize the render target images and associated views (NOTE: it's fine to call
+    // uninit on resources in ALLOC state)
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_uninit_image(state.images.color[i]);
         sg_uninit_image(state.images.resolve[i]);
+        sg_uninit_view(state.offscreen.pass.attachments.colors[i]);
+        sg_uninit_view(state.offscreen.pass.attachments.resolves[i]);
+        sg_uninit_view(state.fsq.bind.textures[TEX_tex + i]);
     }
     sg_uninit_image(state.images.depth);
+    sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
 
-    // ...and initialize them with new size
+    // ...next initialize images with the new size and re-init their associated handles
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_init_image(state.images.color[i], &(sg_image_desc){
             .usage.attachment = true,
@@ -331,6 +312,15 @@ static void reinit_offscreen_attachments(int width, int height) {
             .sample_count = 1,
             .label = "resolve image",
         });
+        sg_init_view(state.offscreen.pass.attachments.colors[i], &(sg_view_desc){
+            .color_attachment = { .image = state.images.color[i] },
+        });
+        sg_init_view(state.offscreen.pass.attachments.resolves[i], &(sg_view_desc){
+            .resolve_attachment = { .image = state.images.resolve[i] },
+        });
+        sg_init_view(state.fsq.bind.textures[TEX_tex0 + i], &(sg_view_desc){
+            .texture_binding = { .image = state.images.resolve[i] },
+        });
     }
     sg_init_image(state.images.depth, &(sg_image_desc){
             .usage.attachment = true,
@@ -340,10 +330,9 @@ static void reinit_offscreen_attachments(int width, int height) {
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
             .label = "depth image",
     });
-
-    // don't need to do anything else, since the image handles remain the same
-    // and the view objects which have been created with those handles will detect
-    // the changes and update themselves as needed
+    sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
+        .depth_stencil_attachment = { .image = state.images.depth },
+    });
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
