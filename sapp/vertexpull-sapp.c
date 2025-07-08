@@ -101,7 +101,9 @@ static void init(void) {
     // resource bindings, note that there is no vertex buffer binding
     state.bind = (sg_bindings){
         .index_buffer = ibuf,
-        .storage_buffers[SBUF_ssbo] = sbuf,
+        .storage_buffers[SBUF_ssbo] = sg_make_view(&(sg_view_desc){
+            .storage_buffer_binding = { .buffer = sbuf, .offset = 0 },
+        }),
     };
 
     // define a clear color
