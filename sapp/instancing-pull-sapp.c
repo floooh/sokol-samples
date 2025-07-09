@@ -21,6 +21,7 @@
 
 static struct {
     sg_pass_action pass_action;
+    sg_buffer inst_buf;
     sg_pipeline pip;
     sg_bindings bind;
     float ry;
@@ -61,7 +62,7 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.1f, 0.2f, 1.0f } }
     };
 
-    // a storage buffer for the static geometry
+    // a storage buffer and view for the static geometry
     const float r = 0.05f;
     const sb_vertex_t vertices[] = {
         { .pos = HMM_Vec3(0.0f,   -r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 0.0f, 1.0f) },
@@ -71,10 +72,14 @@ static void init(void) {
         { .pos = HMM_Vec3(  -r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 1.0f, 1.0f) },
         { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
-    state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
+    sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
         .label = "geometry-vertices",
+    });
+    state.bind.storage_buffers[SBUF_vertices] = sg_make_view(&(sg_view_desc){
+        .storage_buffer_binding = { .buffer = sbuf },
+        .label = "geometry-vertices-view",
     });
 
     // an index buffer for the static geometry
@@ -89,10 +94,14 @@ static void init(void) {
     });
 
     // a dynamic storage buffer for the per-instance data
-    state.bind.storage_buffers[SBUF_instances] = sg_make_buffer(&(sg_buffer_desc) {
+    state.inst_buf = sg_make_buffer(&(sg_buffer_desc){
         .usage = { .storage_buffer = true, .stream_update = true },
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
         .label = "instance-data",
+    });
+    state.bind.storage_buffers[SBUF_instances] = sg_make_view(&(sg_view_desc){
+        .storage_buffer_binding = { .buffer = state.inst_buf },
+        .label = "insatnce-date-view",
     });
 
     // a shader and pipeline object, note the lack of a vertex layout definition
@@ -121,7 +130,7 @@ static void frame(void) {
     update_particles(frame_time);
 
     // update instance data storage buffer
-    sg_update_buffer(state.bind.storage_buffers[SBUF_instances], &(sg_range){
+    sg_update_buffer(state.inst_buf, &(sg_range){
         .ptr = state.inst,
         .size = (size_t)state.cur_num_particles * sizeof(sb_instance_t),
     });

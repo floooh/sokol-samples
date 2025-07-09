@@ -51,7 +51,7 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.75f, 0.25f } },
     };
 
-    // a storage buffer with cube vertices
+    // a storage buffer with cube vertices and a storage buffer view
     sb_vertex_t vertices[] = {
         { .pos = { -1.0f, -1.0f, -1.0f },  .idx = 0, .uv = { 0.0f, 0.0f } },
         { .pos = {  1.0f, -1.0f, -1.0f },  .idx = 0, .uv = { 1.0f, 0.0f } },
@@ -83,10 +83,14 @@ static void init(void) {
         { .pos = {  1.0f,  1.0f,  1.0f },  .idx = 5, .uv = { 1.0f, 1.0f } },
         { .pos = {  1.0f,  1.0f, -1.0f },  .idx = 5, .uv = { 0.0f, 1.0f } },
     };
-    state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&(sg_buffer_desc){
+    const sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
-        .label = "cube-vertices",
+        .label = "cube-vertex-buffer",
+    });
+    state.bind.storage_buffers[SBUF_vertices] = sg_make_view(&(sg_view_desc){
+        .storage_buffer_binding = { .buffer = vbuf },
+        .label = "cube-vertex-view",
     });
 
     // an index buffer with the cube indices
@@ -113,25 +117,33 @@ static void init(void) {
         { .color = { 0.0f, 0.5f, 1.0f, 1.0f } },
         { .color = { 1.0f, 0.5f, 0.0f, 1.0f } },
     };
-    state.bind.storage_buffers[SBUF_colors] = sg_make_buffer(&(sg_buffer_desc){
+    const sg_buffer cbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
         .data = SG_RANGE(colors),
-        .label = "color-palette",
+        .label = "color-palette-buffer",
+    });
+    state.bind.storage_buffers[SBUF_colors] = sg_make_view(&(sg_view_desc){
+        .storage_buffer_binding = { .buffer = cbuf },
+        .label = "color-palette-view",
     });
 
-    // a greyscale texture which modulates the color palette colors
+    // a greyscale texture and texture view which modulates the color palette colors
     uint8_t pixels[4][4] = {
         { 0xFF, 0xCC, 0x88, 0x44 },
         { 0xCC, 0x88, 0x44, 0xFF },
         { 0x88, 0x44, 0xFF, 0xCC },
         { 0x44, 0xFF, 0xCC, 0x88 },
     };
-    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
+    sg_image img = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .pixel_format = SG_PIXELFORMAT_R8,
         .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "texture",
+    });
+    state.bind.textures[TEX_tex] = sg_make_view(&(sg_view_desc){
+        .texture_binding = { .image = img },
+        .label = "texture-view",
     });
 
     // ...and a matching sampler

@@ -137,8 +137,11 @@ static void init(void) {
         .label = "cubemap-indices"
     });
 
-    // allocate a texture handle, but initialize the texture later after data is loaded
-    state.bind.images[IMG_tex] = sg_alloc_image();
+    // allocate a (texture) view handle, but only initialize it later once the
+    // texture data has been asynchronously loaded, this allows us to write
+    // a regular render loop without having to explicitly skip rendering as
+    // long as the texture isn't loaded yet
+    state.bind.textures[TEX_tex] = sg_alloc_view();
 
     // a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
@@ -193,7 +196,8 @@ static void fetch_cb(const sfetch_response_t* response) {
             stbi_image_free(decoded_pixels);
             // all 6 faces loaded?
             if (++state.load_count == SG_CUBEFACE_NUM) {
-                sg_init_image(state.bind.images[IMG_tex], &(sg_image_desc){
+                // create a cubemap image
+                sg_image img = sg_make_image(&(sg_image_desc){
                     .type = SG_IMAGETYPE_CUBE,
                     .width = width,
                     .height = height,
@@ -209,6 +213,11 @@ static void fetch_cb(const sfetch_response_t* response) {
                     .label = "cubemap-image",
                 });
                 free((void*)state.pixels.ptr); state.pixels.ptr = 0;
+                // ...and initialize the pre-allocated view
+                sg_init_view(state.bind.textures[TEX_tex], &(sg_view_desc){
+                    .texture_binding = { .image = img },
+                    .label = "cubemap-view",
+                });
             }
         }
     } else if (response->failed) {
