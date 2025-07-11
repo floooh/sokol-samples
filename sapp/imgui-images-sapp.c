@@ -31,10 +31,8 @@ static struct {
     struct {
         sgl_context sgl_ctx;
         sgl_pipeline sgl_pip;
-        sg_image color_img;
-        sg_image depth_img;
-        sg_attachments attachments;
-        sg_pass_action pass_action;
+        sg_view tex_view;
+        sg_pass pass;
     } offscreen;
     struct {
         sg_pass_action pass_action;
@@ -87,31 +85,45 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // color and depth render target textures for the offscreen pass
-    state.offscreen.color_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    // a color- and depth- render target image
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
-    state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // a render pass object to render into the offscreen render targets
-    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.offscreen.color_img,
-        .depth_stencil.image = state.offscreen.depth_img,
+    // texture- and attachment-views
+    state.offscreen.tex_view = sg_make_view(&(sg_view_desc){
+        .texture_binding.image = color_img,
+    });
+    sg_view color_view = sg_make_view(&(sg_view_desc){
+        .color_attachment.image = color_img,
+    });
+    sg_view depth_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment.image = depth_img,
     });
 
-    // a pass-action for the offscreen pass which clears to black
-    state.offscreen.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
+    // the offscreen render pass struct
+    state.offscreen.pass = (sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f },
+            },
+        },
+        .attachments = {
+            .colors[0] = color_view,
+            .depth_stencil = depth_view,
+        },
     };
 
     // a pass action for the default pass which clears to blue-ish
@@ -177,11 +189,11 @@ static void frame(void) {
         const ImVec2 uv0 = { 0, 0 };
         const ImVec2 uv1 = { 1, 1 };
         const ImVec2 uv2 = { 4, 4 };
-        sg_image img = state.offscreen.color_img;
-        ImTextureID texid0 = simgui_imtextureid_with_sampler(img, state.smp.nearest_clamp);
-        ImTextureID texid1 = simgui_imtextureid_with_sampler(img, state.smp.linear_clamp);
-        ImTextureID texid2 = simgui_imtextureid_with_sampler(img, state.smp.nearest_repeat);
-        ImTextureID texid3 = simgui_imtextureid_with_sampler(img, state.smp.linear_mirror);
+        sg_view view = state.offscreen.tex_view;
+        ImTextureID texid0 = simgui_imtextureid_with_sampler(view, state.smp.nearest_clamp);
+        ImTextureID texid1 = simgui_imtextureid_with_sampler(view, state.smp.linear_clamp);
+        ImTextureID texid2 = simgui_imtextureid_with_sampler(view, state.smp.nearest_repeat);
+        ImTextureID texid3 = simgui_imtextureid_with_sampler(view, state.smp.linear_mirror);
         igImageEx(imtexref(texid0), size, uv0, uv1); igSameLineEx(0, 4);
         igImageEx(imtexref(texid1), size, uv0, uv1);
         igImageEx(imtexref(texid2), size, uv0, uv2); igSameLineEx(0, 4);
@@ -191,10 +203,7 @@ static void frame(void) {
 
     // perform sokol-gfx rendering...
     // ...first the offscreen pass which renders the sokol-gl scene
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen.pass_action,
-        .attachments = state.offscreen.attachments,
-    });
+    sg_begin_pass(&state.offscreen.pass);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
 

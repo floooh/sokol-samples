@@ -15,9 +15,8 @@
 static struct {
     double angle_deg;
     struct {
-        sg_pass_action pass_action;
-        sg_attachments attachments;
-        sg_image img;
+        sg_view tex_view;
+        sg_pass pass;
         sgl_context sgl_ctx;
     } offscreen;
     struct {
@@ -75,21 +74,28 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLECOUNT,
     });
 
-    // create an offscreen render target texture, pass, and pass_action
-    state.offscreen.img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    // create an offscreen render target image, texture and attachment views
+    sg_image img = sg_make_image(&(sg_image_desc){
+        .usage.attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_PIXELFORMAT,
         .sample_count = OFFSCREEN_SAMPLECOUNT,
     });
-    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.offscreen.img
+    state.offscreen.tex_view = sg_make_view(&(sg_view_desc){
+        .texture_binding.image = img,
     });
-    state.offscreen.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
+    state.offscreen.pass = (sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
+            },
+        },
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){
+                .color_attachment.image = img,
+            }),
         },
     };
 
@@ -117,7 +123,7 @@ static void frame(void) {
     sgl_set_context(SGL_DEFAULT_CONTEXT);
     sgl_defaults();
     sgl_enable_texture();
-    sgl_texture(state.offscreen.img, state.display.smp);
+    sgl_texture(state.offscreen.tex_view, state.display.smp);
     sgl_load_pipeline(state.display.sgl_pip);
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), sapp_widthf()/sapp_heightf(), 0.1f, 100.0f);
@@ -127,7 +133,7 @@ static void frame(void) {
     draw_cube();
 
     // do the actual offscreen and display rendering in sokol-gfx passes
-    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.attachments });
+    sg_begin_pass(&state.offscreen.pass);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });

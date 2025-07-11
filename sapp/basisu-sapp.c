@@ -30,8 +30,8 @@
 static struct {
     sg_pass_action pass_action;
     sgl_pipeline alpha_pip;
-    sg_image opaque_img;
-    sg_image alpha_img;
+    sg_view opaque_view;
+    sg_view alpha_view;
     sg_sampler smp;
     double angle_deg;
 } state = {
@@ -69,8 +69,12 @@ void init(void) {
     sbasisu_setup();
 
     // create sokol-gfx textures from the embedded Basis Universal textures
-    state.opaque_img = sbasisu_make_image(SG_RANGE(embed_testcard_basis));
-    state.alpha_img  = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis));
+    state.opaque_view = sg_make_view(&(sg_view_desc){
+        .texture_binding.image = sbasisu_make_image(SG_RANGE(embed_testcard_basis)),
+    });
+    state.alpha_view = sg_make_view(&(sg_view_desc){
+        .texture_binding.image = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis)),
+    });
 
     // create a sampler object
     state.smp = sg_make_sampler(&(sg_sampler_desc){
@@ -97,12 +101,12 @@ typedef struct {
     struct { float x; float y; } pos;
     struct { float x; float y; } scale;
     float rot;
-    sg_image img;
+    sg_view view;
     sgl_pipeline pip;
 } quad_params_t;
 
 static void draw_quad(quad_params_t params) {
-    sgl_texture(params.img, state.smp);
+    sgl_texture(params.view, state.smp);
     if (params.pip.id) {
         sgl_load_pipeline(params.pip);
     }
@@ -141,13 +145,13 @@ void frame(void) {
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = sgl_rad((float)state.angle_deg),
-        .img = state.opaque_img,
+        .view = state.opaque_view,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = -sgl_rad((float)state.angle_deg),
-        .img = state.alpha_img,
+        .view = state.alpha_view,
         .pip = state.alpha_pip,
     });
 
