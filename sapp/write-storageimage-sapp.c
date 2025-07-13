@@ -15,12 +15,13 @@
 
 static struct {
     double time;
+    sg_image img;
     struct {
-        sg_image img;
-        sg_attachments atts;
+        sg_view simg_view;
         sg_pipeline pip;
     } compute;
     struct {
+        sg_view tex_view;
         sg_pipeline pip;
         sg_sampler smp;
         sg_pass_action pass_action;
@@ -39,18 +40,24 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     // an image object with storage attachment usage
-    state.compute.img = sg_make_image(&(sg_image_desc){
-        .usage.storage_attachment = true,
+    state.img = sg_make_image(&(sg_image_desc){
+        .usage.storage_image_binding = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "storage-image",
     });
 
-    // a pass attachment object with the image as storage attachment
-    state.compute.atts = sg_make_attachments(&(sg_attachments_desc){
-        .storages[SIMG_cs_out_tex] = { .image = state.compute.img },
-        .label = "storage-attachments",
+    // a storage image view for compute shader access
+    state.compute.simg_view = sg_make_view(&(sg_view_desc){
+        .storage_image_binding = { .image = state.img },
+        .label = "storage-image-view",
+    });
+
+    // a texture view for binding the same image as texture
+    state.display.tex_view = sg_make_view(&(sg_view_desc){
+        .texture_binding = { .image = state.img },
+        .label = "texture-view",
     });
 
     // a compute pipeline object with the compute shader
@@ -82,10 +89,13 @@ static void frame(void) {
     // a value that fluctuates between 0 and 1
     const double time_offset = (sin(state.time * 4.0) + 1.0) * 0.5;
 
-    // run compute shader to update the storage image
+    // compute pass to update the storage image
     const cs_params_t cs_params = { .offset = (float)time_offset };
-    sg_begin_pass(&(sg_pass){ .compute = true, .attachments = state.compute.atts, .label = "compute-pass" });
+    sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .storage_images[SIMG_cs_out_tex] = state.compute.simg_view,
+    });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch(WIDTH / 16, HEIGHT / 16, 1);    // shader local_size_x/y is 16
     sg_end_pass();
@@ -94,7 +104,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "render-pass" });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
-        .images[IMG_disp_tex] = state.compute.img,
+        .textures[TEX_disp_tex] = state.display.tex_view,
         .samplers[SMP_disp_smp] = state.display.smp,
     });
     sg_draw(0, 3, 1);
