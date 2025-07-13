@@ -84,7 +84,7 @@ static void init(void) {
     {
         // create 3 render target image and texture views with different formats
         sg_image_desc img_desc = {
-            .usage.attachment = true,
+            .usage.color_attachment = true,
             .pixel_format = DEPTH_PIXEL_FORMAT,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
@@ -95,6 +95,7 @@ static void init(void) {
         state.offscreen.normal = make_image_and_views(&img_desc);
         img_desc.pixel_format = COLOR_PIXEL_FORMAT;
         state.offscreen.color = make_image_and_views(&img_desc);
+        img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true };
         img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
         sg_image zbuf_img = sg_make_image(&img_desc);
         sg_view zbuf_view = sg_make_view(&(sg_view_desc){

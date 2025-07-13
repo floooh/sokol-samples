@@ -90,7 +90,7 @@ static void init(void) {
     state.depth_att_view = sg_make_view(&(sg_view_desc){
         .depth_stencil_attachment = {
             .image = sg_make_image(&(sg_image_desc){
-                .usage.attachment = true,
+                .usage.depth_stencil_attachment = true,
                 .width = 64,
                 .height = 64,
                 .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -101,7 +101,7 @@ static void init(void) {
     state.msaa_depth_att_view = sg_make_view(&(sg_view_desc){
         .depth_stencil_attachment = {
             .image = sg_make_image(&(sg_image_desc){
-                .usage.attachment = true,
+                .usage.depth_stencil_attachment = true,
                 .width = 64,
                 .height = 64,
                 .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -185,7 +185,7 @@ static void init(void) {
             // create non-MSAA render target, pipeline state and pass-attachments
             if (fmt_info.render) {
                 state.fmt[i].render = make_image_and_views(&(sg_image_desc){
-                    .usage.attachment = true,
+                    .usage.color_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -199,7 +199,7 @@ static void init(void) {
             // create non-MSAA blend render target, pipeline states and pass-attachments
             if (fmt_info.blend) {
                 state.fmt[i].blend = make_image_and_views(&(sg_image_desc){
-                    .usage.attachment = true,
+                    .usage.color_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
@@ -211,14 +211,14 @@ static void init(void) {
             // create MSAA render target, resolve texture and matching pipeline state
             if (fmt_info.msaa) {
                 state.fmt[i].msaa_render = make_image_and_views(&(sg_image_desc){
-                    .usage.attachment = true,
+                    .usage.color_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,
                     .sample_count = 4,
                 }, false, SG_VIEWTYPE_COLORATTACHMENT);
                 state.fmt[i].msaa_resolve = make_image_and_views(&(sg_image_desc){
-                    .usage.attachment = true,
+                    .usage.resolve_attachment = true,
                     .width = 64,
                     .height = 64,
                     .pixel_format = fmt,

@@ -73,7 +73,7 @@ static void init(void) {
         { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
     sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
+        .usage.storage_buffer_binding = true,
         .data = SG_RANGE(vertices),
         .label = "geometry-vertices",
     });
@@ -95,7 +95,7 @@ static void init(void) {
 
     // a dynamic storage buffer for the per-instance data
     state.inst_buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage = { .storage_buffer = true, .stream_update = true },
+        .usage = { .storage_buffer_binding = true, .stream_update = true },
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
         .label = "instance-data",
     });

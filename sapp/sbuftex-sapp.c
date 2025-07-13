@@ -84,7 +84,7 @@ static void init(void) {
         { .pos = {  1.0f,  1.0f, -1.0f },  .idx = 5, .uv = { 0.0f, 1.0f } },
     };
     const sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
+        .usage.storage_buffer_binding = true,
         .data = SG_RANGE(vertices),
         .label = "cube-vertex-buffer",
     });
@@ -118,7 +118,7 @@ static void init(void) {
         { .color = { 1.0f, 0.5f, 0.0f, 1.0f } },
     };
     const sg_buffer cbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
+        .usage.storage_buffer_binding = true,
         .data = SG_RANGE(colors),
         .label = "color-palette-buffer",
     });

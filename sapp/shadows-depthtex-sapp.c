@@ -113,7 +113,7 @@ static void init(void) {
 
     // a shadow map render target which will serve as depth buffer in the shadow pass
     sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

@@ -116,7 +116,7 @@ static void init(void) {
 
     // a regular RGBA8 render target image as shadow map
     sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.color_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -126,7 +126,7 @@ static void init(void) {
 
     // ...we also need a separate depth-buffer image for the shadow pass
     sg_image shadow_depth_img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

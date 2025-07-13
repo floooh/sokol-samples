@@ -29,14 +29,15 @@ static struct {
     double time;
     sg_buffer vbuf;
     sg_buffer ibuf;
-    sg_image img;
+    sg_view tex_view;
     sg_sampler smp;
     struct {
         sg_pipeline pip;
         sg_pass_action pass_action;
         sg_bindings bindings;
+        sg_view color_att_views[IMG_NUM_LAYERS];
+        sg_view depth_att_view;
         sshape_element_range_t shapes[NUM_SHAPES];
-        sg_attachments attachments[IMG_NUM_LAYERS];
     } offscreen;
     struct {
         sg_pipeline pip;
@@ -80,8 +81,8 @@ static void init(void) {
     state.ibuf = sg_make_buffer(&ibuf_desc);
 
     // create an array-texture as render target
-    state.img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
         .type = SG_IMAGETYPE_ARRAY,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
@@ -93,7 +94,7 @@ static void init(void) {
 
     // ...and a matching depth buffer image
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .num_mipmaps = 1,
@@ -109,13 +110,18 @@ static void init(void) {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
     });
 
-    // one render pass object per texture array layer
+    // view objects (one color attachment per texture layer, one depth-stencil attachment, one texture view)
     for (int i = 0; i < IMG_NUM_LAYERS; i++) {
-        state.offscreen.attachments[i] = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0] = { .image = state.img, .slice = i },
-            .depth_stencil = { .image = depth_img },
+        state.offscreen.color_att_views[i] = sg_make_view(&(sg_view_desc){
+            .color_attachment = { .image = color_img, .slice = i },
         });
     }
+    state.offscreen.depth_att_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment.image = depth_img,
+    });
+    state.tex_view = sg_make_view(&(sg_view_desc){
+        .texture_binding = { .image = color_img },
+    });
 
     // a pipeline object for the offscreen pass
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -165,7 +171,7 @@ static void init(void) {
     state.display.bindings = (sg_bindings){
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .images[IMG_tex] = state.img,
+        .textures[TEX_tex] = state.tex_view,
         .samplers[SMP_smp] = state.smp,
     };
 
@@ -190,7 +196,10 @@ static void frame(void) {
     for (int i = 0; i < IMG_NUM_LAYERS; i++) {
         sg_begin_pass(&(sg_pass){
             .action = state.offscreen.pass_action,
-            .attachments = state.offscreen.attachments[i],
+            .attachments = {
+                .colors[0] = state.offscreen.color_att_views[i],
+                .depth_stencil = state.offscreen.depth_att_view,
+            },
         });
         sg_apply_pipeline(state.offscreen.pip);
         sg_apply_bindings(&state.offscreen.bindings);

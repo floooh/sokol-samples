@@ -55,7 +55,7 @@ static void init(void) {
     // because the offscreen pass uses a different sample count than the display render pass
     // (the display render pass is multi-sampled, the offscreen pass is not)
     sg_image_desc img_desc = {
-        .usage.attachment = true,
+        .usage = { .color_attachment = true },
         .width = 256,
         .height = 256,
         .pixel_format = OFFSCREEN_PIXEL_FORMAT,
@@ -64,6 +64,7 @@ static void init(void) {
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true },
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
 

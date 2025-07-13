@@ -87,14 +87,14 @@ static void init(void) {
 
     // a color- and depth- render target image
     sg_image color_img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.color_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
     sg_image depth_img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,

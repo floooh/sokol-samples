@@ -70,7 +70,7 @@ static void init(void) {
     // create a MSAA render target image, this will be rendered to
     // in the offscreen render pass
     const sg_image msaa_image = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.color_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
@@ -82,7 +82,7 @@ static void init(void) {
     // this needs the same dimensions and sample count as the
     // render target image
     const sg_image depth_image = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,
@@ -94,7 +94,7 @@ static void init(void) {
     // be resolved to at the end of the offscreen pass, and which will be
     // texture-sampled in the display pass
     const sg_image resolve_image = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.resolve_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,

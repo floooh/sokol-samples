@@ -299,14 +299,14 @@ static void reinit_attachments(int width, int height) {
     // ...next initialize images with the new size and re-init their associated handles
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_init_image(state.images.color[i], &(sg_image_desc){
-            .usage.attachment = true,
+            .usage.color_attachment = true,
             .width = width,
             .height = height,
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
             .label = "msaa image",
         });
         sg_init_image(state.images.resolve[i], &(sg_image_desc){
-            .usage.attachment = true,
+            .usage.resolve_attachment = true,
             .width = width,
             .height = height,
             .sample_count = 1,
@@ -323,7 +323,7 @@ static void reinit_attachments(int width, int height) {
         });
     }
     sg_init_image(state.images.depth, &(sg_image_desc){
-        .usage.attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = width,
         .height = height,
         .pixel_format = SG_PIXELFORMAT_DEPTH,

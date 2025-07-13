@@ -46,7 +46,7 @@ static void init(void) {
 
     // render target texture for GPU-rendered plasma
     state.offscreen.img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.color_attachment = true,
         .width = 256,
         .height = 256,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
