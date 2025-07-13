@@ -40,6 +40,7 @@ static struct {
     struct {
         float rx, ry;
         sg_pass_action pass_action;
+        sg_image img;
         sg_pipeline pip;
         sg_bindings bind;
     } scene;
@@ -121,7 +122,7 @@ static void init(void) {
         .image_pool_size = 4,
         .shader_pool_size = 4,
         .pipeline_pool_size = 8,
-        .attachments_pool_size = 1,
+        .view_pool_size = 16,
         .environment = sglue_environment(),
         .allocator = {
             .alloc_fn = smemtrack_alloc,
@@ -182,7 +183,8 @@ static void init(void) {
     });
 
     // setup rendering resources
-    state.scene.bind.images[IMG_tex] = sg_alloc_image();
+    state.scene.img = sg_alloc_image();
+    state.scene.bind.textures[TEX_tex] = sg_alloc_view();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
@@ -262,7 +264,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            sg_init_image(state.scene.bind.images[IMG_tex], &(sg_image_desc){
+            sg_init_image(state.scene.img, &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -270,6 +272,9 @@ static void fetch_img_callback(const sfetch_response_t* response) {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),
                 }
+            });
+            sg_init_view(state.scene.bind.textures[TEX_tex], &(sg_view_desc){
+                .texture_binding = { .image = state.scene.img },
             });
             stbi_image_free(pixels);
         }

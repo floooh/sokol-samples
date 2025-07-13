@@ -41,13 +41,12 @@ static struct {
     sg_buffer vbuf;
     sg_buffer ibuf;
     sg_pipeline pip;
-    sg_pass_action pass_action;     // just keep this default-initialized, which clears to gray
     sg_sampler smp;
+    sg_pass_action pass_action;     // just keep this default-initialized, which clears to gray
     struct {
         sdtx_context text_context;
-        sg_image img;
-        sg_attachments attachments;
-        sg_pass_action pass_action;
+        sg_view tex_view;
+        sg_pass pass;
     } passes[NUM_FACES];
 } state;
 
@@ -164,24 +163,30 @@ static void init(void) {
             .sample_count = OFFSCREEN_SAMPLE_COUNT
         });
 
-        // the render target texture, render pass
-        state.passes[i].img = sg_make_image(&(sg_image_desc){
-            .usage.render_attachment = true,
+        // the render target image, texture view and pass descriptor
+        sg_image img = sg_make_image(&(sg_image_desc){
+            .usage.color_attachment = true,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .pixel_format = OFFSCREEN_PIXELFORMAT,
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
         });
-        state.passes[i].attachments = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0].image = state.passes[i].img
+        state.passes[i].tex_view = sg_make_view(&(sg_view_desc){
+            .texture_binding = { .image = img },
         });
-
-        // each render target is cleared to a different background color
-        state.passes[i].pass_action = (sg_pass_action){
-            .colors[0] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .clear_value = bg[i],
-            }
+        state.passes[i].pass = (sg_pass){
+            .attachments = {
+                .colors[0] = sg_make_view(&(sg_view_desc){
+                    .color_attachment = { .image = img },
+                }),
+            },
+            // each render target is cleared to a different background color
+            .action = {
+                .colors[0] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .clear_value = bg[i],
+                }
+            },
         };
     }
 
@@ -233,10 +238,7 @@ static void frame(void) {
     // right into the loop above, but this shows that the "text definition"
     // can be decoupled from the actual rendering
     for (int i = 0; i < NUM_FACES; i++) {
-        sg_begin_pass(&(sg_pass){
-            .action = state.passes[i].pass_action,
-            .attachments = state.passes[i].attachments,
-        });
+        sg_begin_pass(&state.passes[i].pass);
         sdtx_set_context(state.passes[i].text_context);
         sdtx_draw();
         sg_end_pass();
@@ -252,7 +254,7 @@ static void frame(void) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,
-            .images[IMG_tex] = state.passes[i].img,
+            .textures[TEX_tex] = state.passes[i].tex_view,
             .samplers[SMP_smp] = state.smp
         });
         sg_draw(i * 6, 6, 1);

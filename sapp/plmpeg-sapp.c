@@ -84,7 +84,8 @@ static struct {
         int width;
         int height;
         uint64_t last_upd_frame;
-    } image_attrs[3];
+        sg_image img;
+    } images[3];
     ring_t free_buffers;
     ring_t full_buffers;
     int cur_download_buffer;
@@ -250,7 +251,7 @@ static void frame(void) {
 
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    if (state.bind.images[0].id != SG_INVALID_ID) {
+    if (state.bind.textures[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -273,27 +274,33 @@ static void cleanup(void) {
 // (re-)create a video plane texture on demand, and update it with decoded video-plane data
 static void validate_texture(int slot, plm_plane_t* plane) {
 
-    if ((state.image_attrs[slot].width != (int)plane->width) ||
-        (state.image_attrs[slot].height != (int)plane->height))
+    if ((state.images[slot].width != (int)plane->width) ||
+        (state.images[slot].height != (int)plane->height))
     {
-        state.image_attrs[slot].width = (int)plane->width;
-        state.image_attrs[slot].height = (int)plane->height;
+        state.images[slot].width = (int)plane->width;
+        state.images[slot].height = (int)plane->height;
 
         // NOTE: it's ok to call sg_destroy_image() with SG_INVALID_ID
-        sg_destroy_image(state.bind.images[slot]);
-        state.bind.images[slot] = sg_make_image(&(sg_image_desc){
+        sg_destroy_image(state.images[slot].img);
+        state.images[slot].img = sg_make_image(&(sg_image_desc){
             .width = (int)plane->width,
             .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
             .usage.stream_update = true,
         });
+
+        // recreate associated view
+        sg_destroy_view(state.bind.textures[slot]);
+        state.bind.textures[slot] = sg_make_view(&(sg_view_desc){
+            .texture_binding = { .image = state.images[slot].img },
+        });
     }
 
     // copy decoded plane pixels into texture, need to prevent that
     // sg_update_image() is called more than once per frame
-    if (state.image_attrs[slot].last_upd_frame != state.cur_frame) {
-        state.image_attrs[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.bind.images[slot], &(sg_image_data){
+    if (state.images[slot].last_upd_frame != state.cur_frame) {
+        state.images[slot].last_upd_frame = state.cur_frame;
+        sg_update_image(state.images[slot].img, &(sg_image_data){
             .subimage[0][0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)
@@ -305,9 +312,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
     (void)mpeg; (void)user;
-    validate_texture(IMG_tex_y, &frame->y);
-    validate_texture(IMG_tex_cb, &frame->cb);
-    validate_texture(IMG_tex_cr, &frame->cr);
+    validate_texture(TEX_tex_y, &frame->y);
+    validate_texture(TEX_tex_cb, &frame->cb);
+    validate_texture(TEX_tex_cr, &frame->cr);
 }
 
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
