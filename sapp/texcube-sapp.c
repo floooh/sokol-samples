@@ -104,10 +104,11 @@ void init(void) {
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels),
-        .label = "texcube-texture"
+        .label = "texcube-image",
     });
     state.bind.textures[TEX_tex] = sg_make_view(&(sg_view_desc){
         .texture_binding = { .image = img },
+        .label = "texcube-texture-view",
     });
 
     // create a sampler object with default attributes
