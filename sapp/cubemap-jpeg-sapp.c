@@ -141,7 +141,7 @@ static void init(void) {
     // texture data has been asynchronously loaded, this allows us to write
     // a regular render loop without having to explicitly skip rendering as
     // long as the texture isn't loaded yet
-    state.bind.textures[TEX_tex] = sg_alloc_view();
+    state.bind.views[VIEW_tex] = sg_alloc_view();
 
     // a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
@@ -214,8 +214,8 @@ static void fetch_cb(const sfetch_response_t* response) {
                 });
                 free((void*)state.pixels.ptr); state.pixels.ptr = 0;
                 // ...and initialize the pre-allocated view
-                sg_init_view(state.bind.textures[TEX_tex], &(sg_view_desc){
-                    .texture_binding = { .image = img },
+                sg_init_view(state.bind.views[VIEW_tex], &(sg_view_desc){
+                    .texture = { .image = img },
                     .label = "cubemap-view",
                 });
             }

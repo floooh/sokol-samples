@@ -73,7 +73,7 @@ static void init(void) {
         state.images.resolve[i] = sg_alloc_image();
         state.offscreen.pass.attachments.colors[i] = sg_alloc_view();
         state.offscreen.pass.attachments.resolves[i] = sg_alloc_view();
-        state.fsq.bind.textures[TEX_tex0 + i] = sg_alloc_view();
+        state.fsq.bind.views[VIEW_tex0 + i] = sg_alloc_view();
     }
     state.images.depth = sg_alloc_image();
     state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
@@ -257,7 +257,7 @@ static void frame(void) {
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.textures[TEX_tex] = state.fsq.bind.textures[TEX_tex0 + i];
+        state.dbg.bind.views[VIEW_tex] = state.fsq.bind.views[VIEW_tex0 + i];
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }
@@ -291,7 +291,7 @@ static void reinit_attachments(int width, int height) {
         sg_uninit_image(state.images.resolve[i]);
         sg_uninit_view(state.offscreen.pass.attachments.colors[i]);
         sg_uninit_view(state.offscreen.pass.attachments.resolves[i]);
-        sg_uninit_view(state.fsq.bind.textures[TEX_tex + i]);
+        sg_uninit_view(state.fsq.bind.views[VIEW_tex + i]);
     }
     sg_uninit_image(state.images.depth);
     sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
@@ -318,8 +318,8 @@ static void reinit_attachments(int width, int height) {
         sg_init_view(state.offscreen.pass.attachments.resolves[i], &(sg_view_desc){
             .resolve_attachment = { .image = state.images.resolve[i] },
         });
-        sg_init_view(state.fsq.bind.textures[TEX_tex0 + i], &(sg_view_desc){
-            .texture_binding = { .image = state.images.resolve[i] },
+        sg_init_view(state.fsq.bind.views[VIEW_tex0 + i], &(sg_view_desc){
+            .texture = { .image = state.images.resolve[i] },
         });
     }
     sg_init_image(state.images.depth, &(sg_image_desc){

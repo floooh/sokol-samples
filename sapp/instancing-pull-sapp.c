@@ -77,8 +77,8 @@ static void init(void) {
         .data = SG_RANGE(vertices),
         .label = "geometry-vertices",
     });
-    state.bind.storage_buffers[SBUF_vertices] = sg_make_view(&(sg_view_desc){
-        .storage_buffer_binding = { .buffer = sbuf },
+    state.bind.views[VIEW_vertices] = sg_make_view(&(sg_view_desc){
+        .storage_buffer = { .buffer = sbuf },
         .label = "geometry-vertices-view",
     });
 
@@ -99,8 +99,8 @@ static void init(void) {
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
         .label = "instance-data",
     });
-    state.bind.storage_buffers[SBUF_instances] = sg_make_view(&(sg_view_desc){
-        .storage_buffer_binding = { .buffer = state.inst_buf },
+    state.bind.views[VIEW_instances] = sg_make_view(&(sg_view_desc){
+        .storage_buffer = { .buffer = state.inst_buf },
         .label = "insatnce-date-view",
     });
 

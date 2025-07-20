@@ -127,7 +127,7 @@ static void init(void) {
         .label = "shadow-map-depth-stencil-view",
     });
     sg_view shadow_map_tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = shadow_map_img },
+        .texture = { .image = shadow_map_img },
         .label = "shadow-map-tex-view",
     });
 
@@ -207,7 +207,7 @@ static void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .textures[TEX_shadow_map] = shadow_map_tex_view,
+        .views[VIEW_shadow_map] = shadow_map_tex_view,
         .samplers[SMP_shadow_sampler] = shadow_sampler,
     };
 
@@ -237,7 +237,7 @@ static void init(void) {
     });
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = dbg_vbuf,
-        .textures[TEX_dbg_tex] = shadow_map_tex_view,
+        .views[VIEW_dbg_tex] = shadow_map_tex_view,
         .samplers[SMP_dbg_smp] = dbg_smp,
     };
 }

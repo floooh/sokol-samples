@@ -88,8 +88,8 @@ static void init(void) {
         .data = SG_RANGE(vertices),
         .label = "cube-vertex-buffer",
     });
-    state.bind.storage_buffers[SBUF_vertices] = sg_make_view(&(sg_view_desc){
-        .storage_buffer_binding = { .buffer = vbuf },
+    state.bind.views[VIEW_vertices] = sg_make_view(&(sg_view_desc){
+        .storage_buffer = { .buffer = vbuf },
         .label = "cube-vertex-view",
     });
 
@@ -122,8 +122,8 @@ static void init(void) {
         .data = SG_RANGE(colors),
         .label = "color-palette-buffer",
     });
-    state.bind.storage_buffers[SBUF_colors] = sg_make_view(&(sg_view_desc){
-        .storage_buffer_binding = { .buffer = cbuf },
+    state.bind.views[VIEW_colors] = sg_make_view(&(sg_view_desc){
+        .storage_buffer = { .buffer = cbuf },
         .label = "color-palette-view",
     });
 
@@ -141,8 +141,8 @@ static void init(void) {
         .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "texture",
     });
-    state.bind.textures[TEX_tex] = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = img },
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
         .label = "texture-view",
     });
 

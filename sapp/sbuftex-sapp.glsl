@@ -26,14 +26,14 @@ void main() {
 @end
 
 @fs fs
-layout(binding=0) uniform texture2D tex;
+layout(binding=1) uniform texture2D tex;
 layout(binding=0) uniform sampler smp;
 
 struct sb_color {
     vec4 color;
 };
 
-layout(binding=1) readonly buffer colors {
+layout(binding=2) readonly buffer colors {
     sb_color clr[];
 };
 

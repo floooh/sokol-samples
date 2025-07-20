@@ -129,8 +129,8 @@ static void init(void) {
     // bindings for the display-pass
     state.display.bind = (sg_bindings) {
         .index_buffer = state.display.ibuf,
-        .textures[TEX_tex] = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = state.offscreen.img },
+        .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = state.offscreen.img },
         }),
         .samplers[SMP_smp] = smp,
     };

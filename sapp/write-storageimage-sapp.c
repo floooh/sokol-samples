@@ -50,13 +50,13 @@ static void init(void) {
 
     // a storage image view for compute shader access
     state.compute.simg_view = sg_make_view(&(sg_view_desc){
-        .storage_image_binding = { .image = state.img },
+        .storage_image = { .image = state.img },
         .label = "storage-image-view",
     });
 
     // a texture view for binding the same image as texture
     state.display.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = state.img },
+        .texture = { .image = state.img },
         .label = "texture-view",
     });
 
@@ -94,7 +94,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_images[SIMG_cs_out_tex] = state.compute.simg_view,
+        .views[VIEW_cs_out_tex] = state.compute.simg_view,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch(WIDTH / 16, HEIGHT / 16, 1);    // shader local_size_x/y is 16
@@ -104,7 +104,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "render-pass" });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
-        .textures[TEX_disp_tex] = state.display.tex_view,
+        .views[VIEW_disp_tex] = state.display.tex_view,
         .samplers[SMP_disp_smp] = state.display.smp,
     });
     sg_draw(0, 3, 1);

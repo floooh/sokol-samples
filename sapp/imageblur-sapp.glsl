@@ -10,7 +10,7 @@ layout(binding=0) uniform cs_params {
 };
 
 layout(binding=0) uniform texture2D cs_inp_tex;
-layout(binding=0, rgba8) uniform writeonly image2D cs_outp_tex;
+layout(binding=1, rgba8) uniform writeonly image2D cs_outp_tex;
 layout(binding=0) uniform sampler cs_smp;
 
 layout(local_size_x=32, local_size_y=1, local_size_z=1) in;

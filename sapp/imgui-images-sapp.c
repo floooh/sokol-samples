@@ -103,7 +103,7 @@ static void init(void) {
 
     // texture- and attachment-views
     state.offscreen.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding.image = color_img,
+        .texture.image = color_img,
     });
     sg_view color_view = sg_make_view(&(sg_view_desc){
         .color_attachment.image = color_img,

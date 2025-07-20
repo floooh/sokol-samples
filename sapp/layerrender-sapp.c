@@ -120,7 +120,7 @@ static void init(void) {
         .depth_stencil_attachment.image = depth_img,
     });
     state.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = color_img },
+        .texture = { .image = color_img },
     });
 
     // a pipeline object for the offscreen pass
@@ -171,7 +171,7 @@ static void init(void) {
     state.display.bindings = (sg_bindings){
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .textures[TEX_tex] = state.tex_view,
+        .views[VIEW_tex] = state.tex_view,
         .samplers[SMP_smp] = state.smp,
     };
 

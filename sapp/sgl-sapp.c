@@ -37,7 +37,7 @@ static void init(void) {
         }
     }
     state.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = {
+        .texture = {
             .image = sg_make_image(&(sg_image_desc){
                 .width = 8,
                 .height = 8,

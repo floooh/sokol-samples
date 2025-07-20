@@ -64,7 +64,7 @@ void init(void) {
     });
 
     // a texture view for the image
-    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture_binding = { .image = img } });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture = { .image = img } });
 
     // a sampler object
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -147,7 +147,7 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .textures[TEX_tex] = tex_view,
+        .views[VIEW_tex] = tex_view,
         .samplers[SMP_smp] = smp,
     };
 }

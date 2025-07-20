@@ -65,7 +65,7 @@ static void init(void) {
 
     // create a storage-buffer-view on the buffer
     state.compute.sbuf_view = sg_make_view(&(sg_view_desc){
-        .storage_buffer_binding = { .buffer = state.buf },
+        .storage_buffer = { .buffer = state.buf },
     });
 
     // a compute shader and pipeline object for updating particle positions
@@ -132,7 +132,7 @@ static void init(void) {
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[SBUF_cs_ssbo] = state.compute.sbuf_view,
+        .views[VIEW_cs_ssbo] = state.compute.sbuf_view,
     });
     sg_dispatch(MAX_PARTICLES / 64, 1, 1);
     sg_end_pass();
@@ -154,7 +154,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[SBUF_cs_ssbo] = state.compute.sbuf_view,
+        .views[VIEW_cs_ssbo] = state.compute.sbuf_view,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch((state.num_particles+63)/64, 1, 1);

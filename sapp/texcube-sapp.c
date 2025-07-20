@@ -106,8 +106,8 @@ void init(void) {
         .data.subimage[0][0] = SG_RANGE(pixels),
         .label = "texcube-image",
     });
-    state.bind.textures[TEX_tex] = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = img },
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
         .label = "texcube-texture-view",
     });
 

@@ -292,7 +292,7 @@ static void init(void) {
         pixels[i] = 0xFFFFFFFF;
     }
     state.placeholders.white = sg_make_view(&(sg_view_desc){
-        .texture_binding = {
+        .texture = {
             .image = sg_make_image(&(sg_image_desc){
                 .width = 8,
                 .height = 8,
@@ -305,7 +305,7 @@ static void init(void) {
         pixels[i] = 0xFF000000;
     }
     state.placeholders.black = sg_make_view(&(sg_view_desc){
-        .texture_binding = {
+        .texture = {
             .image = sg_make_image(&(sg_image_desc){
                 .width = 8,
                 .height = 8,
@@ -318,7 +318,7 @@ static void init(void) {
         pixels[i] = 0xFF0000FF;
     }
     state.placeholders.normal = sg_make_view(&(sg_view_desc){
-        .texture_binding = {
+        .texture = {
             .image = sg_make_image(&(sg_image_desc){
                 .width = 8,
                 .height = 8,
@@ -407,11 +407,11 @@ static void frame(void) {
                         emissive_tex = state.placeholders.black;
                         emissive_smp = state.placeholders.smp;
                     }
-                    bind.textures[TEX_cgltf_base_color_tex] = base_color_tex;
-                    bind.textures[TEX_cgltf_metallic_roughness_tex] = metallic_roughness_tex;
-                    bind.textures[TEX_cgltf_normal_tex] = normal_tex;
-                    bind.textures[TEX_cgltf_occlusion_tex] = occlusion_tex;
-                    bind.textures[TEX_cgltf_emissive_tex] = emissive_tex;
+                    bind.views[VIEW_cgltf_base_color_tex] = base_color_tex;
+                    bind.views[VIEW_cgltf_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.views[VIEW_cgltf_normal_tex] = normal_tex;
+                    bind.views[VIEW_cgltf_occlusion_tex] = occlusion_tex;
+                    bind.views[VIEW_cgltf_emissive_tex] = emissive_tex;
                     bind.samplers[SMP_cgltf_base_color_smp] = base_color_smp;
                     bind.samplers[SMP_cgltf_metallic_roughness_smp] = metallic_roughness_smp;
                     bind.samplers[SMP_cgltf_normal_smp] = normal_smp;
@@ -815,7 +815,7 @@ static void create_sg_image_samplers_for_gltf_image(int gltf_image_index, sg_ran
         if (p->gltf_image_index == gltf_image_index) {
             state.scene.images[i].img = sbasisu_make_image(data);
             state.scene.images[i].tex_view = sg_make_view(&(sg_view_desc){
-                .texture_binding = { .image = state.scene.images[i].img },
+                .texture = { .image = state.scene.images[i].img },
             });
             state.scene.images[i].smp = sg_make_sampler(&(sg_sampler_desc){
                 .min_filter = p->min_filter,

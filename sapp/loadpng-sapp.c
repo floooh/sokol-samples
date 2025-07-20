@@ -63,7 +63,7 @@ static void init(void) {
        Any draw calls containing such an "incomplete" view handle
        will be silently dropped.
     */
-    state.bind.textures[TEX_tex] = sg_alloc_view();
+    state.bind.views[VIEW_tex] = sg_alloc_view();
 
     // a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
@@ -185,8 +185,8 @@ static void fetch_callback(const sfetch_response_t* response) {
             stbi_image_free(pixels);
 
             // ...and initialize the pre-allocated texture view handle with that image
-            sg_init_view(state.bind.textures[TEX_tex], &(sg_view_desc){
-                .texture_binding = { .image = img },
+            sg_init_view(state.bind.views[VIEW_tex], &(sg_view_desc){
+                .texture = { .image = img },
             });
         }
     } else if (response->failed) {

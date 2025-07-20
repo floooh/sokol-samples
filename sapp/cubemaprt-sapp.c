@@ -44,8 +44,10 @@ typedef struct {
 // the entire application state
 typedef struct {
     sg_image cubemap;
+    sg_view cubemap_texview;
     sg_sampler smp;
-    sg_attachments offscreen_attachments[SG_CUBEFACE_NUM];
+    sg_view offscreen_color_views[SG_CUBEFACE_NUM];
+    sg_view offscreen_depth_view;
     sg_pass_action offscreen_pass_action;
     sg_pass_action display_pass_action;
     mesh_t cube;
@@ -81,19 +83,21 @@ void init(void) {
     });
     __dbgui_setup(DISPLAY_SAMPLE_COUNT);
 
-    // create a cubemap as render target, and a matching depth-buffer texture
+    // create a cubemap as render target, a texture view, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_CUBE,
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = 1024,
         .height = 1024,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "cubemap-color-rt"
     });
-    // ... and a matching depth-buffer image
+    app.cubemap_texview = sg_make_view(&(sg_view_desc){
+        .texture = { .image = app.cubemap },
+    });
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
-        .usage.render_attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = 1024,
         .height = 1024,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -103,15 +107,13 @@ void init(void) {
 
     // create 6 pass objects, one for each cubemap face
     for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
-        app.offscreen_attachments[i] = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0] = {
-                .image = app.cubemap,
-                .slice = i
-            },
-            .depth_stencil.image = depth_img,
-            .label = "offscreen-pass"
+        app.offscreen_color_views[i] = sg_make_view(&(sg_view_desc){
+            .color_attachment = { .image = app.cubemap, .slice = i },
         });
     }
+    app.offscreen_depth_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment = { .image = depth_img },
+    });
 
     // pass action for offscreen pass (clear to black)
     app.offscreen_pass_action = (sg_pass_action) {
@@ -228,7 +230,13 @@ void frame(void) {
     };
     #endif
     for (int face = 0; face < SG_CUBEFACE_NUM; face++) {
-        sg_begin_pass(&(sg_pass){ .action = app.offscreen_pass_action, .attachments = app.offscreen_attachments[face] });
+        sg_begin_pass(&(sg_pass){
+            .action = app.offscreen_pass_action,
+            .attachments = {
+                .colors[0] = app.offscreen_color_views[face],
+                .depth_stencil = app.offscreen_depth_view,
+            }
+        });
         hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 0.0f), center_and_up[face][0], center_and_up[face][1]);
         hmm_mat4 view_proj = HMM_MultiplyMat4(app.offscreen_proj, view);
         draw_cubes(app.offscreen_shapes_pip, HMM_Vec3(0.0f, 0.0f, 0.0f), view_proj);
@@ -257,7 +265,7 @@ void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
         .index_buffer = app.cube.ibuf,
-        .images[IMG_tex] = app.cubemap,
+        .views[VIEW_tex] = app.cubemap_texview,
         .samplers[SMP_smp] = app.smp,
     });
     shape_uniforms_t uniforms = {

@@ -179,8 +179,8 @@ static void init(void) {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .textures[TEX_tex] = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = color_img },
+        .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = color_img },
         }),
         .samplers[SMP_smp] = smp,
     };

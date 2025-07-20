@@ -47,7 +47,7 @@ void init(void) {
         .label = "dynamic-texture"
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = state.img },
+        .texture = { .image = state.img },
     });
 
     // a sampler object
@@ -135,7 +135,7 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .textures[TEX_tex] = tex_view,
+        .views[VIEW_tex] = tex_view,
         .samplers[SMP_smp] = smp,
     };
 

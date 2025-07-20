@@ -60,7 +60,7 @@ static image_and_views_t make_image_and_views(const sg_image_desc* img_desc) {
         .color_attachment = { .image = img },
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = img },
+        .texture = { .image = img },
     });
     return (image_and_views_t){ .img = img, .att_view = att_view, .tex_view = tex_view };
 }
@@ -263,17 +263,17 @@ static void frame(void) {
         sg_apply_viewport(x0 + i*(quad_width+quad_gap), y0, quad_width, quad_height, true);
         switch (i) {
             case 0:
-                bindings.textures[TEX_tex] = state.offscreen.depth.tex_view;
+                bindings.views[VIEW_tex] = state.offscreen.depth.tex_view;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 1:
-                bindings.textures[TEX_tex] = state.offscreen.normal.tex_view;
+                bindings.views[VIEW_tex] = state.offscreen.normal.tex_view;
                 quad_params.color_bias = 1.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 2:
-                bindings.textures[TEX_tex] = state.offscreen.color.tex_view;
+                bindings.views[VIEW_tex] = state.offscreen.color.tex_view;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 1.0f;
                 break;

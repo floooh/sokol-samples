@@ -57,7 +57,7 @@ static void init(void) {
         .data.subimage[0][0] = SG_RANGE(test_pixels)
     });
     state.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = img },
+        .texture = { .image = img },
     });
 
     // one sampler per uv wrap mode
@@ -94,7 +94,7 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .textures[TEX_tex] = state.tex_view,
+            .views[VIEW_tex] = state.tex_view,
             .samplers[SMP_smp] = state.smp[i],
         });
         float x_offset = 0, y_offset = 0;

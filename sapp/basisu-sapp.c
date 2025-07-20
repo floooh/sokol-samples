@@ -70,10 +70,10 @@ void init(void) {
 
     // create sokol-gfx textures from the embedded Basis Universal textures
     state.opaque_view = sg_make_view(&(sg_view_desc){
-        .texture_binding.image = sbasisu_make_image(SG_RANGE(embed_testcard_basis)),
+        .texture.image = sbasisu_make_image(SG_RANGE(embed_testcard_basis)),
     });
     state.alpha_view = sg_make_view(&(sg_view_desc){
-        .texture_binding.image = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis)),
+        .texture.image = sbasisu_make_image(SG_RANGE(embed_testcard_rgba_basis)),
     });
 
     // create a sampler object

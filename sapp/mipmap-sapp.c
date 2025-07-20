@@ -87,9 +87,7 @@ void init(void) {
     });
 
     // ...and a texture view for the image
-    state.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = img },
-    });
+    state.tex_view = sg_make_view(&(sg_view_desc){ .texture = { .image = img } });
 
     // the first 4 samplers are just different min-filters
     sg_sampler_desc smp_desc = {
@@ -156,7 +154,7 @@ void frame(void) {
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
-        .textures[TEX_tex] = state.tex_view,
+        .views[VIEW_tex] = state.tex_view,
     };
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);

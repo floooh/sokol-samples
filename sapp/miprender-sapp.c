@@ -113,7 +113,7 @@ static void init(void) {
 
     // create a single texture view for the color attachment image
     state.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding = { .image = color_img },
+        .texture = { .image = color_img },
     });
 
     // create pass attachment views for each miplevel
@@ -173,7 +173,7 @@ static void init(void) {
     state.display.bindings = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .textures[TEX_tex] = state.tex_view,
+        .views[VIEW_tex] = state.tex_view,
         .samplers[SMP_smp] = state.smp,
     };
 

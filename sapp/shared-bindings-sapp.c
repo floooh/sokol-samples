@@ -102,27 +102,27 @@ static void init(void) {
 
     // create 3 textures, shaders and pipeline objects
     for (int i = 0; i < NUM_CUBES; i++) {
-        int tex_slot, smp_slot;
+        int view_slot, smp_slot;
         uint32_t color;
         const char* label;
         sg_shader shd;
         switch (i) {
             case RED_CUBE:
-                tex_slot = TEX_tex_red;
+                view_slot = VIEW_tex_red;
                 smp_slot = SMP_smp_red;
                 color = 0xFF0000FF;
                 label = "red";
                 shd = sg_make_shader(red_shader_desc(sg_query_backend()));
                 break;
             case GREEN_CUBE:
-                tex_slot = TEX_tex_green;
+                view_slot = VIEW_tex_green;
                 smp_slot = SMP_smp_green;
                 color = 0xFF00FF00;
                 label = "green";
                 shd = sg_make_shader(green_shader_desc(sg_query_backend()));
                 break;
             default:
-                tex_slot = TEX_tex_blue;
+                view_slot = VIEW_tex_blue;
                 smp_slot = SMP_smp_blue;
                 color = 0xFFFF0000;
                 label = "blue";
@@ -136,8 +136,8 @@ static void init(void) {
                 pixels[y][x] = ((x ^ y) & 1) ? color : 0xFF000000;
             }
         }
-        state.bind.textures[tex_slot] = sg_make_view(&(sg_view_desc){
-            .texture_binding = {
+        state.bind.views[view_slot] = sg_make_view(&(sg_view_desc){
+            .texture = {
                 .image = sg_make_image(&(sg_image_desc){
                     .width = 4,
                     .height = 4,

@@ -94,8 +94,8 @@ static void init(void) {
             }
         }
     }
-    state.bind.textures[TEX_tex] = sg_make_view(&(sg_view_desc){
-        .texture_binding = {
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = {
             .image = sg_make_image(&(sg_image_desc){
                 .type = SG_IMAGETYPE_3D,
                 .width = TEX3D_DIM,

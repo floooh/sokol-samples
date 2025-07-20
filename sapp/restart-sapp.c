@@ -184,7 +184,7 @@ static void init(void) {
 
     // setup rendering resources
     state.scene.img = sg_alloc_image();
-    state.scene.bind.textures[TEX_tex] = sg_alloc_view();
+    state.scene.bind.views[VIEW_tex] = sg_alloc_view();
 
     state.scene.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
@@ -273,8 +273,8 @@ static void fetch_img_callback(const sfetch_response_t* response) {
                     .size = (size_t)(png_width * png_height * 4),
                 }
             });
-            sg_init_view(state.scene.bind.textures[TEX_tex], &(sg_view_desc){
-                .texture_binding = { .image = state.scene.img },
+            sg_init_view(state.scene.bind.views[VIEW_tex], &(sg_view_desc){
+                .texture = { .image = state.scene.img },
             });
             stbi_image_free(pixels);
         }

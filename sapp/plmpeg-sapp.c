@@ -251,7 +251,7 @@ static void frame(void) {
 
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    if (state.bind.textures[0].id != SG_INVALID_ID) {
+    if (state.bind.views[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -290,9 +290,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
         });
 
         // recreate associated view
-        sg_destroy_view(state.bind.textures[slot]);
-        state.bind.textures[slot] = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = state.images[slot].img },
+        sg_destroy_view(state.bind.views[slot]);
+        state.bind.views[slot] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = state.images[slot].img },
         });
     }
 
@@ -312,9 +312,9 @@ static void validate_texture(int slot, plm_plane_t* plane) {
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
     (void)mpeg; (void)user;
-    validate_texture(TEX_tex_y, &frame->y);
-    validate_texture(TEX_tex_cb, &frame->cb);
-    validate_texture(TEX_tex_cr, &frame->cr);
+    validate_texture(VIEW_tex_y, &frame->y);
+    validate_texture(VIEW_tex_cb, &frame->cb);
+    validate_texture(VIEW_tex_cr, &frame->cr);
 }
 
 // the pl_mpeg audio callback, forwards decoded audio samples to sokol-audio
