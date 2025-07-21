@@ -66,7 +66,7 @@ static void init(void) {
         { .pos = {  1.0,  1.0, -1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } },
     };
     sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer_binding = true,
+        .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
         .label = "cube-vertices",
     });
@@ -103,6 +103,7 @@ static void init(void) {
         .index_buffer = ibuf,
         .views[VIEW_ssbo] = sg_make_view(&(sg_view_desc){
             .storage_buffer = { .buffer = sbuf, .offset = 0 },
+            .label = "cube-vertices-view",
         }),
     };
 

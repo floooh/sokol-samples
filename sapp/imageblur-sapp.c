@@ -28,8 +28,10 @@ static struct {
     struct {
         sg_pipeline pip;
         sg_image src_image;
+        sg_view src_tex_view;
         sg_image storage_image[2];
-        sg_attachments attachments[2];
+        sg_view storage_simg_views[2];
+        sg_view storage_tex_views[2];
     } compute;
     struct {
         sg_pipeline pip;
@@ -55,7 +57,7 @@ static struct {
 static sgimgui_t sgimgui;
 static uint8_t file_buffer[256 * 1024];
 
-static void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image);
+static void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view);
 static void fetch_callback(const sfetch_response_t* response);
 static void draw_ui(void);
 
@@ -81,6 +83,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "nearest-sampler",
     });
 
     // start loading source png file asynchronously, all sokol-gfx image
@@ -123,18 +126,18 @@ static void frame(void) {
     }
 
     // ping-pong blur passes starting with the source image
-    blur_pass(0, state.compute.attachments[0], state.compute.src_image);
-    blur_pass(1, state.compute.attachments[1], state.compute.storage_image[0]);
+    blur_pass(0, state.compute.storage_simg_views[0], state.compute.src_tex_view);
+    blur_pass(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
     for (int i = 0; i < state.ui.iterations - 1; i++) {
-        blur_pass(0, state.compute.attachments[0], state.compute.storage_image[1]);
-        blur_pass(1, state.compute.attachments[1], state.compute.storage_image[0]);
+        blur_pass(0, state.compute.storage_simg_views[0], state.compute.storage_tex_views[1]);
+        blur_pass(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
     }
 
     // swapchain render pass to display the result
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "display-pass" });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
-        .images[IMG_disp_tex] = state.compute.storage_image[1],
+        .views[VIEW_disp_tex] = state.compute.storage_tex_views[1],
         .samplers[SMP_disp_smp] = state.smp,
     });
     sg_draw(0, 3, 1);
@@ -155,7 +158,7 @@ static void input(const sapp_event* ev) {
 }
 
 // perform a horizontal or vertical blur pass in a compute shader
-void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image) {
+void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view) {
     const int batch = 4;        // must match shader
     const int tile_dim = 128;   // must match shader
     const int filter_size = state.ui.filter_size | 1;   // must be odd
@@ -169,10 +172,11 @@ void blur_pass(int flip, sg_attachments pass_attachments, sg_image src_image) {
     const int num_workgroups_x = (int)ceilf(src_width / (float)cs_params.block_dim);
     const int num_workgroups_y = (int)ceilf(src_height / (float)batch);
 
-    sg_begin_pass(&(sg_pass){ .compute = true, .attachments = pass_attachments, .label = "blur-pass"});
+    sg_begin_pass(&(sg_pass){ .compute = true, .label = "blur-pass"});
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .images[IMG_cs_inp_tex] = src_image,
+        .views[VIEW_cs_inp_tex] = src_tex_view,
+        .views[VIEW_cs_outp_tex] = dst_simg_view,
         .samplers[SMP_cs_smp] = state.smp,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
@@ -205,22 +209,29 @@ static void fetch_callback(const sfetch_response_t* response) {
                 },
                 .label = "source-image",
             });
-            // create two storage textures for the 2-pass blur and two attachments objects
-            const char* storage_image_labels[2] = { "storage-image-0", "storage-image-1" };
-            const char* compute_pass_labels[2] = { "compute-pass-0", "compute-pass-1" };
+            state.compute.src_tex_view = sg_make_view(&(sg_view_desc){
+                .texture = { .image = state.compute.src_image },
+                .label = "source-image-texture-view",
+            });
+            // create two storage textures for the 2-pass blur, and associated storage-image-views and one texture-views
+            const char* img_labels[2] = { "storage-image-0", "storage-image-1" };
+            const char* tex_view_labels[2] = { "storage-image-tex-view-0", "storage-image-tex-view-1" };
+            const char* att_view_labels[2] = { "storage-image-att-view-0", "storage-image-att-view-1" };
             for (int i = 0; i < 2; i++) {
                 state.compute.storage_image[i] = sg_make_image(&(sg_image_desc){
-                    .usage = {
-                        .storage_attachment = true,
-                    },
+                    .usage.storage_image = true,
                     .width = state.src_width,
                     .height = state.src_height,
                     .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .label = storage_image_labels[i],
+                    .label = img_labels[i],
                 });
-                state.compute.attachments[i] = sg_make_attachments(&(sg_attachments_desc){
-                    .storages[SIMG_cs_outp_tex] = { .image = state.compute.storage_image[i] },
-                    .label = compute_pass_labels[i],
+                state.compute.storage_tex_views[i] = sg_make_view(&(sg_view_desc){
+                    .texture = { .image = state.compute.storage_image[i] },
+                    .label = tex_view_labels[i],
+                });
+                state.compute.storage_simg_views[i] = sg_make_view(&(sg_view_desc){
+                    .storage_image = { .image = state.compute.storage_image[i] },
+                    .label = att_view_labels[i],
                 });
             }
             state.io.succeeded = true;

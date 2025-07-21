@@ -145,6 +145,7 @@ static void init(void) {
     });
     sg_view shadow_depth_att_view = sg_make_view(&(sg_view_desc){
         .depth_stencil_attachment = { .image = shadow_depth_img },
+        .label = "shadow-depth-attachment",
     });
 
     // shadow render pass descriptor

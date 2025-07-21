@@ -73,9 +73,11 @@ static void init(void) {
         .attachments = {
             .colors[0] = sg_make_view(&(sg_view_desc){
                 .color_attachment = { .image = color_img },
+                .label = "color-attachment",
             }),
             .depth_stencil = sg_make_view(&(sg_view_desc){
                 .depth_stencil_attachment = { .image = depth_img },
+                .label = "depth-attachment",
             }),
         },
         .action = {
@@ -167,6 +169,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
+        .label = "sampler",
     });
 
     // the resource bindings for rendering a non-textured shape into offscreen render target
@@ -181,6 +184,7 @@ static void init(void) {
         .index_buffer = ibuf,
         .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
             .texture = { .image = color_img },
+            .label = "texture-view",
         }),
         .samplers[SMP_smp] = smp,
     };

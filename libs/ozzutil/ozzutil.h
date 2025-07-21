@@ -28,6 +28,7 @@ typedef struct {
 void ozz_setup(const ozz_desc_t* desc);
 void ozz_shutdown(void);
 sg_image ozz_joint_texture(void);
+sg_view ozz_joint_texture_view(void);
 sg_sampler ozz_joint_sampler(void);
 ozz_instance_t* ozz_create_instance(int index);
 void ozz_destroy_instance(ozz_instance_t* ozz);

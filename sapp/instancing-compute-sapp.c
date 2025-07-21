@@ -58,7 +58,7 @@ static void init(void) {
         .size = MAX_PARTICLES * sizeof(particle_t),
         .usage = {
             .vertex_buffer = true,
-            .storage_buffer_binding = true,
+            .storage_buffer = true,
         },
         .label = "particle-buffer",
     });
@@ -66,6 +66,7 @@ static void init(void) {
     // create a storage-buffer-view on the buffer
     state.compute.sbuf_view = sg_make_view(&(sg_view_desc){
         .storage_buffer = { .buffer = state.buf },
+        .label = "psrticle-buffer-view",
     });
 
     // a compute shader and pipeline object for updating particle positions

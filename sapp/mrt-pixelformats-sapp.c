@@ -54,13 +54,15 @@ static struct {
     float rx, ry;
 } state;
 
-static image_and_views_t make_image_and_views(const sg_image_desc* img_desc) {
+static image_and_views_t make_image_and_views(const sg_image_desc* img_desc, const char* att_label, const char* tex_label) {
     sg_image img = sg_make_image(img_desc);
     sg_view att_view = sg_make_view(&(sg_view_desc){
         .color_attachment = { .image = img },
+        .label = att_label,
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){
         .texture = { .image = img },
+        .label = tex_label,
     });
     return (image_and_views_t){ .img = img, .att_view = att_view, .tex_view = tex_view };
 }
@@ -89,17 +91,22 @@ static void init(void) {
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .sample_count = 1,
+            .label = "depth-image",
         };
-        state.offscreen.depth = make_image_and_views(&img_desc);
+        state.offscreen.depth = make_image_and_views(&img_desc, "depth-attachment", "depth-texture");
         img_desc.pixel_format = NORMAL_PIXEL_FORMAT;
-        state.offscreen.normal = make_image_and_views(&img_desc);
+        img_desc.label = "normal-image";
+        state.offscreen.normal = make_image_and_views(&img_desc, "normal-attachment", "normal-texture");
         img_desc.pixel_format = COLOR_PIXEL_FORMAT;
-        state.offscreen.color = make_image_and_views(&img_desc);
+        img_desc.label = "color-image";
+        state.offscreen.color = make_image_and_views(&img_desc, "color-attachment", "color-texture");
         img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true };
         img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+        img_desc.label = "depth-buffer-image";
         sg_image zbuf_img = sg_make_image(&img_desc);
         sg_view zbuf_view = sg_make_view(&(sg_view_desc){
             .depth_stencil_attachment = { .image = zbuf_img },
+            .label = "depth-buffer-attachment",
         });
 
         // a render pass descriptor for mrt rendering

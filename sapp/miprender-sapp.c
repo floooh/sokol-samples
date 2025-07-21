@@ -14,6 +14,7 @@
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "miprender-sapp.glsl.h"
+#include <stdio.h> // snprintf
 
 #define IMG_WIDTH (512)
 #define IMG_HEIGHT (512)
@@ -77,8 +78,10 @@ static void init(void) {
     assert(buf.valid);
 
     // create one vertex- and one index-buffer for all shapes
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    vbuf_desc.label = "shape-vertices";
+    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    ibuf_desc.label = "shape-indices";
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
 
@@ -90,6 +93,7 @@ static void init(void) {
         .num_mipmaps = IMG_NUM_MIPMAPS,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = 1,
+        .label = "color-image",
     });
 
     // we also need a matching depth buffer image
@@ -100,6 +104,7 @@ static void init(void) {
         .num_mipmaps = IMG_NUM_MIPMAPS,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = 1,
+        .label = "depth-image",
     });
 
     // create a sampler which smoothly blends between mipmaps
@@ -109,20 +114,28 @@ static void init(void) {
         .mipmap_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 
     // create a single texture view for the color attachment image
     state.tex_view = sg_make_view(&(sg_view_desc){
         .texture = { .image = color_img },
+        .label = "color-texture-view",
     });
 
     // create pass attachment views for each miplevel
     for (int mip_level = 0; mip_level < IMG_NUM_MIPMAPS; mip_level++) {
+        char color_label[32];
+        char depth_label[32];
+        snprintf(color_label, sizeof(color_label), "color-attachment-mip-%d", mip_level);
+        snprintf(depth_label, sizeof(depth_label), "depth-attachment-mip-%d", mip_level);
         state.offscreen.att_views[mip_level].color = sg_make_view(&(sg_view_desc){
             .color_attachment = { .image = color_img, .mip_level = mip_level },
+            .label = color_label,
         });
         state.offscreen.att_views[mip_level].depth = sg_make_view(&(sg_view_desc){
             .depth_stencil_attachment = { .image = depth_img, .mip_level = mip_level },
+            .label = depth_label,
         });
     }
 
@@ -145,6 +158,7 @@ static void init(void) {
             .pixel_format = SG_PIXELFORMAT_DEPTH,
         },
         .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
+        .label = "offscreen-pipeline",
     });
 
     // ...and a pipeline object for the display pass
@@ -162,7 +176,8 @@ static void init(void) {
         .depth = {
             .write_enabled = true,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
-        }
+        },
+        .label = "display-pipeline",
     });
 
     // initialize resource bindings

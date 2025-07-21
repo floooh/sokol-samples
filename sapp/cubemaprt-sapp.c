@@ -12,6 +12,7 @@
 #include "dbgui/dbgui.h"
 #include <stddef.h> /* offsetof */
 #include "cubemaprt-sapp.glsl.h"
+#include <stdio.h> // snprintf
 
 // NOTE: cubemaps can't be multisampled, so (OFFSCREEN_SAMPLE_COUNT > 1) will be a validation error
 #define OFFSCREEN_SAMPLE_COUNT (1)
@@ -94,6 +95,7 @@ void init(void) {
     });
     app.cubemap_texview = sg_make_view(&(sg_view_desc){
         .texture = { .image = app.cubemap },
+        .label = "cubemap-texview",
     });
     sg_image depth_img = sg_make_image(&(sg_image_desc){
         .type = SG_IMAGETYPE_2D,
@@ -107,12 +109,16 @@ void init(void) {
 
     // create 6 pass objects, one for each cubemap face
     for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
+        char label[32];
+        snprintf(label, sizeof(label), "cubemap-texview-%d", i);
         app.offscreen_color_views[i] = sg_make_view(&(sg_view_desc){
             .color_attachment = { .image = app.cubemap, .slice = i },
+            .label = label,
         });
     }
     app.offscreen_depth_view = sg_make_view(&(sg_view_desc){
         .depth_stencil_attachment = { .image = depth_img },
+        .label = "depth-stencil-attachment",
     });
 
     // pass action for offscreen pass (clear to black)

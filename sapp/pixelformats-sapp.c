@@ -451,7 +451,7 @@ static image_and_views_t make_image_and_views(const sg_image_desc* img_desc, boo
     image_and_views_t res = { .img = sg_make_image(img_desc) };
     if (has_tex_view) {
         res.tex_view = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = res.img },
+            .texture = { .image = res.img },
         });
     }
     if (att_view_type == SG_VIEWTYPE_COLORATTACHMENT) {

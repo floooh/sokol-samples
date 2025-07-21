@@ -103,16 +103,18 @@ static void init(void) {
                 .num_slices = TEX3D_DIM,
                 .num_mipmaps = 1,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .label = "3d texture",
+                .label = "3d-texture",
                 .data.subimage[0][0] = SG_RANGE(pixels)
             }),
         },
+        .label = "3d-texture-view",
     });
 
     // ...and a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .label = "sampler",
     });
 }
 

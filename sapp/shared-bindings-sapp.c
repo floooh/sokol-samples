@@ -104,28 +104,40 @@ static void init(void) {
     for (int i = 0; i < NUM_CUBES; i++) {
         int view_slot, smp_slot;
         uint32_t color;
-        const char* label;
+        const char* image_label;
+        const char* view_label;
+        const char* smp_label;
+        const char* pip_label;
         sg_shader shd;
         switch (i) {
             case RED_CUBE:
                 view_slot = VIEW_tex_red;
                 smp_slot = SMP_smp_red;
                 color = 0xFF0000FF;
-                label = "red";
+                image_label = "red-image";
+                view_label = "red-texture-view";
+                smp_label = "red-sampler";
+                pip_label = "red-pipeline";
                 shd = sg_make_shader(red_shader_desc(sg_query_backend()));
                 break;
             case GREEN_CUBE:
                 view_slot = VIEW_tex_green;
                 smp_slot = SMP_smp_green;
                 color = 0xFF00FF00;
-                label = "green";
+                image_label = "green-image";
+                view_label = "green-texture-view";
+                smp_label = "green-sampler";
+                pip_label = "green-pipeline";
                 shd = sg_make_shader(green_shader_desc(sg_query_backend()));
                 break;
             default:
                 view_slot = VIEW_tex_blue;
                 smp_slot = SMP_smp_blue;
                 color = 0xFFFF0000;
-                label = "blue";
+                image_label = "blue-image";
+                view_label = "blue-texture-view";
+                smp_label = "blue-sampler";
+                pip_label = "blue-pipeline";
                 shd = sg_make_shader(blue_shader_desc(sg_query_backend()));
                 break;
         }
@@ -142,12 +154,13 @@ static void init(void) {
                     .width = 4,
                     .height = 4,
                     .data.subimage[0][0] = SG_RANGE(pixels),
-                    .label = label,
+                    .label = image_label,
                 }),
             },
+            .label = view_label,
         });
         state.bind.samplers[smp_slot] = sg_make_sampler(&(sg_sampler_desc){
-            .label = label,
+            .label = smp_label,
         });
         state.pip[i] = sg_make_pipeline(&(sg_pipeline_desc){
             .shader = shd,
@@ -162,7 +175,7 @@ static void init(void) {
                 .compare = SG_COMPAREFUNC_LESS_EQUAL,
                 .write_enabled = true,
             },
-            .label = label,
+            .label = pip_label,
         });
     }
 }

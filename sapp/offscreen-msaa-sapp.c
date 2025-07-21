@@ -106,12 +106,15 @@ static void init(void) {
     state.offscreen.atts = (sg_attachments){
         .colors[0] = sg_make_view(&(sg_view_desc){
             .color_attachment = { .image = msaa_image },
+            .label = "color-attachment",
         }),
         .resolves[0] = sg_make_view(&(sg_view_desc){
             .resolve_attachment = { .image = resolve_image },
+            .label = "resolve-attachment",
         }),
         .depth_stencil = sg_make_view(&(sg_view_desc){
             .depth_stencil_attachment = { .image = depth_image },
+            .label = "depth-attachment",
         }),
     };
 
@@ -192,6 +195,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
+        .label = "sampler",
     });
 
     // the resource bindings for rendering a non-textured shape in the offscreen pass
@@ -207,6 +211,7 @@ static void init(void) {
         .index_buffer = ibuf,
         .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
             .texture = { .image = resolve_image },
+            .label = "texture-view",
         }),
         .samplers[SMP_smp] = smp,
     };

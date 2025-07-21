@@ -66,6 +66,9 @@ static struct {
     std::unique_ptr<ozz_t> ozz;
     sg_pass_action pass_action;
     sg_pipeline pip;
+    sg_buffer instance_buf;
+    sg_buffer joint_buf;
+    sg_buffer vertex_buf;
     sg_bindings bind;
     int num_instances;          // current number of character instances
     int num_triangle_indices;
@@ -170,7 +173,7 @@ static void init(void) {
     pip_desc.label = "pipeline";
     state.pip = sg_make_pipeline(&pip_desc);
 
-    // create a storage buffer which holds the per-instance model-matrices,
+    // create a storage buffer and view which holds the per-instance model-matrices,
     // the model matrices never change, so we can put them into an immutable buffer
     {
         init_instances();
@@ -178,17 +181,25 @@ static void init(void) {
         buf_desc.usage.storage_buffer = true;
         buf_desc.data = SG_RANGE(instance_data);
         buf_desc.label = "instances";
-        state.bind.storage_buffers[SBUF_instances] = sg_make_buffer(&buf_desc);
+        state.instance_buf = sg_make_buffer(&buf_desc);
+        sg_view_desc view_desc = {};
+        view_desc.storage_buffer.buffer = state.instance_buf;
+        view_desc.label = "instances-view";
+        state.bind.views[VIEW_instances] = sg_make_view(&view_desc);
     }
 
-    // create another dynamic storage buffer which receives the animated joint matrices
+    // create another dynamic storage buffer and view which receives the animated joint matrices
     {
         sg_buffer_desc buf_desc = {};
         buf_desc.usage.storage_buffer = true;
         buf_desc.usage.stream_update = true;
         buf_desc.size = MAX_INSTANCES * MAX_JOINTS * sizeof(sb_joint_t);
         buf_desc.label = "joints";
-        state.bind.storage_buffers[SBUF_joints] = sg_make_buffer(&buf_desc);
+        state.joint_buf = sg_make_buffer(&buf_desc);
+        sg_view_desc view_desc = {};
+        view_desc.storage_buffer.buffer = state.joint_buf;
+        view_desc.label = "joints-view";
+        state.bind.views[VIEW_joints] = sg_make_view(&view_desc);
     }
 
     // NOTE: the storage buffers for vertices and indices are created in the async fetch callbacks
@@ -312,7 +323,7 @@ static void update_joints(void) {
     state.time.anim_eval_time = stm_since(start_time);
 
     // update the sokol-gfx joint storage buffer
-    sg_update_buffer(state.bind.storage_buffers[SBUF_joints], SG_RANGE(joint_upload_buffer));
+    sg_update_buffer(state.joint_buf, SG_RANGE(joint_upload_buffer));
 }
 
 // arrange the character instances into a quad
@@ -454,13 +465,17 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
             v->joint_weights = pack_f4_ubyte4n(jw0, jw1, jw2, jw3);
         }
 
-        // create a storage buffer with the vertex data, and an index buffer
-        sg_buffer_desc vbuf_desc = { };
+        // create a storage buffer and view with the vertex data, and an index buffer
+        sg_buffer_desc vbuf_desc = {};
         vbuf_desc.usage.storage_buffer = true;
         vbuf_desc.data.ptr = vertices;
         vbuf_desc.data.size = num_vertices * sizeof(sb_vertex_t);
         vbuf_desc.label = "vertices";
-        state.bind.storage_buffers[SBUF_vertices] = sg_make_buffer(&vbuf_desc);
+        state.vertex_buf = sg_make_buffer(&vbuf_desc);
+        sg_view_desc view_desc = {};
+        view_desc.storage_buffer.buffer = state.vertex_buf;
+        view_desc.label = "vertices-view";
+        state.bind.views[VIEW_vertices] = sg_make_view(&view_desc);
         free(vertices); vertices = nullptr;
 
         sg_buffer_desc ibuf_desc = { };

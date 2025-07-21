@@ -201,6 +201,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 
     // complete the resource bindings for the fullscreen quad
@@ -219,7 +220,7 @@ static void init(void) {
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .samplers[SMP_smp] = smp,
-        // images will be filled right before rendering
+        // texture views will be filled right before rendering
     };
 }
 
@@ -297,29 +298,37 @@ static void reinit_attachments(int width, int height) {
     sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
 
     // ...next initialize images with the new size and re-init their associated handles
+    const char* msaa_image_labels[NUM_MRTS] = { "msaa-image-red", "msaa-image-green", "msaa-image-blue" };
+    const char* resolve_image_labels[NUM_MRTS] = { "resolve-image-red", "resolve-image-green", "resolve-image-blue" };
+    const char* color_attachment_labels[NUM_MRTS] = { "color-attachment-red", "color-attachment-green", "color-attachment-blue" };
+    const char* resolve_attachment_labels[NUM_MRTS] = { "resolve-attachment-red", "resolve-attachment-green", "resolve-attachment-blue" };
+    const char* tex_view_labels[NUM_MRTS] = { "texture-view-red", "texture-view-green", "texture-view-blue" };
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_init_image(state.images.color[i], &(sg_image_desc){
             .usage.color_attachment = true,
             .width = width,
             .height = height,
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
-            .label = "msaa image",
+            .label = msaa_image_labels[i],
         });
         sg_init_image(state.images.resolve[i], &(sg_image_desc){
             .usage.resolve_attachment = true,
             .width = width,
             .height = height,
             .sample_count = 1,
-            .label = "resolve image",
+            .label = resolve_image_labels[i],
         });
         sg_init_view(state.offscreen.pass.attachments.colors[i], &(sg_view_desc){
             .color_attachment = { .image = state.images.color[i] },
+            .label = color_attachment_labels[i],
         });
         sg_init_view(state.offscreen.pass.attachments.resolves[i], &(sg_view_desc){
             .resolve_attachment = { .image = state.images.resolve[i] },
+            .label = resolve_attachment_labels[i],
         });
         sg_init_view(state.fsq.bind.views[VIEW_tex0 + i], &(sg_view_desc){
             .texture = { .image = state.images.resolve[i] },
+            .label = tex_view_labels[i],
         });
     }
     sg_init_image(state.images.depth, &(sg_image_desc){
@@ -328,10 +337,11 @@ static void reinit_attachments(int width, int height) {
         .height = height,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .label = "depth image",
+        .label = "depth-image",
     });
     sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
         .depth_stencil_attachment = { .image = state.images.depth },
+        .label = "depth-attachment",
     });
 }
 

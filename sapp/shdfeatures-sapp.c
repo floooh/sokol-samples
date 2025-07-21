@@ -116,7 +116,7 @@ typedef struct {
     // function pointers to code-generated runtime-reflection functions
     const sg_shader_desc* (*shader_desc_fn)(sg_backend backend);
     int (*attr_slot_fn)(const char* attr_name);
-    int (*image_slot_fn)(const char* img_name);
+    int (*texture_slot_fn)(const char* tex_name);
     int (*sampler_slot_fn)(const char* smp_name);
     int (*uniformblock_slot_fn)(const char* ub_name);
     size_t (*uniformblock_size_fn)(const char* ub_name);
@@ -186,7 +186,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = none_prog_shader_desc,
             .attr_slot_fn = none_prog_attr_slot,
-            .image_slot_fn = none_prog_image_slot,
+            .texture_slot_fn = none_prog_texture_slot,
             .sampler_slot_fn = none_prog_sampler_slot,
             .uniformblock_slot_fn = none_prog_uniformblock_slot,
             .uniformblock_size_fn = none_prog_uniformblock_size,
@@ -197,7 +197,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = slm_prog_shader_desc,
             .attr_slot_fn = slm_prog_attr_slot,
-            .image_slot_fn = slm_prog_image_slot,
+            .texture_slot_fn = slm_prog_texture_slot,
             .sampler_slot_fn = slm_prog_sampler_slot,
             .uniformblock_slot_fn = slm_prog_uniformblock_slot,
             .uniformblock_size_fn = slm_prog_uniformblock_size,
@@ -208,7 +208,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = sl_prog_shader_desc,
             .attr_slot_fn = sl_prog_attr_slot,
-            .image_slot_fn = sl_prog_image_slot,
+            .texture_slot_fn = sl_prog_texture_slot,
             .sampler_slot_fn = sl_prog_sampler_slot,
             .uniformblock_slot_fn = sl_prog_uniformblock_slot,
             .uniformblock_size_fn = sl_prog_uniformblock_size,
@@ -219,7 +219,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = s_prog_shader_desc,
             .attr_slot_fn = s_prog_attr_slot,
-            .image_slot_fn = s_prog_image_slot,
+            .texture_slot_fn = s_prog_texture_slot,
             .sampler_slot_fn = s_prog_sampler_slot,
             .uniformblock_slot_fn = s_prog_uniformblock_slot,
             .uniformblock_size_fn = s_prog_uniformblock_size,
@@ -230,7 +230,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = sm_prog_shader_desc,
             .attr_slot_fn = sm_prog_attr_slot,
-            .image_slot_fn = sm_prog_image_slot,
+            .texture_slot_fn = sm_prog_texture_slot,
             .sampler_slot_fn = sm_prog_sampler_slot,
             .uniformblock_slot_fn = sm_prog_uniformblock_slot,
             .uniformblock_size_fn = sm_prog_uniformblock_size,
@@ -241,7 +241,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = lm_prog_shader_desc,
             .attr_slot_fn = lm_prog_attr_slot,
-            .image_slot_fn = lm_prog_image_slot,
+            .texture_slot_fn = lm_prog_texture_slot,
             .sampler_slot_fn = lm_prog_sampler_slot,
             .uniformblock_slot_fn = lm_prog_uniformblock_slot,
             .uniformblock_size_fn = lm_prog_uniformblock_size,
@@ -252,7 +252,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = m_prog_shader_desc,
             .attr_slot_fn = m_prog_attr_slot,
-            .image_slot_fn = m_prog_image_slot,
+            .texture_slot_fn = m_prog_texture_slot,
             .sampler_slot_fn = m_prog_sampler_slot,
             .uniformblock_slot_fn = m_prog_uniformblock_slot,
             .uniformblock_size_fn = m_prog_uniformblock_size,
@@ -263,7 +263,7 @@ static struct {
             .valid = true,
             .shader_desc_fn = l_prog_shader_desc,
             .attr_slot_fn = l_prog_attr_slot,
-            .image_slot_fn = l_prog_image_slot,
+            .texture_slot_fn = l_prog_texture_slot,
             .sampler_slot_fn = l_prog_sampler_slot,
             .uniformblock_slot_fn = l_prog_uniformblock_slot,
             .uniformblock_size_fn = l_prog_uniformblock_size,
@@ -356,10 +356,10 @@ static void init(void) {
         }
 
         // check if the shader variation needs the joint texture
-        const int tex_slot = var->image_slot_fn("joint_tex");
+        const int tex_slot = var->texture_slot_fn("joint_tex");
         if (tex_slot >= 0) {
             const int smp_slot = var->sampler_slot_fn("smp");
-            var->bind.images[tex_slot] = ozz_joint_texture();
+            var->bind.views[tex_slot] = ozz_joint_texture_view();
             var->bind.samplers[smp_slot] = ozz_joint_sampler();
         }
 

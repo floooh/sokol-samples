@@ -69,6 +69,7 @@ static void init(void) {
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .label = "png-sampler",
     });
 
     // cube vertex buffer with packed texcoords
@@ -181,12 +182,14 @@ static void fetch_callback(const sfetch_response_t* response) {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),
                 },
+                .label = "png-image",
             });
             stbi_image_free(pixels);
 
             // ...and initialize the pre-allocated texture view handle with that image
             sg_init_view(state.bind.views[VIEW_tex], &(sg_view_desc){
                 .texture = { .image = img },
+                .label = "png-texture-view",
             });
         }
     } else if (response->failed) {

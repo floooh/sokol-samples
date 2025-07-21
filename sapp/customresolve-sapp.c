@@ -21,15 +21,15 @@
 static struct {
     struct {
         sg_image img;
+        sg_view tex_view;
         sg_pipeline pip;
-        sg_attachments atts;
-        sg_pass_action action;
+        sg_pass pass;
     } msaa;
     struct {
         sg_image img;
+        sg_view tex_view;
         sg_pipeline pip;
-        sg_attachments atts;
-        sg_pass_action action;
+        sg_pass pass;
         sg_bindings bind;
         fs_params_t fs_params;
     } resolve;
@@ -63,7 +63,7 @@ static void init(void) {
     sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
 
     // catch WebGL2/GLES3
-    if (!sg_query_features().msaa_image_bindings) {
+    if (!sg_query_features().msaa_texture_bindings) {
         return;
     }
 
@@ -75,60 +75,72 @@ static void init(void) {
 
     // msaa-render-pass objects
     state.msaa.img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = 4,
-        .label = "msaa image",
+        .label = "msaa-image",
+    });
+    state.msaa.tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.msaa.img },
+        .label = "msaa-texture-view",
     });
     state.msaa.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(msaa_shader_desc(sg_query_backend())),
         .sample_count = 4,
         .depth.pixel_format = SG_PIXELFORMAT_NONE,
         .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
-        .label = "msaa pipeline",
+        .label = "msaa-pipeline",
     });
-    state.msaa.atts = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.msaa.img,
-        .label = "msaa pass attachments",
-    });
-    state.msaa.action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .store_action = SG_STOREACTION_STORE,
-            .clear_value = { 0, 0, 0, 1 },
+    state.msaa.pass = (sg_pass) {
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .store_action = SG_STOREACTION_STORE,
+                .clear_value = { 0, 0, 0, 1 },
+            },
         },
+        .attachments.colors[0] = sg_make_view(&(sg_view_desc){
+            .color_attachment = { .image = state.msaa.img },
+            .label = "msaa-attachment-view",
+        }),
     };
 
     // resolve-render-pass objects
     state.resolve.img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = 1,
-        .label = "resolve image",
+        .label = "resolve-image",
+    });
+    state.resolve.tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.resolve.img },
+        .label = "resolve-texture-view",
     });
     state.resolve.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(resolve_shader_desc(sg_query_backend())),
         .sample_count = 1,
         .depth.pixel_format = SG_PIXELFORMAT_NONE,
         .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
-        .label = "resolve pipeline",
+        .label = "resolve-pipeline",
     });
-    state.resolve.atts = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.resolve.img,
-        .label = "resolve pass attachments",
-    });
-    state.resolve.action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_DONTCARE,
-            .store_action = SG_STOREACTION_STORE
+    state.resolve.pass = (sg_pass){
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_DONTCARE,
+                .store_action = SG_STOREACTION_STORE
+            },
         },
+        .attachments.colors[0] = sg_make_view(&(sg_view_desc){
+            .color_attachment = { .image = state.resolve.img },
+            .label = "resolve-attachments-view",
+        }),
     };
     state.resolve.bind = (sg_bindings){
-        .images[IMG_texms] = state.msaa.img,
+        .views[VIEW_texms] = state.msaa.tex_view,
         .samplers[SMP_smp] = state.smp,
     };
     state.resolve.fs_params = default_weights;
@@ -142,26 +154,26 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_DONTCARE }
     };
     state.display.bind = (sg_bindings){
-        .images[IMG_tex] = state.resolve.img,
+        .views[VIEW_tex] = state.resolve.tex_view,
         .samplers[SMP_smp] = state.smp,
     };
 }
 
 static void frame(void) {
     draw_ui();
-    if (!sg_query_features().msaa_image_bindings) {
+    if (!sg_query_features().msaa_texture_bindings) {
         draw_fallback();
         return;
     }
 
     // draw a triangle into an msaa render target
-    sg_begin_pass(&(sg_pass){ .action = state.msaa.action, .attachments = state.msaa.atts });
+    sg_begin_pass(&state.msaa.pass);
     sg_apply_pipeline(state.msaa.pip);
     sg_draw(0, 3, 1);
     sg_end_pass();
 
     // custom resolve pass (via a 'fullscreen triangle')
-    sg_begin_pass(&(sg_pass){ .action = state.resolve.action, .attachments = state.resolve.atts });
+    sg_begin_pass(&state.resolve.pass);
     sg_apply_pipeline(state.resolve.pip);
     sg_apply_bindings(&state.resolve.bind);
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(state.resolve.fs_params));
@@ -199,7 +211,7 @@ static void draw_ui(void) {
 
     igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once);
     if (igBegin("#window", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
-        if (sg_query_features().msaa_image_bindings) {
+        if (sg_query_features().msaa_texture_bindings) {
             igText("Sample Weights:");
             igSliderFloatEx("0", &state.resolve.fs_params.weight0, 0.0f, 1.0f, "%.2f", 0);
             igSliderFloatEx("1", &state.resolve.fs_params.weight1, 0.0f, 1.0f, "%.2f", 0);

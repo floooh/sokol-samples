@@ -41,7 +41,7 @@ static void init(void) {
 
     // an image object with storage attachment usage
     state.img = sg_make_image(&(sg_image_desc){
-        .usage.storage_image_binding = true,
+        .usage.storage_image = true,
         .width = WIDTH,
         .height = HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,

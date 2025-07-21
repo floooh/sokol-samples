@@ -62,6 +62,7 @@ static void init(void) {
         .attachments = {
             .colors[0] = sg_make_view(&(sg_view_desc){
                 .color_attachment = { .image = state.offscreen.img },
+                .label = "plasma-texture-attachment",
             }),
         },
     };
@@ -131,6 +132,7 @@ static void init(void) {
         .index_buffer = state.display.ibuf,
         .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
             .texture = { .image = state.offscreen.img },
+            .label = "plasma-texture-view",
         }),
         .samplers[SMP_smp] = smp,
     };

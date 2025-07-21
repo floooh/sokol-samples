@@ -48,6 +48,7 @@ void init(void) {
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){
         .texture = { .image = state.img },
+        .label = "dynamic-texture-view",
     });
 
     // a sampler object
@@ -56,6 +57,7 @@ void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 
     // cube vertex buffer
