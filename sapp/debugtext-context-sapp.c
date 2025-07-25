@@ -172,7 +172,7 @@ static void init(void) {
             .sample_count = OFFSCREEN_SAMPLE_COUNT,
         });
         state.passes[i].tex_view = sg_make_view(&(sg_view_desc){
-            .texture_binding = { .image = img },
+            .texture = { .image = img },
         });
         state.passes[i].pass = (sg_pass){
             .attachments = {
@@ -254,7 +254,7 @@ static void frame(void) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
             .index_buffer = state.ibuf,
-            .textures[TEX_tex] = state.passes[i].tex_view,
+            .views[VIEW_tex] = state.passes[i].tex_view,
             .samplers[SMP_smp] = state.smp
         });
         sg_draw(i * 6, 6, 1);
