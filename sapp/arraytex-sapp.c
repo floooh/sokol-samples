@@ -64,7 +64,10 @@ void init(void) {
     });
 
     // a texture view for the image
-    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture = { .image = img }, .label = "array-texture-view" });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
+        .label = "array-texture-view"
+    });
 
     // a sampler object
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
