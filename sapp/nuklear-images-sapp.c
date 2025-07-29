@@ -36,9 +36,11 @@ static struct {
         sgl_context sgl_ctx;
         sgl_pipeline sgl_pip;
         sg_image color_img;
+        sg_view color_tex_view;
+        sg_view color_att_view;
         sg_image depth_img;
-        sg_attachments atts;
-        sg_pass_action pass_action;
+        sg_view depth_att_view;
+        sg_pass pass;
     } offscreen;
     struct {
         sg_pass_action pass_action;
@@ -87,31 +89,48 @@ static void init(void) {
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
     });
 
-    // color and depth render target textures for the offscreen pass
+    // color and depth render target images and views for the offscreen pass
     state.offscreen.color_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "color-image",
+    });
+    state.offscreen.color_tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.offscreen.color_img },
+        .label = "color-tex-view",
+    });
+    state.offscreen.color_att_view = sg_make_view(&(sg_view_desc){
+        .color_attachment = { .image = state.offscreen.color_img },
+        .label = "color-att-view",
     });
     state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "depth-image",
+    });
+    state.offscreen.depth_att_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment = { .image = state.offscreen.depth_img },
+        .label = "depth-att-view",
     });
 
-    // a render pass object to render into the offscreen render targets
-    state.offscreen.atts = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.offscreen.color_img,
-        .depth_stencil.image = state.offscreen.depth_img,
-    });
-
-    // a pass-action for the offscreen pass which clears to black
-    state.offscreen.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
+    // a pass struct for the offscreen render pass
+    state.offscreen.pass = (sg_pass){
+        // clear to black
+        .action.colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0, 0, 0, 1 },
+        },
+        // color- and depth-attachemnt-views
+        .attachments = {
+            .colors[0] = state.offscreen.color_att_view,
+            .depth_stencil = state.offscreen.depth_att_view,
+        },
     };
 
     // a pass action for the default pass which clears to blue-ish
@@ -122,7 +141,7 @@ static void init(void) {
     // sokol-nuklear image-sampler-pair wrappers which combine the offscreen
     // render target texture with different sampler types
     state.ui.img_nearest_clamp = snk_make_image(&(snk_image_desc_t){
-        .image = state.offscreen.color_img,
+        .texture_view = state.offscreen.color_tex_view,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
             .min_filter = SG_FILTER_NEAREST,
             .mag_filter = SG_FILTER_NEAREST,
@@ -131,7 +150,7 @@ static void init(void) {
         })
     });
     state.ui.img_linear_clamp = snk_make_image(&(snk_image_desc_t){
-        .image = state.offscreen.color_img,
+        .texture_view = state.offscreen.color_tex_view,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
             .min_filter = SG_FILTER_LINEAR,
             .mag_filter = SG_FILTER_LINEAR,
@@ -140,7 +159,7 @@ static void init(void) {
         })
     });
     state.ui.img_nearest_repeat = snk_make_image(&(snk_image_desc_t){
-        .image = state.offscreen.color_img,
+        .texture_view = state.offscreen.color_tex_view,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
             .min_filter = SG_FILTER_NEAREST,
             .mag_filter = SG_FILTER_NEAREST,
@@ -149,7 +168,7 @@ static void init(void) {
         })
     });
     state.ui.img_linear_mirror = snk_make_image(&(snk_image_desc_t){
-        .image = state.offscreen.color_img,
+        .texture_view = state.offscreen.color_tex_view,
         .sampler = sg_make_sampler(&(sg_sampler_desc){
             .min_filter = SG_FILTER_LINEAR,
             .mag_filter = SG_FILTER_LINEAR,
@@ -191,7 +210,7 @@ static void frame(void) {
 
     // perform sokol-gfx rendering...
     // ...first the offscreen pass which renders the sokol-gl scene
-    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
+    sg_begin_pass(&state.offscreen.pass);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
 
