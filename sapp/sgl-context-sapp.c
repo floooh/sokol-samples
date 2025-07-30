@@ -76,14 +76,14 @@ static void init(void) {
 
     // create an offscreen render target image, texture and attachment views
     sg_image img = sg_make_image(&(sg_image_desc){
-        .usage.attachment = true,
+        .usage.color_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_PIXELFORMAT,
         .sample_count = OFFSCREEN_SAMPLECOUNT,
     });
     state.offscreen.tex_view = sg_make_view(&(sg_view_desc){
-        .texture_binding.image = img,
+        .texture.image = img,
     });
     state.offscreen.pass = (sg_pass){
         .action = {

@@ -330,6 +330,9 @@ static void image_data_loaded(const sfetch_response_t* response) {
                     .size = (size_t)(img_width * img_height * 4)
                 }
             });
+            sg_init_view(img_info.sgview, &(sg_view_desc){
+                .texture = { .image = img_info.sgimage },
+            });
             sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
                 .min_filter = img_info.min_filter,
                 .mag_filter = img_info.mag_filter,
