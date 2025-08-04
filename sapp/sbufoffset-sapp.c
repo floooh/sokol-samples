@@ -181,12 +181,7 @@ static void draw_fallback(void) {
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_pos(1, 1);
     sdtx_puts("COMPUTE SHADERS NOT SUPPORTED ON THIS BACKEND");
-    sg_begin_pass(&(sg_pass){
-        .action = {
-            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1, 0, 0, 1} },
-        },
-        .swapchain = sglue_swapchain()
-    });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     sg_end_pass();
     sg_commit();
