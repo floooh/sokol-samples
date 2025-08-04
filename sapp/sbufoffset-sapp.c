@@ -48,7 +48,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // check for compute support and render fallback via sokol_debugtext.h if now available
+    // check for compute support and render fallback via sokol_debugtext.h if not available
     if (!sg_query_features().compute) {
         sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_cpc(), .logger.func = slog_func });
         // set pass action to render red background
