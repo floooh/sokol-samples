@@ -34,8 +34,8 @@ static sapp_icon_desc sokol_icon(void) {
     uint32_t* default_icon_pixels = 0;
     sapp_icon_desc default_icon_desc = {};
 
-    const int num_icons = 3;
-    const int icon_sizes[3] = { 16, 32, 64 };   // must be multiple of 8!
+    const int num_icons = 4;
+    const int icon_sizes[4] = { 16, 32, 64, 128 };   // must be multiple of 8!
 
     // allocate a pixel buffer for all icon pixels
     int all_num_pixels = 0;
@@ -147,7 +147,7 @@ static sapp_icon_desc sokol_icon(void) {
 
 struct state_t {
     sg_pass_action pass_action;
-    sapp_mouse_cursor_image cursor_images[3];
+    sapp_mouse_cursor_image cursor_images[8];
 };
 static state_t state;
 
@@ -170,7 +170,11 @@ static void init(void) {
     state.cursor_images[0] = sapp_make_mouse_cursor_image(&icon.images[0], 8, 8);
     state.cursor_images[1] = sapp_make_mouse_cursor_image(&icon.images[1], 16, 16);
     state.cursor_images[2] = sapp_make_mouse_cursor_image(&icon.images[2], 32, 32);
-
+    state.cursor_images[3] = sapp_make_mouse_cursor_image(&icon.images[3], 64, 64);
+    state.cursor_images[4] = sapp_make_mouse_cursor_image(&icon.images[1], 0, 0);
+    state.cursor_images[5] = sapp_make_mouse_cursor_image(&icon.images[1], 30, 0);
+    state.cursor_images[6] = sapp_make_mouse_cursor_image(&icon.images[1], 0, 30);
+    state.cursor_images[7] = sapp_make_mouse_cursor_image(&icon.images[1], 30, 30);
 }
 
 static void event(const sapp_event* e) {
@@ -227,6 +231,26 @@ static void frame(void) {
         ImGui::SameLine();
         if (draw_cursor_panel("64x64", panel_width, panel_height)) {
             cursor_image_to_set = state.cursor_images[2];
+        }
+        ImGui::SameLine();
+        if (draw_cursor_panel("128x128", panel_width, panel_height)) {
+            cursor_image_to_set = state.cursor_images[3];
+        }
+
+        if (draw_cursor_panel("hotspot top-left", panel_width, panel_height)) {
+            cursor_image_to_set = state.cursor_images[4];
+        }
+        ImGui::SameLine();
+        if (draw_cursor_panel("hotspot top-right", panel_width, panel_height)) {
+            cursor_image_to_set = state.cursor_images[5];
+        }
+        ImGui::SameLine();
+        if (draw_cursor_panel("hotspot bottom-left", panel_width, panel_height)) {
+            cursor_image_to_set = state.cursor_images[6];
+        }
+        ImGui::SameLine();
+        if (draw_cursor_panel("hotspot bottom-right", panel_width, panel_height)) {
+            cursor_image_to_set = state.cursor_images[7];
         }
     }
     ImGui::End();
