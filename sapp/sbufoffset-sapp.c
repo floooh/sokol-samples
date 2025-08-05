@@ -41,6 +41,10 @@ static struct {
 static void draw_fallback(void);
 static vs_params_t compute_vsparams(void);
 
+static size_t roundup(size_t val, size_t round_to) {
+    return (val+(round_to-1)) & ~(round_to-1);
+}
+
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -64,12 +68,14 @@ static void init(void) {
     };
 
     // create a buffer with index- and storage-buffer usage which holds both the index- and vertex-data
+    // NOTE: storage buffer view offsets must be aligned to 256 bytes
+    const size_t vertices_offset = roundup(NUM_INDICES * sizeof(uint32_t), 256);
     state.buf = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
             .index_buffer = true,
             .storage_buffer = true,
         },
-        .size = NUM_INDICES * sizeof(uint32_t) + NUM_VERTICES * sizeof(sb_vertex_t),
+        .size = vertices_offset + NUM_VERTICES * sizeof(sb_vertex_t),
         .label = "storage-buffer",
     });
 
@@ -84,7 +90,7 @@ static void init(void) {
     state.vtx_view = sg_make_view(&(sg_view_desc){
         .storage_buffer = {
             .buffer = state.buf,
-            .offset = NUM_INDICES * sizeof(uint32_t),
+            .offset = (int)vertices_offset,
         },
         .label = "vertex-view",
     });
