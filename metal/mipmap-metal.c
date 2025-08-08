@@ -21,6 +21,7 @@ static struct {
     sg_pipeline pip;
     sg_buffer vbuf;
     sg_image img;
+    sg_view tex_view;
     sg_sampler smp[12];
     float r;
     hmm_mat4 view_proj;
@@ -89,7 +90,7 @@ static void init(void) {
         }
     }
 
-    // create a single image and 12 samplers
+    // create a single image, a texture view and 12 samplers
     state.img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
@@ -97,6 +98,7 @@ static void init(void) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data = img_data
     });
+    state.tex_view = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // the first 4 samplers are just different min-filters
     sg_sampler_desc smp_desc = {
@@ -185,7 +187,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_texture_n = 0,
         },
@@ -193,9 +195,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -225,7 +227,7 @@ static void frame(void) {
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
-        .images[0] = state.img,
+        .views[0] = state.tex_view,
     };
     sg_begin_pass(&(sg_pass){ .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

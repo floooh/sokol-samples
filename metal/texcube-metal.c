@@ -82,17 +82,19 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    // create a checkerboard texture
+    // create a checkerboard image and texture view
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .width = 4,
-        .height = 4,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 4,
+            .height = 4,
+            .data.subimage[0][0] = SG_RANGE(pixels)
+        }),
     });
 
     // ...and a sampler
@@ -150,7 +152,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_texture_n = 0
         },
@@ -158,9 +160,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0
         },
     });

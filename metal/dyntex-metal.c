@@ -19,6 +19,7 @@
 
 static struct {
     sg_pass_action pass_action;
+    sg_image img;
     sg_pipeline pip;
     sg_bindings bind;
     float rx, ry;
@@ -42,12 +43,17 @@ static void init(void) {
     });
 
     // a 128x128 image with streaming update strategy
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
+    state.img = sg_make_image(&(sg_image_desc){
         .usage.stream_update = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
     });
+
+    // a texture view to bind the image as texture
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
+
+    // ...and a sampler
     state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
@@ -144,7 +150,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_texture_n = 0,
         },
@@ -152,9 +158,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -199,7 +205,7 @@ static void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.images[0], &(sg_image_data){
+    sg_update_image(state.img, &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 

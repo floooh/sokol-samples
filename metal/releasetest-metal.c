@@ -22,7 +22,7 @@ static void init(void) {
         .image_pool_size = 2,
         .shader_pool_size = 4,
         .pipeline_pool_size = 4,
-        .attachments_pool_size = 2,
+        .view_pool_size = 2,
         .environment = osx_environment(),
         .logger.func = slog_func,
     });
