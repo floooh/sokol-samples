@@ -124,10 +124,10 @@ static void init(void) {
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(idx_init_pip);
     sg_apply_bindings(&(sg_bindings){ .views[VIEW_cs_idx_ssbo] = idx_view });
-    sg_dispatch((NUM_INDICES / 32) + 1, 1, 1);
+    sg_dispatch(((NUM_INDICES - 1) / 32) + 1, 1, 1);
     sg_apply_pipeline(vtx_init_pip);
     sg_apply_bindings(&(sg_bindings){ .views[VIEW_cs_vtx_ssbo] = state.vtx_view });
-    sg_dispatch((NUM_VERTICES / 32) + 1, 1, 1);
+    sg_dispatch(((NUM_VERTICES - 1) / 32) + 1, 1, 1);
     sg_end_pass();
 
     // get rid of any objects we don't need anymore
