@@ -28,7 +28,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image and texture view with 3 layers and a checkerboard pattern
     uint32_t pixels[3][16][16];
     for (int layer=0, even_odd=0; layer<3; layer++) {
         for (int y = 0; y < 16; y++, even_odd++) {
@@ -45,13 +45,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             }
         }
     }
-    sg_image img = sg_make_image(&(sg_image_desc) {
-        .type = SG_IMAGETYPE_ARRAY,
-        .width = 16,
-        .height = 16,
-        .num_slices = 3,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .type = SG_IMAGETYPE_ARRAY,
+            .width = 16,
+            .height = 16,
+            .num_slices = 3,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data.subimage[0][0] = SG_RANGE(pixels)
+        }),
     });
 
     // ...and a sampler
@@ -115,7 +117,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -169,7 +171,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(params_t),
             .hlsl_register_b_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .image_type = SG_IMAGETYPE_ARRAY,
             .hlsl_register_t_n = 0,
@@ -178,9 +180,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_s_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });

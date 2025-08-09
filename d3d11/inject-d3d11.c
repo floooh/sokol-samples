@@ -142,15 +142,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     hr = d3d11_dev->lpVtbl->CreateTexture2D(d3d11_dev, &d3d11_tex_desc, 0, &d3d11_tex);
     assert(SUCCEEDED(hr) && d3d11_tex);
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC d3d11_srv_desc = {
-        .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-        .ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D,
-        .Texture2D.MipLevels = 1
-    };
-    ID3D11ShaderResourceView* d3d11_srv = 0;
-    hr = d3d11_dev->lpVtbl->CreateShaderResourceView(d3d11_dev, (ID3D11Resource*)d3d11_tex, &d3d11_srv_desc, &d3d11_srv);
-    assert(SUCCEEDED(hr) && d3d11_srv);
-
     // and create a sokol_gfx texture with injected D3D11 texture
     sg_reset_state_cache();
     sg_image img = sg_make_image(&(sg_image_desc){
@@ -158,22 +149,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        // out-comment either of the next lines for testing:
         .d3d11_texture = d3d11_tex,
-        .d3d11_shader_resource_view = d3d11_srv
     });
     assert(sg_d3d11_query_image_info(img).tex2d == d3d11_tex);
     assert(sg_d3d11_query_image_info(img).tex3d == 0);
     assert(sg_d3d11_query_image_info(img).res == d3d11_tex);
-    assert(sg_d3d11_query_image_info(img).srv == d3d11_srv);
     if (d3d11_tex) {
         d3d11_tex->lpVtbl->Release(d3d11_tex);
         d3d11_tex = 0;
     }
-    if (d3d11_srv) {
-        d3d11_srv->lpVtbl->Release(d3d11_srv);
-        d3d11_srv = 0;
-    }
+
+    // note: view objects can currently not be injected
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     // create a D3D11 sampler and inject into an sg_sampler
     D3D11_SAMPLER_DESC d3d11_smp_desc = {
@@ -234,7 +221,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(vs_params_t),
             .hlsl_register_b_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_t_n = 0,
         },
@@ -242,9 +229,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_s_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -281,7 +268,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 

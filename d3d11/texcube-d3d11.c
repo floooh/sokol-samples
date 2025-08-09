@@ -78,7 +78,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .data = SG_RANGE(indices)
     });
 
-    // create a checkerboard texture
+    // create a checkerboard image and texture view
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
         0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
@@ -91,6 +91,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     // create a sampler
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -137,7 +138,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(vs_params_t),
             .hlsl_register_b_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_t_n = 0,
         },
@@ -145,9 +146,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_s_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -174,10 +175,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_pass_action pass_action = { 0 };
 
     // resource bindings
-    sg_bindings bind = {
+    const sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 

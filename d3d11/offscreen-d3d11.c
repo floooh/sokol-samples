@@ -17,13 +17,13 @@ typedef struct {
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper and sokol_gfx
-    const int width = 800;
-    const int height = 600;
+    const int display_width = 800;
+    const int display_height = 600;
     const int display_sample_count = 4;
     const int offscreen_sample_count = 1;
     d3d11_init(&(d3d11_desc_t){
-        .width = width,
-        .height = height,
+        .width = display_width,
+        .height = display_height,
         .sample_count = display_sample_count,
         .title = L"offscreen-d3d11.c",
     });
@@ -32,25 +32,34 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    // create one color and one depth render target image
-    sg_image_desc img_desc = {
-        .usage.render_attachment = true,
-        .width = 512,
-        .height = 512,
+    // create one color- and one depth-stencil-attachment image
+    const int offscreen_width = 512;
+    const int offscreen_height = 512;
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
+        .width = offscreen_width,
+        .height = offscreen_height,
         .sample_count = offscreen_sample_count,
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    sg_image depth_img = sg_make_image(&img_desc);
-
-    // an offscreen pass attachments object into those images
-    sg_attachments offscreen_attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = color_img,
-        .depth_stencil.image = depth_img
     });
-    assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[0] != 0);
-    assert(sg_d3d11_query_attachments_info(offscreen_attachments).color_rtv[1] == 0);
-    assert(sg_d3d11_query_attachments_info(offscreen_attachments).dsv != 0);
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = offscreen_width,
+        .height = offscreen_height,
+        .sample_count = offscreen_sample_count,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+    });
+
+    // a texture view to bind the color image as texture
+    const sg_view color_texview = sg_make_view(&(sg_view_desc){ .texture.image = color_img });
+
+    // a pass struct with color- and depth-stencil-attachment views, and the pass action
+    const sg_pass offscreen_pass = (sg_pass){
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img }),
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = depth_img }),
+        },
+        .action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+    };
 
     // a sampler object for when the rendertarget image is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -58,13 +67,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .mag_filter = SG_FILTER_LINEAR,
     });
 
-    // pass action for offscreen pass, clearing to black
-    sg_pass_action offscreen_pass_action = {
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
-    };
-
     // pass action for default pass, clearing to blue-ish
-    sg_pass_action default_pass_action = {
+    const sg_pass_action default_pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f } }
     };
 
@@ -195,7 +199,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(vs_params_t),
             .hlsl_register_b_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_t_n = 0,
         },
@@ -203,9 +207,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_s_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -259,12 +263,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = color_img,
+        .views[0] = color_texview,
         .samplers[0] = smp,
     };
 
     // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
+    hmm_mat4 proj = HMM_Perspective(60.0f, (float)display_width/(float)display_height, 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
     hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
 
@@ -281,7 +285,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
 
         // offscreen pass, rendering an untextured cube
-        sg_begin_pass(&(sg_pass){ .action = offscreen_pass_action, .attachments = offscreen_attachments });
+        sg_begin_pass(&offscreen_pass);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(0, &SG_RANGE(vs_params));

@@ -80,7 +80,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
     }
 
-    // create a single image and 12 samplers
+    // create a single image, texture view and 12 samplers
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
@@ -88,6 +88,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data = img_data
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     // the first 4 samplers are just different min-filters
     sg_sampler smp[12];
@@ -163,7 +164,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(vs_params_t),
             .hlsl_register_b_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_t_n = 0,
         },
@@ -171,9 +172,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .hlsl_register_s_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         }
     });
@@ -205,7 +206,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_apply_pipeline(pip);
         sg_bindings bind = {
             .vertex_buffers[0] = vbuf,
-            .images[0] = img,
+            .views[0] = tex_view,
         };
         for (int i = 0; i < 12; i++) {
             const float x = ((float)(i & 3) - 1.5f) * 2.0f;

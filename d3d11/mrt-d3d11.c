@@ -11,6 +11,8 @@
 #define HANDMADE_MATH_NO_SSE
 #include "HandmadeMath.h"
 
+#define NUM_MRTS (3)
+
 typedef struct {
     float x, y, z, b;
 } vertex_t;
@@ -34,59 +36,68 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .logger.func = slog_func,
     });
 
-    // a render pass with 3 color attachment images, 3 msaa-resolve images and a depth attachment image
     const int offscreen_sample_count = 4;
-    const sg_image_desc color_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .sample_count = offscreen_sample_count
-    };
-    const sg_image_desc resolve_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .sample_count = 1,
-    };
-    const sg_image_desc depth_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .pixel_format = SG_PIXELFORMAT_DEPTH,
-        .sample_count = offscreen_sample_count,
-    };
-    sg_attachments_desc offscreen_attachments_desc = {
-        .colors = {
-            [0].image = sg_make_image(&color_img_desc),
-            [1].image = sg_make_image(&color_img_desc),
-            [2].image = sg_make_image(&color_img_desc)
-        },
-        .resolves = {
-            [0].image = sg_make_image(&resolve_img_desc),
-            [1].image = sg_make_image(&resolve_img_desc),
-            [2].image = sg_make_image(&resolve_img_desc),
-        },
-        .depth_stencil.image = sg_make_image(&depth_img_desc)
-    };
-    sg_attachments offscreen_attachments = sg_make_attachments(&offscreen_attachments_desc);
 
-    // a matching pass action with clear colors
-    sg_pass_action offscreen_pass_action = {
-        .colors = {
-            [0] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f },
+    // create image objects for color-, resolve- and depth-stencil-attachments,
+    // and texture views to sample the resolve images as texture
+    sg_image color_img[NUM_MRTS];
+    sg_image resolve_img[NUM_MRTS];
+    sg_view resolve_texview[NUM_MRTS];
+    for (int i = 0; i < NUM_MRTS; i++) {
+        color_img[i] = sg_make_image(&(sg_image_desc){
+            .usage.color_attachment = true,
+            .width = width,
+            .height = height,
+            .sample_count = offscreen_sample_count
+        });
+        resolve_img[i] = sg_make_image(&(sg_image_desc){
+            .usage.resolve_attachment = true,
+            .width = width,
+            .height = height,
+            .sample_count = 1,
+        });
+        resolve_texview[i] = sg_make_view(&(sg_view_desc){ .texture.image = resolve_img[i] });
+    }
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = width,
+        .height = height,
+        .sample_count = offscreen_sample_count,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+    });
+
+    // a pass struct with color-, resolve-, depth-stencil-attachemnts views, and the clear action
+    const sg_pass offscreen_pass = (sg_pass){
+        .attachments = {
+            .colors = {
+                [0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img[0] }),
+                [1] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img[1] }),
+                [2] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img[2] }),
             },
-            [1] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+            .resolves = {
+                [0] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = resolve_img[0] }),
+                [1] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = resolve_img[1] }),
+                [2] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = resolve_img[2] }),
             },
-            [2] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = depth_img }),
+        },
+        .action = {
+            .colors = {
+                [0] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f },
+                },
+                [1] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+                },
+                [2] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+                },
             },
         },
     };
@@ -274,16 +285,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(params_t),
             .hlsl_register_b_n = 0,
         },
-        .images = {
-            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 0 },
-            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 1 },
-            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 2 },
+        .views = {
+            [0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 0 },
+            [1].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 1 },
+            [2].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 2 },
         },
         .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_s_n = 0 },
-        .image_sampler_pairs = {
-            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
-            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
-            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
+        .texture_sampler_pairs = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 2, .sampler_slot = 0 },
         }
     });
 
@@ -297,10 +308,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // resource bindings for the fullscreen quad
     sg_bindings fsq_bind = {
         .vertex_buffers[0] = quad_buf,
-        .images = {
-            [0] = offscreen_attachments_desc.resolves[0].image,
-            [1] = offscreen_attachments_desc.resolves[1].image,
-            [2] = offscreen_attachments_desc.resolves[2].image,
+        .views = {
+            [0] = resolve_texview[0],
+            [1] = resolve_texview[1],
+            [2] = resolve_texview[2],
         },
         .samplers[0] = smp,
     };
@@ -332,9 +343,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
                 "  return float4(tex.Sample(smp, uv).xyz, 1.0);\n"
                 "}\n",
             .attrs[0].hlsl_sem_name = "POSITION",
-            .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 0 },
+            .views[0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_t_n = 0 },
             .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .hlsl_register_s_n = 0 },
-            .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
+            .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 0, .sampler_slot = 0 },
         })
     });
     // images will be filled right before rendering
@@ -367,10 +378,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         params.offset = HMM_Vec2(HMM_SinF(rx*0.01f)*0.1f, HMM_SinF(ry*0.01f)*0.1f);
 
         // render cube into MRT offscreen render targets
-        sg_begin_pass(&(sg_pass){
-            .action = offscreen_pass_action,
-            .attachments = offscreen_attachments
-        });
+        sg_begin_pass(&offscreen_pass);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(0, &SG_RANGE(offscreen_params));
@@ -390,7 +398,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_apply_pipeline(dbg_pip);
         for (int i = 0; i < 3; i++) {
             sg_apply_viewport(i*100, 0, 100, 100, false);
-            dbg_bind.images[0] = offscreen_attachments_desc.resolves[i].image;
+            dbg_bind.views[0] = resolve_texview[i];
             sg_apply_bindings(&dbg_bind);
             sg_draw(0, 4, 1);
         }
