@@ -33,7 +33,7 @@ int main() {
     });
     assert(sg_isvalid());
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image with 3 layers and a checkerboard pattern, plus a texture view
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -59,6 +59,7 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data.subimage[0][0] = SG_RANGE(pixels)
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
@@ -120,7 +121,7 @@ int main() {
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -166,11 +167,11 @@ int main() {
                 [3] = { .glsl_name="offset2", .type=SG_UNIFORMTYPE_FLOAT2 }
             }
         },
-        .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_type = SG_IMAGETYPE_ARRAY },
+        .views[0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_type = SG_IMAGETYPE_ARRAY },
         .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
             .glsl_name = "tex",
         },

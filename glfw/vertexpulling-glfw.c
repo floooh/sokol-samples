@@ -40,7 +40,7 @@ int main() {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0.5f, 1.0f, 1.0f } },
     };
 
-    // create a stroage buffer with the vertex data
+    // create a buffer with the vertex data and a storage buffer view
     const vertex_t vertices[] = {
         { .pos = { -1.0, -1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.0, 1.0 } },
         { .pos = {  1.0, -1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.0, 1.0 } },
@@ -76,6 +76,7 @@ int main() {
         .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
     });
+    sg_view sbuf_view = sg_make_view(&(sg_view_desc){ .storage_buffer.buffer = sbuf });
 
     // ... and an index buffer
     uint16_t indices[] = {
@@ -122,7 +123,7 @@ int main() {
                 [0] = {.glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
             },
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .glsl_binding_n = 0,
@@ -144,7 +145,7 @@ int main() {
     // the storage buffer is bound to the vertex stage
     sg_bindings bind = {
         .index_buffer = ibuf,
-        .storage_buffers[0] = sbuf,
+        .views[0] = sbuf_view,
     };
 
     vs_params_t vs_params;
