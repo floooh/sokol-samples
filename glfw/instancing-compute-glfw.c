@@ -108,7 +108,7 @@ int main() {
             "layout(std430, binding=0) buffer ssbo {\n"
             "  particle_t prt[];\n"
             "};\n"
-            "layout(local_size_x=64, local_size_y=1, local_size_y=1) in;"
+            "layout(local_size_x=64, local_size_y=1, local_size_z=1) in;"
             "void main() {\n"
             "  uint idx = gl_GlobalInvocationID.x;\n"
             "  if (idx >= num_particles) {\n"
