@@ -112,18 +112,20 @@ int main() {
         .size = MaxIndices * sizeof(ImDrawIdx)
     });
 
-    // font texture and sampler for imgui's default font
+    // font texture, texture view and sampler for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-    bind.images[0] = sg_make_image({
-        .width = font_width,
-        .height = font_height,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = {
-            .ptr = font_pixels,
-            .size = size_t(font_width * font_height * 4)
-        }
+    bind.views[0] = sg_make_view({
+        .texture.image = sg_make_image({
+            .width = font_width,
+            .height = font_height,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data.subimage[0][0] = {
+                .ptr = font_pixels,
+                .size = size_t(font_width * font_height * 4)
+            }
+        }),
     });
     bind.samplers[0] = sg_make_sampler({
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
@@ -167,9 +169,9 @@ int main() {
                 [0] = { .glsl_name = "disp_size", .type = SG_UNIFORMTYPE_FLOAT2}
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for imgui rendering

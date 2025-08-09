@@ -86,17 +86,19 @@ int main() {
         .data = SG_RANGE(indices)
     });
 
-    // create a checkerboard texture
+    // create a checkerboard image and texture view
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .width = 4,
-        .height = 4,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 4,
+            .height = 4,
+            .data.subimage[0][0] = SG_RANGE(pixels)
+        }),
     });
 
     // create a sampler
@@ -137,11 +139,11 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
             .glsl_name = "tex",
         },

@@ -89,13 +89,15 @@ int main() {
         }
     }
 
-    // create a single image and 12 samplers
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .width = 256,
-        .height = 256,
-        .num_mipmaps = 9,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data = img_data
+    // create a single image, texture view and 12 samplers
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 256,
+            .height = 256,
+            .num_mipmaps = 9,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data = img_data
+        }),
     });
 
     // the first 4 samplers are just different min-filters
@@ -172,9 +174,9 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline state
