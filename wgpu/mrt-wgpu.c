@@ -12,15 +12,19 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 
+#define NUM_MRTS (3)
 #define OFFSCREEN_DEPTH_FORMAT SG_PIXELFORMAT_DEPTH
 #define OFFSCREEN_COLOR_FORMAT SG_PIXELFORMAT_RGBA8
-#define OFFSCREEN_MSAA_SAMPLES (4)
+#define OFFSCREEN_SAMPLE_COUNT (4)
 #define DISPLAY_MSAA_SAMPLES (1)
 
+
 static struct {
+    sg_image color_img[NUM_MRTS];
+    sg_image resolve_img[NUM_MRTS];
+    sg_image depth_img;
     struct {
-        sg_pass_action pass_action;
-        sg_attachments_desc attachments_desc;
+        sg_pass pass;
         sg_attachments attachments;
         sg_pipeline pip;
         sg_bindings bind;
@@ -28,7 +32,8 @@ static struct {
     struct {
         sg_pipeline pip;
         sg_bindings bind;
-    } fsq;
+        sg_view resolve_texview[NUM_MRTS];
+    } display;
     struct {
         sg_pipeline pip;
         sg_bindings bind;
@@ -58,63 +63,70 @@ static void init(void) {
     const int width = wgpu_width();
     const int height = wgpu_height();
 
-    // a render pass with 3 color attachment images, 3 msaa-resolve images and a depth attachment image
-    const int offscreen_sample_count = 4;
-    const sg_image_desc color_img_desc = {
-        .usage.render_attachment = true,
+    // image objects for the color-, resolve- and depth-stencil-attachments,
+    // plus texture views on the resolve images
+    for (int i = 0; i < NUM_MRTS; i++) {
+        state.color_img[i] = sg_make_image(&(sg_image_desc){
+            .usage.color_attachment = true,
+            .width = width,
+            .height = height,
+            .pixel_format = OFFSCREEN_COLOR_FORMAT,
+            .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        });
+        state.resolve_img[i] = sg_make_image(&(sg_image_desc){
+            .usage.resolve_attachment = true,
+            .width = width,
+            .height = height,
+            .pixel_format = OFFSCREEN_COLOR_FORMAT,
+            .sample_count = 1,
+        });
+        state.display.resolve_texview[i] = sg_make_view(&(sg_view_desc){
+            .texture.image = state.resolve_img[i],
+        });
+    }
+    state.depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
         .width = width,
         .height = height,
-        .pixel_format = OFFSCREEN_COLOR_FORMAT,
-        .sample_count = offscreen_sample_count
-    };
-    const sg_image_desc resolve_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .pixel_format = OFFSCREEN_COLOR_FORMAT,
-        .sample_count = 1,
-    };
-    const sg_image_desc depth_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .pixel_format = SG_PIXELFORMAT_DEPTH,
-        .sample_count = offscreen_sample_count,
-    };
-    state.offscreen.attachments_desc = (sg_attachments_desc){
-        .colors = {
-            [0].image = sg_make_image(&color_img_desc),
-            [1].image = sg_make_image(&color_img_desc),
-            [2].image = sg_make_image(&color_img_desc)
-        },
-        .resolves = {
-            [0].image = sg_make_image(&resolve_img_desc),
-            [1].image = sg_make_image(&resolve_img_desc),
-            [2].image = sg_make_image(&resolve_img_desc),
-        },
-        .depth_stencil.image = sg_make_image(&depth_img_desc)
-    };
-    state.offscreen.attachments = sg_make_attachments(&state.offscreen.attachments_desc);
+        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+    });
 
-    // a matching pass action with clear colors
-    state.offscreen.pass_action = (sg_pass_action){
-        .colors = {
-            [0] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f },
+    // setup a pass struct for the offscreen render pass
+    // (color-, resolve- and depth-stencil-attachment views, and pass action)
+    state.offscreen.pass = (sg_pass) {
+        .attachments = {
+            .colors = {
+                [0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = state.color_img[0] }),
+                [1] = sg_make_view(&(sg_view_desc){ .color_attachment.image = state.color_img[1] }),
+                [2] = sg_make_view(&(sg_view_desc){ .color_attachment.image = state.color_img[2] }),
             },
-            [1] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+            .resolves = {
+                [0] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = state.resolve_img[0] }),
+                [1] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = state.resolve_img[1] }),
+                [2] = sg_make_view(&(sg_view_desc){ .resolve_attachment.image = state.resolve_img[2] }),
             },
-            [2] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .store_action = SG_STOREACTION_DONTCARE,
-                .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
-            },
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = state.depth_img }),
         },
+        .action = {
+            .colors = {
+                [0] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.25f, 0.0f, 0.0f, 1.0f },
+                },
+                [1] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.0f, 0.25f, 0.0f, 1.0f }
+                },
+                [2] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .store_action = SG_STOREACTION_DONTCARE,
+                    .clear_value = { 0.0f, 0.0f, 0.25f, 1.0f }
+                },
+            },
+        }
     };
 
     // cube vertex buffer
@@ -231,7 +243,7 @@ static void init(void) {
             [2].pixel_format = OFFSCREEN_COLOR_FORMAT,
         },
         .cull_mode = SG_CULLMODE_BACK,
-        .sample_count = offscreen_sample_count,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "offscreen-pipeline",
     });
 
@@ -295,24 +307,24 @@ static void init(void) {
             .size = sizeof(fsq_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images = {
-            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
-            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 1 },
-            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 2 },
+        .views = {
+            [0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
+            [1].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 1 },
+            [2].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 2 },
         },
         .samplers = {
             [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 3 },
         },
-        .image_sampler_pairs = {
-            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 0, .sampler_slot = 0 },
-            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 1, .sampler_slot = 0 },
-            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_slot = 2, .sampler_slot = 0 },
+        .texture_sampler_pairs = {
+            [0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 0, .sampler_slot = 0 },
+            [1] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 1, .sampler_slot = 0 },
+            [2] = { .stage = SG_SHADERSTAGE_FRAGMENT, .view_slot = 2, .sampler_slot = 0 },
         },
         .label = "fsq-shader",
     });
 
     // the pipeline object for the fullscreen rectangle
-    state.fsq.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs[0].format = SG_VERTEXFORMAT_FLOAT2,
         },
@@ -322,12 +334,12 @@ static void init(void) {
     });
 
     // resource bindings for the fullscreen quad
-    state.fsq.bind = (sg_bindings){
+    state.display.bind = (sg_bindings){
         .vertex_buffers[0] = quad_buf,
-        .images = {
-            [0] = state.offscreen.attachments_desc.resolves[0].image,
-            [1] = state.offscreen.attachments_desc.resolves[1].image,
-            [2] = state.offscreen.attachments_desc.resolves[2].image,
+        .views = {
+            [0] = state.display.resolve_texview[0],
+            [1] = state.display.resolve_texview[1],
+            [2] = state.display.resolve_texview[2],
         },
         .samplers[0] = smp,
     };
@@ -351,11 +363,11 @@ static void init(void) {
             "@fragment fn main(@location(0) uv: vec2f) -> @location(0) vec4f {\n"
             "  return vec4f(textureSample(tex0, smp, uv).xyz, 1);\n"
             "}\n",
-        .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
+        .views[0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 0 },
         .samplers[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .wgsl_group1_binding_n = 1 },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
         .label = "dbg-shader",
@@ -398,10 +410,7 @@ static void frame(void) {
     };
 
     // render cube into MRT offscreen render targets
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen.pass_action,
-        .attachments = state.offscreen.attachments,
-    });
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(0, &SG_RANGE(offscreen_params));
@@ -413,14 +422,14 @@ static void frame(void) {
         .action = state.pass_action,
         .swapchain = wgpu_swapchain()
     });
-    sg_apply_pipeline(state.fsq.pip);
-    sg_apply_bindings(&state.fsq.bind);
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(0, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < 3; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.images[0] = state.offscreen.attachments_desc.resolves[i].image;
+        state.dbg.bind.views[0] = state.display.resolve_texview[i];
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }

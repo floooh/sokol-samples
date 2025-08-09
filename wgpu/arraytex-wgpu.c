@@ -41,7 +41,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image and texture view with 3 layers and a checkerboard pattern
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -58,14 +58,17 @@ static void init(void) {
             }
         }
     }
-    sg_image img = sg_make_image(&(sg_image_desc) {
-        .type = SG_IMAGETYPE_ARRAY,
-        .width = IMG_WIDTH,
-        .height = IMG_HEIGHT,
-        .num_slices = IMG_LAYERS,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels),
-        .label = "array-texture"
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .type = SG_IMAGETYPE_ARRAY,
+            .width = IMG_WIDTH,
+            .height = IMG_HEIGHT,
+            .num_slices = IMG_LAYERS,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data.subimage[0][0] = SG_RANGE(pixels),
+            .label = "array-texture",
+        }),
+        .label = "array-texture-view",
     });
 
     // ...and sampler
@@ -166,7 +169,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .image_type = SG_IMAGETYPE_ARRAY,
             .wgsl_group1_binding_n = 0,
@@ -175,9 +178,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
         .label = "cube-shader",
@@ -205,7 +208,7 @@ static void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 }

@@ -19,7 +19,7 @@ static struct {
     int num_particles;
     float ry;
     struct {
-        sg_buffer buf;
+        sg_view sbuf_view;
         sg_pipeline pip;
     } compute;
     struct {
@@ -65,7 +65,7 @@ static void init(void) {
     });
     stm_setup();
 
-    // a storage buffer which holds the particle positions and velocities,
+    // a buffer and storage buffer view which holds the particle positions and velocities,
     // updated by a compute shader
     {
         particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
@@ -74,13 +74,16 @@ static void init(void) {
             p[i].vel[1] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f;
             p[i].vel[2] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
         }
-        state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
-            .usage.storage_buffer = true,
-            .data = {
-                .ptr = p,
-                .size = MAX_PARTICLES * sizeof(particle_t),
-            },
-            .label = "particle-buffer",
+        state.compute.sbuf_view = sg_make_view(&(sg_view_desc){
+            .storage_buffer.buffer = sg_make_buffer(&(sg_buffer_desc){
+                .usage.storage_buffer = true,
+                .data = {
+                    .ptr = p,
+                    .size = MAX_PARTICLES * sizeof(particle_t),
+                },
+                .label = "particle-buffer",
+            }),
+            .label = "particle-buffer-view",
         });
         free(p);
     }
@@ -123,7 +126,7 @@ static void init(void) {
             .size = sizeof(cs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .readonly = false,
             .wgsl_group1_binding_n = 0,
@@ -200,7 +203,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .wgsl_group1_binding_n = 0,
@@ -242,9 +245,7 @@ static void frame(void) {
     };
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
-    sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[0] = state.compute.buf,
-    });
+    sg_apply_bindings(&(sg_bindings){ .views[0] = state.compute.sbuf_view });
     sg_apply_uniforms(0, &SG_RANGE(cs_params));
     sg_dispatch((state.num_particles + 63)/ 64, 1, 1);
     sg_end_pass();
@@ -267,7 +268,7 @@ static void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = state.display.vbuf,
         .index_buffer = state.display.ibuf,
-        .storage_buffers[0] = state.compute.buf,
+        .views[0] = state.compute.sbuf_view,
     });
     sg_apply_uniforms(0, &SG_RANGE(vs_params));
     sg_draw(0, 24, state.num_particles);

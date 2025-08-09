@@ -19,8 +19,7 @@
 
 static struct {
     struct {
-        sg_pass_action pass_action;
-        sg_attachments attachments;
+        sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -31,12 +30,6 @@ static struct {
     } display;
     float rx, ry;
 } state = {
-    .offscreen.pass_action = {
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
-        }
-    },
     .display.pass_action = {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
@@ -55,27 +48,39 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // create one color and one depth render target image
-    sg_image_desc img_desc = {
-        .usage.render_attachment = true,
-        .width = 512,
-        .height = 512,
+    // create one color- and one depth-stencil-attachment image
+    const int width = 512;
+    const int height = 512;
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
+        .width = width,
+        .height = height,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = OFFSCREEN_DEPTH_FORMAT;
-    sg_image depth_img = sg_make_image(&img_desc);
-
-    // an offscreen render pass into those images
-    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = color_img,
-        .depth_stencil.image = depth_img
     });
-    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).color_view[0] != 0);
-    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).color_view[1] == 0);
-    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).resolve_view[0] == 0);
-    assert(sg_wgpu_query_attachments_info(state.offscreen.attachments).ds_view != 0);
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = OFFSCREEN_DEPTH_FORMAT,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+    });
+
+    // a texture view to sample the color attachment image as texture
+    sg_view color_texview = sg_make_view(&(sg_view_desc){ .texture.image = color_img });
+
+    // setup a pass struct with color- and depth-stencil-attachemnt views, and a pass action
+    state.offscreen.pass = (sg_pass){
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img }),
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = depth_img }),
+        },
+        // clear to black
+        .action.colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f },
+        },
+    };
 
     // a sampler object for when the render target is used as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -194,7 +199,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -202,9 +207,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -263,7 +268,7 @@ static void init(void) {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = color_img,
+        .views[0] = color_texview,
         .samplers[0] = smp,
     };
 }
@@ -283,10 +288,7 @@ static void frame(void) {
     };
 
     // the offscreen pass, rendering an rotating, untextured cube into a render target image
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen.pass_action,
-        .attachments = state.offscreen.attachments
-    });
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(0, &SG_RANGE(vs_params));

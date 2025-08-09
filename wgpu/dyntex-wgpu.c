@@ -19,6 +19,7 @@
 
 static struct {
     sg_pass_action pass_action;
+    sg_image img;
     sg_pipeline pip;
     sg_bindings bind;
     float rx, ry;
@@ -49,14 +50,15 @@ static void init(void) {
     });
     state.rand_val = 0x12345678;
 
-    // an image with streaming update strategy
-    sg_image img = sg_make_image(&(sg_image_desc){
+    // an image with streaming update strategy, and a texture view
+    state.img = sg_make_image(&(sg_image_desc){
         .usage.stream_update = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "dynamic-texture"
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // ...and sampler
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -149,7 +151,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -157,9 +159,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
         .label = "cube-shader",
@@ -188,7 +190,7 @@ static void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -213,7 +215,7 @@ void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.images[0], &(sg_image_data){
+    sg_update_image(state.img, &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 

@@ -69,9 +69,11 @@ static void init(void) {
         { .pos = {  1.0,  1.0,  1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } },
         { .pos = {  1.0,  1.0, -1.0, 1.0 }, .color = { 1.0, 0.0, 0.5, 1.0 } }
     };
-    state.bind.storage_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
-        .data = SG_RANGE(vertices),
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .storage_buffer.buffer = sg_make_buffer(&(sg_buffer_desc){
+            .usage.storage_buffer = true,
+            .data = SG_RANGE(vertices),
+        }),
     });
 
     uint16_t indices[] = {
@@ -120,7 +122,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .wgsl_group1_binding_n = 0,

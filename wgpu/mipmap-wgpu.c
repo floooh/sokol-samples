@@ -82,13 +82,15 @@ static void init(void) {
         }
     }
 
-    // create a single image and 12 samplers
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .width = 256,
-        .height = 256,
-        .num_mipmaps = 9,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data = img_data
+    // create a single image and texture view, and 12 samplers
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 256,
+            .height = 256,
+            .num_mipmaps = 9,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data = img_data
+        }),
     });
 
     // the first 4 samplers are just different min-filters
@@ -161,7 +163,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -169,9 +171,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
