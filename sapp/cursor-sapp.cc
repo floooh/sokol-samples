@@ -154,26 +154,42 @@ static void init(void) {
     state.pass_action.colors[0].clear_value = { 0.0f, 0.5f, 0.7f, 1.0f };
 
     sapp_image_desc image_16 = generate_image(16, 0);
+    image_16.cursor_hotspot_x = 8;
+    image_16.cursor_hotspot_y = 8;
     sapp_image_desc image_32 = generate_image(32, 0);
+    image_32.cursor_hotspot_x = 16;
+    image_32.cursor_hotspot_y = 16;
     sapp_image_desc image_64 = generate_image(64, 0);
+    image_64.cursor_hotspot_x = 32;
+    image_64.cursor_hotspot_y = 32;
     sapp_image_desc image_128 = generate_image(128, 0);
+    image_128.cursor_hotspot_x = 64;
+    image_128.cursor_hotspot_y = 64;
 
-    state.cursor_images[0] = sapp_make_mouse_cursor_image(&image_16, 8, 8);
-    state.cursor_images[1] = sapp_make_mouse_cursor_image(&image_32, 16, 16);
-    state.cursor_images[2] = sapp_make_mouse_cursor_image(&image_64, 32, 32);
-    state.cursor_images[3] = sapp_make_mouse_cursor_image(&image_128, 64, 64);
+    state.cursor_images[0] = sapp_make_mouse_cursor_image(&image_16);
+    state.cursor_images[1] = sapp_make_mouse_cursor_image(&image_32);
+    state.cursor_images[2] = sapp_make_mouse_cursor_image(&image_64);
+    state.cursor_images[3] = sapp_make_mouse_cursor_image(&image_128);
 
     sapp_image_desc image_tl = generate_image(32, 0, 0, 0);
-    state.cursor_image_hotspot_tl = sapp_make_mouse_cursor_image(&image_tl, 0, 0);
+    image_tl.cursor_hotspot_x = 0;
+    image_tl.cursor_hotspot_y = 0;
+    state.cursor_image_hotspot_tl = sapp_make_mouse_cursor_image(&image_tl);
 
     sapp_image_desc image_tr = generate_image(32, 0, 30, 0);
-    state.cursor_image_hotspot_tr = sapp_make_mouse_cursor_image(&image_tr, 30, 0);
+    image_tl.cursor_hotspot_x = 30;
+    image_tl.cursor_hotspot_y = 0;
+    state.cursor_image_hotspot_tr = sapp_make_mouse_cursor_image(&image_tr);
 
     sapp_image_desc image_bl = generate_image(32, 0, 0, 30);
-    state.cursor_image_hotspot_bl = sapp_make_mouse_cursor_image(&image_bl, 0, 30);
+    image_bl.cursor_hotspot_x = 0;
+    image_bl.cursor_hotspot_y = 30;
+    state.cursor_image_hotspot_bl = sapp_make_mouse_cursor_image(&image_bl);
 
     sapp_image_desc image_br = generate_image(32, 0, 30, 30);
-    state.cursor_image_hotspot_br = sapp_make_mouse_cursor_image(&image_br, 30, 30);
+    image_br.cursor_hotspot_x = 30;
+    image_br.cursor_hotspot_y = 30;
+    state.cursor_image_hotspot_br = sapp_make_mouse_cursor_image(&image_br);
 
     free((void*) image_16.pixels.ptr);
     free((void*) image_32.pixels.ptr);
@@ -186,7 +202,9 @@ static void init(void) {
 
     for (int i = 0; i < 8; i++) {
         sapp_image_desc image_32 = generate_image(32, i);
-        state.cursor_images_anim[i] = sapp_make_mouse_cursor_image(&image_32, 16, 16);
+        image_32.cursor_hotspot_x = 16;
+        image_32.cursor_hotspot_y = 16;
+        state.cursor_images_anim[i] = sapp_make_mouse_cursor_image(&image_32);
         free((void*) image_32.pixels.ptr);
     }
 }
