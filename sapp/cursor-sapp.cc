@@ -145,9 +145,8 @@ static void init(void) {
     desc.logger.func = slog_func;
     sg_setup(&desc);
 
-    simgui_desc_t simgui_desc = {
-        .disable_set_mouse_cursor = true, // we want to have control over the cursor, that's the point of this sample
-    };
+    simgui_desc_t simgui_desc = { };
+    simgui_desc.disable_set_mouse_cursor = true, // we want to have control over the cursor, that's the point of this sample
     simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
