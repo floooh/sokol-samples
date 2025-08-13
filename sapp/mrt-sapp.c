@@ -27,7 +27,8 @@ static struct {
     struct {
         sg_pipeline pip;
         sg_bindings bind;
-    } fsq;
+        sg_pass_action pass_action;
+    } display;
     struct {
         sg_pipeline pip;
         sg_bindings bind;
@@ -37,7 +38,6 @@ static struct {
         sg_image resolve[NUM_MRTS];
         sg_image depth;
     } images;
-    sg_pass_action pass_action;
     float rx, ry;
 } state;
 
@@ -55,7 +55,7 @@ static void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     // a pass action for the default render pass
-    state.pass_action = (sg_pass_action) {
+    state.display.pass_action = (sg_pass_action) {
         .colors[0].load_action = SG_LOADACTION_DONTCARE,
         .depth.load_action = SG_LOADACTION_DONTCARE,
         .stencil.load_action = SG_LOADACTION_DONTCARE
@@ -73,7 +73,7 @@ static void init(void) {
         state.images.resolve[i] = sg_alloc_image();
         state.offscreen.pass.attachments.colors[i] = sg_alloc_view();
         state.offscreen.pass.attachments.resolves[i] = sg_alloc_view();
-        state.fsq.bind.views[VIEW_tex0 + i] = sg_alloc_view();
+        state.display.bind.views[VIEW_tex0 + i] = sg_alloc_view();
     }
     state.images.depth = sg_alloc_image();
     state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
@@ -186,7 +186,7 @@ static void init(void) {
     });
 
     // a pipeline and shader object to render the fullscreen quad
-    state.fsq.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(fsq_shader_desc(sg_query_backend())),
         .layout = {
             .attrs[ATTR_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
@@ -205,8 +205,8 @@ static void init(void) {
     });
 
     // complete the resource bindings for the fullscreen quad
-    state.fsq.bind.vertex_buffers[0] = quad_vbuf;
-    state.fsq.bind.samplers[SMP_smp] = smp;
+    state.display.bind.vertex_buffers[0] = quad_vbuf;
+    state.display.bind.samplers[SMP_smp] = smp;
 
     // pipeline and resource bindings to render debug-visualization quads
     state.dbg.pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -250,15 +250,15 @@ static void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    sg_apply_pipeline(state.fsq.pip);
-    sg_apply_bindings(&state.fsq.bind);
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(UB_fsq_params, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
     for (int i = 0; i < NUM_MRTS; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.views[VIEW_tex] = state.fsq.bind.views[VIEW_tex0 + i];
+        state.dbg.bind.views[VIEW_tex] = state.display.bind.views[VIEW_tex0 + i];
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }
@@ -292,7 +292,7 @@ static void reinit_attachments(int width, int height) {
         sg_uninit_image(state.images.resolve[i]);
         sg_uninit_view(state.offscreen.pass.attachments.colors[i]);
         sg_uninit_view(state.offscreen.pass.attachments.resolves[i]);
-        sg_uninit_view(state.fsq.bind.views[VIEW_tex + i]);
+        sg_uninit_view(state.display.bind.views[VIEW_tex + i]);
     }
     sg_uninit_image(state.images.depth);
     sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
@@ -326,7 +326,7 @@ static void reinit_attachments(int width, int height) {
             .resolve_attachment = { .image = state.images.resolve[i] },
             .label = resolve_attachment_labels[i],
         });
-        sg_init_view(state.fsq.bind.views[VIEW_tex0 + i], &(sg_view_desc){
+        sg_init_view(state.display.bind.views[VIEW_tex0 + i], &(sg_view_desc){
             .texture = { .image = state.images.resolve[i] },
             .label = tex_view_labels[i],
         });
