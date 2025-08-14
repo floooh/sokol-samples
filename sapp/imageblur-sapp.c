@@ -57,7 +57,7 @@ static struct {
 static sgimgui_t sgimgui;
 static uint8_t file_buffer[256 * 1024];
 
-static void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view);
+static void blur(int flip, sg_view dst_simg_view, sg_view src_tex_view);
 static void fetch_callback(const sfetch_response_t* response);
 static void draw_ui(void);
 
@@ -126,12 +126,15 @@ static void frame(void) {
     }
 
     // ping-pong blur passes starting with the source image
-    blur_pass(0, state.compute.storage_simg_views[0], state.compute.src_tex_view);
-    blur_pass(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
+    sg_begin_pass(&(sg_pass){ .compute = true, .label = "blur-pass"});
+    sg_apply_pipeline(state.compute.pip);
+    blur(0, state.compute.storage_simg_views[0], state.compute.src_tex_view);
+    blur(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
     for (int i = 0; i < state.ui.iterations - 1; i++) {
-        blur_pass(0, state.compute.storage_simg_views[0], state.compute.storage_tex_views[1]);
-        blur_pass(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
+        blur(0, state.compute.storage_simg_views[0], state.compute.storage_tex_views[1]);
+        blur(1, state.compute.storage_simg_views[1], state.compute.storage_tex_views[0]);
     }
+    sg_end_pass();
 
     // swapchain render pass to display the result
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "display-pass" });
@@ -158,7 +161,7 @@ static void input(const sapp_event* ev) {
 }
 
 // perform a horizontal or vertical blur pass in a compute shader
-void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view) {
+void blur(int flip, sg_view dst_simg_view, sg_view src_tex_view) {
     const int batch = 4;        // must match shader
     const int tile_dim = 128;   // must match shader
     const int filter_size = state.ui.filter_size | 1;   // must be odd
@@ -172,8 +175,6 @@ void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view) {
     const int num_workgroups_x = (int)ceilf(src_width / (float)cs_params.block_dim);
     const int num_workgroups_y = (int)ceilf(src_height / (float)batch);
 
-    sg_begin_pass(&(sg_pass){ .compute = true, .label = "blur-pass"});
-    sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_cs_inp_tex] = src_tex_view,
         .views[VIEW_cs_outp_tex] = dst_simg_view,
@@ -181,7 +182,6 @@ void blur_pass(int flip, sg_view dst_simg_view, sg_view src_tex_view) {
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch(num_workgroups_x, num_workgroups_y, 1);
-    sg_end_pass();
 }
 
 // called when texture file has finished loading, this creates a
