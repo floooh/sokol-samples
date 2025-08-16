@@ -145,12 +145,12 @@ static sapp_image_desc generate_image(const int dim, const int color_offset, int
 
 struct state_t {
     sg_pass_action pass_action;
-    sapp_mouse_cursor_image cursor_images[4];
-    sapp_mouse_cursor_image cursor_image_hotspot_tl;
-    sapp_mouse_cursor_image cursor_image_hotspot_tr;
-    sapp_mouse_cursor_image cursor_image_hotspot_bl;
-    sapp_mouse_cursor_image cursor_image_hotspot_br;
-    sapp_mouse_cursor_image cursor_images_anim[8];
+    sapp_mouse_cursor cursors[4];
+    sapp_mouse_cursor cursor_hotspot_tl;
+    sapp_mouse_cursor cursor_hotspot_tr;
+    sapp_mouse_cursor cursor_hotspot_bl;
+    sapp_mouse_cursor cursor_hotspot_br;
+    sapp_mouse_cursor cursors_anim[8];
 };
 static state_t state;
 
@@ -171,67 +171,61 @@ static void init(void) {
     sapp_image_desc image_16 = generate_image(16, 0);
     image_16.cursor_hotspot_x = 8;
     image_16.cursor_hotspot_y = 8;
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_0, &image_16);
 
     sapp_image_desc image_32 = generate_image(32, 0);
     image_32.cursor_hotspot_x = 16;
     image_32.cursor_hotspot_y = 16;
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_1, &image_32);
 
     sapp_image_desc image_64 = generate_image(64, 0);
     image_64.cursor_hotspot_x = 32;
     image_64.cursor_hotspot_y = 32;
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_2, &image_64);
 
     sapp_image_desc image_128 = generate_image(128, 0);
     image_128.cursor_hotspot_x = 64;
     image_128.cursor_hotspot_y = 64;
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_3, &image_128);
 
-    // sapp_image_desc image_tl = generate_image(32, 0, 0, 0);
-    // image_tl.cursor_hotspot_x = 0;
-    // image_tl.cursor_hotspot_y = 0;
-    // sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_4, &image_tl);
+    state.cursors[0] = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_0, &image_16);
+    state.cursors[1] = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_1, &image_32);
+    state.cursors[2] = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_2, &image_64);
+    state.cursors[3] = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_3, &image_128);
 
-    // sapp_image_desc image_tr = generate_image(32, 0, 30, 0);
-    // image_tl.cursor_hotspot_x = 30;
-    // image_tl.cursor_hotspot_y = 0;
-    // state.cursor_image_hotspot_tr = sapp_make_mouse_cursor_image(&image_tr);
+    sapp_image_desc image_tl = generate_image(32, 0, 0, 0);
+    image_tl.cursor_hotspot_x = 0;
+    image_tl.cursor_hotspot_y = 0;
+    state.cursor_hotspot_tl = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_4, &image_tl);
 
-    // sapp_image_desc image_bl = generate_image(32, 0, 0, 30);
-    // image_bl.cursor_hotspot_x = 0;
-    // image_bl.cursor_hotspot_y = 30;
-    // state.cursor_image_hotspot_bl = sapp_make_mouse_cursor_image(&image_bl);
+    sapp_image_desc image_tr = generate_image(32, 0, 30, 0);
+    image_tl.cursor_hotspot_x = 30;
+    image_tl.cursor_hotspot_y = 0;
+    state.cursor_hotspot_tr = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_5, &image_tl);
 
-    // sapp_image_desc image_br = generate_image(32, 0, 30, 30);
-    // image_br.cursor_hotspot_x = 30;
-    // image_br.cursor_hotspot_y = 30;
-    // state.cursor_image_hotspot_br = sapp_make_mouse_cursor_image(&image_br);
+    sapp_image_desc image_bl = generate_image(32, 0, 0, 30);
+    image_bl.cursor_hotspot_x = 0;
+    image_bl.cursor_hotspot_y = 30;
+    state.cursor_hotspot_bl = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_5, &image_bl);
 
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_0, &image_16);
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_1, &image_32);
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_2, &image_64);
-    sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_3, &image_128);
-    // for (int i = SAPP_MOUSECURSOR_CUSTOM_0; i <= SAPP_MOUSECURSOR_CUSTOM_15; i++) {
-    // }
+    sapp_image_desc image_br = generate_image(32, 0, 30, 30);
+    image_br.cursor_hotspot_x = 30;
+    image_br.cursor_hotspot_y = 30;
+    state.cursor_hotspot_br = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_6, &image_br);
 
     free((void*) image_16.pixels.ptr);
     free((void*) image_32.pixels.ptr);
     free((void*) image_64.pixels.ptr);
     free((void*) image_128.pixels.ptr);
-    // free((void*) image_tl.pixels.ptr);
-    // free((void*) image_tr.pixels.ptr);
-    // free((void*) image_bl.pixels.ptr);
-    // free((void*) image_br.pixels.ptr);
 
-    // for (int i = 0; i < 8; i++) {
-    //     sapp_image_desc image_32 = generate_image(32, i);
-    //     image_32.cursor_hotspot_x = 16;
-    //     image_32.cursor_hotspot_y = 16;
-    //     state.cursor_images_anim[i] = sapp_make_mouse_cursor_image(&image_32);
-    //     free((void*) image_32.pixels.ptr);
-    // }
+    free((void*) image_tl.pixels.ptr);
+    free((void*) image_tr.pixels.ptr);
+    free((void*) image_bl.pixels.ptr);
+    free((void*) image_br.pixels.ptr);
 
+    for (int i = 0; i < 8; i++) {
+        sapp_image_desc image_32 = generate_image(32, i);
+        image_32.cursor_hotspot_x = 15;
+        image_32.cursor_hotspot_y = 15;
+        state.cursors_anim[i] = sapp_bind_mouse_cursor_image((sapp_mouse_cursor) (SAPP_MOUSECURSOR_CUSTOM_7 + i), &image_32);
+        free((void*) image_32.pixels.ptr);
+    }
 }
 
 static void event(const sapp_event* e) {
@@ -259,11 +253,10 @@ static void frame(void) {
     ImGui::SetNextWindowSize(padded_size, ImGuiCond_Always);
 
     sapp_mouse_cursor cursor_to_set = SAPP_MOUSECURSOR_DEFAULT;
-    sapp_mouse_cursor_image cursor_image_to_set = {};
 
     if (ImGui::Begin("Cursors", nullptr, ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse)) {
         ImGui::Text("System cursors:");
-        for (int i = SAPP_MOUSECURSOR_DEFAULT; i < _SAPP_MOUSECURSOR_NUM; i++) {
+        for (int i = SAPP_MOUSECURSOR_DEFAULT; i < SAPP_MOUSECURSOR_CUSTOM_0; i++) {
             sapp_mouse_cursor cur = (sapp_mouse_cursor) i;
             if (i % 5 != 0) {
                 ImGui::SameLine();
@@ -276,41 +269,39 @@ static void frame(void) {
         ImGui::Separator();
         ImGui::Text("Custom image cursors:");
         if (draw_cursor_panel("16x16", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_images[0];
+            cursor_to_set = state.cursors[0];
         }
         ImGui::SameLine();
         if (draw_cursor_panel("32x32", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_images[1];
+            cursor_to_set = state.cursors[1];
         }
         ImGui::SameLine();
         if (draw_cursor_panel("64x64", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_images[2];
+            cursor_to_set = state.cursors[2];
         }
         ImGui::SameLine();
         if (draw_cursor_panel("128x128", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_images[3];
+            cursor_to_set = state.cursors[3];
         }
 
         if (draw_cursor_panel("hotspot top-left", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_image_hotspot_tl;
+            cursor_to_set = state.cursor_hotspot_tl;
         }
         ImGui::SameLine();
         if (draw_cursor_panel("hotspot top-right", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_image_hotspot_tr;
+            cursor_to_set = state.cursor_hotspot_tr;
         }
         ImGui::SameLine();
         if (draw_cursor_panel("hotspot bottom-left", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_image_hotspot_bl;
+            cursor_to_set = state.cursor_hotspot_bl;
         }
         ImGui::SameLine();
         if (draw_cursor_panel("hotspot bottom-right", panel_width, panel_height)) {
-            cursor_image_to_set = state.cursor_image_hotspot_br;
+            cursor_to_set = state.cursor_hotspot_br;
         }
 
         if (draw_cursor_panel("animated", panel_width, panel_height)) {
-            static int frame_count = 0;
-            frame_count++;
-            cursor_image_to_set = state.cursor_images_anim[(frame_count/15)%8];
+            cursor_to_set = state.cursors_anim[(sapp_frame_count()/15)%8];
         }
     }
     ImGui::End();
@@ -327,16 +318,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
-    for (int i = 0; i < 4; i++) {
-        sapp_destroy_mouse_cursor_image(state.cursor_images[i]);
-    }
-    sapp_destroy_mouse_cursor_image(state.cursor_image_hotspot_tl);
-    sapp_destroy_mouse_cursor_image(state.cursor_image_hotspot_tr);
-    sapp_destroy_mouse_cursor_image(state.cursor_image_hotspot_bl);
-    sapp_destroy_mouse_cursor_image(state.cursor_image_hotspot_br);
-    for (int i = 0; i < 8; i++) {
-        sapp_destroy_mouse_cursor_image(state.cursor_images_anim[i]);
-    }
+    // NOTE: No need to unbind mouse cursors on shutdown, it is done automatically by sokol_app.
     sg_shutdown();
 }
 
