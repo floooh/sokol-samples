@@ -151,6 +151,7 @@ struct state_t {
     sapp_mouse_cursor cursor_hotspot_bl;
     sapp_mouse_cursor cursor_hotspot_br;
     sapp_mouse_cursor cursors_anim[8];
+    bool customized[_SAPP_MOUSECURSOR_NUM]; // to keep track of which 'system' cursor is currently bound to a custom image.
 };
 static state_t state;
 
@@ -302,6 +303,44 @@ static void frame(void) {
 
         if (draw_cursor_panel("animated", panel_width, panel_height)) {
             cursor_to_set = state.cursors_anim[(sapp_frame_count()/15)%8];
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Overriding \"system\" cursors with custom images:");
+        {
+            sapp_mouse_cursor cursor = SAPP_MOUSECURSOR_DEFAULT;
+            bool* customized = &state.customized[cursor];
+            if (ImGui::Button(*customized ? "Restore SAPP_MOUSECURSOR_DEFAULT" : "Customize SAPP_MOUSECURSOR_DEFAULT")) {
+                if (!*customized) {
+                    sapp_image_desc image_32 = generate_image(32, 0);
+                    image_32.cursor_hotspot_x = 16;
+                    image_32.cursor_hotspot_y = 16;
+                    sapp_bind_mouse_cursor_image(cursor, &image_32);
+                    free((void*) image_32.pixels.ptr);
+                } else {
+                    sapp_unbind_mouse_cursor_image(cursor);
+                }
+                *customized = !*customized;
+            }
+        }
+        {
+            sapp_mouse_cursor cursor = SAPP_MOUSECURSOR_IBEAM;
+            bool* customized = &state.customized[cursor];
+            if (ImGui::Button(*customized ? "Restore SAPP_MOUSECURSOR_IBEAM" : "Customize SAPP_MOUSECURSOR_IBEAM")) {
+                if (!*customized) {
+                    sapp_image_desc image_32 = generate_image(32, 0);
+                    image_32.cursor_hotspot_x = 16;
+                    image_32.cursor_hotspot_y = 16;
+                    sapp_bind_mouse_cursor_image(cursor, &image_32);
+                    free((void*) image_32.pixels.ptr);
+                } else {
+                    sapp_unbind_mouse_cursor_image(cursor);
+                }
+                *customized = !*customized;
+            }
+            if (*customized) {
+                ImGui::SameLine(); ImGui::Text("To see the effect, hover the SAPP_MOUSECURSOR_IBEAM rectangle higher up!");
+            }
         }
     }
     ImGui::End();
