@@ -196,19 +196,19 @@ static void init(void) {
     state.cursor_hotspot_tl = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_4, &image_tl);
 
     sapp_image_desc image_tr = generate_image(32, 0, 30, 0);
-    image_tl.cursor_hotspot_x = 30;
-    image_tl.cursor_hotspot_y = 0;
-    state.cursor_hotspot_tr = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_5, &image_tl);
+    image_tr.cursor_hotspot_x = 30;
+    image_tr.cursor_hotspot_y = 0;
+    state.cursor_hotspot_tr = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_5, &image_tr);
 
     sapp_image_desc image_bl = generate_image(32, 0, 0, 30);
     image_bl.cursor_hotspot_x = 0;
     image_bl.cursor_hotspot_y = 30;
-    state.cursor_hotspot_bl = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_5, &image_bl);
+    state.cursor_hotspot_bl = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_6, &image_bl);
 
     sapp_image_desc image_br = generate_image(32, 0, 30, 30);
     image_br.cursor_hotspot_x = 30;
     image_br.cursor_hotspot_y = 30;
-    state.cursor_hotspot_br = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_6, &image_br);
+    state.cursor_hotspot_br = sapp_bind_mouse_cursor_image(SAPP_MOUSECURSOR_CUSTOM_7, &image_br);
 
     free((void*) image_16.pixels.ptr);
     free((void*) image_32.pixels.ptr);
@@ -224,7 +224,7 @@ static void init(void) {
         sapp_image_desc image_32 = generate_image(32, i);
         image_32.cursor_hotspot_x = 15;
         image_32.cursor_hotspot_y = 15;
-        state.cursors_anim[i] = sapp_bind_mouse_cursor_image((sapp_mouse_cursor) (SAPP_MOUSECURSOR_CUSTOM_7 + i), &image_32);
+        state.cursors_anim[i] = sapp_bind_mouse_cursor_image((sapp_mouse_cursor) (SAPP_MOUSECURSOR_CUSTOM_8 + i), &image_32);
         free((void*) image_32.pixels.ptr);
     }
 }
