@@ -20,6 +20,7 @@
 
 static struct {
     sg_pass_action pass_action;
+    sg_image img;
     sg_pipeline pip;
     sg_bindings bind;
     float rx, ry;
@@ -131,11 +132,13 @@ static void init(void) {
     for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
         img_desc.mtl_textures[i] = (__bridge const void*) mtl_tex[i];
     }
-
     sg_reset_state_cache();
-    state.bind.images[0] = sg_make_image(&img_desc);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.images[0]).tex[0]) == mtl_tex[0]);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.bind.images[0]).tex[1]) == mtl_tex[1]);
+    state.img = sg_make_image(&img_desc);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.img).tex[0]) == mtl_tex[0]);
+    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.img).tex[1]) == mtl_tex[1]);
+
+    // note: texture views cannot be injected
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // create a Metal sampler object and inject into a sokol-gfx sampler object
     MTLSamplerDescriptor* mtl_smp_desc = [[MTLSamplerDescriptor alloc] init];
@@ -201,7 +204,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_texture_n = 0,
         },
@@ -209,9 +212,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     };
@@ -267,7 +270,7 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

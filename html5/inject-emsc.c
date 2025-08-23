@@ -17,6 +17,7 @@ static uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
 static struct {
     sg_pipeline pip;
+    sg_image img;
     sg_bindings bind;
     sg_pass_action pass_action;
     float rx, ry;
@@ -131,7 +132,8 @@ int main() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     sg_reset_state_cache();
-    state.bind.images[0] = sg_make_image(&img_desc);
+    state.img = sg_make_image(&img_desc);
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // create a GL sampler object
     sg_sampler_desc smp_desc = {
@@ -180,9 +182,9 @@ int main() {
                 [0] = { .glsl_name="mvp", .type=SG_UNIFORMTYPE_MAT4 }
             },
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // create pipeline object
@@ -232,7 +234,7 @@ static EM_BOOL draw(double time, void* userdata) {
         }
     }
     state.counter++;
-    sg_update_image(state.bind.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
     // ...and draw
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });

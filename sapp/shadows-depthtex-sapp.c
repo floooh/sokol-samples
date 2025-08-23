@@ -18,14 +18,11 @@
 #include "shadows-depthtex-sapp.glsl.h"
 
 static struct {
-    sg_image shadow_map;
-    sg_sampler shadow_sampler;
     sg_buffer vbuf;
     sg_buffer ibuf;
     float ry;
     struct {
-        sg_pass_action pass_action;
-        sg_attachments atts;
+        sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
     } shadow;
@@ -106,16 +103,6 @@ static void init(void) {
         .label = "cube-indices"
     });
 
-    // shadow map pass action: only clear depth buffer, don't configure color and stencil actions,
-    // because there are no color and stencil targets
-    state.shadow.pass_action = (sg_pass_action){
-        .depth = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .store_action = SG_STOREACTION_STORE,
-            .clear_value = 1.0f,
-        },
-    };
-
     // display pass action
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
@@ -125,8 +112,8 @@ static void init(void) {
     };
 
     // a shadow map render target which will serve as depth buffer in the shadow pass
-    state.shadow_map = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -134,20 +121,38 @@ static void init(void) {
         .label = "shadow-map",
     });
 
+    // a pass attachment and a texture view for the shadow map render target
+    sg_view shadow_map_ds_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment = { .image = shadow_map_img },
+        .label = "shadow-map-depth-stencil-view",
+    });
+    sg_view shadow_map_tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = shadow_map_img },
+        .label = "shadow-map-tex-view",
+    });
+
+    // shadow render pass descriptor
+    state.shadow.pass = (sg_pass) {
+        // shadow map pass action: only clear depth buffer, don't configure color and stencil actions,
+        // because there are no color and stencil targets
+        .action.depth = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .store_action = SG_STOREACTION_STORE,
+            .clear_value = 1.0f,
+        },
+        // the pass only has a depth-stencil attachment
+        .attachments.depth_stencil = shadow_map_ds_view,
+    };
+
+
     // a comparison sampler which is used to sample the shadow map texture in the display pass
-    state.shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
+    sg_sampler shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .compare = SG_COMPAREFUNC_LESS,
         .label = "shadow-sampler",
-    });
-
-    // a depth-only pass object for the shadow pass
-    state.shadow.atts = sg_make_attachments(&(sg_attachments_desc){
-        .depth_stencil.image = state.shadow_map,
-        .label = "shadow-pass",
     });
 
     // a pipeline object for the shadow pass
@@ -202,8 +207,8 @@ static void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .images[IMG_shadow_map] = state.shadow_map,
-        .samplers[SMP_shadow_sampler] = state.shadow_sampler,
+        .views[VIEW_shadow_map] = shadow_map_tex_view,
+        .samplers[SMP_shadow_sampler] = shadow_sampler,
     };
 
     // a vertex buffer, pipeline and sampler to render a debug visualization of the shadow map
@@ -232,7 +237,7 @@ static void init(void) {
     });
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = dbg_vbuf,
-        .images[IMG_dbg_tex] = state.shadow_map,
+        .views[VIEW_dbg_tex] = shadow_map_tex_view,
         .samplers[SMP_dbg_smp] = dbg_smp,
     };
 }
@@ -283,7 +288,7 @@ static void frame(void) {
     };
 
     // the shadow map pass, render scene from light source into shadow map texture
-    sg_begin_pass(&(sg_pass){ .action = state.shadow.pass_action, .attachments = state.shadow.atts });
+    sg_begin_pass(&state.shadow.pass);
     sg_apply_pipeline(state.shadow.pip);
     sg_apply_bindings(&state.shadow.bind);
     sg_apply_uniforms(UB_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));

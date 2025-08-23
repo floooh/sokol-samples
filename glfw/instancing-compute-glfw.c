@@ -19,7 +19,7 @@ typedef struct {
     int num_particles;
     float ry;
     struct {
-        sg_buffer buf;
+        sg_view sbuf_view;
         sg_pipeline pip;
     } compute;
     struct {
@@ -73,8 +73,8 @@ int main() {
     });
     stm_setup();
 
-    // a storage buffer which holds the particle positions and velocities,
-    // updated by a compute shader
+    // a buffer which holds the particle positions and velocities,
+    // updated by a compute shader, plus a storage buffer view on the buffer
     {
         particle_t* p = calloc(MAX_PARTICLES, sizeof(particle_t));
         assert(p);
@@ -83,7 +83,7 @@ int main() {
             p[i].vel[1] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f;
             p[i].vel[2] = ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f;
         }
-        state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
+        sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
             .usage.storage_buffer = true,
             .data = {
                 .ptr = p,
@@ -91,6 +91,7 @@ int main() {
             },
             .label = "particle-buffer",
         });
+        state.compute.sbuf_view = sg_make_view(&(sg_view_desc){ .storage_buffer.buffer = sbuf });
         free(p);
     }
 
@@ -107,7 +108,7 @@ int main() {
             "layout(std430, binding=0) buffer ssbo {\n"
             "  particle_t prt[];\n"
             "};\n"
-            "layout(local_size_x=64, local_size_y=1, local_size_y=1) in;"
+            "layout(local_size_x=64, local_size_y=1, local_size_z=1) in;"
             "void main() {\n"
             "  uint idx = gl_GlobalInvocationID.x;\n"
             "  if (idx >= num_particles) {\n"
@@ -132,7 +133,7 @@ int main() {
                 [1] = { .glsl_name = "num_particles", .type = SG_UNIFORMTYPE_INT },
             },
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_COMPUTE,
             .readonly = false,
             .glsl_binding_n = 0,
@@ -209,7 +210,7 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
             },
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .glsl_binding_n = 0,
@@ -251,9 +252,7 @@ int main() {
         };
         sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
         sg_apply_pipeline(state.compute.pip);
-        sg_apply_bindings(&(sg_bindings){
-            .storage_buffers[0] = state.compute.buf,
-        });
+        sg_apply_bindings(&(sg_bindings){ .views[0] = state.compute.sbuf_view });
         sg_apply_uniforms(0, &SG_RANGE(cs_params));
         sg_dispatch((state.num_particles + 63)/64, 1, 1);
         sg_end_pass();
@@ -276,7 +275,7 @@ int main() {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.display.vbuf,
             .index_buffer = state.display.ibuf,
-            .storage_buffers[0] = state.compute.buf,
+            .views[0] = state.compute.sbuf_view,
         });
         sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 24, state.num_particles);

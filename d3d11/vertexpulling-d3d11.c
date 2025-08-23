@@ -69,6 +69,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .usage.storage_buffer = true,
         .data = SG_RANGE(vertices),
     });
+    sg_view sbuf_view = sg_make_view(&(sg_view_desc){ .storage_buffer.buffer = sbuf });
 
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
@@ -110,7 +111,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .size = sizeof(vs_params_t),
             .hlsl_register_b_n = 0,
         },
-        .storage_buffers[0] = {
+        .views[0].storage_buffer = {
             .stage = SG_SHADERSTAGE_VERTEX,
             .readonly = true,
             .hlsl_register_t_n = 0,
@@ -127,9 +128,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    sg_bindings bind = {
+    const sg_bindings bind = {
         .index_buffer = ibuf,
-        .storage_buffers[0] = sbuf,
+        .views[0] = sbuf_view,
     };
 
     float rx = 0.0f, ry = 0.0f;

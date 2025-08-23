@@ -14,8 +14,7 @@
 static struct{
     float rx, ry;
     struct {
-        sg_pass_action pass_action;
-        sg_attachments attachments;
+        sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
     } offscreen;
@@ -23,11 +22,8 @@ static struct{
         sg_pass_action pass_action;
         sg_pipeline pip;
         sg_bindings bind;
-
     } display;
 } state = {
-    // offscreen: clear to black
-    .offscreen.pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     // display: clear to blue-ish
     .display.pass_action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.25f, 1.0f, 1.0f } },
 };
@@ -49,24 +45,39 @@ int main() {
     });
     assert(sg_isvalid());
 
-    // create one color- and one depth-rendertarget image
+    // create image objects for color- and depth-attachments
+    const int width = 512;
+    const int height = 512;
     const int offscreen_sample_count = 1;
-    sg_image_desc img_desc = {
-        .usage.render_attachment = true,
-        .width = 512,
-        .height = 512,
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
+        .width = width,
+        .height = height,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .sample_count = offscreen_sample_count
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    sg_image depth_img = sg_make_image(&img_desc);
-
-    // an offscreen render pass into those images
-    state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = color_img,
-        .depth_stencil.image = depth_img
     });
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = offscreen_sample_count
+    });
+
+    // also need a texture view on the color attachment image to sample it as texture
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = color_img });
+
+    // setup pass struct to render into those images
+    state.offscreen.pass = (sg_pass){
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img }),
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = depth_img }),
+        },
+        .action = {
+            // clear to black
+            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1} },
+        },
+    };
 
     // a sampler for using the render target as texture
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -195,9 +206,9 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for offscreen rendering, don't need texcoords here
@@ -252,7 +263,7 @@ int main() {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = color_img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -278,10 +289,7 @@ static EM_BOOL draw(double time, void* userdata) {
 
     // offscreen pass, this renders a rotating, untextured cube to the
     // offscreen render target
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen.pass_action,
-        .attachments = state.offscreen.attachments,
-    });
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(0, &SG_RANGE(vs_params));

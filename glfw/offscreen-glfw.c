@@ -27,29 +27,34 @@ int main() {
     });
     assert(sg_isvalid());
 
-    // create one color- and one depth-buffer render target image
+    // create one color-attachment and one depth-attachment image
     const int offscreen_sample_count = 1;
-    sg_image_desc img_desc = {
-        .usage.render_attachment = true,
-        .width = 512,
-        .height = 512,
+    const int offscreen_width = 512;
+    const int offscreen_height = 512;
+    sg_image color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
+        .width = offscreen_width,
+        .height = offscreen_height,
         .sample_count = offscreen_sample_count
-    };
-    sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    sg_image depth_img = sg_make_image(&img_desc);
-
-    // an offscreen render pass to render into those render target images
-    sg_attachments offscreen_attachments = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = color_img,
-        .depth_stencil.image = depth_img
     });
-    assert(sg_gl_query_attachments_info(offscreen_attachments).framebuffer != 0);
-    assert(sg_gl_query_attachments_info(offscreen_attachments).msaa_resolve_framebuffer[0] == 0);
+    sg_image depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = offscreen_width,
+        .height = offscreen_height,
+        .sample_count = offscreen_sample_count,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+    });
 
-    // pass action for offscreen pass, clearing to black
-    sg_pass_action offscreen_pass_action = {
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
+    // a texture view to sample the color image as texture
+    sg_view color_texview = sg_make_view(&(sg_view_desc){ .texture.image = color_img });
+
+    // a pass struct for the offscreen render pass
+    const sg_pass offscreen_pass = (sg_pass){
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){ .color_attachment.image = color_img }),
+            .depth_stencil = sg_make_view(&(sg_view_desc){ .depth_stencil_attachment.image = depth_img }),
+        },
+        .action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     // pass action for default pass, clearing to blue-ish
@@ -175,9 +180,9 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // pipeline object for offscreen rendering, don't need texcoords here
@@ -232,7 +237,7 @@ int main() {
     sg_bindings default_bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = color_img,
+        .views[0] = color_texview,
         .samplers[0] = smp,
     };
 
@@ -256,10 +261,7 @@ int main() {
 
         // offscreen pass, this renders a rotating, untextured cube to the
         // offscreen render target
-        sg_begin_pass(&(sg_pass){
-            .action = offscreen_pass_action,
-            .attachments = offscreen_attachments,
-        });
+        sg_begin_pass(&offscreen_pass);
         sg_apply_pipeline(offscreen_pip);
         sg_apply_bindings(&offscreen_bind);
         sg_apply_uniforms(0, &SG_RANGE(vs_params));

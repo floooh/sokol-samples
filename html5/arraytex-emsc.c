@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-//  arraytex-glfw.c
+//  arraytex-emsc.c
 //------------------------------------------------------------------------------
 #include <stddef.h>     /* offsetof */
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -42,7 +42,7 @@ int main() {
     });
     assert(sg_isvalid());
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image and texture-view with 3 layers and a checkerboard pattern
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -59,13 +59,15 @@ int main() {
             }
         }
     }
-    sg_image img = sg_make_image(&(sg_image_desc) {
-        .type = SG_IMAGETYPE_ARRAY,
-        .width = IMG_WIDTH,
-        .height = IMG_HEIGHT,
-        .num_slices = IMG_LAYERS,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .type = SG_IMAGETYPE_ARRAY,
+            .width = IMG_WIDTH,
+            .height = IMG_HEIGHT,
+            .num_slices = IMG_LAYERS,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data.subimage[0][0] = SG_RANGE(pixels)
+        }),
     });
 
     // ...and a sampler
@@ -129,7 +131,7 @@ int main() {
     state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -181,12 +183,12 @@ int main() {
                 [3] = { .glsl_name = "offset2", .type = SG_UNIFORMTYPE_FLOAT2 }
             }
         },
-        .images[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_type = SG_IMAGETYPE_ARRAY },
+        .views[0].texture = { .stage = SG_SHADERSTAGE_FRAGMENT, .image_type = SG_IMAGETYPE_ARRAY },
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .glsl_name = "tex",
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0
         },
     });

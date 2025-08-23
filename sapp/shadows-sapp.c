@@ -21,14 +21,11 @@
 #include "shadows-sapp.glsl.h"
 
 static struct {
-    sg_image shadow_map;
-    sg_sampler shadow_sampler;
     sg_buffer vbuf;
     sg_buffer ibuf;
     float ry;
     struct {
-        sg_pass_action pass_action;
-        sg_attachments atts;
+        sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
     } shadow;
@@ -43,7 +40,7 @@ static struct {
     } dbg;
 } state;
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -109,14 +106,6 @@ void init(void) {
         .label = "cube-indices"
     });
 
-    // shadow map pass action: clear the shadow map to (1,1,1,1)
-    state.shadow.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f },
-        }
-    };
-
     // display pass action
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
@@ -126,8 +115,8 @@ void init(void) {
     };
 
     // a regular RGBA8 render target image as shadow map
-    state.shadow_map = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+    sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -137,7 +126,7 @@ void init(void) {
 
     // ...we also need a separate depth-buffer image for the shadow pass
     sg_image shadow_depth_img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = 2048,
         .height = 2048,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
@@ -145,20 +134,43 @@ void init(void) {
         .label = "shadow-depth-buffer",
     });
 
+    // attachment and texture views
+    sg_view shadow_map_att_view = sg_make_view(&(sg_view_desc){
+        .color_attachment = { .image = shadow_map_img },
+        .label = "shadow-map-att-view",
+    });
+    sg_view shadow_map_tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = shadow_map_img },
+        .label = "shadow-map-tex-view",
+    });
+    sg_view shadow_depth_att_view = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment = { .image = shadow_depth_img },
+        .label = "shadow-depth-attachment",
+    });
+
+    // shadow render pass descriptor
+    state.shadow.pass = (sg_pass){
+        // clear the shadow map to (1,1,1,1)
+        .action = {
+            .colors[0] = {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = { 1.0f, 1.0f, 1.0f, 1.0f },
+            },
+        },
+        // attachment views
+        .attachments = {
+            .colors[0] = shadow_map_att_view,
+            .depth_stencil = shadow_depth_att_view,
+        },
+    };
+
     // a regular sampler with nearest filtering to sample the shadow map
-    state.shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
+    sg_sampler shadow_sampler = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .label = "shadow-sampler",
-    });
-
-    // the render pass object for the shadow pass
-    state.shadow.atts = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = state.shadow_map,
-        .depth_stencil.image = shadow_depth_img,
-        .label = "shadow-pass",
     });
 
     // a pipeline object for the shadow pass
@@ -212,8 +224,8 @@ void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
-        .images[IMG_shadow_map] = state.shadow_map,
-        .samplers[SMP_shadow_sampler] = state.shadow_sampler,
+        .views[VIEW_shadow_map] = shadow_map_tex_view,
+        .samplers[SMP_shadow_sampler] = shadow_sampler,
     };
 
     // a vertex buffer, pipeline and sampler to render a debug visualization of the shadow map
@@ -239,12 +251,12 @@ void init(void) {
     });
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = dbg_vbuf,
-        .images[IMG_dbg_tex] = state.shadow_map,
+        .views[VIEW_dbg_tex] = shadow_map_tex_view,
         .samplers[SMP_dbg_smp] = dbg_smp,
     };
 }
 
-void frame(void) {
+static void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.ry += 0.2f * t;
 
@@ -290,7 +302,7 @@ void frame(void) {
     };
 
     // the shadow map pass, render scene from light source into shadow map texture
-    sg_begin_pass(&(sg_pass){ .action = state.shadow.pass_action, .attachments = state.shadow.atts });
+    sg_begin_pass(&state.shadow.pass);
     sg_apply_pipeline(state.shadow.pip);
     sg_apply_bindings(&state.shadow.bind);
     sg_apply_uniforms(UB_vs_shadow_params, &SG_RANGE(cube_vs_shadow_params));
@@ -318,7 +330,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }

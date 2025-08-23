@@ -28,6 +28,7 @@ static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_image img;
+    sg_view texview;
     sg_bindings bind;
     int width_height;
     bool immutable;
@@ -66,10 +67,12 @@ static void init(void) {
                 .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
             },
         },
+        .label = "pipeline",
     });
 
     state.img = sg_alloc_image();
-    state.bind.images[IMG_tex] = state.img;
+    state.texview = sg_alloc_view();
+    state.bind.views[VIEW_tex] = state.texview;
     recreate_image();
 
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
@@ -78,6 +81,7 @@ static void init(void) {
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_w = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 }
 
@@ -146,6 +150,7 @@ static sg_range pixels_as_range(void) {
 static void recreate_image(void) {
     if (sg_query_image_state(state.img) == SG_RESOURCESTATE_VALID) {
         sg_uninit_image(state.img);
+        sg_uninit_view(state.texview);
     }
     update_pixels(sapp_frame_count());
     sg_init_image(state.img, &(sg_image_desc){
@@ -160,6 +165,11 @@ static void recreate_image(void) {
         .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data.subimage[0][0] = state.immutable ? pixels_as_range() : (sg_range){0},
+        .label = "image",
+    });
+    sg_init_view(state.texview, &(sg_view_desc){
+        .texture = { .image = state.img },
+        .label = "texture-view",
     });
 }
 

@@ -93,19 +93,22 @@ void init(void) {
         .label = "texcube-indices"
     });
 
-    // create a checkerboard texture
+    // create a checkerboard texture and view
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    // NOTE: SLOT_tex is provided by shader code generation
-    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
+    sg_image img = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
         .data.subimage[0][0] = SG_RANGE(pixels),
-        .label = "texcube-texture"
+        .label = "texcube-image",
+    });
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
+        .label = "texcube-texture-view",
     });
 
     // create a sampler object with default attributes

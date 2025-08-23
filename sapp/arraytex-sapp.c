@@ -35,7 +35,7 @@ void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f} }
     };
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image with 3 layers and a checkerboard pattern
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -63,10 +63,17 @@ void init(void) {
         .label = "array-texture"
     });
 
+    // a texture view for the image
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
+        .label = "array-texture-view"
+    });
+
     // a sampler object
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .label = "sampler",
     });
 
     // cube vertex buffer
@@ -144,7 +151,7 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[IMG_tex] = img,
+        .views[VIEW_tex] = tex_view,
         .samplers[SMP_smp] = smp,
     };
 }

@@ -12,7 +12,7 @@
 
 static struct {
     sg_pass_action pass_action;
-    sg_image img;
+    sg_view tex_view;
     sg_sampler smp;
     sgl_pipeline pip_3d;
 } state;
@@ -36,10 +36,14 @@ static void init(void) {
             pixels[y][x] = ((y ^ x) & 1) ? 0xFFFFFFFF : 0xFF000000;
         }
     }
-    state.img = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    state.tex_view = sg_make_view(&(sg_view_desc){
+        .texture = {
+            .image = sg_make_image(&(sg_image_desc){
+                .width = 8,
+                .height = 8,
+                .data.subimage[0][0] = SG_RANGE(pixels)
+            }),
+        },
     });
 
     // ... and a sampler
@@ -180,7 +184,7 @@ static void draw_tex_cube(const float t) {
     sgl_load_pipeline(state.pip_3d);
 
     sgl_enable_texture();
-    sgl_texture(state.img, state.smp);
+    sgl_texture(state.tex_view, state.smp);
 
     sgl_matrix_mode_projection();
     sgl_perspective(sgl_rad(45.0f), 1.0f, 0.1f, 100.0f);

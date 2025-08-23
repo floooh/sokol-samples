@@ -55,7 +55,7 @@ static void init(void) {
     // because the offscreen pass uses a different sample count than the display render pass
     // (the display render pass is multi-sampled, the offscreen pass is not)
     sg_image_desc img_desc = {
-        .usage.render_attachment = true,
+        .usage = { .color_attachment = true },
         .width = 256,
         .height = 256,
         .pixel_format = OFFSCREEN_PIXEL_FORMAT,
@@ -64,14 +64,22 @@ static void init(void) {
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true },
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
+
+    // setup a pass struct with attachment views and pass-actions
     state.offscreen.pass = (sg_pass) {
-        .attachments = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0].image = color_img,
-            .depth_stencil.image = depth_img,
-            .label = "offscreen-attachments",
-        }),
+        .attachments = {
+            .colors[0] = sg_make_view(&(sg_view_desc){
+                .color_attachment = { .image = color_img },
+                .label = "color-attachment",
+            }),
+            .depth_stencil = sg_make_view(&(sg_view_desc){
+                .depth_stencil_attachment = { .image = depth_img },
+                .label = "depth-attachment",
+            }),
+        },
         .action = {
             .colors[0] = {
                 .load_action = SG_LOADACTION_CLEAR,
@@ -161,6 +169,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
+        .label = "sampler",
     });
 
     // the resource bindings for rendering a non-textured shape into offscreen render target
@@ -173,7 +182,10 @@ static void init(void) {
     state.display.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[IMG_tex] = color_img,
+        .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = color_img },
+            .label = "texture-view",
+        }),
         .samplers[SMP_smp] = smp,
     };
 }

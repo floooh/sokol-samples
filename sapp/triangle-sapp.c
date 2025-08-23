@@ -23,7 +23,7 @@ static void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // a vertex buffer with 3 vertices
+    // a vertex buffer with 3 vertices and view for binding
     float vertices[] = {
         // positions            // colors
          0.0f,  0.5f, 0.5f,     1.0f, 0.0f, 0.0f, 1.0f,
@@ -32,7 +32,7 @@ static void init(void) {
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
-        .label = "triangle-vertices"
+        .label = "vertex-buffer"
     });
 
     // create shader from code-generated sg_shader_desc

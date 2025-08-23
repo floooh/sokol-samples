@@ -93,6 +93,7 @@ static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
     sg_image joint_texture;
+    sg_view joint_texture_view;
     sg_sampler smp;
     sg_bindings bind;
     int num_instances;          // current number of character instances
@@ -210,26 +211,32 @@ static void init(void) {
     pip_desc.cull_mode = SG_CULLMODE_BACK;
     pip_desc.depth.write_enabled = true;
     pip_desc.depth.compare = SG_COMPAREFUNC_LESS_EQUAL;
+    pip_desc.label = "pipeline";
     state.pip = sg_make_pipeline(&pip_desc);
 
-    // create a dynamic joint-palette texture and sampler
+    // create a dynamic joint-palette image, texture view and sampler
     state.joint_texture_width = MAX_JOINTS * 3;
     state.joint_texture_height = MAX_INSTANCES;
     state.joint_texture_pitch = state.joint_texture_width * 4;
-    sg_image_desc img_desc = { };
+    sg_image_desc img_desc = {};
     img_desc.width = state.joint_texture_width;
     img_desc.height = state.joint_texture_height;
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
     img_desc.usage.stream_update = true;
+    img_desc.label = "joint-texture";
     state.joint_texture = sg_make_image(&img_desc);
-    state.bind.images[IMG_joint_tex] = state.joint_texture;
+    sg_view_desc view_desc = {};
+    view_desc.texture.image = state.joint_texture;
+    view_desc.label = "joint-texture-view";
+    state.bind.views[VIEW_joint_tex] = sg_make_view(&view_desc);
 
     sg_sampler_desc smp_desc = { };
     smp_desc.min_filter = SG_FILTER_NEAREST;
     smp_desc.mag_filter = SG_FILTER_NEAREST;
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.label = "joint-texture-sampler";
     state.smp = sg_make_sampler(&smp_desc);
     state.bind.samplers[SMP_smp] = state.smp;
 
@@ -240,6 +247,7 @@ static void init(void) {
     sg_buffer_desc buf_desc = { };
     buf_desc.usage.vertex_buffer = true;
     buf_desc.data = SG_RANGE(instance_data);
+    buf_desc.label = "instance-data";
     state.bind.vertex_buffers[1] = sg_make_buffer(&buf_desc);
 
     // start loading data
@@ -453,7 +461,7 @@ static void draw_ui(void) {
             ImGui::SameLine();
             if (ImGui::Button("4x")) { state.ui.joint_texture_scale = 4; }
             ImGui::BeginChild("##frame", {0,0}, true, ImGuiWindowFlags_HorizontalScrollbar);
-            ImGui::Image(simgui_imtextureid(state.joint_texture),
+            ImGui::Image(simgui_imtextureid(state.joint_texture_view),
                 { (float)(state.joint_texture_width * state.ui.joint_texture_scale), (float)(state.joint_texture_height * state.ui.joint_texture_scale) },
                 { 0.0f, 0.0f },
                 { 1.0f, 1.0f });
@@ -585,6 +593,7 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         vbuf_desc.usage.vertex_buffer = true;
         vbuf_desc.data.ptr = vertices;
         vbuf_desc.data.size = num_vertices * sizeof(vertex_t);
+        vbuf_desc.label = "vertices";
         state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
         free(vertices); vertices = nullptr;
 
@@ -592,6 +601,7 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         ibuf_desc.usage.index_buffer = true;
         ibuf_desc.data.ptr = &meshes[0].triangle_indices[0];
         ibuf_desc.data.size = state.num_triangle_indices * sizeof(uint16_t);
+        ibuf_desc.label = "indices";
         state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
     }
     else if (response->failed) {

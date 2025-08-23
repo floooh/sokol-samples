@@ -20,8 +20,9 @@
 static struct {
     int num_particles;
     float ry;
+    sg_buffer buf;
     struct {
-        sg_buffer buf;
+        sg_view sbuf_view;
         sg_pipeline pip;
     } compute;
     struct {
@@ -53,13 +54,19 @@ static void init(void) {
     // create an uninitialized storage buffer for the particle state,
     // this will be initialized and updated by compute shaders and then
     // used as vertex buffer to provide per-instance data
-    state.compute.buf = sg_make_buffer(&(sg_buffer_desc){
+    state.buf = sg_make_buffer(&(sg_buffer_desc){
         .size = MAX_PARTICLES * sizeof(particle_t),
         .usage = {
             .vertex_buffer = true,
             .storage_buffer = true,
         },
         .label = "particle-buffer",
+    });
+
+    // create a storage-buffer-view on the buffer
+    state.compute.sbuf_view = sg_make_view(&(sg_view_desc){
+        .storage_buffer = { .buffer = state.buf },
+        .label = "psrticle-buffer-view",
     });
 
     // a compute shader and pipeline object for updating particle positions
@@ -125,7 +132,9 @@ static void init(void) {
     });
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(pip);
-    sg_apply_bindings(&(sg_bindings){ .storage_buffers[SBUF_cs_ssbo] = state.compute.buf });
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_cs_ssbo] = state.compute.sbuf_view,
+    });
     sg_dispatch(MAX_PARTICLES / 64, 1, 1);
     sg_end_pass();
     sg_destroy_pipeline(pip);
@@ -146,7 +155,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[SBUF_cs_ssbo] = state.compute.buf,
+        .views[VIEW_cs_ssbo] = state.compute.sbuf_view,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
     sg_dispatch((state.num_particles+63)/64, 1, 1);
@@ -165,7 +174,7 @@ static void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers = {
             [0] = state.display.vbuf,
-            [1] = state.compute.buf,
+            [1] = state.buf,
         },
         .index_buffer = state.display.ibuf,
     });

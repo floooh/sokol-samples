@@ -21,6 +21,7 @@
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
+    sg_image img;
     sg_bindings bind;
     float rx, ry;
     int update_count;
@@ -37,13 +38,17 @@ void init(void) {
     });
     __dbgui_setup(sapp_sample_count());
 
-    // a 128x128 image with streaming update strategy
-    sg_image img = sg_make_image(&(sg_image_desc){
+    // a 128x128 image and texture view with streaming update strategy
+    state.img = sg_make_image(&(sg_image_desc){
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .usage.stream_update = true,
         .label = "dynamic-texture"
+    });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.img },
+        .label = "dynamic-texture-view",
     });
 
     // a sampler object
@@ -52,6 +57,7 @@ void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 
     // cube vertex buffer
@@ -131,7 +137,7 @@ void init(void) {
     state.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[IMG_tex] = img,
+        .views[VIEW_tex] = tex_view,
         .samplers[SMP_smp] = smp,
     };
 
@@ -156,7 +162,7 @@ void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.bind.images[0], &(sg_image_data){
+    sg_update_image(state.img, &(sg_image_data){
         .subimage[0][0] = SG_RANGE(state.pixels)
     });
 

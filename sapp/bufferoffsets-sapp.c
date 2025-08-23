@@ -11,9 +11,10 @@
 #include "bufferoffsets-sapp.glsl.h"
 
 static struct {
+    sg_buffer vbuf;
+    sg_buffer ibuf;
     sg_pass_action pass_action;
     sg_pipeline pip;
-    sg_bindings bind;
 } state = {
     .pass_action = {
         .colors[0] = {
@@ -51,11 +52,11 @@ void init(void) {
         0, 1, 2,
         0, 1, 2, 0, 2, 3
     };
-    state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
+    state.vbuf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
         .label = "vertex-buffer",
     });
-    state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.ibuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.index_buffer = true,
         .data = SG_RANGE(indices),
         .label = "index-buffer",
@@ -78,15 +79,19 @@ void init(void) {
 void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
-    // render the triangle
-    state.bind.vertex_buffer_offsets[0] = 0;
-    state.bind.index_buffer_offset = 0;
-    sg_apply_bindings(&state.bind);
+    // render the triangle (located at start of vertex- and index-buffer)
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+    });
     sg_draw(0, 3, 1);
-    // render the quad
-    state.bind.vertex_buffer_offsets[0] = 3 * sizeof(vertex_t);
-    state.bind.index_buffer_offset = 3 * sizeof(uint16_t);
-    sg_apply_bindings(&state.bind);
+    // render the quad (located after triangle data in vertex- and index-buffer)
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.vbuf,
+        .vertex_buffer_offsets[0] = 3 * sizeof(vertex_t),
+        .index_buffer = state.ibuf,
+        .index_buffer_offset = 3 * sizeof(uint16_t),
+    });
     sg_draw(0, 6, 1);
     __dbgui_draw();
     sg_end_pass();

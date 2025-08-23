@@ -244,7 +244,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
             &img_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // sokol-spine has already allocated a sokol-gfx image and sampler handle for use,
+            // sokol-spine has already allocated a sokol-gfx image, view and sampler handle for us,
             // now "populate" the handles with an actual image and sampler
             sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
@@ -255,6 +255,9 @@ static void image_data_loaded(const sfetch_response_t* response) {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }
+            });
+            sg_init_view(img_info.sgview, &(sg_view_desc){
+                .texture = { .image = img_info.sgimage },
             });
             sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
                 .min_filter = img_info.min_filter,

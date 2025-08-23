@@ -26,14 +26,20 @@
 #define OFFSCREEN_WIDTH (512)
 #define OFFSCREEN_HEIGHT (512)
 
+// a helper struct which bundles an image, a color attachment view and a texture view
+typedef struct {
+    sg_image img;
+    sg_view att_view;
+    sg_view tex_view;
+} image_and_views_t;
+
 static struct {
     bool features_ok;
     struct {
-        sg_image depth_img;
-        sg_image normal_img;
-        sg_image color_img;
-        sg_pass_action pass_action;
-        sg_attachments attachments;
+        image_and_views_t depth;
+        image_and_views_t normal;
+        image_and_views_t color;
+        sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
         hmm_mat4 view_proj;
@@ -47,6 +53,19 @@ static struct {
     } display;
     float rx, ry;
 } state;
+
+static image_and_views_t make_image_and_views(const sg_image_desc* img_desc, const char* att_label, const char* tex_label) {
+    sg_image img = sg_make_image(img_desc);
+    sg_view att_view = sg_make_view(&(sg_view_desc){
+        .color_attachment = { .image = img },
+        .label = att_label,
+    });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = img },
+        .label = tex_label,
+    });
+    return (image_and_views_t){ .img = img, .att_view = att_view, .tex_view = tex_view };
+}
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -65,39 +84,45 @@ static void init(void) {
 
     // setup resources for offscreen rendering
     {
-        state.offscreen.pass_action = (sg_pass_action) {
-            .colors = {
-                [0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
-                [1] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
-                [2] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
-            },
-        };
-
-        // create 3 render target textures with different formats
+        // create 3 render target image and texture views with different formats
         sg_image_desc img_desc = {
-            .usage.render_attachment = true,
+            .usage.color_attachment = true,
             .pixel_format = DEPTH_PIXEL_FORMAT,
             .width = OFFSCREEN_WIDTH,
             .height = OFFSCREEN_HEIGHT,
             .sample_count = 1,
+            .label = "depth-image",
         };
-        state.offscreen.depth_img = sg_make_image(&img_desc);
+        state.offscreen.depth = make_image_and_views(&img_desc, "depth-attachment", "depth-texture");
         img_desc.pixel_format = NORMAL_PIXEL_FORMAT;
-        state.offscreen.normal_img = sg_make_image(&img_desc);
+        img_desc.label = "normal-image";
+        state.offscreen.normal = make_image_and_views(&img_desc, "normal-attachment", "normal-texture");
         img_desc.pixel_format = COLOR_PIXEL_FORMAT;
-        state.offscreen.color_img = sg_make_image(&img_desc);
+        img_desc.label = "color-image";
+        state.offscreen.color = make_image_and_views(&img_desc, "color-attachment", "color-texture");
+        img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true };
         img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-        sg_image zbuffer_img = sg_make_image(&img_desc);
-
-        // create pass object for MRT offscreen rendering
-        state.offscreen.attachments = sg_make_attachments(&(sg_attachments_desc){
-            .colors = {
-                [0].image = state.offscreen.depth_img,
-                [1].image = state.offscreen.normal_img,
-                [2].image = state.offscreen.color_img,
-            },
-            .depth_stencil.image = zbuffer_img
+        img_desc.label = "depth-buffer-image";
+        sg_image zbuf_img = sg_make_image(&img_desc);
+        sg_view zbuf_view = sg_make_view(&(sg_view_desc){
+            .depth_stencil_attachment = { .image = zbuf_img },
+            .label = "depth-buffer-attachment",
         });
+
+        // a render pass descriptor for mrt rendering
+        state.offscreen.pass = (sg_pass){
+            .action.colors = {
+                [0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+                [1] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+                [2] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 0.0f } },
+            },
+            .attachments = {
+                .colors[0] = state.offscreen.depth.att_view,
+                .colors[1] = state.offscreen.normal.att_view,
+                .colors[2] = state.offscreen.color.att_view,
+                .depth_stencil = zbuf_view,
+            },
+        };
 
         // create a shape to render into the offscreen render target
         sshape_vertex_t vertices[3000] = {0};
@@ -218,10 +243,7 @@ static void frame(void) {
 
     // render donut shape into MRT offscreen render targets
     const offscreen_params_t offscreen_params = compute_offscreen_params();
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen.pass_action,
-        .attachments = state.offscreen.attachments,
-    });
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(UB_offscreen_params, &SG_RANGE(offscreen_params));
@@ -248,17 +270,17 @@ static void frame(void) {
         sg_apply_viewport(x0 + i*(quad_width+quad_gap), y0, quad_width, quad_height, true);
         switch (i) {
             case 0:
-                bindings.images[IMG_tex] = state.offscreen.depth_img;
+                bindings.views[VIEW_tex] = state.offscreen.depth.tex_view;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 1:
-                bindings.images[IMG_tex] = state.offscreen.normal_img;
+                bindings.views[VIEW_tex] = state.offscreen.normal.tex_view;
                 quad_params.color_bias = 1.0f;
                 quad_params.color_scale = 0.5f;
                 break;
             case 2:
-                bindings.images[IMG_tex] = state.offscreen.color_img;
+                bindings.views[VIEW_tex] = state.offscreen.color.tex_view;
                 quad_params.color_bias = 0.0f;
                 quad_params.color_scale = 1.0f;
                 break;

@@ -12,7 +12,7 @@
 
 static struct {
     sg_buffer vbuf;
-    sg_image img;
+    sg_view tex_view;
     sg_sampler smp[_SG_WRAP_NUM];
     sg_pipeline pip;
     sg_pass_action pass_action;
@@ -44,7 +44,7 @@ static void init(void) {
         .data = SG_RANGE(quad_vertices)
     });
 
-    // an image object with a test pattern
+    // an image object with a test pattern, and atexture view
     const uint32_t o = 0xFF555555;
     const uint32_t W = 0xFFFFFFFF;
     const uint32_t R = 0xFF0000FF;
@@ -60,11 +60,13 @@ static void init(void) {
         { B, o, o, o, o, o, o, R },
         { B, B, B, B, R, R, R, R },
     };
-    state.img = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .data.subimage[0][0] = SG_RANGE(test_pixels),
-        .label = "uvwrap-img",
+    state.tex_view = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 8,
+            .height = 8,
+            .data.subimage[0][0] = SG_RANGE(test_pixels),
+            .label = "uvwrap-img",
+        }),
     });
 
     // one sampler object per uv-wrap mode
@@ -106,7 +108,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -114,9 +116,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
         .label = "uvwrap-shader",
@@ -143,7 +145,7 @@ static void frame(void) {
     for (int i = SG_WRAP_REPEAT; i <= SG_WRAP_MIRRORED_REPEAT; i++) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
-            .images[0] = state.img,
+            .views[0] = state.tex_view,
             .samplers[0] = state.smp[i],
         });
         float x_offset = 0, y_offset = 0;

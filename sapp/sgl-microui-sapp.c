@@ -380,6 +380,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 
 //== micrui renderer ===========================================================
 static sg_image atlas_img;
+static sg_view atlas_view;
 static sg_sampler atlas_smp;
 static sgl_pipeline pip;
 
@@ -403,20 +404,27 @@ static void r_init(void) {
                 .ptr = rgba8_pixels,
                 .size = rgba8_size
             }
-        }
+        },
+        .label = "microui-atlas-image",
+    });
+    atlas_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = atlas_img },
+        .label = "microui-atlas-view",
     });
     atlas_smp = sg_make_sampler(&(sg_sampler_desc){
         // LINEAR would be better for text quality in HighDPI, but the
         // atlas texture is "leaking" from neighbouring pixels unfortunately
         .min_filter = SG_FILTER_NEAREST,
         .mag_filter = SG_FILTER_NEAREST,
+        .label = "microui-atlas-sampler",
     });
     pip = sgl_make_pipeline(&(sg_pipeline_desc){
         .colors[0].blend = {
             .enabled = true,
             .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
             .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA
-        }
+        },
+        .label = "microui-pipeline",
     });
 
     free(rgba8_pixels);
@@ -427,7 +435,7 @@ static void r_begin(int disp_width, int disp_height) {
     sgl_push_pipeline();
     sgl_load_pipeline(pip);
     sgl_enable_texture();
-    sgl_texture(atlas_img, atlas_smp);
+    sgl_texture(atlas_view, atlas_smp);
     sgl_matrix_mode_projection();
     sgl_push_matrix();
     sgl_ortho(0.0f, (float) disp_width, (float) disp_height, 0.0f, -1.0f, +1.0f);

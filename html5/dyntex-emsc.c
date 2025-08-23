@@ -25,6 +25,7 @@ static uint32_t pixels[IMAGE_WIDTH][IMAGE_HEIGHT];
 
 static struct {
     sg_pipeline pip;
+    sg_image img;
     sg_bindings bind;
     sg_pass_action pass_action;
     float rx, ry;
@@ -48,13 +49,15 @@ int main() {
     });
     assert(sg_isvalid());
 
-    // a 128x128 image with streaming-update strategy
-    sg_image img = sg_make_image(&(sg_image_desc){
+    // a 128x128 image and texture view with streaming-update strategy
+    state.img = sg_make_image(&(sg_image_desc){
         .usage.stream_update = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
+
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // an sampler object
     sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
@@ -117,7 +120,7 @@ int main() {
     state.bind = (sg_bindings){
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -158,9 +161,9 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
 
     // a pipeline-state-object for the textured cube
@@ -207,7 +210,7 @@ static EM_BOOL draw(double time, void* userdata) {
     game_of_life_update();
 
     // update the dynamic image
-    sg_update_image(state.bind.images[0], &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
 
     // draw pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });

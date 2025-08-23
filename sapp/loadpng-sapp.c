@@ -58,17 +58,18 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.125f, 0.25f, 0.35f, 1.0f } }
     };
 
-    /* Allocate an image handle, but don't actually initialize the image yet,
+    /* Allocate a view handle, but don't actually initialize it yet,
        this happens later when the asynchronous file load has finished.
-       Any draw calls containing such an "incomplete" image handle
+       Any draw calls containing such an "incomplete" view handle
        will be silently dropped.
     */
-    state.bind.images[IMG_tex] = sg_alloc_image();
+    state.bind.views[VIEW_tex] = sg_alloc_view();
 
     // a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .label = "png-sampler",
     });
 
     // cube vertex buffer with packed texcoords
@@ -172,17 +173,24 @@ static void fetch_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // ok, time to actually initialize the sokol-gfx texture
-            sg_init_image(state.bind.images[IMG_tex], &(sg_image_desc){
+            // create an image object from the loaded texture date
+            sg_image img = sg_make_image(&(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .data.subimage[0][0] = {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),
-                }
+                },
+                .label = "png-image",
             });
             stbi_image_free(pixels);
+
+            // ...and initialize the pre-allocated texture view handle with that image
+            sg_init_view(state.bind.views[VIEW_tex], &(sg_view_desc){
+                .texture = { .image = img },
+                .label = "png-texture-view",
+            });
         }
     } else if (response->failed) {
         // if loading the file failed, set clear color to red

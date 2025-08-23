@@ -85,7 +85,7 @@ static void init(void) {
         .label = "cube-pipeline"
     });
 
-    // create a 3d texture with random content
+    // create a 3d image with random content, and a texture view for binding
     static uint32_t pixels[TEX3D_DIM][TEX3D_DIM][TEX3D_DIM];
     for (int x = 0; x < TEX3D_DIM; x++) {
         for (int y = 0; y < TEX3D_DIM; y++) {
@@ -94,21 +94,27 @@ static void init(void) {
             }
         }
     }
-    state.bind.images[IMG_tex] = sg_make_image(&(sg_image_desc){
-        .type = SG_IMAGETYPE_3D,
-        .width = TEX3D_DIM,
-        .height = TEX3D_DIM,
-        .num_slices = TEX3D_DIM,
-        .num_mipmaps = 1,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .label = "3d texture",
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = {
+            .image = sg_make_image(&(sg_image_desc){
+                .type = SG_IMAGETYPE_3D,
+                .width = TEX3D_DIM,
+                .height = TEX3D_DIM,
+                .num_slices = TEX3D_DIM,
+                .num_mipmaps = 1,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .label = "3d-texture",
+                .data.subimage[0][0] = SG_RANGE(pixels)
+            }),
+        },
+        .label = "3d-texture-view",
     });
 
     // ...and a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
+        .label = "sampler",
     });
 }
 

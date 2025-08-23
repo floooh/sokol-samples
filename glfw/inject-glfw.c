@@ -133,7 +133,9 @@ int main() {
     assert(sg_gl_query_image_info(img).tex[1] == img_desc.gl_textures[1]);
     assert(sg_gl_query_image_info(img).active_slot == 0);
     assert(sg_gl_query_image_info(img).tex_target == GL_TEXTURE_2D);
-    assert(sg_gl_query_image_info(img).msaa_render_buffer == 0);
+
+    // create a texture view on the image
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     // create a GL sampler object
     sg_sampler_desc smp_desc = {
@@ -155,7 +157,7 @@ int main() {
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[0] = img,
+        .views[0] = tex_view,
         .samplers[0] = smp,
     };
 
@@ -186,9 +188,9 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 },
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .image_slot = 0, .sampler_slot = 0 },
+        .texture_sampler_pairs[0] = { .stage = SG_SHADERSTAGE_FRAGMENT, .glsl_name = "tex", .view_slot = 0, .sampler_slot = 0 },
     });
     assert(sg_gl_query_shader_info(shd).prog != 0);
 

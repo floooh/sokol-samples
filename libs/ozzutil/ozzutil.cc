@@ -21,6 +21,7 @@ static struct {
     int joint_texture_height;   // in number of pixels
     int joint_texture_pitch;    // in number of floats
     sg_image joint_texture;
+    sg_view joint_texture_view;
     sg_sampler smp;
     float* joint_upload_buffer;
 } state;
@@ -62,13 +63,20 @@ void ozz_setup(const ozz_desc_t* desc) {
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
     img_desc.usage.stream_update = true;
+    img_desc.label = "joint-texture";
     state.joint_texture = sg_make_image(&img_desc);
+
+    sg_view_desc view_desc = { };
+    view_desc.texture.image = state.joint_texture;
+    view_desc.label = "joint-texture-view";
+    state.joint_texture_view = sg_make_view(&view_desc);
 
     sg_sampler_desc smp_desc = { };
     smp_desc.min_filter = SG_FILTER_NEAREST;
     smp_desc.mag_filter = SG_FILTER_NEAREST;
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
     smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
+    smp_desc.label = "joint-texture-sampler";
     state.smp = sg_make_sampler(&smp_desc);
 
     state.joint_upload_buffer = (float*) calloc(state.joint_texture_pitch * state.joint_texture_height, sizeof(float));
@@ -78,7 +86,8 @@ void ozz_shutdown(void) {
     assert(state.valid);
     assert(state.joint_upload_buffer);
     free(state.joint_upload_buffer);
-    // it's ok to call sg_destroy_image with an invalid id
+    sg_destroy_sampler(state.smp);
+    sg_destroy_view(state.joint_texture_view);
     sg_destroy_image(state.joint_texture);
     state.valid = false;
 }
@@ -86,6 +95,11 @@ void ozz_shutdown(void) {
 sg_image ozz_joint_texture(void) {
     assert(state.valid);
     return state.joint_texture;
+}
+
+sg_view ozz_joint_texture_view(void) {
+    assert(state.valid);
+    return state.joint_texture_view;
 }
 
 sg_sampler ozz_joint_sampler(void) {

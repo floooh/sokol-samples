@@ -20,8 +20,9 @@
 typedef struct {
     sspine_context ctx;
     sg_image img;
-    sg_attachments attachments;
-    sg_pass_action pass_action;
+    sg_view tex_view;
+    sg_view att_view;
+    sg_pass pass;
 } offscreen_t;
 
 typedef struct {
@@ -58,7 +59,7 @@ typedef struct {
     struct { float x; float y; } pos;
     struct { float x; float y; } scale;
     float rot;
-    sg_image img;
+    sg_view view;
     sg_sampler smp;
 } quad_params_t;
 static void draw_quad(quad_params_t params);
@@ -141,14 +142,14 @@ static void frame(void) {
         .pos = { -0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = sgl_rad((float)state.angle_deg),
-        .img = state.offscreen[0].img,
+        .view = state.offscreen[0].tex_view,
         .smp = state.smp,
     });
     draw_quad((quad_params_t){
         .pos = { +0.425f, 0.0f },
         .scale = { 0.4f, 0.4f },
         .rot = -sgl_rad((float)state.angle_deg),
-        .img = state.offscreen[1].img,
+        .view = state.offscreen[1].tex_view,
         .smp = state.smp,
     });
 
@@ -158,18 +159,12 @@ static void frame(void) {
     // - the default pass which renders the previously recorded sokol-gl scene using
     //   the two render targets as textures
     //
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen[0].pass_action,
-        .attachments = state.offscreen[0].attachments
-    });
+    sg_begin_pass(&state.offscreen[0].pass);
     sspine_set_context(state.offscreen[0].ctx);
     sspine_draw_layer(0, &state.layer_transform);
     sg_end_pass();
 
-    sg_begin_pass(&(sg_pass){
-        .action = state.offscreen[1].pass_action,
-        .attachments = state.offscreen[1].attachments
-    });
+    sg_begin_pass(&state.offscreen[1].pass);
     sspine_context_draw_layer(state.offscreen[1].ctx, 0, &state.layer_transform);
     sg_end_pass();
 
@@ -188,15 +183,17 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-// helper function to create an offscreen render target and pass, and matching sokol-spine context
+// helper function to create an offscreen pass resources, and a matching sokol-spine context
 offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clear_color) {
     const sg_image img = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = width_height,
         .height = width_height,
         .pixel_format = fmt,
         .sample_count = 1,
     });
+    const sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
+    const sg_view att_view = sg_make_view(&(sg_view_desc){ .color_attachment.image = img });
     return (offscreen_t){
         .ctx = sspine_make_context(&(sspine_context_desc){
             .color_format = fmt,
@@ -204,15 +201,16 @@ offscreen_t setup_offscreen(sg_pixel_format fmt, int width_height, sg_color clea
             .sample_count = 1,
         }),
         .img = img,
-        .attachments = sg_make_attachments(&(sg_attachments_desc){
-            .colors[0] = {
-                .image = img,
-            }
-        }),
-        .pass_action = {
-            .colors[0] = {
-                .load_action = SG_LOADACTION_CLEAR,
-                .clear_value = clear_color },
+        .tex_view = tex_view,
+        .att_view = att_view,
+        .pass = {
+            .action = {
+                .colors[0] = {
+                    .load_action = SG_LOADACTION_CLEAR,
+                    .clear_value = clear_color
+                },
+            },
+            .attachments.colors[0] = att_view,
         },
     };
 }
@@ -312,7 +310,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
             &img_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // sokol-spine has already allocated a sokol-gfx image and sampler handle for us,
+            // sokol-spine has already allocated a sokol-gfx image, view and sampler object for us,
             // now "populate" the handles with an actual image and sampler
             sg_init_image(img_info.sgimage, &(sg_image_desc){
                 .width = img_width,
@@ -324,6 +322,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                     .size = (size_t)(img_width * img_height * 4)
                 }
             });
+            sg_init_view(img_info.sgview, &(sg_view_desc){ .texture.image = img_info.sgimage });
             sg_init_sampler(img_info.sgsampler, &(sg_sampler_desc){
                 .min_filter = img_info.min_filter,
                 .mag_filter = img_info.mag_filter,
@@ -347,7 +346,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 // draw a rotating quad via sokol-gl
 static void draw_quad(quad_params_t params) {
-    sgl_texture(params.img, params.smp);
+    sgl_texture(params.view, params.smp);
     sgl_push_matrix();
     sgl_translate(params.pos.x, params.pos.y, 0.0f);
     sgl_scale(params.scale.x, params.scale.y, 0.0f);

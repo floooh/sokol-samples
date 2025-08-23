@@ -68,7 +68,7 @@ static void init(void) {
     ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
 
-    // font texture and sampler for imgui's default font
+    // font image, texture view and sampler for imgui's default font
     unsigned char* font_pixels;
     int font_width, font_height;
     io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
@@ -78,7 +78,10 @@ static void init(void) {
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
-    state.bind.images[0] = sg_make_image(&img_desc);
+    sg_image img = sg_make_image(&img_desc);
+    sg_view_desc view_desc = { };
+    view_desc.texture.image = img;
+    state.bind.views[0] = sg_make_view(&view_desc);
 
     sg_sampler_desc smp_desc = { };
     smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
@@ -113,13 +116,13 @@ static void init(void) {
     shd_desc.uniform_blocks[0].stage = SG_SHADERSTAGE_VERTEX;
     shd_desc.uniform_blocks[0].size = sizeof(vs_params_t);
     shd_desc.uniform_blocks[0].wgsl_group0_binding_n = 0;
-    shd_desc.images[0].stage = SG_SHADERSTAGE_FRAGMENT;
-    shd_desc.images[0].wgsl_group1_binding_n = 0;
+    shd_desc.views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.views[0].texture.wgsl_group1_binding_n = 0;
     shd_desc.samplers[0].stage = SG_SHADERSTAGE_FRAGMENT;
     shd_desc.samplers[0].wgsl_group1_binding_n = 1;
-    shd_desc.image_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
-    shd_desc.image_sampler_pairs[0].image_slot = 0;
-    shd_desc.image_sampler_pairs[0].sampler_slot = 0;
+    shd_desc.texture_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
+    shd_desc.texture_sampler_pairs[0].view_slot = 0;
+    shd_desc.texture_sampler_pairs[0].sampler_slot = 0;
     sg_shader shd = sg_make_shader(&shd_desc);
 
     // pipeline object for imgui rendering

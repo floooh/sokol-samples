@@ -25,6 +25,7 @@
 static struct {
     sg_pass_action pass_action;
     sg_image img[NUM_IMAGES];
+    sg_view view[NUM_IMAGES];
     sg_pipeline pip;
     sg_bindings bind;
     int num_instances;
@@ -154,6 +155,9 @@ static void init(void) {
             .pixel_format = SG_PIXELFORMAT_RGBA8,
             .data.subimage[0][0] = SG_RANGE(pixels),
         });
+        state.view[i] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = state.img[i] },
+        });
     }
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
@@ -248,7 +252,7 @@ static void frame(void) {
     sg_apply_uniforms(UB_vs_per_frame, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;
 
-    state.bind.images[IMG_tex] = state.img[0];
+    state.bind.views[VIEW_tex] = state.view[0];
     sg_apply_bindings(&state.bind);
     state.stats.num_binding_updates++;
     int cur_bind_count = 0;
@@ -259,7 +263,7 @@ static void frame(void) {
             if (cur_img == NUM_IMAGES) {
                 cur_img = 0;
             }
-            state.bind.images[IMG_tex] = state.img[cur_img++];
+            state.bind.views[VIEW_tex] = state.view[cur_img++];
             sg_apply_bindings(&state.bind);
             state.stats.num_binding_updates++;
         }

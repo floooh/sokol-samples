@@ -70,7 +70,7 @@ static void init(void) {
     // create a MSAA render target image, this will be rendered to
     // in the offscreen render pass
     const sg_image msaa_image = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.color_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
@@ -82,7 +82,7 @@ static void init(void) {
     // this needs the same dimensions and sample count as the
     // render target image
     const sg_image depth_image = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.depth_stencil_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_DEPTH_FORMAT,
@@ -94,7 +94,7 @@ static void init(void) {
     // be resolved to at the end of the offscreen pass, and which will be
     // texture-sampled in the display pass
     const sg_image resolve_image = sg_make_image(&(sg_image_desc){
-        .usage.render_attachment = true,
+        .usage.resolve_attachment = true,
         .width = OFFSCREEN_WIDTH,
         .height = OFFSCREEN_HEIGHT,
         .pixel_format = OFFSCREEN_COLOR_FORMAT,
@@ -102,15 +102,21 @@ static void init(void) {
         .label = "resolve-image",
     });
 
-    // finally, create the offscreen attachments object, by setting a resolve-attachment,
-    // an MSAA-resolve operation will happen from the color attachment into the
-    // resolve attachment in sg_end_pass()
-    state.offscreen.atts = sg_make_attachments(&(sg_attachments_desc){
-        .colors[0].image = msaa_image,
-        .resolves[0].image = resolve_image,
-        .depth_stencil.image = depth_image,
-        .label = "offscreen-attachments",
-    });
+    // populate attachments struct with view objects
+    state.offscreen.atts = (sg_attachments){
+        .colors[0] = sg_make_view(&(sg_view_desc){
+            .color_attachment = { .image = msaa_image },
+            .label = "color-attachment",
+        }),
+        .resolves[0] = sg_make_view(&(sg_view_desc){
+            .resolve_attachment = { .image = resolve_image },
+            .label = "resolve-attachment",
+        }),
+        .depth_stencil = sg_make_view(&(sg_view_desc){
+            .depth_stencil_attachment = { .image = depth_image },
+            .label = "depth-attachment",
+        }),
+    };
 
     // create a couple of meshes
     sshape_vertex_t vertices[8000] = { 0 };
@@ -189,6 +195,7 @@ static void init(void) {
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_REPEAT,
         .wrap_v = SG_WRAP_REPEAT,
+        .label = "sampler",
     });
 
     // the resource bindings for rendering a non-textured shape in the offscreen pass
@@ -202,7 +209,10 @@ static void init(void) {
     state.display.bind = (sg_bindings) {
         .vertex_buffers[0] = vbuf,
         .index_buffer = ibuf,
-        .images[IMG_tex] = resolve_image,
+        .views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+            .texture = { .image = resolve_image },
+            .label = "texture-view",
+        }),
         .samplers[SMP_smp] = smp,
     };
 }

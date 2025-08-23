@@ -39,7 +39,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // a 16x16 array texture with 3 layers and a checkerboard pattern
+    // a 16x16 array image with 3 layers and a checkerboard pattern
     static uint32_t pixels[IMG_LAYERS][IMG_HEIGHT][IMG_WIDTH];
     for (int layer=0, even_odd=0; layer<IMG_LAYERS; layer++) {
         for (int y = 0; y < IMG_HEIGHT; y++, even_odd++) {
@@ -56,13 +56,15 @@ static void init(void) {
             }
         }
     }
-    state.bind.images[0] = sg_make_image(&(sg_image_desc) {
-        .type = SG_IMAGETYPE_ARRAY,
-        .width = IMG_WIDTH,
-        .height = IMG_HEIGHT,
-        .num_slices = IMG_LAYERS,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels)
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .type = SG_IMAGETYPE_ARRAY,
+            .width = IMG_WIDTH,
+            .height = IMG_HEIGHT,
+            .num_slices = IMG_LAYERS,
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .data.subimage[0][0] = SG_RANGE(pixels),
+        }),
     });
     state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc) {
         .min_filter = SG_FILTER_LINEAR,
@@ -168,7 +170,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .msl_buffer_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .image_type = SG_IMAGETYPE_ARRAY,
             .msl_texture_n = 0,
@@ -177,9 +179,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .msl_sampler_n = 0,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });

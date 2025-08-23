@@ -3,7 +3,6 @@
 //  Rendering with multi-rendertargets, and recreating render targets
 //  when window size changes.
 //------------------------------------------------------------------------------
-#include <stddef.h> /* offsetof */
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -13,26 +12,32 @@
 #include "HandmadeMath.h"
 #include "dbgui/dbgui.h"
 #include "mrt-sapp.glsl.h"
+#include <stddef.h> /* offsetof */
+#include <assert.h>
 
 #define OFFSCREEN_SAMPLE_COUNT (4)
+#define NUM_MRTS (3)
 
 static struct {
     struct {
-        sg_pass_action pass_action;
-        sg_attachments_desc atts_desc;
-        sg_attachments atts;
         sg_pipeline pip;
         sg_bindings bind;
+        sg_pass pass;
     } offscreen;
     struct {
         sg_pipeline pip;
         sg_bindings bind;
-    } fsq;
+        sg_pass_action pass_action;
+    } display;
     struct {
         sg_pipeline pip;
         sg_bindings bind;
     } dbg;
-    sg_pass_action pass_action;
+    struct {
+        sg_image color[NUM_MRTS];
+        sg_image resolve[NUM_MRTS];
+        sg_image depth;
+    } images;
     float rx, ry;
 } state;
 
@@ -40,62 +45,9 @@ typedef struct {
     float x, y, z, b;
 } vertex_t;
 
+static void reinit_attachments(int width, int height);
 
-// called initially and when window size changes
-void create_offscreen_attachments(int width, int height) {
-    // destroy previous resource (can be called for invalid id)
-    sg_destroy_attachments(state.offscreen.atts);
-    for (int i = 0; i < 3; i++) {
-        sg_destroy_image(state.offscreen.atts_desc.colors[i].image);
-        sg_destroy_image(state.offscreen.atts_desc.resolves[i].image);
-    }
-    sg_destroy_image(state.offscreen.atts_desc.depth_stencil.image);
-
-    // create offscreen rendertarget images and pass
-    sg_image_desc color_img_desc = {
-        .usage.render_attachment = true,
-        .width = width,
-        .height = height,
-        .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .label = "msaa image"
-    };
-    sg_image_desc resolve_img_desc = color_img_desc;
-    resolve_img_desc.sample_count = 1;
-    resolve_img_desc.label = "resolve image";
-    sg_image_desc depth_img_desc = color_img_desc;
-    depth_img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
-    depth_img_desc.label = "depth image";
-    state.offscreen.atts_desc = (sg_attachments_desc){
-        .colors = {
-            [0].image = sg_make_image(&color_img_desc),
-            [1].image = sg_make_image(&color_img_desc),
-            [2].image = sg_make_image(&color_img_desc)
-        },
-        .resolves = {
-            [0].image = sg_make_image(&resolve_img_desc),
-            [1].image = sg_make_image(&resolve_img_desc),
-            [2].image = sg_make_image(&resolve_img_desc),
-        },
-        .depth_stencil.image = sg_make_image(&depth_img_desc),
-        .label = "offscreen pass"
-    };
-    state.offscreen.atts = sg_make_attachments(&state.offscreen.atts_desc);
-
-    // also need to update the fullscreen-quad texture bindings
-    for (int i = 0; i < 3; i++) {
-        state.fsq.bind.images[i] = state.offscreen.atts_desc.resolves[i].image;
-    }
-}
-
-// listen for window-resize events and recreate offscreen rendertargets
-void event(const sapp_event* e) {
-    if (e->type == SAPP_EVENTTYPE_RESIZED) {
-        create_offscreen_attachments(e->framebuffer_width, e->framebuffer_height);
-    }
-    __dbgui_event(e);
-}
-
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -103,16 +55,33 @@ void init(void) {
     __dbgui_setup(sapp_sample_count());
 
     // a pass action for the default render pass
-    state.pass_action = (sg_pass_action) {
+    state.display.pass_action = (sg_pass_action) {
         .colors[0].load_action = SG_LOADACTION_DONTCARE,
         .depth.load_action = SG_LOADACTION_DONTCARE,
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // render pass attachments with 3 color images, and a depth image
-    create_offscreen_attachments(sapp_width(), sapp_height());
+    // pre-allocate all image and view handles upfront, the actual
+    // initialization will then happen in `reinit_attachments()` which both
+    // called from init() and when the window size changes
+    //
+    // NOTE: we could just as well call destroy/make on window resize,
+    // and in reality this wouldn't make much of a difference, in this sample
+    // the pre-allocate + uninit/init is used for better test coverage
+    for (int i = 0; i < NUM_MRTS; i++) {
+        state.images.color[i] = sg_alloc_image();
+        state.images.resolve[i] = sg_alloc_image();
+        state.offscreen.pass.attachments.colors[i] = sg_alloc_view();
+        state.offscreen.pass.attachments.resolves[i] = sg_alloc_view();
+        state.display.bind.views[VIEW_tex0 + i] = sg_alloc_view();
+    }
+    state.images.depth = sg_alloc_image();
+    state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
 
-    // cube vertex buffer
+    // initialize pass attachment images and views
+    reinit_attachments(sapp_width(), sapp_height());
+
+    // create a vertex buffer for the cube
     vertex_t cube_vertices[] = {
         // pos + brightness
         { -1.0f, -1.0f, -1.0f,   1.0f },
@@ -145,12 +114,12 @@ void init(void) {
         {  1.0f,  1.0f,  1.0f,   0.7f },
         {  1.0f,  1.0f, -1.0f,   0.7f },
     };
-    sg_buffer cube_vbuf = sg_make_buffer(&(sg_buffer_desc){
+    state.offscreen.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
         .label = "cube vertices"
     });
 
-    // index buffer for the cube
+    // ...and an index buffer for the cube
     uint16_t cube_indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -159,17 +128,37 @@ void init(void) {
         16, 17, 18,  16, 18, 19,
         22, 21, 20,  23, 22, 20
     };
-    sg_buffer cube_ibuf = sg_make_buffer(&(sg_buffer_desc){
+    state.offscreen.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage.index_buffer = true,
         .data = SG_RANGE(cube_indices),
         .label = "cube indices"
     });
 
-    // a shader to render the cube into offscreen MRT render targest
-    sg_shader offscreen_shd = sg_make_shader(offscreen_shader_desc(sg_query_backend()));
+    // pipeline and shader object for the offscreen-rendered cube
+    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
+        .layout = {
+            .buffers[0].stride = sizeof(vertex_t),
+            .attrs = {
+                [ATTR_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
+                [ATTR_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
+            }
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .cull_mode = SG_CULLMODE_BACK,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
+        },
+        .color_count = NUM_MRTS,
+        .label = "offscreen pipeline"
+    });
 
-    // pass action for offscreen pass
-    state.offscreen.pass_action = (sg_pass_action) {
+    // a pass action for the offscreen pass (since the MSAA render targets will be resolved
+    // into a texture their content doesn't need to be stored)
+    state.offscreen.pass.action = (sg_pass_action) {
         .colors = {
             [0] = {
                 .load_action = SG_LOADACTION_CLEAR,
@@ -189,90 +178,53 @@ void init(void) {
         }
     };
 
-    // pipeline object for the offscreen-rendered cube
-    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .layout = {
-            .buffers[0].stride = sizeof(vertex_t),
-            .attrs = {
-                [ATTR_offscreen_pos]     = { .offset=offsetof(vertex_t,x), .format=SG_VERTEXFORMAT_FLOAT3 },
-                [ATTR_offscreen_bright0] = { .offset=offsetof(vertex_t,b), .format=SG_VERTEXFORMAT_FLOAT }
-            }
-        },
-        .shader = offscreen_shd,
-        .index_type = SG_INDEXTYPE_UINT16,
-        .cull_mode = SG_CULLMODE_BACK,
-        .sample_count = OFFSCREEN_SAMPLE_COUNT,
-        .depth = {
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true
-        },
-        .color_count = 3,
-        .label = "offscreen pipeline"
-    });
-
-    // resource bindings for offscreen rendering
-    state.offscreen.bind = (sg_bindings){
-        .vertex_buffers[0] = cube_vbuf,
-        .index_buffer = cube_ibuf
-    };
-
     // a vertex buffer to render a fullscreen rectangle
     float quad_vertices[] = { 0.0f, 0.0f,  1.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f };
-    sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
+    const sg_buffer quad_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(quad_vertices),
         .label = "quad vertices"
     });
 
-    // a shader to render a fullscreen rectangle by adding the 3 offscreen-rendered images
-    sg_shader fsq_shd = sg_make_shader(fsq_shader_desc(sg_query_backend()));
-
-    // the pipeline object to render the fullscreen quad
-    state.fsq.pip = sg_make_pipeline(&(sg_pipeline_desc){
+    // a pipeline and shader object to render the fullscreen quad
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(fsq_shader_desc(sg_query_backend())),
         .layout = {
             .attrs[ATTR_fsq_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
-        .shader = fsq_shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .label = "fullscreen quad pipeline"
     });
 
     // a sampler object to sample the offscreen render targets as textures
-    sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
+    const sg_sampler smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "sampler",
     });
 
-    // resource bindings to render a fullscreen quad
-    state.fsq.bind = (sg_bindings){
-        .vertex_buffers[0] = quad_vbuf,
-        .images = {
-            [IMG_tex0] = state.offscreen.atts_desc.resolves[0].image,
-            [IMG_tex1] = state.offscreen.atts_desc.resolves[1].image,
-            [IMG_tex2] = state.offscreen.atts_desc.resolves[2].image
-        },
-        .samplers[SMP_smp] = smp,
-    };
+    // complete the resource bindings for the fullscreen quad
+    state.display.bind.vertex_buffers[0] = quad_vbuf;
+    state.display.bind.samplers[SMP_smp] = smp;
 
     // pipeline and resource bindings to render debug-visualization quads
     state.dbg.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
         .layout = {
             .attrs[ATTR_dbg_pos].format=SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .shader = sg_make_shader(dbg_shader_desc(sg_query_backend())),
         .label = "dbgvis quad pipeline"
     }),
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .samplers[SMP_smp] = smp,
-        // images will be filled right before rendering
+        // texture views will be filled right before rendering
     };
 }
 
-void frame(void) {
+static void frame(void) {
     // view-projection matrix
     hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
@@ -290,7 +242,7 @@ void frame(void) {
     fsq_params.offset = HMM_Vec2(HMM_SinF(state.rx*0.01f)*0.1f, HMM_SinF(state.ry*0.01f)*0.1f);
 
     // render cube into MRT offscreen render targets
-    sg_begin_pass(&(sg_pass){ .action = state.offscreen.pass_action, .attachments = state.offscreen.atts });
+    sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
     sg_apply_uniforms(UB_offscreen_params, &SG_RANGE(offscreen_params));
@@ -298,15 +250,15 @@ void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    sg_apply_pipeline(state.fsq.pip);
-    sg_apply_bindings(&state.fsq.bind);
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(UB_fsq_params, &SG_RANGE(fsq_params));
     sg_draw(0, 4, 1);
     sg_apply_pipeline(state.dbg.pip);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < NUM_MRTS; i++) {
         sg_apply_viewport(i*100, 0, 100, 100, false);
-        state.dbg.bind.images[IMG_tex] = state.offscreen.atts_desc.resolves[i].image;
+        state.dbg.bind.views[VIEW_tex] = state.display.bind.views[VIEW_tex0 + i];
         sg_apply_bindings(&state.dbg.bind);
         sg_draw(0, 4, 1);
     }
@@ -316,9 +268,81 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
+}
+
+// listen for window-resize events and recreate offscreen rendertargets
+static void event(const sapp_event* e) {
+    if (e->type == SAPP_EVENTTYPE_RESIZED) {
+        reinit_attachments(e->framebuffer_width, e->framebuffer_height);
+    }
+    __dbgui_event(e);
+}
+
+// called initially and when window size changes, will re-initialize
+// the offscreen render target images to a new size and then re-initialize
+// the associated view objects
+static void reinit_attachments(int width, int height) {
+    // uninitialize the render target images and associated views (NOTE: it's fine to call
+    // uninit on resources in ALLOC state)
+    for (int i = 0; i < NUM_MRTS; i++) {
+        sg_uninit_image(state.images.color[i]);
+        sg_uninit_image(state.images.resolve[i]);
+        sg_uninit_view(state.offscreen.pass.attachments.colors[i]);
+        sg_uninit_view(state.offscreen.pass.attachments.resolves[i]);
+        sg_uninit_view(state.display.bind.views[VIEW_tex + i]);
+    }
+    sg_uninit_image(state.images.depth);
+    sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
+
+    // ...next initialize images with the new size and re-init their associated handles
+    const char* msaa_image_labels[NUM_MRTS] = { "msaa-image-red", "msaa-image-green", "msaa-image-blue" };
+    const char* resolve_image_labels[NUM_MRTS] = { "resolve-image-red", "resolve-image-green", "resolve-image-blue" };
+    const char* color_attachment_labels[NUM_MRTS] = { "color-attachment-red", "color-attachment-green", "color-attachment-blue" };
+    const char* resolve_attachment_labels[NUM_MRTS] = { "resolve-attachment-red", "resolve-attachment-green", "resolve-attachment-blue" };
+    const char* tex_view_labels[NUM_MRTS] = { "texture-view-red", "texture-view-green", "texture-view-blue" };
+    for (int i = 0; i < NUM_MRTS; i++) {
+        sg_init_image(state.images.color[i], &(sg_image_desc){
+            .usage.color_attachment = true,
+            .width = width,
+            .height = height,
+            .sample_count = OFFSCREEN_SAMPLE_COUNT,
+            .label = msaa_image_labels[i],
+        });
+        sg_init_image(state.images.resolve[i], &(sg_image_desc){
+            .usage.resolve_attachment = true,
+            .width = width,
+            .height = height,
+            .sample_count = 1,
+            .label = resolve_image_labels[i],
+        });
+        sg_init_view(state.offscreen.pass.attachments.colors[i], &(sg_view_desc){
+            .color_attachment = { .image = state.images.color[i] },
+            .label = color_attachment_labels[i],
+        });
+        sg_init_view(state.offscreen.pass.attachments.resolves[i], &(sg_view_desc){
+            .resolve_attachment = { .image = state.images.resolve[i] },
+            .label = resolve_attachment_labels[i],
+        });
+        sg_init_view(state.display.bind.views[VIEW_tex0 + i], &(sg_view_desc){
+            .texture = { .image = state.images.resolve[i] },
+            .label = tex_view_labels[i],
+        });
+    }
+    sg_init_image(state.images.depth, &(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = OFFSCREEN_SAMPLE_COUNT,
+        .label = "depth-image",
+    });
+    sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
+        .depth_stencil_attachment = { .image = state.images.depth },
+        .label = "depth-attachment",
+    });
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

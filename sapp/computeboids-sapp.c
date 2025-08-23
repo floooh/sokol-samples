@@ -21,6 +21,7 @@ static struct {
     sim_params_t sim_params;
     struct {
         sg_buffer buf[2];
+        sg_view view[2];
         sg_pipeline pip;
     } compute;
     struct {
@@ -74,7 +75,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // two storage buffers with pre-initialized positions and velocities
+    // two storage buffers and views with pre-initialized positions and velocities
     {
         const size_t initial_data_size = MAX_PARTICLES * sizeof(particle_t);
         particle_t* initial_data = calloc(1, initial_data_size);
@@ -92,6 +93,10 @@ static void init(void) {
                     .size = initial_data_size
                 },
                 .label = (i == 0) ? "particle-buffer-0" : "particle-buffer-1",
+            });
+            state.compute.view[i] = sg_make_view(&(sg_view_desc){
+                .storage_buffer = { .buffer = state.compute.buf[i] },
+                .label = (i == 0) ? "particle-view-0" : "particle-view-1",
             });
         }
         free(initial_data);
@@ -117,17 +122,17 @@ static void frame(void) {
     draw_ui();
 
     // input- and output- storage-buffers for this frame
-    const sg_buffer in_buf = state.compute.buf[sapp_frame_count() & 1];
-    const sg_buffer out_buf = state.compute.buf[(sapp_frame_count() + 1) & 1];
+    const sg_view in_view = state.compute.view[sapp_frame_count() & 1];
+    const sg_view out_view = state.compute.view[(sapp_frame_count() + 1) & 1];
 
     // compute pass to update boid positions and velocities, this works with buffer-ping-ponging,
     // since the compute shader needs random access on the input parameters
     sg_begin_pass(&(sg_pass){ .compute = true, .label = "compute-pass" });
     sg_apply_pipeline(state.compute.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers = {
-            [SBUF_cs_ssbo_in] = in_buf,
-            [SBUF_cs_ssbo_out] = out_buf,
+        .views = {
+            [VIEW_cs_ssbo_in] = in_view,
+            [VIEW_cs_ssbo_out] = out_view,
         },
     });
     sg_apply_uniforms(UB_sim_params, &SG_RANGE(state.sim_params));
@@ -141,7 +146,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
-        .storage_buffers[SBUF_vs_ssbo] = out_buf,
+        .views[VIEW_vs_ssbo] = out_view,
     });
     sg_draw(0, 3, state.sim_params.num_particles);
     simgui_render();

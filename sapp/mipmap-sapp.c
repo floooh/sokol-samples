@@ -16,7 +16,7 @@
 static struct {
     sg_pipeline pip;
     sg_buffer vbuf;
-    sg_image img;
+    sg_view tex_view;
     sg_sampler smp[12];
     float r;
     struct {
@@ -62,7 +62,7 @@ void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    // create image with mipmap content, different colors and checkboard pattern
+    // create image with mipmap content: different colors and checkboard pattern
     sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
     bool even_odd = false;
@@ -78,13 +78,16 @@ void init(void) {
             even_odd = !even_odd;
         }
     }
-    state.img = sg_make_image(&(sg_image_desc){
+    sg_image img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data = img_data
     });
+
+    // ...and a texture view for the image
+    state.tex_view = sg_make_view(&(sg_view_desc){ .texture = { .image = img } });
 
     // the first 4 samplers are just different min-filters
     sg_sampler_desc smp_desc = {
@@ -151,7 +154,7 @@ void frame(void) {
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
-        .images[IMG_tex] = state.img,
+        .views[VIEW_tex] = state.tex_view,
     };
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);

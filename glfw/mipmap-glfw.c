@@ -79,7 +79,7 @@ int main() {
         }
     }
 
-    // create a single image and 12 samplers
+    // create a single image, texture view and 12 samplers
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = 256,
         .height = 256,
@@ -87,6 +87,7 @@ int main() {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .data = img_data
     });
+    sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 
     // the first 4 samplers are just different min-filters
     sg_sampler smp[12];
@@ -158,11 +159,11 @@ int main() {
                 [0] = { .glsl_name = "mvp", .type = SG_UNIFORMTYPE_MAT4 }
             }
         },
-        .images[0].stage = SG_SHADERSTAGE_FRAGMENT,
+        .views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT,
         .samplers[0].stage = SG_SHADERSTAGE_FRAGMENT,
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
             .glsl_name = "tex",
         },
@@ -182,7 +183,7 @@ int main() {
 
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf,
-        .images[0] = img,
+        .views[0] = tex_view,
     };
     vs_params_t vs_params;
     float r = 0.0f;

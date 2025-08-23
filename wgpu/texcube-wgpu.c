@@ -96,18 +96,20 @@ static void init(void) {
         .label = "cube-indices"
     });
 
-    // create a checkerboard texture and matching sampler
+    // create a checkerboard image, texture view and sampler
     uint32_t pixels[4*4] = {
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
         0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
         0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
     };
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
-        .width = 4,
-        .height = 4,
-        .data.subimage[0][0] = SG_RANGE(pixels),
-        .label = "cube-texture"
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){
+        .texture.image = sg_make_image(&(sg_image_desc){
+            .width = 4,
+            .height = 4,
+            .data.subimage[0][0] = SG_RANGE(pixels),
+            .label = "cube-texture"
+        }),
     });
     state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
@@ -144,7 +146,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -152,9 +154,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });

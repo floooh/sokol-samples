@@ -29,6 +29,7 @@ static WGPUStringView strview(const char* str) {
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;
+    sg_image img;
     sg_bindings bind;
     float rx, ry;
     uint32_t counter;
@@ -156,23 +157,20 @@ static void init(void) {
         .mipLevelCount = 1,
         .sampleCount = 1,
     });
-    state.wgpu_tex_view = wgpuTextureCreateView(state.wgpu_tex, &(WGPUTextureViewDescriptor) {
-        .mipLevelCount = 1,
-        .arrayLayerCount = 1,
-    });
     sg_reset_state_cache();
 
     // ... and the sokol-gfx texture object with the injected WGPU texture
-    state.bind.images[0] = sg_make_image(&(sg_image_desc){
+    state.img = sg_make_image(&(sg_image_desc){
         .usage.stream_update = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .wgpu_texture = state.wgpu_tex,
-        .wgpu_texture_view = state.wgpu_tex_view,
     });
-    assert(sg_wgpu_query_image_info(state.bind.images[0]).tex == state.wgpu_tex);
-    assert(sg_wgpu_query_image_info(state.bind.images[0]).view == state.wgpu_tex_view);
+    assert(sg_wgpu_query_image_info(state.img).tex == state.wgpu_tex);
+
+    // views currently cannot be injected
+    state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // a WebGPU sampler object...
     state.wgpu_smp = wgpuDeviceCreateSampler(wgpu_dev, &(WGPUSamplerDescriptor){
@@ -223,7 +221,7 @@ static void init(void) {
             .size = sizeof(vs_params_t),
             .wgsl_group0_binding_n = 0,
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -231,9 +229,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0,
         },
     });
@@ -288,7 +286,7 @@ void frame() {
     }
     state.counter++;
     sg_image_data content = { .subimage[0][0] = SG_RANGE(state.pixels) };
-    sg_update_image(state.bind.images[0], &content);
+    sg_update_image(state.img, &content);
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);

@@ -122,8 +122,9 @@ typedef struct {
 
 typedef struct {
     sg_image img;
+    sg_view tex_view;
     sg_sampler smp;
-} image_sampler_t;
+} image_t;
 
 // the complete scene
 typedef struct {
@@ -135,7 +136,7 @@ typedef struct {
     int num_meshes;
     int num_nodes;
     sg_buffer buffers[SCENE_MAX_BUFFERS];
-    image_sampler_t image_samplers[SCENE_MAX_IMAGES];
+    image_t images[SCENE_MAX_IMAGES];
     sg_pipeline pipelines[SCENE_MAX_PIPELINES];
     material_t materials[SCENE_MAX_MATERIALS];
     primitive_t primitives[SCENE_MAX_PRIMITIVES];
@@ -194,9 +195,9 @@ static struct {
         pipeline_cache_params_t items[SCENE_MAX_PIPELINES];
     } pip_cache;
     struct {
-        sg_image white;
-        sg_image normal;
-        sg_image black;
+        sg_view white;
+        sg_view normal;
+        sg_view black;
         sg_sampler smp;
     } placeholders;
 } state;
@@ -290,29 +291,41 @@ static void init(void) {
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFFFFFFFF;
     }
-    state.placeholders.white = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels),
+    state.placeholders.white = sg_make_view(&(sg_view_desc){
+        .texture = {
+            .image = sg_make_image(&(sg_image_desc){
+                .width = 8,
+                .height = 8,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .data.subimage[0][0] = SG_RANGE(pixels),
+            }),
+        },
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF000000;
     }
-    state.placeholders.black = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels),
+    state.placeholders.black = sg_make_view(&(sg_view_desc){
+        .texture = {
+            .image = sg_make_image(&(sg_image_desc){
+                .width = 8,
+                .height = 8,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .data.subimage[0][0] = SG_RANGE(pixels),
+            }),
+        },
     });
     for (int i = 0; i < 64; i++) {
         pixels[i] = 0xFF0000FF;
     }
-    state.placeholders.normal = sg_make_image(&(sg_image_desc){
-        .width = 8,
-        .height = 8,
-        .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = SG_RANGE(pixels),
+    state.placeholders.normal = sg_make_view(&(sg_view_desc){
+        .texture = {
+            .image = sg_make_image(&(sg_image_desc){
+                .width = 8,
+                .height = 8,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .data.subimage[0][0] = SG_RANGE(pixels),
+            }),
+        },
     });
     state.placeholders.smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_NEAREST,
@@ -363,16 +376,16 @@ static void frame(void) {
                 sg_apply_uniforms(UB_cgltf_vs_params, &SG_RANGE(vs_params));
                 sg_apply_uniforms(UB_cgltf_light_params, &SG_RANGE(state.point_light));
                 if (mat->is_metallic) {
-                    sg_image base_color_tex = state.scene.image_samplers[mat->metallic.images.base_color].img;
-                    sg_image metallic_roughness_tex = state.scene.image_samplers[mat->metallic.images.metallic_roughness].img;
-                    sg_image normal_tex = state.scene.image_samplers[mat->metallic.images.normal].img;
-                    sg_image occlusion_tex = state.scene.image_samplers[mat->metallic.images.occlusion].img;
-                    sg_image emissive_tex = state.scene.image_samplers[mat->metallic.images.emissive].img;
-                    sg_sampler base_color_smp = state.scene.image_samplers[mat->metallic.images.base_color].smp;
-                    sg_sampler metallic_roughness_smp = state.scene.image_samplers[mat->metallic.images.metallic_roughness].smp;
-                    sg_sampler normal_smp = state.scene.image_samplers[mat->metallic.images.normal].smp;
-                    sg_sampler occlusion_smp = state.scene.image_samplers[mat->metallic.images.occlusion].smp;
-                    sg_sampler emissive_smp = state.scene.image_samplers[mat->metallic.images.emissive].smp;
+                    sg_view base_color_tex = state.scene.images[mat->metallic.images.base_color].tex_view;
+                    sg_view metallic_roughness_tex = state.scene.images[mat->metallic.images.metallic_roughness].tex_view;
+                    sg_view normal_tex = state.scene.images[mat->metallic.images.normal].tex_view;
+                    sg_view occlusion_tex = state.scene.images[mat->metallic.images.occlusion].tex_view;
+                    sg_view emissive_tex = state.scene.images[mat->metallic.images.emissive].tex_view;
+                    sg_sampler base_color_smp = state.scene.images[mat->metallic.images.base_color].smp;
+                    sg_sampler metallic_roughness_smp = state.scene.images[mat->metallic.images.metallic_roughness].smp;
+                    sg_sampler normal_smp = state.scene.images[mat->metallic.images.normal].smp;
+                    sg_sampler occlusion_smp = state.scene.images[mat->metallic.images.occlusion].smp;
+                    sg_sampler emissive_smp = state.scene.images[mat->metallic.images.emissive].smp;
 
                     if (!base_color_tex.id) {
                         base_color_tex = state.placeholders.white;
@@ -394,11 +407,11 @@ static void frame(void) {
                         emissive_tex = state.placeholders.black;
                         emissive_smp = state.placeholders.smp;
                     }
-                    bind.images[IMG_cgltf_base_color_tex] = base_color_tex;
-                    bind.images[IMG_cgltf_metallic_roughness_tex] = metallic_roughness_tex;
-                    bind.images[IMG_cgltf_normal_tex] = normal_tex;
-                    bind.images[IMG_cgltf_occlusion_tex] = occlusion_tex;
-                    bind.images[IMG_cgltf_emissive_tex] = emissive_tex;
+                    bind.views[VIEW_cgltf_base_color_tex] = base_color_tex;
+                    bind.views[VIEW_cgltf_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.views[VIEW_cgltf_normal_tex] = normal_tex;
+                    bind.views[VIEW_cgltf_occlusion_tex] = occlusion_tex;
+                    bind.views[VIEW_cgltf_emissive_tex] = emissive_tex;
                     bind.samplers[SMP_cgltf_base_color_smp] = base_color_smp;
                     bind.samplers[SMP_cgltf_metallic_roughness_smp] = metallic_roughness_smp;
                     bind.samplers[SMP_cgltf_normal_smp] = normal_smp;
@@ -641,8 +654,9 @@ static void gltf_parse_images(const cgltf_data* gltf) {
         p->mipmap_filter = gltf_to_sg_mipmap_filter(gltf_tex->sampler->min_filter);
         p->wrap_s = gltf_to_sg_wrap(gltf_tex->sampler->wrap_s);
         p->wrap_t = gltf_to_sg_wrap(gltf_tex->sampler->wrap_t);
-        state.scene.image_samplers[i].img.id = SG_INVALID_ID;
-        state.scene.image_samplers[i].smp.id = SG_INVALID_ID;
+        assert(SG_INVALID_ID == state.scene.images[i].img.id);
+        assert(SG_INVALID_ID == state.scene.images[i].tex_view.id);
+        assert(SG_INVALID_ID == state.scene.images[i].smp.id);
     }
 
     // start loading all images
@@ -799,8 +813,11 @@ static void create_sg_image_samplers_for_gltf_image(int gltf_image_index, sg_ran
     for (int i = 0; i < state.scene.num_images; i++) {
         image_sampler_creation_params_t* p = &state.creation_params.images[i];
         if (p->gltf_image_index == gltf_image_index) {
-            state.scene.image_samplers[i].img = sbasisu_make_image(data);
-            state.scene.image_samplers[i].smp = sg_make_sampler(&(sg_sampler_desc){
+            state.scene.images[i].img = sbasisu_make_image(data);
+            state.scene.images[i].tex_view = sg_make_view(&(sg_view_desc){
+                .texture = { .image = state.scene.images[i].img },
+            });
+            state.scene.images[i].smp = sg_make_sampler(&(sg_sampler_desc){
                 .min_filter = p->min_filter,
                 .mag_filter = p->mag_filter,
                 .mipmap_filter = p->mipmap_filter,

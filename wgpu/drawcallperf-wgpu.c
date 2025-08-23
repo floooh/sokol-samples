@@ -23,7 +23,7 @@
 
 static struct {
     sg_pass_action pass_action;
-    sg_image img[NUM_IMAGES];
+    sg_view tex_view[NUM_IMAGES];
     sg_pipeline pip;
     sg_bindings bind;
     int num_instances;
@@ -163,11 +163,13 @@ static void init(void) {
                 pixels[y][x] = color;
             }
         }
-        state.img[i] = sg_make_image(&(sg_image_desc){
-            .width = IMG_WIDTH,
-            .height = IMG_HEIGHT,
-            .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .data.subimage[0][0] = SG_RANGE(pixels),
+        state.tex_view[i] = sg_make_view(&(sg_view_desc){
+            .texture.image = sg_make_image(&(sg_image_desc){
+                .width = IMG_WIDTH,
+                .height = IMG_HEIGHT,
+                .pixel_format = SG_PIXELFORMAT_RGBA8,
+                .data.subimage[0][0] = SG_RANGE(pixels),
+            }),
         });
     }
     state.bind.samplers[0] = sg_make_sampler(&(sg_sampler_desc){
@@ -216,7 +218,7 @@ static void init(void) {
                 .wgsl_group0_binding_n = 1,
             }
         },
-        .images[0] = {
+        .views[0].texture = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 0,
         },
@@ -224,9 +226,9 @@ static void init(void) {
             .stage = SG_SHADERSTAGE_FRAGMENT,
             .wgsl_group1_binding_n = 1,
         },
-        .image_sampler_pairs[0] = {
+        .texture_sampler_pairs[0] = {
             .stage = SG_SHADERSTAGE_FRAGMENT,
-            .image_slot = 0,
+            .view_slot = 0,
             .sampler_slot = 0
         },
     });
@@ -311,7 +313,7 @@ static void frame(void) {
     sg_apply_uniforms(0, &SG_RANGE(vs_per_frame));
     state.stats.num_uniform_updates++;
 
-    state.bind.images[0] = state.img[0];
+    state.bind.views[0] = state.tex_view[0];
     sg_apply_bindings(&state.bind);
     state.stats.num_binding_updates++;
     int cur_bind_count = 0;
@@ -322,7 +324,7 @@ static void frame(void) {
             if (cur_img == NUM_IMAGES) {
                 cur_img = 0;
             }
-            state.bind.images[0] = state.img[cur_img++];
+            state.bind.views[0] = state.tex_view[cur_img++];
             sg_apply_bindings(&state.bind);
             state.stats.num_binding_updates++;
         }
