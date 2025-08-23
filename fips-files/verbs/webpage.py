@@ -53,7 +53,6 @@ samples = [
     [ 'vertexindexbuffer', 'vertexindexbuffer-sapp.c', 'vertexindexbuffer-sapp.glsl'],
     [ 'vertextexture', 'vertextexture-sapp.c', 'vertextexture-sapp.glsl'],
     [ 'sbuftex', 'sbuftex-sapp.c', 'sbuftex-sapp.glsl' ],
-    [ 'sbufoffset', 'sbufoffset-sapp.c', 'sbufoffset-sapp.glsl'],
     [ 'shapes', 'shapes-sapp.c', 'shapes-sapp.glsl'],
     [ 'shapes-transform', 'shapes-transform-sapp.c', 'shapes-transform-sapp.glsl'],
     [ 'offscreen', 'offscreen-sapp.c', 'offscreen-sapp.glsl' ],
@@ -127,6 +126,7 @@ samples = [
 ]
 
 compute_samples = [
+    [ 'sbufoffset', 'sbufoffset-sapp.c', 'sbufoffset-sapp.glsl'],
     [ 'instancing-compute', 'instancing-compute-sapp.c', 'instancing-compute-sapp.glsl' ],
     [ 'computeboids', 'computeboids-sapp.c', 'computeboids-sapp.glsl' ],
     [ 'write-storageimage', 'write-storageimage-sapp.c', 'write-storageimage-sapp.glsl' ],
