@@ -112,7 +112,7 @@ void frame(void) {
     const float h = sapp_heightf();
     const float t = (float)(sapp_frame_duration() * 60.0);
     mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
-    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 6.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     mat44_t view_proj = vm_mul(view, proj);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
     mat44_t rxm = mat44_rotation_axis(vec3(1.0f, 0.0f, 0.0f), vm_radians(state.rx));
