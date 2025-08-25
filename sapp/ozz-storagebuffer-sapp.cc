@@ -316,7 +316,7 @@ static void update_joints(void) {
         for (int i = 0; i < state.num_skin_joints; i++) {
             const ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
             const ozz::math::Float4x4 transposed = ozz::math::Transpose(skin_matrix);
-            memcpy(&joint_upload_buffer[instance][i], &transposed.cols[0], 3 * sizeof(vec4));
+            memcpy(&joint_upload_buffer[instance][i], &transposed.cols[0], 3 * sizeof(vec4_t));
         }
     }
     state.time.anim_eval_time = stm_since(start_time);

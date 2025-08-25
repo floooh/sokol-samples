@@ -77,7 +77,7 @@ void init(void) {
 
     // empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1
     state.bind.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
-        .size = MAX_PARTICLES * sizeof(vec3),
+        .size = MAX_PARTICLES * sizeof(vec3_t),
         .usage.stream_update = true,
         .label = "instance-data"
     });
@@ -141,7 +141,7 @@ void frame(void) {
     // update instance data
     sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){
         .ptr = state.pos,
-        .size = (size_t)state.cur_num_particles * sizeof(vec3)
+        .size = (size_t)state.cur_num_particles * sizeof(vec3_t)
     });
 
     // model-view-projection matrix
@@ -149,7 +149,7 @@ void frame(void) {
     const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     const mat44_t view_proj = vm_mul(view, proj);
     state.ry += 60.0f * frame_time;
-    const vs_params_t vs_params = { .mvp = vm_mul(mat44_rotation_y(state.ry), view_proj) };
+    const vs_params_t vs_params = { .mvp = vm_mul(mat44_rotation_y(vm_radians(state.ry)), view_proj) };
 
     // ...and draw
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
