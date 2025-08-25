@@ -10,14 +10,13 @@
 #include "sokol_shape.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "shapes-sapp.glsl.h"
 
 typedef struct {
-    hmm_vec3 pos;
+    vec3_t pos;
     sshape_element_range_t draw;
 } shape_t;
 
@@ -77,11 +76,11 @@ static void init(void) {
     });
 
     // shape positions
-    state.shapes[BOX].pos = HMM_Vec3(-1.0f, 1.0f, 0.0f);
-    state.shapes[PLANE].pos = HMM_Vec3(1.0f, 1.0f, 0.0f);
-    state.shapes[SPHERE].pos = HMM_Vec3(-2.0f, -1.0f, 0.0f);
-    state.shapes[CYLINDER].pos = HMM_Vec3(2.0f, -1.0f, 0.0f);
-    state.shapes[TORUS].pos = HMM_Vec3(0.0f, -1.0f, 0.0f);
+    state.shapes[BOX].pos = vec3(-1.0f, 1.0f, 0.0f);
+    state.shapes[PLANE].pos = vec3(1.0f, 1.0f, 0.0f);
+    state.shapes[SPHERE].pos = vec3(-2.0f, -1.0f, 0.0f);
+    state.shapes[CYLINDER].pos = vec3(2.0f, -1.0f, 0.0f);
+    state.shapes[TORUS].pos = vec3(0.0f, -1.0f, 0.0f);
 
     // generate shape geometries
     sshape_vertex_t vertices[6 * 1024];
@@ -147,17 +146,17 @@ static void frame(void) {
               "  3: vertex color");
 
     // view-projection matrix...
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
 
     // model-rotation matrix
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.rx += 1.0f * t;
     state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 rm = HMM_MultiplyMat4(rxm, rym);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const mat44_t rm = vm_mul(rym, rxm);
 
     // render shapes...
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
@@ -168,8 +167,8 @@ static void frame(void) {
     });
     for (int i = 0; i < NUM_SHAPES; i++) {
         // per shape model-view-projection matrix
-        hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(state.shapes[i].pos), rm);
-        state.vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+        const mat44_t model = vm_mul(rm, mat44_translation(state.shapes[i].pos.x, state.shapes[i].pos.y, state.shapes[i].pos.z));
+        state.vs_params.mvp = vm_mul(model, view_proj);
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(state.vs_params));
         sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
     }

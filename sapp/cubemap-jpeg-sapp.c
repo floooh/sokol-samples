@@ -3,9 +3,8 @@
 //
 //  Load and render cubemap from individual jpeg files.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_gfx.h"
 #include "sokol_app.h"

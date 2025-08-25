@@ -9,9 +9,8 @@
 //
 //  This is a modified version of texcube-sapp.c
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_fetch.h"
@@ -35,6 +34,7 @@ typedef struct {
     int16_t u, v;
 } vertex_t;
 
+static vs_params_t compute_vsparams(float rx, float ry);
 static void fetch_callback(const sfetch_response_t*);
 
 static void init(void) {
@@ -157,6 +157,36 @@ static void init(void) {
     });
 }
 
+/* The frame-function is fairly boring, note that no special handling is
+   needed for the case where the texture isn't loaded yet.
+   Also note the sfetch_dowork() function, this is usually called once a
+   frame to pump the sokol-fetch message queues.
+*/
+static void frame(void) {
+    // pump the sokol-fetch message queues, and invoke response callbacks
+    sfetch_dowork();
+
+    // compute model-view-projection matrix for vertex shader
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t; state.ry += 2.0f * t;
+    const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
+
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&state.bind);
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
+    sg_draw(0, 36, 1);
+    __dbgui_draw();
+    sg_end_pass();
+    sg_commit();
+}
+
+static void cleanup(void) {
+    __dbgui_shutdown();
+    sfetch_shutdown();
+    sg_shutdown();
+}
+
 /* The fetch-callback is called by sokol_fetch.h when the data is loaded,
    or when an error has occurred.
 */
@@ -200,41 +230,16 @@ static void fetch_callback(const sfetch_response_t* response) {
     }
 }
 
-/* The frame-function is fairly boring, note that no special handling is
-   needed for the case where the texture isn't loaded yet.
-   Also note the sfetch_dowork() function, this is usually called once a
-   frame to pump the sokol-fetch message queues.
-*/
-static void frame(void) {
-    // pump the sokol-fetch message queues, and invoke response callbacks
-    sfetch_dowork();
-
-    // compute model-view-projection matrix for vertex shader
-    const float t = (float)(sapp_frame_duration() * 60.0);
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    vs_params_t vs_params;
-    state.rx += 1.0f * t; state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    sg_apply_pipeline(state.pip);
-    sg_apply_bindings(&state.bind);
-    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
-    sg_draw(0, 36, 1);
-    __dbgui_draw();
-    sg_end_pass();
-    sg_commit();
-}
-
-static void cleanup(void) {
-    __dbgui_shutdown();
-    sfetch_shutdown();
-    sg_shutdown();
+static vs_params_t compute_vsparams(float rx, float ry) {
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

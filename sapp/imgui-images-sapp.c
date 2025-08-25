@@ -16,9 +16,6 @@
 #include "sokol_imgui.h"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 
 #define OFFSCREEN_WIDTH (32)
 #define OFFSCREEN_HEIGHT (32)

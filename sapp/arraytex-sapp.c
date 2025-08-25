@@ -22,6 +22,8 @@ static struct {
     float rx, ry;
 } state;
 
+static vs_params_t compute_vsparams(float rx, float ry, float offset);
+
 void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -156,24 +158,10 @@ void init(void) {
 }
 
 void frame(void) {
-    // rotated model matrix
     const float t = (float)(sapp_frame_duration() * 60.0);
-    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-    mat44_t view_proj = vm_mul(view, proj);
-    state.rx += 0.25f * t; state.ry += 0.5f * t;
-    mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
-    mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
-    mat44_t model = vm_mul(rym, rxm);
-
-    // model-view-projection matrix for vertex shader
-    vs_params_t vs_params;
-    vs_params.mvp = vm_mul(model, view_proj);
-    // uv offsets
-    float offset = (float)sapp_frame_count() * 0.0001f * t;
-    vs_params.offset0 = vec2(-offset, offset);
-    vs_params.offset1 = vec2(offset, -offset);
-    vs_params.offset2 = vec2(0.0f, 0.0f);
+    const float offset = (float)sapp_frame_count() * 0.0001f * t;
+    state.rx += 1.0f * t; state.ry += 2.0f * t;
+    const vs_params_t vs_params = compute_vsparams(state.rx, state.ry, offset);
 
     // render the frame
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
@@ -189,6 +177,23 @@ void frame(void) {
 void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
+}
+
+static vs_params_t compute_vsparams(float rx, float ry, float offset) {
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return (vs_params_t){
+        .mvp = vm_mul(model, view_proj),
+        .offset0 = vec2(-offset, offset),
+        .offset1 = vec2(offset, -offset),
+        .offset2 = vec2(0.0f, 0.0f),
+    };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

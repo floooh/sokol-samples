@@ -14,9 +14,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "shadows-sapp.glsl.h"
 
@@ -260,44 +259,44 @@ static void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.ry += 0.2f * t;
 
-    const hmm_vec3 eye_pos = HMM_Vec3(5.0f, 5.0f, 5.0f);
-    const hmm_mat4 plane_model = HMM_Mat4d(1.0f);
-    const hmm_mat4 cube_model = HMM_Translate(HMM_Vec3(0.0f, 1.5f, 0.0f));
-    const hmm_vec3 plane_color = HMM_Vec3(1.0f, 0.5f, 0.0f);
-    const hmm_vec3 cube_color = HMM_Vec3(0.5f, 0.5f, 1.0f);
+    const vec3_t eye_pos = vec3(5.0f, 5.0f, 5.0f);
+    const mat44_t plane_model = mat44_identity();
+    const mat44_t cube_model = mat44_translation(0.0f, 1.5f, 0.0f);
+    const vec3_t plane_color = vec3(1.0f, 0.5f, 0.0f);
+    const vec3_t cube_color = vec3(0.5f, 0.5f, 1.0f);
 
     // calculate matrices for shadow pass
-    const hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    const hmm_vec4 light_pos = HMM_MultiplyMat4ByVec4(rym, HMM_Vec4(50.0f, 50.0f, -50.0f, 1.0f));
-    const hmm_mat4 light_view = HMM_LookAt(light_pos.XYZ, HMM_Vec3(0.0f, 1.5f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    const hmm_mat4 light_proj = HMM_Orthographic(-5.0f, 5.0f, -5.0f, 5.0f, 0, 100.0f);
-    const hmm_mat4 light_view_proj = HMM_MultiplyMat4(light_proj, light_view);
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const vec4_t light_pos = vec4_transform(vec4(50.0f, 50.0f, -50.0f, 1.0f), rym);
+    const mat44_t light_view = mat44_look_at_rh(vec4_xyz(light_pos), vec3(0.0f, 1.5f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t light_proj = mat44_ortho_off_center_rh(-5.0f, 5.0f, -5.0f, 5.0f, 0, 100.0f);
+    const mat44_t light_view_proj = vm_mul(light_view, light_proj);
 
     const vs_shadow_params_t cube_vs_shadow_params = {
-        .mvp = HMM_MultiplyMat4(light_view_proj, cube_model)
+        .mvp = vm_mul(cube_model, light_view_proj)
     };
 
     // calculate matrices for display pass
-    const hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
-    const hmm_mat4 view = HMM_LookAt(eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
+    const mat44_t view = mat44_look_at_rh(eye_pos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
 
     const fs_display_params_t fs_display_params = {
-        .light_dir = HMM_NormalizeVec3(light_pos.XYZ),
+        .light_dir = vm_normalize(vec4_xyz(light_pos)),
         .eye_pos = eye_pos,
     };
 
     const vs_display_params_t plane_vs_display_params = {
-        .mvp = HMM_MultiplyMat4(view_proj, plane_model),
+        .mvp = vm_mul(plane_model, view_proj),
         .model = plane_model,
-        .light_mvp = HMM_MultiplyMat4(light_view_proj, plane_model),
+        .light_mvp = vm_mul(plane_model, light_view_proj),
         .diff_color = plane_color,
     };
 
     const vs_display_params_t cube_vs_display_params = {
-        .mvp = HMM_MultiplyMat4(view_proj, cube_model),
+        .mvp = vm_mul(cube_model, view_proj),
         .model = cube_model,
-        .light_mvp = HMM_MultiplyMat4(light_view_proj, cube_model),
+        .light_mvp = vm_mul(cube_model, light_view_proj),
         .diff_color = cube_color,
     };
 

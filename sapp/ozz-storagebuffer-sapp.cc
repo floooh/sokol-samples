@@ -19,9 +19,8 @@
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
 
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "util/camera.h"
 #include "util/fileutil.h"
 
@@ -142,7 +141,7 @@ static void init(void) {
     camera_desc_t camdesc = {};
     camdesc.min_dist = 2.0f;
     camdesc.max_dist = 40.0f;
-    camdesc.center.Y = 1.1f;
+    camdesc.center.y = 1.1f;
     camdesc.distance = 3.0f;
     camdesc.latitude = 20.0f;
     camdesc.longitude = 20.0f;
@@ -317,7 +316,7 @@ static void update_joints(void) {
         for (int i = 0; i < state.num_skin_joints; i++) {
             const ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
             const ozz::math::Float4x4 transposed = ozz::math::Transpose(skin_matrix);
-            memcpy(&joint_upload_buffer[instance][i], &transposed.cols[0], 3 * sizeof(hmm_vec4));
+            memcpy(&joint_upload_buffer[instance][i], &transposed.cols[0], 3 * sizeof(vec4));
         }
     }
     state.time.anim_eval_time = stm_since(start_time);
@@ -330,7 +329,7 @@ static void update_joints(void) {
 static void init_instances(void) {
     // initialize the character instance model-to-world matrices
     for (int i=0, x=0, y=0, dx=0, dy=0; i < MAX_INSTANCES; i++, x+=dx, y+=dy) {
-        instance_data[i].model = HMM_Translate(HMM_Vec3((float)x * 1.5f, 0.0f, (float)y * 1.5f));
+        instance_data[i].model = mat44_translation((float)x * 1.5f, 0.0f, (float)y * 1.5f);
         // at a corner?
         if (abs(x) == abs(y)) {
             if (x >= 0) {
@@ -446,9 +445,9 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
         sb_vertex_t* vertices = (sb_vertex_t*) calloc(num_vertices, sizeof(sb_vertex_t));
         for (int i = 0; i < (int)num_vertices; i++) {
             sb_vertex_t* v = &vertices[i];
-            v->pos.X = positions[i * 3 + 0];
-            v->pos.Y = positions[i * 3 + 1];
-            v->pos.Z = positions[i * 3 + 2];
+            v->pos.x = positions[i * 3 + 0];
+            v->pos.y = positions[i * 3 + 1];
+            v->pos.z = positions[i * 3 + 2];
             const float nx = normals[i * 3 + 0];
             const float ny = normals[i * 3 + 1];
             const float nz = normals[i * 3 + 2];

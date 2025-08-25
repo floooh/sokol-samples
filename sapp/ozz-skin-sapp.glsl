@@ -1,5 +1,5 @@
-@ctype mat4 hmm_mat4
-@ctype vec4 hmm_vec4
+@ctype mat4 mat44_t
+@ctype vec4 vec4_t
 
 @block skin_utils
 void skinned_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 skin_weights, in uvec4 skin_indices, out vec4 skin_pos, out vec4 skin_nrm) {

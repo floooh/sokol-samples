@@ -16,6 +16,10 @@
 #define CAMERA_DEFAULT_NEARZ (0.01f)
 #define CAMERA_DEFAULT_FARZ (100.0f)
 
+#if defined(__cplusplus)
+using namespace vecmath;
+#endif
+
 typedef struct {
     float min_dist;
     float max_dist;

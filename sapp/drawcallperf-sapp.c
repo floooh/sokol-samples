@@ -11,9 +11,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "drawcallperf-sapp.glsl.h"
 
 #define NUM_IMAGES (3)
@@ -51,11 +50,11 @@ static inline uint32_t xorshift32(void) {
     return x;
 }
 
-static hmm_vec4 rand_pos(void) {
+static vec4_t rand_pos(void) {
     const float x = (((float)(xorshift32() & 0xFFFF)) / 0x10000) - 0.5f;
     const float y = (((float)(xorshift32() & 0xFFFF)) / 0x10000) - 0.5f;
     const float z = (((float)(xorshift32() & 0xFFFF)) / 0x10000) - 0.5f;
-    return HMM_NormalizeVec4(HMM_Vec4(x, y, z, 0.0f));
+    return vm_normalize(vec4(x, y, z, 0.0f));
 }
 
 static void init(void) {
@@ -188,15 +187,15 @@ static void init(void) {
     }
 }
 
-static hmm_mat4 compute_viewproj(void) {
+static mat44_t compute_viewproj(void) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
     state.angle = fmodf(state.angle + 0.01, 360.0f);
-    const float dist = 6.0f;
-    const hmm_vec3 eye = HMM_Vec3(HMM_SinF(state.angle) * dist, 1.5f, HMM_CosF(state.angle) * dist);
-    hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(eye, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    return HMM_MultiplyMat4(proj, view);
+    const float dist = 4.5f;
+    const vec3_t eye = vec3(vm_sin(state.angle) * dist, 1.5f, vm_cos(state.angle) * dist);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(eye, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    return vm_mul(view, proj);
 }
 
 static void frame(void) {

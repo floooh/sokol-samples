@@ -10,9 +10,8 @@
 #include "sokol_glue.h"
 #define SOKOL_SHAPE_IMPL
 #include "sokol_shape.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "mrt-pixelformats-sapp.glsl.h"
 #include <assert.h>
@@ -42,7 +41,7 @@ static struct {
         sg_pass pass;
         sg_pipeline pip;
         sg_bindings bind;
-        hmm_mat4 view_proj;
+        mat44_t view_proj;
         sshape_element_range_t donut;
     } offscreen;
     struct {
@@ -178,9 +177,9 @@ static void init(void) {
         };
 
         // constant view_proj matrix for offscreen rendering
-        hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 5.0f);
-        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 2.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-        state.offscreen.view_proj = HMM_MultiplyMat4(proj, view);
+        const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), 1.0f, 0.01f, 5.0f);
+        const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+        state.offscreen.view_proj = vm_mul(view, proj);
     }
 
     // setup resources for rendering to the display
@@ -224,12 +223,10 @@ static void draw_fallback() {
 }
 
 static offscreen_params_t compute_offscreen_params(void) {
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rzm = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 0.0f, 1.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rzm);
-    return (offscreen_params_t) {
-        .mvp = HMM_MultiplyMat4(state.offscreen.view_proj, model)
-    };
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rzm = mat44_rotation_z(vm_radians(state.ry));
+    const mat44_t model = vm_mul(rzm, rxm);
+    return (offscreen_params_t) { .mvp = vm_mul(model, state.offscreen.view_proj) };
 }
 
 static void frame(void) {

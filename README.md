@@ -425,6 +425,7 @@ Make sure `emcc` and `emrun` from the Emscripten SDK are in the path.
 
 - GLFW: https://github.com/glfw/glfw
 - flextGL: https://github.com/ginkgo/flextGL
+- vecmath: https://github.com/mattiasgustavsson/libs/blob/main/docs/vecmath.md
 - Handmade-Math: https://github.com/StrangeZak/Handmade-Math
 - Dear Imgui: https://github.com/ocornut/imgui
 - cimgui: https://github.com/cimgui/cimgui

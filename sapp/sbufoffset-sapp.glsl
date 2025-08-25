@@ -1,7 +1,7 @@
 //
 // NOTE: don't do this sort of silly bulk-data-initialization in real-world code!
 //
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 @block common
 struct sb_vertex {

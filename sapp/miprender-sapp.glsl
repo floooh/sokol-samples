@@ -1,4 +1,4 @@
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 @block uniforms
 layout(binding=0) uniform vs_params {

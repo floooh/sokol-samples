@@ -16,9 +16,8 @@
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "debugtext-context-sapp.glsl.h"
 
@@ -199,14 +198,14 @@ static void init(void) {
 
 // compute the model-view-proj matrix for rendering the rotating cube
 vs_params_t compute_vs_params(int w, int h) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)w/(float)h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)w/(float)h, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
     vs_params_t vs_params;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    mat44_t model = vm_mul(rym, rxm);
+    vs_params.mvp = vm_mul(model, view_proj);
     return vs_params;
 }
 

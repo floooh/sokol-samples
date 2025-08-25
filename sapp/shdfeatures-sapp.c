@@ -43,9 +43,8 @@
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "util/camera.h"
 #include "util/fileutil.h"
 
@@ -82,9 +81,9 @@ typedef struct {
     bool valid;
     int slot;
     size_t num_bytes;
-    hmm_mat4* mvp;
-    hmm_mat4* model;
-    hmm_vec2* joint_uv;
+    mat44_t* mvp;
+    mat44_t* model;
+    vec2_t* joint_uv;
     float* joint_pixel_width;
 } vs_params_ptr_t;
 
@@ -92,11 +91,11 @@ typedef struct {
     bool valid;
     int slot;
     size_t num_bytes;
-    hmm_vec3* light_dir;
-    hmm_vec3* eye_pos;
-    hmm_vec3* light_color;
-    hmm_vec3* mat_diffuse;
-    hmm_vec3* mat_specular;
+    vec3_t* light_dir;
+    vec3_t* eye_pos;
+    vec3_t* light_color;
+    vec3_t* mat_diffuse;
+    vec3_t* mat_specular;
     float* mat_spec_power;
 } phong_params_ptr_t;
 
@@ -148,14 +147,14 @@ static struct {
         bool dbg_draw;
         float latitude;
         float longitude;
-        hmm_vec3 dir;   // computed from lat/long
+        vec3_t dir;   // computed from lat/long
         float intensity;
-        hmm_vec3 color;
+        vec3_t color;
     } light;
     struct {
         bool enabled;
-        hmm_vec3 diffuse;
-        hmm_vec3 specular;
+        vec3_t diffuse;
+        vec3_t specular;
         float spec_power;
     } material;
     shader_variation_t variations[MAX_SHADER_VARIATIONS];
@@ -171,12 +170,12 @@ static struct {
         .latitude = 45.0f,
         .longitude = -45.0f,
         .intensity = 1.0f,
-        .color = {{ 1.0f, 1.0f, 1.0f }},
+        .color = { 1.0f, 1.0f, 1.0f },
     },
     .material = {
         .enabled = true,
-        .diffuse = {{ 1.0f, 0.0f, 0.0f }},
-        .specular = {{ 1.0f, 1.0f, 1.0f }},
+        .diffuse = { 1.0f, 0.0f, 0.0f },
+        .specular = { 1.0f, 1.0f, 1.0f },
         .spec_power = 8.0f
     },
 
@@ -295,9 +294,9 @@ static void draw_ui(void);
 static sg_vertex_layout_state vertex_layout_for_variation(const shader_variation_t* var);
 static void fill_vs_params(const shader_variation_t* var);
 static void fill_phong_params(const shader_variation_t* var);
-static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
-static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
-static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static mat44_t* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static vec2_t* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
+static vec3_t* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
 static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name);
 
 static void init(void) {
@@ -335,7 +334,7 @@ static void init(void) {
     cam_init(&state.camera, &(camera_desc_t){
         .min_dist = 2.0f,
         .max_dist = 10.0f,
-        .center.Y = 1.1f,
+        .center.y = 1.1f,
         .distance = 3.0f,
         .latitude = 20.0f,
         .longitude = 20.0f
@@ -447,9 +446,9 @@ static void frame(void) {
     });
 
     if (state.light.enabled) {
-        const float lat = HMM_ToRadians(state.light.latitude);
-        const float lng = HMM_ToRadians(state.light.longitude);
-        state.light.dir = HMM_Vec3(cosf(lat) * sinf(lng), sinf(lat), cosf(lat) * cosf(lng));
+        const float lat = vm_radians(state.light.latitude);
+        const float lng = vm_radians(state.light.longitude);
+        state.light.dir = vec3(vm_cos(lat) * vm_sin(lng), vm_sin(lat), vm_cos(lat) * vm_cos(lng));
         if (state.light.dbg_draw) {
             draw_light_debug();
         }
@@ -560,10 +559,10 @@ static void draw_light_debug(void) {
     sgl_load_matrix((const float*)&state.camera.proj);
     sgl_matrix_mode_modelview();
     sgl_load_matrix((const float*)&state.camera.view);
-    sgl_c3f(state.light.color.X, state.light.color.Y, state.light.color.Z);
+    sgl_c3f(state.light.color.x, state.light.color.y, state.light.color.z);
     sgl_begin_lines();
     sgl_v3f(0.0f, y, 0.0f);
-    sgl_v3f(state.light.dir.X * l, y + (state.light.dir.Y * l), state.light.dir.Z * l);
+    sgl_v3f(state.light.dir.x * l, y + (state.light.dir.y * l), state.light.dir.z * l);
     sgl_end();
 }
 
@@ -601,10 +600,10 @@ static void fill_vs_params(const shader_variation_t* var) {
         *p->mvp = state.camera.view_proj;
     }
     if (p->model) {
-        *p->model = HMM_Mat4d(1.0f);
+        *p->model = mat44_identity();
     }
     if (p->joint_uv) {
-        *p->joint_uv = HMM_Vec2(ozz_joint_texture_u(state.ozz), ozz_joint_texture_v(state.ozz));
+        *p->joint_uv = vec2(ozz_joint_texture_u(state.ozz), ozz_joint_texture_v(state.ozz));
     }
     if (p->joint_pixel_width) {
         *p->joint_pixel_width = ozz_joint_texture_pixel_width();
@@ -620,7 +619,7 @@ static void fill_phong_params(const shader_variation_t* var) {
         *p->eye_pos = state.camera.eye_pos;
     }
     if (p->light_color) {
-        *p->light_color = HMM_MultiplyVec3f(state.light.color, state.light.intensity);
+        *p->light_color = vm_mul(state.light.color, state.light.intensity);
     }
     if (p->mat_diffuse) {
         *p->mat_diffuse = state.material.diffuse;
@@ -646,16 +645,16 @@ static uint8_t* uniform_ptr(const shader_variation_t* var, uint8_t* base_ptr, sg
     return base_ptr + offset;
 }
 
-static hmm_mat4* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
-    return (hmm_mat4*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_MAT4, ub_name, u_name);
+static mat44_t* uniform_ptr_mat4(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (mat44_t*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_MAT4, ub_name, u_name);
 }
 
-static hmm_vec2* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
-    return (hmm_vec2*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT2, ub_name, u_name);
+static vec2_t* uniform_ptr_vec2(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (vec2_t*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT2, ub_name, u_name);
 }
 
-static hmm_vec3* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
-    return (hmm_vec3*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT3, ub_name, u_name);
+static vec3_t* uniform_ptr_vec3(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
+    return (vec3_t*) uniform_ptr(var, base_ptr, SG_UNIFORMTYPE_FLOAT3, ub_name, u_name);
 }
 
 static float* uniform_ptr_float(const shader_variation_t* var, uint8_t* base_ptr, const char* ub_name, const char* u_name) {
@@ -698,7 +697,7 @@ static void draw_ui(void) {
                 igSliderFloatEx("Latitude", &state.light.latitude, -85.0f, 85.0f, "%.1f", ImGuiSliderFlags_None);
                 igSliderFloatEx("Longitude", &state.light.longitude, 0.0f, 360.0f, "%.1f", ImGuiSliderFlags_None);
                 igSliderFloatEx("Intensity", &state.light.intensity, 0.0f, 10.0f, "%.1f", ImGuiSliderFlags_None);
-                igColorEdit3("Color", &state.light.color.X, ImGuiColorEditFlags_None);
+                igColorEdit3("Color", &state.light.color.x, ImGuiColorEditFlags_None);
                 igPopID();
             }
             igSeparator();
@@ -708,8 +707,8 @@ static void draw_ui(void) {
             if (state.material.enabled) {
                 igPushID("material");
                 igSeparator();
-                igColorEdit3("Diffuse", &state.material.diffuse.X, ImGuiColorEditFlags_None);
-                igColorEdit3("Specular", &state.material.specular.X, ImGuiColorEditFlags_None);
+                igColorEdit3("Diffuse", &state.material.diffuse.x, ImGuiColorEditFlags_None);
+                igColorEdit3("Specular", &state.material.specular.x, ImGuiColorEditFlags_None);
                 igSliderFloatEx("Spec Pwr", &state.material.spec_power, 1.0f, 64.0f, "%.1f", ImGuiSliderFlags_None);
                 igPopID();
             }
