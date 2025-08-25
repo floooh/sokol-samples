@@ -8,9 +8,9 @@
 // C code generator, other then that it's not needed
 @module cgltf
 
-@ctype mat4 hmm_mat4
-@ctype vec4 hmm_vec4
-@ctype vec3 hmm_vec3
+@ctype mat4 mat44_t
+@ctype vec4 vec4_t
+@ctype vec3 vec3_t
 
 @vs vs
 layout(binding=0) uniform vs_params {

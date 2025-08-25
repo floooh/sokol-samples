@@ -115,8 +115,8 @@ void frame(void) {
     mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     mat44_t view_proj = vm_mul(view, proj);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
-    mat44_t rxm = mat44_rotation_axis(vec3(1.0f, 0.0f, 0.0f), vm_radians(state.rx));
-    mat44_t rym = mat44_rotation_axis(vec3(0.0f, 1.0f, 0.0f), vm_radians(state.ry));
+    mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
     mat44_t model = vm_mul(rym, rxm);
     vs_params.mvp = vm_mul(model, view_proj);
 

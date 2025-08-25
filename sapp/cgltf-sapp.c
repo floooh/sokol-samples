@@ -6,9 +6,8 @@
 //
 //  https://github.com/jkuhlmann/cgltf
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_fetch.h"
@@ -117,7 +116,7 @@ typedef struct {
 // currently, the transform matrices are 'baked' upfront into world space
 typedef struct {
     int mesh;           // index into scene.meshes
-    hmm_mat4 transform;
+    mat44_t transform;
 } node_t;
 
 typedef struct {
@@ -185,7 +184,7 @@ static struct {
     scene_t scene;
     camera_t camera;
     cgltf_light_params_t point_light;     // code-generated from shader
-    hmm_mat4 root_transform;
+    mat44_t root_transform;
     float rx, ry;
     struct {
         buffer_creation_params_t buffers[SCENE_MAX_BUFFERS];
@@ -217,7 +216,7 @@ static void create_sg_buffers_for_gltf_buffer(int gltf_buffer_index, sg_range da
 static void create_sg_image_samplers_for_gltf_image(int gltf_image_index, sg_range data);
 static vertex_buffer_mapping_t create_vertex_buffer_mapping_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim);
 static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map);
-static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
+static mat44_t build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node);
 
 static void update_scene(void);
 static cgltf_vs_params_t vs_params_for_node(int node_index);
@@ -236,7 +235,7 @@ static void init(void) {
     cam_init(&state.camera, &(camera_desc_t){
         .latitude = -10.0f,
         .longitude = 45.0f,
-        .distance = 3.0f
+        .distance = 2.5f,
     });
 
     // initialize Basis Universal
@@ -273,9 +272,9 @@ static void init(void) {
 
     // setup the point light
     state.point_light = (cgltf_light_params_t){
-        .light_pos = HMM_Vec3(10.0, 10.0, 10.0),
+        .light_pos = vec3(10.0, 10.0, 10.0),
         .light_range = 200.0,
-        .light_color = HMM_Vec3(1.0, 1.5, 2.0),
+        .light_color = vec3(1.0, 1.5, 2.0),
         .light_intensity = 700.0
     };
 
@@ -689,10 +688,10 @@ static void gltf_parse_materials(const cgltf_data* gltf) {
             const cgltf_pbr_metallic_roughness* src = &gltf_mat->pbr_metallic_roughness;
             metallic_material_t* dst = &scene_mat->metallic;
             for (int d = 0; d < 4; d++) {
-                dst->fs_params.base_color_factor.Elements[d] = src->base_color_factor[d];
+                vec4_set(&dst->fs_params.base_color_factor, d, src->base_color_factor[d]);
             }
             for (int d = 0; d < 3; d++) {
-                dst->fs_params.emissive_factor.Elements[d] = gltf_mat->emissive_factor[d];
+                vec3_set(&dst->fs_params.emissive_factor, d, gltf_mat->emissive_factor[d]);
             }
             dst->fs_params.metallic_factor = src->metallic_factor;
             dst->fs_params.roughness_factor = src->roughness_factor;
@@ -1005,44 +1004,40 @@ static int create_sg_pipeline_for_gltf_primitive(const cgltf_data* gltf, const c
     return i;
 }
 
-static hmm_mat4 build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node) {
-    hmm_mat4 parent_tform = HMM_Mat4d(1);
+static mat44_t build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf_node* node) {
+    mat44_t parent_tform = mat44_identity();
     if (node->parent) {
         parent_tform = build_transform_for_gltf_node(gltf, node->parent);
     }
     if (node->has_matrix) {
         // needs testing, not sure if the element order is correct
-        hmm_mat4 tform = *(hmm_mat4*)node->matrix;
+        mat44_t tform = *(mat44_t*)node->matrix;
         return tform;
     } else {
-        hmm_mat4 translate = HMM_Mat4d(1);
-        hmm_mat4 rotate = HMM_Mat4d(1);
-        hmm_mat4 scale = HMM_Mat4d(1);
+        mat44_t translate = mat44_identity();
+        mat44_t rotate = mat44_identity();
+        mat44_t scale = mat44_identity();
         if (node->has_translation) {
-            translate = HMM_Translate(HMM_Vec3(node->translation[0], node->translation[1], node->translation[2]));
+            translate = mat44_translation(node->translation[0], node->translation[1], node->translation[2]);
         }
         if (node->has_rotation) {
-            rotate = HMM_QuaternionToMat4(HMM_Quaternion(node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3]));
+            rotate = mat44_from_quat(vec4(node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3]));
         }
         if (node->has_scale) {
-            scale = HMM_Scale(HMM_Vec3(node->scale[0], node->scale[1], node->scale[2]));
+            scale = mat44_scaling(node->scale[0], node->scale[1], node->scale[2]);
         }
         // NOTE: not sure if the multiplication order is correct
-        return HMM_MultiplyMat4(parent_tform, HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate));
+        return vm_mul(vm_mul(translate, vm_mul(rotate, scale)), parent_tform);
     }
 }
 
 static void update_scene(void) {
-    /*
-    state.rx += 0.25f;
-    state.ry += 2.0f;
-    */
-    state.root_transform = HMM_Rotate(state.rx, HMM_Vec3(0, 1, 0));
+    state.root_transform = mat44_rotation_y(vm_radians(state.rx));
 }
 
 static cgltf_vs_params_t vs_params_for_node(int node_index) {
     return (cgltf_vs_params_t){
-        .model = HMM_MultiplyMat4(state.root_transform, state.scene.nodes[node_index].transform),
+        .model = vm_mul(state.scene.nodes[node_index].transform, state.root_transform),
         .view_proj = state.camera.view_proj,
         .eye_pos = state.camera.eye_pos
     };
