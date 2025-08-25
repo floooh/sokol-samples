@@ -1,6 +1,6 @@
-@ctype mat4 hmm_mat4
-@ctype vec3 hmm_vec3
-@ctype vec4 hmm_vec4
+@ctype mat4 mat44_t
+@ctype vec3 vec3_t
+@ctype vec4 vec4_t
 
 @block skin_utils
 void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, out vec4 skin_pos, out vec4 skin_nrm) {

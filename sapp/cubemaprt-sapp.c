@@ -2,9 +2,8 @@
 //  cubemaprt-sapp.c
 //  Cubemap as render target.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_log.h"
@@ -21,9 +20,9 @@
 
 /* state struct for the little cubes rotating around the big cube */
 typedef struct {
-    hmm_mat4 model;
-    hmm_vec4 color;
-    hmm_vec3 axis;
+    mat44_t model;
+    vec4_t color;
+    vec3_t axis;
     float radius;
     float angle;
     float angular_velocity;
@@ -55,14 +54,14 @@ typedef struct {
     sg_pipeline offscreen_shapes_pip;
     sg_pipeline display_shapes_pip;
     sg_pipeline display_cube_pip;
-    hmm_mat4 offscreen_proj;
-    hmm_vec4 light_dir;
+    mat44_t offscreen_proj;
+    vec4_t light_dir;
     float rx, ry;
     shape_t shapes[NUM_SHAPES];
 } app_t;
 static app_t app;
 
-static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj);
+static void draw_cubes(sg_pipeline pip, vec3_t eye_pos, mat44_t view_proj);
 static mesh_t make_cube_mesh(void);
 
 static inline uint32_t xorshift32(void) {
@@ -185,13 +184,13 @@ void init(void) {
     });
 
     // 1:1 aspect ration projection matrix for offscreen rendering
-    app.offscreen_proj = HMM_Perspective(90.0f, 1.0f, 0.01f, 100.0f);
-    app.light_dir = HMM_Vec4v(HMM_NormalizeVec3(HMM_Vec3(-0.75f, 1.0f, 0.0f)), 0.0f);
+    app.offscreen_proj = mat44_perspective_fov_rh(vm_radians(90.0f), 1.0f, 0.01f, 100.0f);
+    app.light_dir = vec4v3f(vm_normalize(vec3(-0.75f, 1.0f, 0.0f)), 0.0f);
 
     // setup initial state for the orbiting cubes
     for (int i = 0; i < NUM_SHAPES; i++) {
-        app.shapes[i].color = HMM_Vec4(rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), 1.0f);
-        app.shapes[i].axis = HMM_NormalizeVec3(HMM_Vec3(rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f)));
+        app.shapes[i].color = vec4(rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), 1.0f);
+        app.shapes[i].axis = vm_normalize(vec3(rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f), rnd(-1.0f, 1.0f)));
         app.shapes[i].radius = rnd(5.0f, 10.0f);
         app.shapes[i].angle = rnd(0.0f, 360.0f);
         app.shapes[i].angular_velocity = rnd(15.0f, 50.0f) * (rnd(-1.0f, 1.0f)>0.0f ? 1.0f : -1.0f);
@@ -205,10 +204,10 @@ void frame(void) {
     // update the little cubes that are reflected in the big cube
     for (int i = 0; i < NUM_SHAPES; i++) {
         app.shapes[i].angle += app.shapes[i].angular_velocity * t;
-        hmm_mat4 scale = HMM_Scale(HMM_Vec3(0.25f, 0.25f, 0.25f));
-        hmm_mat4 rot = HMM_Rotate(app.shapes[i].angle, app.shapes[i].axis);
-        hmm_mat4 trans = HMM_Translate(HMM_Vec3(0.0f, 0.0f, app.shapes[i].radius));
-        app.shapes[i].model = HMM_MultiplyMat4(rot, HMM_MultiplyMat4(trans, scale));
+        mat44_t scale = mat44_scaling(0.25f, 0.25f, 0.25f);
+        mat44_t rot = mat44_rotation_axis(app.shapes[i].axis, vm_radians(app.shapes[i].angle));
+        mat44_t trans = mat44_translation(0.0f, 0.0f, app.shapes[i].radius);
+        app.shapes[i].model = vm_mul(vm_mul(scale, trans), rot);
     }
 
     // offscreen pass which renders the environment cubemap
@@ -217,22 +216,22 @@ void frame(void) {
     //
     // FIXME: is this actually correct???
     #if defined(SOKOL_METAL) || defined(SOKOL_D3D11) || defined(SOKOL_WGPU)
-    hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
-        { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X= 0.0f, .Y=-1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=-1.0f } },
-        { { .X= 0.0f, .Y=+1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=+1.0f } },
-        { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
+    vec3_t center_and_up[SG_CUBEFACE_NUM][2] = {
+        { { .x=+1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x=-1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x= 0.0f, .y=-1.0f, .z= 0.0f }, { .x=0.0f, .y= 0.0f, .z=-1.0f } },
+        { { .x= 0.0f, .y=+1.0f, .z= 0.0f }, { .x=0.0f, .y= 0.0f, .z=+1.0f } },
+        { { .x= 0.0f, .y= 0.0f, .z=+1.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x= 0.0f, .y= 0.0f, .z=-1.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } }
     };
     #else // GL
-    hmm_vec3 center_and_up[SG_CUBEFACE_NUM][2] = {
-        { { .X=+1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X=-1.0f, .Y= 0.0f, .Z= 0.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X= 0.0f, .Y=+1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=+1.0f } },
-        { { .X= 0.0f, .Y=-1.0f, .Z= 0.0f }, { .X=0.0f, .Y= 0.0f, .Z=-1.0f } },
-        { { .X= 0.0f, .Y= 0.0f, .Z=+1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } },
-        { { .X= 0.0f, .Y= 0.0f, .Z=-1.0f }, { .X=0.0f, .Y=-1.0f, .Z= 0.0f } }
+    vec3_t center_and_up[SG_CUBEFACE_NUM][2] = {
+        { { .x=+1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x=-1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x= 0.0f, .y=+1.0f, .z= 0.0f }, { .x=0.0f, .y= 0.0f, .z=+1.0f } },
+        { { .x= 0.0f, .y=-1.0f, .z= 0.0f }, { .x=0.0f, .y= 0.0f, .z=-1.0f } },
+        { { .x= 0.0f, .y= 0.0f, .z=+1.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
+        { { .x= 0.0f, .y= 0.0f, .z=-1.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } }
     };
     #endif
     for (int face = 0; face < SG_CUBEFACE_NUM; face++) {
@@ -243,9 +242,9 @@ void frame(void) {
                 .depth_stencil = app.offscreen_depth_view,
             }
         });
-        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 0.0f), center_and_up[face][0], center_and_up[face][1]);
-        hmm_mat4 view_proj = HMM_MultiplyMat4(app.offscreen_proj, view);
-        draw_cubes(app.offscreen_shapes_pip, HMM_Vec3(0.0f, 0.0f, 0.0f), view_proj);
+        mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 0.0f), center_and_up[face][0], center_and_up[face][1]);
+        mat44_t view_proj = vm_mul(view, app.offscreen_proj);
+        draw_cubes(app.offscreen_shapes_pip, vec3(0.0f, 0.0f, 0.0f), view_proj);
         sg_end_pass();
     }
 
@@ -254,19 +253,19 @@ void frame(void) {
     const int h = sapp_height();
     sg_begin_pass(&(sg_pass){ .action = app.display_pass_action, .swapchain = sglue_swapchain() });
 
-    hmm_vec3 eye_pos = HMM_Vec3(0.0f, 0.0f, 30.0f);
-    hmm_mat4 proj = HMM_Perspective(45.0f, (float)w/(float)h, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(eye_pos, HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    vec3_t eye_pos = vec3(0.0f, 0.0f, 20.0f);
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(45.0f), (float)w/(float)h, 0.01f, 100.0f);
+    mat44_t view = mat44_look_at_rh(eye_pos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
 
     // render the orbiting cubes
     draw_cubes(app.display_shapes_pip, eye_pos, view_proj);
 
     // render a big cube in the middle with environment mapping
     app.rx += 0.1f * 60.0f * t; app.ry += 0.2f * 60.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(app.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(app.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(HMM_MultiplyMat4(rxm, rym), HMM_Scale(HMM_Vec3(2.0f, 2.0f, 2.f)));
+    mat44_t rxm = mat44_rotation_x(vm_radians(app.rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(app.ry));
+    mat44_t model = vm_mul(mat44_scaling(2.0f, 2.0f, 2.f), vm_mul(rym, rxm));
     sg_apply_pipeline(app.display_cube_pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
@@ -275,11 +274,11 @@ void frame(void) {
         .samplers[SMP_smp] = app.smp,
     });
     shape_uniforms_t uniforms = {
-        .mvp = HMM_MultiplyMat4(view_proj, model),
+        .mvp = vm_mul(model, view_proj),
         .model = model,
-        .shape_color = HMM_Vec4(1.0f, 1.0f, 1.0f, 1.0f),
+        .shape_color = vec4(1.0f, 1.0f, 1.0f, 1.0f),
         .light_dir = app.light_dir,
-        .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
+        .eye_pos = vec4v3f(eye_pos, 1.0f)
     };
     sg_apply_uniforms(UB_shape_uniforms, &SG_RANGE(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
@@ -311,7 +310,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     };
 }
 
-static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
+static void draw_cubes(sg_pipeline pip, vec3_t eye_pos, mat44_t view_proj) {
     sg_apply_pipeline(pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = app.cube.vbuf,
@@ -320,11 +319,11 @@ static void draw_cubes(sg_pipeline pip, hmm_vec3 eye_pos, hmm_mat4 view_proj) {
     for (int i = 0; i < NUM_SHAPES; i++) {
         const shape_t* shape = &app.shapes[i];
         shape_uniforms_t uniforms = {
-            .mvp = HMM_MultiplyMat4(view_proj, shape->model),
+            .mvp = vm_mul(shape->model, view_proj),
             .model = shape->model,
             .shape_color = shape->color,
             .light_dir = app.light_dir,
-            .eye_pos = HMM_Vec4v(eye_pos, 1.0f)
+            .eye_pos = vec4v3f(eye_pos, 1.0f)
         };
         sg_apply_uniforms(UB_shape_uniforms, &SG_RANGE(uniforms));
         sg_draw(0, app.cube.num_elements, 1);

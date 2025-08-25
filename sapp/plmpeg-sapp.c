@@ -20,9 +20,8 @@
 //    that the audio playback device doesn't support the video's audio
 //    sample rate (44.1 kHz). This example doesn't contain a sample-rate converter.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_audio.h"
@@ -245,13 +244,12 @@ static void frame(void) {
     }
 
     // compute model-view-projection matrix for vertex shader
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    vs_params_t vs_params;
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0, 5.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.ry += -0.1f * 60.0f * (float)sapp_frame_duration();
-    hmm_mat4 model = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    const mat44_t model = mat44_rotation_y(vm_radians(state.ry));
+    const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
 
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });

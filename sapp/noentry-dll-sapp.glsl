@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  shaders for noentry-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 @vs vs
 layout(binding=0) uniform vs_params {
@@ -28,4 +28,3 @@ void main() {
 @end
 
 @program noentry vs fs
-

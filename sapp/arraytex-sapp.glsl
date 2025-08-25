@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  shaders for arraytex-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 hmm_mat4
-@ctype vec2 hmm_vec2
+@ctype mat4 mat44_t
+@ctype vec2 vec2_t
 
 @vs vs
 layout(binding=0) uniform vs_params {

@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  shaders for offscreen-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 // shared code for all shaders
 @block uniforms
@@ -69,4 +69,3 @@ void main() {
 @end
 
 @program default vs_default fs_default
-

@@ -1,6 +1,6 @@
 #pragma once
 /*
-    Quick'n'dirty Maya-style camera. Include after HandmadeMath.h
+    Quick'n'dirty Maya-style camera. Include after vecmath.h
     and sokol_app.h
 */
 #include <string.h>
@@ -12,9 +12,13 @@
 #define CAMERA_DEFAULT_MIN_LAT (-85.0f)
 #define CAMERA_DEFAULT_MAX_LAT (85.0f)
 #define CAMERA_DEFAULT_DIST (5.0f)
-#define CAMERA_DEFAULT_ASPECT (60.0f)
+#define CAMERA_DEFAULT_FOV (60.0f)
 #define CAMERA_DEFAULT_NEARZ (0.01f)
 #define CAMERA_DEFAULT_FARZ (100.0f)
+
+#if defined(__cplusplus)
+using namespace vecmath;
+#endif
 
 typedef struct {
     float min_dist;
@@ -24,10 +28,10 @@ typedef struct {
     float distance;
     float latitude;
     float longitude;
-    float aspect;
+    float fov;
     float nearz;
     float farz;
-    hmm_vec3 center;
+    vec3_t center;
 } camera_desc_t;
 
 typedef struct {
@@ -38,14 +42,14 @@ typedef struct {
     float distance;
     float latitude;
     float longitude;
-    float aspect;
+    float fov;
     float nearz;
     float farz;
-    hmm_vec3 center;
-    hmm_vec3 eye_pos;
-    hmm_mat4 view;
-    hmm_mat4 proj;
-    hmm_mat4 view_proj;
+    vec3_t center;
+    vec3_t eye_pos;
+    mat44_t view;
+    mat44_t proj;
+    mat44_t view_proj;
 } camera_t;
 
 static float _cam_def(float val, float def) {
@@ -64,7 +68,7 @@ static void cam_init(camera_t* cam, const camera_desc_t* desc) {
     cam->center = desc->center;
     cam->latitude = desc->latitude;
     cam->longitude = desc->longitude;
-    cam->aspect = _cam_def(desc->aspect, CAMERA_DEFAULT_ASPECT);
+    cam->fov = _cam_def(desc->fov, CAMERA_DEFAULT_FOV);
     cam->nearz = _cam_def(desc->nearz, CAMERA_DEFAULT_NEARZ);
     cam->farz = _cam_def(desc->farz, CAMERA_DEFAULT_FARZ);
 }
@@ -79,19 +83,19 @@ static void cam_orbit(camera_t* cam, float dx, float dy) {
     if (cam->longitude > 360.0f) {
         cam->longitude -= 360.0f;
     }
-    cam->latitude = HMM_Clamp(cam->min_lat, cam->latitude + dy, cam->max_lat);
+    cam->latitude = vm_clamp(cam->min_lat, cam->latitude + dy, cam->max_lat);
 }
 
 /* feed zoom (mouse wheel) input */
 static void cam_zoom(camera_t* cam, float d) {
     assert(cam);
-    cam->distance = HMM_Clamp(cam->min_dist, cam->distance + d, cam->max_dist);
+    cam->distance = vm_clamp(cam->min_dist, cam->distance + d, cam->max_dist);
 }
 
-static hmm_vec3 _cam_euclidean(float latitude, float longitude) {
-    const float lat = HMM_ToRadians(latitude);
-    const float lng = HMM_ToRadians(longitude);
-    return HMM_Vec3(cosf(lat) * sinf(lng), sinf(lat), cosf(lat) * cosf(lng));
+static vec3_t _cam_euclidean(float latitude, float longitude) {
+    const float lat = vm_radians(latitude);
+    const float lng = vm_radians(longitude);
+    return vec3(vm_cos(lat) * vm_sin(lng), vm_sin(lat), vm_cos(lat) * vm_cos(lng));
 }
 
 /* update the view, proj and view_proj matrix */
@@ -100,10 +104,10 @@ static void cam_update(camera_t* cam, int fb_width, int fb_height) {
     assert((fb_width > 0) && (fb_height > 0));
     const float w = (float) fb_width;
     const float h = (float) fb_height;
-    cam->eye_pos = HMM_AddVec3(cam->center, HMM_MultiplyVec3f(_cam_euclidean(cam->latitude, cam->longitude), cam->distance));
-    cam->view = HMM_LookAt(cam->eye_pos, cam->center, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    cam->proj = HMM_Perspective(cam->aspect, w/h, cam->nearz, cam->farz);
-    cam->view_proj = HMM_MultiplyMat4(cam->proj, cam->view);
+    cam->eye_pos = vm_add(cam->center, vec3_mulf(_cam_euclidean(cam->latitude, cam->longitude), cam->distance));
+    cam->view = mat44_look_at_rh(cam->eye_pos, cam->center, vec3(0.0f, 1.0f, 0.0f));
+    cam->proj = mat44_perspective_fov_rh(vm_radians(cam->fov), w/h, cam->nearz, cam->farz);
+    cam->view_proj = vm_mul(cam->view, cam->proj);
 }
 
 /* handle sokol-app input events */

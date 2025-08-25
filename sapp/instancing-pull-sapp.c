@@ -10,9 +10,8 @@
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "instancing-pull-sapp.glsl.h"
 
@@ -27,7 +26,7 @@ static struct {
     float ry;
     int cur_num_particles;
     sb_instance_t inst[MAX_PARTICLES];
-    hmm_vec3 vel[MAX_PARTICLES];
+    vec3_t vel[MAX_PARTICLES];
 } state;
 
 static void draw_fallback(void);
@@ -65,12 +64,12 @@ static void init(void) {
     // a storage buffer and view for the static geometry
     const float r = 0.05f;
     const sb_vertex_t vertices[] = {
-        { .pos = HMM_Vec3(0.0f,   -r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 0.0f, 1.0f) },
-        { .pos = HMM_Vec3(   r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 0.0f, 1.0f) },
-        { .pos = HMM_Vec3(   r, 0.0f, -r  ), .color = HMM_Vec4(0.0f, 0.0f, 1.0f, 1.0f) },
-        { .pos = HMM_Vec3(  -r, 0.0f, -r  ), .color = HMM_Vec4(1.0f, 1.0f, 0.0f, 1.0f) },
-        { .pos = HMM_Vec3(  -r, 0.0f, r   ), .color = HMM_Vec4(0.0f, 1.0f, 1.0f, 1.0f) },
-        { .pos = HMM_Vec3(0.0f,    r, 0.0f), .color = HMM_Vec4(1.0f, 0.0f, 1.0f, 1.0f) },
+        { .pos = vec3(0.0f,   -r, 0.0f), .color = vec4(1.0f, 0.0f, 0.0f, 1.0f) },
+        { .pos = vec3(   r, 0.0f, r   ), .color = vec4(0.0f, 1.0f, 0.0f, 1.0f) },
+        { .pos = vec3(   r, 0.0f, -r  ), .color = vec4(0.0f, 0.0f, 1.0f, 1.0f) },
+        { .pos = vec3(  -r, 0.0f, -r  ), .color = vec4(1.0f, 1.0f, 0.0f, 1.0f) },
+        { .pos = vec3(  -r, 0.0f, r   ), .color = vec4(0.0f, 1.0f, 1.0f, 1.0f) },
+        { .pos = vec3(0.0f,    r, 0.0f), .color = vec4(1.0f, 0.0f, 1.0f, 1.0f) },
     };
     sg_buffer sbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
@@ -175,8 +174,8 @@ static void draw_fallback(void) {
 static void emit_particles(void) {
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
         if (state.cur_num_particles < MAX_PARTICLES) {
-            state.inst[state.cur_num_particles].pos = HMM_Vec3(0.0, 0.0, 0.0);
-            state.vel[state.cur_num_particles] = HMM_Vec3(
+            state.inst[state.cur_num_particles].pos = vec3(0.0, 0.0, 0.0);
+            state.vel[state.cur_num_particles] = vec3(
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f);
@@ -189,26 +188,26 @@ static void emit_particles(void) {
 
 static void update_particles(float frame_time) {
     for (int i = 0; i < state.cur_num_particles; i++) {
-        state.vel[i].Y -= 1.0f * frame_time;
-        state.inst[i].pos.X += state.vel[i].X * frame_time;
-        state.inst[i].pos.Y += state.vel[i].Y * frame_time;
-        state.inst[i].pos.Z += state.vel[i].Z * frame_time;
+        state.vel[i].y -= 1.0f * frame_time;
+        state.inst[i].pos.x += state.vel[i].x * frame_time;
+        state.inst[i].pos.y += state.vel[i].y * frame_time;
+        state.inst[i].pos.z += state.vel[i].z * frame_time;
         // bounce back from 'ground'
-        if (state.inst[i].pos.Y < -2.0f) {
-            state.inst[i].pos.Y = -1.8f;
-            state.vel[i].Y = -state.vel[i].Y;
-            state.vel[i].X *= 0.8f; state.vel[i].Y *= 0.8f; state.vel[i].Z *= 0.8f;
+        if (state.inst[i].pos.y < -2.0f) {
+            state.inst[i].pos.y = -1.8f;
+            state.vel[i].y = -state.vel[i].y;
+            state.vel[i].x *= 0.8f; state.vel[i].y *= 0.8f; state.vel[i].z *= 0.8f;
         }
     }
 }
 
 static vs_params_t compute_vsparams(float frame_time) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.ry += 60.0f * frame_time;
     return (vs_params_t) {
-        .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f))),
+        .mvp = vm_mul(mat44_rotation_y(vm_radians(state.ry)), view_proj),
     };
 }
 

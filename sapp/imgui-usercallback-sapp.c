@@ -11,9 +11,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -157,15 +156,14 @@ void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
 
     // a model-view-proj matrix for the vertex shader
     const float t = (float)(sapp_frame_duration() * 60.0);
-    vs_params_t vs_params;
-    hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), 1.0f, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.scene1.rx += 1.0f * t; state.scene1.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.scene1.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.scene1.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.scene1.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.scene1.ry));
+    const mat44_t model = vm_mul(rym, rxm);
+    const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
 
     /*
         NOTE: we cannot start a separate render pass here since passes cannot

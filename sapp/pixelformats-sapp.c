@@ -9,9 +9,8 @@
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "pixelformats-sapp.glsl.h"
 
 typedef struct {
@@ -295,14 +294,14 @@ static void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
 
     // compute the model-view-proj matrix for rendering to render targets
-    hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), 1.0f, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 6.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    state.cube_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const mat44_t model = vm_mul(rym, rxm);
+    state.cube_vs_params.mvp = vm_mul(model, view_proj);
     state.bg_fs_params.tick += 1.0f * t;
 
     // render into all the offscreen render targets

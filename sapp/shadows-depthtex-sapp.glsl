@@ -1,5 +1,5 @@
-@ctype mat4 hmm_mat4
-@ctype vec3 hmm_vec3
+@ctype mat4 mat44_t
+@ctype vec3 vec3_t
 
 //=== shadow pass
 @vs vs_shadow

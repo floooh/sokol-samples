@@ -1,4 +1,4 @@
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 @block noise_utils
 //

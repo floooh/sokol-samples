@@ -16,9 +16,8 @@
 #include "sokol_glue.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "sbuftex-sapp.glsl.h"
 
@@ -186,14 +185,14 @@ static void frame(void) {
 
 static vs_params_t make_vs_params(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    return (vs_params_t){ .mvp = HMM_MultiplyMat4(view_proj, model) };
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const mat44_t model = vm_mul(rym, rxm);
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
 }
 
 static void draw_fallback(void) {
@@ -201,8 +200,9 @@ static void draw_fallback(void) {
     sdtx_pos(1, 1);
     sdtx_puts("STORAGE BUFFERS NOT SUPPORTED");
     sg_begin_pass(&(sg_pass){
-        .action = {
-            .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1, 0, 0, 1} },
+        .action.colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 1, 0, 0, 1},
         },
         .swapchain = sglue_swapchain()
     });

@@ -8,9 +8,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "vertextexture-sapp.glsl.h"
 #include <stdlib.h>
@@ -175,15 +174,12 @@ static vs_params_t compute_vsparams(void) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
     const float t = (float)(sapp_frame_duration() * 60.0);
-    hmm_mat4 proj = HMM_Perspective(60.0f, w/h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.0f, 3.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.0f, 2.5f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.ry += 0.5f * t;
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = rym;
-    return (vs_params_t){
-        .mvp = HMM_MultiplyMat4(view_proj, model),
-    };
+    const mat44_t model = mat44_rotation_y(vm_radians(state.ry));
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

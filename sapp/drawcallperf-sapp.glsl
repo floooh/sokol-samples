@@ -1,5 +1,5 @@
-@ctype mat4 hmm_mat4
-@ctype vec4 hmm_vec4
+@ctype mat4 mat44_t
+@ctype vec4 vec4_t
 
 @vs vs
 layout(binding=0) uniform vs_per_frame {

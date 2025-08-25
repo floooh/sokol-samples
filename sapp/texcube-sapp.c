@@ -6,9 +6,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "texcube-sapp.glsl.h"
 
@@ -24,6 +23,8 @@ typedef struct {
     uint32_t color;
     int16_t u, v;
 } vertex_t;
+
+static vs_params_t compute_vsparams(float rx, float ry);
 
 void init(void) {
     sg_setup(&(sg_desc){
@@ -147,15 +148,8 @@ void init(void) {
 void frame(void) {
     // compute model-view-projection matrix for vertex shader
     const float t = (float)(sapp_frame_duration() * 60.0);
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    vs_params_t vs_params;
     state.rx += 1.0f * t; state.ry += 2.0f * t;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
 
     sg_begin_pass(&(sg_pass) { .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
@@ -170,6 +164,18 @@ void frame(void) {
 void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
+}
+
+static vs_params_t compute_vsparams(float rx, float ry) {
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

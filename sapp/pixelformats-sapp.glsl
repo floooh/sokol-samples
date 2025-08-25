@@ -1,4 +1,4 @@
-@ctype mat4 hmm_mat4
+@ctype mat4 mat44_t
 
 @vs vs_cube
 layout(binding=0) uniform cube_vs_params {

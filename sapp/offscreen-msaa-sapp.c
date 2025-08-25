@@ -10,9 +10,8 @@
 #include "sokol_glue.h"
 #define SOKOL_SHAPE_IMPL
 #include "sokol_shape.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "offscreen-msaa-sapp.glsl.h"
 
@@ -218,14 +217,14 @@ static void init(void) {
 }
 
 // helper function to compute model-view-projection matrix
-static hmm_mat4 compute_mvp(float rx, float ry, float aspect, float eye_dist) {
-    hmm_mat4 proj = HMM_Perspective(45.0f, aspect, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, eye_dist), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rym, rxm);
-    hmm_mat4 mvp = HMM_MultiplyMat4(view_proj, model);
+static mat44_t compute_mvp(float rx, float ry, float aspect, float eye_dist) {
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(45.0f), aspect, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, eye_dist), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    const mat44_t model = vm_mul(rxm, rym);
+    const mat44_t mvp = vm_mul(model, view_proj);
     return mvp;
 }
 
@@ -255,7 +254,7 @@ static void frame(void) {
     int w = sapp_width();
     int h = sapp_height();
     vs_params = (vs_params_t) {
-        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 2.0f)
+        .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 1.5f)
     };
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);

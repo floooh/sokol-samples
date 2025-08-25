@@ -7,9 +7,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 
@@ -116,9 +115,9 @@ void init(void) {
 
 void frame(void) {
     // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(90.0f, sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 20.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
 
     // start rendering
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
@@ -137,11 +136,11 @@ void frame(void) {
                 continue;
             }
             // compute new model-view-proj matrix
-            hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
+            mat44_t rm = mat44_rotation_y(vm_radians(r0));
             const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
             const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;
-            hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-            state.quad_vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+            mat44_t model = vm_mul(rm, mat44_translation(x, y, 0.0f));
+            state.quad_vs_params.mvp = vm_mul(model, view_proj);
 
             sg_apply_pipeline(state.pips[src][dst]);
             sg_apply_bindings(&state.bind);

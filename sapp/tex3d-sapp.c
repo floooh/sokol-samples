@@ -6,9 +6,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "tex3d-sapp.glsl.h"
 
@@ -124,15 +123,15 @@ static void frame(void) {
     state.rx += 1.0f * t;
     state.ry += 2.0f * t;
     state.t  += 0.03f * t;
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params_t vs_params = {
-        .mvp = HMM_MultiplyMat4(view_proj, model),
-        .scale = (HMM_SinF(state.t) + 1.0f) * 0.5f
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const mat44_t model = vm_mul(rym, rxm);
+    const vs_params_t vs_params = {
+        .mvp = vm_mul(model, view_proj),
+        .scale = (vm_sin(state.t) + 1.0f) * 0.5f
     };
 
     // render the scene

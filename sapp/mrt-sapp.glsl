@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 //  shaders for mrt-sapp sample
 //------------------------------------------------------------------------------
-@ctype mat4 hmm_mat4
-@ctype vec2 hmm_vec2
+@ctype mat4 mat44_t
+@ctype vec2 vec2_t
 
 // shaders for offscreen-pass rendering
 @vs vs_offscreen
@@ -108,5 +108,3 @@ void main() {
 @end
 
 @program dbg vs_dbg fs_dbg
-
-

@@ -5,9 +5,8 @@
 //  different shaders using explicit bindslots, and also test that
 //  gaps between bind slots work.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_log.h"
@@ -33,7 +32,7 @@ typedef struct {
     int16_t u, v;
 } vertex_t;
 
-static hmm_mat4 compute_mvp(void);
+static mat44_t compute_mvp(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -212,14 +211,13 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-static hmm_mat4 compute_mvp(void) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, 1.0f, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 4.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    return HMM_MultiplyMat4(view_proj, model);
+static mat44_t compute_mvp(void) {
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), 1.0f, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
+    const mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, vm_mul(view, proj));
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

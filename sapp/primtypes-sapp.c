@@ -3,9 +3,8 @@
 //
 //  Test/demonstrate the various primitive types.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -225,14 +224,14 @@ static void cleanup(void) {
 
 // helper function to compute vertex shader params
 vs_params_t compute_vsparams(float disp_w, float disp_h, float rx, float ry, float point_size) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, disp_w/disp_h, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 1.5f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), disp_w/disp_h, 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 1.25f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
+    const mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    const mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    const mat44_t model = vm_mul(rym, rxm);
     return (vs_params_t){
-        .mvp = HMM_MultiplyMat4(view_proj, model),
+        .mvp = vm_mul(model, view_proj),
         .point_size = point_size,
     };
 }

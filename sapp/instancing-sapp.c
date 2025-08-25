@@ -7,9 +7,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "dbgui/dbgui.h"
 #include "instancing-sapp.glsl.h"
 
@@ -22,8 +21,8 @@ static struct {
     sg_bindings bind;
     float ry;
     int cur_num_particles;
-    hmm_vec3 pos[MAX_PARTICLES];
-    hmm_vec3 vel[MAX_PARTICLES];
+    vec3_t pos[MAX_PARTICLES];
+    vec3_t vel[MAX_PARTICLES];
 } state;
 
 static inline uint32_t xorshift32(void) {
@@ -78,7 +77,7 @@ void init(void) {
 
     // empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1
     state.bind.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
-        .size = MAX_PARTICLES * sizeof(hmm_vec3),
+        .size = MAX_PARTICLES * sizeof(vec3_t),
         .usage.stream_update = true,
         .label = "instance-data"
     });
@@ -114,8 +113,8 @@ void frame(void) {
     // emit new particles
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
         if (state.cur_num_particles < MAX_PARTICLES) {
-            state.pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
-            state.vel[state.cur_num_particles] = HMM_Vec3(
+            state.pos[state.cur_num_particles] = vec3(0.0, 0.0, 0.0);
+            state.vel[state.cur_num_particles] = vec3(
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f,
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) * 0.5f + 2.0f,
                 ((float)(xorshift32() & 0x7FFF) / 0x7FFF) - 0.5f);
@@ -127,31 +126,30 @@ void frame(void) {
 
     // update particle positions
     for (int i = 0; i < state.cur_num_particles; i++) {
-        state.vel[i].Y -= 1.0f * frame_time;
-        state.pos[i].X += state.vel[i].X * frame_time;
-        state.pos[i].Y += state.vel[i].Y * frame_time;
-        state.pos[i].Z += state.vel[i].Z * frame_time;
+        state.vel[i].y -= 1.0f * frame_time;
+        state.pos[i].x += state.vel[i].x * frame_time;
+        state.pos[i].y += state.vel[i].y * frame_time;
+        state.pos[i].z += state.vel[i].z * frame_time;
         // bounce back from 'ground'
-        if (state.pos[i].Y < -2.0f) {
-            state.pos[i].Y = -1.8f;
-            state.vel[i].Y = -state.vel[i].Y;
-            state.vel[i].X *= 0.8f; state.vel[i].Y *= 0.8f; state.vel[i].Z *= 0.8f;
+        if (state.pos[i].y < -2.0f) {
+            state.pos[i].y = -1.8f;
+            state.vel[i].y = -state.vel[i].y;
+            state.vel[i].x *= 0.8f; state.vel[i].y *= 0.8f; state.vel[i].z *= 0.8f;
         }
     }
 
     // update instance data
     sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){
         .ptr = state.pos,
-        .size = (size_t)state.cur_num_particles * sizeof(hmm_vec3)
+        .size = (size_t)state.cur_num_particles * sizeof(vec3_t)
     });
 
     // model-view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), sapp_widthf()/sapp_heightf(), 0.01f, 50.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
     state.ry += 60.0f * frame_time;
-    vs_params_t vs_params;
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)));
+    const vs_params_t vs_params = { .mvp = vm_mul(mat44_rotation_y(vm_radians(state.ry)), view_proj) };
 
     // ...and draw
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });

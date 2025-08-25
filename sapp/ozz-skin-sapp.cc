@@ -27,9 +27,8 @@
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
 
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "vecmath.h"
 #include "util/camera.h"
 #include "util/fileutil.h"
 
@@ -182,7 +181,7 @@ static void init(void) {
     camera_desc_t camdesc = { };
     camdesc.min_dist = 2.0f;
     camdesc.max_dist = 40.0f;
-    camdesc.center.Y = 1.1f;
+    camdesc.center.y = 1.1f;
     camdesc.distance = 3.0f;
     camdesc.latitude = 20.0f;
     camdesc.longitude = 20.0f;
