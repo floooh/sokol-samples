@@ -27,7 +27,7 @@
 #include "modplug.h"
 
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "restart-sapp.glsl.h"
 #include "util/fileutil.h"
 

@@ -3,7 +3,7 @@
 //  Cubemap as render target.
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_log.h"

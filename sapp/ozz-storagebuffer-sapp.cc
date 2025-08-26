@@ -20,7 +20,7 @@
 #include "sokol_gfx_imgui.h"
 
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "util/camera.h"
 #include "util/fileutil.h"
 

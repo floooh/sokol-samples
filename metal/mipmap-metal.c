@@ -8,9 +8,8 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 #include <assert.h>
 
 #define WIDTH (800)
@@ -24,7 +23,6 @@ static struct {
     sg_view tex_view;
     sg_sampler smp[12];
     float r;
-    hmm_mat4 view_proj;
     uint32_t mip_colors[9];
     struct {
         uint32_t mip0[65536];   // 256x256
@@ -52,7 +50,7 @@ static struct {
 };
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 static void init(void) {
@@ -213,17 +211,14 @@ static void init(void) {
         .shader = shd,
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
     });
-
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    vs_params_t vs_params;
     state.r += 0.1f;
-    hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), (float)osx_width()/(float)osx_height(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
+    const mat44_t rm = mat44_rotation_x(vm_radians(state.r));
 
     sg_bindings bind = {
         .vertex_buffers[0] = state.vbuf,
@@ -234,8 +229,8 @@ static void frame(void) {
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
-        hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-        vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+        const mat44_t model = vm_mul(rm, mat44_translation(x, y, 0.0f));
+        const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
         bind.samplers[0] = state.smp[i];
         sg_apply_bindings(&bind);
         sg_apply_uniforms(0, &SG_RANGE(vs_params));

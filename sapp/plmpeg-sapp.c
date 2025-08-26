@@ -21,7 +21,7 @@
 //    sample rate (44.1 kHz). This example doesn't contain a sample-rate converter.
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_audio.h"

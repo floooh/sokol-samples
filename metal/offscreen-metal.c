@@ -4,9 +4,8 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 #define WIDTH (640)
 #define HEIGHT (480)
@@ -24,7 +23,6 @@ static struct {
         sg_pass_action pass_action;
     } display;
     float rx, ry;
-    hmm_mat4 view_proj;
 } state = {
     // display: clear to blue-ish
     .display.pass_action = {
@@ -37,8 +35,18 @@ static struct {
 
 // vertex-shader params (just a model-view-projection matrix)
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 static void init(void) {
     // setup sokol
@@ -295,28 +303,18 @@ static void init(void) {
         },
         .cull_mode = SG_CULLMODE_BACK,
     });
-
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
-    // compute model-view-projection matrix for vertex shader, this will be
-    // used both for the offscreen-pass, and the display-pass
-    vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+    const vs_params_t offscreen_vs_params = { .mvp = compute_mvp(state.rx, state.ry, 256, 256) };
+    const vs_params_t display_vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
 
     // the offscreen pass, rendering an rotating, untextured cube into a render target image
     sg_begin_pass(&state.offscreen.pass);
     sg_apply_pipeline(state.offscreen.pip);
     sg_apply_bindings(&state.offscreen.bind);
-    sg_apply_uniforms(0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(offscreen_vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 
@@ -328,7 +326,7 @@ static void frame(void) {
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
-    sg_apply_uniforms(0, &SG_RANGE(vs_params));
+    sg_apply_uniforms(0, &SG_RANGE(display_vs_params));
     sg_draw(0, 36, 1);
     sg_end_pass();
 

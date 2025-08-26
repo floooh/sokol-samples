@@ -10,7 +10,7 @@
 //  This is a modified version of texcube-sapp.c
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_fetch.h"

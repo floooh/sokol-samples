@@ -5,9 +5,8 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 #if !TARGET_OS_IPHONE
 #include "binshader-metal-macosx.h"
 #else
@@ -23,12 +22,21 @@ static struct {
     sg_pipeline pip;
     sg_bindings bind;
     float rx, ry;
-    hmm_mat4 view_proj;
 } state;
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -36,7 +44,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    /* cube vertex buffer */
+    // cube vertex buffer
     float vertices[] = {
         -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
          1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
@@ -72,7 +80,7 @@ static void init(void) {
         .data = SG_RANGE(vertices)
     });
 
-    /* create an index buffer for the cube */
+    // create an index buffer for the cube
     uint16_t indices[] = {
         0, 1, 2,  0, 2, 3,
         6, 5, 4,  7, 6, 4,
@@ -86,7 +94,7 @@ static void init(void) {
         .data = SG_RANGE(indices)
     });
 
-    /* shader as precompiled metal lib */
+    // shader as precompiled metal lib
     sg_shader shd = sg_make_shader(&(sg_shader_desc){
         .vertex_func.bytecode = SG_RANGE(vs_bytecode),
         .fragment_func.bytecode = SG_RANGE(fs_bytecode),
@@ -97,7 +105,7 @@ static void init(void) {
         },
     });
 
-    /* pipeline object for rendering the cube */
+    // pipeline object for rendering the cube
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
             .attrs = {
@@ -113,21 +121,12 @@ static void init(void) {
             .write_enabled = true
         },
     });
-
-    /* view-projection matrix */
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame() {
-    /* compute model-view-projection matrix for vertex shader */
-    vs_params_t vs_params;
+    // compute model-view-projection matrix for vertex shader
     state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+    const vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

@@ -10,7 +10,7 @@
 //  This sample also demonstrates the optional user-data callbacks.
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #define SOKOL_DLL
 #include "sokol_gfx.h"
 #include "sokol_app.h"

@@ -4,7 +4,7 @@
 //  Load and render cubemap from individual jpeg files.
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_gfx.h"
 #include "sokol_app.h"

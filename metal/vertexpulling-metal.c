@@ -6,9 +6,8 @@
 #include "osxentry.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 static struct {
     sg_pass_action pass_action;
@@ -23,8 +22,18 @@ typedef struct {
 } vertex_t;
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -141,16 +150,8 @@ static void init(void) {
 }
 
 static void frame(void) {
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)osx_width()/(float)osx_height(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
-    vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+    const vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

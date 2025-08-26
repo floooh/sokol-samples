@@ -6,9 +6,8 @@
 #define SOKOL_METAL
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 
@@ -25,13 +24,22 @@ static struct {
     sg_bindings bind;
     float rx, ry;
     uint32_t counter;
-    hmm_mat4 view_proj;
     uint32_t pixels[IMG_WIDTH*IMG_HEIGHT];
 } state;
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 static void init(void) {
     // setup sokol_gfx
@@ -243,21 +251,12 @@ static void init(void) {
     state.pip = sg_make_pipeline(&pip_desc);
     assert(((__bridge id<MTLRenderPipelineState>) sg_mtl_query_pipeline_info(state.pip).rps) != nil);
     assert(((__bridge id<MTLDepthStencilState>) sg_mtl_query_pipeline_info(state.pip).dss) != nil);
-
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    state.view_proj = HMM_MultiplyMat4(proj, view);
 }
 
 static void frame(void) {
     // compute model-view-projection matrix for vertex shader
-    vs_params_t vs_params;
     state.rx += 1.0f; state.ry += 2.0f;
-    hmm_mat4 rxm = HMM_Rotate(state.rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-    hmm_mat4 rym = HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-    vs_params.mvp = HMM_MultiplyMat4(state.view_proj, model);
+    const vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
 
     // update texture image with some generated pixel data
     for (int y = 0; y < IMG_WIDTH; y++) {

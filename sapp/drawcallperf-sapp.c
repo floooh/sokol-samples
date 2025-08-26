@@ -12,7 +12,7 @@
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "drawcallperf-sapp.glsl.h"
 
 #define NUM_IMAGES (3)

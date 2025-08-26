@@ -8,7 +8,7 @@
 #include "sokol_log.h"
 #include "sokol_glue.h"
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 

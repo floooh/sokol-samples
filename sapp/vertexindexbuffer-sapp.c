@@ -5,7 +5,7 @@
 //  buffer (which isn't allowed on WebGL2, but fine on other APIs).
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_log.h"

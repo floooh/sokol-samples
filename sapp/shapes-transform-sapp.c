@@ -13,7 +13,7 @@
 #define SOKOL_DEBUGTEXT_IMPL
 #include "sokol_debugtext.h"
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "dbgui/dbgui.h"
 #include "shapes-transform-sapp.glsl.h"
 

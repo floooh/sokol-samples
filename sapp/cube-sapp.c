@@ -7,7 +7,7 @@
 #include "sokol_glue.h"
 #include "dbgui/dbgui.h"
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "cube-sapp.glsl.h"
 
 static struct {

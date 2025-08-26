@@ -10,7 +10,7 @@
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 #define VECMATH_GENERICS
-#include "vecmath.h"
+#include "vecmath/vecmath.h"
 #include "pixelformats-sapp.glsl.h"
 
 typedef struct {
