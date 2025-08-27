@@ -7,23 +7,29 @@
 #define SOKOL_D3D11
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 #include "binshader_vs.h"
 #include "binshader_fs.h"
 
-// a uniform block with a model-view-projection matrix
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper and sokol_gfx
-    const int width = 800;
-    const int height = 600;
-    d3d11_init(&(d3d11_desc_t){ .width = width, .height = height, .sample_count = 4, .title = L"binshader-d3d11.c" });
+    d3d11_init(&(d3d11_desc_t){ .width = 800, .height = 600, .sample_count = 4, .title = L"binshader-d3d11.c" });
     sg_setup(&(sg_desc){
         .environment = d3d11_environment(),
         .logger.func = slog_func,
@@ -121,21 +127,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // default pass action (clear to gray)
     sg_pass_action pass_action = { 0 };
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     float rx = 0.0f, ry = 0.0f;
     while (d3d11_process_events()) {
-        // model-view-proj matrix for vertex shader
-        vs_params_t vs_params;
         rx += 1.0f; ry += 2.0f;
-        hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-        hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-        hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-
+        const vs_params_t vs_params = { .mvp = compute_mvp(rx, ry, d3d11_width(), d3d11_height()) };
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
         sg_apply_bindings(&bind);

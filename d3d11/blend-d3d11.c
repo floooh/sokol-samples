@@ -7,12 +7,11 @@
 #define SOKOL_D3D11
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 typedef struct {
@@ -25,9 +24,7 @@ static sg_pipeline pips[NUM_BLEND_FACTORS][NUM_BLEND_FACTORS];
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
     // setup d3d11 app wrapper and sokol_gfx
-    const int WIDTH = 800;
-    const int HEIGHT = 600;
-    d3d11_init(&(d3d11_desc_t){ .width = WIDTH, .height = HEIGHT, .sample_count = 4, .title = L"blend-d3d11.c" });
+    d3d11_init(&(d3d11_desc_t){ .width = 800, .height = 600, .sample_count = 4, .title = L"blend-d3d11.c" });
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_FACTORS * NUM_BLEND_FACTORS + 1,
         .environment = d3d11_environment(),
@@ -155,21 +152,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .stencil.load_action = SG_LOADACTION_DONTCARE
     };
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 100.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 25.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // resource bindings
     sg_bindings bind = {
         .vertex_buffers[0] = vbuf
     };
 
-    vs_params_t vs_params;
-    fs_params_t fs_params;
     float r = 0.0f;
-    fs_params.tick = 0.0f;
+    fs_params_t fs_params = { .tick = 0.0f };
     while (d3d11_process_events()) {
+        const mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), (float)d3d11_width()/(float)d3d11_height(), 0.01f, 100.0f);
+        const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 20.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+        const mat44_t view_proj = vm_mul(view, proj);
+
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
 
         // draw a background quad
@@ -183,12 +177,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         for (int src = 0; src < NUM_BLEND_FACTORS; src++) {
             for (int dst = 0; dst < NUM_BLEND_FACTORS; dst++, r0+=0.6f) {
                 // compute new model-view-proj matrix
-                hmm_mat4 rm = HMM_Rotate(r0, HMM_Vec3(0.0f, 1.0f, 0.0f));
+                const mat44_t rm = mat44_rotation_y(vm_radians(r0));
                 const float x = ((float)(dst - NUM_BLEND_FACTORS/2)) * 3.0f;
                 const float y = ((float)(src - NUM_BLEND_FACTORS/2)) * 2.2f;
-                hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
-                vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
-
+                const mat44_t model = vm_mul(rm, mat44_translation(x, y, 0.0f));
+                const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
                 sg_apply_pipeline(pips[src][dst]);
                 sg_apply_bindings(&bind);
                 sg_apply_uniforms(0, &SG_RANGE(vs_params));

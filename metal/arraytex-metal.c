@@ -14,7 +14,6 @@
 #define IMG_WIDTH   (16)
 #define IMG_HEIGHT  (16)
 
-
 static struct {
     sg_pass_action pass_action;
     sg_pipeline pip;

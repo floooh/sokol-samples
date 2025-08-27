@@ -147,7 +147,7 @@ static void init(void) {
 
 static void frame(void) {
     state.rx += 1.0f; state.ry += 2.0f;
-    vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
+    const vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, osx_width(), osx_height()) };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);

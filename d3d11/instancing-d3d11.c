@@ -7,9 +7,8 @@
 #define SOKOL_D3D11
 #include "sokol_gfx.h"
 #include "sokol_log.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 enum {
     MAX_PARTICLES = 512 * 1024,
@@ -18,13 +17,13 @@ enum {
 
 // vertex shader uniform block
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 // particle positions and velocity
 static int cur_num_particles = 0;
-static hmm_vec3 pos[MAX_PARTICLES];
-static hmm_vec3 vel[MAX_PARTICLES];
+static vec3_t pos[MAX_PARTICLES];
+static vec3_t vel[MAX_PARTICLES];
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
     (void)hInstance; (void)hPrevInstance; (void)lpCmdLine; (void)nCmdShow;
@@ -65,7 +64,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // dynamic per-instance data, goes into vb slot 1
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
         .usage.stream_update = true,
-        .size = MAX_PARTICLES * sizeof(hmm_vec3),
+        .size = MAX_PARTICLES * sizeof(vec3_t),
     });
 
     // create shader
@@ -143,21 +142,15 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // default pass action (clear to grey)
     sg_pass_action pass_action = { 0 };
 
-    // view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)width/(float)height, 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // draw loop
-    vs_params_t vs_params;
-    float roty = 0.0f;
+    float ry = 0.0f;
     const float frame_time = 1.0f / 60.0f;
     while (d3d11_process_events()) {
         // emit new particles
         for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
             if (cur_num_particles < MAX_PARTICLES) {
-                pos[cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
-                vel[cur_num_particles] = HMM_Vec3(
+                pos[cur_num_particles] = vec3(0.0, 0.0, 0.0);
+                vel[cur_num_particles] = vec3(
                     ((float)(rand() & 0x7FFF) / (float)0x7FFF) - 0.5f,
                     ((float)(rand() & 0x7FFF) / (float)0x7FFF) * 0.5f + 2.0f,
                     ((float)(rand() & 0x7FFF) / (float)0x7FFF) - 0.5f);
@@ -169,26 +162,29 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
         // update particle positions
         for (int i = 0; i < cur_num_particles; i++) {
-            vel[i].Y -= 1.0f * frame_time;
-            pos[i].X += vel[i].X * frame_time;
-            pos[i].Y += vel[i].Y * frame_time;
-            pos[i].Z += vel[i].Z * frame_time;
-            if (pos[i].Y < -2.0f) {
-                pos[i].Y = -1.8f;
-                vel[i].Y = -vel[i].Y;
-                vel[i].X *= 0.8f; vel[i].Y *= 0.8f; vel[i].Z *= 0.8f;
+            vel[i].y -= 1.0f * frame_time;
+            pos[i].x += vel[i].x * frame_time;
+            pos[i].y += vel[i].y * frame_time;
+            pos[i].z += vel[i].z * frame_time;
+            if (pos[i].y < -2.0f) {
+                pos[i].y = -1.8f;
+                vel[i].y = -vel[i].y;
+                vel[i].x *= 0.8f; vel[i].y *= 0.8f; vel[i].z *= 0.8f;
             }
         }
 
         // update dynamic instance data buffer
         sg_update_buffer(vbuf_inst, &(sg_range){
             .ptr = pos,
-            .size = (size_t)cur_num_particles * sizeof(hmm_vec3)
+            .size = (size_t)cur_num_particles * sizeof(vec3_t)
         });
 
         // model-view-projection matrix
-        roty += 1.0f;
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(roty, HMM_Vec3(0.0f, 1.0f, 0.0f)));;
+        ry += 1.0f;
+        const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)d3d11_width()/(float)d3d11_height(), 0.01f, 50.0f);
+        const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+        const mat44_t model = mat44_rotation_y(vm_radians(ry));
+        const vs_params_t vs_params = { .mvp = vm_mul(model, vm_mul(view, proj)) };
 
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
         sg_apply_pipeline(pip);
