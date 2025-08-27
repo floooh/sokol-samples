@@ -8,9 +8,6 @@
 //  render buffers when the window size changes, instead the window content
 //  will be scaled during the blit operation.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 #include "flextgl33/flextGL.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE
@@ -19,6 +16,8 @@
 #include "sokol_log.h"
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 static bool flext_initialized = false;
 
@@ -43,10 +42,19 @@ typedef struct {
     sg_pass_action pass_action;
 } window_t;
 
-// vertex shader params
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 // create a GLFW window and associated framebuffers
 static window_t create_window(const window_desc_t* desc) {
@@ -274,13 +282,7 @@ int main() {
         .cull_mode = SG_CULLMODE_BACK,
     });
 
-    // just use the same view-proj matrix, ignoring current window aspect ratio
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)WIDTH/(float)HEIGHT, 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
     // run until main window is closed
-    vs_params_t vs_params = {0};
     float rx = 0.0f, ry = 0.0f;
     bool running = true;
     while (running) {
@@ -289,10 +291,7 @@ int main() {
         sg_reset_state_cache();
         // rotated model matrix
         rx += 1.0f; ry += 2.0f;
-        hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-        hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-        hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+        const vs_params_t vs_params = { .mvp = compute_mvp(rx, ry, WIDTH, HEIGHT) };
         // make sure main GL context is current and that sokol's cached GL state doesn't get confused
         // for each open window...
         for (int i = 0; i < 3; i++) {

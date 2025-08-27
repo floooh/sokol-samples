@@ -219,7 +219,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     float rx = 0.0f, ry = 0.0f;
     int frame_index = 0;
     while (d3d11_process_events()) {
-        // rotated model matrix
         rx += 0.25f; ry += 0.5f;
         float offset = (float)frame_index * 0.0001f;
         frame_index++;

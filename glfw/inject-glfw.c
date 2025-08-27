@@ -2,14 +2,13 @@
 //  inject-glwf.c
 //  Demonstrate usage of injected native GL buffer and image resources.
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 // constants (VS doesn't like "const int" for array size)
 enum {
@@ -20,8 +19,18 @@ enum {
 uint32_t pixels[IMG_WIDTH * IMG_HEIGHT];
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
+
+static mat44_t compute_mvp(float rx, float ry, int width, int height) {
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)width/(float)height, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return vm_mul(model, view_proj);
+}
 
 int main() {
 
@@ -214,23 +223,11 @@ int main() {
     // default pass action
     sg_pass_action pass_action = { 0 };
 
-    vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
     uint32_t counter = 0;
     while (!glfwWindowShouldClose(glfw_window())) {
-        // view-projection matrix
-        hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 10.0f);
-        hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 6.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-        hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-
-        // rotated model matrix
-        rx += 0.5f; ry += 0.75f;
-        hmm_mat4 rxm = HMM_Rotate(rx, HMM_Vec3(1.0f, 0.0f, 0.0f));
-        hmm_mat4 rym = HMM_Rotate(ry, HMM_Vec3(0.0f, 1.0f, 0.0f));
-        hmm_mat4 model = HMM_MultiplyMat4(rxm, rym);
-
-        // model-view-projection matrix for vertex shader
-        vs_params.mvp = HMM_MultiplyMat4(view_proj, model);
+        rx += 1.0f; ry += 2.0f;
+        const vs_params_t vs_params = { .mvp = compute_mvp(rx, ry, glfw_width(), glfw_height()) };
 
         // update texture image with some generated pixel data
         for (int y = 0; y < IMG_WIDTH; y++) {

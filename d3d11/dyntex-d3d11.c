@@ -188,7 +188,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // initial game-of-life seed state
     game_of_life_init();
 
-    vs_params_t vs_params;
     float rx = 0.0f, ry = 0.0f;
     while (d3d11_process_events()) {
         // model-view-projection matrix from rotated model matrix

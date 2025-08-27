@@ -1,15 +1,14 @@
 //------------------------------------------------------------------------------
 //  instancing-compute-glfw.c
 //------------------------------------------------------------------------------
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_time.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
@@ -36,7 +35,7 @@ typedef struct {
 } cs_params_t;
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 typedef struct {
@@ -260,12 +259,10 @@ int main() {
         // render pass to render the instanced particles, with the
         // instance-positions pulled from the compute-updated storage buffer
         state.ry += 1;
-        const hmm_mat4 proj = HMM_Perspective(60.0f, (float)glfw_width()/(float)glfw_height(), 0.01f, 50.0f);
-        const hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-        const hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-        const vs_params_t vs_params = {
-            .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.ry, HMM_Vec3(0.0f, 1.0f, 0.0f)))
-        };
+        const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)glfw_width()/(float)glfw_height(), 0.01f, 50.0f);
+        const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+        const mat44_t model = mat44_rotation_y(vm_radians(state.ry));
+        const vs_params_t vs_params = { .mvp = vm_mul(model, vm_mul(view, proj)) };
         sg_begin_pass(&(sg_pass){
             .action = state.display.pass_action,
             .swapchain = glfw_swapchain(),
