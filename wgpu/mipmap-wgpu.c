@@ -3,18 +3,17 @@
 //  Demonstrate all the mipmapping filters.
 //------------------------------------------------------------------------------
 #include "wgpu_entry.h"
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_WGPU
 #include "sokol_gfx.h"
 #include "sokol_log.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 #define SAMPLE_COUNT (4)
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 static struct {
@@ -192,21 +191,21 @@ static void init(void) {
 }
 
 static void frame(void) {
-    hmm_mat4 proj = HMM_Perspective(90.0f, (float)wgpu_width()/(float)wgpu_height(), 0.01f, 10.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 0.0f, 5.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
     state.r += 0.1f;
-    hmm_mat4 rm = HMM_Rotate(state.r, HMM_Vec3(1.0f, 0.0f, 0.0f));
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), (float)wgpu_width()/(float)wgpu_height(), 0.01f, 10.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t view_proj = vm_mul(view, proj);
+    const mat44_t rm = mat44_rotation_x(vm_radians(state.r));
 
     sg_begin_pass(&(sg_pass){ .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;
         const float y = ((float)(i / 4) - 1.0f) * -2.0f;
-        hmm_mat4 model = HMM_MultiplyMat4(HMM_Translate(HMM_Vec3(x, y, 0.0f)), rm);
+        const mat44_t model = vm_mul(rm, mat44_translation(x, y, 0.0f));
+        const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
         state.bind.samplers[0] = state.smp[i];
         sg_apply_bindings(&state.bind);
-        const vs_params_t vs_params = { .mvp = HMM_MultiplyMat4(view_proj, model) };
         sg_apply_uniforms(0, &SG_RANGE(vs_params));
         sg_draw(0, 4, 1);
     }
