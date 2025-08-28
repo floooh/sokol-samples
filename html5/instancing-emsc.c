@@ -2,20 +2,19 @@
 //  instancing-emsc.c
 //------------------------------------------------------------------------------
 #include <stddef.h>
-#define HANDMADE_MATH_IMPLEMENTATION
-#define HANDMADE_MATH_NO_SSE
-#include "HandmadeMath.h"
 #define SOKOL_IMPL
 #define SOKOL_GLES3
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "emsc.h"
+#define VECMATH_GENERICS
+#include "../libs/vecmath/vecmath.h"
 
 #define MAX_PARTICLES (512 * 1024)
 #define NUM_PARTICLES_EMITTED_PER_FRAME (10)
 
 static struct {
-    float roty;
+    float ry;
     int cur_num_particles;
     sg_pipeline pip;
     sg_bindings bind;
@@ -26,11 +25,11 @@ static struct {
 };
 
 // particle positions and velocity
-static hmm_vec3 pos[MAX_PARTICLES];
-static hmm_vec3 vel[MAX_PARTICLES];
+static vec3_t pos[MAX_PARTICLES];
+static vec3_t vel[MAX_PARTICLES];
 
 typedef struct {
-    hmm_mat4 mvp;
+    mat44_t mvp;
 } vs_params_t;
 
 static EM_BOOL draw(double time, void* userdata);
@@ -74,7 +73,7 @@ int main() {
     // empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1)
     sg_buffer inst_vbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.stream_update = true,
-        .size = MAX_PARTICLES * sizeof(hmm_vec3),
+        .size = MAX_PARTICLES * sizeof(vec3_t),
     });
 
     // the resource bindings
@@ -154,8 +153,8 @@ static EM_BOOL draw(double time, void* userdata) {
     // emit new particles
     for (int i = 0; i < NUM_PARTICLES_EMITTED_PER_FRAME; i++) {
         if (state.cur_num_particles < MAX_PARTICLES) {
-            pos[state.cur_num_particles] = HMM_Vec3(0.0, 0.0, 0.0);
-            vel[state.cur_num_particles] = HMM_Vec3(
+            pos[state.cur_num_particles] = vec3(0.0, 0.0, 0.0);
+            vel[state.cur_num_particles] = vec3(
                 ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f,
                 ((float)(rand() & 0xFFFF) / 0xFFFF) * 0.5f + 2.0f,
                 ((float)(rand() & 0xFFFF) / 0xFFFF) - 0.5f);
@@ -168,29 +167,27 @@ static EM_BOOL draw(double time, void* userdata) {
 
     // update particle positions
     for (int i = 0; i < state.cur_num_particles; i++) {
-        vel[i].Y -= 1.0f * frame_time;
-        pos[i].X += vel[i].X * frame_time;
-        pos[i].Y += vel[i].Y * frame_time;
-        pos[i].Z += vel[i].Z * frame_time;
+        vel[i].y -= 1.0f * frame_time;
+        pos[i].x += vel[i].x * frame_time;
+        pos[i].y += vel[i].y * frame_time;
+        pos[i].z += vel[i].z * frame_time;
         // bounce back from 'ground'
-        if (pos[i].Y < -2.0f) {
-            pos[i].Y = -1.8f;
-            vel[i].Y = -vel[i].Y;
-            vel[i].X *= 0.8f; vel[i].Y *= 0.8f; vel[i].Z *= 0.8f;
+        if (pos[i].y < -2.0f) {
+            pos[i].y = -1.8f;
+            vel[i].y = -vel[i].y;
+            vel[i].x *= 0.8f; vel[i].y *= 0.8f; vel[i].z *= 0.8f;
         }
     }
 
     // update instance data
-    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, (size_t)state.cur_num_particles*sizeof(hmm_vec3) });
+    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, (size_t)state.cur_num_particles*sizeof(vec3_t) });
 
     // model-view-projection matrix
-    hmm_mat4 proj = HMM_Perspective(60.0f, (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
-    hmm_mat4 view = HMM_LookAt(HMM_Vec3(0.0f, 1.5f, 12.0f), HMM_Vec3(0.0f, 0.0f, 0.0f), HMM_Vec3(0.0f, 1.0f, 0.0f));
-    hmm_mat4 view_proj = HMM_MultiplyMat4(proj, view);
-    state.roty += 1.0f;
-    const vs_params_t vs_params = {
-        .mvp = HMM_MultiplyMat4(view_proj, HMM_Rotate(state.roty, HMM_Vec3(0.0f, 1.0f, 0.0f)))
-    };
+    state.ry += 1.0f;
+    const mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), (float)emsc_width()/(float)emsc_height(), 0.01f, 50.0f);
+    const mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 8.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    const mat44_t model = mat44_rotation_y(vm_radians(state.ry));
+    const vs_params_t vs_params = { .mvp = vm_mul(model, vm_mul(view, proj)) };
 
     // and the actual draw pass...
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
