@@ -94,7 +94,7 @@ static sapp_image_desc generate_image(const int dim, const int color_offset, int
     const uint32_t* dst_end = dst + num_pixels;
     const uint32_t blank = 0x00FFFFFF;
     const uint32_t shadow = 0xFF000000;
-    SOKOL_ASSERT((dim % 8) == 0);
+    assert((dim % 8) == 0);
     const int scale = dim / 8;
     for (int ty = 0, y = 0; ty < 8; ty++) {
         const uint32_t color = colors[(ty+(8-color_offset))%8];
@@ -103,7 +103,7 @@ static sapp_image_desc generate_image(const int dim, const int color_offset, int
             for (int tx = 0, x = 0; tx < 8; tx++, bits<<=1) {
                 uint32_t pixel = (0 == (bits & 0x80)) ? blank : color;
                 for (int sx = 0; sx < scale; sx++, x++) {
-                    SOKOL_ASSERT(dst < dst_end);
+                    assert(dst < dst_end); (void)dst_end;
                     *dst++ = pixel;
                 }
             }
@@ -284,19 +284,19 @@ static void frame(void) {
             cursor_to_set = state.cursors[3];
         }
 
-        if (draw_cursor_panel("hotspot top-left", panel_width, panel_height)) {
+        if (draw_cursor_panel("hotspot\ntop-left", panel_width, panel_height)) {
             cursor_to_set = state.cursor_hotspot_tl;
         }
         ImGui::SameLine();
-        if (draw_cursor_panel("hotspot top-right", panel_width, panel_height)) {
+        if (draw_cursor_panel("hotspot\ntop-right", panel_width, panel_height)) {
             cursor_to_set = state.cursor_hotspot_tr;
         }
         ImGui::SameLine();
-        if (draw_cursor_panel("hotspot bottom-left", panel_width, panel_height)) {
+        if (draw_cursor_panel("hotspot\nbottom-left", panel_width, panel_height)) {
             cursor_to_set = state.cursor_hotspot_bl;
         }
         ImGui::SameLine();
-        if (draw_cursor_panel("hotspot bottom-right", panel_width, panel_height)) {
+        if (draw_cursor_panel("hotspot\nbottom-right", panel_width, panel_height)) {
             cursor_to_set = state.cursor_hotspot_br;
         }
 

@@ -98,6 +98,7 @@ samples = [
     [ 'debugtext-context', 'debugtext-context-sapp.c', 'debugtext-context-sapp.glsl'],
     [ 'debugtext-layers', 'debugtext-layers-sapp.c', None],
     [ 'events', 'events-sapp.cc', None],
+    [ 'cursor', 'cursor-sapp.cc', None],
     [ 'icon', 'icon-sapp.c', None ],
     [ 'droptest', 'droptest-sapp.c', None],
     [ 'pixelformats', 'pixelformats-sapp.c', None],
