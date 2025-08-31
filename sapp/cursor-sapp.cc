@@ -12,6 +12,17 @@
 
 #include <stdio.h> // snprintf
 
+static struct {
+    sg_pass_action pass_action;
+    sapp_mouse_cursor cursors[4];
+    sapp_mouse_cursor cursor_hotspot_tl;
+    sapp_mouse_cursor cursor_hotspot_tr;
+    sapp_mouse_cursor cursor_hotspot_bl;
+    sapp_mouse_cursor cursor_hotspot_br;
+    sapp_mouse_cursor cursors_anim[8];
+    bool customized[_SAPP_MOUSECURSOR_NUM]; // to keep track of which 'system' cursor is currently bound to a custom image.
+} state;
+
 static const char* mousecursor_to_str(sapp_mouse_cursor t) {
     switch (t) {
         case SAPP_MOUSECURSOR_DEFAULT: return "DEFAULT";
@@ -143,18 +154,6 @@ static sapp_image_desc generate_image(const int dim, const int color_offset, int
     return img_desc;
 }
 
-struct state_t {
-    sg_pass_action pass_action;
-    sapp_mouse_cursor cursors[4];
-    sapp_mouse_cursor cursor_hotspot_tl;
-    sapp_mouse_cursor cursor_hotspot_tr;
-    sapp_mouse_cursor cursor_hotspot_bl;
-    sapp_mouse_cursor cursor_hotspot_br;
-    sapp_mouse_cursor cursors_anim[8];
-    bool customized[_SAPP_MOUSECURSOR_NUM]; // to keep track of which 'system' cursor is currently bound to a custom image.
-};
-static state_t state;
-
 static void init(void) {
     sg_desc desc = { };
     desc.environment = sglue_environment();
@@ -244,8 +243,8 @@ static void frame(void) {
     const int h = sapp_height();
     simgui_new_frame({ w, h, sapp_frame_duration(), sapp_dpi_scale() });
 
-    const float panel_width = 160.0f - ImGui::GetStyle().FramePadding.x;
-    const float panel_height = 115.0f;
+    const float panel_width = 140.0f - ImGui::GetStyle().FramePadding.x;
+    const float panel_height = 70.0f;
     const float pad = 5.0f;
     ImVec2 padded_size = ImGui::GetIO().DisplaySize;
     padded_size.x -= 2.0f*pad;
