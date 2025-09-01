@@ -824,6 +824,12 @@ fips_begin_app(icon-sapp windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(cursor-sapp windowed)
+    fips_files(cursor-sapp.cc)
+    fips_deps(sokol imgui)
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(droptest-sapp windowed)
     fips_files(droptest-sapp.c)
     fips_deps(sokol imgui)
