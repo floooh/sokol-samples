@@ -162,7 +162,7 @@ static void draw_ui(void) {
             igText("Mipmaps: %d", state.img_info.num_mipmaps);
             igSeparator();
             igCheckbox("Use Linear Sampler", &state.ui.use_linear_sampler);
-            igSliderFloat("Mip LOD", &state.ui.mip_lod, 0.0f, (float)state.img_info.num_mipmaps);
+            igSliderFloat("Mip LOD", &state.ui.mip_lod, 0.0f, (float)(state.ui.max_mip - state.ui.min_mip));
             if (igSliderInt("Min Mip", &state.ui.min_mip, 0, (state.img_info.num_mipmaps - 1))) {
                 reinit_texview();
             }
@@ -215,7 +215,7 @@ static void reinit_texview(void) {
             .image = state.img,
             .mip_levels = {
                 .base = state.ui.min_mip,
-                .count = (state.ui.max_mip - state.ui.max_mip) + 1,
+                .count = (state.ui.max_mip - state.ui.min_mip) + 1,
             },
         },
     });
