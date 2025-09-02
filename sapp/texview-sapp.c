@@ -56,11 +56,10 @@ static struct {
 
 static uint8_t file_buffer[MAX_FILE_SIZE];
 
-static void draw_ui(void);
+static void ui_draw(void);
 static void fetch_async(const char* filename);
 static void fetch_callback(const sfetch_response_t*);
 static void reinit_texview(void);
-static void apply_viewport(void);
 
 static void init(void) {
     sbasisu_setup();
@@ -116,8 +115,7 @@ static void frame(void) {
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
-
-    draw_ui();
+    ui_draw();
 
     const fs_params_t fs_params = { .mip_lod = state.ui.mip_lod };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
@@ -144,7 +142,7 @@ static void cleanup(void) {
     sbasisu_shutdown();
 }
 
-static void draw_ui(void) {
+static void ui_draw(void) {
     igSetNextWindowPos((ImVec2){ 20, 20 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -162,11 +160,21 @@ static void draw_ui(void) {
             igText("Mipmaps: %d", state.img_info.num_mipmaps);
             igSeparator();
             igCheckbox("Use Linear Sampler", &state.ui.use_linear_sampler);
+            float max_mip_lod = (float)(state.ui.max_mip - state.ui.min_mip);
+            if (state.ui.mip_lod > max_mip_lod) {
+                state.ui.mip_lod = max_mip_lod;
+            }
             igSliderFloat("Mip LOD", &state.ui.mip_lod, 0.0f, (float)(state.ui.max_mip - state.ui.min_mip));
             if (igSliderInt("Min Mip", &state.ui.min_mip, 0, (state.img_info.num_mipmaps - 1))) {
+                if (state.ui.max_mip < state.ui.min_mip) {
+                    state.ui.max_mip = state.ui.min_mip;
+                }
                 reinit_texview();
             }
             if (igSliderInt("Max Mip", &state.ui.max_mip, 0, (state.img_info.num_mipmaps - 1))) {
+                if (state.ui.min_mip > state.ui.max_mip) {
+                    state.ui.min_mip = state.ui.max_mip;
+                }
                 reinit_texview();
             }
         }
