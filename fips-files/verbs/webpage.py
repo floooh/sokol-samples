@@ -103,6 +103,7 @@ samples = [
     [ 'droptest', 'droptest-sapp.c', None],
     [ 'pixelformats', 'pixelformats-sapp.c', None],
     [ 'drawcallperf', 'drawcallperf-sapp.c', 'drawcallperf-sapp.glsl'],
+    [ 'texview', 'texview-sapp.c', 'texview-sapp.glsl'],
     [ 'saudio', 'saudio-sapp.c', None],
     [ 'modplay', 'modplay-sapp.c', None],
     [ 'noentry', 'noentry-sapp.c', 'noentry-sapp.glsl' ],
@@ -176,6 +177,11 @@ assets = [
     "nb2_negy.jpg",
     "nb2_posz.jpg",
     "nb2_negz.jpg",
+    "kodim05.basis",
+    "kodim07.basis",
+    "kodim17.basis",
+    "kodim20.basis",
+    "kodim23.basis",
 ]
 
 #-------------------------------------------------------------------------------

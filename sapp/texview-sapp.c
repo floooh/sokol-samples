@@ -32,7 +32,10 @@ static struct {
     sg_image img;
     sg_view tex_view;
     sg_pipeline pip;
-    sg_sampler smp;
+    struct {
+        sg_sampler linear;
+        sg_sampler nearest;
+    } smp;
     struct {
         int width;
         int height;
@@ -44,6 +47,10 @@ static struct {
     } load;
     struct {
         int selected;
+        int min_mip;
+        int max_mip;
+        float mip_lod;
+        bool use_linear_sampler;
     } ui;
 } state;
 
@@ -53,6 +60,7 @@ static void draw_ui(void);
 static void fetch_async(const char* filename);
 static void fetch_callback(const sfetch_response_t*);
 static void reinit_texview(void);
+static void apply_viewport(void);
 
 static void init(void) {
     sbasisu_setup();
@@ -83,12 +91,17 @@ static void init(void) {
         .label = "pipeline",
     });
 
-    // a linear-filtering sampler
-    state.smp = sg_make_sampler(&(sg_sampler_desc){
+    state.smp.linear = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .mipmap_filter = SG_FILTER_LINEAR,
-        .label = "sampler",
+        .label = "linear-sampler",
+    });
+    state.smp.nearest = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .mipmap_filter = SG_FILTER_LINEAR,
+        .label = "nearest-sampler",
     });
 
     // start loading the first file
@@ -106,12 +119,14 @@ static void frame(void) {
 
     draw_ui();
 
+    const fs_params_t fs_params = { .mip_lod = state.ui.mip_lod };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_tex] = state.tex_view,
-        .samplers[SMP_smp] = state.smp,
+        .samplers[SMP_smp] = state.ui.use_linear_sampler ? state.smp.linear : state.smp.nearest,
     });
+    sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
     simgui_render();
     sg_end_pass();
@@ -145,6 +160,15 @@ static void draw_ui(void) {
             igText("Width:   %d", state.img_info.width);
             igText("Height:  %d", state.img_info.height);
             igText("Mipmaps: %d", state.img_info.num_mipmaps);
+            igSeparator();
+            igCheckbox("Use Linear Sampler", &state.ui.use_linear_sampler);
+            igSliderFloat("Mip LOD", &state.ui.mip_lod, 0.0f, (float)state.img_info.num_mipmaps);
+            if (igSliderInt("Min Mip", &state.ui.min_mip, 0, (state.img_info.num_mipmaps - 1))) {
+                reinit_texview();
+            }
+            if (igSliderInt("Max Mip", &state.ui.max_mip, 0, (state.img_info.num_mipmaps - 1))) {
+                reinit_texview();
+            }
         }
     }
     igEnd();
@@ -169,9 +193,13 @@ static void fetch_callback(const sfetch_response_t* response) {
             .ptr = response->data.ptr,
             .size = response->data.size,
         });
+        assert(img_desc.num_mipmaps > 0);
         state.img_info.width = img_desc.width;
         state.img_info.height = img_desc.height;
         state.img_info.num_mipmaps = img_desc.num_mipmaps;
+        state.ui.min_mip = 0;
+        state.ui.max_mip = img_desc.num_mipmaps - 1;
+        state.ui.mip_lod = 0.0f;
         sg_init_image(state.img, &img_desc);
         sbasisu_free(&img_desc);
         reinit_texview();
@@ -185,7 +213,10 @@ static void reinit_texview(void) {
     sg_init_view(state.tex_view, &(sg_view_desc){
         .texture = {
             .image = state.img,
-            // FIXME: mip-range
+            .mip_levels = {
+                .base = state.ui.min_mip,
+                .count = (state.ui.max_mip - state.ui.max_mip) + 1,
+            },
         },
     });
 }
