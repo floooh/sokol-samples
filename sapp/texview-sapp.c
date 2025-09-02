@@ -7,12 +7,12 @@
 #include "sokol_gfx.h"
 #include "sokol_fetch.h"
 #include "sokol_log.h"
-#include "sokol_color.h"
 #include "sokol_glue.h"
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
-#include "dbgui/dbgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
 #include "basisu/sokol_basisu.h"
 #include "util/fileutil.h"
 #include "texview-sapp.glsl.h"
@@ -51,6 +51,7 @@ static struct {
         int max_mip;
         float mip_lod;
         bool use_linear_sampler;
+        sgimgui_t sgimgui;
     } ui;
 } state;
 
@@ -60,6 +61,8 @@ static void ui_draw(void);
 static void fetch_async(const char* filename);
 static void fetch_callback(const sfetch_response_t*);
 static void reinit_texview(void);
+static void apply_viewport(void);
+static bool has_texture_views(void);
 
 static void init(void) {
     sbasisu_setup();
@@ -67,6 +70,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -77,9 +81,11 @@ static void init(void) {
         .logger.func = slog_func,
     });
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = SG_STEEL_BLUE },
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
     };
 
+    // pre-allocate handles so we can keep rendering even no
+    // image has been loaded yet
     state.img = sg_alloc_image();
     state.tex_view = sg_alloc_view();
 
@@ -103,7 +109,7 @@ static void init(void) {
         .label = "nearest-sampler",
     });
 
-    // start loading the first file
+    // start loading the first image
     fetch_async(files[0]);
 }
 
@@ -119,6 +125,7 @@ static void frame(void) {
 
     const fs_params_t fs_params = { .mip_lod = state.ui.mip_lod };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    apply_viewport();
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_tex] = state.tex_view,
@@ -126,6 +133,7 @@ static void frame(void) {
     });
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
+    sgimgui_draw(&state.ui.sgimgui);
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -137,13 +145,18 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     sfetch_shutdown();
+    sgimgui_discard(&state.ui.sgimgui);
     simgui_shutdown();
     sg_shutdown();
     sbasisu_shutdown();
 }
 
 static void ui_draw(void) {
-    igSetNextWindowPos((ImVec2){ 20, 20 }, ImGuiCond_Once);
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        igEndMainMenuBar();
+    }
+    igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         if (state.load.pending) {
@@ -151,6 +164,9 @@ static void ui_draw(void) {
         } else {
             if (state.load.failed) {
                 igText("Loading failed!");
+            }
+            if (!has_texture_views()) {
+                igText("NOTE: WebGL2/GLES3/GL4.1 have no texture views!\n");
             }
             if (igComboChar("Image", &state.ui.selected, files, IM_ARRAYSIZE(files))) {
                 fetch_async(files[state.ui.selected]);
@@ -227,6 +243,44 @@ static void reinit_texview(void) {
             },
         },
     });
+}
+
+static bool has_texture_views(void) {
+    const sg_backend backend = sg_query_backend();
+    return !((backend == SG_BACKEND_GLCORE || backend == SG_BACKEND_GLES3) && !sg_query_features().gl_texture_views);
+}
+
+// set viewport to keep image aspect ratio correct regardless of window size
+static void apply_viewport(void) {
+    if ((state.img_info.width == 0) || (state.img_info.height == 0)) {
+        return;
+    }
+    const float border = 5.0f;
+    float canvas_width = sapp_widthf() - 2.0f * border;
+    float canvas_height = sapp_heightf() - 2.0f * border;
+    if (canvas_width < 1.0f) {
+        canvas_width = 1.0f;
+    }
+    if (canvas_height < 1.0f) {
+        canvas_height = 1.0f;
+    }
+    const float canvas_aspect = canvas_width / canvas_height;
+    const float img_width = (float)state.img_info.width;
+    const float img_height = (float)state.img_info.height;
+    const float img_aspect = img_width / img_height;
+    float vp_x, vp_y, vp_w, vp_h;
+    if (img_aspect < canvas_aspect) {
+        vp_y = border;
+        vp_h = canvas_height;
+        vp_w = canvas_height * img_aspect;
+        vp_x = border + (canvas_width - vp_w) * 0.5f;
+    } else {
+        vp_x = border;
+        vp_w = canvas_width;
+        vp_h = canvas_width / img_aspect;
+        vp_y = border + (canvas_height - vp_h) * 0.5f;
+    }
+    sg_apply_viewportf(vp_x, vp_y, vp_w, vp_h, true);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
