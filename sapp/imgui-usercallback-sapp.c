@@ -77,7 +77,7 @@ static uint16_t cube_indices[] = {
     22, 21, 20,  23, 22, 20
 };
 
-void init(void) {
+static void init(void) {
     // setup sokol-gfx, sokol-imgui and sokol-gl
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -142,7 +142,7 @@ void init(void) {
 }
 
 // an ImGui draw callback to render directly with sokol-gfx
-void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
+static void draw_scene_1(const ImDrawList* dl, const ImDrawCmd* cmd) {
     (void)dl;
 
     // first set the viewport rectangle to render in, same as
@@ -218,7 +218,7 @@ static void cube_sgl(void) {
 }
 
 // another ImGui draw callback to render via sokol-gl
-void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
+static void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
     (void)dl;
     const float t = (float)(sapp_frame_duration() * 60.0);
 
@@ -267,7 +267,7 @@ void draw_scene_2(const ImDrawList* dl, const ImDrawCmd* cmd) {
     sgl_draw();
 }
 
-void frame(void) {
+static void frame(void) {
 
     // create the ImGui UI, a single window with two child views, each
     // rendering its own custom 3D scene via a user draw callback
@@ -307,13 +307,13 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     sgl_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
 
-void input(const sapp_event * ev) {
+static void input(const sapp_event * ev) {
     simgui_handle_event(ev);
 }
 

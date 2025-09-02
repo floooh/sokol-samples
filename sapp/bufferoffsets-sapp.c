@@ -28,7 +28,7 @@ typedef struct {
     float x, y, r, g, b;
 } vertex_t;
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -76,7 +76,7 @@ void init(void) {
     });
 }
 
-void frame(void) {
+static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     // render the triangle (located at start of vertex- and index-buffer)
@@ -98,7 +98,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }

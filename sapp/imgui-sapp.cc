@@ -20,7 +20,7 @@ static bool show_another_window = false;
 
 static sg_pass_action pass_action;
 
-void init(void) {
+static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_desc desc = { };
     desc.environment = sglue_environment();
@@ -38,7 +38,7 @@ void init(void) {
     pass_action.colors[0].clear_value = { 0.0f, 0.5f, 0.7f, 1.0f };
 }
 
-void frame(void) {
+static void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
     simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
@@ -81,12 +81,12 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     simgui_shutdown();
     sg_shutdown();
 }
 
-void input(const sapp_event* event) {
+static void input(const sapp_event* event) {
     simgui_handle_event(event);
 }
 

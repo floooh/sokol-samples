@@ -51,7 +51,7 @@ static const char* pixelformat_to_str(sg_pixel_format fmt) {
     }
 }
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -126,7 +126,7 @@ static void draw_quad(quad_params_t params) {
     sgl_pop_matrix();
 }
 
-void frame(void) {
+static void frame(void) {
     // info text
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_origin(0.5f, 2.0f);
@@ -164,7 +164,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     sbasisu_shutdown();
     sgl_shutdown();
     sdtx_shutdown();

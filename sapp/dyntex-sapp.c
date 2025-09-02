@@ -31,7 +31,7 @@ static void game_of_life_init();
 static void game_of_life_update();
 static vs_params_t compute_vsparams(float rx, float ry);
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -145,7 +145,7 @@ void init(void) {
     game_of_life_init();
 }
 
-void frame(void) {
+static void frame(void) {
     const float t = (float)(sapp_frame_duration() * 60.0);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
     const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
@@ -169,7 +169,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }
@@ -186,7 +186,7 @@ static vs_params_t compute_vsparams(float rx, float ry) {
     return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
 }
 
-void game_of_life_init() {
+static void game_of_life_init() {
     for (int y = 0; y < IMAGE_HEIGHT; y++) {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             if ((rand() & 255) > 230) {
@@ -198,7 +198,7 @@ void game_of_life_init() {
     }
 }
 
-void game_of_life_update() {
+static void game_of_life_update() {
     for (int y = 0; y < IMAGE_HEIGHT; y++) {
         for (int x = 0; x < IMAGE_WIDTH; x++) {
             int num_living_neighbours = 0;

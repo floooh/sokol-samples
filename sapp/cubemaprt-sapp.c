@@ -76,7 +76,7 @@ static inline float rnd(float min_val, float max_val) {
     return ((((float)(xorshift32() & 0xFFFF)) / 0x10000) * (max_val - min_val)) + min_val;
 }
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -197,7 +197,7 @@ void init(void) {
     }
 }
 
-void frame(void) {
+static void frame(void) {
     // compute a frame time multiplier
     const float t = (float)sapp_frame_duration();
 
@@ -288,7 +288,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }

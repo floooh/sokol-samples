@@ -33,7 +33,7 @@ static inline uint32_t xorshift32(void) {
     return x;
 }
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -107,7 +107,7 @@ void init(void) {
     });
 }
 
-void frame(void) {
+static void frame(void) {
     const float frame_time = (float)(sapp_frame_duration());
 
     // emit new particles
@@ -162,7 +162,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }

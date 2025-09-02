@@ -18,7 +18,7 @@ static struct {
     }
 };
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = wgpu_environment(),
         .logger.func = slog_func,
@@ -78,7 +78,7 @@ void init(void) {
     });
 }
 
-void frame(void) {
+static void frame(void) {
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -87,7 +87,7 @@ void frame(void) {
     sg_commit();
 }
 
-void shutdown(void) {
+static void shutdown(void) {
     sg_shutdown();
 }
 

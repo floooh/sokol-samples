@@ -37,7 +37,7 @@ static mat44_t compute_mvp(float rx, float ry, int width, int height) {
     return vm_mul(model, view_proj);
 }
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = wgpu_environment(),
         .logger.func = slog_func,
@@ -150,7 +150,7 @@ void init(void) {
     };
 }
 
-void frame(void) {
+static void frame(void) {
     state.rx += 1.0f; state.ry += 2.0f;
     const vs_params_t vs_params = { .mvp = compute_mvp(state.rx, state.ry, wgpu_width(), wgpu_height()) };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = wgpu_swapchain() });
@@ -162,7 +162,7 @@ void frame(void) {
     sg_commit();
 }
 
-void shutdown(void) {
+static void shutdown(void) {
     sg_shutdown();
 }
 

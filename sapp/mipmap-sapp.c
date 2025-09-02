@@ -43,7 +43,7 @@ static const uint32_t mip_colors[9] = {
     0xFFA000FF,     // purple
 };
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
@@ -143,7 +143,7 @@ void init(void) {
     });
 }
 
-void frame(void) {
+static void frame(void) {
     const mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), sapp_widthf()/sapp_heightf(), 0.01f, 10.0f);
     const mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 3.5f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     const mat44_t view_proj = vm_mul(view, proj);
@@ -172,7 +172,7 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }

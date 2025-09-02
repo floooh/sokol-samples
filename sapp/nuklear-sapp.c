@@ -29,7 +29,7 @@
 
 static int draw_demo_ui(struct nk_context* ctx);
 
-void init(void) {
+static void init(void) {
     // setup sokol-gfx and sokol-nuklear
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -46,7 +46,7 @@ void init(void) {
     });
 }
 
-void frame(void) {
+static void frame(void) {
     struct nk_context *ctx = snk_new_frame();
 
     // see big function at end of file
@@ -67,13 +67,13 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     snk_shutdown();
     sg_shutdown();
 }
 
-void input(const sapp_event* event) {
+static void input(const sapp_event* event) {
     if (!__dbgui_event_with_retval(event)) {
         snk_handle_event(event);
     }

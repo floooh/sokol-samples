@@ -20,7 +20,7 @@ typedef struct {
 } state_t;
 static state_t state;
 
-void init(void) {
+static void init(void) {
     // setup sokol-gfx, sokol-time and sokol-imgui
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
@@ -45,7 +45,7 @@ void init(void) {
     };
 }
 
-void frame(void) {
+static void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
     simgui_new_frame(&(simgui_frame_desc_t){
@@ -86,12 +86,12 @@ void frame(void) {
     sg_commit();
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     simgui_shutdown();
     sg_shutdown();
 }
 
-void input(const sapp_event* event) {
+static void input(const sapp_event* event) {
     simgui_handle_event(event);
 }
 

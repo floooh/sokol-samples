@@ -24,7 +24,7 @@ static struct {
     bg_fs_params_t bg_fs_params;
 } state;
 
-void init(void) {
+static void init(void) {
     sg_setup(&(sg_desc){
         .pipeline_pool_size = NUM_BLEND_OPS * NUM_BLEND_OPS + 16,
         .environment = sglue_environment(),
@@ -114,7 +114,7 @@ void init(void) {
     }
 }
 
-void frame(void) {
+static void frame(void) {
     // view-projection matrix
     mat44_t proj = mat44_perspective_fov_rh(vm_radians(90.0f), sapp_widthf()/sapp_heightf(), 0.01f, 100.0f);
     mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 7.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
@@ -154,7 +154,7 @@ void frame(void) {
     state.bg_fs_params.tick += 1.0f * t;
 }
 
-void cleanup(void) {
+static void cleanup(void) {
     __dbgui_shutdown();
     sg_shutdown();
 }
