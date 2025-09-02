@@ -1,0 +1,13 @@
+---
+options:
+    src_dir: texview
+    ios:
+        dst_dir: $TARGET_NAME.app
+    macos:
+        dst_dir: $TARGET_NAME.app/Contents/Resources
+files:
+    - kodim05.basis
+    - kodim07.basis
+    - kodim17.basis
+    - kodim20.basis
+    - kodim23.basis
