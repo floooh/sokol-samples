@@ -37,10 +37,7 @@ void init(void) {
     auto& io = ImGui::GetIO();
     ImFontConfig fontCfg;
     fontCfg.FontDataOwnedByAtlas = false;
-    fontCfg.OversampleH = 2;
-    fontCfg.OversampleV = 2;
-    fontCfg.RasterizerMultiply = 1.5f;
-    io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 16.0f, &fontCfg);
+    io.Fonts->AddFontFromMemoryTTF(dump_font, sizeof(dump_font), 18.0f, &fontCfg);
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
