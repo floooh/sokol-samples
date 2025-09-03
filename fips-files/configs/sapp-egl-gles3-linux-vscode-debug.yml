@@ -9,8 +9,8 @@ vscode_exclude_from_workspace:
     - sokol-tools-bin
     - fips-utils
     - fips-libmodplug
-    - fips-imgui
-    - fips-cimgui
+    - fips-ozz-animation
+    - dcimgui
 defines:
     USE_SOKOL_APP: ON
     SOKOL_USE_EGL_GLES3: ON
