@@ -164,10 +164,12 @@ static void request_device(wgpu_state_t* state) {
 void wgpu_platform_start(wgpu_state_t* state) {
     assert(state->instance == 0);
 
+    WGPUInstanceFeatureName inst_features[1] = {
+        WGPUInstanceFeatureName_TimedWaitAny,
+    };
     WGPUInstanceDescriptor inst_desc = {
-        .capabilities = {
-            .timedWaitAnyEnable = true,
-        }
+        .requiredFeatureCount = 1,
+        .requiredFeatures = inst_features,
     };
     state->instance = wgpuCreateInstance(&inst_desc);
     assert(state->instance);
