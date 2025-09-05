@@ -129,7 +129,7 @@ static void request_adapter(wgpu_state_t* state) {
     });
     WGPUFutureWaitInfo future_info = { .future = future };
     WGPUWaitStatus res = wgpuInstanceWaitAny(state->instance, 1, &future_info, UINT64_MAX);
-    assert(res == WGPUWaitStatus_Success);
+    assert(res == WGPUWaitStatus_Success); (void)res;
 }
 
 static void request_device(wgpu_state_t* state) {
@@ -157,7 +157,7 @@ static void request_device(wgpu_state_t* state) {
         });
     WGPUFutureWaitInfo future_info = { .future = future };
     WGPUWaitStatus res = wgpuInstanceWaitAny(state->instance, 1, &future_info, UINT64_MAX);
-    assert(res == WGPUWaitStatus_Success);
+    assert(res == WGPUWaitStatus_Success); (void)res;
     assert(state->device);
 }
 
