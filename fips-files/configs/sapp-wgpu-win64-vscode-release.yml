@@ -1,0 +1,17 @@
+---
+platform: win64
+generator: Visual Studio 17
+generator-platform: x64
+build_tool: vscode
+build_type: Release
+vscode_exclude_from_workspace:
+    - fips-glfw
+    - fips-dawn
+    - sokol-tools-bin
+    - fips-utils
+    - fips-libmodplug
+    - fips-ozz-animation
+    - dcimgui
+defines:
+    USE_SOKOL_APP: ON
+    SOKOL_USE_WGPU_DAWN: ON
