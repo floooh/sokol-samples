@@ -90,6 +90,7 @@ void wgpu_swapchain_discard(wgpu_state_t* state);
 void wgpu_swapchain_resized(wgpu_state_t* state);
 WGPUTextureView wgpu_swapchain_next(wgpu_state_t* state);
 void wgpu_platform_start(wgpu_state_t* state);
+WGPUTextureFormat wgpu_pick_render_format(size_t count, const WGPUTextureFormat* formats);
 
 #ifdef __cplusplus
 } /* extern "C" */

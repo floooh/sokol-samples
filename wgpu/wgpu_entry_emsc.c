@@ -173,7 +173,7 @@ static void request_device_cb(WGPURequestDeviceStatus status, WGPUDevice device,
     }
     WGPUSurfaceCapabilities surf_caps = {0};
     wgpuSurfaceGetCapabilities(state->surface, state->adapter, &surf_caps);
-    state->render_format = surf_caps.formats[0];
+    state->render_format = wgpu_pick_render_format(surf_caps.format_count, surf_caps.formats);
     wgpu_swapchain_init(state);
     state->desc.init_cb();
     wgpuDevicePopErrorScope(state->device, (WGPUPopErrorScopeCallbackInfo){

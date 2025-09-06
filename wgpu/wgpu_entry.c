@@ -126,3 +126,16 @@ sg_swapchain wgpu_swapchain(void) {
         }
     };
 }
+
+WGPUTextureFormat wgpu_pick_render_format(size_t count, const WGPUTextureFormat* formats) {
+    assert((count > 0) && formats);
+    for (size_t i = 0; i < count; i++) {
+        WGPUTextureFormat fmt = formats[i];
+        if (fmt == WGPUTextureFormat_RGBA8Unorm) {
+            return fmt;
+        } else if (fmt == WGPUTextureFormat_BGRA8Unorm) {
+            return fmt;
+        }
+    }
+    return formats[0];
+}

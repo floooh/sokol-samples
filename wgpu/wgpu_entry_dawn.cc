@@ -194,7 +194,7 @@ void wgpu_platform_start(wgpu_state_t* state) {
     assert(state->surface);
     WGPUSurfaceCapabilities surf_caps;
     wgpuSurfaceGetCapabilities(state->surface, state->adapter, &surf_caps);
-    state->render_format = surf_caps.formats[0];
+    state->render_format = wgpu_pick_render_format(surf_caps.formatCount, surf_caps.formats);
 
     wgpu_swapchain_init(state);
     state->desc.init_cb();
