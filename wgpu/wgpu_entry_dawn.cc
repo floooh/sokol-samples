@@ -218,4 +218,5 @@ void wgpu_platform_start(wgpu_state_t* state) {
     wgpu_swapchain_discard(state);
     wgpuDeviceRelease(state->device);
     wgpuAdapterRelease(state->adapter);
+    wgpuInstanceRelease(state->instance);
 }
