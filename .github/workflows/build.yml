@@ -108,10 +108,6 @@ jobs:
           run:  python3 fips build sapp-wgpu-wasm-ninja-debug
         - name: sapp-wgpu-wasm-ninja-release
           run:  python3 fips build sapp-wgpu-wasm-ninja-release
-        - name: wgpu-wasm-ninja-debug
-          run:  python3 fips build wgpu-wasm-ninja-debug
-        - name: wgpu-wasm-ninja-release
-          run:  python3 fips build wgpu-wasm-ninja-release
     android:
         runs-on: ubuntu-latest
         steps:
