@@ -127,6 +127,34 @@ Note the following caveats:
   native HTML5 sample section
 - for iOS, set the developer team id, as described above in the iOS section
 
+### Building with WebGPU backend on native desktop platforms
+
+On Windows, macOS and Linux you can also build the samples for the
+`SOKOL_WGPU` backend by linking against Google's Dawn (other WebGPU
+implementations might work but are not tested so far).
+
+First fetch and build Dawn into a DLL (this can take anywhere between
+10 minutes and an hour depending on your setup):
+
+```bash
+> ./fips dawn install
+```
+
+...then select one of the following build configs:
+
+```
+> ./fips set config sapp-wgpu-linux-ninja-release
+> ./fips set config sapp-wgpu-osx-ninja-release
+> ./fips set config sapp-wgpu-win64-vstudio-release
+```
+
+...and build and run the samples:
+
+```bash
+> ./fips build
+> ./fips run clear-sapp-ui
+```
+
 ### Building the platform-specific samples
 
 There are two types of samples, platform-specific samples in the
@@ -207,21 +235,6 @@ Another known issue: The arraytex-metal sample currently has a weird rendering a
 > ./fips list targets
 ...
 > ./fips run triangle-emsc
-...
-```
-
-### To build for WebGPU+WASM on Emscripten:
-
-```
-> cd ~/scratch/sokol-samples
-> ./fips setup emscripten
-[...this will take a while]
-> ./fips set config wgpu-wasm-ninja-release
-> ./fips build
-...
-> ./fips list targets
-...
-> ./fips run triangle-wgpu
 ...
 ```
 
