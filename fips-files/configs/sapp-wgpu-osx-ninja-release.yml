@@ -1,9 +1,8 @@
 ---
 platform: osx
-generator: Xcode
-build_tool: xcodebuild
+generator: Ninja
+build_tool: ninja
 build_type: Release
 defines:
+    USE_SOKOL_APP: ON
     SOKOL_USE_WGPU_DAWN: ON
-
-

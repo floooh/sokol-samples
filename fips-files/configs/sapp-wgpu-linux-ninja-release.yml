@@ -1,7 +1,8 @@
 ---
-platform: osx
+platform: linux 
 generator: Ninja
-build_tool: vscode
+build_tool: ninja
 build_type: Release
 defines:
+    USE_SOKOL_APP: ON
     SOKOL_USE_WGPU_DAWN: ON
