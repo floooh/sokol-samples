@@ -96,7 +96,7 @@ int main() {
         .width = 4,
         .height = 4,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0] = SG_RANGE(pixels)
+        .data.mip_levels[0] = SG_RANGE(pixels)
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
 

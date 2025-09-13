@@ -188,7 +188,7 @@ int main() {
 
         // update the dynamic image
         sg_update_image(img, &(sg_image_data){
-            .subimage[0] = {
+            .mip_levels[0] = {
                 .ptr=pixels,
                 .size=sizeof(pixels)
             }

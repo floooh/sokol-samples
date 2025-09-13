@@ -121,7 +121,7 @@ int main() {
             .width = font_width,
             .height = font_height,
             .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .data.subimage[0][0] = {
+            .data.mip_levels[0] = {
                 .ptr = font_pixels,
                 .size = size_t(font_width * font_height * 4)
             }

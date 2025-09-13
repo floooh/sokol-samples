@@ -269,7 +269,7 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(state.pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(state.pixels) });
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

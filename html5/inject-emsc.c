@@ -234,7 +234,7 @@ static EM_BOOL draw(double time, void* userdata) {
         }
     }
     state.counter++;
-    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
 
     // ...and draw
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });
