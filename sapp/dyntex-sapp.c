@@ -155,7 +155,7 @@ static void frame(void) {
 
     // update the texture
     sg_update_image(state.img, &(sg_image_data){
-        .subimage[0][0] = SG_RANGE(state.pixels)
+        .subimage[0] = SG_RANGE(state.pixels)
     });
 
     // render the frame

@@ -88,7 +88,7 @@ static void init(void) {
 static void frame(void) {
     if (!state.immutable) {
         update_pixels(sapp_frame_count());
-        sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = pixels_as_range() });
+        sg_update_image(state.img, &(sg_image_data){ .subimage[0] = pixels_as_range() });
     }
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
@@ -164,7 +164,7 @@ static void recreate_image(void) {
         .num_slices = DEPTH,
         .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.subimage[0][0] = state.immutable ? pixels_as_range() : (sg_range){0},
+        .data.subimage[0] = state.immutable ? pixels_as_range() : (sg_range){0},
         .label = "image",
     });
     sg_init_view(state.texview, &(sg_view_desc){
