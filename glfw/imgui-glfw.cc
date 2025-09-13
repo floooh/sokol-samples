@@ -100,7 +100,7 @@ int main() {
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.data.subimage[0][0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
+    img_desc.data.subimage[0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
     sg_image img = sg_make_image(&img_desc);
 
     sg_view_desc view_desc = { };
