@@ -104,7 +104,7 @@ static void init(void) {
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = 4,
         .height = 4,
-        .data.subimage[0] = SG_RANGE(pixels),
+        .data.mip_levels[0] = SG_RANGE(pixels),
         .label = "texcube-image",
     });
     state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
