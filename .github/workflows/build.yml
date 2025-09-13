@@ -27,18 +27,22 @@ jobs:
         runs-on: macos-latest
         steps:
         - uses: actions/checkout@main
-        - name: osx-make-debug
-          run:  python3 fips build osx-make-debug
-        - name: osx-make-release
-          run:  python3 fips build osx-make-release
-        - name: metal-osx-make-debug
-          run:  python3 fips build metal-osx-make-debug
-        - name: metal-osx-make-release
-          run:  python3 fips build metal-osx-make-release
-        - name: sapp-metal-osx-make-debug
-          run:  python3 fips build sapp-metal-osx-make-debug
-        - name: sapp-metal-osx-make-release
-          run:  python3 fips build sapp-metal-osx-make-release
+        - name: osx-ninja-debug
+          run:  python3 fips build osx-ninja-debug
+        - name: osx-ninja-release
+          run:  python3 fips build osx-ninja-release
+        - name: metal-osx-ninja-debug
+          run:  python3 fips build metal-osx-ninja-debug
+        - name: metal-osx-ninja-release
+          run:  python3 fips build metal-osx-ninja-release
+        - name: sapp-osx-ninja-debug
+          run:  python3 fips build sapp-osx-ninja-debug
+        - name: sapp-osx-ninja-release
+          run:  python3 fips build sapp-osx-ninja-release
+        - name: sapp-metal-osx-ninja-debug
+          run:  python3 fips build sapp-metal-osx-ninja-debug
+        - name: sapp-metal-osx-ninja-release
+          run:  python3 fips build sapp-metal-osx-ninja-release
     ios:
         runs-on: macos-latest
         steps:
