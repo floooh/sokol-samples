@@ -29,6 +29,7 @@ static struct {
 } state;
 
 // room for loading all cubemap faces in parallel
+#define NUM_FACES (6)
 #define FACE_WIDTH (2048)
 #define FACE_HEIGHT (2048)
 #define FACE_NUM_BYTES (FACE_WIDTH * FACE_HEIGHT * 4)
@@ -37,7 +38,7 @@ static void fetch_cb(const sfetch_response_t*);
 
 static sg_range cubeface_range(int face_index) {
     assert(state.pixels.ptr);
-    assert((face_index >= 0) && (face_index < SG_CUBEFACE_NUM));
+    assert((face_index >= 0) && (face_index < NUM_FACES));
     size_t offset = (size_t)(face_index * FACE_NUM_BYTES);
     assert((offset + FACE_NUM_BYTES) <= state.pixels.size);
     return (sg_range){
@@ -63,7 +64,7 @@ static void init(void) {
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 6,
         .num_channels = 1,
-        .num_lanes = SG_CUBEFACE_NUM,
+        .num_lanes = NUM_FACES,
         .logger.func = slog_func,
     });
 
@@ -77,7 +78,7 @@ static void init(void) {
     });
 
     // allocate memory for pixel data (both as io buffer for JPEG data, and for the decoded pixel data)
-    state.pixels.size = SG_CUBEFACE_NUM * FACE_NUM_BYTES;
+    state.pixels.size = NUM_FACES * FACE_NUM_BYTES;
     state.pixels.ptr = malloc(state.pixels.size);
     assert(state.pixels.ptr);
 
@@ -163,12 +164,12 @@ static void init(void) {
 
     // load 6 cubemap face image files (note: filenames are in same order as SG_CUBEFACE_*)
     char path_buf[1024];
-    const char* filenames[SG_CUBEFACE_NUM] = {
+    const char* filenames[NUM_FACES] = {
         "nb2_posx.jpg", "nb2_negx.jpg",
         "nb2_posy.jpg", "nb2_negy.jpg",
         "nb2_posz.jpg", "nb2_negz.jpg"
     };
-    for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
+    for (int i = 0; i < NUM_FACES; i++) {
         sfetch_send(&(sfetch_request_t){
             .path = fileutil_get_path(filenames[i], path_buf, sizeof(path_buf)),
             .callback = fetch_cb,
@@ -194,21 +195,14 @@ static void fetch_cb(const sfetch_response_t* response) {
             memcpy((void*)response->buffer.ptr, decoded_pixels, FACE_NUM_BYTES);
             stbi_image_free(decoded_pixels);
             // all 6 faces loaded?
-            if (++state.load_count == SG_CUBEFACE_NUM) {
+            if (++state.load_count == NUM_FACES) {
                 // create a cubemap image
                 sg_image img = sg_make_image(&(sg_image_desc){
                     .type = SG_IMAGETYPE_CUBE,
                     .width = width,
                     .height = height,
                     .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .data.subimage = {
-                        [SG_CUBEFACE_POS_X][0] = cubeface_range(SG_CUBEFACE_POS_X),
-                        [SG_CUBEFACE_NEG_X][0] = cubeface_range(SG_CUBEFACE_NEG_X),
-                        [SG_CUBEFACE_POS_Y][0] = cubeface_range(SG_CUBEFACE_POS_Y),
-                        [SG_CUBEFACE_NEG_Y][0] = cubeface_range(SG_CUBEFACE_NEG_Y),
-                        [SG_CUBEFACE_POS_Z][0] = cubeface_range(SG_CUBEFACE_POS_Z),
-                        [SG_CUBEFACE_NEG_Z][0] = cubeface_range(SG_CUBEFACE_NEG_Z),
-                    },
+                    .data.subimage[0] = state.pixels,
                     .label = "cubemap-image",
                 });
                 free((void*)state.pixels.ptr); state.pixels.ptr = 0;
