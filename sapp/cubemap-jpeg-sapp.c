@@ -202,7 +202,7 @@ static void fetch_cb(const sfetch_response_t* response) {
                     .width = width,
                     .height = height,
                     .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .data.subimage[0] = state.pixels,
+                    .data.mip_levels[0] = state.pixels,
                     .label = "cubemap-image",
                 });
                 free((void*)state.pixels.ptr); state.pixels.ptr = 0;

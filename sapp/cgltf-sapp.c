@@ -296,7 +296,7 @@ static void init(void) {
                 .width = 8,
                 .height = 8,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .data.subimage[0] = SG_RANGE(pixels),
+                .data.mip_levels[0] = SG_RANGE(pixels),
             }),
         },
     });
@@ -309,7 +309,7 @@ static void init(void) {
                 .width = 8,
                 .height = 8,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .data.subimage[0] = SG_RANGE(pixels),
+                .data.mip_levels[0] = SG_RANGE(pixels),
             }),
         },
     });
@@ -322,7 +322,7 @@ static void init(void) {
                 .width = 8,
                 .height = 8,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .data.subimage[0] = SG_RANGE(pixels),
+                .data.mip_levels[0] = SG_RANGE(pixels),
             }),
         },
     });
