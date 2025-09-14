@@ -59,7 +59,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .height = 16,
             .num_slices = 3,
             .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .data.subimage[0][0] = SG_RANGE(pixels)
+            .data.mip_levels[0] = SG_RANGE(pixels)
         }),
     });
 

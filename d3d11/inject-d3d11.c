@@ -296,7 +296,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+        sg_update_image(img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
 
         // draw frame
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
