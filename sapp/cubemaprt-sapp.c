@@ -17,6 +17,7 @@
 #define OFFSCREEN_SAMPLE_COUNT (1)
 #define DISPLAY_SAMPLE_COUNT (4)
 #define NUM_SHAPES (32)
+#define NUM_FACES (6)
 
 /* state struct for the little cubes rotating around the big cube */
 typedef struct {
@@ -46,7 +47,7 @@ typedef struct {
     sg_image cubemap;
     sg_view cubemap_texview;
     sg_sampler smp;
-    sg_view offscreen_color_views[SG_CUBEFACE_NUM];
+    sg_view offscreen_color_views[NUM_FACES];
     sg_view offscreen_depth_view;
     sg_pass_action offscreen_pass_action;
     sg_pass_action display_pass_action;
@@ -107,7 +108,7 @@ static void init(void) {
     });
 
     // create 6 pass objects, one for each cubemap face
-    for (int i = 0; i < SG_CUBEFACE_NUM; i++) {
+    for (int i = 0; i < NUM_FACES; i++) {
         char label[32];
         snprintf(label, sizeof(label), "cubemap-texview-%d", i);
         app.offscreen_color_views[i] = sg_make_view(&(sg_view_desc){
@@ -216,7 +217,7 @@ static void frame(void) {
     //
     // FIXME: is this actually correct???
     #if defined(SOKOL_METAL) || defined(SOKOL_D3D11) || defined(SOKOL_WGPU)
-    vec3_t center_and_up[SG_CUBEFACE_NUM][2] = {
+    vec3_t center_and_up[NUM_FACES][2] = {
         { { .x=+1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
         { { .x=-1.0f, .y= 0.0f, .z= 0.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } },
         { { .x= 0.0f, .y=-1.0f, .z= 0.0f }, { .x=0.0f, .y= 0.0f, .z=-1.0f } },
@@ -234,7 +235,7 @@ static void frame(void) {
         { { .x= 0.0f, .y= 0.0f, .z=-1.0f }, { .x=0.0f, .y=-1.0f, .z= 0.0f } }
     };
     #endif
-    for (int face = 0; face < SG_CUBEFACE_NUM; face++) {
+    for (int face = 0; face < NUM_FACES; face++) {
         sg_begin_pass(&(sg_pass){
             .action = app.offscreen_pass_action,
             .attachments = {

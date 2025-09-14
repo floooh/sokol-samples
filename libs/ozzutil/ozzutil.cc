@@ -317,8 +317,8 @@ void ozz_update_joint_texture(void) {
 
     // FIXME: upload partial texture? (needs sokol-gfx fixes)
     sg_image_data img_data = { };
-    img_data.subimage[0][0].ptr = state.joint_upload_buffer;
-    img_data.subimage[0][0].size = (size_t) (state.joint_texture_pitch * state.joint_texture_height * sizeof(float));
+    img_data.mip_levels[0].ptr = state.joint_upload_buffer;
+    img_data.mip_levels[0].size = (size_t) (state.joint_texture_pitch * state.joint_texture_height * sizeof(float));
     sg_update_image(state.joint_texture, img_data);
 }
 

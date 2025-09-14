@@ -351,7 +351,7 @@ static void update_joint_texture(void) {
     state.time.anim_eval_time = stm_since(start_time);
 
     sg_image_data img_data = { };
-    img_data.subimage[0][0] = SG_RANGE(joint_upload_buffer);
+    img_data.mip_levels[0] = SG_RANGE(joint_upload_buffer);
     sg_update_image(state.joint_texture, img_data);
 }
 

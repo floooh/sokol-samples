@@ -305,7 +305,7 @@ static void validate_texture(int slot, plm_plane_t* plane, const char* img_label
     if (state.images[slot].last_upd_frame != state.cur_frame) {
         state.images[slot].last_upd_frame = state.cur_frame;
         sg_update_image(state.images[slot].img, &(sg_image_data){
-            .subimage[0][0] = {
+            .mip_levels[0] = {
                 .ptr = plane->data,
                 .size = plane->width * plane->height * sizeof(uint8_t)
             }

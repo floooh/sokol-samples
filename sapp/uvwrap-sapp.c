@@ -54,7 +54,7 @@ static void init(void) {
     sg_image img = sg_make_image(&(sg_image_desc){
         .width = 8,
         .height = 8,
-        .data.subimage[0][0] = SG_RANGE(test_pixels)
+        .data.mip_levels[0] = SG_RANGE(test_pixels)
     });
     state.tex_view = sg_make_view(&(sg_view_desc){
         .texture = { .image = img },
