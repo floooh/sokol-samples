@@ -111,7 +111,7 @@ static void init(void) {
     const image_and_views_t invalid_img = make_image_and_views(&(sg_image_desc){
         .width = 8,
         .height = 8,
-        .data.subimage[0][0] = SG_RANGE(disabled_texture_pixels)
+        .data.mip_levels[0] = SG_RANGE(disabled_texture_pixels)
     }, true, SG_VIEWTYPE_INVALID);
     for (int i = 0; i < _SG_PIXELFORMAT_NUM; i++) {
         state.fmt[i].unfiltered = invalid_img;
@@ -173,7 +173,7 @@ static void init(void) {
                     .width = 8,
                     .height = 8,
                     .pixel_format = fmt,
-                    .data.subimage[0][0] = img_data,
+                    .data.mip_levels[0] = img_data,
                 }, true, SG_VIEWTYPE_INVALID);
                 state.fmt[i].unfiltered = img;
                 if (fmt_info.filter) {

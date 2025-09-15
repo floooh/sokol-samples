@@ -202,7 +202,7 @@ static EM_BOOL draw(double time, void* userdata) {
     game_of_life_update();
 
     // update the dynamic image
-    sg_update_image(state.img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
 
     // draw pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });

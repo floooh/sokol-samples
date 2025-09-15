@@ -90,8 +90,8 @@ sg_image_desc sbasisu_transcode(sg_range basisu_data) {
         transcoder.get_image_level_desc(basisu_data.ptr, (uint32_t)basisu_data.size, 0, i, orig_width, orig_height, total_blocks);
         uint32_t required_size = total_blocks * bytes_per_block;
         void* ptr = malloc(required_size);
-        desc.data.subimage[0][i].ptr = ptr;
-        desc.data.subimage[0][i].size = required_size;
+        desc.data.mip_levels[i].ptr = ptr;
+        desc.data.mip_levels[i].size = required_size;
         bool res = transcoder.transcode_image_level(
             basisu_data.ptr,
             (uint32_t)basisu_data.size,
@@ -109,8 +109,8 @@ sg_image_desc sbasisu_transcode(sg_range basisu_data) {
 void sbasisu_free(const sg_image_desc* desc) {
     assert(desc);
     for (int i = 0; i < desc->num_mipmaps; i++) {
-        if (desc->data.subimage[0][i].ptr) {
-            free((void*)desc->data.subimage[0][i].ptr);
+        if (desc->data.mip_levels[i].ptr) {
+            free((void*)desc->data.mip_levels[i].ptr);
         }
     }
 }

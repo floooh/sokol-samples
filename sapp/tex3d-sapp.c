@@ -103,7 +103,7 @@ static void init(void) {
                 .num_mipmaps = 1,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .label = "3d-texture",
-                .data.subimage[0][0] = SG_RANGE(pixels)
+                .data.mip_levels[0] = SG_RANGE(pixels)
             }),
         },
         .label = "3d-texture-view",

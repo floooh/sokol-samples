@@ -41,7 +41,7 @@ static void init(void) {
             .image = sg_make_image(&(sg_image_desc){
                 .width = 8,
                 .height = 8,
-                .data.subimage[0][0] = SG_RANGE(pixels)
+                .data.mip_levels[0] = SG_RANGE(pixels)
             }),
         },
     });

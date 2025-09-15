@@ -80,8 +80,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     img_desc.width = font_width;
     img_desc.height = font_height;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.data.subimage[0][0].ptr = font_pixels;
-    img_desc.data.subimage[0][0].size = font_width * font_height * 4;
+    img_desc.data.mip_levels[0].ptr = font_pixels;
+    img_desc.data.mip_levels[0].size = font_width * font_height * 4;
     sg_image img = sg_make_image(&img_desc);
     sg_view_desc view_desc = { };
     view_desc.texture.image = img;

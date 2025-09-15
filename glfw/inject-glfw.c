@@ -240,7 +240,7 @@ int main() {
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_data){ .subimage[0][0] = SG_RANGE(pixels) });
+        sg_update_image(img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
 
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);

@@ -101,7 +101,7 @@ static void init(void) {
         .texture.image = sg_make_image(&(sg_image_desc){
             .width = 4,
             .height = 4,
-            .data.subimage[0][0] = SG_RANGE(pixels)
+            .data.mip_levels[0] = SG_RANGE(pixels)
         }),
     });
 
