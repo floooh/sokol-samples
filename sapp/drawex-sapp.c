@@ -11,15 +11,21 @@
 #include "sokol_debugtext.h"
 #include "sokol_color.h"
 #include "dbgui/dbgui.h"
+#include "drawex-sapp.glsl.h"
 
 typedef enum {
-    BASE_VERTEX = (1<<0),
+    INVALID = 0,
+    BASE_VERTEX = (1 << 0),
     BASE_INSTANCE = (1 << 1),
     BASE_VERTEX_INSTANCE = (1 << 2),
 } draw_mode_t;
 
 static struct {
     sg_pass_action pass_action;
+    sg_buffer vtx_buf;
+    sg_buffer idx_buf;
+    sg_buffer inst_buf;
+    sg_pipeline pip;
     uint8_t supported_modes; // bitmask of draw_mode_t
     draw_mode_t current_mode;
 } state = {
@@ -30,6 +36,9 @@ static struct {
         }
     }
 };
+
+typedef struct { float x, y, r, g, b; } vertex_t;
+typedef struct { float x, y, scale; } instance_t;
 
 static void draw_panel(void);
 
@@ -56,12 +65,115 @@ static void init(void) {
         state.supported_modes |= BASE_VERTEX_INSTANCE;
     }
     state.current_mode = BASE_VERTEX;
+
+    // vertex and index buffers with 2 separate sections (a triangle and a quad)
+    const vertex_t vertices[7] = {
+        // triangle
+        { .x=0.0f,   .y=0.55f, .r=1.0f, .g=1.0f, .b=0.0f },
+        { .x=0.25f,  .y=0.05f, .r=0.0f, .g=1.0f, .b=1.0f },
+        { .x=-0.25f, .y=0.05f, .r=1.0f, .g=0.0f, .b=1.0f },
+
+        // quad
+        { .x=-0.25f, .y=-0.05f, .r=0.5f, .g=0.0f, .b=1.0f },
+        { .x=0.25f,  .y=-0.05f, .r=0.5f, .g=1.0f, .b=0.0f },
+        { .x=0.25f,  .y=-0.55f, .r=1.0f, .g=0.0f, .b=0.5f },
+        { .x=-0.25f, .y=-0.55f, .r=0.0f, .g=1.0f, .b=0.5f },
+    };
+    uint16_t indices[9] = {
+        // triangle
+        0, 1, 2,
+        // quad
+        0, 1, 2, 0, 2, 3,
+    };
+    state.vtx_buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.vertex_buffer = true,
+        .data = SG_RANGE(vertices),
+        .label = "vertex-buffer",
+    });
+    state.idx_buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.index_buffer = true,
+        .data = SG_RANGE(indices),
+        .label = "index-buffer",
+    });
+
+    // a buffer with two sections of instance positions
+    const instance_t instances[6] = {
+        // first section
+        { .x = -0.5f, .y = -0.5f, .scale = 0.25f },
+        { .x = -0.5f, .y =  0.0f, .scale = 0.25f },
+        { .x = -0.5f, .y =  0.5f, .scale = 0.25f },
+        // second section
+        { .x =  0.5f, .y = -0.5f, .scale = 0.25f },
+        { .x =  0.5f, .y =  0.0f, .scale = 0.25f },
+        { .x =  0.5f, .y =  0.5f, .scale = 0.25f },
+    };
+    state.inst_buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.vertex_buffer = true,
+        .data = SG_RANGE(instances),
+        .label = "instance-buffer",
+    });
+
+    // a shader and pipeline to render instanced 2D shapes
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(drawex_shader_desc(sg_query_backend())),
+        .index_type = SG_INDEXTYPE_UINT16,
+        .layout = {
+            .buffers[1].step_func = SG_VERTEXSTEP_PER_INSTANCE,
+            .attrs = {
+                [ATTR_drawex_pos] = { .format = SG_VERTEXFORMAT_FLOAT2, .buffer_index = 0 },
+                [ATTR_drawex_color0] = { .format = SG_VERTEXFORMAT_FLOAT3, .buffer_index = 0 },
+                [ATTR_drawex_inst_data] = { .format = SG_VERTEXFORMAT_FLOAT3, .buffer_index = 1 },
+            },
+        },
+        .label = "render-pipeline",
+    });
 }
 
 static void frame(void) {
+    // draw the text panel via sokol-debugtext
     draw_panel();
 
+    // actual render pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers = {
+            [0] = state.vtx_buf,
+            [1] = state.inst_buf,
+        },
+        .index_buffer = state.idx_buf,
+    });
+
+    const int tri_base_index = 0;
+    const int tri_num_indices = 3;
+    const int quad_base_index = 3;
+    const int quad_num_indices = 6;
+    const int num_instances = 3;
+    const int tri_base_vertex = 0;
+    const int quad_base_vertex = 3;
+    const int left_inst_base = 0;
+    const int right_inst_base = 3;
+
+    switch (state.current_mode) {
+        case BASE_VERTEX:
+            // draw with base_instance = 0
+            sg_draw_ex(tri_base_index, tri_num_indices, num_instances, tri_base_vertex, left_inst_base);
+            sg_draw_ex(quad_base_index, quad_num_indices, num_instances, quad_base_vertex, left_inst_base);
+            break;
+        case BASE_INSTANCE:
+            // draw with base_vertex = 0
+            sg_draw_ex(tri_base_index, tri_num_indices, num_instances, tri_base_vertex, left_inst_base);
+            sg_draw_ex(tri_base_index, tri_num_indices, num_instances, tri_base_vertex, right_inst_base);
+            break;
+        case BASE_VERTEX_INSTANCE:
+            sg_draw_ex(tri_base_index, tri_num_indices, num_instances, tri_base_vertex, left_inst_base);
+            sg_draw_ex(quad_base_index, quad_num_indices, num_instances, quad_base_vertex, left_inst_base);
+            sg_draw_ex(tri_base_index, tri_num_indices, num_instances, tri_base_vertex, right_inst_base);
+            sg_draw_ex(quad_base_index, quad_num_indices, num_instances, quad_base_vertex, right_inst_base);
+            break;
+        default:
+            break;
+    }
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();
@@ -77,6 +189,7 @@ static void input(const sapp_event* ev) {
             default: break;
         }
     }
+    state.current_mode &= state.supported_modes;
     __dbgui_event(ev);
 }
 

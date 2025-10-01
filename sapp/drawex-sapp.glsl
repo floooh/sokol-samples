@@ -1,12 +1,14 @@
 @vs vs
 in vec2 pos;
 in vec3 color0;
-in vec2 inst_pos;
+in vec3 inst_data;
 
 out vec4 color;
 
 void main() {
-    gl_Position = vec4(pos + inst_pos, 0, 1);
+    vec2 inst_pos = inst_data.xy;
+    float inst_scale = inst_data.z;
+    gl_Position = vec4(pos * inst_scale + inst_pos, 0, 1);
     color = vec4(color0, 1);
 }
 @end
