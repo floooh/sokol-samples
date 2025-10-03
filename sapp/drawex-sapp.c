@@ -15,9 +15,9 @@
 
 typedef enum {
     INVALID = 0,
-    BASE_VERTEX = (1 << 0),
-    BASE_INSTANCE = (1 << 1),
-    BASE_VERTEX_INSTANCE = (1 << 2),
+    BASE_VERTEX_INSTANCE = (1 << 0),
+    BASE_VERTEX = (1 << 1),
+    BASE_INSTANCE = (1 << 2),
 } draw_mode_t;
 
 static struct {
@@ -64,7 +64,7 @@ static void init(void) {
     if (sg_query_features().draw_base_vertex_base_instance) {
         state.supported_modes |= BASE_VERTEX_INSTANCE;
     }
-    state.current_mode = BASE_VERTEX;
+    state.current_mode = BASE_VERTEX_INSTANCE & state.supported_modes;
 
     // vertex and index buffers with 2 separate sections (a triangle and a quad)
     const vertex_t vertices[7] = {
@@ -76,8 +76,8 @@ static void init(void) {
         // quad
         { .x=-0.25f, .y=-0.05f, .r=0.5f, .g=0.0f, .b=1.0f },
         { .x=0.25f,  .y=-0.05f, .r=0.5f, .g=1.0f, .b=0.0f },
-        { .x=0.25f,  .y=-0.55f, .r=1.0f, .g=0.0f, .b=0.5f },
-        { .x=-0.25f, .y=-0.55f, .r=0.0f, .g=1.0f, .b=0.5f },
+        { .x=0.25f,  .y=-0.55f, .r=0.0f, .g=1.0f, .b=0.5f },
+        { .x=-0.25f, .y=-0.55f, .r=1.0f, .g=0.0f, .b=0.5f },
     };
     uint16_t indices[9] = {
         // triangle
@@ -97,15 +97,19 @@ static void init(void) {
     });
 
     // a buffer with two sections of instance positions
+    const float off_y = -0.2f;
+    const float dx = 0.3f;
+    const float dy = 0.4f;
+    const float s = 0.4f;
     const instance_t instances[6] = {
-        // first section
-        { .x = -0.5f, .y = -0.5f, .scale = 0.25f },
-        { .x = -0.5f, .y =  0.0f, .scale = 0.25f },
-        { .x = -0.5f, .y =  0.5f, .scale = 0.25f },
-        // second section
-        { .x =  0.5f, .y = -0.5f, .scale = 0.25f },
-        { .x =  0.5f, .y =  0.0f, .scale = 0.25f },
-        { .x =  0.5f, .y =  0.5f, .scale = 0.25f },
+        // first group
+        { .x = -dx, .y = -dy   + off_y, .scale = s },
+        { .x =  dx, .y =  0.0f + off_y, .scale = s },
+        { .x = -dx, .y =  dy   + off_y, .scale = s },
+        // second group
+        { .x =  dx, .y = -dy   + off_y, .scale = s },
+        { .x = -dx, .y =  0.0f + off_y, .scale = s },
+        { .x =  dx, .y =  dy   + off_y, .scale = s },
     };
     state.inst_buf = sg_make_buffer(&(sg_buffer_desc){
         .usage.vertex_buffer = true,
@@ -233,6 +237,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
+        .sample_count = 4,
         .window_title = "drawex-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
