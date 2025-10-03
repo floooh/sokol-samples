@@ -32,7 +32,7 @@ static struct {
     .pass_action = {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = sg_maroon,
+            .clear_value = SG_MAROON,
         }
     }
 };
