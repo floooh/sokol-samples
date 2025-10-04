@@ -59,10 +59,7 @@ static void init(void) {
         state.supported_modes |= BASE_VERTEX;
     }
     if (sg_query_features().draw_base_instance) {
-        state.supported_modes |= BASE_INSTANCE;
-    }
-    if (sg_query_features().draw_base_vertex_base_instance) {
-        state.supported_modes |= BASE_VERTEX_INSTANCE;
+        state.supported_modes |= (BASE_INSTANCE | BASE_VERTEX_INSTANCE);
     }
     state.current_mode = BASE_VERTEX_INSTANCE & state.supported_modes;
 
