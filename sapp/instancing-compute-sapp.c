@@ -166,7 +166,7 @@ static void frame(void) {
     const vs_params_t vs_params = compute_vsparams(dt);
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
-        .swapchain = sglue_swapchain(),
+        .swapchain = sglue_swapchain_next(),
         .label = "render-pass",
     });
     sg_apply_pipeline(state.display.pip);

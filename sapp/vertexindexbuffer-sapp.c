@@ -142,7 +142,7 @@ static void frame(void) {
 
     // otherwise render regular frame
     const vs_params_t vs_params = compute_vsparams();
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -178,7 +178,7 @@ static void draw_fallback(void) {
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_pos(1, 1);
     sdtx_puts("WebGL2 doesn't support combined vertex/index buffers");
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sdtx_draw();
     sg_end_pass();
     sg_commit();

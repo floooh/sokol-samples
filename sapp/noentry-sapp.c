@@ -162,7 +162,7 @@ void frame(void* user_data) {
             .load_action = SG_LOADACTION_CLEAR,
             .clear_value = { 0.5f, 0.25f, 0.75f, 1.0f },
         },
-        .swapchain = sglue_swapchain()
+        .swapchain = sglue_swapchain_next()
     });
     sg_apply_pipeline(state->pip);
     sg_apply_bindings(&state->bind);

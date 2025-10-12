@@ -59,7 +59,7 @@ static void frame(void) {
                 .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.7f, 1.0f }
             }
         },
-        .swapchain = sglue_swapchain()
+        .swapchain = sglue_swapchain_next()
     });
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();
@@ -91,7 +91,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 1024,
         .height = 768,
         .window_title = "nuklear (sokol-app)",
-        .ios_keyboard_resizes_canvas = true,
+        .ios.keyboard_resizes_canvas = true,
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

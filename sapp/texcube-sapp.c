@@ -151,7 +151,7 @@ static void frame(void) {
     state.rx += 1.0f * t; state.ry += 2.0f * t;
     const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
 
-    sg_begin_pass(&(sg_pass) { .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass) { .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -193,6 +193,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .logger.func = slog_func,
         // NOTE: this is just a test for using the 'set-main-loop' method
         // in the sokol-app Emscripten backend
-        .html5_use_emsc_set_main_loop = true,
+        .html5.use_emsc_set_main_loop = true,
     };
 }

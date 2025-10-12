@@ -26,7 +26,7 @@ static void init(void) {
 static void frame(void) {
     float g = pass_action.colors[0].clear_value.g + 0.01f;
     pass_action.colors[0].clear_value.g = (g > 1.0f) ? 0.0f : g;
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain_next() });
     __dbgui_draw();
     sg_end_pass();
     sg_commit();

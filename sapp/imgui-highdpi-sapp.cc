@@ -110,7 +110,7 @@ void frame(void) {
     // the sokol_gfx draw pass
     sg_pass pass = {};
     pass.action = pass_action;
-    pass.swapchain = sglue_swapchain();
+    pass.swapchain = sglue_swapchain_next();
     sg_begin_pass(&pass);
     simgui_render();
     sg_end_pass();
@@ -144,8 +144,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.height = 768;
     desc.fullscreen = true;
     desc.high_dpi = true;
-    desc.html5_ask_leave_site = html5_ask_leave_site;
-    desc.ios_keyboard_resizes_canvas = false;
+    desc.html5.ask_leave_site = html5_ask_leave_site;
+    desc.ios.keyboard_resizes_canvas = false;
     desc.window_title = "Dear ImGui HighDPI (sokol-app)";
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;

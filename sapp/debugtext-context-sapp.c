@@ -244,7 +244,7 @@ static void frame(void) {
     }
 
     // finally render to the default framebuffer
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
 
     // draw the cube as 6 separate draw calls (because each has its own texture)
     sg_apply_pipeline(state.pip);

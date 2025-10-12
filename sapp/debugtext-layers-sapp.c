@@ -88,7 +88,7 @@ static void frame(void) {
     }
 
     // actually render everything in an sokol-gfx render pass
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     for (int i = 0; i < NUM_LAYERS; i++) {
         sgl_draw_layer(i);
         sdtx_draw_layer(i);

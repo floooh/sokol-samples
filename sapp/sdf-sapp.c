@@ -54,7 +54,7 @@ static void frame(void) {
     int h = sapp_height();
     state.vs_params.time += (float)sapp_frame_duration();
     state.vs_params.aspect = (float)w / (float)h;
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(state.vs_params));

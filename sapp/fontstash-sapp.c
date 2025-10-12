@@ -299,7 +299,7 @@ static void frame(void) {
                 .clear_value = { 0.3f, 0.3f, 0.32f, 1.0f }
             }
         },
-        .swapchain = sglue_swapchain()
+        .swapchain = sglue_swapchain_next()
     });
     sgl_draw();
     __dbgui_draw();

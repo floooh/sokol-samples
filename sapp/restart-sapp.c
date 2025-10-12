@@ -393,7 +393,7 @@ static void frame(void) {
     const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
 
     // and finally the actual sokol-gfx render pass
-    sg_begin_pass(&(sg_pass){ .action = state.scene.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.scene.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.scene.pip);
     sg_apply_bindings(&state.scene.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));

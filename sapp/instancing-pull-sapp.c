@@ -138,7 +138,7 @@ static void frame(void) {
     const vs_params_t vs_params = compute_vsparams(frame_time);
 
     // ...and draw
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -164,7 +164,7 @@ static void draw_fallback(void) {
         .action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } },
         },
-        .swapchain = sglue_swapchain()
+        .swapchain = sglue_swapchain_next()
     });
     sdtx_draw();
     sg_end_pass();

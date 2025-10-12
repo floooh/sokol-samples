@@ -74,7 +74,7 @@ static void frame(void) {
     // the sokol_gfx draw pass
     sg_pass pass = {};
     pass.action = pass_action;
-    pass.swapchain = sglue_swapchain();
+    pass.swapchain = sglue_swapchain_next();
     sg_begin_pass(&pass);
     simgui_render();
     sg_end_pass();
@@ -98,7 +98,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.cleanup_cb = cleanup;
     desc.event_cb = input;
     desc.window_title = "Dear ImGui (sokol-app)";
-    desc.ios_keyboard_resizes_canvas = false;
+    desc.ios.keyboard_resizes_canvas = false;
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;
     desc.logger.func = slog_func;

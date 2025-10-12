@@ -136,7 +136,7 @@ static void frame(void) {
     sg_begin_pass(&state.offscreen.pass);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
     sgl_context_draw(SGL_DEFAULT_CONTEXT);
     __dbgui_draw();
     sg_end_pass();

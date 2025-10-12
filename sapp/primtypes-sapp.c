@@ -150,7 +150,7 @@ static void frame(void) {
 
     print_status_text(w, h);
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.prim[state.cur_prim_type].pip);
     sg_apply_bindings(&(sg_bindings){
         .vertex_buffers[0] = state.vbuf,

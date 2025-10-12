@@ -120,7 +120,7 @@ static void frame(void) {
     mat44_t view_proj = vm_mul(view, proj);
 
     // start rendering
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
 
     /* draw a background quad */
     sg_apply_pipeline(state.bg_pip);

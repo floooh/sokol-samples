@@ -77,7 +77,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     // render the triangle (located at start of vertex- and index-buffer)
     sg_apply_bindings(&(sg_bindings){

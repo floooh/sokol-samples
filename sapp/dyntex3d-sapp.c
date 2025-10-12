@@ -90,7 +90,7 @@ static void frame(void) {
         update_pixels(sapp_frame_count());
         sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = pixels_as_range() });
     }
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     for (int slice = 0; slice < 3; slice++) {

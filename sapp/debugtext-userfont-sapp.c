@@ -90,7 +90,7 @@ static void frame(void) {
         sdtx_putc(c);
     }
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();

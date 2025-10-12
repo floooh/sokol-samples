@@ -348,7 +348,7 @@ static void frame(void) {
 
     sg_pass pass = { };
     pass.action = state.pass_action;
-    pass.swapchain = sglue_swapchain();
+    pass.swapchain = sglue_swapchain_next();
     sg_begin_pass(&pass);
     simgui_render();
     sg_end_pass();

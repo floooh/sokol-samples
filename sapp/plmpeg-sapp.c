@@ -252,7 +252,7 @@ static void frame(void) {
     const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
 
     // start rendering, but not before the first video frame has been decoded into textures
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     if (state.bind.views[0].id != SG_INVALID_ID) {
         sg_apply_pipeline(state.pip);
         sg_apply_bindings(&state.bind);

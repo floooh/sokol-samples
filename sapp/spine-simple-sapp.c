@@ -303,7 +303,7 @@ static void frame(void) {
     // if the atlas image have already been loaded yet, if the image handles
     // recorded by sokol-spine for rendering are not yet valid, rendering
     // operations will silently be skipped.
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sspine_draw_layer(0, &layer_transform);
     __dbgui_draw();
     sg_end_pass();

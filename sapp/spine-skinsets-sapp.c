@@ -254,7 +254,7 @@ static void frame(void) {
     sdtx_printf("vertices:%d indices:%d draws:%d", ctx_info.num_vertices, ctx_info.num_indices, ctx_info.num_commands);
 
     // actual sokol-gfx render pass
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
     __dbgui_draw();
