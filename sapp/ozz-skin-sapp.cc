@@ -228,7 +228,8 @@ static void init(void) {
     sg_view_desc view_desc = {};
     view_desc.texture.image = state.joint_texture;
     view_desc.label = "joint-texture-view";
-    state.bind.views[VIEW_joint_tex] = sg_make_view(&view_desc);
+    state.joint_texture_view = sg_make_view(&view_desc);
+    state.bind.views[VIEW_joint_tex] = state.joint_texture_view;
 
     sg_sampler_desc smp_desc = { };
     smp_desc.min_filter = SG_FILTER_NEAREST;
