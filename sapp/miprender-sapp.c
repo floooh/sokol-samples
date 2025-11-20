@@ -227,7 +227,7 @@ static void frame(void) {
     }
 
     // default pass: render a textured plane that moves back and forth to use different mipmap levels
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bindings);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(display_vsparams));

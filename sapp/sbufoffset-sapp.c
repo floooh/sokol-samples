@@ -144,7 +144,7 @@ static void frame(void) {
 
     // draw cube with both indices and vertices provided by the same buffer,
     // and using vertex pulling in the vertex shader
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&(sg_bindings){
         .index_buffer = state.buf,
@@ -184,7 +184,7 @@ static void draw_fallback(void) {
     sdtx_canvas(sapp_widthf() * 0.5f, sapp_heightf() * 0.5f);
     sdtx_pos(1, 1);
     sdtx_puts("COMPUTE SHADERS NOT SUPPORTED ON THIS BACKEND");
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     sg_end_pass();
     sg_commit();

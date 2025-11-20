@@ -107,7 +107,7 @@ static void frame(void) {
         sdtx_crlf(); sdtx_crlf();
     }
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     float x0 = -1.0f + (28.0f * glyph_w);

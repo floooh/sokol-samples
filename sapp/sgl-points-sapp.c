@@ -84,7 +84,7 @@ static void frame(void) {
             .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         }
     };
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     sg_end_pass();
     sg_commit();

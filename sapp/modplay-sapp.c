@@ -121,7 +121,7 @@ void frame(void* user_data) {
     sg_pass_action pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.4f, 0.7f, 1.0f, 1.0f } }
     };
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     sg_end_pass();
     sg_commit();
 }

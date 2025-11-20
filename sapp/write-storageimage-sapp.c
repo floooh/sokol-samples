@@ -101,7 +101,7 @@ static void frame(void) {
     sg_end_pass();
 
     // and a swapchain pass to render the result
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next(), .label = "render-pass" });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "render-pass" });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_disp_tex] = state.display.tex_view,

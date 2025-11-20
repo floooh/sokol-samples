@@ -216,7 +216,7 @@ static void draw_fallback() {
     const sg_pass_action pass_action = {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
-    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -260,7 +260,7 @@ static void frame(void) {
         .samplers[SMP_smp] = state.display.smp,
     };
 
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     quad_params_t quad_params = { .color_bias = 0.0f, .color_scale = 1.0f };
     for (int i = 0; i < 3; i++) {

@@ -455,7 +455,7 @@ static void frame(void) {
     }
     draw_ui();
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_viewport(vp_x, vp_y, vp_width, vp_height, true);
     if (ozz_all_loaded(state.ozz)) {
 

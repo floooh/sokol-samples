@@ -153,7 +153,7 @@ static void frame(void) {
     const vs_params_t vs_params = compute_vsparams();
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
-        .swapchain = sglue_swapchain_next(),
+        .swapchain = sglue_swapchain(),
     });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);

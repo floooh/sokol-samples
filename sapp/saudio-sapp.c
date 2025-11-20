@@ -32,7 +32,7 @@ void init(void) {
 }
 
 void frame(void) {
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     int num_frames = saudio_expect();
     float s;
     for (int i = 0; i < num_frames; i++) {

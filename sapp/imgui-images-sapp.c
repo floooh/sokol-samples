@@ -207,7 +207,7 @@ static void frame(void) {
     // then the display pass with the Dear ImGui scene
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
-        .swapchain = sglue_swapchain_next()
+        .swapchain = sglue_swapchain()
     });
     simgui_render();
     sg_end_pass();

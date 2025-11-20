@@ -215,7 +215,7 @@ static void frame(void) {
     sg_end_pass();
 
     // then the display pass with the Dear ImGui scene
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();
     sg_end_pass();

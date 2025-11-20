@@ -154,7 +154,7 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .views[VIEW_tex] = state.tex_view,
     };
-    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     for (int i = 0; i < 12; i++) {
         const float x = ((float)(i & 3) - 1.5f) * 2.0f;

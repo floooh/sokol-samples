@@ -181,7 +181,7 @@ static void frame(void) {
     sg_end_pass();
 
     // the final swapchain pass (also via a 'fullscreen triangle')
-    sg_begin_pass(&(sg_pass){ .action = state.display.action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_draw(0, 3, 1);
@@ -233,7 +233,7 @@ static void draw_fallback(void) {
         .action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.5f, 0, 0, 1} },
         },
-        .swapchain = sglue_swapchain_next(),
+        .swapchain = sglue_swapchain(),
     });
     simgui_render();
     sg_end_pass();

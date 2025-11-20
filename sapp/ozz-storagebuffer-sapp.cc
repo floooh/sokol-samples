@@ -250,7 +250,7 @@ static void frame(void) {
     // finally render everything in a single draw call
     sg_pass pass = {};
     pass.action = state.pass_action;
-    pass.swapchain = sglue_swapchain_next();
+    pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
     if (draw_ok()) {
         vs_params_t vs_params = {};

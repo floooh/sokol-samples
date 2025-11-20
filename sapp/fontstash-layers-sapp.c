@@ -162,7 +162,7 @@ static void frame(void) {
     sfons_flush(fs);
 
     // sokol-gfx render pass
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
 
     // draw background text layer via sokol-gl
     sgl_draw_layer(0);

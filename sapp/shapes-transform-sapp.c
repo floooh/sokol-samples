@@ -145,7 +145,7 @@ static void frame(void) {
     state.vs_params.mvp = vm_mul(model, view_proj);
 
     // render the single shape
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(state.vs_params));

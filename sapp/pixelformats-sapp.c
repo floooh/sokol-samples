@@ -414,7 +414,7 @@ static void frame(void) {
         .action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
         },
-        .swapchain = sglue_swapchain_next()
+        .swapchain = sglue_swapchain()
     });
     simgui_render();
     sg_end_pass();

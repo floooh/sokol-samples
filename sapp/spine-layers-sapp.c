@@ -134,7 +134,7 @@ static void frame(void) {
     sspine_draw_instance_in_layer(state.instances[2], 2);
 
     // sokol-gfx render pass, draw the sokol-gl and sokol-spine layers interleaved
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int layer_index = 0; layer_index < 3; layer_index++) {
         sspine_draw_layer(layer_index, &layer_transform);
         sgl_draw_layer(layer_index);

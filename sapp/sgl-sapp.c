@@ -228,7 +228,7 @@ static void frame(void) {
        a sokol-gfx begin/end pass pair.
        sgl_draw() also 'rewinds' sokol-gl for the next frame.
     */
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

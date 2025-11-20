@@ -59,7 +59,7 @@ static void frame(void) {
                 .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.25f, 0.5f, 0.7f, 1.0f }
             }
         },
-        .swapchain = sglue_swapchain_next()
+        .swapchain = sglue_swapchain()
     });
     snk_render(sapp_width(), sapp_height());
     __dbgui_draw();

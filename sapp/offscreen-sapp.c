@@ -227,7 +227,7 @@ static void frame(void) {
     };
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
-        .swapchain = sglue_swapchain_next(),
+        .swapchain = sglue_swapchain(),
         .label = "swapchain-pass",
     });
     sg_apply_pipeline(state.display.pip);

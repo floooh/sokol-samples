@@ -192,7 +192,7 @@ static void frame(void) {
     const float vph = vpw;
     const float vpy = dh * 0.5f - vph * 0.5f;
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int i = 0; i < 3; i++) {
         const float vpx = dw * 0.5f - 1.5f * vpw + i * vpw;
         sg_apply_viewportf(vpx, vpy, vpw, vph, true);

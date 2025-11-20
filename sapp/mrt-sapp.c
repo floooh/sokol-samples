@@ -249,7 +249,7 @@ static void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(UB_fsq_params, &SG_RANGE(fsq_params));

@@ -168,7 +168,7 @@ static void frame(void) {
     sspine_context_draw_layer(state.offscreen[1].ctx, 0, &state.layer_transform);
     sg_end_pass();
 
-    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

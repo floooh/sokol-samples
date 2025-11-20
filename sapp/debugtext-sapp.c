@@ -77,7 +77,7 @@ static void frame(void) {
     print_font(FONT_C64,   "C64:\n",         0x79, 0x86, 0xcb);
     print_font(FONT_ORIC,  "Oric Atmos:\n",  0xff, 0x98, 0x00);
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     __dbgui_draw();
     sg_end_pass();

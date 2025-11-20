@@ -134,7 +134,7 @@ static void frame(void) {
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
     __dbgui_draw();

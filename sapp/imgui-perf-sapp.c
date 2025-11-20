@@ -121,7 +121,7 @@ static void frame(void) {
     }
 
     // draw everything
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     simgui_render();
     sg_end_pass();
     sg_commit();

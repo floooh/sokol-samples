@@ -85,7 +85,7 @@ static void frame(void) {
     }
 
     // just clear the window client area to some color
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
     sg_end_pass();
     sg_commit();

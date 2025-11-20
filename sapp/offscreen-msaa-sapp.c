@@ -256,7 +256,7 @@ static void frame(void) {
     vs_params = (vs_params_t) {
         .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, (float)w/(float)h, 1.5f)
     };
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));

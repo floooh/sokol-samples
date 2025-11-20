@@ -175,7 +175,7 @@ void frame(void) {
                 .clear_value = { state.bg.r / 255.0f, state.bg.g / 255.0f, state.bg.b / 255.0f, 1.0f }
             }
         },
-        .swapchain = sglue_swapchain_next()
+        .swapchain = sglue_swapchain()
     });
     r_draw();
     __cdbgui_draw();

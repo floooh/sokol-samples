@@ -371,7 +371,7 @@ static void frame(void) {
 
     sg_pass pass = {};
     pass.action = state.pass_action;
-    pass.swapchain = sglue_swapchain_next();
+    pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
     if (state.loaded.animation && state.loaded.skeleton && state.loaded.mesh) {
         update_joint_texture();

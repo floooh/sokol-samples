@@ -152,7 +152,7 @@ static void frame(void) {
     const vs_params_t vs_params = { .mvp = vm_mul(mat44_rotation_y(vm_radians(state.ry)), view_proj) };
 
     // ...and draw
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));

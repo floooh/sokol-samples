@@ -172,7 +172,7 @@ static void frame(void) {
     sgl_pop_pipeline();
 
     // sokol-gfx default pass with the actual sokol-gl drawing
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();

@@ -252,7 +252,7 @@ static void frame(void) {
     // render the default pass
     const int w = sapp_width();
     const int h = sapp_height();
-    sg_begin_pass(&(sg_pass){ .action = app.display_pass_action, .swapchain = sglue_swapchain_next() });
+    sg_begin_pass(&(sg_pass){ .action = app.display_pass_action, .swapchain = sglue_swapchain() });
 
     vec3_t eye_pos = vec3(0.0f, 0.0f, 20.0f);
     mat44_t proj = mat44_perspective_fov_rh(vm_radians(45.0f), (float)w/(float)h, 0.01f, 100.0f);

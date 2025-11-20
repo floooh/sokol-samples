@@ -74,7 +74,7 @@ static void frame(void) {
     // the sokol_gfx draw pass
     sg_pass pass = {};
     pass.action = pass_action;
-    pass.swapchain = sglue_swapchain_next();
+    pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
     simgui_render();
     sg_end_pass();
