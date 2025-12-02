@@ -193,6 +193,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .logger.func = slog_func,
         // NOTE: this is just a test for using the 'set-main-loop' method
         // in the sokol-app Emscripten backend
-        .html5_use_emsc_set_main_loop = true,
+        .html5.use_emsc_set_main_loop = true,
     };
 }

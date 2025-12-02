@@ -82,6 +82,7 @@ static void init(void) {
         case SG_BACKEND_METAL_MACOS: state.backend = "METAL_MACOS"; break;
         case SG_BACKEND_METAL_SIMULATOR: state.backend = "METAL_SIMULATOR"; break;
         case SG_BACKEND_WGPU: state.backend = "WGPU"; break;
+        case SG_BACKEND_VULKAN: state.backend = "VULKAN"; break;
         case SG_BACKEND_DUMMY: state.backend = "DUMMY"; break;
         default: state.backend = "???"; break;
     }
