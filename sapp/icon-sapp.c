@@ -156,7 +156,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 800,
         .height = 600,
-        .window_title = "Window Icon Test",
+        .window_title = "icon-sapp.c",
         .logger.func = slog_func,
     };
 }

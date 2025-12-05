@@ -440,7 +440,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .icon.sokol_default = true,
-        .window_title = "Pixelformat Test",
+        .window_title = "pixelformats-sapp.c",
         .logger.func = slog_func,
     };
 }

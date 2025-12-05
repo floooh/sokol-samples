@@ -233,7 +233,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .event_cb = input,
         .cleanup_cb = cleanup,
-        .window_title = "imgui-images-sapp",
+        .window_title = "imgui-images-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

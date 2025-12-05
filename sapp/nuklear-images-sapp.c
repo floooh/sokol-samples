@@ -245,7 +245,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .enable_clipboard = true,
         .width = 580,
         .height = 600,
-        .window_title = "nuklear-image-sapp.c",
+        .window_title = "nuklear-images-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

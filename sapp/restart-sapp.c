@@ -423,7 +423,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Restart Sokol Libs (sokol-app)",
+        .window_title = "restart-sapp.c",
         .icon.sokol_default = true,
         .allocator = {
             .alloc_fn = smemtrack_alloc,

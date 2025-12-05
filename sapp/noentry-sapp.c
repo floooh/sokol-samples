@@ -49,7 +49,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Noentry (sokol-app)",
+        .window_title = "noentry-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     });

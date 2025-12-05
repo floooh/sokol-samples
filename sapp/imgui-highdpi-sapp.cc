@@ -146,7 +146,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.high_dpi = true;
     desc.html5.ask_leave_site = html5_ask_leave_site;
     desc.ios.keyboard_resizes_canvas = false;
-    desc.window_title = "Dear ImGui HighDPI (sokol-app)";
+    desc.window_title = "imgui-highdpi-sapp.cc",
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;
     desc.logger.func = slog_func;

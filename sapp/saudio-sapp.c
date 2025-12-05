@@ -64,7 +64,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 400,
         .height = 300,
-        .window_title = "Sokol Audio Test",
+        .window_title = "saudio-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

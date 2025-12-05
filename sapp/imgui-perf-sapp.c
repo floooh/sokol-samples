@@ -145,7 +145,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .window_title = "imgui perftest",
+        .window_title = "imgui-perf-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

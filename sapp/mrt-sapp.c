@@ -354,7 +354,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "MRT Rendering (sokol-app)",
+        .window_title = "mrt-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

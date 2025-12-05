@@ -47,7 +47,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 400,
         .height = 300,
-        .window_title = "Clear (sokol app)",
+        .window_title = "clear-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

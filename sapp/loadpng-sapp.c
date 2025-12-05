@@ -252,7 +252,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Async PNG Loading (sokol-app)",
+        .window_title = "loadpng-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

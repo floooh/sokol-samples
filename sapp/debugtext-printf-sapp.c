@@ -102,7 +102,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 640,
         .height = 480,
-        .window_title = "debugtext-printf-sapp",
+        .window_title = "debugtext-printf-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

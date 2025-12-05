@@ -326,7 +326,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 860,
         .height = 440,
-        .window_title = "imgui-usercallback",
+        .window_title = "imgui-usercallback-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

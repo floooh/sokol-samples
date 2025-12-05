@@ -105,7 +105,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 1024,
         .height = 768,
-        .window_title = "cimgui (sokol-app)",
+        .window_title = "cimgui-sapp.c",
         .ios.keyboard_resizes_canvas = false,
         .icon.sokol_default = true,
         .enable_clipboard = true,

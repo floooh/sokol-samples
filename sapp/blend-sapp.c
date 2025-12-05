@@ -172,7 +172,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Blend Modes (sokol-app)",
+        .window_title = "blend-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

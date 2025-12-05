@@ -195,7 +195,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 512,
         .height = 512,
         .sample_count = 4,
-        .window_title = "sokol_gl.h lines (sokol-app)",
+        .window_title = "sgl-lines-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

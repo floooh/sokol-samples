@@ -305,7 +305,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = DISPLAY_SAMPLE_COUNT,
-        .window_title = "Cubemap Render Target (sokol-app)",
+        .window_title = "cubemaprt-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

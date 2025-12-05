@@ -372,7 +372,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = event,
         .width = 720,
         .height = 540,
-        .window_title = "microui+sokol_gl.h",
+        .window_title = "sgl-microui-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

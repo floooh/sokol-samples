@@ -391,7 +391,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 960,
         .height = 540,
         .sample_count = 4,
-        .window_title = "pl_mpeg demo",
+        .window_title = "plmpeg-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

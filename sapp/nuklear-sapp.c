@@ -90,7 +90,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .enable_clipboard = true,
         .width = 1024,
         .height = 768,
-        .window_title = "nuklear (sokol-app)",
+        .window_title = "nuklear-sapp.c",
         .ios.keyboard_resizes_canvas = true,
         .icon.sokol_default = true,
         .logger.func = slog_func,

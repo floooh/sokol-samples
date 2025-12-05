@@ -114,7 +114,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .window_title = "debugtext-layers-sapp",
+        .window_title = "debugtext-layers-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

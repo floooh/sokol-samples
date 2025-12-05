@@ -326,7 +326,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .high_dpi = true,
-        .window_title = "fontstash",
+        .window_title = "fontstash-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

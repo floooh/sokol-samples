@@ -49,7 +49,7 @@ int main() {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .window_title = "Noentry DLL (sokol-app)",
+        .window_title = "noentry-dll-sapp.c",
         .logger.func = slog_func,
     });
     free(state);    // NOTE: on some platforms, this isn't reached on exit
