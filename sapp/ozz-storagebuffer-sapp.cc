@@ -88,9 +88,6 @@ static struct {
         float factor;
         bool paused;
     } time;
-    struct {
-        sgimgui_t sgimgui;
-    } ui;
 } state;
 
 // IO buffers (we know the max file sizes upfront)
@@ -127,11 +124,11 @@ static void init(void) {
     stm_setup();
 
     // setup sokol-imgui
+    sgimgui_desc_t sgimgui_desc = {};
+    sgimgui_setup(&sgimgui_desc);
     simgui_desc_t imdesc = {};
     imdesc.logger.func = slog_func;
     simgui_setup(&imdesc);
-    sgimgui_desc_t sgimgui_desc = {};
-    sgimgui_init(&state.ui.sgimgui, &sgimgui_desc);
 
     // initialize pass action for default pass
     state.pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
@@ -273,7 +270,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
-    sgimgui_discard(&state.ui.sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
     sfetch_shutdown();
     sg_shutdown();
@@ -491,10 +488,10 @@ static void mesh_data_loaded(const sfetch_response_t* response) {
 
 static void draw_ui(void) {
     if (ImGui::BeginMainMenuBar()) {
-        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         ImGui::EndMainMenuBar();
     }
-    sgimgui_draw(&state.ui.sgimgui);
+    sgimgui_draw();
     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);

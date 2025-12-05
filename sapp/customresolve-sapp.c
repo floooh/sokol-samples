@@ -38,9 +38,6 @@ static struct {
         sg_pass_action action;
         sg_bindings bind;
     } display;
-    struct {
-        sgimgui_t sgimgui;
-    } ui;
     sg_sampler smp; // a common non-filtering sampler
 } state;
 
@@ -59,8 +56,8 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
-    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
 
     // catch WebGL2/GLES3
     if (!sg_query_features().msaa_texture_bindings) {
@@ -191,7 +188,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
-    sgimgui_discard(&state.ui.sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
@@ -204,10 +201,10 @@ static void draw_ui(void) {
         .delta_time = sapp_frame_duration(),
     });
     if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         igEndMainMenuBar();
     }
-    sgimgui_draw(&state.ui.sgimgui);
+    sgimgui_draw();
 
     igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once);
     if (igBegin("#window", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
