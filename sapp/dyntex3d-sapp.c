@@ -32,7 +32,6 @@ static struct {
     sg_bindings bind;
     int width_height;
     bool immutable;
-    sgimgui_t sgimgui;
 } state = {
     .width_height = 16,
     .immutable = false,
@@ -51,7 +50,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
-    sgimgui_init(&state.sgimgui, &(sgimgui_desc_t){0});
+    sgimgui_setup(&(sgimgui_desc_t){0});
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
@@ -108,7 +107,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
-    sgimgui_discard(&state.sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
@@ -121,7 +120,7 @@ static void draw_ui(void) {
         .dpi_scale = sapp_dpi_scale(),
     });
     if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu(&state.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         igEndMainMenuBar();
     }
     igSetNextWindowPos((ImVec2){20, 40}, ImGuiCond_Once);
@@ -136,7 +135,7 @@ static void draw_ui(void) {
         }
     }
     igEnd();
-    sgimgui_draw(&state.sgimgui);
+    sgimgui_draw();
     simgui_render();
 }
 

@@ -13,11 +13,9 @@
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
 
-static sgimgui_t sg_imgui;
-
 void __cdbgui_setup(int sample_count) {
-    // setup debug inspection header(s)
-    sgimgui_init(&sg_imgui, &(sgimgui_desc_t){0});
+    // setup debug inspection header
+    sgimgui_setup(&(sgimgui_desc_t){0});
 
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
@@ -27,7 +25,7 @@ void __cdbgui_setup(int sample_count) {
 }
 
 void __cdbgui_shutdown(void) {
-    sgimgui_discard(&sg_imgui);
+    sgimgui_shutdown();
     simgui_shutdown();
 }
 
@@ -39,10 +37,10 @@ void __cdbgui_draw(void) {
         .dpi_scale = sapp_dpi_scale()
     });
     if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu(&sg_imgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         igEndMainMenuBar();
     }
-    sgimgui_draw(&sg_imgui);
+    sgimgui_draw();
     simgui_render();
 }
 

@@ -48,8 +48,6 @@ static struct {
         }
     }
 };
-static sgimgui_t sgimgui;
-
 static void draw_ui(void);
 
 static inline uint32_t xorshift32(void) {
@@ -70,7 +68,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    sgimgui_init(&sgimgui, &(sgimgui_desc_t){0});
+    sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -156,7 +154,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
-    sgimgui_discard(&sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
@@ -173,7 +171,7 @@ static void draw_ui(void) {
         .dpi_scale = sapp_dpi_scale(),
     });
     if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu(&sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         igEndMainMenuBar();
     }
     igSetNextWindowBgAlpha(0.8f);
@@ -194,7 +192,7 @@ static void draw_ui(void) {
         igSliderInt("Num Boids", &state.sim_params.num_particles, 0, MAX_PARTICLES);
     }
     igEnd();
-    sgimgui_draw(&sgimgui);
+    sgimgui_draw();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

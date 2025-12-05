@@ -39,7 +39,6 @@ static struct {
         bool skel_data_is_binary;
     } load_status;
     struct {
-        sgimgui_t sgimgui;
         bool draw_bones_enabled;
         bool atlas_open;
         bool bones_open;
@@ -160,6 +159,8 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    // setup UI libs
+    ui_setup();
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func
@@ -175,8 +176,6 @@ static void init(void) {
     sspine_setup(&(sspine_desc){
         .logger.func = slog_func
     });
-    // setup UI libs
-    ui_setup();
     // start loading Spine atlas and skeleton file asynchronously
     load_spine_scene(0);
 }
@@ -475,12 +474,12 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 //=== UI STUFF =================================================================
 static void ui_setup(void) {
+    sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
-    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
 }
 
 static void ui_shutdown(void) {
-    sgimgui_discard(&state.ui.sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
 }
 
@@ -527,7 +526,7 @@ static void ui_draw(void) {
             igMenuItemBoolPtr("IK Targets...", 0, &state.ui.iktargets_open, true);
             igEndMenu();
         }
-        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         if (igBeginMenu("options")) {
             static int theme = 0;
             if (igRadioButtonIntPtr("Dark Theme", &theme, 0)) {
@@ -838,7 +837,7 @@ static void ui_draw(void) {
             igPopStyleColor();
         }
     }
-    sgimgui_draw(&state.ui.sgimgui);
+    sgimgui_draw();
 }
 
 static void draw_bones(void) {

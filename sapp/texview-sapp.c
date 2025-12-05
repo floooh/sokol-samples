@@ -51,7 +51,6 @@ static struct {
         int max_mip;
         float mip_lod;
         bool use_linear_sampler;
-        sgimgui_t sgimgui;
     } ui;
 } state;
 
@@ -70,7 +69,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    sgimgui_init(&state.ui.sgimgui, &(sgimgui_desc_t){0});
+    sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -133,7 +132,7 @@ static void frame(void) {
     });
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
-    sgimgui_draw(&state.ui.sgimgui);
+    sgimgui_draw();
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -145,7 +144,7 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     sfetch_shutdown();
-    sgimgui_discard(&state.ui.sgimgui);
+    sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
     sbasisu_shutdown();
@@ -153,7 +152,7 @@ static void cleanup(void) {
 
 static void ui_draw(void) {
     if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu(&state.ui.sgimgui, "sokol-gfx");
+        sgimgui_draw_menu("sokol-gfx");
         igEndMainMenuBar();
     }
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
