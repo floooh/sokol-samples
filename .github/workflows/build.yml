@@ -7,6 +7,16 @@ jobs:
         runs-on: windows-latest
         steps:
         - uses: actions/checkout@main
+        - name: prepare vulkan sdk
+          uses: humbletim/setup-vulkan-sdk@main
+          with:
+            vulkan-query-version: 1.4.335.0
+            vulkan-components: Vulkan-Headers, Vulkan-Loader
+            vulkan-use-cache: true
+        - name: sapp-vk-win64-vstudio-debug
+          run:  python3 fips build sapp-vk-win64-vstudio-debug
+        - name: sapp-vk-win64-vstudio-release
+          run:  python3 fips build sapp-vk-win64-vstudio-release
         - name: win64-vstudio-debug
           run:  python3 fips build win64-vstudio-debug
         - name: win64-vstudio-release
