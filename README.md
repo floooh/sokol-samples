@@ -30,7 +30,13 @@ Xcode xx.x (newer is better, older version are no longer tested)
 1.x.y
 ```
 
-> NOTE in Linux you'll also need to install the OpenGL, X11 and ALSA development packages (e.g. mesa-common-dev, libx11-dev and libasound2-dev).
+> [!NOTE]
+> On Linux you'll also need to install packages for OpenGL, X11, ALSA and Vulkan development, e.g.
+> mesa-common-dev, libx11-dev, libasound2-dev, libvulkan-dev, vulkan-validationlayers, vulkan-tools
+
+> [!NOTE]
+> On Windows with Vulkan development you need to install the Vulkan SDK and before building,
+> make sure that the environement variable `VULKAN_SDK` is valid
 
 Create a scratch/workspace dir and clone the project:
 ```sh
@@ -50,8 +56,12 @@ Select a build config for your platform and 3D backend combination:
 > ./fips set config sapp-d3d11-win64-vstudio-debug
 # Windows with OpenGL:
 > ./fips set config sapp-win64-vstudio-debug
-# Linux:
+# Windows with Vulkan:
+> ./fips set config sapp-vk-win64-vstudio-debug
+# Linux with OpenGL
 > ./fips set config sapp-linux-ninja-debug
+# Linux with Vulkan:
+> ./fips set config sapp-vk-linux-ninja-debug
 ```
 
 Build the project (this will also fetch additional dependencies):
@@ -291,11 +301,12 @@ Of course, in your own project you can put the sokol headers wherever
 you want (I recommend copying them somewhere into your source directory),
 and you don't have to use the prebuilt sokol-shdc shader compiler either.
 
-> NOTE: for Release builds, you might want to add the compiler's respective
+> [!NOTE]
+> For Release builds, you might want to add the compiler's respective
 optimization flags, and provide an ```NDEBUG``` define so that assert() checks
 and the sokol-gfx validation layer are removed (**BUT** please don't do
 this for the Debug/Dev builds because asserts() and the validation
-layer give useful feedback if something goes wrong).
+layer give important feedback if something goes wrong).
 
 ### Building manually on macOS with clang
 
@@ -359,7 +370,8 @@ To build one of the sokol-app samples for GL on Windows:
 
 ### Building manually on Windows with MSYS2/mingw gcc:
 
-> NOTE: compile with '-mwin32' (this defines _WIN32 for proper platform detection)
+> [!NOTE]
+> Compile with '-mwin32' (this defines _WIN32 for proper platform detection)
 
 From the MSYS2 shell:
 
@@ -377,7 +389,8 @@ From the MSYS2 shell:
 
 ### Building manually on Windows with Clang:
 
-> NOTE: AFAIK Clang for Windows needs a working MSVC toolchain and Windows SDK installed, I haven't tested without.
+> [!NOTE]
+> AFAIK Clang for Windows needs a working MSVC toolchain and Windows SDK installed, I haven't tested without.
 
 Clang recognizes the ```#pragma comment(lib,...)``` statements in the Sokol headers, so you don't
 need to specify the link libraries manually.
