@@ -12,7 +12,7 @@
 #include "dbgui/dbgui.h"
 #include "blend-sapp.glsl.h"
 
-#define NUM_BLEND_FACTORS (15)
+#define NUM_BLEND_FACTORS (15) // ignore dual-source-blend-factor!
 
 static struct {
     sg_pass_action pass_action;
