@@ -428,6 +428,13 @@ fips_begin_app(basisu-sapp-ui windowed)
 fips_end_app()
 
 fips_ide_group(Samples)
+fips_begin_app(blend-playground-sapp windowed)
+    fips_files(blend-playground-sapp.c)
+    sokol_shader(blend-playground-sapp.glsl ${slang})
+    fips_deps(sokol imgui)
+fips_end_app()
+
+fips_ide_group(Samples)
 fips_begin_app(blend-sapp windowed)
     fips_files(blend-sapp.c)
     sokol_shader(blend-sapp.glsl ${slang})
