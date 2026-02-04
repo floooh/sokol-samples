@@ -1,0 +1,12 @@
+---
+options:
+  src_dir: qoi
+  ios:
+    dst_dir: $TARGET_NAME.app
+  macos:
+    dst_dir: $TARGET_NAME.app/Contents/Resources
+files:
+  - baboon.qoi
+  - dice.qoi
+  - testcard_rgba.qoi
+  - testcard.qoi
