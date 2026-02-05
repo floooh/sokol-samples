@@ -6,11 +6,9 @@ policies:
   no_auto_import: true
 imports:
   sokol:
-    git: http://gitea.ovcollyer.com:3000/oviano/sokol.git
-    branch: oviano-mods
+    git: https://github.com/floooh/sokol
   sokol-tools-bin:
-    git: http://gitea.ovcollyer.com:3000/oviano/sokol-tools-bin.git
-    branch: oviano-mods
+    git: https://github.com/floooh/sokol-tools-bin
   fips-glfw:
     git: https://github.com/fips-libs/fips-glfw
   fips-libmodplug:
