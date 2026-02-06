@@ -22,6 +22,8 @@
 #define MAX_FILE_SIZE (768 * 1024)
 #define NUM_BLEND_FACTORS (19)
 #define NUM_BLEND_OPS (5)
+#define MAX_SCALE (8.0f)
+#define MIN_SCALE (0.25f)
 
 static const char* blend_factor_names[NUM_BLEND_FACTORS] = {
     "Zero",
@@ -91,6 +93,8 @@ enum {
 static struct {
     sg_pass_action pass_action;
     sg_pipeline bg_pip;
+    sg_blend_state blend;
+    sg_color blend_color;
     struct {
         bool valid;
         sg_image img;
@@ -102,12 +106,11 @@ static struct {
         float height;
     } image;
     struct {
-        sg_blend_state blend;
-        float alpha_scale;
         float scale;
         vec2_t offset;
     } ctrl;
     struct {
+        float alpha_scale;
         int src_factor_rgb_sel;
         int dst_factor_rgb_sel;
         int op_rgb_sel;
@@ -126,6 +129,15 @@ static bool draw_ui(void);
 static void fetch_callback(const sfetch_response_t* response);
 static void recreate_pipeline(void);
 static img_params_t compute_image_params(void);
+static void set_src_factor_rgb(sg_blend_factor f);
+static void set_dst_factor_rgb(sg_blend_factor f);
+static void set_op_rgb(sg_blend_op op);
+static void set_src_factor_alpha(sg_blend_factor f);
+static void set_dst_factor_alpha(sg_blend_factor f);
+static void set_op_alpha(sg_blend_op op);
+static void ctrl_reset(void);
+static void ctrl_move(float dx, float dy);
+static void ctrl_scale(float d);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -151,23 +163,16 @@ static void init(void) {
     };
 
     // initial control state
-    state.ctrl.blend.enabled = true;
-    state.ctrl.blend.src_factor_rgb = SG_BLENDFACTOR_ONE;
-    state.ctrl.blend.dst_factor_rgb = SG_BLENDFACTOR_ZERO;
-    state.ctrl.blend.op_rgb = SG_BLENDOP_ADD;
-    state.ctrl.blend.src_factor_alpha = SG_BLENDFACTOR_ONE;
-    state.ctrl.blend.dst_factor_alpha = SG_BLENDFACTOR_ZERO;
-    state.ctrl.blend.op_alpha = SG_BLENDOP_ADD;
-    state.ctrl.alpha_scale = 1.0f;
-    state.ctrl.scale = 0.75;
-
-    // initial UI state
-    state.ui.src_factor_rgb_sel = 0;
-    state.ui.dst_factor_rgb_sel = 1;
-    state.ui.src_factor_alpha_sel = 0;
-    state.ui.dst_factor_alpha_sel = 1;
-    state.ui.op_rgb_sel = 0;
-    state.ui.op_alpha_sel = 0;
+    ctrl_reset();
+    state.blend.enabled = true;
+    state.blend_color = (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f };
+    state.ui.alpha_scale = 1.0f;
+    set_src_factor_rgb(SG_BLENDFACTOR_SRC_ALPHA);
+    set_dst_factor_rgb(SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA);
+    set_op_rgb(SG_BLENDOP_ADD);
+    set_src_factor_alpha(SG_BLENDFACTOR_ZERO);
+    set_dst_factor_alpha(SG_BLENDFACTOR_ONE);
+    set_op_alpha(SG_BLENDOP_ADD);
 
     // create pipeline and shader to draw a bufferless fullscreen triangle as background
     state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -238,8 +243,23 @@ static void cleanup(void) {
 static void input(const sapp_event* ev) {
     if (simgui_handle_event(ev)) {
         return;
+    } else switch (ev->type) {
+        case SAPP_EVENTTYPE_KEY_DOWN:
+            if (ev->key_code == SAPP_KEYCODE_SPACE) {
+                ctrl_reset();
+            }
+            break;
+        case SAPP_EVENTTYPE_MOUSE_MOVE:
+            if (ev->modifiers & SAPP_MODIFIER_LMB) {
+                ctrl_move(ev->mouse_dx, ev->mouse_dy);
+            }
+            break;
+        case SAPP_EVENTTYPE_MOUSE_SCROLL:
+            ctrl_scale(ev->scroll_y * 0.75f);
+            break;
+        default:
+            break;
     }
-    // FIXME: handle pan/scale
 }
 
 static bool draw_ui(void) {
@@ -255,38 +275,40 @@ static bool draw_ui(void) {
         igEndMainMenuBar();
     }
     sgimgui_draw();
-    igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
-    igSetNextWindowBgAlpha(0.75f);
+    igSetNextWindowPos((ImVec2){ 20, 30 }, ImGuiCond_Once);
+    igSetNextWindowBgAlpha(0.7f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         if (state.file.error != SFETCH_ERROR_NO_ERROR) {
             igText("Failed to load image.");
         } else if (!state.image.valid) {
             igText("Loading image...");
         } else {
-            igSliderFloat("Image Scale", &state.ctrl.scale, 0.1f, 10.0f);
-            igSliderFloat("Alpha Scale", &state.ctrl.alpha_scale, 0.0f, 1.0f);
+            igSliderFloat("Alpha Scale", &state.ui.alpha_scale, 0.0f, 1.0f);
             if (igComboChar("Src Factor RGB", &state.ui.src_factor_rgb_sel, blend_factor_names, NUM_BLEND_FACTORS)) {
-                state.ctrl.blend.src_factor_rgb = blend_factors[state.ui.src_factor_rgb_sel];
+                set_src_factor_rgb(blend_factors[state.ui.src_factor_rgb_sel]);
                 pip_dirty = true;
             }
             if (igComboChar("Dst Factor RGB", &state.ui.dst_factor_rgb_sel, blend_factor_names, NUM_BLEND_FACTORS)) {
-                state.ctrl.blend.dst_factor_rgb = blend_factors[state.ui.dst_factor_rgb_sel];
+                set_dst_factor_rgb(blend_factors[state.ui.dst_factor_rgb_sel]);
                 pip_dirty = true;
             }
             if (igComboChar("Op RGB", &state.ui.op_rgb_sel, blend_op_names, NUM_BLEND_OPS)) {
-                state.ctrl.blend.op_rgb = blend_ops[state.ui.op_rgb_sel];
+                set_op_rgb(blend_ops[state.ui.op_rgb_sel]);
                 pip_dirty = true;
             }
             if (igComboChar("Src Factor Alpha", &state.ui.src_factor_alpha_sel, blend_factor_names, NUM_BLEND_FACTORS)) {
-                state.ctrl.blend.src_factor_alpha = blend_factors[state.ui.src_factor_alpha_sel];
+                set_src_factor_alpha(blend_factors[state.ui.src_factor_alpha_sel]);
                 pip_dirty = true;
             }
             if (igComboChar("Dst Factor Alpha", &state.ui.dst_factor_alpha_sel, blend_factor_names, NUM_BLEND_FACTORS)) {
-                state.ctrl.blend.dst_factor_alpha = blend_factors[state.ui.dst_factor_alpha_sel];
+                set_dst_factor_alpha(blend_factors[state.ui.dst_factor_alpha_sel]);
                 pip_dirty = true;
             }
             if (igComboChar("Op Alpha", &state.ui.op_alpha_sel, blend_op_names, NUM_BLEND_OPS)) {
-                state.ctrl.blend.op_alpha = blend_ops[state.ui.op_alpha_sel];
+                set_op_alpha(blend_ops[state.ui.op_alpha_sel]);
+                pip_dirty = true;
+            }
+            if (igColorEdit4("Blend Color", &state.blend_color.r, ImGuiColorEditFlags_AlphaBar)) {
                 pip_dirty = true;
             }
         }
@@ -306,7 +328,8 @@ static void recreate_pipeline(void) {
         .shader = state.image.shaders[SHADER_STD],
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .color_count = 1,
-        .colors[0].blend = state.ctrl.blend,
+        .colors[0].blend = state.blend,
+        .blend_color = state.blend_color,
         .label = "img-pipeline",
     });
 
@@ -350,12 +373,15 @@ static void create_image(const void* qoi_data_ptr, size_t qoi_data_size) {
 
 static img_params_t compute_image_params(void) {
     return (img_params_t){
-        .offset = state.ctrl.offset,
+        .offset = {
+            .x = state.ctrl.offset.x / (0.5f * sapp_widthf()),
+            .y = -state.ctrl.offset.y / (0.5f * sapp_heightf()),
+        },
         .scale = {
             .x = (state.image.width / sapp_widthf()) * state.ctrl.scale,
             .y = (state.image.height / sapp_heightf()) * state.ctrl.scale,
         },
-        .alpha_scale = state.ctrl.alpha_scale,
+        .alpha_scale = state.ui.alpha_scale,
     };
 }
 
@@ -366,6 +392,102 @@ static void fetch_callback(const sfetch_response_t* response) {
     } else if (response->failed) {
         state.file.error = response->error_code;
     }
+}
+
+static void ctrl_reset(void) {
+    state.ctrl.scale = 0.75;
+    state.ctrl.offset.x = 0.0f;
+    state.ctrl.offset.y = 0.0f;
+}
+
+static void ctrl_move(float dx, float dy) {
+    state.ctrl.offset.x += dx;
+    state.ctrl.offset.y += dy;
+}
+
+static void ctrl_scale(float ds) {
+    state.ctrl.scale *= expf(ds);
+    if (state.ctrl.scale > MAX_SCALE) {
+        state.ctrl.scale = MAX_SCALE;
+    } else if (state.ctrl.scale < MIN_SCALE) {
+        state.ctrl.scale = MIN_SCALE;
+    }
+}
+
+static int find_blend_factor_index(sg_blend_factor f) {
+    for (int i = 0; i < NUM_BLEND_FACTORS; i++) {
+        if (f == blend_factors[i]) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+static int find_blend_op_index(sg_blend_op op) {
+    for (int i = 0; i < NUM_BLEND_OPS; i++) {
+        if (op == blend_ops[i]) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+static void ensure_rgb_valid(void) {
+    if ((state.blend.op_rgb == SG_BLENDOP_MIN) || (state.blend.op_rgb == SG_BLENDOP_MAX)) {
+        if (state.blend.src_factor_rgb != SG_BLENDFACTOR_ONE) {
+            set_src_factor_rgb(SG_BLENDFACTOR_ONE);
+        }
+        if (state.blend.dst_factor_rgb != SG_BLENDFACTOR_ONE) {
+            set_dst_factor_rgb(SG_BLENDFACTOR_ONE);
+        }
+    }
+}
+
+static void ensure_alpha_valid(void) {
+    if ((state.blend.op_alpha == SG_BLENDOP_MIN) || (state.blend.op_alpha == SG_BLENDOP_MAX)) {
+        if (state.blend.src_factor_alpha != SG_BLENDFACTOR_ONE) {
+            set_src_factor_alpha(SG_BLENDFACTOR_ONE);
+        }
+        if (state.blend.dst_factor_alpha != SG_BLENDFACTOR_ONE) {
+            set_dst_factor_alpha(SG_BLENDFACTOR_ONE);
+        }
+    }
+}
+
+static void set_src_factor_rgb(sg_blend_factor f) {
+    state.blend.src_factor_rgb = f;
+    state.ui.src_factor_rgb_sel = find_blend_factor_index(f);
+    ensure_rgb_valid();
+}
+
+static void set_dst_factor_rgb(sg_blend_factor f) {
+    state.blend.dst_factor_rgb = f;
+    state.ui.dst_factor_rgb_sel = find_blend_factor_index(f);
+    ensure_rgb_valid();
+}
+
+static void set_op_rgb(sg_blend_op op) {
+    state.blend.op_rgb = op;
+    state.ui.op_rgb_sel = find_blend_op_index(op);
+    ensure_rgb_valid();
+}
+
+static void set_src_factor_alpha(sg_blend_factor f) {
+    state.blend.src_factor_alpha = f;
+    state.ui.src_factor_alpha_sel = find_blend_factor_index(f);
+    ensure_alpha_valid();
+}
+
+static void set_dst_factor_alpha(sg_blend_factor f) {
+    state.blend.dst_factor_alpha = f;
+    state.ui.dst_factor_alpha_sel = find_blend_factor_index(f);
+    ensure_alpha_valid();
+}
+
+static void set_op_alpha(sg_blend_op op) {
+    state.blend.op_alpha = op;
+    state.ui.op_alpha_sel = find_blend_op_index(op);
+    ensure_alpha_valid();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
