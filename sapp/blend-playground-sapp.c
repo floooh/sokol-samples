@@ -95,6 +95,7 @@ static struct {
     sg_pipeline bg_pip;
     sg_blend_state blend;
     sg_color blend_color;
+    sg_color src1_color;
     struct {
         bool valid;
         sg_image img;
@@ -166,6 +167,7 @@ static void init(void) {
     ctrl_reset();
     state.blend.enabled = true;
     state.blend_color = (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f };
+    state.src1_color = (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f };
     state.ui.alpha_scale = 1.0f;
     set_src_factor_rgb(SG_BLENDFACTOR_SRC_ALPHA);
     set_dst_factor_rgb(SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA);
@@ -311,6 +313,7 @@ static bool draw_ui(void) {
             if (igColorEdit4("Blend Color", &state.blend_color.r, ImGuiColorEditFlags_AlphaBar)) {
                 pip_dirty = true;
             }
+            igColorEdit4("Src1 Color", &state.src1_color.r, ImGuiColorEditFlags_AlphaBar);
         }
     }
     igEnd();
@@ -382,6 +385,12 @@ static img_params_t compute_image_params(void) {
             .y = (state.image.height / sapp_heightf()) * state.ctrl.scale,
         },
         .alpha_scale = state.ui.alpha_scale,
+        .src1_color = {
+            .x = state.src1_color.r,
+            .y = state.src1_color.g,
+            .z = state.src1_color.b,
+            .w = state.src1_color.a,
+        },
     };
 }
 

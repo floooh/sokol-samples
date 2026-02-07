@@ -1,5 +1,6 @@
 @ctype mat4 mat44_t
 @ctype vec2 vec2_t
+@ctype vec4 vec4_t
 
 // draw a checkboard fullscreen background
 @vs vs_bg
@@ -37,6 +38,7 @@ in vec2 in_pos;
 layout(binding=0) uniform img_params {
     vec2 offset;
     vec2 scale;
+    vec4 src1_color;
     float alpha_scale;
 };
 
@@ -44,27 +46,30 @@ const vec2 pos[] = { vec2(-1, -1), vec2(+1, -1), vec2(-1, +1), vec2(+1, +1) };
 
 out vec2 uv;
 out float amul;
+out vec4 src1;
 
 void main() {
     const vec2 p = pos[gl_VertexIndex];
     gl_Position = vec4((p * scale) + offset, 0, 1);
     uv = p * vec2(0.5, -0.5) + 0.5;
     amul = alpha_scale;
+    src1 = src1_color;
 }
 @end
 
-@block fs_img_common
+@fs fs_img_std
 layout(binding=0) uniform texture2D tex;
 layout(binding=0) uniform sampler smp;
-out vec4 frag_color;
 in vec2 uv;
 in float amul;
-@end
+in vec4 src1;
 
-@fs fs_img_std
-@include_block fs_img_common
+layout(location = 0, index = 0) out vec4 frag_color;
+layout(location = 0, index = 1) out vec4 frag_blend;
+
 void main() {
     frag_color = texture(sampler2D(tex,smp), uv) * vec4(1, 1, 1, amul);
+    frag_blend = src1;
 }
 @end
 @program img_std vs_img fs_img_std
