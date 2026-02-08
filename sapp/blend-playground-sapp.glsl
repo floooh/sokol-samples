@@ -2,24 +2,31 @@
 @ctype vec2 vec2_t
 @ctype vec4 vec4_t
 
-// draw a checkboard fullscreen background
-@vs vs_bg
+@vs vs_fsq
+@glsl_options flip_vert_y
+out vec2 uv;
+
+// generic fullscreen shader
 void main() {
     if (0 == gl_VertexIndex) {
-        gl_Position = vec4(-1, -1, 0, 1);
+        gl_Position = vec4(-1, +1, 0, 1);
+        uv = vec2(0, 0);
     } else if (1 == gl_VertexIndex) {
-        gl_Position = vec4(3, -1, 0, 1);
+        gl_Position = vec4(3, +1, 0, 1);
+        uv = vec2(2, 0);
     } else {
-        gl_Position = vec4(-1, 3, 0, 1);
+        gl_Position = vec4(-1, -3, 0, 1);
+        uv = vec2(0, 2);
     }
 }
 @end
 
+// draw a checkboard fullscreen background
 @fs fs_bg
 layout(binding=0) uniform bg_params {
     float dark, light;
 };
-
+in vec2 uv; // unused
 out vec4 frag_color;
 void main() {
     uvec2 xy = uvec2(floor(gl_FragCoord.xy / 15));
@@ -30,7 +37,21 @@ void main() {
     }
 }
 @end
-@program bg vs_bg fs_bg
+@program bg vs_fsq fs_bg
+
+// fullscreen-compose offscreen render target with background
+@fs fs_compose
+layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform sampler smp;
+
+in vec2 uv;
+out vec4 frag_color;
+
+void main() {
+    frag_color = texture(sampler2D(tex,smp), uv);
+}
+@end
+@program compose vs_fsq fs_compose
 
 in vec2 in_pos;
 
@@ -60,6 +81,22 @@ void main() {
 @fs fs_img_std
 layout(binding=0) uniform texture2D tex;
 layout(binding=0) uniform sampler smp;
+
+in vec2 uv;
+in float amul;
+in vec4 src1;   // unused
+
+out vec4 frag_color;
+
+void main() {
+    frag_color = texture(sampler2D(tex,smp), uv) * vec4(1, 1, 1, amul);
+}
+@end
+
+@fs fs_img_dualsrc
+layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform sampler smp;
+
 in vec2 uv;
 in float amul;
 in vec4 src1;
@@ -72,4 +109,6 @@ void main() {
     frag_blend = src1;
 }
 @end
+
 @program img_std vs_img fs_img_std
+@program img_dualsrc vs_img fs_img_dualsrc

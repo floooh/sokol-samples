@@ -87,11 +87,11 @@ static const sg_blend_op blend_ops[NUM_BLEND_OPS] = {
 
 enum {
     SHADER_STD = 0,
+    SHADER_DUALSRC = 1,
     NUM_SHADERS,
 };
 
 static struct {
-    sg_pass_action pass_action;
     sg_pipeline bg_pip;
     sg_blend_state blend;
     sg_color blend_color;
@@ -106,6 +106,13 @@ static struct {
         float width;
         float height;
     } image;
+    struct {
+        sg_image img;
+        sg_view att_view;
+        sg_view tex_view;
+        sg_sampler smp;
+        sg_pipeline pip;
+    } compose;
     struct {
         float scale;
         vec2_t offset;
@@ -129,6 +136,7 @@ static struct {
 static bool draw_ui(void);
 static void fetch_callback(const sfetch_response_t* response);
 static void recreate_pipeline(void);
+static void recreate_compose_image_and_views(void);
 static img_params_t compute_image_params(void);
 static void set_src_factor_rgb(sg_blend_factor f);
 static void set_dst_factor_rgb(sg_blend_factor f);
@@ -139,6 +147,8 @@ static void set_op_alpha(sg_blend_op op);
 static void ctrl_reset(void);
 static void ctrl_move(float dx, float dy);
 static void ctrl_scale(float d);
+static bool is_dualsrc_blend_factor(sg_blend_factor f);
+static bool is_dualsrc_blend(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -156,14 +166,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    state.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f },
-        },
-    };
-
-    // initial control state
+    // initial UI state
     ctrl_reset();
     state.blend.enabled = true;
     state.blend_color = (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -179,19 +182,50 @@ static void init(void) {
     // create pipeline and shader to draw a bufferless fullscreen triangle as background
     state.bg_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(bg_shader_desc(sg_query_backend())),
+        .depth = {
+            .write_enabled = false,
+            .pixel_format = SG_PIXELFORMAT_NONE,
+        },
+        .colors[0].pixel_format = SG_PIXELFORMAT_RGBA8,
         .label = "background-pipeline"
     });
 
-    // create image resources
+    // create sampler and pipeline for the alpha-test image
     state.image.shaders[SHADER_STD] = sg_make_shader(img_std_shader_desc(sg_query_backend()));
+    if (sg_query_features().dual_source_blending) {
+        state.image.shaders[SHADER_DUALSRC] = sg_make_shader(img_dualsrc_shader_desc(sg_query_backend()));
+    }
     state.image.smp = sg_make_sampler(&(sg_sampler_desc){
         .min_filter = SG_FILTER_LINEAR,
         .mag_filter = SG_FILTER_LINEAR,
         .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .label = "sampler",
+        .label = "img-sampler",
     });
     recreate_pipeline();
+
+    // create resources for rendering offscreen render target into canvas
+    recreate_compose_image_and_views();
+    state.compose.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "offscreen-sampler",
+    });
+    state.compose.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(compose_shader_desc(sg_query_backend())),
+        .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .color_count = 1,
+        .colors[0].blend = {
+            .enabled = true,
+            .src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA,
+            .dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA,
+            .src_factor_alpha = SG_BLENDFACTOR_ZERO,
+            .dst_factor_alpha = SG_BLENDFACTOR_ONE,
+        },
+        .label = "offscreen-pipeline",
+    });
 
     // start loading example texture
     char path_buf[512];
@@ -210,7 +244,11 @@ static void frame(void) {
         recreate_pipeline();
     }
 
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    // offscreen pass to render blended test-image
+    sg_begin_pass(&(sg_pass){
+        .action.colors[0] = { .load_action = SG_LOADACTION_DONTCARE },
+        .attachments.colors[0] = state.compose.att_view,
+    });
 
     // draw background
     const bg_params_t bg_params = { .light = 0.6f, .dark = 0.4f };
@@ -229,7 +267,21 @@ static void frame(void) {
         sg_apply_uniforms(UB_img_params, &SG_RANGE(img_params));
         sg_draw(0, 4, 1);
     }
+    sg_end_pass();
 
+    // display-pass to compose the offscreen image with a test-color-cleared canvas
+    sg_begin_pass(&(sg_pass){
+        .action.colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 1.0f, 1.0f }
+        },
+        .swapchain = sglue_swapchain(),
+    });
+    sg_apply_pipeline(state.compose.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_tex] = state.compose.tex_view,
+        .samplers[SMP_smp] = state.compose.smp,
+    });
+    sg_draw(0, 3, 1);
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -246,6 +298,9 @@ static void input(const sapp_event* ev) {
     if (simgui_handle_event(ev)) {
         return;
     } else switch (ev->type) {
+        case SAPP_EVENTTYPE_RESIZED:
+            recreate_compose_image_and_views();
+            break;
         case SAPP_EVENTTYPE_KEY_DOWN:
             if (ev->key_code == SAPP_KEYCODE_SPACE) {
                 ctrl_reset();
@@ -326,16 +381,55 @@ static void recreate_pipeline(void) {
         state.image.pip.id = SG_INVALID_ID;
     }
 
+    const int shd_index = (sg_query_features().dual_source_blending && is_dualsrc_blend()) ? SHADER_DUALSRC : SHADER_STD;
+
     // synthesize vertices in vertex shader
     state.image.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = state.image.shaders[SHADER_STD],
+        .shader = state.image.shaders[shd_index],
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_NONE,
+            .write_enabled = false,
+        },
         .color_count = 1,
-        .colors[0].blend = state.blend,
+        .colors[0] = {
+            .pixel_format = SG_PIXELFORMAT_RGBA8,
+            .blend = state.blend,
+        },
         .blend_color = state.blend_color,
         .label = "img-pipeline",
     });
 
+}
+
+static void recreate_compose_image_and_views(void) {
+    if (state.compose.img.id != SG_INVALID_ID) {
+        sg_destroy_image(state.compose.img);
+        state.compose.img.id = SG_INVALID_ID;
+    }
+    if (state.compose.att_view.id != SG_INVALID_ID) {
+        sg_destroy_view(state.compose.att_view);
+        state.compose.att_view.id = SG_INVALID_ID;
+    }
+    if (state.compose.tex_view.id != SG_INVALID_ID) {
+        sg_destroy_view(state.compose.tex_view);
+        state.compose.tex_view.id = SG_INVALID_ID;
+    }
+    state.compose.img = sg_make_image(&(sg_image_desc){
+        .usage = { .color_attachment = true },
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .label = "compose-image",
+    });
+    state.compose.att_view = sg_make_view(&(sg_view_desc){
+        .color_attachment = { .image = state.compose.img },
+        .label = "compose-color-attachment",
+    });
+    state.compose.tex_view = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.compose.img },
+        .label = "compose-tex-view",
+    });
 }
 
 static void create_image(const void* qoi_data_ptr, size_t qoi_data_size) {
@@ -423,6 +517,20 @@ static void ctrl_scale(float ds) {
     }
 }
 
+static bool is_dualsrc_blend_factor(sg_blend_factor f) {
+    return (f == SG_BLENDFACTOR_SRC1_ALPHA)
+        || (f == SG_BLENDFACTOR_SRC1_COLOR)
+        || (f == SG_BLENDFACTOR_ONE_MINUS_SRC1_ALPHA)
+        || (f == SG_BLENDFACTOR_ONE_MINUS_SRC1_COLOR);
+}
+
+static bool is_dualsrc_blend(void) {
+    return is_dualsrc_blend_factor(state.blend.src_factor_rgb)
+        || is_dualsrc_blend_factor(state.blend.dst_factor_rgb)
+        || is_dualsrc_blend_factor(state.blend.src_factor_alpha)
+        || is_dualsrc_blend_factor(state.blend.dst_factor_alpha);
+}
+
 static int find_blend_factor_index(sg_blend_factor f) {
     for (int i = 0; i < NUM_BLEND_FACTORS; i++) {
         if (f == blend_factors[i]) {
@@ -449,6 +557,9 @@ static void ensure_rgb_valid(void) {
         if (state.blend.dst_factor_rgb != SG_BLENDFACTOR_ONE) {
             set_dst_factor_rgb(SG_BLENDFACTOR_ONE);
         }
+    } else if (is_dualsrc_blend() && !sg_query_features().dual_source_blending) {
+        set_src_factor_rgb(SG_BLENDFACTOR_SRC_ALPHA);
+        set_dst_factor_rgb(SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA);
     }
 }
 
@@ -460,6 +571,9 @@ static void ensure_alpha_valid(void) {
         if (state.blend.dst_factor_alpha != SG_BLENDFACTOR_ONE) {
             set_dst_factor_alpha(SG_BLENDFACTOR_ONE);
         }
+    } else if (is_dualsrc_blend() && !sg_query_features().dual_source_blending) {
+        set_src_factor_alpha(SG_BLENDFACTOR_ZERO);
+        set_dst_factor_alpha(SG_BLENDFACTOR_ONE);
     }
 }
 
