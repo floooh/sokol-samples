@@ -56,57 +56,63 @@ void main() {
 in vec2 in_pos;
 
 @vs vs_img
-layout(binding=0) uniform img_params {
+layout(binding=0) uniform img_vs_params {
     vec2 offset;
     vec2 scale;
-    vec4 src1_color;
-    float alpha_scale;
 };
 
 const vec2 pos[] = { vec2(-1, -1), vec2(+1, -1), vec2(-1, +1), vec2(+1, +1) };
 
 out vec2 uv;
-out float amul;
-out vec4 src1;
 
 void main() {
     const vec2 p = pos[gl_VertexIndex];
     gl_Position = vec4((p * scale) + offset, 0, 1);
     uv = p * vec2(0.5, -0.5) + 0.5;
-    amul = alpha_scale;
-    src1 = src1_color;
 }
 @end
 
-@fs fs_img_std
+@block fs_img_common
+layout(binding=1) uniform img_fs_params {
+    vec4 src1_color;
+    float alpha_scale;
+    int premultiplied_alpha;
+};
 layout(binding=0) uniform texture2D tex;
 layout(binding=0) uniform sampler smp;
 
 in vec2 uv;
-in float amul;
-in vec4 src1;   // unused
+@end
+
+@fs fs_img_std
+@include_block fs_img_common
 
 out vec4 frag_color;
 
 void main() {
-    frag_color = texture(sampler2D(tex,smp), uv) * vec4(1, 1, 1, amul);
+    vec4 c = texture(sampler2D(tex,smp), uv);
+    c.a *= alpha_scale;
+    if (0 != premultiplied_alpha) {
+        c.rgb *= c.a;
+    }
+    frag_color = c;
 }
 @end
 
 @fs fs_img_dualsrc
-layout(binding=0) uniform texture2D tex;
-layout(binding=0) uniform sampler smp;
-
-in vec2 uv;
-in float amul;
-in vec4 src1;
+@include_block fs_img_common
 
 layout(location = 0, index = 0) out vec4 frag_color;
 layout(location = 0, index = 1) out vec4 frag_blend;
 
 void main() {
-    frag_color = texture(sampler2D(tex,smp), uv) * vec4(1, 1, 1, amul);
-    frag_blend = src1;
+    vec4 c = texture(sampler2D(tex,smp), uv);
+    c.a *= alpha_scale;
+    if (0 != premultiplied_alpha) {
+        c.rgb *= c.a;
+    }
+    frag_color = c;
+    frag_blend = src1_color;
 }
 @end
 
