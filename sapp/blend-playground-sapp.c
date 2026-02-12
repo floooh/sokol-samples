@@ -22,7 +22,7 @@
 #define MAX_FILE_SIZE (768 * 1024)
 #define NUM_BLEND_FACTORS (19)
 #define NUM_BLEND_OPS (5)
-#define MAX_SCALE (8.0f)
+#define MAX_SCALE (4.0f)
 #define MIN_SCALE (0.25f)
 
 static const char* blend_factor_names[NUM_BLEND_FACTORS] = {
@@ -319,7 +319,7 @@ static void input(const sapp_event* ev) {
             }
             break;
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            ctrl_scale(ev->scroll_y * 0.75f);
+            ctrl_scale(ev->scroll_y * 0.25f);
             break;
         default:
             break;
@@ -346,6 +346,13 @@ static bool draw_ui(void) {
         } else if (!state.image.valid) {
             igText("Loading image...");
         } else {
+            igSeparatorText("Camera");
+            igSliderFloat("Zoom", &state.ctrl.scale, MIN_SCALE, MAX_SCALE);
+            igSliderFloat2("Pan", &state.ctrl.offset.x, -sapp_widthf() * 0.5f, sapp_width() * 0.5f);
+            if (igButton("Reset")) {
+                state.ctrl.scale = 1.0f;
+                state.ctrl.offset = vec2(0.0f, 0.0f);
+            }
             igSeparatorText("Texture Properties");
             igSliderFloat("Alpha Scale", &state.ui.alpha_scale, 0.0f, 1.0f);
             igCheckbox("Premultiplied Alpha", &state.ui.premultiplied_alpha);
