@@ -314,7 +314,7 @@ To build one of the Metal samples:
 
 ```sh
 > cd sokol-samples/metal
-> cc cube-metal.c osxentry.m sokol_gfx.m -o cube-metal -fobjc-arc -I../../sokol -framework Metal -framework Cocoa -framework MetalKit -framework Quartz
+> cc cube-metal.c osxentry.m sokol_gfx.m -o cube-metal -fobjc-arc -I../../sokol -framework Metal -framework Cocoa -framework QuartzCore
 ```
 
 To build one of the GLFW samples (requires a system-wide glfw install, e.g. ```brew install glfw```):
@@ -329,7 +329,7 @@ To build one of the sokol-app samples for Metal:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l metal_macos
-> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -DSOKOL_METAL -fobjc-arc -I../../sokol -I ../libs -framework Metal -framework Cocoa -framework MetalKit -framework Quartz -framework AudioToolbox
+> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -DSOKOL_METAL -fobjc-arc -I../../sokol -I ../libs -framework Metal -framework Cocoa -framework MetalKit -framework QuartzCore -framework AudioToolbox
 ```
 
 To build one of the sokol-app samples for GL on macOS:
