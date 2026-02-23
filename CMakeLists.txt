@@ -16,7 +16,7 @@ include("${FIPS_ROOT_DIR}/cmake/fips.cmake")
 
 fips_setup()
 if (FIPS_IOS)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0" CACHE STRING "")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "")
 else()
     set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "")
 endif()
