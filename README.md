@@ -329,7 +329,7 @@ To build one of the sokol-app samples for Metal:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/osx/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l metal_macos
-> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -DSOKOL_METAL -fobjc-arc -I../../sokol -I ../libs -framework Metal -framework Cocoa -framework MetalKit -framework QuartzCore -framework AudioToolbox
+> cc cube-sapp.c ../libs/sokol/sokol.m -o cube-sapp -DSOKOL_METAL -fobjc-arc -I../../sokol -I ../libs -framework Metal -framework Cocoa -framework QuartzCore -framework AudioToolbox
 ```
 
 To build one of the sokol-app samples for GL on macOS:
