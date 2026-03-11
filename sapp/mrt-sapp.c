@@ -215,7 +215,8 @@ static void init(void) {
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
         .label = "dbgvis quad pipeline"
-    }),
+    });
+
     state.dbg.bind = (sg_bindings){
         .vertex_buffers[0] = quad_vbuf,
         .samplers[SMP_smp] = smp,
