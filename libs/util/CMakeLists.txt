@@ -1,7 +1,0 @@
-fips_begin_lib(fileutil)
-    if (FIPS_OSX)
-        fips_files(fileutil_osx.m fileutil.h)
-    else()
-        fips_files(fileutil.c fileutil.h)
-    endif()
-fips_end_lib()

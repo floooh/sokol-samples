@@ -1,11 +1,6 @@
+.fibs/
 .vscode/
+CMakeLists.txt
+CMakePresets.json
 *.swp
 .DS_Store
-fips-files/build/
-fips-files/deploy/
-#>fips
-# this area is managed by fips, do not edit
-.fips-*
-*.pyc
-CMakeUserPresets.json
-#<fips

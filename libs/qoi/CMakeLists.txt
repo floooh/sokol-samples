@@ -1,6 +1,0 @@
-fips_begin_lib(qoi)
-    fips_files(qoi.c qoi.h)
-    if (FIPS_CLANG OR FIPS_GCC)
-        target_compile_options(qoi PRIVATE -Wno-sign-conversion)
-    endif()
-fips_end_lib()

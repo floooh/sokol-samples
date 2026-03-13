@@ -1,9 +1,0 @@
----
-platform: ios
-generator: Xcode
-build_tool: xcodebuild
-build_type: Release
-cmake-toolchain: ios.toolchain.cmake
-defines:
-    SOKOL_USE_METAL: ON
-
