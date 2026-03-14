@@ -1,0 +1,15 @@
+{
+    "fmt": {
+        "useTabs": false,
+        "indentWidth": 4,
+        "singleQuote": true,
+        "lineWidth": 160,
+        "proseWrap": "never",
+        "include": ["fibs.ts"]
+    },
+    "lint": {
+        "rules": {
+            "exclude": ["no-import-prefix"]
+        }
+    }
+}

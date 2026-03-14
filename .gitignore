@@ -2,5 +2,6 @@
 .vscode/
 CMakeLists.txt
 CMakePresets.json
+deno.lock
 *.swp
 .DS_Store
