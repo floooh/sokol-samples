@@ -16,7 +16,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
     { name: 'vertexindexbuffer', ui: 'cc', shd: true },
     { name: 'texcube', ui: 'cc', shd: true },
     { name: 'sbuftex', ui: 'cc', shd: true },
-    { name: 'sbufoffset', ui: 'cc', shd: true },
+    { name: 'sbufoffset', ui: 'cc', shd: true, filter: hasCompute },
     { name: 'vertextexture', ui: 'cc', shd: true },
     { name: 'offscreen', ui: 'cc', shd: true },
     { name: 'offscreen-msaa', ui: 'cc', shd: true },
@@ -46,6 +46,130 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
             'nb2_posy.jpg',
             'nb2_posz.jpg',
         ]),
+    },
+    {
+        name: 'basisu',
+        ui: 'cc',
+        deps: ['basisu'],
+        jobs: copy('data/basisu', ['testcard.basis', 'testcard_rgba.basis']) },
+    {
+        name: 'blend-playground',
+        shd: true,
+        deps: ['imgui', 'fileutil', 'qoi'],
+        jobs: copy('data/qoi', [
+            'baboon.qoi',
+            'dice.qoi',
+            'testcard_rgba.qoi',
+            'testcard.qoi',
+        ]),
+    },
+    { name: 'blend', ui: 'cc', shd: true },
+    { name: 'blend-op', ui: 'cc', shd: true },
+    { name: 'uvwrap', ui: 'cc', shd: true },
+    { name: 'uniformtypes', ui: 'cc', shd: true },
+    // use sokol-cpp for testing, not required though
+    { name: 'imgui', ext: 'cc', sokol: 'cc', deps: ['imgui'] },
+    { name: 'imgui-dock', ext: 'cc', deps: ['imgui-docking'] },
+    { name: 'imgui-highdpi', ext: 'cc', deps: ['imgui'] },
+    { name: 'cimgui', deps: ['imgui'] },
+    { name: 'imgui-usercallback', shd: true, deps: ['imgui'] },
+    { name: 'imgui-images', deps: ['imgui'] },
+    { name: 'imgui-perf', deps: ['imgui'] },
+    { name: 'events', ext: 'cc', deps: ['imgui'] },
+    { name: 'pixelformats', shd: true, deps: ['imgui'] },
+    { name: 'sgl', ui: 'cc' },
+    { name: 'sgl-lines', ui: 'cc' },
+    { name: 'sgl-points', ui: 'cc' },
+    { name: 'sgl-context', ui: 'cc' },
+    // FIXME: microui
+    // FIXME: nuklear
+    // FIXME: nuklear-images
+    { name: 'cubemaprt', ui: 'cc', shd: true },
+    { name: 'miprender', ui: 'cc', shd: true },
+    { name: 'layerrender', ui: 'cc', shd: true },
+    { name: 'sdf', ui: 'cc', shd: true },
+    { name: 'shapes', ui: 'cc', shd: true },
+    { name: 'shapes-transform', ui: 'cc', shd: true },
+    { name: 'primtypes', ui: 'cc', shd: true },
+    { name: 'drawcallperf', shd: true, deps: ['imgui'] },
+    { name: 'debugtext', ui: 'cc' },
+    { name: 'debugtext-printf', ui: 'cc' },
+    { name: 'debugtext-userfont', ui: 'cc' },
+    { name: 'debugtext-context', shd: true, ui: 'cc' },
+    { name: 'debugtext-layers', ui: 'cc' },
+    { name: 'saudio' },
+    { name: 'icon' },
+    { name: 'cursor', ext: 'cc', deps: ['imgui'] },
+    { name: 'droptest', deps: ['imgui'] },
+    {
+        name: 'fontstash',
+        ui: 'cc',
+        deps: ['fileutil'],
+        jobs: copy('data', [
+            'DroidSansJapanese.ttf',
+            'DroidSerif-Bold.ttf',
+            'DroidSerif-Italic.ttf',
+            'DroidSerif-Regular.ttf',
+        ]),
+    },
+    {
+        name: 'fontstash-layers',
+        ui: 'cc',
+        shd: true,
+        deps: ['fileutil'],
+        jobs: copy('data', [
+            'DroidSansJapanese.ttf',
+            'DroidSerif-Bold.ttf',
+            'DroidSerif-Italic.ttf',
+            'DroidSerif-Regular.ttf',
+        ]),
+    },
+    // FIXME: modplay
+    // FIXME: restart
+    {
+        name: 'plmpeg',
+        shd: true,
+        ui: 'cc',
+        deps: ['fileutil'],
+        jobs: copy('data', ['bjork-all-is-full-of-love.mpg'])
+    },
+    {
+        name: 'cgltf',
+        shd: true,
+        ui: 'cc',
+        deps: ['fileutil', 'basisu'],
+        jobs: copy('data/gltf/DamagedHelmet', [
+            'DamagedHelmet.bin',
+            'DamagedHelmet.gltf',
+            'Default_albedo.basis',
+            'Default_AO.basis',
+            'Default_emissive.basis',
+            'Default_metalRoughness.basis',
+            'Default_normal.basis',
+        ]),
+    },
+    { name: 'loadpng', shd: true, ui: 'cc', deps: ['fileutil', 'stb-lib'], jobs: copy('data', ['baboon.png']) },
+    // FIXME: spine-simple
+    // FIXME: spine-inspector
+    // FIXME: spine-skinsets
+    // FIXME: spine-layers
+    // FIXME: spine-contexts
+    // FIXME: spine-switch-skinsets
+    // FIXME: ozz-anim
+    // FIXME: ozz-skin
+    // FIXME: ozz-storagebuffer
+    // FIXME: shdfeatures
+    { name: 'noentry', sokol: 'noentry', shd: true, filter: (b) => !b.isAndroid() },
+    { name: 'noentry-dll', sokol: 'dll', shd: true, filter: (b) => b.isWindows() || b.isMacOS() || b.isLinux() },
+    { name: 'instancing-compute', ui: 'cc', shd: true, filter: hasCompute },
+    { name: 'write-storageimage', ui: 'cc', shd: true, filter: hasCompute },
+    { name: 'computeboids', shd: true, deps: ['imgui'], filter: hasCompute },
+    {
+        name: 'imageblur',
+        shd: true,
+        deps: ['imgui', 'stb-lib', 'fileutil'],
+        filter: hasCompute,
+        jobs: copy('data', ['baboon.png']),
     },
 ];
 
@@ -92,7 +216,9 @@ export function configure(c: Configurer) {
 
 export function build(b: Builder) {
     addLibs(b);
-    sokolAppSamples.forEach((s) => addSokolAppSample(b, s));
+    if (b.activeConfig().name.startsWith('sapp-')) {
+        sokolAppSamples.forEach((s) => addSokolAppSample(b, s));
+    }
 }
 
 type SokolAppSampleOptions = {
@@ -103,9 +229,13 @@ type SokolAppSampleOptions = {
     shd?: true;
     deps?: string[];
     jobs?: TargetJob[];
+    filter?: (b: Builder) => boolean;
 };
 
-function addSokolAppSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs }: SokolAppSampleOptions) {
+function addSokolAppSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, filter }: SokolAppSampleOptions) {
+    if (filter && !filter(b)) {
+        return;
+    }
     const cmn = (t: TargetBuilder) => {
         t.setDir('sapp');
         t.addSource(`${name}-sapp.${ext ?? 'c'}`);
@@ -201,6 +331,36 @@ function addLibs(b: Builder) {
             t.addSource('fileutil.c');
         }
     });
+    b.addTarget('basisu', 'lib', (t) => {
+        t.setDir('libs/basisu');
+        t.addSources(['sokol_basisu.cpp', 'sokol_basisu.h']);
+        t.addDependencies(['sokol']);
+        if (b.isGcc() || b.isClang()) {
+            t.addCompileOptions({
+                scope: 'private',
+                opts: ['-Wno-unused-value', '-Wno-unused-variable', '-Wno-unused-parameter', '-Wno-type-limits', '-Wno-deprecated-builtins'],
+            });
+            if (b.isGcc()) {
+                t.addCompileOptions({
+                    scope: 'private',
+                    opts: ['-Wno-maybe-uninitialized', '-Wno-class-memaccess'],
+                });
+            }
+            if (b.isClang()) {
+                t.addCompileOptions({
+                    scope: 'private',
+                    opts: ['-Wno-deprecated-declarations'],
+                });
+            }
+        }
+    });
+    b.addTarget('qoi', 'lib', (t) => {
+        t.setDir('libs/qoi');
+        t.addSources(['qoi.c', 'qoi.h']);
+        if (b.isGcc() || b.isClang()) {
+            t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion'] });
+        }
+    });
 }
 
 function sokolBackendByConfig(config: Config) {
@@ -213,6 +373,19 @@ function sokolBackendByConfig(config: Config) {
     if (n.includes('-vk-')) return 'vulkan';
     // otherwise: autoselect
     return undefined;
+}
+
+function hasCompute(b: Builder): boolean {
+    const cfg = b.activeConfig();
+    if (b.isAndroid()) {
+        return true;
+    } else if (sokolBackendByConfig(cfg) === 'gles3') {
+        return false;
+    } else if ((sokolBackendByConfig(cfg) === 'glcore') && b.isMacOS()) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 function copy(srcDir: string, files: string[]): TargetJob[] {
