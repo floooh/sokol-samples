@@ -1,7 +1,0 @@
----
-options:
-    ios:
-        dst_dir: $TARGET_NAME.app
-    macos:
-        dst_dir: $TARGET_NAME.app/Contents/Resources
-files: [ "baboon.png" ]

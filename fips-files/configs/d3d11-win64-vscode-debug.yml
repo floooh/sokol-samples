@@ -1,8 +1,0 @@
----
-platform: win64
-generator: Visual Studio 17
-generator-platform: x64
-build_tool: vscode
-build_type: Debug
-defines:
-    SOKOL_USE_D3D11: ON

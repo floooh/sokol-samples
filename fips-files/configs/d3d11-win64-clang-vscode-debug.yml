@@ -1,8 +1,0 @@
----
-platform: win64
-generator: Ninja
-build_tool: vscode
-build_type: Debug
-cmake-toolchain: windows-clang.cmake
-defines:
-    SOKOL_USE_D3D11: ON

@@ -1,8 +1,0 @@
----
-platform: osx
-generator: Ninja
-build_tool: vscode
-build_type: Debug
-defines:
-    SOKOL_USE_METAL: ON
-

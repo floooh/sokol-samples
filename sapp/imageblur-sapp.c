@@ -16,7 +16,7 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
-#include "stb/stb_image.h"
+#include "stb_image.h"
 #include "util/fileutil.h"
 #include "imageblur-sapp.glsl.h"
 #include <math.h> // ceilf()
