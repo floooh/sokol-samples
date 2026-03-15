@@ -37,7 +37,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
         name: 'cubemap-jpeg',
         ui: 'cc',
         shd: true,
-        deps: ['stb-lib', 'fileutil'],
+        deps: ['stb', 'fileutil'],
         jobs: copy('data/nissibeach2', [
             'nb2_negx.jpg',
             'nb2_negy.jpg',
@@ -148,7 +148,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
             'Default_normal.basis',
         ]),
     },
-    { name: 'loadpng', shd: true, ui: 'cc', deps: ['fileutil', 'stb-lib'], jobs: copy('data', ['baboon.png']) },
+    { name: 'loadpng', shd: true, ui: 'cc', deps: ['fileutil', 'stb'], jobs: copy('data', ['baboon.png']) },
     // FIXME: spine-simple
     // FIXME: spine-inspector
     // FIXME: spine-skinsets
@@ -167,7 +167,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
     {
         name: 'imageblur',
         shd: true,
-        deps: ['imgui', 'stb-lib', 'fileutil'],
+        deps: ['imgui', 'stb', 'fileutil'],
         filter: hasCompute,
         jobs: copy('data', ['baboon.png']),
     },
@@ -317,11 +317,6 @@ function addLibs(b: Builder) {
     });
 
     // misc libs
-    b.addTarget('stb-lib', 'lib', (t) => {
-        t.setDir('libs/stb');
-        t.addSource('stb_image.c');
-        t.addDependencies(['stb']);
-    });
     b.addTarget('fileutil', 'lib', (t) => {
         t.setDir('libs/util');
         t.addSource('fileutil.h');

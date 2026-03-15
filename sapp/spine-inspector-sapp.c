@@ -18,8 +18,9 @@
 #include "cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
-#include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define MAX_TRIGGERED_EVENTS (16)
 

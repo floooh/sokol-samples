@@ -17,7 +17,6 @@
 #include "sokol_fetch.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "stb/stb_image.h"
 
 #define SOKOL_IMPL
 #include "sokol_gl.h"
@@ -25,6 +24,9 @@
 #include "sokol_memtrack.h"
 
 #include "modplug.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define VECMATH_GENERICS
 #include "vecmath/vecmath.h"

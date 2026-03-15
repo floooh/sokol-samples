@@ -13,9 +13,10 @@
 #include "sokol_glue.h"
 #include "spine/spine.h"
 #include "sokol_spine.h"
-#include "stb/stb_image.h"
 #include "util/fileutil.h"
 #include "dbgui/dbgui.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define NUM_INSTANCES_X (16)
 #define NUM_INSTANCES_Y (8)
