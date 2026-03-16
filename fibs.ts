@@ -5,6 +5,7 @@ import { addConfigs } from './fibs-scripts/configs.ts';
 import { addSokolAppSamples } from './fibs-scripts/sapp.ts';
 import { addGlfwSamples } from './fibs-scripts/glfw.ts';
 import { addMetalSamples } from './fibs-scripts/metal.ts';
+import { addEmscriptenSamples } from './fibs-scripts/emscripten.ts';
 
 export function configure(c: Configurer) {
     addConfigs(c);
@@ -20,5 +21,7 @@ export function build(b: Builder) {
         addGlfwSamples(b);
     } else if (cfg.options.metalSamples) {
         addMetalSamples(b);
+    } else if (cfg.name.startsWith('emsc-')) {
+        addEmscriptenSamples(b);
     }
 }
