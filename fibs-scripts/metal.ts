@@ -1,9 +1,6 @@
 import type { Builder } from 'jsr:@floooh/fibs@^1';
 
 export function addMetalSamples(b: Builder) {
-    if (!(b.isMacOS() || b.isIOS())) {
-        throw new Error('Metal samples can only be built for macOS or iOS');
-    }
     addLibs(b);
     const stdSamples = [
         'clear',
