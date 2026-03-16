@@ -22,14 +22,22 @@ export function addGlfwSamples(b: Builder) {
     ]
     stdSamples.forEach((name) => addSample(b, { name }));
     addSample(b, { name: 'imgui', ext: 'cc', deps: ['imgui'] });
+    addSample(b, { name: 'multiwindow', deps: ['flextgl33']});
+    addSample(b, { name: 'sgl-test', deps: ['flextgl12']});
     if (!b.isMacOS()) {
         addSample(b, { name: 'instancing-compute' });
         addSample(b, { name: 'vertexpulling' });
     }
 
-    // FIXME: multiwindow
-    // FIXME: sgl-test
-    // FIXME: metal
+    // special glfw+metal sample
+    if (b.isMacOS()) {
+        b.addTarget('metal-glfw', 'plain-exe', (t) => {
+            t.setDir('glfw');
+            t.addSource('metal-glfw.m');
+            t.addDependencies(['glfw_glue']);
+            t.addFrameworks(['Cocoa', 'QuartzCore', 'Metal']);
+        });
+    }
 }
 
 type SampleOptions = {
@@ -68,7 +76,7 @@ function addLibs(b: Builder) {
             t.addCompileOptions({ scope: 'private', opts: ['-Wno-incompatible-function-pointer-types'] });
         }
         if (b.isClang() || b.isGcc()) {
-            t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion'] });
+            t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion', '-Wno-missing-braces', '-Wno-unused-parameter'] });
         }
     });
     b.addTarget('glfw_glue', 'lib', (t) => {
