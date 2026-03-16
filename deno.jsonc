@@ -5,11 +5,12 @@
         "singleQuote": true,
         "lineWidth": 160,
         "proseWrap": "never",
-        "include": ["fibs.ts"]
+        "include": ["fibs.ts", "fibs-scripts/*.ts"]
     },
     "lint": {
         "rules": {
             "exclude": ["no-import-prefix"]
-        }
+        },
+        "include": ["fibs.ts", "fibs-scripts/*.ts"]
     }
 }

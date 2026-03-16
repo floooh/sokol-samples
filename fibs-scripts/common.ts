@@ -12,18 +12,18 @@ export function sokolBackendByConfig(config: Config) {
     return undefined;
 }
 
-export function copy(srcDir: string, files: string[]): TargetJob[] {
-    return [{
+export function copy(srcDir: string, files: string[]): TargetJob {
+    return {
         job: 'copyfiles',
         args: { srcDir, files },
-    }];
+    };
 }
 
-export function embed(dir: string, outHeader: string, files: string[]): TargetJob[] {
-    return [{
+export function embed(dir: string, outHeader: string, files: string[]): TargetJob {
+    return {
         job: 'embedfiles',
         args: { dir, outHeader, files },
-    }];
+    };
 }
 
 export type ShdcOptions = {
