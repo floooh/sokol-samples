@@ -3,7 +3,6 @@
 //  update texture per-frame with CPU generated data
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"

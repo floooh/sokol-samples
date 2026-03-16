@@ -1,11 +1,11 @@
-import { type Builder, type TargetBuilder, type TargetJob, } from 'jsr:@floooh/fibs@^1';
+import type { Builder, TargetBuilder, TargetJob } from 'jsr:@floooh/fibs@^1';
 import { hasCompute, copy, embed, shdc } from './common.ts';
 
 export function addSokolAppSamples(b: Builder) {
-    sokolAppSamples.forEach((s) => addSokolAppSample(b, s));
+    samples.forEach((s) => addSample(b, s));
 }
 
-const sokolAppSamples: SokolAppSampleOptions[] = [
+const samples: SampleOptions[] = [
     { name: 'clear', ui: 'cc' },
     { name: 'triangle', ui: 'cc', shd: true },
     { name: 'triangle-bufferless', ui: 'cc', shd: true },
@@ -192,7 +192,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
     },
 ];
 
-type SokolAppSampleOptions = {
+type SampleOptions = {
     name: string;
     ext?: 'cc';
     ui?: 'c' | 'cc';
@@ -203,7 +203,7 @@ type SokolAppSampleOptions = {
     filter?: (b: Builder) => boolean;
 };
 
-function addSokolAppSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, filter }: SokolAppSampleOptions) {
+function addSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, filter }: SampleOptions) {
     if (filter && !filter(b)) {
         return;
     }

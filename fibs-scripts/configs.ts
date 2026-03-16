@@ -5,10 +5,12 @@ const ANDROID_PLATFORM = 'android-30';
 
 export function addConfigs(c: Configurer) {
     addSappConfigs(c);
+    addGlfwConfigs(c);
 }
 
+const cfg = conf.builtinConfigDesc;
+
 function addSappConfigs(c: Configurer) {
-    const cfg = conf.builtinConfigDesc;
     const d3d11 = { sapp: true, backend: 'd3d11' };
     const gl = { sapp: true, backend: 'glcore' };
     const vk = { sapp: true, backend: 'vulkan' };
@@ -227,4 +229,34 @@ function addSappConfigs(c: Configurer) {
     c.addConfig({ ...android, name: 'sapp-gles-android-ninja-debug', generator: 'ninja', buildMode: 'debug', options: gles });
     c.addConfig({ ...android, name: 'sapp-gles-android-vscode-release', generator: 'ninja', buildMode: 'release', opener: 'vscode', options: gles });
     c.addConfig({ ...android, name: 'sapp-gles-android-vscode-debug', generator: 'ninja', buildMode: 'debug', opener: 'vscode', options: gles });
+}
+
+function addGlfwConfigs(c: Configurer) {
+    const glfw = { glfw: true, backend: 'glcore' };
+
+    // windows
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-msvc-debug', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-msvc-release', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-vstudio-debug', opener: 'vstudio', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-vstudio-release', opener: 'vstudio', options: glfw  });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-vscode-release', generator: 'ninja', opener: 'vscode', options: glfw });
+
+    // macos
+    c.addConfig({ ...cfg('macos-make-release'), name: 'glfw-macos-make-release', options: glfw });
+    c.addConfig({ ...cfg('macos-make-debug'), name: 'glfw-macos-make-debug', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'glfw-macos-ninja-release', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'glfw-macos-ninja-debug', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'glfw-macos-vscode-release', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'glfw-macos-vscode-debug', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'glfw-macos-xcode-release', generator: 'xcode', opener: 'xcode', options: glfw });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'glfw-macos-xcode-debug', generator: 'xcode', opener: 'xcode', options: glfw });
+
+    // linux
+    c.addConfig({ ...cfg('linux-make-release'), name: 'glfw-linux-make-release', options: glfw });
+    c.addConfig({ ...cfg('linux-make-debug'), name: 'glfw-linux-make-debug', options: glfw });
+    c.addConfig({ ...cfg('linux-ninja-release'), name: 'glfw-linux-ninja-release', options: glfw });
+    c.addConfig({ ...cfg('linux-ninja-debug'), name: 'glfw-linux-ninja-debug', options: glfw });
+    c.addConfig({ ...cfg('linux-ninja-release'), name: 'glfw-linux-vscode-release', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('linux-ninja-debug'), name: 'glfw-linux-vscode-debug', opener: 'vscode', options: glfw });
 }

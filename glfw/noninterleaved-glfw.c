@@ -7,7 +7,6 @@
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
-#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"
