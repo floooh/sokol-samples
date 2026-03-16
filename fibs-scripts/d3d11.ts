@@ -1,10 +1,6 @@
 import type { Builder } from 'jsr:@floooh/fibs@^1';
-import { addLibs } from './libs.ts';
 
 export function addD3d11Samples(b: Builder) {
-    if (!b.isWindows()) {
-        throw new Error('D3D11 samples can only be built for Windows');
-    }
     b.addTarget('d3d11entry', 'lib', (t) => {
         const sokolDir = b.importDir('sokol');
         t.setDir('d3d11');
