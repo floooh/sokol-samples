@@ -12,9 +12,9 @@
 #include "sokol_time.h"
 #include "sokol_log.h"
 #include "imgui.h"
-#define SOKOL_METAL
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_IMGUI_NO_SOKOL_APP
+#define SOKOL_METAL
 #include "sokol_imgui.h"
 
 static const int WIDTH = 1024;

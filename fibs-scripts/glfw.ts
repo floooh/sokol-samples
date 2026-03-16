@@ -80,8 +80,10 @@ function addLibs(b: Builder) {
         }
     });
     b.addTarget('glfw_glue', 'lib', (t) => {
+        const sokolDir = `${b.importDir('sokol')}`;
         t.setDir('glfw');
         t.addSources(['glfw_glue.c', 'glfw_glue.h']);
-        t.addDependencies(['glfw3', 'sokol']);
+        t.addDependencies(['glfw3']);
+        t.addIncludeDirectories([sokolDir, `${sokolDir}/util`]);
     });
 }

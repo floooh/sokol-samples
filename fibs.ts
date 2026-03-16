@@ -4,6 +4,7 @@ import { addLibs } from './fibs-scripts/libs.ts';
 import { addConfigs } from './fibs-scripts/configs.ts';
 import { addSokolAppSamples } from './fibs-scripts/sapp.ts';
 import { addGlfwSamples } from './fibs-scripts/glfw.ts';
+import { addMetalSamples } from './fibs-scripts/metal.ts';
 
 export function configure(c: Configurer) {
     addConfigs(c);
@@ -12,9 +13,12 @@ export function configure(c: Configurer) {
 
 export function build(b: Builder) {
     addLibs(b);
-    if (b.activeConfig().options.sapp) {
+    const cfg = b.activeConfig();
+    if (cfg.options.sappSamples) {
         addSokolAppSamples(b);
-    } else if (b.activeConfig().options.glfw) {
+    } else if (cfg.options.glfwSamples) {
         addGlfwSamples(b);
+    } else if (cfg.options.metalSamples) {
+        addMetalSamples(b);
     }
 }

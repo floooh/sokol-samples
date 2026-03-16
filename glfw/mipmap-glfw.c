@@ -5,6 +5,7 @@
 //  Bottom row: anistropy levels 2, 4, 8 and 16
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
+#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"

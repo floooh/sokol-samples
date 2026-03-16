@@ -6,17 +6,18 @@ const ANDROID_PLATFORM = 'android-30';
 export function addConfigs(c: Configurer) {
     addSappConfigs(c);
     addGlfwConfigs(c);
+    addMetalConfigs(c);
 }
 
 const cfg = conf.builtinConfigDesc;
 
 function addSappConfigs(c: Configurer) {
-    const d3d11 = { sapp: true, backend: 'd3d11' };
-    const gl = { sapp: true, backend: 'glcore' };
-    const vk = { sapp: true, backend: 'vulkan' };
-    const wgpu = { sapp: true, backend: 'wgpu' };
-    const metal = { sapp: true, backend: 'metal' };
-    const gles = { sapp: true, backend: 'gles3' };
+    const d3d11 = { sappSamples: true, backend: 'd3d11' };
+    const gl = { sappSamples: true, backend: 'glcore' };
+    const vk = { sappSamples: true, backend: 'vulkan' };
+    const wgpu = { sappSamples: true, backend: 'wgpu' };
+    const metal = { sappSamples: true, backend: 'metal' };
+    const gles = { sappSamples: true, backend: 'gles3' };
 
     // override default configs
     c.addConfig({ ...cfg('win-msvc-release'), options: d3d11 });
@@ -232,7 +233,7 @@ function addSappConfigs(c: Configurer) {
 }
 
 function addGlfwConfigs(c: Configurer) {
-    const glfw = { glfw: true, backend: 'glcore' };
+    const glfw = { glfwSamples: true, backend: 'glcore' };
 
     // windows
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-msvc-debug', options: glfw });
@@ -259,4 +260,16 @@ function addGlfwConfigs(c: Configurer) {
     c.addConfig({ ...cfg('linux-ninja-debug'), name: 'glfw-linux-ninja-debug', options: glfw });
     c.addConfig({ ...cfg('linux-ninja-release'), name: 'glfw-linux-vscode-release', opener: 'vscode', options: glfw });
     c.addConfig({ ...cfg('linux-ninja-debug'), name: 'glfw-linux-vscode-debug', opener: 'vscode', options: glfw });
+}
+
+export function addMetalConfigs(c: Configurer) {
+    const metal = { metalSamples: true, backend: 'metal' };
+    c.addConfig({ ...cfg('macos-make-release'), name: 'metal-macos-make-release', options: metal });
+    c.addConfig({ ...cfg('macos-make-debug'), name: 'metal-macos-make-debug', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'metal-macos-ninja-release', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'metal-macos-ninja-debug', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'metal-macos-vscode-release', opener: 'vscode', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'metal-macos-vscode-debug', opener: 'vscode', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-release'), name: 'metal-macos-xcode-release', generator: 'xcode', opener: 'xcode', options: metal });
+    c.addConfig({ ...cfg('macos-ninja-debug'), name: 'metal-macos-xcode-debug', generator: 'xcode', opener: 'xcode', options: metal });
 }

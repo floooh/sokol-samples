@@ -3,6 +3,7 @@
 //  Demonstrate usage of injected native GL buffer and image resources.
 //------------------------------------------------------------------------------
 #define SOKOL_IMPL
+#define SOKOL_GLCORE
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"
