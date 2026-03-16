@@ -7,6 +7,7 @@ export function addConfigs(c: Configurer) {
     addSappConfigs(c);
     addGlfwConfigs(c);
     addMetalConfigs(c);
+    addD3d11Configs(c);
 }
 
 const cfg = conf.builtinConfigDesc;
@@ -272,4 +273,14 @@ export function addMetalConfigs(c: Configurer) {
     c.addConfig({ ...cfg('macos-ninja-debug'), name: 'metal-macos-vscode-debug', opener: 'vscode', options: metal });
     c.addConfig({ ...cfg('macos-ninja-release'), name: 'metal-macos-xcode-release', generator: 'xcode', opener: 'xcode', options: metal });
     c.addConfig({ ...cfg('macos-ninja-debug'), name: 'metal-macos-xcode-debug', generator: 'xcode', opener: 'xcode', options: metal });
+}
+
+export function addD3d11Configs(c: Configurer) {
+    const d3d11 = { d3d11Samples: true };
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-msvc-debug', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-msvc-release', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-vstudio-debug', opener: 'vstudio', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-vstudio-release', opener: 'vstudio', options: d3d11  });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-vscode-release', generator: 'ninja', opener: 'vscode', options: d3d11 });
 }
