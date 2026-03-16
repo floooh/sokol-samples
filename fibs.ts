@@ -51,7 +51,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
         name: 'basisu',
         ui: 'cc',
         deps: ['basisu'],
-        jobs: copy('data/basisu', ['testcard.basis', 'testcard_rgba.basis']) },
+        jobs: embed('data', 'basisu-assets.h', ['basisu/testcard.basis', 'basisu/testcard_rgba.basis']) },
     {
         name: 'blend-playground',
         shd: true,
@@ -67,8 +67,7 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
     { name: 'blend-op', ui: 'cc', shd: true },
     { name: 'uvwrap', ui: 'cc', shd: true },
     { name: 'uniformtypes', ui: 'cc', shd: true },
-    // use sokol-cpp for testing, not required though
-    { name: 'imgui', ext: 'cc', sokol: 'cc', deps: ['imgui'] },
+    { name: 'imgui', ext: 'cc', sokol: 'cc', deps: ['imgui'] }, // use sokol-cpp for testing, not required though
     { name: 'imgui-dock', ext: 'cc', deps: ['imgui-docking'] },
     { name: 'imgui-highdpi', ext: 'cc', deps: ['imgui'] },
     { name: 'cimgui', deps: ['imgui'] },
@@ -77,13 +76,19 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
     { name: 'imgui-perf', deps: ['imgui'] },
     { name: 'events', ext: 'cc', deps: ['imgui'] },
     { name: 'pixelformats', shd: true, deps: ['imgui'] },
+    {
+        name: 'texview',
+        shd: true,
+        deps: ['imgui', 'fileutil', 'basisu'],
+        jobs: copy('data/texview', ['kodim05.basis', 'kodim07.basis', 'kodim17.basis', 'kodim20.basis', 'kodim23.basis' ]),
+    },
     { name: 'sgl', ui: 'cc' },
     { name: 'sgl-lines', ui: 'cc' },
     { name: 'sgl-points', ui: 'cc' },
     { name: 'sgl-context', ui: 'cc' },
-    // FIXME: microui
-    // FIXME: nuklear
-    // FIXME: nuklear-images
+    { name: 'sgl-microui', ui: 'c', deps: ['microui'] },
+    { name: 'nuklear', ui: 'cc', deps: ['nuklear-static'] },
+    { name: 'nuklear-images', ui: 'cc', deps: ['nuklear-static'] },
     { name: 'cubemaprt', ui: 'cc', shd: true },
     { name: 'miprender', ui: 'cc', shd: true },
     { name: 'layerrender', ui: 'cc', shd: true },
@@ -124,8 +129,8 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
             'DroidSerif-Regular.ttf',
         ]),
     },
-    // FIXME: modplay
-    // FIXME: restart
+    { name: 'modplay', deps: ['libmodplug'], jobs: embed('data', 'mods.h', ['disco_feva_baby.s3m']) },
+    { name: 'restart', shd: true, deps: ['libmodplug', 'fileutil', 'stb'], jobs: copy('data', ['baboon.png', 'comsi.s3m']) },
     {
         name: 'plmpeg',
         shd: true,
@@ -149,15 +154,32 @@ const sokolAppSamples: SokolAppSampleOptions[] = [
         ]),
     },
     { name: 'loadpng', shd: true, ui: 'cc', deps: ['fileutil', 'stb'], jobs: copy('data', ['baboon.png']) },
-    // FIXME: spine-simple
-    // FIXME: spine-inspector
-    // FIXME: spine-skinsets
-    // FIXME: spine-layers
-    // FIXME: spine-contexts
-    // FIXME: spine-switch-skinsets
-    // FIXME: ozz-anim
-    // FIXME: ozz-skin
-    // FIXME: ozz-storagebuffer
+    { name: 'spine-simple', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: copySpineAssets() },
+    { name: 'spine-inspector', deps: ['spine', 'stb', 'fileutil', 'imgui'], jobs: copySpineAssets() },
+    { name: 'spine-skinsets', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: copySpineAssets() },
+    { name: 'spine-layers', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: copySpineAssets() },
+    { name: 'spine-contexts', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: copySpineAssets() },
+    { name: 'spine-switch-skinsets', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: copySpineAssets() },
+    {
+        name: 'ozz-anim',
+        ext: 'cc',
+        deps: ['fileutil', 'ozzanimation', 'imgui'],
+        jobs: copy('data/ozz', ['ozz_anim_animation.ozz', 'ozz_anim_skeleton.ozz']),
+    },
+    {
+        name: 'ozz-skin',
+        ext: 'cc',
+        shd: true,
+        deps: ['fileutil', 'ozzanimation', 'imgui'],
+        jobs: copy('data/ozz', ['ozz_skin_animation.ozz', 'ozz_skin_skeleton.ozz', 'ozz_skin_mesh.ozz']),
+    },
+    {
+        name: 'ozz-storagebuffer',
+        ext: 'cc',
+        shd: true,
+        deps: ['fileutil', 'ozzanimation', 'imgui'],
+        jobs: copy('data/ozz', ['ozz_skin_animation.ozz', 'ozz_skin_skeleton.ozz', 'ozz_skin_mesh.ozz']),
+    },
     // FIXME: shdfeatures
     { name: 'noentry', sokol: 'noentry', shd: true, filter: (b) => !b.isAndroid() },
     { name: 'noentry-dll', sokol: 'dll', shd: true, filter: (b) => b.isWindows() || b.isMacOS() || b.isLinux() },
@@ -195,8 +217,14 @@ export function configure(c: Configurer) {
     c.addImport({
         name: 'libs',
         url: 'https://github.com/floooh/fibs-libs',
-        // FIXME: nuklear, microui, stb, glfw3
-        files: ['sokol.ts', 'stb.ts'],
+        files: [
+            'sokol.ts',
+            'stb.ts',
+            'libmodplug.ts',
+            'ozzanimation.ts',
+            'microui.ts',
+            'nuklear.ts',
+        ],
     });
     c.addImport({
         name: 'dcimgui',
@@ -247,7 +275,7 @@ function addSokolAppSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, 
         } else if (sokol === 'dll') {
             t.addDependencies(['sokol-dll']);
         } else {
-            t.addDependencies(['sokol-lib']);
+            t.addDependencies(['sokol-static']);
         }
         if (deps) {
             t.addDependencies(deps);
@@ -279,7 +307,7 @@ function addSokolAppSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, 
 
 function addLibs(b: Builder) {
     // the various sokol-library flavours
-    b.addTarget('sokol-lib', 'lib', (t) => {
+    b.addTarget('sokol-static', 'lib', (t) => {
         t.setDir('libs/sokol');
         t.addSource('sokol.c');
         t.addDependencies(['sokol']);
@@ -356,6 +384,50 @@ function addLibs(b: Builder) {
             t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion'] });
         }
     });
+    b.addTarget('nuklear-static', 'lib', (t) => {
+        t.setDir('libs/nuklear');
+        t.addSource('nuklear.c');
+        t.addDependencies(['nuklear']);
+    });
+    b.addTarget('spine', 'lib', (t) => {
+        const glob = (dir: string) => {
+            const res: string[] = [];
+            for (const entry of Deno.readDirSync(dir)) {
+                if (entry.isFile && entry.name.endsWith('.c')) {
+                    res.push(entry.name);
+                }
+            }
+            return res;
+        };
+        t.setDir('libs/spine-c/src/spine');
+        t.addSources(glob(`${b.selfDir()}/libs/spine-c/src/spine`));
+        t.addIncludeDirectories(['../../include']);
+        if (b.isMsvc()) {
+            t.addCompileOptions({
+                scope: 'private',
+                opts: ['/wd4146', '/wd4244', '/wd4267'],
+            });
+        } else if (b.isGcc() || b.isClang()) {
+            t.addCompileOptions({
+                scope: 'private',
+                opts: [
+                    '-Wno-sign-conversion',
+                    '-Wno-unused-but-set-variable',
+                    '-Wno-implicit-fallthrough',
+                    '-Wno-parentheses'
+                ],
+            });
+            if (b.isClang()) {
+                t.addCompileOptions({
+                    scope: 'private',
+                    opts: [
+                        '-Wno-shorten-64-to-32',
+                        '-Wno-implicit-const-int-float-conversion',
+                    ],
+                });
+            }
+        }
+    });
 }
 
 function sokolBackendByConfig(config: Config) {
@@ -388,6 +460,33 @@ function copy(srcDir: string, files: string[]): TargetJob[] {
         job: 'copyfiles',
         args: { srcDir, files },
     }];
+}
+
+function embed(dir: string, outHeader: string, files: string[]): TargetJob[] {
+    return [{
+        job: 'embedfiles',
+        args: { dir, outHeader, files },
+    }];
+}
+
+function copySpineAssets(): TargetJob[] {
+    return copy('data/spine', [
+        'spineboy-pro.json',
+        'spineboy.atlas',
+        'spineboy.png',
+        'raptor-pro.skel',
+        'raptor-pma.atlas',
+        'raptor-pma.png',
+        'alien-pro.skel',
+        'alien-pma.atlas',
+        'alien-pma.png',
+        'speedy-ess.skel',
+        'speedy-pma.atlas',
+        'speedy-pma.png',
+        'mix-and-match-pro.skel',
+        'mix-and-match-pma.atlas',
+        'mix-and-match-pma.png',
+    ]);
 }
 
 function addConfigs(c: Configurer) {

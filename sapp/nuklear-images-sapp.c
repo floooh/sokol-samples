@@ -20,7 +20,7 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_INCLUDE_STANDARD_VARARGS
-#include "nuklear/nuklear.h"
+#include "nuklear.h"
 #define SOKOL_NUKLEAR_IMPL
 #include "sokol_nuklear.h"
 

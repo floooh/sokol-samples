@@ -14,8 +14,8 @@
 #include "sokol_app.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "microui/microui.h"
-#include "microui/atlas.inl"
+#include "microui.h"
+#include "atlas.inl"
 #define SOKOL_GL_IMPL
 #include "sokol_gl.h"
 #include "cdbgui/cdbgui.h"
