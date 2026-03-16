@@ -233,7 +233,7 @@ function addSappConfigs(c: Configurer) {
 }
 
 function addGlfwConfigs(c: Configurer) {
-    const glfw = { glfwSamples: true, backend: 'glcore' };
+    const glfw = { glfwSamples: true };
 
     // windows
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-msvc-debug', options: glfw });
@@ -263,7 +263,7 @@ function addGlfwConfigs(c: Configurer) {
 }
 
 export function addMetalConfigs(c: Configurer) {
-    const metal = { metalSamples: true, backend: 'metal' };
+    const metal = { metalSamples: true };
     c.addConfig({ ...cfg('macos-make-release'), name: 'metal-macos-make-release', options: metal });
     c.addConfig({ ...cfg('macos-make-debug'), name: 'metal-macos-make-debug', options: metal });
     c.addConfig({ ...cfg('macos-ninja-release'), name: 'metal-macos-ninja-release', options: metal });
