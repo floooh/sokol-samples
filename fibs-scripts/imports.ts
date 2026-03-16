@@ -1,5 +1,4 @@
 import { type Configurer, type Project } from 'jsr:@floooh/fibs@^1';
-import { sokolBackendByConfig } from './common.ts';
 
 export function addImports(c: Configurer) {
     c.addImport({
@@ -39,8 +38,8 @@ export function addImports(c: Configurer) {
     c.addImportOptions((p: Project) => {
         return {
             sokol: {
-                backend: sokolBackendByConfig(p.activeConfig()),
-                useEGL: p.activeConfig().name.includes('-egl-'),
+                backend: p.activeConfig().options.backend,
+                useEGL: p.activeConfig().options.egl,
             },
             // FIXME: Android import options
         };

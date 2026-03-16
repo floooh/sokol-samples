@@ -1,16 +1,4 @@
-import type { Config, TargetJob, Builder  } from 'jsr:@floooh/fibs@^1';
-
-export function sokolBackendByConfig(config: Config) {
-    const n = config.name;
-    if (n.includes('-gl-')) return 'glcore';
-    if (n.includes('-gles-')) return 'gles3';
-    if (n.includes('-d3d11-')) return 'd3d11';
-    if (n.includes('-metal-')) return 'metal';
-    if (n.includes('-wgpu-')) return 'wgpu';
-    if (n.includes('-vk-')) return 'vulkan';
-    // otherwise: autoselect
-    return undefined;
-}
+import type { TargetJob, Builder  } from 'jsr:@floooh/fibs@^1';
 
 export function copy(srcDir: string, files: string[]): TargetJob {
     return {
@@ -51,9 +39,9 @@ export function hasCompute(b: Builder): boolean {
     const cfg = b.activeConfig();
     if (b.isAndroid()) {
         return true;
-    } else if (sokolBackendByConfig(cfg) === 'gles3') {
+    } else if (cfg.options.backend === 'gles3') {
         return false;
-    } else if ((sokolBackendByConfig(cfg) === 'glcore') && b.isMacOS()) {
+    } else if ((cfg.options.backend === 'glcore') && b.isMacOS()) {
         return false;
     } else {
         return true;

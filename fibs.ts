@@ -11,7 +11,7 @@ export function configure(c: Configurer) {
 
 export function build(b: Builder) {
     addLibs(b);
-    if (b.activeConfig().name.startsWith('sapp-')) {
+    if (b.activeConfig().options.sapp) {
         addSokolAppSamples(b);
     }
 }
