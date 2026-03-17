@@ -14,6 +14,11 @@ export function configure(c: Configurer) {
 }
 
 export function build(b: Builder) {
+    if (b.isMsvc()) {
+        b.addCompileOptions([
+            '/wd4324', // structure was padded due to alignment specifier
+        ]);
+    }
     addLibs(b);
     const cfg = b.activeConfig();
     if (cfg.options.sappSamples) {

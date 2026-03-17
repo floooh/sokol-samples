@@ -210,7 +210,7 @@ function addSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, filter }
     const cmn = (t: TargetBuilder) => {
         t.setDir('sapp');
         t.addSource(`${name}-sapp.${ext ?? 'c'}`);
-        t.addIncludeDirectories(['../libs']);
+        t.addIncludeDirectories({ system: true, dirs: ['../libs']});
         t.addIncludeDirectories([t.buildDir()]);
         if (sokol === 'cc') {
             t.addDependencies(['sokol-cpp-lib']);

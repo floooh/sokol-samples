@@ -48,7 +48,7 @@ static struct {
 #define USER_FONT (1)
 
 // forward declared font data, the actual font data is at the end of this source file
-static const uint8_t user_font[128 * 8];
+static uint8_t user_font[128 * 8];
 
 static void init(void) {
     // setup sokol-gfx
@@ -87,7 +87,7 @@ static void frame(void) {
         // color scrolling effect:
         const rgb_t rgb = state.color_palette[(c + line + ((int)sapp_frame_count() / 2)) & 15];
         sdtx_color3b(rgb.r, rgb.g, rgb.b);
-        sdtx_putc(c);
+        sdtx_putc((char)c);
     }
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
@@ -122,7 +122,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
 // Font data extracted from Atari 400 ROM at address 0xE000,
 // and reshuffled to map to ASCII. Each character is 8 bytes,
 // 1 bit per pixel in an 8x8 matrix.
-static const uint8_t user_font[128 * 8] = {
+static uint8_t user_font[128 * 8] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 20
     0x00, 0x18, 0x18, 0x18, 0x18, 0x00, 0x18, 0x00, // 21
     0x00, 0x66, 0x66, 0x66, 0x00, 0x00, 0x00, 0x00, // 22

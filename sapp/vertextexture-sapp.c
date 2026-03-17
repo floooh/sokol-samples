@@ -78,12 +78,12 @@ static void init(void) {
 
     // an index buffer with triangle indices for a 256x256 plane
     {
-        const size_t tiles = NUM_TILES_ALONG_EDGE;
+        const uint16_t tiles = NUM_TILES_ALONG_EDGE;
         const size_t ibuf_size = tiles * tiles * 6 * sizeof(uint16_t);
         uint16_t* indices = malloc(ibuf_size);
         uint16_t* ptr = indices;
-        for (size_t y = 0; y < tiles; y++) {
-            for (size_t x = 0; x < tiles; x++) {
+        for (uint16_t y = 0; y < tiles; y++) {
+            for (uint16_t x = 0; x < tiles; x++) {
                 uint16_t i0 = y * (tiles + 1) + x;
                 uint16_t i1 = i0 + 1;
                 uint16_t i2 = i0 + tiles + 1;
@@ -138,7 +138,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    state.offscreen.plasma_params.time += sapp_frame_duration();
+    state.offscreen.plasma_params.time += (float)sapp_frame_duration();
 
     // offscreen pass to render plasma, this renders an offscreen-triangle
     // with vertices synthesized in the vertex shader

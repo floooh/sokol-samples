@@ -182,7 +182,7 @@ static void draw_ui(void) {
         ImGuiWindowFlags_NoBringToFrontOnFocus |
         ImGuiWindowFlags_NoFocusOnAppearing;
     if (igBegin("controls", 0, flags)) {
-        igSliderFloat("Delta T", &state.sim_params.dt, 0.01, 0.1);
+        igSliderFloat("Delta T", &state.sim_params.dt, 0.01f, 0.1f);
         igSliderFloat("Rule1 Distance", &state.sim_params.rule1_distance, 0.0f, 0.2f);
         igSliderFloat("Rule2 Distance", &state.sim_params.rule2_distance, 0.0f, 0.1f);
         igSliderFloat("Rule3 Distance", &state.sim_params.rule3_distance, 0.0f, 0.1f);
