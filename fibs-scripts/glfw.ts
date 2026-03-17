@@ -68,6 +68,13 @@ function addLibs(b: Builder) {
         if (b.isClang() || b.isGcc()) {
             t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion'] });
         }
+        if (b.isMsvc()) {
+            t.addCompileOptions({ scope: 'private', opts: [
+                '/wd4996', // 'strdup' the POSIX name for this item is deprecated
+                '/wd4152', // nonstandard extension
+                '/wd4100', // unreferenced parameter
+            ]});
+        }
     });
     b.addTarget('flextgl33', 'lib', (t) => {
         t.setDir('glfw/flextgl33');
@@ -77,6 +84,13 @@ function addLibs(b: Builder) {
         }
         if (b.isClang() || b.isGcc()) {
             t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion', '-Wno-missing-braces', '-Wno-unused-parameter'] });
+        }
+        if (b.isMsvc()) {
+            t.addCompileOptions({ scope: 'private', opts: [
+                '/wd4996', // 'strdup' the POSIX name for this item is deprecated
+                '/wd4152', // nonstandard extension
+                '/wd4100', // unreferenced parameter
+            ]});
         }
     });
     b.addTarget('glfw_glue', 'lib', (t) => {
