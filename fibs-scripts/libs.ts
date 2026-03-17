@@ -72,6 +72,10 @@ export function addLibs(b: Builder) {
         t.addSources(['qoi.c', 'qoi.h']);
         if (b.isGcc() || b.isClang()) {
             t.addCompileOptions({ scope: 'private', opts: ['-Wno-sign-conversion'] });
+        } else if (b.isMsvc()) {
+            t.addCompileOptions({ scope: 'private', opts: [
+                '/wd4244',  // conversion from 'X' to 'Y', possible loss of data
+            ]});
         }
     });
     b.addTarget('nuklear-static', 'lib', (t) => {
@@ -95,7 +99,12 @@ export function addLibs(b: Builder) {
         if (b.isMsvc()) {
             t.addCompileOptions({
                 scope: 'private',
-                opts: ['/wd4146', '/wd4244', '/wd4267'],
+                opts: [
+                    '/wd4127', // conditional expression is constant
+                    '/wd4305', // truncation from 'int' to 'float'
+                    '/wd4244', // conversion from 'X' to 'Y', possible loss of data
+                    '/wd4267', // conversion from 'X' to 'Y', possible loss of data
+                ],
             });
         } else if (b.isGcc() || b.isClang()) {
             t.addCompileOptions({

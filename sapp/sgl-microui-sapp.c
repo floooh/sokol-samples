@@ -7,9 +7,6 @@
 //  NOTE: for the debugging UI, cimgui is used via sokol_gfx_cimgui.h
 //  (C bindings to Dear ImGui instead of the ImGui C++ API)
 //------------------------------------------------------------------------------
-#if defined(_MSC_VER)
-#define _CRT_SECURE_NO_WARNINGS (1)
-#endif
 #include "sokol_gfx.h"
 #include "sokol_app.h"
 #include "sokol_log.h"
@@ -198,7 +195,6 @@ static void test_window(mu_Context* ctx) {
 
         /* window info */
         if (mu_header(ctx, "Window Info")) {
-            mu_Container *win = mu_get_current_container(ctx);
             char buf[64];
             mu_layout_row(ctx, 2, (int[]) { 54, -1 }, 0);
             mu_label(ctx,"Position:");
@@ -277,9 +273,9 @@ static void test_window(mu_Context* ctx) {
             mu_layout_end_column(ctx);
             /* color preview */
             mu_Rect r = mu_layout_next(ctx);
-            mu_draw_rect(ctx, r, mu_color(state.bg.r, state.bg.g, state.bg.b, 255));
+            mu_draw_rect(ctx, r, mu_color((int)state.bg.r, (int)state.bg.g, (int)state.bg.b, 255));
             char buf[32];
-            sprintf(buf, "#%02X%02X%02X", (int) state.bg.r, (int) state.bg.g, (int) state.bg.b);
+            sprintf(buf, "#%02X%02X%02X", (int)state.bg.r, (int)state.bg.g, (int)state.bg.b);
             mu_draw_control_text(ctx, buf, r, MU_COLOR_TEXT, MU_OPT_ALIGNCENTER);
         }
 
@@ -349,7 +345,7 @@ static void style_window(mu_Context *ctx) {
     };
 
     if (mu_begin_window(ctx, "Style Editor", mu_rect(350, 250, 300, 240))) {
-        int sw = mu_get_current_container(ctx)->body.w * 0.14;
+        int sw = (int)(mu_get_current_container(ctx)->body.w * 0.14f);
         mu_layout_row(ctx, 6, (int[]) { 80, sw, sw, sw, sw, -1 }, 0);
         for (int i = 0; colors[i].label; i++) {
             mu_label(ctx, colors[i].label);
