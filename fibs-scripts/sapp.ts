@@ -5,7 +5,7 @@ export function addSokolAppSamples(b: Builder) {
     samples.forEach((s) => addSample(b, s));
 }
 
-const samples: SampleOptions[] = [
+export const samples: SampleOptions[] = [
     { name: 'clear', ui: 'cc' },
     { name: 'triangle', ui: 'cc', shd: true },
     { name: 'triangle-bufferless', ui: 'cc', shd: true },
@@ -192,7 +192,7 @@ const samples: SampleOptions[] = [
     },
 ];
 
-type SampleOptions = {
+export type SampleOptions = {
     name: string;
     ext?: 'cc';
     ui?: 'c' | 'cc';
