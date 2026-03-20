@@ -78,7 +78,7 @@ jobs:
             ./fibs build
         - name: metal-macos-ninja-debug
           run: |
-            /fibs config metal-macos-ninja-debug
+            ./fibs config metal-macos-ninja-debug
             ./fibs build
         - name: metal-macos-ninja-release
           run: |
