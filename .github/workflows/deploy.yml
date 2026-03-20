@@ -48,7 +48,7 @@ jobs:
           git config user.name "GH Action"
           git add .
           git commit -m "updated (${{ github.run_number }})"
-#          git push
+          git push
 
   deploy_webgpu:
     needs: build
@@ -67,4 +67,4 @@ jobs:
           git config user.name "GH Action"
           git add .
           git commit -m "updated (${{ github.run_number }})"
-#          git push
+          git push
