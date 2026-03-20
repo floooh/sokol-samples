@@ -7,133 +7,209 @@ jobs:
         runs-on: windows-latest
         steps:
         - uses: actions/checkout@main
+        - uses: denoland/setup-deno@v2
         - name: prepare vulkan sdk
           uses: humbletim/setup-vulkan-sdk@main
           with:
             vulkan-query-version: 1.4.335.0
             vulkan-components: Vulkan-Headers, Vulkan-Loader
             vulkan-use-cache: true
-        - name: sapp-vk-win64-vstudio-debug
-          run:  python3 fips build sapp-vk-win64-vstudio-debug
-        - name: sapp-vk-win64-vstudio-release
-          run:  python3 fips build sapp-vk-win64-vstudio-release
-        - name: win64-vstudio-debug
-          run:  python3 fips build win64-vstudio-debug
-        - name: win64-vstudio-release
-          run:  python3 fips build win64-vstudio-release
-        - name: d3d11-win64-vstudio-debug
-          run:  python3 fips build d3d11-win64-vstudio-debug
-        - name: d3d11-win64-vstudio-release
-          run:  python3 fips build d3d11-win64-vstudio-release
-        - name: sapp-win64-vstudio-debug
-          run:  python3 fips build sapp-win64-vstudio-debug
-        - name: sapp-win64-vstudio-release
-          run:  python3 fips build sapp-win64-vstudio-release
-        - name: sapp-d3d11-win64-vstudio-debug
-          run:  python3 fips build sapp-d3d11-win64-vstudio-debug
-        - name: sapp-d3d11-win64-vstudio-release
-          run:  python3 fips build sapp-d3d11-win64-vstudio-release
+        - name: sapp-vk-win-msvc-debug
+          run:  |
+            ./fibs config sapp-vk-win-msvc-debug
+            ./fibs build
+        - name: sapp-vk-win-msvc-release
+          run: |
+            ./fibs config sapp-vk-win-msvc-release
+            ./fibs build
+        - name: sapp-d3d11-win-msvc-debug
+          run: |
+            ./fibs config sapp-d3d11-win-msvc-debug
+            ./fibs build
+        - name: sapp-d3d11-win-msvc-release
+          run: |
+            ./fibs config sapp-d3d11-win-msvc-release
+            ./fibs build
+        - name: sapp-gl-win-msvc-debug
+          run: |
+            ./fibs config sapp-gl-win-msvc-debug
+            ./fibs build
+        - name: sapp-gl-win-msvc-release
+          run: |
+            ./fibs config sapp-gl-win-msvc-release
+            ./fibs build
+        - name: d3d11-win-msvc-debug
+          run: |
+            ./fibs config d3d11-win-msvc-debug
+            ./fibs build
+        - name: d3d11-win-msvc-release
+          run: |
+            ./fibs config d3d11-win-msvc-release
+            ./fibs build
+        - name: glfw-win-msvc-debug
+          run: |
+            ./fibs config glfw-win-msvc-debug
+            ./fibs build
+        - name: glfw-win-msvc-release
+          run: |
+            ./fibs config glfw-win-msvc-release
+            ./fibs build
     mac:
         runs-on: macos-latest
         steps:
         - uses: actions/checkout@main
-        - name: osx-ninja-debug
-          run:  python3 fips build osx-ninja-debug
-        - name: osx-ninja-release
-          run:  python3 fips build osx-ninja-release
-        - name: metal-osx-ninja-debug
-          run:  python3 fips build metal-osx-ninja-debug
-        - name: metal-osx-ninja-release
-          run:  python3 fips build metal-osx-ninja-release
-        - name: sapp-osx-ninja-debug
-          run:  python3 fips build sapp-osx-ninja-debug
-        - name: sapp-osx-ninja-release
-          run:  python3 fips build sapp-osx-ninja-release
-        - name: sapp-metal-osx-ninja-debug
-          run:  python3 fips build sapp-metal-osx-ninja-debug
-        - name: sapp-metal-osx-ninja-release
-          run:  python3 fips build sapp-metal-osx-ninja-release
+        - uses: ashutoshvarma/setup-ninja@master
+        - uses: denoland/setup-deno@v2
+        - name: sapp-metal-macos-ninja-debug
+          run: |
+            ./fibs config sapp-metal-macos-ninja-debug
+            ./fibs build
+        - name: sapp-metal-macos-ninja-release
+          run: |
+            ./fibs config sapp-metal-macos-ninja-release
+            ./fibs build
+        - name: sapp-gl-macos-ninja-debug
+          run: |
+            ./fibs config sapp-gl-macos-ninja-debug
+            ./fibs build
+        - name: sapp-gl-macos-ninja-release
+          run: |
+            ./fibs config sapp-gl-macos-ninja-release
+            ./fibs build
+        - name: metal-macos-ninja-debug
+          run: |
+            /fibs config metal-macos-ninja-debug
+            ./fibs build
+        - name: metal-macos-ninja-release
+          run: |
+            ./fibs config metal-macos-ninja-release
+            ./fibs build
+        - name: glfw-macos-ninja-debug
+          run: |
+            /fibs config glfw-macos-ninja-debug
+            ./fibs build
+        - name: glfw-macos-ninja-release
+          run: |
+            ./fibs config glfw-macos-ninja-release
+            ./fibs build
     ios:
         runs-on: macos-latest
         steps:
         - uses: actions/checkout@main
-        - name: ios-xcode-debug
-          run:  python3 fips build ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-        - name: ios-xcode-release
-          run:  python3 fips build ios-xcode-release -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-        - name: metal-ios-xcode-debug
-          run:  python3 fips build metal-ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-        - name: metal-ios-xcode-release
-          run:  python3 fips build metal-ios-xcode-release -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
-        - name: sapp-ios-xcode-debug
-          run:  python3 fips build sapp-ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+        - uses: denoland/setup-deno@v2
+        - name: sapp-metal-ios-xcode-debug
+          run: |
+            ./fibs config sapp-metal-ios-xcode-debug
+            ./fibs build
         - name: sapp-metal-ios-xcode-release
-          run:  python3 fips build sapp-metal-ios-xcode-debug -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          run: |
+            ./fibs config sapp-metal-ios-xcode-release
+            ./fibs build
+        - name: sapp-gles-ios-xcode-debug
+          run: |
+            ./fibs config sapp-gles-ios-xcode-debug
+            ./fibs build
+        - name: sapp-gles-ios-xcode-release
+          run: |
+            ./fibs config sapp-gles-ios-xcode-release
+            ./fibs build
     linux:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@main
+        - uses: ashutoshvarma/setup-ninja@master
+        - uses: denoland/setup-deno@v2
         - name: prepare
           run:  |
             sudo apt-get update
             sudo apt-get install libgl1-mesa-dev libegl1-mesa-dev mesa-common-dev xorg-dev libasound-dev
             cmake --version
-        - name: linux-make-debug
-          run:  python3 fips build linux-make-debug
-        - name: linux-make-release
-          run:  python3 fips build linux-make-release
-        - name: sapp-linux-make-debug
-          run:  python3 fips build sapp-linux-make-debug
-        - name: sapp-linux-make-release
-          run:  python3 fips build sapp-linux-make-release
-        - name: sapp-egl-gl-linux-make-debug
-          run:  python3 fips build sapp-egl-gl-linux-make-debug
-        - name: sapp-egl-gl-linux-make-release
-          run:  python3 fips build sapp-egl-gl-linux-make-release
-        - name: sapp-egl-gles3-linux-make-debug
-          run:  python3 fips build sapp-egl-gles3-linux-make-debug
-        - name: sapp-egl-gles3-linux-make-release
-          run:  python3 fips build sapp-egl-gles3-linux-make-release
-    webgl2:
+        - name: sapp-gl-linux-ninja-debug
+          run: |
+            ./fibs config sapp-gl-linux-ninja-debug
+            ./fibs build
+        - name: sapp-gl-linux-ninja-release
+          run: |
+            ./fibs config sapp-gl-linux-ninja-release
+            ./fibs build
+        - name: sapp-gl-egl-linux-ninja-debug
+          run: |
+            ./fibs config sapp-gl-egl-linux-ninja-debug
+            ./fibs build
+        - name: sapp-gl-egl-linux-ninja-release
+          run: |
+            ./fibs config sapp-gl-egl-linux-ninja-release
+            ./fibs build
+        - name: sapp-gles-egl-linux-ninja-debug
+          run: |
+            ./fibs config sapp-gles-egl-linux-ninja-debug
+            ./fibs build
+        - name: sapp-gles-egl-linux-ninja-release
+          run: |
+            ./fibs config sapp-gles-egl-linux-ninja-release
+            ./fibs build
+        - name: sapp-vk-linux-ninja-debug
+          run: |
+            ./fibs config sapp-vk-linux-ninja-debug
+            ./fibs build
+        - name: sapp-vk-linux-ninja-release
+          run: |
+            ./fibs config sapp-vk-linux-ninja-release
+            ./fibs build
+        - name: glfw-linux-ninja-debug
+          run: |
+            ./fibs config glfw-linux-ninja-debug
+            ./fibs build
+        - name: glfw-linux-ninja-release
+          run: |
+            ./fibs config glfw-linux-ninja-release
+            ./fibs build
+    emscripten:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@main
-        - name: prepare
+        - uses: ashutoshvarma/setup-ninja@master
+        - uses: denoland/setup-deno@v2
+        - name: install emsdk
+          run: ./fibs emsdk install
+        - name: sapp-gles-emsc-ninja-debug
           run: |
-            sudo apt-get install ninja-build
-            python3 fips emsdk install latest
-        - name: sapp-webgl2-wasm-ninja-debug
-          run:  python3 fips build sapp-webgl2-wasm-ninja-debug
-        - name: sapp-webgl2-wasm-ninja-release
-          run:  python3 fips build sapp-webgl2-wasm-ninja-release
-        - name: webgl2-wasm-ninja-debug
-          run:  python3 fips build webgl2-wasm-ninja-debug
-        - name: webgl2-wasm-ninja-release
-          run:  python3 fips build webgl2-wasm-ninja-release
-    wgpu:
-        runs-on: ubuntu-latest
-        steps:
-        - uses: actions/checkout@main
-        - name: prepare
+            ./fibs config sapp-gles-emsc-ninja-debug
+            ./fibs build
+        - name: sapp-gles-emsc-ninja-release
           run: |
-            sudo apt-get install ninja-build
-            python3 fips emsdk install latest
-        - name: sapp-wgpu-wasm-ninja-debug
-          run:  python3 fips build sapp-wgpu-wasm-ninja-debug
-        - name: sapp-wgpu-wasm-ninja-release
-          run:  python3 fips build sapp-wgpu-wasm-ninja-release
+            ./fibs config sapp-gles-emsc-ninja-release
+            ./fibs build
+        - name: sapp-wgpu-emsc-ninja-debug
+          run: |
+            ./fibs config sapp-wgpu-emsc-ninja-debug
+            ./fibs build
+        - name: sapp-wgpu-emsc-ninja-release
+          run: |
+            ./fibs config sapp-wgpu-emsc-ninja-release
+            ./fibs build
+        - name: emsc-ninja-debug
+          run: |
+            ./fibs config emsc-ninja-debug
+            ./fibs build
     android:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@main
+        - uses: ashutoshvarma/setup-ninja@master
+        - uses: denoland/setup-deno@v2
         - uses: actions/setup-java@v4
           with:
             distribution: 'zulu'
-            java-version: '8'
-        - name: prepare
+            java-version: '17'
+        - name: install android sdk/ndk
           run: |
-            yes | python3 fips setup android
-        - name: sapp-android-make-debug
-          run: python3 fips build sapp-android-make-debug
-        - name: sapp-android-make-release
-          run: python3 fips build sapp-android-make-release
+            yes | ./fibs android install
+        - name: sapp-gles-android-ninja-debug
+          run: |
+            ./fibs config sapp-gles-android-ninja-debug
+            ./fibs build
+        - name: sapp-gles-android-ninja-release
+          run: |
+            ./fibs config sapp-gles-android-ninja-release
+            ./fibs build
