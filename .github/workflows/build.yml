@@ -86,7 +86,7 @@ jobs:
             ./fibs build
         - name: glfw-macos-ninja-debug
           run: |
-            /fibs config glfw-macos-ninja-debug
+            ./fibs config glfw-macos-ninja-debug
             ./fibs build
         - name: glfw-macos-ninja-release
           run: |
