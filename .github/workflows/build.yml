@@ -100,19 +100,19 @@ jobs:
         - name: sapp-metal-ios-xcode-debug
           run: |
             ./fibs config sapp-metal-ios-xcode-debug
-            ./fibs build
+            ./fibs build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         - name: sapp-metal-ios-xcode-release
           run: |
             ./fibs config sapp-metal-ios-xcode-release
-            ./fibs build
+            ./fibs build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         - name: sapp-gles-ios-xcode-debug
           run: |
             ./fibs config sapp-gles-ios-xcode-debug
-            ./fibs build
+            ./fibs build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
         - name: sapp-gles-ios-xcode-release
           run: |
             ./fibs config sapp-gles-ios-xcode-release
-            ./fibs build
+            ./fibs build -- CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
     linux:
         runs-on: ubuntu-latest
         steps:
