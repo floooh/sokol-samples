@@ -32,7 +32,8 @@ Xcode xx.x (newer is better, older version are no longer tested)
 
 > [!NOTE]
 > On Linux you'll also need to install packages for OpenGL, X11, ALSA and Vulkan development, e.g.
-> mesa-common-dev, libx11-dev, libasound2-dev, libvulkan-dev, vulkan-validationlayers, vulkan-tools
+> libgl1-mesa-dev, libegl1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev, libvulkan-dev, vulkan-validationlayers,
+> vulkan-tools
 
 > [!NOTE]
 > On Windows with Vulkan development you need to install the Vulkan SDK and before building,

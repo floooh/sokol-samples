@@ -122,7 +122,7 @@ jobs:
         - name: prepare
           run:  |
             sudo apt-get update
-            sudo apt-get install mesa-common-dev libx11-dev libvulkan-dev libasound-dev
+            sudo apt-get install libgl1-mesa-dev libegl1-mesa-dev mesa-common-dev xorg-dev libasound-dev libvulkan-dev
             cmake --version
         - name: sapp-gl-linux-ninja-debug
           run: |
