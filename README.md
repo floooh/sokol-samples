@@ -78,6 +78,10 @@ then run `./fibs open`, e.g.:
 ./fibs open
 ```
 
+...for additional documentation on the fibs meta-build-system see:
+
+- https://github.com/floooh/fibs
+
 ## Cross-compile to Emscripten, iOS or Android
 
 ### Emscripten
