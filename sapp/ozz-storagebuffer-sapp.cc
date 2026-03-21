@@ -514,13 +514,13 @@ static void draw_ui(void) {
             ImGui::Text("Camera Controls:");
             ImGui::Text("  LMB + Mouse Move: Look");
             ImGui::Text("  Mouse Wheel: Zoom");
-            ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
-            ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
-            ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", 1.0f);
+            ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f");
+            ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f");
+            ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f");
             ImGui::Separator();
             ImGui::Text("Time Controls:");
             ImGui::Checkbox("Paused", &state.time.paused);
-            ImGui::SliderFloat("Factor", &state.time.factor, 0.0f, 10.0f, "%.1f", 1.0f);
+            ImGui::SliderFloat("Factor", &state.time.factor, 0.0f, 10.0f, "%.1f");
             ImGui::Separator();
         }
     }

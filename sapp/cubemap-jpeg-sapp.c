@@ -12,11 +12,12 @@
 #include "sokol_debugtext.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
 #include "util/camera.h"
 #include "util/fileutil.h"
 #include "cubemap-jpeg-sapp.glsl.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 static struct {
     sg_pass_action pass_action;

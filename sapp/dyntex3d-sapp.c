@@ -93,7 +93,7 @@ static void frame(void) {
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     for (int slice = 0; slice < 3; slice++) {
-        const vs_params_t vs_params = (vs_params_t){ .w = 0.1f + ((float)slice) / 3.0 };
+        const vs_params_t vs_params = (vs_params_t){ .w = 0.1f + ((float)slice) / 3.0f };
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 6, 1);
     }

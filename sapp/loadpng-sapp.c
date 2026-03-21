@@ -16,10 +16,11 @@
 #include "sokol_fetch.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
-#include "stb/stb_image.h"
 #include "dbgui/dbgui.h"
 #include "util/fileutil.h"
 #include "loadpng-sapp.glsl.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 static struct {
     float rx, ry;

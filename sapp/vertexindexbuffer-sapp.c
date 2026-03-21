@@ -111,7 +111,7 @@ static void init(void) {
     state.bind = (sg_bindings){
         .vertex_buffers[0] = buf,
         .index_buffer = buf,
-        .index_buffer_offset = indices_offset,
+        .index_buffer_offset = (int)indices_offset,
     };
 
     // create pipeline object (nothing special here)

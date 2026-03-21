@@ -171,7 +171,6 @@ int main() {
     // draw loop
     while (!glfwWindowShouldClose(w)) {
         // this is standard ImGui demo code
-        ImGuiIO& io = ImGui::GetIO();
         io.DisplaySize = ImVec2(float(glfw_width()), float(glfw_height()));
         io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
         ImGui::NewFrame();

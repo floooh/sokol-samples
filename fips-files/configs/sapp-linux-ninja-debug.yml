@@ -1,7 +1,0 @@
----
-platform: linux 
-generator: Ninja
-build_tool: ninja
-build_type: Debug
-defines:
-    USE_SOKOL_APP: ON

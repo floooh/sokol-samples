@@ -285,8 +285,8 @@ void setup_vertex_and_index_data(void) {
 
     { // line-list indices
         int ii = 0;
-        for (int y = 0; y < (NUM_Y - 1); y++) {
-            for (int x = 0; x < NUM_X; x++) {
+        for (uint16_t y = 0; y < (NUM_Y - 1); y++) {
+            for (uint16_t x = 0; x < NUM_X; x++) {
                 const uint16_t i0 = (x & 1) ? (y * NUM_X + x - 1) : (y * NUM_X + x + 1);
                 const uint16_t i1 = (x & 1) ? (i0 + NUM_X + 1) : (i0 + NUM_X - 1);
                 assert((ii < (NUM_LINE_INDICES-1)) && (i0 < NUM_VERTS) && (i1 < NUM_VERTS));
@@ -299,8 +299,8 @@ void setup_vertex_and_index_data(void) {
 
     { // line-strip indices
         int ii = 0;
-        for (int y = 0; y < (NUM_Y - 1); y++) {
-            for (int x = 0; x < NUM_X; x++) {
+        for (uint16_t y = 0; y < (NUM_Y - 1); y++) {
+            for (uint16_t x = 0; x < NUM_X; x++) {
                 const uint16_t i0 = (x & 1) ? (y * NUM_X + x) : ((y + 1) * NUM_X + x);
                 assert((ii < NUM_LINE_STRIP_INDICES) && (i0 < NUM_VERTS));
                 state.indices.line_strip[ii++] = i0;
@@ -311,8 +311,8 @@ void setup_vertex_and_index_data(void) {
 
     { // triangle-list indices
         int ii = 0;
-        for (int y = 0; y < (NUM_Y - 1); y++) {
-            for (int x = 0; x < (NUM_X - 1); x++) {
+        for (uint16_t y = 0; y < (NUM_Y - 1); y++) {
+            for (uint16_t x = 0; x < (NUM_X - 1); x++) {
                 const uint16_t i0 = x + y * NUM_X;
                 const uint16_t i1 = (x & 1) ? (i0 + NUM_X) : (i0 + 1);
                 const uint16_t i2 = (x & 1) ? (i1 + 1) : (i0 + NUM_X);
@@ -327,9 +327,10 @@ void setup_vertex_and_index_data(void) {
 
     { // triangle strip indices
         int ii = 0;
-        for (int y = 0; y < (NUM_Y - 1); y++) {
-            uint16_t i0, i1;
-            for (int x = 0; x < NUM_X; x++) {
+        for (uint16_t y = 0; y < (NUM_Y - 1); y++) {
+            uint16_t i0 = 0;
+            uint16_t i1 = 0;
+            for (uint16_t x = 0; x < NUM_X; x++) {
                 i0 = x + y * NUM_X;
                 i1 = i0 + NUM_X;
                 assert((ii < (NUM_TRIANGLE_STRIP_INDICES-1)) && (i0 < NUM_VERTS) && (i1 < NUM_VERTS));

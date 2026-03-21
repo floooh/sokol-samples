@@ -220,7 +220,7 @@ static void init(void) {
     free((void*) image_br.pixels.ptr);
 
     for (int i = 0; i < 8; i++) {
-        sapp_image_desc image_32 = generate_image(32, i);
+        image_32 = generate_image(32, i);
         image_32.cursor_hotspot_x = 15;
         image_32.cursor_hotspot_y = 15;
         state.cursors_anim[i] = sapp_bind_mouse_cursor_image((sapp_mouse_cursor) (SAPP_MOUSECURSOR_CUSTOM_8 + i), &image_32);

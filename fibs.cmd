@@ -1,0 +1,1 @@
+@deno run --allow-all --no-config jsr:@floooh/fibs %*

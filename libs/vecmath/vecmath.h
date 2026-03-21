@@ -11,7 +11,7 @@ vecmath.h - v1.0 - vector/matrix math library for C/C++.
 vecmath.h
 =========
 
-vecmath.h is a vector/matrix math library for C/C++, with some additional 
+vecmath.h is a vector/matrix math library for C/C++, with some additional
 helpers specifically for 3D math.
 
 It's designed to support most of the functionality you would expect from
@@ -22,8 +22,8 @@ DirectX SDK.
 The goal of vecmath.h is to be a complete and comprehensive vector math
 library. It makes no use of SIMD intrinsics or similar, but instead just
 implements each function in the most straightforward way. It uses no complex
-macro acrobatics to shorten the implementations, and no templates or the 
-like. Many compilers do a decent job optimizing the functions, but if you 
+macro acrobatics to shorten the implementations, and no templates or the
+like. Many compilers do a decent job optimizing the functions, but if you
 need maximum speed, you are probably best off doing a custom SIMD intrinsics
 implementation for your specific use case - but this also involves structuring
 your data to allow for maximum parallelization.
@@ -34,12 +34,12 @@ what they do in most cases, as standard terminology is used.
 
 > vecmath.h is primarily designed to be a C library, but some care have been
 > taken to make sure it works well when used from C++ too. It makes no claim
-> to be using idiomatic "Modern C++" practices, but is instead taking a 
+> to be using idiomatic "Modern C++" practices, but is instead taking a
 > pragmatic approach, to leverage some C++ features when using the library
 > from C++ code. This documentation points out all C++ specific behavior in
 > blocks like this one.
 
-> [!NOTE]  
+> [!NOTE]
 > In C++ all functions and types are wrapped in `namespace vecmath`.
 
 
@@ -47,7 +47,7 @@ Examples
 --------
 
 Here is a sample of how code using the vecmath.h library can look (this is
-taken from a software renderer doing per-pixel lighting, as you would 
+taken from a software renderer doing per-pixel lighting, as you would
 typically see in a GPU shader written in HLSL or GLSL):
 
 	vec3_t lighting( vec3_t albedo, vec3_t l, vec3_t n, vec3_t view, float spec, float gloss, float ambocc, vec3_t env ) {
@@ -55,7 +55,7 @@ typically see in a GPU shader written in HLSL or GLSL):
 		vec3_t ground= vec3( 0.3f, 0.2f, 0.1f );
 		vec3_t lightcol= vec3( 0.9f, 0.85f, 0.8f );
 
-		vec3_t r = normalize( 2.0f *  dot(n, l) * n - l); 
+		vec3_t r = normalize( 2.0f *  dot(n, l) * n - l);
 		float sn = pow( 2.0f, 8.0f * gloss );
 		float s = pow( saturate( dot( r, view ) ), sn ) * ( ( sn + 2.0f ) / ( 2 * VECMATH_PI ) );
 
@@ -65,14 +65,14 @@ typically see in a GPU shader written in HLSL or GLSL):
 		vec3_t directional = lightcol * ( diffuse * 0.75f + diffuse_wrapped * 0.5f );
 		vec3_t specular = s * albedo * ambocc;
 
-		vec3_t color = albedo * ( directional + hemisphere ) + specular * 2.0f; 
+		vec3_t color = albedo * ( directional + hemisphere ) + specular * 2.0f;
 		color += env * spec;
 		return color;
 	}
 
 The example above is in C, but it is also using the vecmath.h option to use the
-clang extension for vector types, allowing operators `+`, `-`, `*`, `/` to be 
-used in C. It is also using the option to define aliases without prefixes for 
+clang extension for vector types, allowing operators `+`, `-`, `*`, `/` to be
+used in C. It is also using the option to define aliases without prefixes for
 nicer vecmath function names.
 
 Without the clang vector type extension, and without stripping prefixes, the same
@@ -83,7 +83,7 @@ code would look like this:
 		vec3_t ground= vec3( 0.3f, 0.2f, 0.1f );
 		vec3_t lightcol= vec3( 0.9f, 0.85f, 0.8f );
 
-		vec3_t r = vec3_normalize( vec3_fmul( 2.0f, vec3_sub( vec3_fmul( vec3_dot(n, l), n ), l ) ) ); 
+		vec3_t r = vec3_normalize( vec3_fmul( 2.0f, vec3_sub( vec3_fmul( vec3_dot(n, l), n ), l ) ) );
 		float sn = vecmath_pow( 2.0f, 8.0f * gloss );
 		float s = vecmath_pow( vecmath_saturate( vec3_dot( r, view ) ), sn ) * ( ( sn + 2.0f ) / ( 2 * VECMATH_PI ) );
 
@@ -93,7 +93,7 @@ code would look like this:
 		vec3_t directional = vec3_mulf( lightcol, diffuse * 0.75f + diffuse_wrapped * 0.5f );
 		vec3_t specular = vec3_fmul( s, vec3_mulf( albedo, ambocc ) );
 
-		vec3_t color = vec3_add( vec3_mul( albedo, vec3_add( directional, hemisphere ) ), vec3_mulf( specular, 2.0f ) ); 
+		vec3_t color = vec3_add( vec3_mul( albedo, vec3_add( directional, hemisphere ) ), vec3_mulf( specular, 2.0f ) );
 		color = vec3_add( color, vec3_mulf( env, spec ) );
 		return color;
 	}
@@ -105,7 +105,7 @@ versions can be compiled with C++ as well.
 Customization
 -------------
 
-There are a couple of aspects of vecmath.h that can be customized through 
+There are a couple of aspects of vecmath.h that can be customized through
 compile-time defines.
 
 ### Standard math functions
@@ -114,11 +114,11 @@ By default, vecmath.h will include the standard C <math.h> header, and use the
 standard math functions defined there. However, you can override this to use
 your own equivalents by defining one or more of the following macros:
 
-`VECMATH_ABS`, `VECMATH_ACOS`, `VECMATH_ASIN`, `VECMATH_ATAN`, `VECMATH_ATAN2`, 
-`VECMATH_CEIL`, `VECMATH_COS`, `VECMATH_COSH`, `VECMATH_EXP`, `VECMATH_EXP2`, 
-`VECMATH_FLOOR`, `VECMATH_FMOD`, `VECMATH_FRAC`, `VECMATH_LOG`, `VECMATH_LOG10`, 
-`VECMATH_POW`, `VECMATH_SIN`, `VECMATH_SINH`, `VECMATH_SQRT`, `VECMATH_LOG2`, 
-`VECMATH_ROUND`, `VECMATH_TAN`, `VECMATH_TANH`, `VECMATH_TRUNC` 
+`VECMATH_ABS`, `VECMATH_ACOS`, `VECMATH_ASIN`, `VECMATH_ATAN`, `VECMATH_ATAN2`,
+`VECMATH_CEIL`, `VECMATH_COS`, `VECMATH_COSH`, `VECMATH_EXP`, `VECMATH_EXP2`,
+`VECMATH_FLOOR`, `VECMATH_FMOD`, `VECMATH_FRAC`, `VECMATH_LOG`, `VECMATH_LOG10`,
+`VECMATH_POW`, `VECMATH_SIN`, `VECMATH_SINH`, `VECMATH_SQRT`, `VECMATH_LOG2`,
+`VECMATH_ROUND`, `VECMATH_TAN`, `VECMATH_TANH`, `VECMATH_TRUNC`
 
 If you redefine every single one of these, vecmath.h will no longer include
 the <math.h> header at all.
@@ -150,7 +150,7 @@ There are three vector types:
 * `vec3_t` three component vector, x/y/z
 * `vec4_t` four component vector, x/y/z/w
 
-There are nine matrix types. A matrix is made up of a number of rows, where 
+There are nine matrix types. A matrix is made up of a number of rows, where
 each row is a vector type representing the columns of the matrix.
 
 * `mat22_t` matrix with two rows (x/y) of vec2_t
@@ -171,19 +171,19 @@ first.
 
 > In C++, there are also class-equivalents of the types, without the `_t` suffix,
 > which supports overloaded constructors and operators for a more idiomatic C++
-> feel. These are named vec2, vec3, vec4, mat22, mat23, mat24, mat32, mat33, 
+> feel. These are named vec2, vec3, vec4, mat22, mat23, mat24, mat32, mat33,
 > mat34, mat42, mat43 and mat44.
 
 Note that all of these are simple structs of floats, with no padding, meaning
 arrays are also just made up of tightly packed floats. Be aware though, that if
-you define `VECMATH_EXT_VECTOR_TYPE`, the clang extension to get operator 
+you define `VECMATH_EXT_VECTOR_TYPE`, the clang extension to get operator
 overloading, padding of vector types might be introduced. No part of vecmath.h
 itself relies on elements being tightly packed, but if your code does and you
 enable `VECMATH_EXT_VECTOR_TYPE`, be aware that tight packing of elements is no
 longer guaranteed (typically, vec2_t/vec3_t/vec4_t will all be 16 bytes in size).
 
-For all of the types, both vector and matrices, there are a large number of 
-functions, operators and constructors defined, following a unified naming 
+For all of the types, both vector and matrices, there are a large number of
+functions, operators and constructors defined, following a unified naming
 convention and behavior.
 
 
@@ -192,7 +192,7 @@ Constructors
 
 All types can be constructed from their elements:
 
-	vec2_t vec2( float x, float y ) 
+	vec2_t vec2( float x, float y )
 	vec3_t vec3( float x, float y, float z )
 	vec4_t vec4( float x, float y, float z, float w )
 
@@ -200,7 +200,7 @@ All types can be constructed from their elements:
 	mat23_t mat23( vec3_t x, vec3_t y )
 	mat24_t mat24( vec4_t x, vec4_t y )
 
-	mat32_t mat32( vec2_t x, vec2_t y, vec2_t z ) 
+	mat32_t mat32( vec2_t x, vec2_t y, vec2_t z )
 	mat33_t mat33( vec3_t x, vec3_t y, vec3_t z )
 	mat34_t mat34( vec4_t x, vec4_t y, vec4_t z )
 
@@ -211,7 +211,7 @@ All types can be constructed from their elements:
 Note that for vectors, each element is a float, while for matrices, each
 element is a vector.
 
-> In C++, this is implemented as a constructor on the vec2, vec3, vec4, mat22, 
+> In C++, this is implemented as a constructor on the vec2, vec3, vec4, mat22,
 > mat23, mat24, mat32, mat33, mat34, mat42, mat43 and mat44 classes, but the
 > syntax for constructing is the same.
 
@@ -226,20 +226,20 @@ of matrices, to every column of every row.
 	mat22_t mat22f( float v )
 	mat23_t mat23f( float v )
 	mat24_t mat24f( float v )
-			
+
 	mat32_t mat32f( float v )
 	mat33_t mat33f( float v )
 	mat34_t mat34f( float v )
-			
+
 	mat42_t mat42f( float v )
 	mat43_t mat43f( float v )
 	mat44_t mat44f( float v )
 
 All of these have the suffix `f` for float.
 
-> In C++, there are also constructor overloads for all classes, allowing for 
+> In C++, there are also constructor overloads for all classes, allowing for
 > passing a single float, without needing the suffix `f`. Do note that using
-> those will of course make it so your code no longer compiles in C. Using 
+> those will of course make it so your code no longer compiles in C. Using
 > the constructor functions with the `f` suffix works in both C and C++.
 
 Additionally, for vec3_t and vec4_t, it is possible to construct them from a
@@ -250,7 +250,7 @@ from two vec2_t.
 	vec3_t vec3fv2( float f, vec2_t v )
 
 	vec4_t vec4v3f( vec3_t v, float f )
-	vec4_t vec4fv3( float f, vec3_t v ) 
+	vec4_t vec4fv3( float f, vec3_t v )
 	vec4_t vec4v2( vec2_t a, vec2_t b )
 
 These have various suffixes to indicate which parameters are used - `v2f` for
@@ -266,16 +266,16 @@ followed by a three-element vector, etc.
 Accessing elements
 ------------------
 
-Each element can of course be accessed using `.x`, `.y`, `.z` and `.w`. For 
+Each element can of course be accessed using `.x`, `.y`, `.z` and `.w`. For
 matrices, individual cells can be accessed using `.x.x`, `.x.y` etc, as would be
 expected.
 
 It is also possible to access elements by index. To get the value by index,
 the functions are type name with suffix `_get`:
 
-	float vec2_get( vec2_t vec, int index ) 
-	float vec3_get( vec3_t vec, int index ) 
-	float vec4_get( vec4_t vec, int index ) 
+	float vec2_get( vec2_t vec, int index )
+	float vec3_get( vec3_t vec, int index )
+	float vec4_get( vec4_t vec, int index )
 
 	vec2_t mat22_get( mat22_t m, int row )
 	vec3_t mat23_get( mat23_t m, int row )
@@ -322,25 +322,25 @@ To set a value by index, the functions are type name with suffix `_set`:
 Operators
 ---------
 
-A number of operators are defined, as functions, for all of the types, 
-performing element-wise negation, equality-test, addition, multiplication and 
-division, with variants supporting element-wise add/sub/mul/div between two of 
+A number of operators are defined, as functions, for all of the types,
+performing element-wise negation, equality-test, addition, multiplication and
+division, with variants supporting element-wise add/sub/mul/div between two of
 the same type as well as any type with a single float.
 
-The operator functions are defined in this general form, where `###` is the 
-type name (vec2, vec3, vec4, mat22, mat23, mat24, mat32, mat33, mat34, mat42, 
+The operator functions are defined in this general form, where `###` is the
+type name (vec2, vec3, vec4, mat22, mat23, mat24, mat32, mat33, mat34, mat42,
 mat43 or mat44):
 
 	###_t ###_neg( ###_t v )
 	int ###_eq( ###_t a, ###_t b )
-	###_t ###_add( ###_t a, ###_t b ) 
-	###_t ###_sub( ###_t a, ###_t b ) 
-	###_t ###_mul( ###_t a, ###_t b ) 
-	###_t ###_div( ###_t a, ###_t b ) 
-	###_t ###_addf( ###_t a, float s ) 
-	###_t ###_subf( ###_t a, float s ) 
-	###_t ###_mulf( ###_t a, float s ) 
-	###_t ###_divf( ###_t a, float s ) 
+	###_t ###_add( ###_t a, ###_t b )
+	###_t ###_sub( ###_t a, ###_t b )
+	###_t ###_mul( ###_t a, ###_t b )
+	###_t ###_div( ###_t a, ###_t b )
+	###_t ###_addf( ###_t a, float s )
+	###_t ###_subf( ###_t a, float s )
+	###_t ###_mulf( ###_t a, float s )
+	###_t ###_divf( ###_t a, float s )
 
 For example, for vec2_t the following operators are defined:
 
@@ -357,9 +357,9 @@ For example, for vec2_t the following operators are defined:
 
 Note that for matrix types, the `###_mul` operator is named `###_mul_elem`,
 so as to not cause confusion with matrix multiplication functions like
-`mat44_mul_mat44` etc (which does full row-by-column multiplication). 
+`mat44_mul_mat44` etc (which does full row-by-column multiplication).
 
-> [!WARNING]  
+> [!WARNING]
 > The `###_mul_elem` functions (`mat22_mul_elem`, `mat44_mul_elem` etc) does
 > NOT perform standard matrix multiplication - they perform element-wise
 > multiplication, also known as Hadamard product. A separate set of functions,
@@ -367,10 +367,10 @@ so as to not cause confusion with matrix multiplication functions like
 > for performing standard matrix multiplication between matrices of compatible
 > dimensions (see the section on "Matrix Multiplication").
 
-> For C++, all of these, except for the `###_mul_elem` functions, are also 
+> For C++, all of these, except for the `###_mul_elem` functions, are also
 > provided as C++ operator overloads. The multiplication operator `operator*`
 > is mapped to the matrix multiplication functions, like `mat44_mul_mat44`
-> rather than to the element-wise `###_mul_elem` functions. For vectors, 
+> rather than to the element-wise `###_mul_elem` functions. For vectors,
 > multiplication operator maps to the element-wise `###_mul` functions.
 >
 > For multiplication of vector with matrix, or matrix with vector, the vector
@@ -380,50 +380,50 @@ so as to not cause confusion with matrix multiplication functions like
 Element-wise functions
 ----------------------
 
-There is a large number of functions defined for every type, that perform 
+There is a large number of functions defined for every type, that perform
 element-wise calculations. Here are their declarations for the vect2_t
-type, but the naming is consistent for all other types (both vector and 
+type, but the naming is consistent for all other types (both vector and
 matrix types):
 
-	vec2_t vec2_abs( vec2_t m ) 
-	vec2_t vec2_acos( vec2_t m ) 
-	int vec2_all( vec2_t m ) 
-	int vec2_any( vec2_t m ) 
-	vec2_t vec2_asin( vec2_t m ) 
-	vec2_t vec2_atan( vec2_t m ) 
-	vec2_t vec2_atan2( vec2_t y, vec2_t x ) 
-	vec2_t vec2_ceil( vec2_t m ) 
-	vec2_t vec2_clamp( vec2_t m, vec2_t min_v, vec2_t max_v ) 
-	vec2_t vec2_cos( vec2_t m ) 
-	vec2_t vec2_cosh( vec2_t m ) 
-	vec2_t vec2_degrees( vec2_t m ) 
-	vec2_t vec2_exp( vec2_t m ) 
-	vec2_t vec2_exp2( vec2_t m ) 
-	vec2_t vec2_floor( vec2_t m ) 
-	vec2_t vec2_fmod( vec2_t a, vec2_t b ) 
-	vec2_t vec2_frac( vec2_t m ) 
-	vec2_t vec2_lerp( vec2_t a, vec2_t b, float s ) 
-	vec2_t vec2_log( vec2_t m ) 
-	vec2_t vec2_log2( vec2_t m ) 
-	vec2_t vec2_log10( vec2_t m ) 
-	vec2_t vec2_max( vec2_t a, vec2_t b ) 
-	vec2_t vec2_min( vec2_t a, vec2_t b ) 
-	vec2_t vec2_pow( vec2_t a, vec2_t b ) 
-	vec2_t vec2_radians( vec2_t m ) 
-	vec2_t vec2_rcp( vec2_t m ) 
-	vec2_t vec2_round( vec2_t m ) 
-	vec2_t vec2_rsqrt( vec2_t m ) 
-	vec2_t vec2_saturate( vec2_t m ) 
-	vec2_t vec2_sign( vec2_t m ) 
-	vec2_t vec2_sin( vec2_t m ) 
-	vec2_t vec2_sinh( vec2_t m ) 
-	vec2_t vec2_smoothstep( vec2_t min_v, vec2_t max_v, vec2_t m ) 
-	vec2_t vec2_smootherstep( vec2_t min_v, vec2_t max_v, vec2_t m ) 
-	vec2_t vec2_sqrt( vec2_t m ) 
-	vec2_t vec2_step( vec2_t a, vec2_t b ) 
-	vec2_t vec2_tan( vec2_t m ) 
-	vec2_t vec2_tanh( vec2_t m ) 
-	vec2_t vec2_trunc( vec2_t m ) 
+	vec2_t vec2_abs( vec2_t m )
+	vec2_t vec2_acos( vec2_t m )
+	int vec2_all( vec2_t m )
+	int vec2_any( vec2_t m )
+	vec2_t vec2_asin( vec2_t m )
+	vec2_t vec2_atan( vec2_t m )
+	vec2_t vec2_atan2( vec2_t y, vec2_t x )
+	vec2_t vec2_ceil( vec2_t m )
+	vec2_t vec2_clamp( vec2_t m, vec2_t min_v, vec2_t max_v )
+	vec2_t vec2_cos( vec2_t m )
+	vec2_t vec2_cosh( vec2_t m )
+	vec2_t vec2_degrees( vec2_t m )
+	vec2_t vec2_exp( vec2_t m )
+	vec2_t vec2_exp2( vec2_t m )
+	vec2_t vec2_floor( vec2_t m )
+	vec2_t vec2_fmod( vec2_t a, vec2_t b )
+	vec2_t vec2_frac( vec2_t m )
+	vec2_t vec2_lerp( vec2_t a, vec2_t b, float s )
+	vec2_t vec2_log( vec2_t m )
+	vec2_t vec2_log2( vec2_t m )
+	vec2_t vec2_log10( vec2_t m )
+	vec2_t vec2_max( vec2_t a, vec2_t b )
+	vec2_t vec2_min( vec2_t a, vec2_t b )
+	vec2_t vec2_pow( vec2_t a, vec2_t b )
+	vec2_t vec2_radians( vec2_t m )
+	vec2_t vec2_rcp( vec2_t m )
+	vec2_t vec2_round( vec2_t m )
+	vec2_t vec2_rsqrt( vec2_t m )
+	vec2_t vec2_saturate( vec2_t m )
+	vec2_t vec2_sign( vec2_t m )
+	vec2_t vec2_sin( vec2_t m )
+	vec2_t vec2_sinh( vec2_t m )
+	vec2_t vec2_smoothstep( vec2_t min_v, vec2_t max_v, vec2_t m )
+	vec2_t vec2_smootherstep( vec2_t min_v, vec2_t max_v, vec2_t m )
+	vec2_t vec2_sqrt( vec2_t m )
+	vec2_t vec2_step( vec2_t a, vec2_t b )
+	vec2_t vec2_tan( vec2_t m )
+	vec2_t vec2_tanh( vec2_t m )
+	vec2_t vec2_trunc( vec2_t m )
 
 These all perform, per element, the standard mathematical calculation suggested
 by each function's name. The behavior is consistent with that of HLSL (or GLSL,
@@ -432,14 +432,14 @@ but is primarily modeled after HLSL).
 In addition, the following are only defined for vector types (and are defined for
 vector types of all three sizes), but not for matrix types:
 
-	float vec2_distancesq( vec2_t a, vec2_t b ) 
-	float vec2_distance( vec2_t a, vec2_t b ) 
-	float vec2_dot( vec2_t a, vec2_t b ) 
-	float vec2_lengthsq( vec2_t v ) 
-	float vec2_length( vec2_t v ) 
-	vec2_t vec2_normalize( vec2_t v ) 
-	vec2_t vec2_reflect( vec2_t i, vec2_t n ) 
-	vec2_t vec2_refract( vec2_t i, vec2_t n, float r ) 
+	float vec2_distancesq( vec2_t a, vec2_t b )
+	float vec2_distance( vec2_t a, vec2_t b )
+	float vec2_dot( vec2_t a, vec2_t b )
+	float vec2_lengthsq( vec2_t v )
+	float vec2_length( vec2_t v )
+	vec2_t vec2_normalize( vec2_t v )
+	vec2_t vec2_reflect( vec2_t i, vec2_t n )
+	vec2_t vec2_refract( vec2_t i, vec2_t n, float r )
 
 and again, they work the same as in HLSL.
 
@@ -451,53 +451,53 @@ Finally, a cross-product function is only defined for vec3_t:
 For completeness, all of these functions are also implemented in a version for
 single floats, using a `vecmath_` prefix:
 
-	float vecmath_abs( float v ) 
-	float vecmath_acos( float v ) 
-	int vecmath_all( float v ) 
-	int vecmath_any( float v ) 
-	float vecmath_asin( float v ) 
-	float vecmath_atan( float v ) 
-	float vecmath_atan2( float y, float x ) 
-	float vecmath_ceil( float v ) 
-	float vecmath_clamp( float v, float min_v, float max_v ) 
-	float vecmath_cos( float v ) 
-	float vecmath_cosh( float v ) 
-	float vecmath_degrees( float v ) 
-	float vecmath_distancesq( float a, float b ) 
-	float vecmath_distance( float a, float b ) 
-	float vecmath_dot( float a, float b ) 
-	float vecmath_exp( float v ) 
-	float vecmath_exp2( float v ) 
-	float vecmath_floor( float v ) 
-	float vecmath_fmod( float a, float b ) 
-	float vecmath_frac( float v ) 
-	float vecmath_lengthsq( float v ) 
-	float vecmath_length( float v ) 
-	float vecmath_lerp( float a, float b, float s ) 
-	float vecmath_log( float v ) 
-	float vecmath_log2( float v ) 
-	float vecmath_log10( float v ) 
-	float vecmath_max( float a, float b ) 
-	float vecmath_min( float a, float b ) 
-	float vecmath_normalize( float v ) 
-	float vecmath_pow( float a, float b ) 
-	float vecmath_radians( float v ) 
-	float vecmath_rcp( float v ) 
-	float vecmath_reflect( float i, float n ) 
-	float vecmath_refract( float i, float n, float r ) 
-	float vecmath_round( float v ) 
-	float vecmath_rsqrt( float v ) 
-	float vecmath_saturate( float v ) 
-	float vecmath_sign( float v ) 
-	float vecmath_sin( float v ) 
-	float vecmath_sinh( float v ) 
-	float vecmath_smoothstep( float min_v, float max_v, float v ) 
-	float vecmath_smootherstep( float min_v, float max_v, float v ) 
-	float vecmath_sqrt( float v ) 
-	float vecmath_step( float edge, float x ) 
-	float vecmath_tan( float v ) 
-	float vecmath_tanh( float v ) 
-	float vecmath_trunc( float v ) 
+	float vecmath_abs( float v )
+	float vecmath_acos( float v )
+	int vecmath_all( float v )
+	int vecmath_any( float v )
+	float vecmath_asin( float v )
+	float vecmath_atan( float v )
+	float vecmath_atan2( float y, float x )
+	float vecmath_ceil( float v )
+	float vecmath_clamp( float v, float min_v, float max_v )
+	float vecmath_cos( float v )
+	float vecmath_cosh( float v )
+	float vecmath_degrees( float v )
+	float vecmath_distancesq( float a, float b )
+	float vecmath_distance( float a, float b )
+	float vecmath_dot( float a, float b )
+	float vecmath_exp( float v )
+	float vecmath_exp2( float v )
+	float vecmath_floor( float v )
+	float vecmath_fmod( float a, float b )
+	float vecmath_frac( float v )
+	float vecmath_lengthsq( float v )
+	float vecmath_length( float v )
+	float vecmath_lerp( float a, float b, float s )
+	float vecmath_log( float v )
+	float vecmath_log2( float v )
+	float vecmath_log10( float v )
+	float vecmath_max( float a, float b )
+	float vecmath_min( float a, float b )
+	float vecmath_normalize( float v )
+	float vecmath_pow( float a, float b )
+	float vecmath_radians( float v )
+	float vecmath_rcp( float v )
+	float vecmath_reflect( float i, float n )
+	float vecmath_refract( float i, float n, float r )
+	float vecmath_round( float v )
+	float vecmath_rsqrt( float v )
+	float vecmath_saturate( float v )
+	float vecmath_sign( float v )
+	float vecmath_sin( float v )
+	float vecmath_sinh( float v )
+	float vecmath_smoothstep( float min_v, float max_v, float v )
+	float vecmath_smootherstep( float min_v, float max_v, float v )
+	float vecmath_sqrt( float v )
+	float vecmath_step( float edge, float x )
+	float vecmath_tan( float v )
+	float vecmath_tanh( float v )
+	float vecmath_trunc( float v )
 
 
 Transpose, determinant, inverse and identity matrices
@@ -523,30 +523,30 @@ Calculating the determinant is supported for square matrices only:
 
 As is computing the inverse:
 
-	int mat22_inverse( mat22_t* out_matrix, float* out_determinant, mat22_t m ) 
-	int mat33_inverse( mat33_t* out_matrix, float* out_determinant, mat33_t m ) 
-	int mat44_inverse( mat44_t* out_matrix, float* out_determinant, mat44_t m ) 
+	int mat22_inverse( mat22_t* out_matrix, float* out_determinant, mat22_t m )
+	int mat33_inverse( mat33_t* out_matrix, float* out_determinant, mat33_t m )
+	int mat44_inverse( mat44_t* out_matrix, float* out_determinant, mat44_t m )
 
-Note that the inverse functions return 0 if the matrix cannot be inverted, and 
-non-zero if inversion was successful. Both the `out_matrix` and the 
-`out_determinant` parameters are optional and may be NULL. If non-NULL, 
-`out_determinant` will be set, and if non-NULL and inversion is successful, 
+Note that the inverse functions return 0 if the matrix cannot be inverted, and
+non-zero if inversion was successful. Both the `out_matrix` and the
+`out_determinant` parameters are optional and may be NULL. If non-NULL,
+`out_determinant` will be set, and if non-NULL and inversion is successful,
 `out_matrix` will be set.
 
-There are helper functions to construct the identity matrix for each of the 
+There are helper functions to construct the identity matrix for each of the
 square matrix sizes:
 
-	mat22_t mat22_identity( void ) 
-	mat33_t mat33_identity( void ) 
-	mat44_t mat44_identity( void ) 
+	mat22_t mat22_identity( void )
+	mat33_t mat33_identity( void )
+	mat44_t mat44_identity( void )
 
 and also functions to test if a matrix is exactly identity:
 
-	int mat22_is_identity( mat22_t m ) 
-	int mat33_is_identity( mat33_t m ) 
-	int mat44_is_identity( mat44_t m ) 
+	int mat22_is_identity( mat22_t m )
+	int mat33_is_identity( mat33_t m )
+	int mat44_is_identity( mat44_t m )
 
-returning non-zero if the matrix is identity, as compared exactly (no 
+returning non-zero if the matrix is identity, as compared exactly (no
 floating point epsilon is used).
 
 
@@ -554,7 +554,7 @@ Matrix multiplications
 ----------------------
 
 Matrix multiplication is supported between all vectors and matrices, in any
-valid combination of dimensions, all named on the form `###_mul_###` where 
+valid combination of dimensions, all named on the form `###_mul_###` where
 `###` is the type name of the first and second argument. The return type
 depends on the dimensions of the types involved.
 
@@ -564,26 +564,26 @@ All valid combinations, along with their return types, are as follows:
 	float vec3_mul_vec3( vec3_t a, vec3_t b )
 	float vec4_mul_vec4( vec4_t a, vec4_t b )
 
-	vec2_t vec2_mul_mat22( vec2_t a, mat22_t b ) 
-	vec3_t vec2_mul_mat23( vec2_t a, mat23_t b ) 
-	vec4_t vec2_mul_mat24( vec2_t a, mat24_t b ) 
-	vec2_t vec3_mul_mat32( vec3_t a, mat32_t b ) 
-	vec3_t vec3_mul_mat33( vec3_t a, mat33_t b ) 
-	vec4_t vec3_mul_mat34( vec3_t a, mat34_t b ) 
-	vec2_t vec4_mul_mat42( vec4_t a, mat42_t b ) 
-	vec3_t vec4_mul_mat43( vec4_t a, mat43_t b ) 
-	vec4_t vec4_mul_mat44( vec4_t a, mat44_t b ) 
+	vec2_t vec2_mul_mat22( vec2_t a, mat22_t b )
+	vec3_t vec2_mul_mat23( vec2_t a, mat23_t b )
+	vec4_t vec2_mul_mat24( vec2_t a, mat24_t b )
+	vec2_t vec3_mul_mat32( vec3_t a, mat32_t b )
+	vec3_t vec3_mul_mat33( vec3_t a, mat33_t b )
+	vec4_t vec3_mul_mat34( vec3_t a, mat34_t b )
+	vec2_t vec4_mul_mat42( vec4_t a, mat42_t b )
+	vec3_t vec4_mul_mat43( vec4_t a, mat43_t b )
+	vec4_t vec4_mul_mat44( vec4_t a, mat44_t b )
 
-	vec2_t mat22_mul_vec2( mat22_t a, vec2_t b ) 
-	vec3_t mat32_mul_vec2( mat32_t a, vec2_t b ) 
-	vec4_t mat42_mul_vec2( mat42_t a, vec2_t b ) 
-	vec2_t mat23_mul_vec3( mat23_t a, vec3_t b ) 
-	vec3_t mat33_mul_vec3( mat33_t a, vec3_t b ) 
-	vec4_t mat43_mul_vec3( mat43_t a, vec3_t b ) 
-	vec2_t mat24_mul_vec4( mat24_t a, vec4_t b ) 
-	vec3_t mat34_mul_vec4( mat34_t a, vec4_t b ) 
+	vec2_t mat22_mul_vec2( mat22_t a, vec2_t b )
+	vec3_t mat32_mul_vec2( mat32_t a, vec2_t b )
+	vec4_t mat42_mul_vec2( mat42_t a, vec2_t b )
+	vec2_t mat23_mul_vec3( mat23_t a, vec3_t b )
+	vec3_t mat33_mul_vec3( mat33_t a, vec3_t b )
+	vec4_t mat43_mul_vec3( mat43_t a, vec3_t b )
+	vec2_t mat24_mul_vec4( mat24_t a, vec4_t b )
+	vec3_t mat34_mul_vec4( mat34_t a, vec4_t b )
 	vec4_t mat44_mul_vec4( mat44_t a, vec4_t b )
- 
+
 	mat22_t mat22_mul_mat22( mat22_t a, mat22_t b )
 	mat23_t mat22_mul_mat23( mat22_t a, mat23_t b )
 	mat24_t mat22_mul_mat24( mat22_t a, mat24_t b )
@@ -616,50 +616,50 @@ All valid combinations, along with their return types, are as follows:
 
 When a vector is multiplied by another vector, this is equivalent to the dot
 product. When a vector is multiplied by a matrix, the vector is treated like a
-1xN matrix, or row vector. When a matrix is multiplied by a vector, the 
+1xN matrix, or row vector. When a matrix is multiplied by a vector, the
 vector is treated like a Nx1 matrix, or a column vector.
 
 
 Quaternions
 -----------
 
-Quaternions are supported, and as they also have four elements, they are 
+Quaternions are supported, and as they also have four elements, they are
 represented by the `vec4_t` type.
 
 The following functions operate on quaternions:
 
-	vec4_t quat_normalize( vec4_t q ) 
-	vec4_t quat_slerp( vec4_t a, vec4_t b, float t ) 
-	vec4_t quat_barycentric( vec4_t q1, vec4_t q2, vec4_t q3, float f, float g ) 
-	vec4_t quat_conjugate( vec4_t q ) 
-	vec4_t quat_exp( vec4_t q ) 
-	vec4_t quat_identity( void ) 
-	vec4_t quat_inverse( vec4_t q ) 
-	int quat_is_identity( vec4_t q ) 
-	vec4_t quat_ln( vec4_t q ) 
-	vec4_t quat_mul( vec4_t a, vec4_t b ) 
-	vec4_t quat_rotation_axis( vec3_t axis, float angle ) 
-	vec4_t quat_rotation_matrix( mat44_t m ) 
-	vec4_t quat_rotation_yaw_pitch_roll(float yaw, float pitch, float roll) 
-	void quat_squad_setup( vec4_t* out_a, vec4_t* out_b, vec4_t* out_c, vec4_t q0, vec4_t q1, vec4_t q2, vec4_t q3 ) 
-	vec4_t quat_squad(vec4_t q1, vec4_t a, vec4_t b, vec4_t c, float t ) 
-	void quat_to_axis_angle( vec4_t q, vec3_t* out_axis, float* out_angle ) 
-	vec3_t quat_rotate_vector( vec3_t v, vec4_t q ) 
-	vec4_t quat_shortest_arc( vec3_t from, vec3_t to ) 
-	vec4_t quat_from_mat33( mat33_t m ) 
-	vec4_t quat_from_mat44( mat44_t m ) 
-	float quat_angle( vec4_t a, vec4_t b ) 
-	mat33_t mat33_from_quat( vec4_t q ) 
-	mat44_t mat44_from_quat( vec4_t q ) 
+	vec4_t quat_normalize( vec4_t q )
+	vec4_t quat_slerp( vec4_t a, vec4_t b, float t )
+	vec4_t quat_barycentric( vec4_t q1, vec4_t q2, vec4_t q3, float f, float g )
+	vec4_t quat_conjugate( vec4_t q )
+	vec4_t quat_exp( vec4_t q )
+	vec4_t quat_identity( void )
+	vec4_t quat_inverse( vec4_t q )
+	int quat_is_identity( vec4_t q )
+	vec4_t quat_ln( vec4_t q )
+	vec4_t quat_mul( vec4_t a, vec4_t b )
+	vec4_t quat_rotation_axis( vec3_t axis, float angle )
+	vec4_t quat_rotation_matrix( mat44_t m )
+	vec4_t quat_rotation_yaw_pitch_roll(float yaw, float pitch, float roll)
+	void quat_squad_setup( vec4_t* out_a, vec4_t* out_b, vec4_t* out_c, vec4_t q0, vec4_t q1, vec4_t q2, vec4_t q3 )
+	vec4_t quat_squad(vec4_t q1, vec4_t a, vec4_t b, vec4_t c, float t )
+	void quat_to_axis_angle( vec4_t q, vec3_t* out_axis, float* out_angle )
+	vec3_t quat_rotate_vector( vec3_t v, vec4_t q )
+	vec4_t quat_shortest_arc( vec3_t from, vec3_t to )
+	vec4_t quat_from_mat33( mat33_t m )
+	vec4_t quat_from_mat44( mat44_t m )
+	float quat_angle( vec4_t a, vec4_t b )
+	mat33_t mat33_from_quat( vec4_t q )
+	mat44_t mat44_from_quat( vec4_t q )
 
-The functionality and behavior of all of these are consistent with D3DX, 
+The functionality and behavior of all of these are consistent with D3DX,
 XNAMath or DirectXMath, and the support they have for quaternions.
 
-> [!NOTE]  
-> As there is nothing in the API preventing you from using four-element 
+> [!NOTE]
+> As there is nothing in the API preventing you from using four-element
 > vectors and quaternions interchangeably, care should be taken to use
-> them in the correct way. For example, using `vec4_mul` to multiply two 
-> quaternions will give the wrong result - make sure to use `quat_mul` 
+> them in the correct way. For example, using `vec4_mul` to multiply two
+> quaternions will give the wrong result - make sure to use `quat_mul`
 > instead.
 
 
@@ -669,48 +669,48 @@ Matrix 3D utility functions
 There are a number of utility functions for creating various matrices used in 3d
 rendering (transformation and projection):
 
-	mat44_t mat44_look_at_lh( vec3_t eye, vec3_t at, vec3_t up ) 
-	mat44_t mat44_look_at_rh( vec3_t eye, vec3_t at, vec3_t up ) 
-	mat44_t mat44_ortho_lh( float w, float h, float zn, float zf ) 
-	mat44_t mat44_ortho_rh( float w, float h, float zn, float zf ) 
-	mat44_t mat44_ortho_off_center_lh( float l, float r, float b, float t, float zn, float zf ) 
-	mat44_t mat44_ortho_off_center_rh( float l, float r, float b, float t, float zn, float zf ) 
-	mat44_t mat44_perspective_lh( float w, float h, float zn, float zf ) 
-	mat44_t mat44_perspective_rh( float w, float h, float zn, float zf ) 
-	mat44_t mat44_perspective_off_center_lh( float l, float r, float b, float t, float zn, float zf ) 
-	mat44_t mat44_perspective_off_center_rh( float l, float r, float b, float t, float zn, float zf ) 
-	mat44_t mat44_perspective_fov_lh( float fovy, float aspect, float zn, float zf ) 
-	mat44_t mat44_perspective_fov_rh( float fovy, float aspect, float zn, float zf ) 
-	mat44_t mat44_rotation_axis( vec3_t axis, float angle ) 
-	mat44_t mat44_rotation_x( float angle ) 
-	mat44_t mat44_rotation_y( float angle ) 
-	mat44_t mat44_rotation_z( float angle ) 
-	mat44_t mat44_rotation_yaw_pitch_roll( float yaw, float pitch, float roll ) 
-	mat44_t mat44_scaling( float sx, float sy, float sz ) 
-	mat44_t mat44_translation( float tx, float ty, float tz ) 
+	mat44_t mat44_look_at_lh( vec3_t eye, vec3_t at, vec3_t up )
+	mat44_t mat44_look_at_rh( vec3_t eye, vec3_t at, vec3_t up )
+	mat44_t mat44_ortho_lh( float w, float h, float zn, float zf )
+	mat44_t mat44_ortho_rh( float w, float h, float zn, float zf )
+	mat44_t mat44_ortho_off_center_lh( float l, float r, float b, float t, float zn, float zf )
+	mat44_t mat44_ortho_off_center_rh( float l, float r, float b, float t, float zn, float zf )
+	mat44_t mat44_perspective_lh( float w, float h, float zn, float zf )
+	mat44_t mat44_perspective_rh( float w, float h, float zn, float zf )
+	mat44_t mat44_perspective_off_center_lh( float l, float r, float b, float t, float zn, float zf )
+	mat44_t mat44_perspective_off_center_rh( float l, float r, float b, float t, float zn, float zf )
+	mat44_t mat44_perspective_fov_lh( float fovy, float aspect, float zn, float zf )
+	mat44_t mat44_perspective_fov_rh( float fovy, float aspect, float zn, float zf )
+	mat44_t mat44_rotation_axis( vec3_t axis, float angle )
+	mat44_t mat44_rotation_x( float angle )
+	mat44_t mat44_rotation_y( float angle )
+	mat44_t mat44_rotation_z( float angle )
+	mat44_t mat44_rotation_yaw_pitch_roll( float yaw, float pitch, float roll )
+	mat44_t mat44_scaling( float sx, float sy, float sz )
+	mat44_t mat44_translation( float tx, float ty, float tz )
 
 These all work the same as in DirectX (and most 3d math libraries).
 
 There's also a function to decompose a transformation matrix into separate scale,
 rotation and translation components:
-	
-	int mat44_decompose( vec3_t* out_scale, vec4_t* out_rotation, vec3_t* out_translation, mat44_t m ) 
+
+	int mat44_decompose( vec3_t* out_scale, vec4_t* out_rotation, vec3_t* out_translation, mat44_t m )
 
 Again, this works just like in D3DX, and returns a non-zero value if the matrix
 could be successfully decomposed, and returns 0 if decomposition failed. If it
 failed, `out_scale`, `out_rotation` and `out_translation` are not modified. It
-is valid to pass NULL for any of the out parameters if you do not need that 
+is valid to pass NULL for any of the out parameters if you do not need that
 result value.
 
 Finally, there are transform helpers mirroring the ones in D3DX:
 
-	vec4_t vec2_transform( vec2_t v, mat44_t m ) 
-	vec2_t vec2_transform_coord( vec2_t v, mat44_t m ) 
-	vec2_t vec2_transform_normal( vec2_t v, mat44_t m ) 
-	vec4_t vec3_transform( vec3_t v, mat44_t m ) 
-	vec3_t vec3_transform_coord( vec3_t v, mat44_t m ) 
-	vec3_t vec3_transform_normal( vec3_t v, mat44_t m ) 
-	vec4_t vec4_transform( vec4_t v, mat44_t m ) 
+	vec4_t vec2_transform( vec2_t v, mat44_t m )
+	vec2_t vec2_transform_coord( vec2_t v, mat44_t m )
+	vec2_t vec2_transform_normal( vec2_t v, mat44_t m )
+	vec4_t vec3_transform( vec3_t v, mat44_t m )
+	vec3_t vec3_transform_coord( vec3_t v, mat44_t m )
+	vec3_t vec3_transform_normal( vec3_t v, mat44_t m )
+	vec4_t vec4_transform( vec4_t v, mat44_t m )
 
 
 Vector swizzling
@@ -720,16 +720,16 @@ vecmath.h supports swizzling in the form swizzle-on-read, but does not support
 swizzle-on-right, meaning you cannot assign to a swizzled target.
 
 Swizzling is supported by defining separate swizzle functions for every single
-combination of swizzling, on vec2/vec3 and vec4 types. That's hundreds of 
-functions, and we won't list them here, but let's at least look at the ones 
-returning vec2_t (the rest follows the same pattern, but with many more 
+combination of swizzling, on vec2/vec3 and vec4 types. That's hundreds of
+functions, and we won't list them here, but let's at least look at the ones
+returning vec2_t (the rest follows the same pattern, but with many more
 variations):
 
 	vec2_t vec2_xx( vec2_t v )
 	vec2_t vec2_xy( vec2_t v )
 	vec2_t vec2_yx( vec2_t v )
 	vec2_t vec2_yy( vec2_t v )
-	
+
 	vec2_t vec3_xx( vec3_t v )
 	vec2_t vec3_xy( vec3_t v )
 	vec2_t vec3_xz( vec3_t v )
@@ -739,7 +739,7 @@ variations):
 	vec2_t vec3_zx( vec3_t v )
 	vec2_t vec3_zy( vec3_t v )
 	vec2_t vec3_zz( vec3_t v )
-	
+
 	vec2_t vec4_xx( vec4_t v )
 	vec2_t vec4_xy( vec4_t v )
 	vec2_t vec4_xz( vec4_t v )
@@ -762,7 +762,7 @@ function suffix (`_xx`, `_yx` etc) - all of the two elements in this example,
 but variants exist with more elements as well, for other swizzling combinations.
 
 The function prefix (`vec2_`, `vec3_`, `vec4_`) indicates the parameter type
-as would be expected. 
+as would be expected.
 
 > For C++, swizzling is also supported in the form of member functions on the
 > `vec2`, `vec3` and `vec4` classes, allowing swizzling in the form `v.xxx()`,
@@ -777,18 +777,18 @@ All functions in vecmath.h are prefixed with the name of the type it operates
 on (`vec2_`, `vec3_`, `vec4_`, `mat22_` etc ). From C11, there is the new
 keyword `_Generic`, allowing for defining a macro dispatcher that allows the
 use of the same name to invoke different functions depending on the type of
-the arguments. 
+the arguments.
 
 In vecmath.h you can define the preprocessor symbol `VECMATH_GENERICS`, and if
 you are compiling with C11 or later, a full set of `vm_` macros will be defined
 for calling functions without specifying a prefix. It allows you to do things
 like `vm_add( a, b )` regardless of which vecmath.h types `a` and `b` are, as
-long as they are the same type. 
+long as they are the same type.
 
-Unlike most other vm_ functions, which perform element-wise operations, the 
-`vm_mul` macro does not wrap the `*_mul_elem` element-wise multiply functions, 
-but instead the full matrix multiply `*_mul_*` functions, allowing for 
-expressions like `vm_mul( v4, m44 )`, `vm_mul( m44, v44 )`, `vm_mul( m44, m44 )` 
+Unlike most other vm_ functions, which perform element-wise operations, the
+`vm_mul` macro does not wrap the `*_mul_elem` element-wise multiply functions,
+but instead the full matrix multiply `*_mul_*` functions, allowing for
+expressions like `vm_mul( v4, m44 )`, `vm_mul( m44, v44 )`, `vm_mul( m44, m44 )`
 etc.
 
 The full set of generic function names are:
@@ -859,7 +859,7 @@ The full set of generic function names are:
 In addition to the `VECMATH_GENERICS` preprocessor symbol, it is also possible
 to define the symbol `VECMATH_GENERICS_NO_PREFIX`, to create a set of aliases
 for all the `vm_*` macros, that omits the `vm_` prefix, providing more natural
-names like `add( a, b )`, `mul( v, m )` etc. 
+names like `add( a, b )`, `mul( v, m )` etc.
 
 > [!CAUTION]
 > Do note that defining `VECMATH_GENERICS_NO_PREFIX` will redefine names like
@@ -867,22 +867,22 @@ names like `add( a, b )`, `mul( v, m )` etc.
 > names from the C standard math library. Use this feature with care, as it can
 > very easily lead to some pretty weird compilation errors.
 
-> In C++, when `VECMATH_GENERICS_NO_PREFIX` is defined, all the function 
+> In C++, when `VECMATH_GENERICS_NO_PREFIX` is defined, all the function
 > overloads are just defined without the prefix in the first place, and instead
 > macros are defined to provide the `vm_` prefixed names as aliases. This avoids
 > the global redefining of common math.h names, and also places the overloaded
-> functions within the `vecmath` namespace, which further avoids collisions. 
+> functions within the `vecmath` namespace, which further avoids collisions.
 
 
 Unit tests
 ----------
 
-vecmath.h contains an extensive test suite, consisting of over 1300 tests, 
-checking over 6000 assertions. These tests are implemented at the end of the 
+vecmath.h contains an extensive test suite, consisting of over 1300 tests,
+checking over 6000 assertions. These tests are implemented at the end of the
 vecmath.h file, guarded by a conditional compile flag so they are ignored when
 using the library normally.
 
-To enable the tests, compile vecmath.h as a C or C++ file, and define the 
+To enable the tests, compile vecmath.h as a C or C++ file, and define the
 preprocessor symbol VECMATH_RUN_TESTS.
 
 Using MSVCs cl.exe it would look like this:
@@ -905,7 +905,7 @@ library, specifically the D3DX part of DirectX 9. This is a very widely used
 and well proven math library implementation, and testing vecmath.h against this
 gives a high level of confidence.
 
-To enable the running of D3DX tests, define the preprocessor symbol 
+To enable the running of D3DX tests, define the preprocessor symbol
 `VECMATH_RUN_D3DX_TESTS` (in addition to `VECMATH_RUN_TESTS`), and make sure to
 build with the correct include and library paths set for your installation of
 d3d9.
@@ -958,7 +958,7 @@ if using clang (gcc and tcc use similar syntax).
 	typedef float vec2_t __attribute__((ext_vector_type(2)));
 	typedef float vec3_t __attribute__((ext_vector_type(3)));
 	typedef float vec4_t __attribute__((ext_vector_type(4)));
-#else 
+#else
 	typedef struct vec2_t { float x, y; } vec2_t ;
 	typedef struct vec3_t { float x, y, z; } vec3_t;
 	typedef struct vec4_t { float x, y, z, w; } vec4_t;
@@ -991,8 +991,12 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
 		} // namespace vecmath
 	#endif
 
-	#define _CRT_NONSTDC_NO_DEPRECATE 
+    #ifndef _CRT_NONSTDC_NO_DEPRECATE
+	#define _CRT_NONSTDC_NO_DEPRECATE
+    #endif
+    #ifndef _CRT_SECURE_NO_WARNINGS
 	#define _CRT_SECURE_NO_WARNINGS
+    #endif
 
 	// If we are running tests on windows
 	#if defined( VECMATH_RUN_TESTS ) && defined( VECMATH_USE_EXTERNAL_TESTFW ) && defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && !defined( __TINYC__ )
@@ -1001,77 +1005,77 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
 	#endif
 
 	#include <math.h>
-	
+
 	#ifdef __cplusplus
 		namespace vecmath {
 	#endif
 #endif
 
-#if !defined( VECMATH_ABS ) 
+#if !defined( VECMATH_ABS )
 	#ifndef __TINYC__
 		#define VECMATH_ABS( v ) ( (float)( fabsf( v ) ) )
 	#else
 		#define VECMATH_ABS( v ) ( (float)( fabs( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_ACOS ) 
+#if !defined( VECMATH_ACOS )
 	#ifndef __TINYC__
 		#define VECMATH_ACOS( v ) ( (float)( acosf( v ) ) )
 	#else
 		#define VECMATH_ACOS( v ) ( (float)( acos( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_ASIN ) 
+#if !defined( VECMATH_ASIN )
 	#ifndef __TINYC__
 		#define VECMATH_ASIN( v ) ( (float)( asinf( v ) ) )
 	#else
 		#define VECMATH_ASIN( v ) ( (float)( asin( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_ATAN ) 
+#if !defined( VECMATH_ATAN )
 	#ifndef __TINYC__
 		#define VECMATH_ATAN( v ) ( (float)( atanf( v ) ) )
 	#else
 		#define VECMATH_ATAN( v ) ( (float)( atan( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_ATAN2 ) 
+#if !defined( VECMATH_ATAN2 )
 	#ifndef __TINYC__
 		#define VECMATH_ATAN2( y, x ) ( (float)( atan2f( ( y ), ( x ) ) ) )
 	#else
 		#define VECMATH_ATAN2( y, x ) ( (float)( atan2( ( y ), ( x ) ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_CEIL ) 
+#if !defined( VECMATH_CEIL )
 	#ifndef __TINYC__
 		#define VECMATH_CEIL( v ) ( (float)( ceilf( v ) ) )
 	#else
 		#define VECMATH_CEIL( v ) ( (float)( ceil( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_COS ) 
+#if !defined( VECMATH_COS )
 	#ifndef __TINYC__
 		#define VECMATH_COS( v ) ( (float)( cosf( v ) ) )
 	#else
 		#define VECMATH_COS( v ) ( (float)( cos( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_COSH ) 
+#if !defined( VECMATH_COSH )
 	#ifndef __TINYC__
 		#define VECMATH_COSH( v ) ( (float)( coshf( v ) ) )
 	#else
 		#define VECMATH_COSH( v ) ( (float)( cosh( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_EXP ) 
+#if !defined( VECMATH_EXP )
 	#ifndef __TINYC__
 		#define VECMATH_EXP( v ) ( (float)( expf( v ) ) )
 	#else
 		#define VECMATH_EXP( v ) ( (float)( exp( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_EXP2 ) 
-	#if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && _MSC_VER < 1800 
+#if !defined( VECMATH_EXP2 )
+	#if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && _MSC_VER < 1800
 		#define VECMATH_EXP2( v ) ( (float)( powf( 2.0f, ( v ) ) ) )
 	#elif defined(__TINYC__)
 		#define VECMATH_EXP2( v ) ( (float)( pow( 2.0f, ( v ) ) ) )
@@ -1079,21 +1083,21 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
 		#define VECMATH_EXP2( v ) ( (float)( exp2f( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_FLOOR ) 
+#if !defined( VECMATH_FLOOR )
 	#ifndef __TINYC__
 		#define VECMATH_FLOOR( v ) ( (float)( floorf( v ) ) )
 	#else
 		#define VECMATH_FLOOR( v ) ( (float)( floor( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_FMOD ) 
+#if !defined( VECMATH_FMOD )
 	#ifndef __TINYC__
 		#define VECMATH_FMOD( a, b ) ( (float)( fmodf( ( a ), ( b ) ) ) )
 	#else
 		#define VECMATH_FMOD( a, b ) ( (float)( fmod( ( a ), ( b ) ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_FRAC ) 
+#if !defined( VECMATH_FRAC )
     #ifndef __TINYC__
 		VECMATH_INLINE float internal_vecmath_frac( float v ) { float t; return (float)( fabsf( modff( v, &t ) ) ); }
     #else
@@ -1101,14 +1105,14 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
     #endif
 	#define VECMATH_FRAC( v ) internal_vecmath_frac( v )
 #endif
-#if !defined( VECMATH_LOG ) 
+#if !defined( VECMATH_LOG )
 	#ifndef __TINYC__
 		#define VECMATH_LOG( v ) ( (float)( logf( v ) ) )
 	#else
 		#define VECMATH_LOG( v ) ( (float)( log( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_LOG2 ) 
+#if !defined( VECMATH_LOG2 )
 	#if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && _MSC_VER < 1800
 		#define VECMATH_LOG2( v ) ( (float)( VECMATH_LOG10( ( v ) ) / VECMATH_LOG10( 2.0 ) ) )
 	#elif defined( __TINYC__ )
@@ -1117,35 +1121,35 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
 		#define VECMATH_LOG2( v ) ( (float)( log2f( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_LOG10 ) 
+#if !defined( VECMATH_LOG10 )
 	#ifndef __TINYC__
 		#define VECMATH_LOG10( v ) ( (float)( log10f( v ) ) )
 	#else
 		#define VECMATH_LOG10( v ) ( (float)( log10( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_MAX ) 
+#if !defined( VECMATH_MAX )
 	#ifndef __TINYC__
 		#define VECMATH_MAX( a, b ) ( (float)( fmaxf( a, b ) ) )
 	#else
 		#define VECMATH_MAX( a, b ) ( (float)( fmax( a, b ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_MIN ) 
+#if !defined( VECMATH_MIN )
 	#ifndef __TINYC__
 		#define VECMATH_MIN( a, b ) ( (float)( fminf( a, b ) ) )
 	#else
 		#define VECMATH_MIN( a, b ) ( (float)( fmin( a, b ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_POW ) 
+#if !defined( VECMATH_POW )
 	#ifndef __TINYC__
 		#define VECMATH_POW( a, b ) ( (float)( powf( ( a ), ( b ) ) ) )
 	#else
 		#define VECMATH_POW( a, b ) ( (float)( pow( ( a ), ( b ) ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_ROUND ) 
+#if !defined( VECMATH_ROUND )
 	#if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && _MSC_VER < 1800
 		VECMATH_INLINE float internal_vecmath_round( float x ) { float i, r; float fraction = modff( (float) x, &i ); modff( 2.0f * fraction, &r ); return i + r; }
 		#define VECMATH_ROUND( v ) internal_vecmath_round( v )
@@ -1155,42 +1159,42 @@ typedef struct mat44_t { /* rows */ vec4_t x, y, z, w; } mat44_t;
 		#define VECMATH_ROUND( v ) ( (float)( roundf( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_SIN ) 
+#if !defined( VECMATH_SIN )
 	#ifndef __TINYC__
 		#define VECMATH_SIN( v ) ( (float)( sinf( v ) ) )
 	#else
 		#define VECMATH_SIN( v ) ( (float)( sin( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_SINH ) 
+#if !defined( VECMATH_SINH )
 	#ifndef __TINYC__
 		#define VECMATH_SINH( v ) ( (float)( sinhf( v ) ) )
 	#else
 		#define VECMATH_SINH( v ) ( (float)( sinh( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_SQRT ) 
+#if !defined( VECMATH_SQRT )
 	#ifndef __TINYC__
 		#define VECMATH_SQRT( v ) ( (float)( sqrtf( v ) ) )
 	#else
 		#define VECMATH_SQRT( v ) ( (float)( sqrt( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_TAN ) 
+#if !defined( VECMATH_TAN )
 	#ifndef __TINYC__
 		#define VECMATH_TAN( v ) ( (float)( tanf( v ) ) )
 	#else
 		#define VECMATH_TAN( v ) ( (float)( tan( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_TANH ) 
+#if !defined( VECMATH_TANH )
 	#ifndef __TINYC__
 		#define VECMATH_TANH( v ) ( (float)( tanhf( v ) ) )
 	#else
 		#define VECMATH_TANH( v ) ( (float)( tanh( v ) ) )
 	#endif
 #endif
-#if !defined( VECMATH_TRUNC ) 
+#if !defined( VECMATH_TRUNC )
 	#if defined( _MSC_VER ) && !defined( __clang__ ) && !defined( __GNUC__ ) && _MSC_VER < 1800
 		#define VECMATH_TRUNC( v ) ( (float)( v > 0.0f ? ( VECMATH_FLOOR( v ) ) : ( VECMATH_CEIL( v ) ) ) )
 	#elif defined( __TINYC__ )
@@ -1212,10 +1216,10 @@ VECMATH_INLINE float vecmath_ceil( float v ) { return VECMATH_CEIL( v ); }
 VECMATH_INLINE float vecmath_clamp( float v, float min_v, float max_v ) { return v < min_v ? min_v : v > max_v ? max_v : v; }
 VECMATH_INLINE float vecmath_cos( float v ) { return VECMATH_COS( v ); }
 VECMATH_INLINE float vecmath_cosh( float v ) { return VECMATH_COSH( v ); }
-VECMATH_INLINE float vecmath_degrees( float v ) { float const f = 57.295779513082320876846364344191f; return v * f; } 
+VECMATH_INLINE float vecmath_degrees( float v ) { float const f = 57.295779513082320876846364344191f; return v * f; }
 VECMATH_INLINE float vecmath_distancesq( float a, float b ) { float x = b - a; return x * x; }
 VECMATH_INLINE float vecmath_distance( float a, float b ) { return VECMATH_ABS( b - a ); }
-VECMATH_INLINE float vecmath_dot( float a, float b ) { return a * b; } 
+VECMATH_INLINE float vecmath_dot( float a, float b ) { return a * b; }
 VECMATH_INLINE float vecmath_exp( float v ) { return VECMATH_EXP( v ); }
 VECMATH_INLINE float vecmath_exp2( float v ) { return VECMATH_EXP2( v ); }
 VECMATH_INLINE float vecmath_floor( float v ) { return VECMATH_FLOOR( v ); }
@@ -1231,7 +1235,7 @@ VECMATH_INLINE float vecmath_max( float a, float b ) { return VECMATH_MAX( a , b
 VECMATH_INLINE float vecmath_min( float a, float b ) { return VECMATH_MIN( a, b ); }
 VECMATH_INLINE float vecmath_normalize( float v ) { float l = VECMATH_SQRT( v * v ); return l == 0.0f ? v : (float)( v / l ); }
 VECMATH_INLINE float vecmath_pow( float a, float b ) { return VECMATH_POW( a, b );}
-VECMATH_INLINE float vecmath_radians( float v ) { float const f = 0.01745329251994329576922222222222f; return v * f; } 
+VECMATH_INLINE float vecmath_radians( float v ) { float const f = 0.01745329251994329576922222222222f; return v * f; }
 VECMATH_INLINE float vecmath_rcp( float v ) { return 1.0f / v; }
 VECMATH_INLINE float vecmath_reflect( float i, float n ) { return i - 2.0f * n * vecmath_dot( i, n ); }
 VECMATH_INLINE float vecmath_refract( float i, float n, float r ) { float n_i = vecmath_dot( n, i ); float k = 1.0f - r * r * ( 1.0f - n_i * n_i ); return ( k < 0.0f ) ? (float)( 0.0f ) : ( r * i - ( r * n_i + VECMATH_SQRT( k ) ) * n ); }
@@ -1259,7 +1263,7 @@ VECMATH_INLINE float vecmath_fdiv( float a, float b ) { return a / b; }
 
 // vec2
 #ifdef __cplusplus
-	struct vec2 : vec2_t { 
+	struct vec2 : vec2_t {
 		inline vec2() {}
 		inline vec2( float x_, float y_ ) { x = x_; y = y_; }
 		inline vec2( vec2_t v ) { x = v.x; y = v.y; }
@@ -1302,10 +1306,10 @@ VECMATH_INLINE float vecmath_fdiv( float a, float b ) { return a / b; }
 	VECMATH_INLINE vec2_t vec2( float x, float y ) { vec2_t vec; vec.x = x; vec.y = y; return vec; }
 #endif
 VECMATH_INLINE vec2_t vec2f( float v ) { vec2_t vec; vec.x = v; vec.y = v; return vec; }
-	
+
 VECMATH_INLINE float vec2_get( vec2_t vec, int index ) { return ( (float*) &vec )[ index ]; }
 VECMATH_INLINE void vec2_set( vec2_t* vec, int index, float f ) { ( (float*) vec )[ index ] = f; }
-	
+
 // operators
 VECMATH_INLINE vec2_t vec2_neg( vec2_t v ) { return vec2( -v.x, -v.y ); }
 VECMATH_INLINE int vec2_eq( vec2_t a, vec2_t b ) { return a.x == b.x && a.y == b.y; }
@@ -1335,7 +1339,7 @@ VECMATH_INLINE vec2_t vec2_clamp( vec2_t v, vec2_t min_v, vec2_t max_v ) { retur
 VECMATH_INLINE vec2_t vec2_cos( vec2_t v ) { return vec2( vecmath_cos( v.x ), vecmath_cos( v.y ) ); }
 VECMATH_INLINE vec2_t vec2_cosh( vec2_t v ) { return vec2( vecmath_cosh( v.x ), vecmath_cosh( v.y ) ); }
 VECMATH_INLINE float vec2_cross( vec2_t a, vec2_t b ) { return a.x * b.y - a.y * b.x; }
-VECMATH_INLINE vec2_t vec2_degrees( vec2_t v ) { return vec2( vecmath_degrees( v.x ), vecmath_degrees( v.y ) ); } 
+VECMATH_INLINE vec2_t vec2_degrees( vec2_t v ) { return vec2( vecmath_degrees( v.x ), vecmath_degrees( v.y ) ); }
 VECMATH_INLINE float vec2_distancesq( vec2_t a, vec2_t b ) { float x = b.x - a.x; float y = b.y - a.y; return x * x + y * y; }
 VECMATH_INLINE float vec2_distance( vec2_t a, vec2_t b ) { float x = b.x - a.x; float y = b.y - a.y; return vecmath_sqrt( x * x + y * y ); }
 VECMATH_INLINE float vec2_dot( vec2_t a, vec2_t b ) { return a.x * b.x + a.y * b.y; }
@@ -1354,7 +1358,7 @@ VECMATH_INLINE vec2_t vec2_max( vec2_t a, vec2_t b ) { return vec2( vecmath_max(
 VECMATH_INLINE vec2_t vec2_min( vec2_t a, vec2_t b ) { return vec2( vecmath_min( a.x, b.x ), vecmath_min( a.y, b.y ) ); }
 VECMATH_INLINE vec2_t vec2_normalize( vec2_t v ) { float l = vecmath_sqrt( v.x * v.x + v.y * v.y ); return l == 0.0f ? v : vec2( v.x / l, v.y / l ); }
 VECMATH_INLINE vec2_t vec2_pow( vec2_t a, vec2_t b ) { return vec2( vecmath_pow( a.x, b.x ), vecmath_pow( a.y, b.y ) ); }
-VECMATH_INLINE vec2_t vec2_radians( vec2_t v ) { return vec2( vecmath_radians( v.x ), vecmath_radians( v.y ) ); } 
+VECMATH_INLINE vec2_t vec2_radians( vec2_t v ) { return vec2( vecmath_radians( v.x ), vecmath_radians( v.y ) ); }
 VECMATH_INLINE vec2_t vec2_rcp( vec2_t v ) { return vec2( vecmath_rcp( v.x ), vecmath_rcp( v.y ) ); }
 VECMATH_INLINE vec2_t vec2_reflect( vec2_t i, vec2_t n ) { return vec2_sub( i, vec2_mulf( n, 2.0f * vec2_dot( i, n ) ) ); }
 VECMATH_INLINE vec2_t vec2_refract( vec2_t i, vec2_t n, float r ) { float d = vec2_dot( n, i ); float k = 1.0f - r * r * ( 1.0f - d * d ); return k < 0.0f ? vec2f( 0.0f ) : vec2_sub( vec2_mulf( i, r ), vec2_mulf( n, r * d + vecmath_sqrt( k ) ) ); }
@@ -1375,7 +1379,7 @@ VECMATH_INLINE vec2_t vec2_trunc( vec2_t v ) { return vec2( vecmath_trunc( v.x )
 
 // vec3
 #ifdef __cplusplus
-	struct vec3 : vec3_t { 
+	struct vec3 : vec3_t {
 		inline vec3() {}
 		inline vec3( float x_, float y_, float z_ ) { x = x_; y = y_; z = z_; }
 		inline vec3( vec3_t v ) { x = v.x; y = v.y; z = v.z; }
@@ -1511,7 +1515,7 @@ VECMATH_INLINE vec2_t vec2_trunc( vec2_t v ) { return vec2( vecmath_trunc( v.x )
 VECMATH_INLINE vec3_t vec3f( float v ) { vec3_t vec; vec.x = v; vec.y = v; vec.z = v; return vec; }
 VECMATH_INLINE vec3_t vec3v2f( vec2_t v, float f ) { vec3_t vec; vec.x = v.x; vec.y = v.y; vec.z = f; return vec; }
 VECMATH_INLINE vec3_t vec3fv2( float f, vec2_t v ) { vec3_t vec; vec.x = f; vec.y = v.x; vec.z = v.y; return vec; }
-	
+
 VECMATH_INLINE float vec3_get( vec3_t vec, int index ) { return ( (float*) &vec )[ index ]; }
 VECMATH_INLINE void vec3_set( vec3_t* vec, int index, float f ) { ( (float*) vec )[ index ] = f; }
 
@@ -1544,7 +1548,7 @@ VECMATH_INLINE vec3_t vec3_clamp( vec3_t v, vec3_t min_v, vec3_t max_v ) { retur
 VECMATH_INLINE vec3_t vec3_cos( vec3_t v ) { return vec3( vecmath_cos( v.x ), vecmath_cos( v.y ), vecmath_cos( v.z ) ); }
 VECMATH_INLINE vec3_t vec3_cosh( vec3_t v ) { return vec3( vecmath_cosh( v.x ), vecmath_cosh( v.y ), vecmath_cosh( v.z ) ); }
 VECMATH_INLINE vec3_t vec3_cross( vec3_t a, vec3_t b ) { return vec3( a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x ); }
-VECMATH_INLINE vec3_t vec3_degrees( vec3_t v ) { return vec3( vecmath_degrees( v.x ), vecmath_degrees( v.y ), vecmath_degrees( v.z ) ); } 
+VECMATH_INLINE vec3_t vec3_degrees( vec3_t v ) { return vec3( vecmath_degrees( v.x ), vecmath_degrees( v.y ), vecmath_degrees( v.z ) ); }
 VECMATH_INLINE float vec3_distancesq( vec3_t a, vec3_t b ) { float x = b.x - a.x; float y = b.y - a.y; float z = b.z - a.z; return x * x + y * y + z * z; }
 VECMATH_INLINE float vec3_distance( vec3_t a, vec3_t b ) { float x = b.x - a.x; float y = b.y - a.y; float z = b.z - a.z; return vecmath_sqrt( x * x + y * y + z * z ); }
 VECMATH_INLINE float vec3_dot( vec3_t a, vec3_t b ) { return a.x * b.x + a.y * b.y + a.z * b.z; }
@@ -1563,7 +1567,7 @@ VECMATH_INLINE vec3_t vec3_max( vec3_t a, vec3_t b ) { return vec3( vecmath_max(
 VECMATH_INLINE vec3_t vec3_min( vec3_t a, vec3_t b ) { return vec3( vecmath_min( a.x, b.x ), vecmath_min( a.y, b.y ), vecmath_min( a.z, b.z ) ); }
 VECMATH_INLINE vec3_t vec3_normalize( vec3_t v ) { float l = vecmath_sqrt( v.x * v.x + v.y * v.y + v.z * v.z ); return l == 0.0f ? v : vec3( v.x / l, v.y / l, v.z / l ); }
 VECMATH_INLINE vec3_t vec3_pow( vec3_t a, vec3_t b ) { return vec3( vecmath_pow( a.x, b.x ), vecmath_pow( a.y, b.y ), vecmath_pow( a.z, b.z ) ); }
-VECMATH_INLINE vec3_t vec3_radians( vec3_t v ) { return vec3( vecmath_radians( v.x ), vecmath_radians( v.y ), vecmath_radians( v.z ) ); } 
+VECMATH_INLINE vec3_t vec3_radians( vec3_t v ) { return vec3( vecmath_radians( v.x ), vecmath_radians( v.y ), vecmath_radians( v.z ) ); }
 VECMATH_INLINE vec3_t vec3_rcp( vec3_t v ) { return vec3( vecmath_rcp( v.x ), vecmath_rcp( v.y ), vecmath_rcp( v.z ) ); }
 VECMATH_INLINE vec3_t vec3_reflect( vec3_t i, vec3_t n ) { return vec3_sub( i, vec3_mulf( n, 2.0f * vec3_dot( i, n ) ) ); }
 VECMATH_INLINE vec3_t vec3_refract( vec3_t i, vec3_t n, float r ) { float d = vec3_dot( n, i ); float k = 1.0f - r * r * ( 1.0f - d * d ); return k < 0.0f ? vec3f( 0.0f ) : vec3_sub( vec3_mulf( i, r ), vec3_mulf( n, r * d + vecmath_sqrt( k ) ) ); }
@@ -1584,7 +1588,7 @@ VECMATH_INLINE vec3_t vec3_trunc( vec3_t v ) { return vec3( vecmath_trunc( v.x )
 
 // vec4
 #ifdef __cplusplus
-	struct vec4 : vec4_t { 
+	struct vec4 : vec4_t {
 		inline vec4() {}
 		inline vec4( float x_, float y_, float z_, float w_ ) { x = x_; y = y_; z = z_; w = w_; }
 		inline vec4( vec4_t v ) { x = v.x; y = v.y; z = v.z; w = v.w; }
@@ -1941,7 +1945,7 @@ VECMATH_INLINE vec4_t vec4f( float v ) { vec4_t vec; vec.x = v; vec.y = v; vec.z
 VECMATH_INLINE vec4_t vec4v3f( vec3_t v, float f ) { vec4_t vec; vec.x = v.x; vec.y = v.y; vec.z = v.z; vec.w = f; return vec; }
 VECMATH_INLINE vec4_t vec4fv3( float f, vec3_t v ) { vec4_t vec; vec.x = f; vec.y = v.x; vec.z = v.y; vec.w = v.z; return vec; }
 VECMATH_INLINE vec4_t vec4v2( vec2_t a, vec2_t b ) { vec4_t vec; vec.x = a.x; vec.y = a.y; vec.z = b.x; vec.w = b.y; return vec; }
-	
+
 VECMATH_INLINE float vec4_get( vec4_t vec, int index ) { return ( (float*) &vec )[ index ]; }
 VECMATH_INLINE void vec4_set( vec4_t* vec, int index, float f ) { ( (float*) vec )[ index ] = f; }
 
@@ -1973,7 +1977,7 @@ VECMATH_INLINE vec4_t vec4_ceil( vec4_t v ) { return vec4( vecmath_ceil( v.x ), 
 VECMATH_INLINE vec4_t vec4_clamp( vec4_t v, vec4_t min_v, vec4_t max_v ) { return vec4( vecmath_clamp( v.x, min_v.x, max_v.x ), vecmath_clamp( v.y, min_v.y, max_v.y ), vecmath_clamp( v.z, min_v.z, max_v.z ), vecmath_clamp( v.w, min_v.w, max_v.w ) ); }
 VECMATH_INLINE vec4_t vec4_cos( vec4_t v ) { return vec4( vecmath_cos( v.x ), vecmath_cos( v.y ), vecmath_cos( v.z ), vecmath_cos( v.w ) ); }
 VECMATH_INLINE vec4_t vec4_cosh( vec4_t v ) { return vec4( vecmath_cosh( v.x ), vecmath_cosh( v.y ), vecmath_cosh( v.z ), vecmath_cosh( v.w ) ); }
-VECMATH_INLINE vec4_t vec4_degrees( vec4_t v ) { return vec4( vecmath_degrees( v.x ), vecmath_degrees( v.y ), vecmath_degrees( v.z ), vecmath_degrees( v.w ) ); } 
+VECMATH_INLINE vec4_t vec4_degrees( vec4_t v ) { return vec4( vecmath_degrees( v.x ), vecmath_degrees( v.y ), vecmath_degrees( v.z ), vecmath_degrees( v.w ) ); }
 VECMATH_INLINE float vec4_distancesq( vec4_t a, vec4_t b ) { float x = b.x - a.x; float y = b.y - a.y; float z = b.z - a.z; float w = b.w - a.w; return x * x + y * y + z * z + w * w; }
 VECMATH_INLINE float vec4_distance( vec4_t a, vec4_t b ) { float x = b.x - a.x; float y = b.y - a.y; float z = b.z - a.z; float w = b.w - a.w; return vecmath_sqrt( x * x + y * y + z * z + w * w ); }
 VECMATH_INLINE float vec4_dot( vec4_t a, vec4_t b ) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
@@ -1992,7 +1996,7 @@ VECMATH_INLINE vec4_t vec4_max( vec4_t a, vec4_t b ) { return vec4( vecmath_max(
 VECMATH_INLINE vec4_t vec4_min( vec4_t a, vec4_t b ) { return vec4( vecmath_min( a.x, b.x ), vecmath_min( a.y, b.y ), vecmath_min( a.z, b.z ), vecmath_min( a.w, b.w ) ); }
 VECMATH_INLINE vec4_t vec4_normalize( vec4_t v ) { float l = vecmath_sqrt( v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w ); return l == 0.0f ? v : vec4( v.x / l, v.y / l, v.z / l, v.w / l ); }
 VECMATH_INLINE vec4_t vec4_pow( vec4_t a, vec4_t b ) { return vec4( vecmath_pow( a.x, b.x ), vecmath_pow( a.y, b.y ), vecmath_pow( a.z, b.z ), vecmath_pow( a.w, b.w ) ); }
-VECMATH_INLINE vec4_t vec4_radians( vec4_t v ) { return vec4( vecmath_radians( v.x ), vecmath_radians( v.y ), vecmath_radians( v.z ), vecmath_radians( v.w ) ); } 
+VECMATH_INLINE vec4_t vec4_radians( vec4_t v ) { return vec4( vecmath_radians( v.x ), vecmath_radians( v.y ), vecmath_radians( v.z ), vecmath_radians( v.w ) ); }
 VECMATH_INLINE vec4_t vec4_rcp( vec4_t v ) { return vec4( vecmath_rcp( v.x ), vecmath_rcp( v.y ), vecmath_rcp( v.z ), vecmath_rcp( v.w ) ); }
 VECMATH_INLINE vec4_t vec4_reflect( vec4_t i, vec4_t n ) { return vec4_sub( i, vec4_mulf( n, 2.0f * vec4_dot( i, n ) ) ); }
 VECMATH_INLINE vec4_t vec4_refract( vec4_t i, vec4_t n, float r ) { float d = vec4_dot( n, i ); float k = 1.0f - r * r * ( 1.0f - d * d ); return k < 0.0f ? vec4f( 0.0f ) : vec4_sub( vec4_mulf( i, r ), vec4_mulf( n, r * d + vecmath_sqrt( k ) ) ); }
@@ -2633,7 +2637,7 @@ VECMATH_INLINE mat43_t mat43_trunc( mat43_t m ) { return mat43( vec3_trunc( m.x 
 	VECMATH_INLINE mat44_t mat44( vec4_t x, vec4_t y, vec4_t z, vec4_t w ) { mat44_t m; m.x = x; m.y = y; m.z = z; m.w = w; return m; }
 #endif
 VECMATH_INLINE mat44_t mat44f( float v ) { mat44_t m; m.x = vec4f( v ); m.y = vec4f( v ); m.z = vec4f( v ); m.w = vec4f( v ); return m; }
-	
+
 VECMATH_INLINE vec4_t mat44_get( mat44_t m, int row ) { return ( (vec4_t*) &m )[ row ]; }
 VECMATH_INLINE void mat44_set( mat44_t* m, int row, vec4_t v ) { ( (vec4_t*) m )[ row ] = v; }
 
@@ -2664,7 +2668,7 @@ VECMATH_INLINE mat44_t mat44_ceil( mat44_t m ) { return mat44( vec4_ceil( m.x ),
 VECMATH_INLINE mat44_t mat44_clamp( mat44_t m, mat44_t min_v, mat44_t max_v ) { return mat44( vec4_clamp( m.x, min_v.x, max_v.x ), vec4_clamp( m.y, min_v.y, max_v.y ), vec4_clamp( m.z, min_v.z, max_v.z ), vec4_clamp( m.w, min_v.w, max_v.w ) ); }
 VECMATH_INLINE mat44_t mat44_cos( mat44_t m ) { return mat44( vec4_cos( m.x ), vec4_cos( m.y ), vec4_cos( m.z ), vec4_cos( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_cosh( mat44_t m ) { return mat44( vec4_cosh( m.x ), vec4_cosh( m.y ), vec4_cosh( m.z ), vec4_cosh( m.w ) ); }
-VECMATH_INLINE mat44_t mat44_degrees( mat44_t m ) { return mat44( vec4_degrees( m.x ), vec4_degrees( m.y ), vec4_degrees( m.z ), vec4_degrees( m.w ) ); } 
+VECMATH_INLINE mat44_t mat44_degrees( mat44_t m ) { return mat44( vec4_degrees( m.x ), vec4_degrees( m.y ), vec4_degrees( m.z ), vec4_degrees( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_exp( mat44_t m ) { return mat44( vec4_exp( m.x ), vec4_exp( m.y ), vec4_exp( m.z ), vec4_exp( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_exp2( mat44_t m ) { return mat44( vec4_exp2( m.x ), vec4_exp2( m.y ), vec4_exp2( m.z ), vec4_exp2( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_floor( mat44_t m ) { return mat44( vec4_floor( m.x ), vec4_floor( m.y ), vec4_floor( m.z ), vec4_floor( m.w ) ); }
@@ -2677,7 +2681,7 @@ VECMATH_INLINE mat44_t mat44_log10( mat44_t m ) { return mat44( vec4_log10( m.x 
 VECMATH_INLINE mat44_t mat44_max( mat44_t a, mat44_t b ) { return mat44( vec4_max( a.x, b.x ), vec4_max( a.y, b.y ), vec4_max( a.z, b.z ), vec4_max( a.w, b.w ) ); }
 VECMATH_INLINE mat44_t mat44_min( mat44_t a, mat44_t b ) { return mat44( vec4_min( a.x, b.x ), vec4_min( a.y, b.y ), vec4_min( a.z, b.z ), vec4_min( a.w, b.w ) ); }
 VECMATH_INLINE mat44_t mat44_pow( mat44_t a, mat44_t b ) { return mat44( vec4_pow( a.x, b.x ), vec4_pow( a.y, b.y ), vec4_pow( a.z, b.z ), vec4_pow( a.w, b.w ) ); }
-VECMATH_INLINE mat44_t mat44_radians( mat44_t m ) { return mat44( vec4_radians( m.x ), vec4_radians( m.y ), vec4_radians( m.z ), vec4_radians( m.w ) ); } 
+VECMATH_INLINE mat44_t mat44_radians( mat44_t m ) { return mat44( vec4_radians( m.x ), vec4_radians( m.y ), vec4_radians( m.z ), vec4_radians( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_rcp( mat44_t m ) { return mat44( vec4_rcp( m.x ), vec4_rcp( m.y ), vec4_rcp( m.z ), vec4_rcp( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_round( mat44_t m ) { return mat44( vec4_round( m.x ), vec4_round( m.y ), vec4_round( m.z ), vec4_round( m.w ) ); }
 VECMATH_INLINE mat44_t mat44_rsqrt( mat44_t m ) { return mat44( vec4_rsqrt( m.x ), vec4_rsqrt( m.y ), vec4_rsqrt( m.z ), vec4_rsqrt( m.w ) ); }
@@ -2712,7 +2716,7 @@ VECMATH_INLINE float mat44_determinant( mat44_t m) { return m.x.w * m.y.z * m.z.
 
 VECMATH_INLINE int mat22_inverse( mat22_t* out_matrix, float* out_determinant, mat22_t m ) { float d = mat22_determinant( m ); if( out_determinant ) *out_determinant = d; if( d != 0.0f && out_matrix ) { *out_matrix = mat22( vec2( m.y.y / d, - m.x.y / d), vec2( - m.y.x / d, m.x.x / d ) ); } return d != 0.0f; }
 VECMATH_INLINE int mat33_inverse( mat33_t* out_matrix, float* out_determinant, mat33_t m ) { float d = mat33_determinant( m ); if( out_determinant ) *out_determinant = d; if( d != 0.0f && out_matrix ) { *out_matrix = mat33( vec3( ( m.y.y * m.z.z - m.y.z * m.z.y ) / d, ( m.x.z * m.z.y - m.x.y * m.z.z ) / d, ( m.x.y * m.y.z - m.x.z * m.y.y ) / d ), vec3( ( m.y.z * m.z.x - m.y.x * m.z.z ) / d, ( m.x.x * m.z.z - m.x.z * m.z.x ) / d, ( m.x.z * m.y.x - m.x.x * m.y.z ) / d ), vec3( ( m.y.x * m.z.y - m.y.y * m.z.x ) / d, ( m.x.y * m.z.x - m.x.x * m.z.y ) / d, ( m.x.x * m.y.y - m.x.y * m.y.x ) / d ) ); } return d != 0.0f; }
-VECMATH_INLINE int mat44_inverse( mat44_t* out_matrix, float* out_determinant, mat44_t m ) { float d = mat44_determinant( m ); if( out_determinant ) *out_determinant = d; if( d != 0.0f && out_matrix ) { *out_matrix = mat44( vec4( ( m.y.z * m.z.w * m.w.y - m.y.w * m.z.z * m.w.y + m.y.w * m.z.y * m.w.z - m.y.y * m.z.w * m.w.z - m.y.z * m.z.y * m.w.w + m.y.y * m.z.z * m.w.w ) / d, ( m.x.w * m.z.z * m.w.y - m.x.z * m.z.w * m.w.y - m.x.w * m.z.y * m.w.z + m.x.y * m.z.w * m.w.z + m.x.z * m.z.y * m.w.w - m.x.y * m.z.z * m.w.w ) / d, ( m.x.z * m.y.w * m.w.y - m.x.w * m.y.z * m.w.y + m.x.w * m.y.y * m.w.z - m.x.y * m.y.w * m.w.z - m.x.z * m.y.y * m.w.w + m.x.y * m.y.z * m.w.w ) / d, ( m.x.w * m.y.z * m.z.y - m.x.z * m.y.w * m.z.y - m.x.w * m.y.y * m.z.z + m.x.y * m.y.w * m.z.z + m.x.z * m.y.y * m.z.w - m.x.y * m.y.z * m.z.w ) / d ), vec4( ( m.y.w * m.z.z * m.w.x - m.y.z * m.z.w * m.w.x - m.y.w * m.z.x * m.w.z + m.y.x * m.z.w * m.w.z + m.y.z * m.z.x * m.w.w - m.y.x * m.z.z * m.w.w ) / d, ( m.x.z * m.z.w * m.w.x - m.x.w * m.z.z * m.w.x + m.x.w * m.z.x * m.w.z - m.x.x * m.z.w * m.w.z - m.x.z * m.z.x * m.w.w + m.x.x * m.z.z * m.w.w ) / d, ( m.x.w * m.y.z * m.w.x - m.x.z * m.y.w * m.w.x - m.x.w * m.y.x * m.w.z + m.x.x * m.y.w * m.w.z + m.x.z * m.y.x * m.w.w - m.x.x * m.y.z * m.w.w ) / d, ( m.x.z * m.y.w * m.z.x - m.x.w * m.y.z * m.z.x + m.x.w * m.y.x * m.z.z - m.x.x * m.y.w * m.z.z - m.x.z * m.y.x * m.z.w + m.x.x * m.y.z * m.z.w ) / d ), vec4( ( m.y.y * m.z.w * m.w.x - m.y.w * m.z.y * m.w.x + m.y.w * m.z.x * m.w.y - m.y.x * m.z.w * m.w.y - m.y.y * m.z.x * m.w.w + m.y.x * m.z.y * m.w.w ) / d, ( m.x.w * m.z.y * m.w.x - m.x.y * m.z.w * m.w.x - m.x.w * m.z.x * m.w.y + m.x.x * m.z.w * m.w.y + m.x.y * m.z.x * m.w.w - m.x.x * m.z.y * m.w.w ) / d, ( m.x.y * m.y.w * m.w.x - m.x.w * m.y.y * m.w.x + m.x.w * m.y.x * m.w.y - m.x.x * m.y.w * m.w.y - m.x.y * m.y.x * m.w.w + m.x.x * m.y.y * m.w.w ) / d, ( m.x.w * m.y.y * m.z.x - m.x.y * m.y.w * m.z.x - m.x.w * m.y.x * m.z.y + m.x.x * m.y.w * m.z.y + m.x.y * m.y.x * m.z.w - m.x.x * m.y.y * m.z.w ) / d ), vec4( ( m.y.z * m.z.y * m.w.x - m.y.y * m.z.z * m.w.x - m.y.z * m.z.x * m.w.y + m.y.x * m.z.z * m.w.y + m.y.y * m.z.x * m.w.z - m.y.x * m.z.y * m.w.z ) / d, ( m.x.y * m.z.z * m.w.x - m.x.z * m.z.y * m.w.x + m.x.z * m.z.x * m.w.y - m.x.x * m.z.z * m.w.y - m.x.y * m.z.x * m.w.z + m.x.x * m.z.y * m.w.z ) / d, ( m.x.z * m.y.y * m.w.x - m.x.y * m.y.z * m.w.x - m.x.z * m.y.x * m.w.y + m.x.x * m.y.z * m.w.y + m.x.y * m.y.x * m.w.z - m.x.x * m.y.y * m.w.z ) / d, ( m.x.y * m.y.z * m.z.x - m.x.z * m.y.y * m.z.x + m.x.z * m.y.x * m.z.y - m.x.x * m.y.z * m.z.y - m.x.y * m.y.x * m.z.z + m.x.x * m.y.y * m.z.z ) / d ) ); } return d != 0.0f; }		
+VECMATH_INLINE int mat44_inverse( mat44_t* out_matrix, float* out_determinant, mat44_t m ) { float d = mat44_determinant( m ); if( out_determinant ) *out_determinant = d; if( d != 0.0f && out_matrix ) { *out_matrix = mat44( vec4( ( m.y.z * m.z.w * m.w.y - m.y.w * m.z.z * m.w.y + m.y.w * m.z.y * m.w.z - m.y.y * m.z.w * m.w.z - m.y.z * m.z.y * m.w.w + m.y.y * m.z.z * m.w.w ) / d, ( m.x.w * m.z.z * m.w.y - m.x.z * m.z.w * m.w.y - m.x.w * m.z.y * m.w.z + m.x.y * m.z.w * m.w.z + m.x.z * m.z.y * m.w.w - m.x.y * m.z.z * m.w.w ) / d, ( m.x.z * m.y.w * m.w.y - m.x.w * m.y.z * m.w.y + m.x.w * m.y.y * m.w.z - m.x.y * m.y.w * m.w.z - m.x.z * m.y.y * m.w.w + m.x.y * m.y.z * m.w.w ) / d, ( m.x.w * m.y.z * m.z.y - m.x.z * m.y.w * m.z.y - m.x.w * m.y.y * m.z.z + m.x.y * m.y.w * m.z.z + m.x.z * m.y.y * m.z.w - m.x.y * m.y.z * m.z.w ) / d ), vec4( ( m.y.w * m.z.z * m.w.x - m.y.z * m.z.w * m.w.x - m.y.w * m.z.x * m.w.z + m.y.x * m.z.w * m.w.z + m.y.z * m.z.x * m.w.w - m.y.x * m.z.z * m.w.w ) / d, ( m.x.z * m.z.w * m.w.x - m.x.w * m.z.z * m.w.x + m.x.w * m.z.x * m.w.z - m.x.x * m.z.w * m.w.z - m.x.z * m.z.x * m.w.w + m.x.x * m.z.z * m.w.w ) / d, ( m.x.w * m.y.z * m.w.x - m.x.z * m.y.w * m.w.x - m.x.w * m.y.x * m.w.z + m.x.x * m.y.w * m.w.z + m.x.z * m.y.x * m.w.w - m.x.x * m.y.z * m.w.w ) / d, ( m.x.z * m.y.w * m.z.x - m.x.w * m.y.z * m.z.x + m.x.w * m.y.x * m.z.z - m.x.x * m.y.w * m.z.z - m.x.z * m.y.x * m.z.w + m.x.x * m.y.z * m.z.w ) / d ), vec4( ( m.y.y * m.z.w * m.w.x - m.y.w * m.z.y * m.w.x + m.y.w * m.z.x * m.w.y - m.y.x * m.z.w * m.w.y - m.y.y * m.z.x * m.w.w + m.y.x * m.z.y * m.w.w ) / d, ( m.x.w * m.z.y * m.w.x - m.x.y * m.z.w * m.w.x - m.x.w * m.z.x * m.w.y + m.x.x * m.z.w * m.w.y + m.x.y * m.z.x * m.w.w - m.x.x * m.z.y * m.w.w ) / d, ( m.x.y * m.y.w * m.w.x - m.x.w * m.y.y * m.w.x + m.x.w * m.y.x * m.w.y - m.x.x * m.y.w * m.w.y - m.x.y * m.y.x * m.w.w + m.x.x * m.y.y * m.w.w ) / d, ( m.x.w * m.y.y * m.z.x - m.x.y * m.y.w * m.z.x - m.x.w * m.y.x * m.z.y + m.x.x * m.y.w * m.z.y + m.x.y * m.y.x * m.z.w - m.x.x * m.y.y * m.z.w ) / d ), vec4( ( m.y.z * m.z.y * m.w.x - m.y.y * m.z.z * m.w.x - m.y.z * m.z.x * m.w.y + m.y.x * m.z.z * m.w.y + m.y.y * m.z.x * m.w.z - m.y.x * m.z.y * m.w.z ) / d, ( m.x.y * m.z.z * m.w.x - m.x.z * m.z.y * m.w.x + m.x.z * m.z.x * m.w.y - m.x.x * m.z.z * m.w.y - m.x.y * m.z.x * m.w.z + m.x.x * m.z.y * m.w.z ) / d, ( m.x.z * m.y.y * m.w.x - m.x.y * m.y.z * m.w.x - m.x.z * m.y.x * m.w.y + m.x.x * m.y.z * m.w.y + m.x.y * m.y.x * m.w.z - m.x.x * m.y.y * m.w.z ) / d, ( m.x.y * m.y.z * m.z.x - m.x.z * m.y.y * m.z.x + m.x.z * m.y.x * m.z.y - m.x.x * m.y.z * m.z.y - m.x.y * m.y.x * m.z.z + m.x.x * m.y.y * m.z.z ) / d ) ); } return d != 0.0f; }
 
 VECMATH_INLINE mat22_t mat22_identity( void ) { return mat22( vec2( 1.0f, 0.0f ), vec2( 0.0f, 1.0f ) ); }
 VECMATH_INLINE mat33_t mat33_identity( void ) { return mat33( vec3( 1.0f, 0.0f, 0.0f ), vec3( 0.0f, 1.0f, 0.0f ), vec3( 0.0f, 0.0f, 1.0f ) ); }
@@ -2722,9 +2726,9 @@ VECMATH_INLINE int mat22_is_identity( mat22_t m ) { return m.x.x == 1.0f && m.x.
 VECMATH_INLINE int mat33_is_identity( mat33_t m ) { return m.x.x == 1.0f && m.x.y == 0.0f && m.x.z == 0.0f && m.y.x == 0.0f && m.y.y == 1.0f && m.y.z == 0.0f && m.z.x == 0.0f && m.z.y == 0.0f && m.z.z == 1.0f; }
 VECMATH_INLINE int mat44_is_identity( mat44_t m ) { return m.x.x == 1.0f && m.x.y == 0.0f && m.x.z == 0.0f && m.x.w == 0.0f && m.y.x == 0.0f && m.y.y == 1.0f && m.y.z == 0.0f && m.y.w == 0.0f && m.z.x == 0.0f && m.z.y == 0.0f && m.z.z == 1.0f && m.z.w == 0.0f && m.w.x == 0.0f && m.w.y == 0.0f && m.w.z == 0.0f && m.w.w == 1.0f; }
 
-		 
 
-// matrix multiplications		 
+
+// matrix multiplications
 
 VECMATH_INLINE float vec2_mul_vec2( vec2_t a, vec2_t b ) { return vec2_dot( a, b ); }
 VECMATH_INLINE float vec3_mul_vec3( vec3_t a, vec3_t b ) { return vec3_dot( a, b ); }
@@ -2783,52 +2787,52 @@ VECMATH_INLINE mat44_t mat44_mul_mat44( mat44_t a, mat44_t b ) { return mat44( v
 
 // quaternions
 
-VECMATH_INLINE vec4_t quat_normalize( vec4_t q ) { return vec4_normalize( q ); } 
-VECMATH_INLINE vec4_t quat_slerp( vec4_t a, vec4_t b, float t ) { float dot = vec4_dot( a, b ); if( dot < 0.0f ) { b = vec4_neg( b ); dot = -dot; } if( dot > 0.9995f ) { vec4_t result = vec4_add( vec4_mulf( a, 1.0f - t ), vec4_mulf( b, t ) ); return quat_normalize( result ); } float theta = vecmath_acos( dot ); float sin_theta = vecmath_sin( theta ); float s0 = vecmath_sin( ( 1.0f - t ) * theta ) / sin_theta; float s1 = vecmath_sin( t * theta ) / sin_theta; return vec4_add( vec4_mulf( a, s0 ), vec4_mulf( b, s1 ) ); } 
-VECMATH_INLINE vec4_t quat_barycentric( vec4_t q1, vec4_t q2, vec4_t q3, float f, float g ) { float fg = f + g; return fg == 0.0f ? q1 : quat_slerp( quat_slerp( q1, q2, fg ), quat_slerp( q1, q3, fg ), g / fg ); } 
-VECMATH_INLINE vec4_t quat_conjugate( vec4_t q ) { return vec4( -q.x, -q.y, -q.z, q.w ); } 
+VECMATH_INLINE vec4_t quat_normalize( vec4_t q ) { return vec4_normalize( q ); }
+VECMATH_INLINE vec4_t quat_slerp( vec4_t a, vec4_t b, float t ) { float dot = vec4_dot( a, b ); if( dot < 0.0f ) { b = vec4_neg( b ); dot = -dot; } if( dot > 0.9995f ) { vec4_t result = vec4_add( vec4_mulf( a, 1.0f - t ), vec4_mulf( b, t ) ); return quat_normalize( result ); } float theta = vecmath_acos( dot ); float sin_theta = vecmath_sin( theta ); float s0 = vecmath_sin( ( 1.0f - t ) * theta ) / sin_theta; float s1 = vecmath_sin( t * theta ) / sin_theta; return vec4_add( vec4_mulf( a, s0 ), vec4_mulf( b, s1 ) ); }
+VECMATH_INLINE vec4_t quat_barycentric( vec4_t q1, vec4_t q2, vec4_t q3, float f, float g ) { float fg = f + g; return fg == 0.0f ? q1 : quat_slerp( quat_slerp( q1, q2, fg ), quat_slerp( q1, q3, fg ), g / fg ); }
+VECMATH_INLINE vec4_t quat_conjugate( vec4_t q ) { return vec4( -q.x, -q.y, -q.z, q.w ); }
 VECMATH_INLINE vec4_t quat_exp( vec4_t q ) { vec3_t v = vec3( q.x, q.y, q.z ); float angle = vecmath_sqrt( vec3_dot( v, v ) ); float s = (angle > 0.00001f) ? vecmath_sin( angle ) / angle : 1.0f; return vec4( v.x * s, v.y * s, v.z * s, vecmath_cos( angle ) ); }
-VECMATH_INLINE vec4_t quat_identity( void ) { return vec4( 0.0f, 0.0f, 0.0f, 1.0f ); } 
-VECMATH_INLINE vec4_t quat_inverse( vec4_t q ) { float dot = vec4_dot( q, q ); return dot == 0.0f ? quat_identity() : vec4_mulf( vec4( -q.x, -q.y, -q.z, q.w ), 1.0f / dot ); } 
-VECMATH_INLINE int quat_is_identity( vec4_t q ) { return q.x == 0.0f && q.y == 0.0f && q.z == 0.0f && q.w == 1.0f; } 
+VECMATH_INLINE vec4_t quat_identity( void ) { return vec4( 0.0f, 0.0f, 0.0f, 1.0f ); }
+VECMATH_INLINE vec4_t quat_inverse( vec4_t q ) { float dot = vec4_dot( q, q ); return dot == 0.0f ? quat_identity() : vec4_mulf( vec4( -q.x, -q.y, -q.z, q.w ), 1.0f / dot ); }
+VECMATH_INLINE int quat_is_identity( vec4_t q ) { return q.x == 0.0f && q.y == 0.0f && q.z == 0.0f && q.w == 1.0f; }
 VECMATH_INLINE vec4_t quat_ln( vec4_t q ) { float epsilon = 1.0f - 0.00001f; float w = q.w; vec3_t v = vec3( q.x, q.y, q.z ); vec4_t result; if( vecmath_abs(w) < epsilon ) { float theta = vecmath_acos(w); float sin_theta = vecmath_sin( theta ); float scale = theta / sin_theta; result = vec4( v.x * scale, v.y * scale, v.z * scale, 0.0f ); } else { result = vec4( v.x, v.y, v.z, 0.0f ); } return result; }
 VECMATH_INLINE vec4_t quat_mul( vec4_t a, vec4_t b ) { return vec4( b.w*a.x + b.x*a.w + b.y*a.z - b.z*a.y, b.w*a.y - b.x*a.z + b.y*a.w + b.z*a.x, b.w*a.z + b.x*a.y - b.y*a.x + b.z*a.w, b.w*a.w - b.x*a.x - b.y*a.y - b.z*a.z ); }
-VECMATH_INLINE vec4_t quat_rotation_axis( vec3_t axis, float angle ) { return vec4v3f( vec3_mulf( vec3_normalize( axis ), vecmath_sin( angle * 0.5f ) ), vecmath_cos( angle * 0.5f ) ); } 
-VECMATH_INLINE vec4_t quat_rotation_matrix( mat44_t m ) { float trace = m.x.x + m.y.y + m.z.z; if( trace > 0.0f ) { float s = vecmath_sqrt( trace + 1.0f ) * 2.0f; return vec4( ( m.y.z - m.z.y ) / s, ( m.z.x - m.x.z ) / s, ( m.x.y - m.y.x ) / s, 0.25f * s ); } else if( m.x.x > m.y.y && m.x.x > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.x.x - m.y.y - m.z.z ) * 2.0f; return vec4( 0.25f * s, ( m.x.y + m.y.x ) / s, ( m.x.z + m.z.x ) / s, ( m.y.z - m.z.y ) / s ); } else if( m.y.y > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.y.y - m.x.x - m.z.z ) * 2.0f; return vec4( ( m.y.x + m.x.y ) / s, 0.25f * s, ( m.y.z + m.z.y ) / s, ( m.z.x - m.x.z ) / s ); } else { float s = vecmath_sqrt( 1.0f + m.z.z - m.x.x - m.y.y ) * 2.0f; return vec4( ( m.z.x + m.x.z ) / s, ( m.z.y + m.y.z ) / s, 0.25f * s, ( m.x.y - m.y.x ) / s ); } } 
+VECMATH_INLINE vec4_t quat_rotation_axis( vec3_t axis, float angle ) { return vec4v3f( vec3_mulf( vec3_normalize( axis ), vecmath_sin( angle * 0.5f ) ), vecmath_cos( angle * 0.5f ) ); }
+VECMATH_INLINE vec4_t quat_rotation_matrix( mat44_t m ) { float trace = m.x.x + m.y.y + m.z.z; if( trace > 0.0f ) { float s = vecmath_sqrt( trace + 1.0f ) * 2.0f; return vec4( ( m.y.z - m.z.y ) / s, ( m.z.x - m.x.z ) / s, ( m.x.y - m.y.x ) / s, 0.25f * s ); } else if( m.x.x > m.y.y && m.x.x > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.x.x - m.y.y - m.z.z ) * 2.0f; return vec4( 0.25f * s, ( m.x.y + m.y.x ) / s, ( m.x.z + m.z.x ) / s, ( m.y.z - m.z.y ) / s ); } else if( m.y.y > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.y.y - m.x.x - m.z.z ) * 2.0f; return vec4( ( m.y.x + m.x.y ) / s, 0.25f * s, ( m.y.z + m.z.y ) / s, ( m.z.x - m.x.z ) / s ); } else { float s = vecmath_sqrt( 1.0f + m.z.z - m.x.x - m.y.y ) * 2.0f; return vec4( ( m.z.x + m.x.z ) / s, ( m.z.y + m.y.z ) / s, 0.25f * s, ( m.x.y - m.y.x ) / s ); } }
 VECMATH_INLINE vec4_t quat_rotation_yaw_pitch_roll(float yaw, float pitch, float roll) { float hy = yaw * 0.5f; float hp = pitch * 0.5f; float hr = roll * 0.5f; float cy = vecmath_cos( hy ); float sy = vecmath_sin( hy ); float cp = vecmath_cos( hp ); float sp = vecmath_sin( hp ); float cr = vecmath_cos( hr ); float sr = vecmath_sin( hr ); return vec4( cr * sp * cy + sr * cp * sy, cr * cp * sy - sr * sp * cy, sr * cp * cy - cr * sp * sy, cr * cp * cy + sr * sp * sy ); }
 VECMATH_INLINE void quat_squad_setup( vec4_t* out_a, vec4_t* out_b, vec4_t* out_c, vec4_t q0, vec4_t q1, vec4_t q2, vec4_t q3 ) { vec4_t sq2 = vec4_dot(vec4_add(q1, q2), vec4_add(q1, q2)) < vec4_dot(vec4_sub(q1, q2), vec4_sub(q1, q2)) ? vec4_neg(q2) : q2; vec4_t sq0 = vec4_dot(vec4_add(q0, q1), vec4_add(q0, q1)) < vec4_dot(vec4_sub(q0, q1), vec4_sub(q0, q1)) ? vec4_neg(q0) : q0; vec4_t sq3 = vec4_dot(vec4_add(sq2, q3), vec4_add(sq2, q3)) < vec4_dot(vec4_sub(sq2, q3), vec4_sub(sq2, q3)) ? vec4_neg(q3) : q3; vec4_t invq1 = quat_inverse(q1); vec4_t invq2 = quat_inverse(sq2); vec4_t lnq0 = quat_ln(quat_mul(invq1, sq0)); vec4_t lnq2 = quat_ln(quat_mul(invq1, sq2)); vec4_t lnq1 = quat_ln(quat_mul(invq2, q1)); vec4_t lnq3 = quat_ln(quat_mul(invq2, sq3)); vec4_t expq02 = quat_exp(vec4_mulf(vec4_add(lnq0, lnq2), -0.25f)); vec4_t expq13 = quat_exp(vec4_mulf(vec4_add(lnq1, lnq3), -0.25f)); if( out_a ) *out_a = quat_mul(q1, expq02); if( out_b ) *out_b = quat_mul(sq2, expq13); if( out_c ) *out_c = sq2; }
 VECMATH_INLINE vec4_t quat_squad(vec4_t q1, vec4_t a, vec4_t b, vec4_t c, float t ) { return quat_slerp( quat_slerp( q1, c, t ), quat_slerp( a, b, t ), 2.0f * t * ( 1.0f - t ) ); }
 VECMATH_INLINE void quat_to_axis_angle( vec4_t q, vec3_t* out_axis, float* out_angle ) { if( out_angle ) *out_angle = 2.0f * vecmath_acos( q.w ); if( out_axis ) *out_axis = vec3( q.x, q.y, q.z ); }
-VECMATH_INLINE vec3_t quat_rotate_vector( vec3_t v, vec4_t q ) { vec3_t u = vec3( q.x, q.y, q.z ); float s = q.w; vec3_t t = vec3_mulf( vec3_cross( u, v ), 2.0f ); return vec3_add( v, vec3_add( vec3_mulf( t, s ), vec3_cross( u, t ) ) ); } 
-VECMATH_INLINE vec4_t quat_shortest_arc( vec3_t from, vec3_t to ) { vec3_t f = vec3_normalize( from ); vec3_t t = vec3_normalize( to ); float d = vec3_dot( f, t ); if ( d == 1.0f ) { return quat_identity( ); } if ( d == -1.0f ) { vec3_t axis = vecmath_abs( f.x ) < 1.0f ? vec3( 1, 0, 0 ) : vec3( 0, 1, 0 ); axis = vec3_normalize( vec3_cross( f, axis ) ); return quat_rotation_axis( axis, 3.14159265f ); } vec3_t axis = vec3_cross( f, t ); float s = vecmath_sqrt( ( 1.0f + d ) * 2.0f ); float invs = 1.0f / s; return vec4( axis.x * invs, axis.y * invs, axis.z * invs, 0.5f * s ); } 
-VECMATH_INLINE vec4_t quat_from_mat33( mat33_t m ) { float trace = m.x.x + m.y.y + m.z.z; if ( trace > 0.0f ) { float s = vecmath_sqrt( trace + 1.0f ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.y.z - m.z.y ) * invs, ( m.z.x - m.x.z ) * invs, ( m.x.y - m.y.x ) * invs, 0.25f * s ); } if ( m.x.x > m.y.y && m.x.x > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.x.x - m.y.y - m.z.z ) * 2.0f; float invs = 1.0f / s; return vec4( 0.25f * s, ( m.x.y + m.y.x ) * invs, ( m.x.z + m.z.x ) * invs, ( m.y.z - m.z.y ) * invs ); } if ( m.y.y > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.y.y - m.x.x - m.z.z ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.x.y + m.y.x ) * invs, 0.25f * s, ( m.y.z + m.z.y ) * invs, ( m.z.x - m.x.z ) * invs ); } float s = vecmath_sqrt( 1.0f + m.z.z - m.x.x - m.y.y ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.x.z + m.z.x ) * invs, ( m.y.z + m.z.y ) * invs, 0.25f * s, ( m.x.y - m.y.x ) * invs ); } 
-VECMATH_INLINE vec4_t quat_from_mat44( mat44_t m ) { return quat_from_mat33( mat33( vec3( m.x.x, m.x.y, m.x.z ), vec3( m.y.x, m.y.y, m.y.z ), vec3( m.z.x, m.z.y, m.z.z ) ) ); } 
-VECMATH_INLINE float quat_angle( vec4_t a, vec4_t b ) { float d = vec4_dot( a, b ); d = vecmath_clamp( d, -1.0f, 1.0f ); return 2.0f * vecmath_acos( vecmath_abs( d ) ); } 
+VECMATH_INLINE vec3_t quat_rotate_vector( vec3_t v, vec4_t q ) { vec3_t u = vec3( q.x, q.y, q.z ); float s = q.w; vec3_t t = vec3_mulf( vec3_cross( u, v ), 2.0f ); return vec3_add( v, vec3_add( vec3_mulf( t, s ), vec3_cross( u, t ) ) ); }
+VECMATH_INLINE vec4_t quat_shortest_arc( vec3_t from, vec3_t to ) { vec3_t f = vec3_normalize( from ); vec3_t t = vec3_normalize( to ); float d = vec3_dot( f, t ); if ( d == 1.0f ) { return quat_identity( ); } if ( d == -1.0f ) { vec3_t axis = vecmath_abs( f.x ) < 1.0f ? vec3( 1, 0, 0 ) : vec3( 0, 1, 0 ); axis = vec3_normalize( vec3_cross( f, axis ) ); return quat_rotation_axis( axis, 3.14159265f ); } vec3_t axis = vec3_cross( f, t ); float s = vecmath_sqrt( ( 1.0f + d ) * 2.0f ); float invs = 1.0f / s; return vec4( axis.x * invs, axis.y * invs, axis.z * invs, 0.5f * s ); }
+VECMATH_INLINE vec4_t quat_from_mat33( mat33_t m ) { float trace = m.x.x + m.y.y + m.z.z; if ( trace > 0.0f ) { float s = vecmath_sqrt( trace + 1.0f ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.y.z - m.z.y ) * invs, ( m.z.x - m.x.z ) * invs, ( m.x.y - m.y.x ) * invs, 0.25f * s ); } if ( m.x.x > m.y.y && m.x.x > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.x.x - m.y.y - m.z.z ) * 2.0f; float invs = 1.0f / s; return vec4( 0.25f * s, ( m.x.y + m.y.x ) * invs, ( m.x.z + m.z.x ) * invs, ( m.y.z - m.z.y ) * invs ); } if ( m.y.y > m.z.z ) { float s = vecmath_sqrt( 1.0f + m.y.y - m.x.x - m.z.z ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.x.y + m.y.x ) * invs, 0.25f * s, ( m.y.z + m.z.y ) * invs, ( m.z.x - m.x.z ) * invs ); } float s = vecmath_sqrt( 1.0f + m.z.z - m.x.x - m.y.y ) * 2.0f; float invs = 1.0f / s; return vec4( ( m.x.z + m.z.x ) * invs, ( m.y.z + m.z.y ) * invs, 0.25f * s, ( m.x.y - m.y.x ) * invs ); }
+VECMATH_INLINE vec4_t quat_from_mat44( mat44_t m ) { return quat_from_mat33( mat33( vec3( m.x.x, m.x.y, m.x.z ), vec3( m.y.x, m.y.y, m.y.z ), vec3( m.z.x, m.z.y, m.z.z ) ) ); }
+VECMATH_INLINE float quat_angle( vec4_t a, vec4_t b ) { float d = vec4_dot( a, b ); d = vecmath_clamp( d, -1.0f, 1.0f ); return 2.0f * vecmath_acos( vecmath_abs( d ) ); }
 VECMATH_INLINE mat33_t mat33_from_quat( vec4_t q ) { float x = q.x, y = q.y, z = q.z, w = q.w; float xx = x * x, yy = y * y, zz = z * z; float xy = x * y, xz = x * z, yz = y * z; float wx = w * x, wy = w * y, wz = w * z; return mat33( vec3( 1.0f - 2.0f * (yy + zz), 2.0f * (xy + wz), 2.0f * (xz - wy) ), vec3( 2.0f * (xy - wz), 1.0f - 2.0f * (xx + zz), 2.0f * (yz + wx) ), vec3( 2.0f * (xz + wy), 2.0f * (yz - wx), 1.0f - 2.0f * (xx + yy) ) ); }
-VECMATH_INLINE mat44_t mat44_from_quat( vec4_t q ) { mat33_t r = mat33_from_quat( q ); return mat44( vec4( r.x.x, r.x.y, r.x.z, 0.0f ), vec4( r.y.x, r.y.y, r.y.z, 0.0f ), vec4( r.z.x, r.z.y, r.z.z, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
+VECMATH_INLINE mat44_t mat44_from_quat( vec4_t q ) { mat33_t r = mat33_from_quat( q ); return mat44( vec4( r.x.x, r.x.y, r.x.z, 0.0f ), vec4( r.y.x, r.y.y, r.y.z, 0.0f ), vec4( r.z.x, r.z.y, r.z.z, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
 
 
 // matrix utils
 
 VECMATH_INLINE mat44_t mat44_look_at_lh( vec3_t eye, vec3_t at, vec3_t up ) { vec3_t zaxis = vec3_normalize( vec3_sub( at, eye ) ); vec3_t xaxis = vec3_normalize( vec3_cross( up, zaxis ) ); vec3_t yaxis = vec3_cross( zaxis, xaxis ); return mat44( vec4( xaxis.x, yaxis.x, zaxis.x, 0.0f ), vec4( xaxis.y, yaxis.y, zaxis.y, 0.0f ), vec4( xaxis.z, yaxis.z, zaxis.z, 0.0f ), vec4( -vec3_dot( xaxis, eye ), -vec3_dot( yaxis, eye ), -vec3_dot( zaxis, eye ), 1.0f ) ); }
-VECMATH_INLINE mat44_t mat44_look_at_rh( vec3_t eye, vec3_t at, vec3_t up ) { vec3_t zaxis = vec3_normalize( vec3_sub( eye, at ) ); vec3_t xaxis = vec3_normalize( vec3_cross( up, zaxis ) ); vec3_t yaxis = vec3_cross( zaxis, xaxis ); return mat44( vec4( xaxis.x, yaxis.x, zaxis.x, 0.0f ), vec4( xaxis.y, yaxis.y, zaxis.y, 0.0f ), vec4( xaxis.z, yaxis.z, zaxis.z, 0.0f ), vec4( -vec3_dot( xaxis, eye ), -vec3_dot( yaxis, eye ), -vec3_dot( zaxis, eye ), 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_ortho_lh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zf - zn ), 0.0f ), vec4( 0.0f, 0.0f, zn / ( zn - zf ), 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_ortho_rh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zn - zf ), 0.0f ), vec4( 0.0f, 0.0f, zn / ( zn - zf ), 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_ortho_off_center_lh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / ( t - b ), 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zf - zn ), 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zn / ( zn - zf ), 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_ortho_off_center_rh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / ( t - b ), 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zn - zf ), 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zn / ( zn - zf ), 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_lh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f * zn / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_rh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f * zn / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_off_center_lh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f * zn / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / ( t - b ), 0.0f, 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_off_center_rh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f * zn / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / ( t - b ), 0.0f, 0.0f ), vec4( ( l + r ) / ( r - l ), ( t + b ) / ( t - b ), zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_fov_lh( float fovy, float aspect, float zn, float zf ) { float yscale = 1.0f / vecmath_tan( fovy * 0.5f ); float xscale = yscale / aspect; return mat44( vec4( xscale, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, yscale, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, -zn * zf / ( zf - zn ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_perspective_fov_rh( float fovy, float aspect, float zn, float zf ) { float yscale = 1.0f / vecmath_tan( fovy * 0.5f ); float xscale = yscale / aspect; return mat44( vec4( xscale, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, yscale, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_rotation_axis( vec3_t axis, float angle ) { axis = vec3_normalize( axis ); float s = vecmath_sin( angle ); float c = vecmath_cos( angle ); float ic = 1.0f - c; float xyic = axis.x * axis.y * ic; float xzic = axis.x * axis.z * ic; float yzic = axis.y * axis.z * ic; float xs = axis.x * s; float ys = axis.y * s; float zs = axis.z * s; return mat44( vec4( c + axis.x * axis.x * ic, xyic + zs, xzic - ys, 0.0f ), vec4( xyic - zs, c + axis.y * axis.y * ic, yzic + xs, 0.0f ), vec4( xzic + ys, yzic - xs, c + axis.z * axis.z * ic, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_rotation_x( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( 1.0f, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, c, s, 0.0f ), vec4( 0.0f, -s, c, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_rotation_y( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( c, 0.0f, -s, 0.0f ), vec4( 0.0f, 1.0f, 0.0f, 0.0f ), vec4( s, 0.0f, c, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_rotation_z( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( c, s, 0.0f, 0.0f ), vec4( -s, c, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
+VECMATH_INLINE mat44_t mat44_look_at_rh( vec3_t eye, vec3_t at, vec3_t up ) { vec3_t zaxis = vec3_normalize( vec3_sub( eye, at ) ); vec3_t xaxis = vec3_normalize( vec3_cross( up, zaxis ) ); vec3_t yaxis = vec3_cross( zaxis, xaxis ); return mat44( vec4( xaxis.x, yaxis.x, zaxis.x, 0.0f ), vec4( xaxis.y, yaxis.y, zaxis.y, 0.0f ), vec4( xaxis.z, yaxis.z, zaxis.z, 0.0f ), vec4( -vec3_dot( xaxis, eye ), -vec3_dot( yaxis, eye ), -vec3_dot( zaxis, eye ), 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_ortho_lh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zf - zn ), 0.0f ), vec4( 0.0f, 0.0f, zn / ( zn - zf ), 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_ortho_rh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zn - zf ), 0.0f ), vec4( 0.0f, 0.0f, zn / ( zn - zf ), 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_ortho_off_center_lh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / ( t - b ), 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zf - zn ), 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zn / ( zn - zf ), 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_ortho_off_center_rh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f / ( t - b ), 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f / ( zn - zf ), 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zn / ( zn - zf ), 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_lh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f * zn / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_rh( float w, float h, float zn, float zf ) { return mat44( vec4( 2.0f * zn / w, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / h, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_off_center_lh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f * zn / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / ( t - b ), 0.0f, 0.0f ), vec4( ( l + r ) / ( l - r ), ( t + b ) / ( b - t ), zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_off_center_rh( float l, float r, float b, float t, float zn, float zf ) { return mat44( vec4( 2.0f * zn / ( r - l ), 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 2.0f * zn / ( t - b ), 0.0f, 0.0f ), vec4( ( l + r ) / ( r - l ), ( t + b ) / ( t - b ), zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_fov_lh( float fovy, float aspect, float zn, float zf ) { float yscale = 1.0f / vecmath_tan( fovy * 0.5f ); float xscale = yscale / aspect; return mat44( vec4( xscale, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, yscale, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zf - zn ), 1.0f ), vec4( 0.0f, 0.0f, -zn * zf / ( zf - zn ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_perspective_fov_rh( float fovy, float aspect, float zn, float zf ) { float yscale = 1.0f / vecmath_tan( fovy * 0.5f ); float xscale = yscale / aspect; return mat44( vec4( xscale, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, yscale, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, zf / ( zn - zf ), -1.0f ), vec4( 0.0f, 0.0f, zn * zf / ( zn - zf ), 0.0f ) ); }
+VECMATH_INLINE mat44_t mat44_rotation_axis( vec3_t axis, float angle ) { axis = vec3_normalize( axis ); float s = vecmath_sin( angle ); float c = vecmath_cos( angle ); float ic = 1.0f - c; float xyic = axis.x * axis.y * ic; float xzic = axis.x * axis.z * ic; float yzic = axis.y * axis.z * ic; float xs = axis.x * s; float ys = axis.y * s; float zs = axis.z * s; return mat44( vec4( c + axis.x * axis.x * ic, xyic + zs, xzic - ys, 0.0f ), vec4( xyic - zs, c + axis.y * axis.y * ic, yzic + xs, 0.0f ), vec4( xzic + ys, yzic - xs, c + axis.z * axis.z * ic, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_rotation_x( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( 1.0f, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, c, s, 0.0f ), vec4( 0.0f, -s, c, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_rotation_y( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( c, 0.0f, -s, 0.0f ), vec4( 0.0f, 1.0f, 0.0f, 0.0f ), vec4( s, 0.0f, c, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_rotation_z( float angle ) { float s = vecmath_sin( angle ), c = vecmath_cos( angle ); return mat44( vec4( c, s, 0.0f, 0.0f ), vec4( -s, c, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
 VECMATH_INLINE mat44_t mat44_rotation_yaw_pitch_roll( float yaw, float pitch, float roll ) { return mat44_mul_mat44( mat44_mul_mat44( mat44_rotation_z( roll ), mat44_rotation_x( pitch ) ), mat44_rotation_y( yaw ) ); }
-VECMATH_INLINE mat44_t mat44_scaling( float sx, float sy, float sz ) { return mat44( vec4( sx, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, sy, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, sz, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); } 
-VECMATH_INLINE mat44_t mat44_translation( float tx, float ty, float tz ) { return mat44( vec4( 1.0f, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 1.0f, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f, 0.0f ), vec4( tx, ty, tz, 1.0f ) ); } 
+VECMATH_INLINE mat44_t mat44_scaling( float sx, float sy, float sz ) { return mat44( vec4( sx, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, sy, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, sz, 0.0f ), vec4( 0.0f, 0.0f, 0.0f, 1.0f ) ); }
+VECMATH_INLINE mat44_t mat44_translation( float tx, float ty, float tz ) { return mat44( vec4( 1.0f, 0.0f, 0.0f, 0.0f ), vec4( 0.0f, 1.0f, 0.0f, 0.0f ), vec4( 0.0f, 0.0f, 1.0f, 0.0f ), vec4( tx, ty, tz, 1.0f ) ); }
 VECMATH_INLINE int mat44_decompose( vec3_t* out_scale, vec4_t* out_rotation, vec3_t* out_translation, mat44_t m ) { vec3_t x = vec3( m.x.x, m.x.y, m.x.z ); vec3_t y = vec3( m.y.x, m.y.y, m.y.z ); vec3_t z = vec3( m.z.x, m.z.y, m.z.z ); float sx = vec3_length( x ); float sy = vec3_length( y ); float sz = vec3_length( z ); int i0, i1, i2; if ( sx < sy ) { if ( sy < sz ) { i0 = 2; i1 = 1; i2 = 0; } else { i0 = 1; ( sx < sz ) ? ( i1 = 2, i2 = 0 ) : ( i1 = 0, i2 = 2 ); } } else { if ( sx < sz ) { i0 = 2; i1 = 0; i2 = 1; } else { i0 = 0; ( sy < sz ) ? ( i1 = 2, i2 = 1 ) : ( i1 = 1, i2 = 2 ); } } vec3_t* v[ 3 ] = { &x, &y, &z }; float* s[ 3 ] = { &sx, &sy, &sz }; if ( *s[ i0 ] < 0.0001f ) *v[ i0 ] = vec3( i0 == 0 ? 1.0f : 0.0f, i0 == 1 ? 1.0f : 0.0f, i0 == 2 ? 1.0f : 0.0f ); *v[ i0 ] = vec3_normalize( *v[ i0 ] ); if ( *s[ i1 ] < 0.0001f ) { float ax = vecmath_abs( v[ i0 ]->x ); float ay = vecmath_abs( v[ i0 ]->y ); float az = vecmath_abs( v[ i0 ]->z ); int j2; if ( ax < ay ) { if ( ay < az ) { j2 = 0; } else { ( ax < az ) ? ( j2 = 0 ) : ( j2 = 2 ); } } else { if ( ax < az ) { j2 = 1; } else { ( ay < az ) ? ( j2 = 1 ) : (  j2 = 2 ); } } *v[ i1 ] = vec3_cross( *v[ i0 ], vec3( j2 == 0 ? 1.0f : 0.0f, j2 == 1 ? 1.0f : 0.0f, j2 == 2 ? 1.0f : 0.0f ) ); } *v[ i1 ] = vec3_normalize( *v[ i1 ] ); if ( *s[ i2 ] < 0.0001f ) *v[ i2 ] = vec3_cross( *v[ i0 ], *v[ i1 ] ); *v[ i2 ] = vec3_normalize( *v[ i2 ] ); float det = vec3_dot( x, vec3_cross( y, z ) ); if ( det < 0.0f ) { *s[ i0 ] = -*s[ i0 ]; *v[ i0 ] = vec3_neg( *v[ i0 ] ); det = -det; } if ( vecmath_abs( det - 1.0f ) > 0.0001f ) return 0; float trace = x.x + y.y + z.z; float w, qx, qy, qz; if ( trace > 0.0f ) { float r = vecmath_sqrt( trace + 1.0f ) * 2.0f; w = 0.25f * r; qx = ( z.y - y.z ) / r; qy = ( x.z - z.x ) / r; qz = ( y.x - x.y ) / r; } else if ( x.x > y.y && x.x > z.z ) { float r = vecmath_sqrt( 1.0f + x.x - y.y - z.z ) * 2.0f; w = ( z.y - y.z ) / r; qx = 0.25f * r; qy = ( x.y + y.x ) / r; qz = ( x.z + z.x ) / r; } else if ( y.y > z.z ) { float r = vecmath_sqrt( 1.0f + y.y - x.x - z.z ) * 2.0f; w = ( x.z - z.x ) / r; qx = ( x.y + y.x ) / r; qy = 0.25f * r; qz = ( y.z + z.y ) / r; } else { float r = vecmath_sqrt( 1.0f + z.z - x.x - y.y ) * 2.0f; w = ( y.x - x.y ) / r; qx = ( x.z + z.x ) / r; qy = ( y.z + z.y ) / r; qz = 0.25f * r; } if ( out_translation ) *out_translation = vec3( m.w.x, m.w.y, m.w.z ); if ( out_rotation ) *out_rotation = vec4( qx, qy, qz, w ); if ( out_scale ) *out_scale = vec3( sx, sy, sz ); return 1; }
 
 VECMATH_INLINE vec4_t vec2_transform( vec2_t v, mat44_t m ) { return vec4_mul_mat44( vec4( v.x, v.y, 0.0f, 1.0f ), m ); }
@@ -3684,7 +3688,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 	VECMATH_INLINE mat44_t& operator/=( mat44_t& a, float b ) { return a = mat44_divf( a, b ); }
 
 
-	// c++ operators for matrix multiplication 
+	// c++ operators for matrix multiplication
     VECMATH_INLINE vec2_t operator*( vec2_t a, mat22_t b ) { return vec2_mul_mat22( a, b ); }
     VECMATH_INLINE vec3_t operator*( vec2_t a, mat23_t b ) { return vec2_mul_mat23( a, b ); }
     VECMATH_INLINE vec4_t operator*( vec2_t a, mat24_t b ) { return vec2_mul_mat24( a, b ); }
@@ -3704,7 +3708,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
     VECMATH_INLINE vec2_t operator*( mat24_t a, vec4_t b ) { return mat24_mul_vec4( a, b ); }
     VECMATH_INLINE vec3_t operator*( mat34_t a, vec4_t b ) { return mat34_mul_vec4( a, b ); }
     VECMATH_INLINE vec4_t operator*( mat44_t a, vec4_t b ) { return mat44_mul_vec4( a, b ); }
-    
+
 	VECMATH_INLINE mat22_t operator*( mat22_t a, mat22_t b ) { return mat22_mul_mat22( a, b ); }
     VECMATH_INLINE mat23_t operator*( mat22_t a, mat23_t b ) { return mat22_mul_mat23( a, b ); }
     VECMATH_INLINE mat24_t operator*( mat22_t a, mat24_t b ) { return mat22_mul_mat24( a, b ); }
@@ -3714,7 +3718,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
     VECMATH_INLINE mat22_t operator*( mat24_t a, mat42_t b ) { return mat24_mul_mat42( a, b ); }
     VECMATH_INLINE mat23_t operator*( mat24_t a, mat43_t b ) { return mat24_mul_mat43( a, b ); }
     VECMATH_INLINE mat24_t operator*( mat24_t a, mat44_t b ) { return mat24_mul_mat44( a, b ); }
-    
+
 	VECMATH_INLINE mat32_t operator*( mat32_t a, mat22_t b ) { return mat32_mul_mat22( a, b ); }
     VECMATH_INLINE mat33_t operator*( mat32_t a, mat23_t b ) { return mat32_mul_mat23( a, b ); }
     VECMATH_INLINE mat34_t operator*( mat32_t a, mat24_t b ) { return mat32_mul_mat24( a, b ); }
@@ -3724,13 +3728,13 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
     VECMATH_INLINE mat32_t operator*( mat34_t a, mat42_t b ) { return mat34_mul_mat42( a, b ); }
     VECMATH_INLINE mat33_t operator*( mat34_t a, mat43_t b ) { return mat34_mul_mat43( a, b ); }
     VECMATH_INLINE mat34_t operator*( mat34_t a, mat44_t b ) { return mat34_mul_mat44( a, b ); }
-    
+
 	VECMATH_INLINE mat42_t operator*( mat42_t a, mat22_t b ) { return mat42_mul_mat22( a, b ); }
     VECMATH_INLINE mat43_t operator*( mat42_t a, mat23_t b ) { return mat42_mul_mat23( a, b ); }
     VECMATH_INLINE mat44_t operator*( mat42_t a, mat24_t b ) { return mat42_mul_mat24( a, b ); }
     VECMATH_INLINE mat42_t operator*( mat43_t a, mat32_t b ) { return mat43_mul_mat32( a, b ); }
     VECMATH_INLINE mat43_t operator*( mat43_t a, mat33_t b ) { return mat43_mul_mat33( a, b ); }
-    
+
 	VECMATH_INLINE mat44_t operator*( mat43_t a, mat34_t b ) { return mat43_mul_mat34( a, b ); }
     VECMATH_INLINE mat42_t operator*( mat44_t a, mat42_t b ) { return mat44_mul_mat42( a, b ); }
     VECMATH_INLINE mat43_t operator*( mat44_t a, mat43_t b ) { return mat44_mul_mat43( a, b ); }
@@ -3739,11 +3743,11 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 	VECMATH_INLINE mat22_t& operator*=(mat22_t &a, mat22_t b) { a = mat22_mul_mat22(a, b); return a; }
 	VECMATH_INLINE mat23_t& operator*=(mat23_t &a, mat33_t b) { a = mat23_mul_mat33(a, b); return a; }
 	VECMATH_INLINE mat24_t& operator*=(mat24_t &a, mat44_t b) { a = mat24_mul_mat44(a, b); return a; }
-	
+
 	VECMATH_INLINE mat32_t& operator*=(mat32_t &a, mat22_t b) { a = mat32_mul_mat22(a, b); return a; }
 	VECMATH_INLINE mat33_t& operator*=(mat33_t &a, mat33_t b) { a = mat33_mul_mat33(a, b); return a; }
 	VECMATH_INLINE mat34_t& operator*=(mat34_t &a, mat44_t b) { a = mat34_mul_mat44(a, b); return a; }
-	
+
 	VECMATH_INLINE mat42_t& operator*=(mat42_t &a, mat22_t b) { a = mat42_mul_mat22(a, b); return a; }
 	VECMATH_INLINE mat43_t& operator*=(mat43_t &a, mat33_t b) { a = mat43_mul_mat33(a, b); return a; }
 	VECMATH_INLINE mat44_t& operator*=(mat44_t &a, mat44_t b) { a = mat44_mul_mat44(a, b); return a; }
@@ -3761,7 +3765,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 	#define vm_eq(a, b) _Generic((a), float: _Generic((b), float: vecmath_feq, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_eq, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_eq, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_eq, default: vecmath_unsupported_types ), mat22_t: _Generic((b), mat22_t: mat22_eq, default: vecmath_unsupported_types ), mat23_t: _Generic((b), mat23_t: mat23_eq, default: vecmath_unsupported_types ), mat24_t: _Generic((b), mat24_t: mat24_eq, default: vecmath_unsupported_types ), mat32_t: _Generic((b), mat32_t: mat32_eq, default: vecmath_unsupported_types ), mat33_t: _Generic((b), mat33_t: mat33_eq, default: vecmath_unsupported_types ), mat34_t: _Generic((b), mat34_t: mat34_eq, default: vecmath_unsupported_types ), mat42_t: _Generic((b), mat42_t: mat42_eq, default: vecmath_unsupported_types ), mat43_t: _Generic((b), mat43_t: mat43_eq, default: vecmath_unsupported_types ), mat44_t: _Generic((b), mat44_t: mat44_eq, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)
 	#define vm_add(a, b) _Generic((a), float: _Generic((b), float: vecmath_fadd, vec2_t: vec2_fadd, vec3_t: vec3_fadd, vec4_t: vec4_fadd, mat22_t: mat22_fadd, mat23_t: mat23_fadd, mat24_t: mat24_fadd, mat32_t: mat32_fadd, mat33_t: mat33_fadd, mat34_t: mat34_fadd, mat42_t: mat42_fadd, mat43_t: mat43_fadd, mat44_t: mat44_fadd, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_add, float: vec2_addf, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_add, float: vec3_addf, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_add, float: vec4_addf, default: vecmath_unsupported_types ), mat22_t: _Generic((b), mat22_t: mat22_add, float: mat22_addf, default: vecmath_unsupported_types ), mat23_t: _Generic((b), mat23_t: mat23_add, float: mat23_addf, default: vecmath_unsupported_types ), mat24_t: _Generic((b), mat24_t: mat24_add, float: mat24_addf, default: vecmath_unsupported_types ), mat32_t: _Generic((b), mat32_t: mat32_add, float: mat32_addf, default: vecmath_unsupported_types ), mat33_t: _Generic((b), mat33_t: mat33_add, float: mat33_addf, default: vecmath_unsupported_types ), mat34_t: _Generic((b), mat34_t: mat34_add, float: mat34_addf, default: vecmath_unsupported_types ), mat42_t: _Generic((b), mat42_t: mat42_add, float: mat42_addf, default: vecmath_unsupported_types ), mat43_t: _Generic((b), mat43_t: mat43_add, float: mat43_addf, default: vecmath_unsupported_types ), mat44_t: _Generic((b), mat44_t: mat44_add, float: mat44_addf, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)
 	#define vm_sub(a, b) _Generic((a), float: _Generic((b), float: vecmath_fsub, vec2_t: vec2_fsub, vec3_t: vec3_fsub, vec4_t: vec4_fsub, mat22_t: mat22_fsub, mat23_t: mat23_fsub, mat24_t: mat24_fsub, mat32_t: mat32_fsub, mat33_t: mat33_fsub, mat34_t: mat34_fsub, mat42_t: mat42_fsub, mat43_t: mat43_fsub, mat44_t: mat44_fsub, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_sub, float: vec2_subf, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_sub, float: vec3_subf, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_sub, float: vec4_subf, default: vecmath_unsupported_types ), mat22_t: _Generic((b), mat22_t: mat22_sub, float: mat22_subf, default: vecmath_unsupported_types ), mat23_t: _Generic((b), mat23_t: mat23_sub, float: mat23_subf, default: vecmath_unsupported_types ), mat24_t: _Generic((b), mat24_t: mat24_sub, float: mat24_subf, default: vecmath_unsupported_types ), mat32_t: _Generic((b), mat32_t: mat32_sub, float: mat32_subf, default: vecmath_unsupported_types ), mat33_t: _Generic((b), mat33_t: mat33_sub, float: mat33_subf, default: vecmath_unsupported_types ), mat34_t: _Generic((b), mat34_t: mat34_sub, float: mat34_subf, default: vecmath_unsupported_types ), mat42_t: _Generic((b), mat42_t: mat42_sub, float: mat42_subf, default: vecmath_unsupported_types ), mat43_t: _Generic((b), mat43_t: mat43_sub, float: mat43_subf, default: vecmath_unsupported_types ), mat44_t: _Generic((b), mat44_t: mat44_sub, float: mat44_subf, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)
-	#define vm_mul(a, b) _Generic((a), float: _Generic((b), float: vecmath_fmul, vec2_t: vec2_fmul, vec3_t: vec3_fmul, vec4_t: vec4_fmul, mat22_t: mat22_fmul, mat23_t: mat23_fmul, mat24_t: mat24_fmul, mat32_t: mat32_fmul, mat33_t: mat33_fmul, mat34_t: mat34_fmul, mat42_t: mat42_fmul, mat43_t: mat43_fmul, mat44_t: mat44_fmul, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_mul, float: vec2_mulf, mat22_t: vec2_mul_mat22, mat23_t: vec2_mul_mat23, mat24_t: vec2_mul_mat24, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_mul, float: vec3_mulf, mat32_t: vec3_mul_mat32, mat33_t: vec3_mul_mat33, mat34_t: vec3_mul_mat34, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_mul, float: vec4_mulf, mat42_t: vec4_mul_mat42, mat43_t: vec4_mul_mat43, mat44_t: vec4_mul_mat44, default: vecmath_unsupported_types ), mat22_t: _Generic((b), float: mat22_mulf, vec2_t: mat22_mul_vec2, mat22_t: mat22_mul_mat22, mat23_t: mat22_mul_mat23, mat24_t: mat22_mul_mat24, default: vecmath_unsupported_types ), mat23_t: _Generic((b), float: mat23_mulf, vec3_t: mat23_mul_vec3, mat32_t: mat23_mul_mat32, mat33_t: mat23_mul_mat33, mat34_t: mat23_mul_mat34, default: vecmath_unsupported_types ), mat24_t: _Generic((b), float: mat24_mulf, vec4_t: mat24_mul_vec4, mat42_t: mat24_mul_mat42, mat43_t: mat24_mul_mat43, mat44_t: mat24_mul_mat44, default: vecmath_unsupported_types ), mat32_t: _Generic((b), float: mat32_mulf, vec2_t: mat32_mul_vec2, mat22_t: mat32_mul_mat22, mat23_t: mat32_mul_mat23, mat24_t: mat32_mul_mat24, default: vecmath_unsupported_types ), mat33_t: _Generic((b), float: mat33_mulf, vec3_t: mat33_mul_vec3, mat32_t: mat33_mul_mat32, mat33_t: mat33_mul_mat33, mat34_t: mat33_mul_mat34, default: vecmath_unsupported_types ), mat34_t: _Generic((b), float: mat34_mulf, vec4_t: mat34_mul_vec4, mat42_t: mat34_mul_mat42, mat43_t: mat34_mul_mat43, mat44_t: mat34_mul_mat44, default: vecmath_unsupported_types ), mat42_t: _Generic((b), float: mat42_mulf, vec2_t: mat42_mul_vec2, mat22_t: mat42_mul_mat22, mat23_t: mat42_mul_mat23, mat24_t: mat42_mul_mat24, default: vecmath_unsupported_types ), mat43_t: _Generic((b), float: mat43_mulf, vec3_t: mat43_mul_vec3, mat32_t: mat43_mul_mat32, mat33_t: mat43_mul_mat33, mat34_t: mat43_mul_mat34, default: vecmath_unsupported_types ), mat44_t: _Generic((b), float: mat44_mulf, vec4_t: mat44_mul_vec4, mat42_t: mat44_mul_mat42, mat43_t: mat44_mul_mat43, mat44_t: mat44_mul_mat44, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)	
+	#define vm_mul(a, b) _Generic((a), float: _Generic((b), float: vecmath_fmul, vec2_t: vec2_fmul, vec3_t: vec3_fmul, vec4_t: vec4_fmul, mat22_t: mat22_fmul, mat23_t: mat23_fmul, mat24_t: mat24_fmul, mat32_t: mat32_fmul, mat33_t: mat33_fmul, mat34_t: mat34_fmul, mat42_t: mat42_fmul, mat43_t: mat43_fmul, mat44_t: mat44_fmul, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_mul, float: vec2_mulf, mat22_t: vec2_mul_mat22, mat23_t: vec2_mul_mat23, mat24_t: vec2_mul_mat24, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_mul, float: vec3_mulf, mat32_t: vec3_mul_mat32, mat33_t: vec3_mul_mat33, mat34_t: vec3_mul_mat34, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_mul, float: vec4_mulf, mat42_t: vec4_mul_mat42, mat43_t: vec4_mul_mat43, mat44_t: vec4_mul_mat44, default: vecmath_unsupported_types ), mat22_t: _Generic((b), float: mat22_mulf, vec2_t: mat22_mul_vec2, mat22_t: mat22_mul_mat22, mat23_t: mat22_mul_mat23, mat24_t: mat22_mul_mat24, default: vecmath_unsupported_types ), mat23_t: _Generic((b), float: mat23_mulf, vec3_t: mat23_mul_vec3, mat32_t: mat23_mul_mat32, mat33_t: mat23_mul_mat33, mat34_t: mat23_mul_mat34, default: vecmath_unsupported_types ), mat24_t: _Generic((b), float: mat24_mulf, vec4_t: mat24_mul_vec4, mat42_t: mat24_mul_mat42, mat43_t: mat24_mul_mat43, mat44_t: mat24_mul_mat44, default: vecmath_unsupported_types ), mat32_t: _Generic((b), float: mat32_mulf, vec2_t: mat32_mul_vec2, mat22_t: mat32_mul_mat22, mat23_t: mat32_mul_mat23, mat24_t: mat32_mul_mat24, default: vecmath_unsupported_types ), mat33_t: _Generic((b), float: mat33_mulf, vec3_t: mat33_mul_vec3, mat32_t: mat33_mul_mat32, mat33_t: mat33_mul_mat33, mat34_t: mat33_mul_mat34, default: vecmath_unsupported_types ), mat34_t: _Generic((b), float: mat34_mulf, vec4_t: mat34_mul_vec4, mat42_t: mat34_mul_mat42, mat43_t: mat34_mul_mat43, mat44_t: mat34_mul_mat44, default: vecmath_unsupported_types ), mat42_t: _Generic((b), float: mat42_mulf, vec2_t: mat42_mul_vec2, mat22_t: mat42_mul_mat22, mat23_t: mat42_mul_mat23, mat24_t: mat42_mul_mat24, default: vecmath_unsupported_types ), mat43_t: _Generic((b), float: mat43_mulf, vec3_t: mat43_mul_vec3, mat32_t: mat43_mul_mat32, mat33_t: mat43_mul_mat33, mat34_t: mat43_mul_mat34, default: vecmath_unsupported_types ), mat44_t: _Generic((b), float: mat44_mulf, vec4_t: mat44_mul_vec4, mat42_t: mat44_mul_mat42, mat43_t: mat44_mul_mat43, mat44_t: mat44_mul_mat44, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)
 	#define vm_div(a, b) _Generic((a), float: _Generic((b), float: vecmath_fdiv, vec2_t: vec2_fdiv, vec3_t: vec3_fdiv, vec4_t: vec4_fdiv, mat22_t: mat22_fdiv, mat23_t: mat23_fdiv, mat24_t: mat24_fdiv, mat32_t: mat32_fdiv, mat33_t: mat33_fdiv, mat34_t: mat34_fdiv, mat42_t: mat42_fdiv, mat43_t: mat43_fdiv, mat44_t: mat44_fdiv, default: vecmath_unsupported_types ), vec2_t: _Generic((b), vec2_t: vec2_div, float: vec2_divf, default: vecmath_unsupported_types ), vec3_t: _Generic((b), vec3_t: vec3_div, float: vec3_divf, default: vecmath_unsupported_types ), vec4_t: _Generic((b), vec4_t: vec4_div, float: vec4_divf, default: vecmath_unsupported_types ), mat22_t: _Generic((b), mat22_t: mat22_div, float: mat22_divf, default: vecmath_unsupported_types ), mat23_t: _Generic((b), mat23_t: mat23_div, float: mat23_divf, default: vecmath_unsupported_types ), mat24_t: _Generic((b), mat24_t: mat24_div, float: mat24_divf, default: vecmath_unsupported_types ), mat32_t: _Generic((b), mat32_t: mat32_div, float: mat32_divf, default: vecmath_unsupported_types ), mat33_t: _Generic((b), mat33_t: mat33_div, float: mat33_divf, default: vecmath_unsupported_types ), mat34_t: _Generic((b), mat34_t: mat34_div, float: mat34_divf, default: vecmath_unsupported_types ), mat42_t: _Generic((b), mat42_t: mat42_div, float: mat42_divf, default: vecmath_unsupported_types ), mat43_t: _Generic((b), mat43_t: mat43_div, float: mat43_divf, default: vecmath_unsupported_types ), mat44_t: _Generic((b), mat44_t: mat44_div, float: mat44_divf, default: vecmath_unsupported_types ), default: vecmath_unsupported_types )(a, b)
 	#define vm_abs(a) _Generic((a), float: vecmath_abs, vec2_t: vec2_abs, vec3_t: vec3_abs, vec4_t: vec4_abs, mat22_t: mat22_abs, mat23_t: mat23_abs, mat24_t: mat24_abs, mat32_t: mat32_abs, mat33_t: mat33_abs, mat34_t: mat34_abs, mat42_t: mat42_abs, mat43_t: mat43_abs, mat44_t: mat44_abs, default: vecmath_unsupported_types )(a)
 	#define vm_acos(a) _Generic((a), float: vecmath_acos, vec2_t: vec2_acos, vec3_t: vec3_acos, vec4_t: vec4_acos, mat22_t: mat22_acos, mat23_t: mat23_acos, mat24_t: mat24_acos, mat32_t: mat32_acos, mat33_t: mat33_acos, mat34_t: mat34_acos, mat42_t: mat42_acos, mat43_t: mat43_acos, mat44_t: mat44_acos, default: vecmath_unsupported_types )(a)
@@ -3817,7 +3821,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 #endif /* VECMATH_GENERICS */
 
 #if defined( VECMATH_GENERICS ) && defined(__cplusplus )
-	#ifdef VECMATH_GENERICS_NO_PREFIX 
+	#ifdef VECMATH_GENERICS_NO_PREFIX
 		#define vm_neg neg
 		#define vm_eq eq
 		#define vm_mul mul
@@ -3880,7 +3884,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 	VECMATH_INLINE bool vm_eq( float a, float b ) { return (bool) vecmath_feq( a, b ); } VECMATH_INLINE bool vm_eq( vec2_t a, vec2_t b ) { return (bool) vec2_eq( a, b ); } VECMATH_INLINE bool vm_eq( vec3_t a, vec3_t b ) { return (bool) vec3_eq( a, b ); } VECMATH_INLINE bool vm_eq( vec4_t a, vec4_t b ) { return (bool) vec4_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat22_t a, mat22_t b ) { return (bool) mat22_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat23_t a, mat23_t b ) { return (bool) mat23_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat24_t a, mat24_t b ) { return (bool) mat24_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat32_t a, mat32_t b ) { return (bool) mat32_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat33_t a, mat33_t b ) { return (bool) mat33_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat34_t a, mat34_t b ) { return (bool) mat34_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat42_t a, mat42_t b ) { return (bool) mat42_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat43_t a, mat43_t b ) { return (bool) mat43_eq( a, b ); } VECMATH_INLINE bool vm_eq( mat44_t a, mat44_t b ) { return (bool) mat44_eq( a, b ); }
 	VECMATH_INLINE float vm_add( float a, float b ) { return vecmath_fadd( a, b ); } VECMATH_INLINE vec2_t vm_add( vec2_t a, vec2_t b ) { return vec2_add( a, b ); } VECMATH_INLINE vec2_t vm_add( vec2_t a, float b ) { return vec2_addf( a, b ); } VECMATH_INLINE vec2_t vm_add( float a, vec2_t b ) { return vec2_fadd( a, b ); } VECMATH_INLINE vec3_t vm_add( vec3_t a, vec3_t b ) { return vec3_add( a, b ); } VECMATH_INLINE vec3_t vm_add( vec3_t a, float b ) { return vec3_addf( a, b ); } VECMATH_INLINE vec3_t vm_add( float a, vec3_t b ) { return vec3_fadd( a, b ); } VECMATH_INLINE vec4_t vm_add( vec4_t a, vec4_t b ) { return vec4_add( a, b ); } VECMATH_INLINE vec4_t vm_add( vec4_t a, float b ) { return vec4_addf( a, b ); } VECMATH_INLINE vec4_t vm_add( float a, vec4_t b ) { return vec4_fadd( a, b ); } VECMATH_INLINE mat22_t vm_add( mat22_t a, mat22_t b ) { return mat22_add( a, b ); } VECMATH_INLINE mat22_t vm_add( mat22_t a, float b ) { return mat22_addf( a, b ); } VECMATH_INLINE mat22_t vm_add( float a, mat22_t b ) { return mat22_fadd( a, b ); } VECMATH_INLINE mat23_t vm_add( mat23_t a, mat23_t b ) { return mat23_add( a, b ); } VECMATH_INLINE mat23_t vm_add( mat23_t a, float b ) { return mat23_addf( a, b ); } VECMATH_INLINE mat23_t vm_add( float a, mat23_t b ) { return mat23_fadd( a, b ); } VECMATH_INLINE mat24_t vm_add( mat24_t a, mat24_t b ) { return mat24_add( a, b ); } VECMATH_INLINE mat24_t vm_add( mat24_t a, float b ) { return mat24_addf( a, b ); } VECMATH_INLINE mat24_t vm_add( float a, mat24_t b ) { return mat24_fadd( a, b ); } VECMATH_INLINE mat32_t vm_add( mat32_t a, mat32_t b ) { return mat32_add( a, b ); } VECMATH_INLINE mat32_t vm_add( mat32_t a, float b ) { return mat32_addf( a, b ); } VECMATH_INLINE mat32_t vm_add( float a, mat32_t b ) { return mat32_fadd( a, b ); } VECMATH_INLINE mat33_t vm_add( mat33_t a, mat33_t b ) { return mat33_add( a, b ); } VECMATH_INLINE mat33_t vm_add( mat33_t a, float b ) { return mat33_addf( a, b ); } VECMATH_INLINE mat33_t vm_add( float a, mat33_t b ) { return mat33_fadd( a, b ); } VECMATH_INLINE mat34_t vm_add( mat34_t a, mat34_t b ) { return mat34_add( a, b ); } VECMATH_INLINE mat34_t vm_add( mat34_t a, float b ) { return mat34_addf( a, b ); } VECMATH_INLINE mat34_t vm_add( float a, mat34_t b ) { return mat34_fadd( a, b ); } VECMATH_INLINE mat42_t vm_add( mat42_t a, mat42_t b ) { return mat42_add( a, b ); } VECMATH_INLINE mat42_t vm_add( mat42_t a, float b ) { return mat42_addf( a, b ); } VECMATH_INLINE mat42_t vm_add( float a, mat42_t b ) { return mat42_fadd( a, b ); } VECMATH_INLINE mat43_t vm_add( mat43_t a, mat43_t b ) { return mat43_add( a, b ); } VECMATH_INLINE mat43_t vm_add( mat43_t a, float b ) { return mat43_addf( a, b ); } VECMATH_INLINE mat43_t vm_add( float a, mat43_t b ) { return mat43_fadd( a, b ); } VECMATH_INLINE mat44_t vm_add( mat44_t a, mat44_t b ) { return mat44_add( a, b ); } VECMATH_INLINE mat44_t vm_add( mat44_t a, float b ) { return mat44_addf( a, b ); } VECMATH_INLINE mat44_t vm_add( float a, mat44_t b ) { return mat44_fadd( a, b ); }
 	VECMATH_INLINE float vm_sub( float a, float b ) { return vecmath_fsub( a, b ); } VECMATH_INLINE vec2_t vm_sub( vec2_t a, vec2_t b ) { return vec2_sub( a, b ); } VECMATH_INLINE vec2_t vm_sub( vec2_t a, float b ) { return vec2_subf( a, b ); } VECMATH_INLINE vec2_t vm_sub( float a, vec2_t b ) { return vec2_fsub( a, b ); } VECMATH_INLINE vec3_t vm_sub( vec3_t a, vec3_t b ) { return vec3_sub( a, b ); } VECMATH_INLINE vec3_t vm_sub( vec3_t a, float b ) { return vec3_subf( a, b ); } VECMATH_INLINE vec3_t vm_sub( float a, vec3_t b ) { return vec3_fsub( a, b ); } VECMATH_INLINE vec4_t vm_sub( vec4_t a, vec4_t b ) { return vec4_sub( a, b ); } VECMATH_INLINE vec4_t vm_sub( vec4_t a, float b ) { return vec4_subf( a, b ); } VECMATH_INLINE vec4_t vm_sub( float a, vec4_t b ) { return vec4_fsub( a, b ); } VECMATH_INLINE mat22_t vm_sub( mat22_t a, mat22_t b ) { return mat22_sub( a, b ); } VECMATH_INLINE mat22_t vm_sub( mat22_t a, float b ) { return mat22_subf( a, b ); } VECMATH_INLINE mat22_t vm_sub( float a, mat22_t b ) { return mat22_fsub( a, b ); } VECMATH_INLINE mat23_t vm_sub( mat23_t a, mat23_t b ) { return mat23_sub( a, b ); } VECMATH_INLINE mat23_t vm_sub( mat23_t a, float b ) { return mat23_subf( a, b ); } VECMATH_INLINE mat23_t vm_sub( float a, mat23_t b ) { return mat23_fsub( a, b ); } VECMATH_INLINE mat24_t vm_sub( mat24_t a, mat24_t b ) { return mat24_sub( a, b ); } VECMATH_INLINE mat24_t vm_sub( mat24_t a, float b ) { return mat24_subf( a, b ); } VECMATH_INLINE mat24_t vm_sub( float a, mat24_t b ) { return mat24_fsub( a, b ); } VECMATH_INLINE mat32_t vm_sub( mat32_t a, mat32_t b ) { return mat32_sub( a, b ); } VECMATH_INLINE mat32_t vm_sub( mat32_t a, float b ) { return mat32_subf( a, b ); } VECMATH_INLINE mat32_t vm_sub( float a, mat32_t b ) { return mat32_fsub( a, b ); } VECMATH_INLINE mat33_t vm_sub( mat33_t a, mat33_t b ) { return mat33_sub( a, b ); } VECMATH_INLINE mat33_t vm_sub( mat33_t a, float b ) { return mat33_subf( a, b ); } VECMATH_INLINE mat33_t vm_sub( float a, mat33_t b ) { return mat33_fsub( a, b ); } VECMATH_INLINE mat34_t vm_sub( mat34_t a, mat34_t b ) { return mat34_sub( a, b ); } VECMATH_INLINE mat34_t vm_sub( mat34_t a, float b ) { return mat34_subf( a, b ); } VECMATH_INLINE mat34_t vm_sub( float a, mat34_t b ) { return mat34_fsub( a, b ); } VECMATH_INLINE mat42_t vm_sub( mat42_t a, mat42_t b ) { return mat42_sub( a, b ); } VECMATH_INLINE mat42_t vm_sub( mat42_t a, float b ) { return mat42_subf( a, b ); } VECMATH_INLINE mat42_t vm_sub( float a, mat42_t b ) { return mat42_fsub( a, b ); } VECMATH_INLINE mat43_t vm_sub( mat43_t a, mat43_t b ) { return mat43_sub( a, b ); } VECMATH_INLINE mat43_t vm_sub( mat43_t a, float b ) { return mat43_subf( a, b ); } VECMATH_INLINE mat43_t vm_sub( float a, mat43_t b ) { return mat43_fsub( a, b ); } VECMATH_INLINE mat44_t vm_sub( mat44_t a, mat44_t b ) { return mat44_sub( a, b ); } VECMATH_INLINE mat44_t vm_sub( mat44_t a, float b ) { return mat44_subf( a, b ); } VECMATH_INLINE mat44_t vm_sub( float a, mat44_t b ) { return mat44_fsub( a, b ); }
-	VECMATH_INLINE float vm_mul( float a, float b ) { return vecmath_fmul( a, b ); } VECMATH_INLINE vec2_t vm_mul( float a, vec2_t b ) { return vec2_fmul( a, b ); } VECMATH_INLINE vec3_t vm_mul( float a, vec3_t b ) { return vec3_fmul( a, b ); } VECMATH_INLINE vec4_t vm_mul( float a, vec4_t b ) { return vec4_fmul( a, b ); } VECMATH_INLINE mat22_t vm_mul( float a, mat22_t b ) { return mat22_fmul( a, b ); } VECMATH_INLINE mat23_t vm_mul( float a, mat23_t b ) { return mat23_fmul( a, b ); } VECMATH_INLINE mat24_t vm_mul( float a, mat24_t b ) { return mat24_fmul( a, b ); } VECMATH_INLINE mat32_t vm_mul( float a, mat32_t b ) { return mat32_fmul( a, b ); } VECMATH_INLINE mat33_t vm_mul( float a, mat33_t b ) { return mat33_fmul( a, b ); } VECMATH_INLINE mat34_t vm_mul( float a, mat34_t b ) { return mat34_fmul( a, b ); } VECMATH_INLINE mat42_t vm_mul( float a, mat42_t b ) { return mat42_fmul( a, b ); } VECMATH_INLINE mat43_t vm_mul( float a, mat43_t b ) { return mat43_fmul( a, b ); } VECMATH_INLINE mat44_t vm_mul( float a, mat44_t b ) { return mat44_fmul( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, vec2_t b ) { return vec2_mul( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, float b ) { return vec2_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, mat22_t b ) { return vec2_mul_mat22( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec2_t a, mat23_t b ) { return vec2_mul_mat23( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec2_t a, mat24_t b ) { return vec2_mul_mat24( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat22_t a, vec2_t b ) { return mat22_mul_vec2( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat22_t a, float b ) { return mat22_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat22_t a, mat22_t b ) { return mat22_mul_mat22( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat22_t a, mat23_t b ) { return mat22_mul_mat23( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat22_t a, mat24_t b ) { return mat22_mul_mat24( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, vec3_t b ) { return vec3_mul( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, float b ) { return vec3_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec3_t a, mat32_t b ) { return vec3_mul_mat32( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, mat33_t b ) { return vec3_mul_mat33( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec3_t a, mat34_t b ) { return vec3_mul_mat34( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat23_t a, vec3_t b ) { return mat23_mul_vec3( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat23_t a, float b ) { return mat23_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat23_t a, mat32_t b ) { return mat23_mul_mat32( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat23_t a, mat33_t b ) { return mat23_mul_mat33( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat23_t a, mat34_t b ) { return mat23_mul_mat34( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, vec4_t b ) { return vec4_mul( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, float b ) { return vec4_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec4_t a, mat42_t b ) { return vec4_mul_mat42( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec4_t a, mat43_t b ) { return vec4_mul_mat43( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, mat44_t b ) { return vec4_mul_mat44( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat24_t a, vec4_t b ) { return mat24_mul_vec4( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat24_t a, float b ) { return mat24_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat24_t a, mat42_t b ) { return mat24_mul_mat42( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat24_t a, mat43_t b ) { return mat24_mul_mat43( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat24_t a, mat44_t b ) { return mat24_mul_mat44( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat32_t a, vec2_t b ) { return mat32_mul_vec2( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat32_t a, float b ) { return mat32_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat32_t a, mat22_t b ) { return mat32_mul_mat22( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat32_t a, mat23_t b ) { return mat32_mul_mat23( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat32_t a, mat24_t b ) { return mat32_mul_mat24( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat33_t a, vec3_t b ) { return mat33_mul_vec3( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat33_t a, float b ) { return mat33_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat33_t a, mat32_t b ) { return mat33_mul_mat32( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat33_t a, mat33_t b ) { return mat33_mul_mat33( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat33_t a, mat34_t b ) { return mat33_mul_mat34( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat34_t a, vec4_t b ) { return mat34_mul_vec4( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat34_t a, float b ) { return mat34_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat34_t a, mat42_t b ) { return mat34_mul_mat42( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat34_t a, mat43_t b ) { return mat34_mul_mat43( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat34_t a, mat44_t b ) { return mat34_mul_mat44( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat42_t a, vec2_t b ) { return mat42_mul_vec2( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat42_t a, float b ) { return mat42_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat42_t a, mat22_t b ) { return mat42_mul_mat22( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat42_t a, mat23_t b ) { return mat42_mul_mat23( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat42_t a, mat24_t b ) { return mat42_mul_mat24( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat43_t a, vec3_t b ) { return mat43_mul_vec3( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat43_t a, float b ) { return mat43_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat43_t a, mat32_t b ) { return mat43_mul_mat32( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat43_t a, mat33_t b ) { return mat43_mul_mat33( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat43_t a, mat34_t b ) { return mat43_mul_mat34( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat44_t a, vec4_t b ) { return mat44_mul_vec4( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat44_t a, float b ) { return mat44_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat44_t a, mat42_t b ) { return mat44_mul_mat42( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat44_t a, mat43_t b ) { return mat44_mul_mat43( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat44_t a, mat44_t b ) { return mat44_mul_mat44( a, b ); } 
+	VECMATH_INLINE float vm_mul( float a, float b ) { return vecmath_fmul( a, b ); } VECMATH_INLINE vec2_t vm_mul( float a, vec2_t b ) { return vec2_fmul( a, b ); } VECMATH_INLINE vec3_t vm_mul( float a, vec3_t b ) { return vec3_fmul( a, b ); } VECMATH_INLINE vec4_t vm_mul( float a, vec4_t b ) { return vec4_fmul( a, b ); } VECMATH_INLINE mat22_t vm_mul( float a, mat22_t b ) { return mat22_fmul( a, b ); } VECMATH_INLINE mat23_t vm_mul( float a, mat23_t b ) { return mat23_fmul( a, b ); } VECMATH_INLINE mat24_t vm_mul( float a, mat24_t b ) { return mat24_fmul( a, b ); } VECMATH_INLINE mat32_t vm_mul( float a, mat32_t b ) { return mat32_fmul( a, b ); } VECMATH_INLINE mat33_t vm_mul( float a, mat33_t b ) { return mat33_fmul( a, b ); } VECMATH_INLINE mat34_t vm_mul( float a, mat34_t b ) { return mat34_fmul( a, b ); } VECMATH_INLINE mat42_t vm_mul( float a, mat42_t b ) { return mat42_fmul( a, b ); } VECMATH_INLINE mat43_t vm_mul( float a, mat43_t b ) { return mat43_fmul( a, b ); } VECMATH_INLINE mat44_t vm_mul( float a, mat44_t b ) { return mat44_fmul( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, vec2_t b ) { return vec2_mul( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, float b ) { return vec2_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec2_t a, mat22_t b ) { return vec2_mul_mat22( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec2_t a, mat23_t b ) { return vec2_mul_mat23( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec2_t a, mat24_t b ) { return vec2_mul_mat24( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat22_t a, vec2_t b ) { return mat22_mul_vec2( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat22_t a, float b ) { return mat22_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat22_t a, mat22_t b ) { return mat22_mul_mat22( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat22_t a, mat23_t b ) { return mat22_mul_mat23( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat22_t a, mat24_t b ) { return mat22_mul_mat24( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, vec3_t b ) { return vec3_mul( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, float b ) { return vec3_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec3_t a, mat32_t b ) { return vec3_mul_mat32( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec3_t a, mat33_t b ) { return vec3_mul_mat33( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec3_t a, mat34_t b ) { return vec3_mul_mat34( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat23_t a, vec3_t b ) { return mat23_mul_vec3( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat23_t a, float b ) { return mat23_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat23_t a, mat32_t b ) { return mat23_mul_mat32( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat23_t a, mat33_t b ) { return mat23_mul_mat33( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat23_t a, mat34_t b ) { return mat23_mul_mat34( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, vec4_t b ) { return vec4_mul( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, float b ) { return vec4_mulf( a, b ); } VECMATH_INLINE vec2_t vm_mul( vec4_t a, mat42_t b ) { return vec4_mul_mat42( a, b ); } VECMATH_INLINE vec3_t vm_mul( vec4_t a, mat43_t b ) { return vec4_mul_mat43( a, b ); } VECMATH_INLINE vec4_t vm_mul( vec4_t a, mat44_t b ) { return vec4_mul_mat44( a, b ); } VECMATH_INLINE vec2_t vm_mul( mat24_t a, vec4_t b ) { return mat24_mul_vec4( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat24_t a, float b ) { return mat24_mulf( a, b ); } VECMATH_INLINE mat22_t vm_mul( mat24_t a, mat42_t b ) { return mat24_mul_mat42( a, b ); } VECMATH_INLINE mat23_t vm_mul( mat24_t a, mat43_t b ) { return mat24_mul_mat43( a, b ); } VECMATH_INLINE mat24_t vm_mul( mat24_t a, mat44_t b ) { return mat24_mul_mat44( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat32_t a, vec2_t b ) { return mat32_mul_vec2( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat32_t a, float b ) { return mat32_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat32_t a, mat22_t b ) { return mat32_mul_mat22( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat32_t a, mat23_t b ) { return mat32_mul_mat23( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat32_t a, mat24_t b ) { return mat32_mul_mat24( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat33_t a, vec3_t b ) { return mat33_mul_vec3( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat33_t a, float b ) { return mat33_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat33_t a, mat32_t b ) { return mat33_mul_mat32( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat33_t a, mat33_t b ) { return mat33_mul_mat33( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat33_t a, mat34_t b ) { return mat33_mul_mat34( a, b ); } VECMATH_INLINE vec3_t vm_mul( mat34_t a, vec4_t b ) { return mat34_mul_vec4( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat34_t a, float b ) { return mat34_mulf( a, b ); } VECMATH_INLINE mat32_t vm_mul( mat34_t a, mat42_t b ) { return mat34_mul_mat42( a, b ); } VECMATH_INLINE mat33_t vm_mul( mat34_t a, mat43_t b ) { return mat34_mul_mat43( a, b ); } VECMATH_INLINE mat34_t vm_mul( mat34_t a, mat44_t b ) { return mat34_mul_mat44( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat42_t a, vec2_t b ) { return mat42_mul_vec2( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat42_t a, float b ) { return mat42_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat42_t a, mat22_t b ) { return mat42_mul_mat22( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat42_t a, mat23_t b ) { return mat42_mul_mat23( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat42_t a, mat24_t b ) { return mat42_mul_mat24( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat43_t a, vec3_t b ) { return mat43_mul_vec3( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat43_t a, float b ) { return mat43_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat43_t a, mat32_t b ) { return mat43_mul_mat32( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat43_t a, mat33_t b ) { return mat43_mul_mat33( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat43_t a, mat34_t b ) { return mat43_mul_mat34( a, b ); } VECMATH_INLINE vec4_t vm_mul( mat44_t a, vec4_t b ) { return mat44_mul_vec4( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat44_t a, float b ) { return mat44_mulf( a, b ); } VECMATH_INLINE mat42_t vm_mul( mat44_t a, mat42_t b ) { return mat44_mul_mat42( a, b ); } VECMATH_INLINE mat43_t vm_mul( mat44_t a, mat43_t b ) { return mat44_mul_mat43( a, b ); } VECMATH_INLINE mat44_t vm_mul( mat44_t a, mat44_t b ) { return mat44_mul_mat44( a, b ); }
 	VECMATH_INLINE float vm_div( float a, float b ) { return vecmath_fdiv( a, b ); } VECMATH_INLINE vec2_t vm_div( float a, vec2_t b ) { return vec2_fdiv( a, b ); } VECMATH_INLINE vec3_t vm_div( float a, vec3_t b ) { return vec3_fdiv( a, b ); } VECMATH_INLINE vec4_t vm_div( float a, vec4_t b ) { return vec4_fdiv( a, b ); } VECMATH_INLINE mat22_t vm_div( float a, mat22_t b ) { return mat22_fdiv( a, b ); } VECMATH_INLINE mat23_t vm_div( float a, mat23_t b ) { return mat23_fdiv( a, b ); } VECMATH_INLINE mat24_t vm_div( float a, mat24_t b ) { return mat24_fdiv( a, b ); } VECMATH_INLINE mat32_t vm_div( float a, mat32_t b ) { return mat32_fdiv( a, b ); } VECMATH_INLINE mat33_t vm_div( float a, mat33_t b ) { return mat33_fdiv( a, b ); } VECMATH_INLINE mat34_t vm_div( float a, mat34_t b ) { return mat34_fdiv( a, b ); } VECMATH_INLINE mat42_t vm_div( float a, mat42_t b ) { return mat42_fdiv( a, b ); } VECMATH_INLINE mat43_t vm_div( float a, mat43_t b ) { return mat43_fdiv( a, b ); } VECMATH_INLINE mat44_t vm_div( float a, mat44_t b ) { return mat44_fdiv( a, b ); } VECMATH_INLINE vec2_t vm_div( vec2_t a, vec2_t b ) { return vec2_div( a, b ); } VECMATH_INLINE vec2_t vm_div( vec2_t a, float b ) { return vec2_divf( a, b ); } VECMATH_INLINE vec3_t vm_div( vec3_t a, vec3_t b ) { return vec3_div( a, b ); } VECMATH_INLINE vec3_t vm_div( vec3_t a, float b ) { return vec3_divf( a, b ); } VECMATH_INLINE vec4_t vm_div( vec4_t a, vec4_t b ) { return vec4_div( a, b ); } VECMATH_INLINE vec4_t vm_div( vec4_t a, float b ) { return vec4_divf( a, b ); } VECMATH_INLINE mat22_t vm_div( mat22_t a, mat22_t b ) { return mat22_div( a, b ); } VECMATH_INLINE mat22_t vm_div( mat22_t a, float b ) { return mat22_divf( a, b ); } VECMATH_INLINE mat23_t vm_div( mat23_t a, mat23_t b ) { return mat23_div( a, b ); } VECMATH_INLINE mat23_t vm_div( mat23_t a, float b ) { return mat23_divf( a, b ); } VECMATH_INLINE mat24_t vm_div( mat24_t a, mat24_t b ) { return mat24_div( a, b ); } VECMATH_INLINE mat24_t vm_div( mat24_t a, float b ) { return mat24_divf( a, b ); } VECMATH_INLINE mat32_t vm_div( mat32_t a, mat32_t b ) { return mat32_div( a, b ); } VECMATH_INLINE mat32_t vm_div( mat32_t a, float b ) { return mat32_divf( a, b ); } VECMATH_INLINE mat33_t vm_div( mat33_t a, mat33_t b ) { return mat33_div( a, b ); } VECMATH_INLINE mat33_t vm_div( mat33_t a, float b ) { return mat33_divf( a, b ); } VECMATH_INLINE mat34_t vm_div( mat34_t a, mat34_t b ) { return mat34_div( a, b ); } VECMATH_INLINE mat34_t vm_div( mat34_t a, float b ) { return mat34_divf( a, b ); } VECMATH_INLINE mat42_t vm_div( mat42_t a, mat42_t b ) { return mat42_div( a, b ); } VECMATH_INLINE mat42_t vm_div( mat42_t a, float b ) { return mat42_divf( a, b ); } VECMATH_INLINE mat43_t vm_div( mat43_t a, mat43_t b ) { return mat43_div( a, b ); } VECMATH_INLINE mat43_t vm_div( mat43_t a, float b ) { return mat43_divf( a, b ); } VECMATH_INLINE mat44_t vm_div( mat44_t a, mat44_t b ) { return mat44_div( a, b ); } VECMATH_INLINE mat44_t vm_div( mat44_t a, float b ) { return mat44_divf( a, b ); }
 	VECMATH_INLINE float vm_abs( float a ) { return vecmath_abs( a ); } VECMATH_INLINE vec2_t vm_abs( vec2_t a ) { return vec2_abs( a ); } VECMATH_INLINE vec3_t vm_abs( vec3_t a ) { return vec3_abs( a ); } VECMATH_INLINE vec4_t vm_abs( vec4_t a ) { return vec4_abs( a ); } VECMATH_INLINE mat22_t vm_abs( mat22_t a ) { return mat22_abs( a ); } VECMATH_INLINE mat23_t vm_abs( mat23_t a ) { return mat23_abs( a ); } VECMATH_INLINE mat24_t vm_abs( mat24_t a ) { return mat24_abs( a ); } VECMATH_INLINE mat32_t vm_abs( mat32_t a ) { return mat32_abs( a ); } VECMATH_INLINE mat33_t vm_abs( mat33_t a ) { return mat33_abs( a ); } VECMATH_INLINE mat34_t vm_abs( mat34_t a ) { return mat34_abs( a ); } VECMATH_INLINE mat42_t vm_abs( mat42_t a ) { return mat42_abs( a ); } VECMATH_INLINE mat43_t vm_abs( mat43_t a ) { return mat43_abs( a ); } VECMATH_INLINE mat44_t vm_abs( mat44_t a ) { return mat44_abs( a ); }
 	VECMATH_INLINE float vm_acos( float a ) { return vecmath_acos( a ); } VECMATH_INLINE vec2_t vm_acos( vec2_t a ) { return vec2_acos( a ); } VECMATH_INLINE vec3_t vm_acos( vec3_t a ) { return vec3_acos( a ); } VECMATH_INLINE vec4_t vm_acos( vec4_t a ) { return vec4_acos( a ); } VECMATH_INLINE mat22_t vm_acos( mat22_t a ) { return mat22_acos( a ); } VECMATH_INLINE mat23_t vm_acos( mat23_t a ) { return mat23_acos( a ); } VECMATH_INLINE mat24_t vm_acos( mat24_t a ) { return mat24_acos( a ); } VECMATH_INLINE mat32_t vm_acos( mat32_t a ) { return mat32_acos( a ); } VECMATH_INLINE mat33_t vm_acos( mat33_t a ) { return mat33_acos( a ); } VECMATH_INLINE mat34_t vm_acos( mat34_t a ) { return mat34_acos( a ); } VECMATH_INLINE mat42_t vm_acos( mat42_t a ) { return mat42_acos( a ); } VECMATH_INLINE mat43_t vm_acos( mat43_t a ) { return mat43_acos( a ); } VECMATH_INLINE mat44_t vm_acos( mat44_t a ) { return mat44_acos( a ); }
@@ -3944,64 +3948,64 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 #if defined( VECMATH_GENERICS ) && ( ( defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L ) || defined(__TINYC__) )
 	#ifdef VECMATH_GENERICS_NO_PREFIX
 
-		#undef neg 
-		#undef eq 
-		#undef mul 
-		#undef add 
-		#undef sub 
-		#undef div 
-		#undef abs 
-		#undef acos 
-		#undef all 
-		#undef any 
-		#undef asin 
-		#undef atan 
-		#undef atan2 
-		#undef ceil 
-		#undef clamp 
-		#undef cos 
-		#undef cosh 
-		#undef cross 
-		#undef degrees 
-		#undef distancesq 
-		#undef distance 
-		#undef dot 
-		#undef exp 
-		#undef exp2 
-		#undef floor 
-		#undef fmod 
-		#undef frac 
-		#undef lengthsq 
-		#undef length 
-		#undef lerp 
-		#undef log 
-		#undef log2 
-		#undef log10 
-		#undef max 
-		#undef min 
-		#undef normalize 
-		#undef pow 
-		#undef radians 
-		#undef rcp 
-		#undef reflect 
-		#undef refract 
-		#undef round 
-		#undef rsqrt 
-		#undef saturate 
-		#undef sign 
-		#undef sin 
-		#undef sinh 
-		#undef smoothstep 
-		#undef smootherste 
-		#undef sqrt 
-		#undef step 
-		#undef tan 
-		#undef tanh 
-		#undef trunc 
-		#undef transpose 
-		#undef determinant 
-		#undef inverse 
- 
+		#undef neg
+		#undef eq
+		#undef mul
+		#undef add
+		#undef sub
+		#undef div
+		#undef abs
+		#undef acos
+		#undef all
+		#undef any
+		#undef asin
+		#undef atan
+		#undef atan2
+		#undef ceil
+		#undef clamp
+		#undef cos
+		#undef cosh
+		#undef cross
+		#undef degrees
+		#undef distancesq
+		#undef distance
+		#undef dot
+		#undef exp
+		#undef exp2
+		#undef floor
+		#undef fmod
+		#undef frac
+		#undef lengthsq
+		#undef length
+		#undef lerp
+		#undef log
+		#undef log2
+		#undef log10
+		#undef max
+		#undef min
+		#undef normalize
+		#undef pow
+		#undef radians
+		#undef rcp
+		#undef reflect
+		#undef refract
+		#undef round
+		#undef rsqrt
+		#undef saturate
+		#undef sign
+		#undef sin
+		#undef sinh
+		#undef smoothstep
+		#undef smootherste
+		#undef sqrt
+		#undef step
+		#undef tan
+		#undef tanh
+		#undef trunc
+		#undef transpose
+		#undef determinant
+		#undef inverse
+
 		#define neg vm_neg
 		#define eq vm_eq
 		#define mul vm_mul
@@ -4058,7 +4062,7 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 		#define trunc vm_trunc
 		#define transpose vm_transpose
 		#define determinant vm_determinant
- 
+
 	#endif /* VECMATH_GENERICS_NO_PREFIX */
 #endif /* VECMATH_GENERICS */
 
@@ -4069,15 +4073,15 @@ VECMATH_INLINE vec4_t vec4_wwww( vec4_t v ) { return vec4( v.w, v.w, v.w, v.w );
 -------------
 
 To build and run the test suite, compile it like this:
-	
+
 	cl /Tc vecmath.h /DVECMATH_RUN_TESTS
 
-and then simply run this from the commandline: 
+and then simply run this from the commandline:
 
 	vecmath.exe
 
-For more extensive tests, like memory leaks of access violations, you can use the 
-testfw.h test framework by placing it in the same directory as vecmath.h, and 
+For more extensive tests, like memory leaks of access violations, you can use the
+testfw.h test framework by placing it in the same directory as vecmath.h, and
 defining the VECMATH_USE_EXTERNAL_TESTFW when building
 
 	cl /Tc vecmath.h /DVECMATH_RUN_TESTS /D VECMATH_USE_EXTERNAL_TESTFW /MTd
@@ -4113,7 +4117,7 @@ You can find testfw.h here:
 	#define TESTFW_EXPECTED( expression ) \
 		++g_testfw_asserts_count; if( !(expression) ) { ++g_testfw_asserts_failed; g_testfw_current_test_failed = 1; if( g_testfw_desc )  {  printf( "\n-------------------------------------------------------------------------------\n" ); \
 		printf( "%s\n", g_testfw_desc );  printf( "-------------------------------------------------------------------------------\n" ); printf( "%s(%d): %s\n", __FILE__, g_testfw_line, __func__ ); \
-		printf( "...............................................................................\n" ); g_testfw_desc = NULL; }  printf( "\n%s(%d): FAILED:\n", __FILE__, __LINE__ );  printf( "\n  TESTFW_EXPECTED( %s )\n", #expression ); }  
+		printf( "...............................................................................\n" ); g_testfw_desc = NULL; }  printf( "\n%s(%d): FAILED:\n", __FILE__, __LINE__ );  printf( "\n  TESTFW_EXPECTED( %s )\n", #expression ); }
 #endif
 
 #include <float.h>
@@ -4173,7 +4177,7 @@ void test_scalar_math( void ) {
 	TESTFW_TEST_BEGIN( "vecmath_abs propagates NaN" )
 		TESTFW_EXPECTED( isnan( vecmath_abs( NAN ) ) );
 	TESTFW_TEST_END();
-	
+
 	// vecmath_acos
 	TESTFW_TEST_BEGIN( "vecmath_acos returns correct values for canonical inputs" )
 		TESTFW_EXPECTED( vecmath_acos( 1.0f ) == 0.0f );
@@ -4207,7 +4211,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( vecmath_all( -1e-30f ) != 0 );
 		TESTFW_EXPECTED( vecmath_all( 1.0f ) != 0 );
 		TESTFW_EXPECTED( vecmath_all( -1.0f ) != 0 );
-	
+
 		TESTFW_EXPECTED( vecmath_all( NAN ) != 0 );
 		TESTFW_EXPECTED( vecmath_all( INFINITY ) != 0 );
 		TESTFW_EXPECTED( vecmath_all( -INFINITY ) != 0 );
@@ -4221,7 +4225,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( vecmath_any( -1e-30f ) != 0 );
 		TESTFW_EXPECTED( vecmath_any( 1.0f ) != 0 );
 		TESTFW_EXPECTED( vecmath_any( -1.0f ) != 0 );
-		
+
 		TESTFW_EXPECTED( vecmath_any( NAN ) != 0 );
 		TESTFW_EXPECTED( vecmath_any( INFINITY ) != 0 );
 		TESTFW_EXPECTED( vecmath_any( -INFINITY ) != 0 );
@@ -4356,7 +4360,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( vecmath_clamp( -15.0f, -10.0f, -1.0f ) == -10.0f );
 		TESTFW_EXPECTED( vecmath_clamp( 0.0f, -10.0f, -1.0f ) == -1.0f );
 	TESTFW_TEST_END();
-		
+
 	TESTFW_TEST_BEGIN( "vecmath_clamp handles very large and very small values" )
 		TESTFW_EXPECTED( vecmath_clamp( -1e30f, 0.0f, 1e30f ) == 0.0f );
 		TESTFW_EXPECTED( vecmath_clamp( 1e30f, 0.0f, 1e30f ) == 1e30f );
@@ -4471,7 +4475,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( vecmath_distancesq( 0.0f, -1e19f ) == 1e38f );
 	TESTFW_TEST_END();
 
-	// vecmath_distance 
+	// vecmath_distance
 	TESTFW_TEST_BEGIN( "vecmath_distance returns absolute difference" )
 		TESTFW_EXPECTED( vecmath_distance( 0.0f, 0.0f ) == 0.0f );
 		TESTFW_EXPECTED( vecmath_distance( 1.0f, 0.0f ) == 1.0f );
@@ -4819,7 +4823,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( vecmath_max( 1.0f, INFINITY ) == INFINITY );
 		TESTFW_EXPECTED( vecmath_max( 1.0f, -INFINITY ) == 1.0f );
 	TESTFW_TEST_END();
-	
+
 	// vecmath_min
 	TESTFW_TEST_BEGIN( "vecmath_min returns lesser of two values" )
 		TESTFW_EXPECTED( vecmath_min( 1.0f, 2.0f ) == 1.0f );
@@ -4918,7 +4922,7 @@ void test_scalar_math( void ) {
 		TESTFW_EXPECTED( isnan( vecmath_pow( NAN, NAN ) ) );
 	TESTFW_TEST_END();
 
-	// vecmath_radians 
+	// vecmath_radians
 	TESTFW_TEST_BEGIN( "vecmath_radians zero and multiples of pi" )
 		TESTFW_EXPECTED( vecmath_radians( 0.0f ) == 0.0f );
 		TESTFW_EXPECTED( vecmath_radians( 180.0f ) == 3.14159265f );
@@ -5431,7 +5435,7 @@ void test_vec2( void ) {
 		vec2_t a = vec2( 1.0f, 6.0f );
 		vec2_t b = vec2( 4.0f, 9.0f );
 		vec2_t r = vec2_add( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
 		TESTFW_EXPECTED( r.y == 15.0f );
 	TESTFW_TEST_END();
 
@@ -5440,7 +5444,7 @@ void test_vec2( void ) {
 		vec2_t a = vec2( 8.0f, 15.0f );
 		vec2_t b = vec2( 3.0f, 4.0f );
 		vec2_t r = vec2_sub( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
 		TESTFW_EXPECTED( r.y == 11.0f );
 	TESTFW_TEST_END();
 
@@ -5449,8 +5453,8 @@ void test_vec2( void ) {
 		vec2_t a = vec2( 2.0f, 5.0f );
 		vec2_t b = vec2( 3.0f, 4.0f );
 		vec2_t r = vec2_mul( a, b );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
-		TESTFW_EXPECTED( r.y == 20.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
+		TESTFW_EXPECTED( r.y == 20.0f );
 	TESTFW_TEST_END();
 
 	// vec2_div
@@ -5458,40 +5462,40 @@ void test_vec2( void ) {
 		vec2_t a = vec2( 10.0f, 18.0f );
 		vec2_t b = vec2( 2.0f, 3.0f );
 		vec2_t r = vec2_div( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
-		TESTFW_EXPECTED( r.y == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
+		TESTFW_EXPECTED( r.y == 6.0f );
 	TESTFW_TEST_END();
 
 	// vec2_addf
 	TESTFW_TEST_BEGIN( "vec2_addf adds scalar to both components of vector" )
 		vec2_t a = vec2( 2.0f, 5.0f );
 		vec2_t r = vec2_addf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
-		TESTFW_EXPECTED( r.y == 8.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
+		TESTFW_EXPECTED( r.y == 8.0f );
 	TESTFW_TEST_END();
 
 	// vec2_subf
 	TESTFW_TEST_BEGIN( "vec2_subf subtracts scalar from both components of vector" )
 		vec2_t a = vec2( 10.0f, 6.0f );
 		vec2_t r = vec2_subf( a, 4.0f );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
-		TESTFW_EXPECTED( r.y == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
+		TESTFW_EXPECTED( r.y == 2.0f );
 	TESTFW_TEST_END();
 
 	// vec2_mulf
 	TESTFW_TEST_BEGIN( "vec2_mulf multiplies both components of vector by scalar" )
 		vec2_t a = vec2( 2.0f, 5.0f );
 		vec2_t r = vec2_mulf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
-		TESTFW_EXPECTED( r.y == 15.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
+		TESTFW_EXPECTED( r.y == 15.0f );
 	TESTFW_TEST_END();
 
 	// vec2_divf
 	TESTFW_TEST_BEGIN( "vec2_divf divides both components of vector by scalar" )
 		vec2_t a = vec2( 12.0f, 18.0f );
 		vec2_t r = vec2_divf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
-		TESTFW_EXPECTED( r.y == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
+		TESTFW_EXPECTED( r.y == 6.0f );
 	TESTFW_TEST_END();
 
 	// vec2_abs
@@ -5506,8 +5510,8 @@ void test_vec2( void ) {
 	TESTFW_TEST_BEGIN( "vec2_acos applies acos to each component" )
 		vec2_t a = vec2( 0.5f, -1.0f );
 		vec2_t r = vec2_acos( a );
-		TESTFW_EXPECTED( test_cmp( r.x, 1.04719758f ) ); 
-		TESTFW_EXPECTED( test_cmp( r.y, 3.14159265f ) ); 
+		TESTFW_EXPECTED( test_cmp( r.x, 1.04719758f ) );
+		TESTFW_EXPECTED( test_cmp( r.y, 3.14159265f ) );
 	TESTFW_TEST_END();
 
 	// vec2_all
@@ -5530,16 +5534,16 @@ void test_vec2( void ) {
 	TESTFW_TEST_BEGIN( "vec2_asin applies asin to each component" )
 		vec2_t a = vec2( 0.5f, -1.0f );
 		vec2_t r = vec2_asin( a );
-		TESTFW_EXPECTED( test_cmp( r.x, 0.52359878f )); 
-		TESTFW_EXPECTED( test_cmp( r.y, -1.57079633f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 0.52359878f ));
+		TESTFW_EXPECTED( test_cmp( r.y, -1.57079633f ));
 	TESTFW_TEST_END();
 
 	// vec2_atan
 	TESTFW_TEST_BEGIN( "vec2_atan applies atan to each component" )
 		vec2_t a = vec2( 0.5f, -2.0f );
 		vec2_t r = vec2_atan( a );
-		TESTFW_EXPECTED( r.x == 0.46364761f ); 
-		TESTFW_EXPECTED( r.y == -1.10714872f ); 
+		TESTFW_EXPECTED( r.x == 0.46364761f );
+		TESTFW_EXPECTED( r.y == -1.10714872f );
 	TESTFW_TEST_END();
 
 	// vec2_atan2
@@ -5547,24 +5551,24 @@ void test_vec2( void ) {
 		vec2_t y = vec2( 2.0f, -3.0f );
 		vec2_t x = vec2( 1.0f, -4.0f );
 		vec2_t r = vec2_atan2( y, x );
-		TESTFW_EXPECTED( test_cmp( r.x, 1.10714872f )); 
-		TESTFW_EXPECTED( test_cmp( r.y, -2.49809154f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 1.10714872f ));
+		TESTFW_EXPECTED( test_cmp( r.y, -2.49809154f ));
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec2_atan2 handles distinct signs and quadrants" )
 		vec2_t y = vec2( 3.0f, -2.0f );
 		vec2_t x = vec2( -2.0f, 5.0f );
 		vec2_t r = vec2_atan2( y, x );
-		TESTFW_EXPECTED( test_cmp( r.x, 2.15879893f )); 
-		TESTFW_EXPECTED( test_cmp( r.y, -0.38050638f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 2.15879893f ));
+		TESTFW_EXPECTED( test_cmp( r.y, -0.38050638f ));
 	TESTFW_TEST_END();
 
 	// vec2_ceil
 	TESTFW_TEST_BEGIN( "vec2_ceil applies ceil to each component" )
 		vec2_t v = vec2( 1.2f, -3.7f );
 		vec2_t r = vec2_ceil( v );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
-		TESTFW_EXPECTED( r.y == -3.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
+		TESTFW_EXPECTED( r.y == -3.0f );
 	TESTFW_TEST_END();
 
 	// vec2_clamp
@@ -5573,24 +5577,24 @@ void test_vec2( void ) {
 		vec2_t min = vec2( 0.0f, -8.0f );
 		vec2_t max = vec2( 4.0f, -7.0f );
 		vec2_t r = vec2_clamp( v, min, max );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
-		TESTFW_EXPECTED( r.y == -8.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
+		TESTFW_EXPECTED( r.y == -8.0f );
 	TESTFW_TEST_END();
 
 	// vec2_cos
 	TESTFW_TEST_BEGIN( "vec2_cos applies cos to each component" )
 		vec2_t a = vec2( 0.5f, 2.0f );
 		vec2_t r = vec2_cos( a );
-		TESTFW_EXPECTED( r.x == 0.87758256f ); 
-		TESTFW_EXPECTED( r.y == -0.41614684f ); 
+		TESTFW_EXPECTED( r.x == 0.87758256f );
+		TESTFW_EXPECTED( r.y == -0.41614684f );
 	TESTFW_TEST_END();
 
 	// vec2_cosh
 	TESTFW_TEST_BEGIN( "vec2_cosh applies cosh to each component" )
 		vec2_t a = vec2( 0.5f, 2.0f );
 		vec2_t r = vec2_cosh( a );
-		TESTFW_EXPECTED( test_cmp( r.x, 1.12762597f )); 
-		TESTFW_EXPECTED( test_cmp( r.y, 3.76219569f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 1.12762597f ));
+		TESTFW_EXPECTED( test_cmp( r.y, 3.76219569f ));
 	TESTFW_TEST_END();
 
 	// vec2_cross
@@ -5695,7 +5699,7 @@ void test_vec2( void ) {
 	TESTFW_TEST_BEGIN( "vec2_exp2 applies exp2 to each component" )
 		vec2_t a = vec2( 3.0f, -2.0f );
 		vec2_t r = vec2_exp2( a );
-		TESTFW_EXPECTED( r.x == 8.0f ); 
+		TESTFW_EXPECTED( r.x == 8.0f );
 		TESTFW_EXPECTED( r.y == 0.25f );
 	TESTFW_TEST_END();
 
@@ -5712,8 +5716,8 @@ void test_vec2( void ) {
 		vec2_t a = vec2( 6.5f, -5.0f );
 		vec2_t b = vec2( 2.0f, 3.0f );
 		vec2_t r = vec2_fmod( a, b );
-		TESTFW_EXPECTED( r.x == 0.5f ); 
-		TESTFW_EXPECTED( r.y == -2.0f ); 
+		TESTFW_EXPECTED( r.x == 0.5f );
+		TESTFW_EXPECTED( r.y == -2.0f );
 	TESTFW_TEST_END();
 
 	// vec2_frac
@@ -6106,9 +6110,9 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 1.0f, 6.0f, -1.0f );
 		vec3_t b = vec3( 4.0f, 9.0f, 2.0f );
 		vec3_t r = vec3_add( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
 		TESTFW_EXPECTED( r.y == 15.0f );
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
 
 	// vec3_sub
@@ -6116,9 +6120,9 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 8.0f, 15.0f, 5.0f );
 		vec3_t b = vec3( 3.0f, 4.0f, -2.0f );
 		vec3_t r = vec3_sub( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
 		TESTFW_EXPECTED( r.y == 11.0f );
-		TESTFW_EXPECTED( r.z == 7.0f ); 
+		TESTFW_EXPECTED( r.z == 7.0f );
 	TESTFW_TEST_END();
 
 	// vec3_mul
@@ -6126,7 +6130,7 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 2.0f, 5.0f, -3.0f );
 		vec3_t b = vec3( 3.0f, 4.0f, 2.0f );
 		vec3_t r = vec3_mul( a, b );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
 		TESTFW_EXPECTED( r.y == 20.0f );
 		TESTFW_EXPECTED( r.z == -6.0f );
 	TESTFW_TEST_END();
@@ -6136,8 +6140,8 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 10.0f, 18.0f, -6.0f );
 		vec3_t b = vec3( 2.0f, 3.0f, 2.0f );
 		vec3_t r = vec3_div( a, b );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
-		TESTFW_EXPECTED( r.y == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
+		TESTFW_EXPECTED( r.y == 6.0f );
 		TESTFW_EXPECTED( r.z == -3.0f );
 	TESTFW_TEST_END();
 
@@ -6145,17 +6149,17 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_addf adds scalar to all components of vector" )
 		vec3_t a = vec3( 2.0f, 5.0f, -1.0f );
 		vec3_t r = vec3_addf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 5.0f ); 
-		TESTFW_EXPECTED( r.y == 8.0f ); 
-		TESTFW_EXPECTED( r.z == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 5.0f );
+		TESTFW_EXPECTED( r.y == 8.0f );
+		TESTFW_EXPECTED( r.z == 2.0f );
 	TESTFW_TEST_END();
 
 	// vec3_subf
 	TESTFW_TEST_BEGIN( "vec3_subf subtracts scalar from all components of vector" )
 		vec3_t a = vec3( 10.0f, 6.0f, 0.0f );
 		vec3_t r = vec3_subf( a, 4.0f );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
-		TESTFW_EXPECTED( r.y == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
+		TESTFW_EXPECTED( r.y == 2.0f );
 		TESTFW_EXPECTED( r.z == -4.0f );
 	TESTFW_TEST_END();
 
@@ -6163,7 +6167,7 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_mulf multiplies all components of vector by scalar" )
 		vec3_t a = vec3( 2.0f, 5.0f, -3.0f );
 		vec3_t r = vec3_mulf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 6.0f );
 		TESTFW_EXPECTED( r.y == 15.0f );
 		TESTFW_EXPECTED( r.z == -9.0f );
 	TESTFW_TEST_END();
@@ -6172,8 +6176,8 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_divf divides all components of vector by scalar" )
 		vec3_t a = vec3( 12.0f, 18.0f, -6.0f );
 		vec3_t r = vec3_divf( a, 3.0f );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
-		TESTFW_EXPECTED( r.y == 6.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
+		TESTFW_EXPECTED( r.y == 6.0f );
 		TESTFW_EXPECTED( r.z == -2.0f );
 	TESTFW_TEST_END();
 
@@ -6238,25 +6242,25 @@ void test_vec3( void ) {
 		vec3_t r = vec3_atan2( y, x );
 		TESTFW_EXPECTED( test_cmp( r.x, 1.10714872f ));
 		TESTFW_EXPECTED( test_cmp( r.y, -2.49809154f ));
-		TESTFW_EXPECTED( test_cmp( r.z, 0.24497866f )); 
+		TESTFW_EXPECTED( test_cmp( r.z, 0.24497866f ));
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec3_atan2 handles distinct signs and quadrants" )
 		vec3_t y = vec3( 3.0f, -2.0f, 0.0f );
 		vec3_t x = vec3( -2.0f, 5.0f, -1.0f );
 		vec3_t r = vec3_atan2( y, x );
-		TESTFW_EXPECTED( test_cmp( r.x, 2.15879893f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 2.15879893f ));
 		TESTFW_EXPECTED( test_cmp( r.y, -0.38050638f ));
-		TESTFW_EXPECTED( test_cmp( r.z, 3.14159265f )); 
+		TESTFW_EXPECTED( test_cmp( r.z, 3.14159265f ));
 	TESTFW_TEST_END();
 
 	// vec3_ceil
 	TESTFW_TEST_BEGIN( "vec3_ceil applies ceil to each component" )
 		vec3_t v = vec3( 1.2f, -3.7f, 0.0f );
 		vec3_t r = vec3_ceil( v );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
 		TESTFW_EXPECTED( r.y == -3.0f );
-		TESTFW_EXPECTED( r.z == 0.0f ); 
+		TESTFW_EXPECTED( r.z == 0.0f );
 	TESTFW_TEST_END();
 
 	// vec3_clamp
@@ -6265,7 +6269,7 @@ void test_vec3( void ) {
 		vec3_t min = vec3( 0.0f, -8.0f, -1.0f );
 		vec3_t max = vec3( 4.0f, -7.0f, 1.0f );
 		vec3_t r = vec3_clamp( v, min, max );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
 		TESTFW_EXPECTED( r.y == -8.0f );
 		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
@@ -6274,7 +6278,7 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_cos applies cos to each component" )
 		vec3_t a = vec3( 0.5f, 2.0f, 3.14159265f );
 		vec3_t r = vec3_cos( a );
-		TESTFW_EXPECTED( r.x == 0.87758256f ); 
+		TESTFW_EXPECTED( r.x == 0.87758256f );
 		TESTFW_EXPECTED( r.y == -0.41614684f );
 		TESTFW_EXPECTED( r.z == -1.00000000f );
 	TESTFW_TEST_END();
@@ -6283,9 +6287,9 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_cosh applies cosh to each component" )
 		vec3_t a = vec3( 0.5f, 2.0f, 1.0f );
 		vec3_t r = vec3_cosh( a );
-		TESTFW_EXPECTED( test_cmp( r.x, 1.12762597f )); 
-		TESTFW_EXPECTED( test_cmp( r.y, 3.76219569f )); 
-		TESTFW_EXPECTED( test_cmp( r.z, 1.54308063f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 1.12762597f ));
+		TESTFW_EXPECTED( test_cmp( r.y, 3.76219569f ));
+		TESTFW_EXPECTED( test_cmp( r.z, 1.54308063f ));
 	TESTFW_TEST_END();
 
 	// vec3_cross
@@ -6311,7 +6315,7 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 0.0f, 1.0f, 0.0f );
 		vec3_t b = vec3( 0.0f, 0.0f, 1.0f );
 		vec3_t r = vec3_cross( a, b );
-		TESTFW_EXPECTED( r.x == 1.0f ); 
+		TESTFW_EXPECTED( r.x == 1.0f );
 		TESTFW_EXPECTED( r.y == 0.0f );
 		TESTFW_EXPECTED( r.z == 0.0f );
 	TESTFW_TEST_END();
@@ -6320,9 +6324,9 @@ void test_vec3( void ) {
 	TESTFW_TEST_BEGIN( "vec3_degrees converts radians to degrees component-wise" )
 		vec3_t a = vec3( 0.5f, -2.0f, 1.0f );
 		vec3_t r = vec3_degrees( a );
-		TESTFW_EXPECTED( r.x == 28.6478898f ); 
+		TESTFW_EXPECTED( r.x == 28.6478898f );
 		TESTFW_EXPECTED( r.y == -114.591559f );
-		TESTFW_EXPECTED( r.z == 57.2957795f ); 
+		TESTFW_EXPECTED( r.z == 57.2957795f );
 	TESTFW_TEST_END();
 
 	// vec3_distancesq
@@ -6352,7 +6356,7 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 3.0f, 4.0f, 0.0f );
 		vec3_t b = vec3f( 0.0f );
 		float r = vec3_distance( a, b );
-		TESTFW_EXPECTED( r == 5.0f ); 
+		TESTFW_EXPECTED( r == 5.0f );
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec3_distance is zero when vectors are equal" )
@@ -6374,7 +6378,7 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 1.0f, 1.0f, 2.0f );
 		vec3_t b = vec3( 1.0f, 1.0f, 1.0f );
 		float r = vec3_dot( a, b );
-		TESTFW_EXPECTED( r == 4.0f ); 
+		TESTFW_EXPECTED( r == 4.0f );
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec3_dot is symmetric in its arguments" )
@@ -6409,7 +6413,7 @@ void test_vec3( void ) {
 		vec3_t r = vec3_floor( a );
 		TESTFW_EXPECTED( r.x == 2.0f );
 		TESTFW_EXPECTED( r.y == -4.0f );
-		TESTFW_EXPECTED( r.z == 0.0f ); 
+		TESTFW_EXPECTED( r.z == 0.0f );
 	TESTFW_TEST_END();
 
 	// vec3_fmod
@@ -6428,21 +6432,21 @@ void test_vec3( void ) {
 		vec3_t r = vec3_frac( a );
 		TESTFW_EXPECTED( r.x == 0.75f );
 		TESTFW_EXPECTED( r.y == 0.25f );
-		TESTFW_EXPECTED( r.z == 0.5f ); 
+		TESTFW_EXPECTED( r.z == 0.5f );
 	TESTFW_TEST_END();
 
 	// vec3_lengthsq
 	TESTFW_TEST_BEGIN( "vec3_lengthsq returns sum of squared components" )
 		vec3_t a = vec3( 3.0f, -4.0f, 12.0f );
 		float r = vec3_lengthsq( a );
-		TESTFW_EXPECTED( r == 169.0f ); 
+		TESTFW_EXPECTED( r == 169.0f );
 	TESTFW_TEST_END();
 
 	// vec3_length
 	TESTFW_TEST_BEGIN( "vec3_length returns Euclidean length of vector" )
 		vec3_t a = vec3( 3.0f, -4.0f, 12.0f );
 		float r = vec3_length( a );
-		TESTFW_EXPECTED( r == 13.0f ); 
+		TESTFW_EXPECTED( r == 13.0f );
 	TESTFW_TEST_END();
 
 	// vec3_lerp
@@ -6450,36 +6454,36 @@ void test_vec3( void ) {
 		vec3_t a = vec3( 2.0f, -4.0f, 0.0f );
 		vec3_t b = vec3( 6.0f, 8.0f, 4.0f );
 		vec3_t r = vec3_lerp( a, b, 0.25f );
-		TESTFW_EXPECTED( r.x == 3.0f ); 
+		TESTFW_EXPECTED( r.x == 3.0f );
 		TESTFW_EXPECTED( r.y == -1.0f );
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
 
 	// vec3_log
 	TESTFW_TEST_BEGIN( "vec3_log applies natural log to each component" )
 		vec3_t a = vec3( 7.38905610f, 54.5981500f, 20.085537f );
 		vec3_t r = vec3_log( a );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
-		TESTFW_EXPECTED( r.y == 4.0f ); 
-		TESTFW_EXPECTED( r.z == 3.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
+		TESTFW_EXPECTED( r.y == 4.0f );
+		TESTFW_EXPECTED( r.z == 3.0f );
 	TESTFW_TEST_END();
 
 	// vec3_log2
 	TESTFW_TEST_BEGIN( "vec3_log2 applies base-2 logarithm to each component" )
 		vec3_t a = vec3( 16.0f, 0.25f, 2.0f );
 		vec3_t r = vec3_log2( a );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
 		TESTFW_EXPECTED( r.y == -2.0f );
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
 
 	// vec3_log10
 	TESTFW_TEST_BEGIN( "vec3_log10 applies base-10 logarithm to each component" )
 		vec3_t a = vec3( 100.0f, 0.001f, 10.0f );
 		vec3_t r = vec3_log10( a );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
 		TESTFW_EXPECTED( r.y == -3.0f );
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
 
 	// vec3_max
@@ -6660,16 +6664,16 @@ void test_vec3( void ) {
 		vec3_t r = vec3_sin( a );
 		TESTFW_EXPECTED( r.x == 0.47942554f );
 		TESTFW_EXPECTED( r.y == -0.90929743f );
-		TESTFW_EXPECTED( r.z == 1.00000000f ); 
+		TESTFW_EXPECTED( r.z == 1.00000000f );
 	TESTFW_TEST_END();
 
 	// vec3_sinh
 	TESTFW_TEST_BEGIN( "vec3_sinh applies sinh to each component" )
 		vec3_t a = vec3( 1.0f, -2.0f, 0.0f );
 		vec3_t r = vec3_sinh( a );
-		TESTFW_EXPECTED( r.x == 1.17520119f ); 
+		TESTFW_EXPECTED( r.x == 1.17520119f );
 		TESTFW_EXPECTED( r.y == -3.62686041f );
-		TESTFW_EXPECTED( r.z == 0.00000000f ); 
+		TESTFW_EXPECTED( r.z == 0.00000000f );
 	TESTFW_TEST_END();
 
 	// vec3_smoothstep
@@ -6708,25 +6712,25 @@ void test_vec3( void ) {
 		vec3_t edge = vec3( 2.5f, 6.0f, 4.0f );
 		vec3_t x = vec3( 3.0f, 5.0f, 4.0f );
 		vec3_t r = vec3_step( edge, x );
-		TESTFW_EXPECTED( r.x == 1.0f ); 
-		TESTFW_EXPECTED( r.y == 0.0f ); 
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.x == 1.0f );
+		TESTFW_EXPECTED( r.y == 0.0f );
+		TESTFW_EXPECTED( r.z == 1.0f );
 	TESTFW_TEST_END();
 
 	// vec3_tan
 	TESTFW_TEST_BEGIN( "vec3_tan applies tan to each component" )
 		vec3_t a = vec3( 0.5f, -1.0f, 1.0f );
 		vec3_t r = vec3_tan( a );
-		TESTFW_EXPECTED( r.x == 0.54630249f ); 
+		TESTFW_EXPECTED( r.x == 0.54630249f );
 		TESTFW_EXPECTED( r.y == -1.55740772f );
-		TESTFW_EXPECTED( r.z == 1.55740772f ); 
+		TESTFW_EXPECTED( r.z == 1.55740772f );
 	TESTFW_TEST_END();
 
 	// vec3_tanh
 	TESTFW_TEST_BEGIN( "vec3_tanh applies tanh to each component" )
 		vec3_t a = vec3( 1.0f, -2.0f, 0.0f );
 		vec3_t r = vec3_tanh( a );
-		TESTFW_EXPECTED( r.x == 0.76159416f ); 
+		TESTFW_EXPECTED( r.x == 0.76159416f );
 		TESTFW_EXPECTED( r.y == -0.96402758f );
 		TESTFW_EXPECTED( r.z == 0.00000000f );
 	TESTFW_TEST_END();
@@ -6954,9 +6958,9 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_atan applies atan to each component" )
 		vec4_t a = vec4( 0.5f, -2.0f, 1.0f, -1.0f );
 		vec4_t r = vec4_atan( a );
-		TESTFW_EXPECTED( r.x == 0.46364761f ); 
-		TESTFW_EXPECTED( r.y == -1.10714872f ); 
-		TESTFW_EXPECTED( r.z == 0.78539816f ); 
+		TESTFW_EXPECTED( r.x == 0.46364761f );
+		TESTFW_EXPECTED( r.y == -1.10714872f );
+		TESTFW_EXPECTED( r.z == 0.78539816f );
 		TESTFW_EXPECTED( r.w == -0.78539816f );
 	TESTFW_TEST_END();
 
@@ -6965,9 +6969,9 @@ void test_vec4( void ) {
 		vec4_t y = vec4( 2.0f, -3.0f, 1.0f, -1.0f );
 		vec4_t x = vec4( 1.0f, -4.0f, 4.0f, 1.0f );
 		vec4_t r = vec4_atan2( y, x );
-		TESTFW_EXPECTED( test_cmp( r.x, 1.10714872f )); 
+		TESTFW_EXPECTED( test_cmp( r.x, 1.10714872f ));
 		TESTFW_EXPECTED( test_cmp( r.y, -2.49809154f ));
-		TESTFW_EXPECTED( test_cmp( r.z, 0.24497866f )); 
+		TESTFW_EXPECTED( test_cmp( r.z, 0.24497866f ));
 		TESTFW_EXPECTED( test_cmp( r.w, -0.78539816f ));
 	TESTFW_TEST_END();
 
@@ -6975,10 +6979,10 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_ceil applies ceil to each component" )
 		vec4_t v = vec4( 1.2f, -3.7f, 0.0f, 2.3f );
 		vec4_t r = vec4_ceil( v );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
 		TESTFW_EXPECTED( r.y == -3.0f );
-		TESTFW_EXPECTED( r.z == 0.0f ); 
-		TESTFW_EXPECTED( r.w == 3.0f ); 
+		TESTFW_EXPECTED( r.z == 0.0f );
+		TESTFW_EXPECTED( r.w == 3.0f );
 	TESTFW_TEST_END();
 
 	// vec4_clamp
@@ -7028,14 +7032,14 @@ void test_vec4( void ) {
 		vec4_t a = vec4( 3.0f, 4.0f, 0.0f, 12.0f );
 		vec4_t b = vec4f( 0.0f );
 		float r = vec4_distancesq( a, b );
-		TESTFW_EXPECTED( r == 169.0f ); 
+		TESTFW_EXPECTED( r == 169.0f );
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec4_distance returns Euclidean distance between vectors" )
 		vec4_t a = vec4( 3.0f, 4.0f, 0.0f, 12.0f );
 		vec4_t b = vec4f( 0.0f );
 		float r = vec4_distance( a, b );
-		TESTFW_EXPECTED( r == 13.0f ); 
+		TESTFW_EXPECTED( r == 13.0f );
 	TESTFW_TEST_END();
 
 	// vec4_dot
@@ -7043,7 +7047,7 @@ void test_vec4( void ) {
 		vec4_t a = vec4( 1.0f, 1.0f, 2.0f, 2.0f );
 		vec4_t b = vec4( 1.0f, 1.0f, 1.0f, 1.0f );
 		float r = vec4_dot( a, b );
-		TESTFW_EXPECTED( r == 6.0f ); 
+		TESTFW_EXPECTED( r == 6.0f );
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec4_dot is symmetric in its arguments" )
@@ -7058,17 +7062,17 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_exp applies exp to each component" )
 		vec4_t a = vec4( 0.5f, -2.0f, 1.0f, 0.0f );
 		vec4_t r = vec4_exp( a );
-		TESTFW_EXPECTED( r.x == 1.64872127f ); 
-		TESTFW_EXPECTED( r.y == 0.13533528f ); 
-		TESTFW_EXPECTED( r.z == 2.71828183f ); 
-		TESTFW_EXPECTED( r.w == 1.00000000f ); 
+		TESTFW_EXPECTED( r.x == 1.64872127f );
+		TESTFW_EXPECTED( r.y == 0.13533528f );
+		TESTFW_EXPECTED( r.z == 2.71828183f );
+		TESTFW_EXPECTED( r.w == 1.00000000f );
 	TESTFW_TEST_END();
 
 	// vec4_exp2
 	TESTFW_TEST_BEGIN( "vec4_exp2 applies exp2 to each component" )
 		vec4_t a = vec4( 3.0f, -2.0f, 1.0f, 0.0f );
 		vec4_t r = vec4_exp2( a );
-		TESTFW_EXPECTED( r.x == 8.0f ); 
+		TESTFW_EXPECTED( r.x == 8.0f );
 		TESTFW_EXPECTED( r.y == 0.25f );
 		TESTFW_EXPECTED( r.z == 2.0f );
 		TESTFW_EXPECTED( r.w == 1.0f );
@@ -7078,9 +7082,9 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_floor applies floor to each component" )
 		vec4_t a = vec4( 2.7f, -3.2f, 0.0f, -1.5f );
 		vec4_t r = vec4_floor( a );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
 		TESTFW_EXPECTED( r.y == -4.0f );
-		TESTFW_EXPECTED( r.z == 0.0f ); 
+		TESTFW_EXPECTED( r.z == 0.0f );
 		TESTFW_EXPECTED( r.w == -2.0f );
 	TESTFW_TEST_END();
 
@@ -7089,7 +7093,7 @@ void test_vec4( void ) {
 		vec4_t a = vec4( 6.5f, -5.0f, 7.75f, 5.5f );
 		vec4_t b = vec4( 2.0f, 3.0f, 2.5f, 4.0f );
 		vec4_t r = vec4_fmod( a, b );
-		TESTFW_EXPECTED( r.x == 0.5f ); 
+		TESTFW_EXPECTED( r.x == 0.5f );
 		TESTFW_EXPECTED( r.y == -2.0f );
 		TESTFW_EXPECTED( r.z == 0.25f );
 		TESTFW_EXPECTED( r.w == 1.5f );
@@ -7124,39 +7128,39 @@ void test_vec4( void ) {
 		vec4_t a = vec4( 0.0f, 0.0f, 0.0f, 0.0f );
 		vec4_t b = vec4( 4.0f, 8.0f, 12.0f, 16.0f );
 		vec4_t r = vec4_lerp( a, b, 0.25f );
-		TESTFW_EXPECTED( r.x == 1.0f ); 
-		TESTFW_EXPECTED( r.y == 2.0f ); 
-		TESTFW_EXPECTED( r.z == 3.0f ); 
-		TESTFW_EXPECTED( r.w == 4.0f ); 
+		TESTFW_EXPECTED( r.x == 1.0f );
+		TESTFW_EXPECTED( r.y == 2.0f );
+		TESTFW_EXPECTED( r.z == 3.0f );
+		TESTFW_EXPECTED( r.w == 4.0f );
 	TESTFW_TEST_END();
 
 	// vec4_log
 	TESTFW_TEST_BEGIN( "vec4_log applies natural log to each component" )
 		vec4_t a = vec4( 1.0f, 7.38905610f, 20.0855370f, 54.5981500f );
 		vec4_t r = vec4_log( a );
-		TESTFW_EXPECTED( r.x == 0.0f ); 
-		TESTFW_EXPECTED( r.y == 2.0f ); 
-		TESTFW_EXPECTED( r.z == 3.0f ); 
-		TESTFW_EXPECTED( r.w == 4.0f ); 
+		TESTFW_EXPECTED( r.x == 0.0f );
+		TESTFW_EXPECTED( r.y == 2.0f );
+		TESTFW_EXPECTED( r.z == 3.0f );
+		TESTFW_EXPECTED( r.w == 4.0f );
 	TESTFW_TEST_END();
 
 	// vec4_log2
 	TESTFW_TEST_BEGIN( "vec4_log2 applies base-2 logarithm to each component" )
 		vec4_t a = vec4( 16.0f, 0.25f, 2.0f, 1.0f );
 		vec4_t r = vec4_log2( a );
-		TESTFW_EXPECTED( r.x == 4.0f ); 
+		TESTFW_EXPECTED( r.x == 4.0f );
 		TESTFW_EXPECTED( r.y == -2.0f );
-		TESTFW_EXPECTED( r.z == 1.0f ); 
-		TESTFW_EXPECTED( r.w == 0.0f ); 
+		TESTFW_EXPECTED( r.z == 1.0f );
+		TESTFW_EXPECTED( r.w == 0.0f );
 	TESTFW_TEST_END();
 
 	// vec4_log10
 	TESTFW_TEST_BEGIN( "vec4_log10 applies base-10 logarithm to each component" )
 		vec4_t a = vec4( 100.0f, 0.001f, 10.0f, 1.0f );
 		vec4_t r = vec4_log10( a );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
-		TESTFW_EXPECTED( r.y == -3.0f ); 
-		TESTFW_EXPECTED( r.z == 1.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
+		TESTFW_EXPECTED( r.y == -3.0f );
+		TESTFW_EXPECTED( r.z == 1.0f );
 		TESTFW_EXPECTED( r.w == 0.0f );
 	TESTFW_TEST_END();
 
@@ -7186,10 +7190,10 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_normalize returns vector of unit length in same direction" )
 		vec4_t a = vec4( 0.0f, 3.0f, 4.0f, 0.0f );
 		vec4_t r = vec4_normalize( a );
-		TESTFW_EXPECTED( r.x == 0.00000000f ); 
-		TESTFW_EXPECTED( r.y == 0.60000000f ); 
-		TESTFW_EXPECTED( r.z == 0.80000000f ); 
-		TESTFW_EXPECTED( r.w == 0.00000000f ); 
+		TESTFW_EXPECTED( r.x == 0.00000000f );
+		TESTFW_EXPECTED( r.y == 0.60000000f );
+		TESTFW_EXPECTED( r.z == 0.80000000f );
+		TESTFW_EXPECTED( r.w == 0.00000000f );
 	TESTFW_TEST_END();
 
 	TESTFW_TEST_BEGIN( "vec4_normalize returns zero vector when input is zero" )
@@ -7206,9 +7210,9 @@ void test_vec4( void ) {
 		vec4_t a = vec4( 4.0f, 9.0f, 16.0f, 25.0f );
 		vec4_t b = vec4( 0.5f, 0.5f, 0.5f, 0.5f );
 		vec4_t r = vec4_pow( a, b );
-		TESTFW_EXPECTED( r.x == 2.0f ); 
-		TESTFW_EXPECTED( r.y == 3.0f ); 
-		TESTFW_EXPECTED( r.w == 5.0f ); 
+		TESTFW_EXPECTED( r.x == 2.0f );
+		TESTFW_EXPECTED( r.y == 3.0f );
+		TESTFW_EXPECTED( r.w == 5.0f );
 	TESTFW_TEST_END();
 
 	// vec4_radians
@@ -7356,10 +7360,10 @@ void test_vec4( void ) {
 	TESTFW_TEST_BEGIN( "vec4_sinh applies sinh to each component" )
 		vec4_t a = vec4( -1.0f, 0.0f, 1.0f, 2.0f );
 		vec4_t r = vec4_sinh( a );
-		TESTFW_EXPECTED( r.x == -1.17520119f ); 
-		TESTFW_EXPECTED( r.y == 0.00000000f ); 
-		TESTFW_EXPECTED( r.z == 1.17520119f ); 
-		TESTFW_EXPECTED( r.w == 3.62686041f ); 
+		TESTFW_EXPECTED( r.x == -1.17520119f );
+		TESTFW_EXPECTED( r.y == 0.00000000f );
+		TESTFW_EXPECTED( r.z == 1.17520119f );
+		TESTFW_EXPECTED( r.w == 3.62686041f );
 	TESTFW_TEST_END();
 
 	// vec4_smoothstep
@@ -7380,10 +7384,10 @@ void test_vec4( void ) {
 		vec4_t b = vec4f( 4.0f );
 		vec4_t t = vec4( 0.0f, 2.0f, 3.0f, 4.0f );
 		vec4_t r = vec4_smootherstep( a, b, t );
-		TESTFW_EXPECTED( r.x == 0.00000000f ); 
-		TESTFW_EXPECTED( r.y == 0.50000000f ); 
-		TESTFW_EXPECTED( r.z == 0.89648438f ); 
-		TESTFW_EXPECTED( r.w == 1.00000000f ); 
+		TESTFW_EXPECTED( r.x == 0.00000000f );
+		TESTFW_EXPECTED( r.y == 0.50000000f );
+		TESTFW_EXPECTED( r.z == 0.89648438f );
+		TESTFW_EXPECTED( r.w == 1.00000000f );
 	TESTFW_TEST_END();
 
 	// vec4_sqrt
@@ -7533,7 +7537,7 @@ void test_mat22( void ) {
 		mat22_t a = mat22( vec2(1.0f, 6.0f), vec2(8.0f, 15.0f) );
 		mat22_t b = mat22( vec2(4.0f, 9.0f), vec2(3.0f, 4.0f) );
 		mat22_t r = mat22_add( a, b );
-		TESTFW_EXPECTED( r.x.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x.x == 5.0f );
 		TESTFW_EXPECTED( r.x.y == 15.0f );
 		TESTFW_EXPECTED( r.y.x == 11.0f );
 		TESTFW_EXPECTED( r.y.y == 19.0f );
@@ -7544,10 +7548,10 @@ void test_mat22( void ) {
 		mat22_t a = mat22( vec2(8.0f, 15.0f), vec2(5.0f, 10.0f) );
 		mat22_t b = mat22( vec2(3.0f, 4.0f), vec2(2.0f, 5.0f) );
 		mat22_t r = mat22_sub( a, b );
-		TESTFW_EXPECTED( r.x.x == 5.0f ); 
+		TESTFW_EXPECTED( r.x.x == 5.0f );
 		TESTFW_EXPECTED( r.x.y == 11.0f );
-		TESTFW_EXPECTED( r.y.x == 3.0f ); 
-		TESTFW_EXPECTED( r.y.y == 5.0f ); 
+		TESTFW_EXPECTED( r.y.x == 3.0f );
+		TESTFW_EXPECTED( r.y.y == 5.0f );
 	TESTFW_TEST_END();
 
 	// mat22_mul_elem
@@ -7555,7 +7559,7 @@ void test_mat22( void ) {
 		mat22_t a = mat22( vec2(2.0f, 5.0f), vec2(10.0f, 12.0f) );
 		mat22_t b = mat22( vec2(3.0f, 4.0f), vec2(2.0f, 3.0f) );
 		mat22_t r = mat22_mul_elem( a, b );
-		TESTFW_EXPECTED( r.x.x == 6.0f ); 
+		TESTFW_EXPECTED( r.x.x == 6.0f );
 		TESTFW_EXPECTED( r.x.y == 20.0f );
 		TESTFW_EXPECTED( r.y.x == 20.0f );
 		TESTFW_EXPECTED( r.y.y == 36.0f );
@@ -7566,18 +7570,18 @@ void test_mat22( void ) {
 		mat22_t a = mat22( vec2(10.0f, 18.0f), vec2(12.0f, 9.0f) );
 		mat22_t b = mat22( vec2(2.0f, 3.0f), vec2(4.0f, 3.0f) );
 		mat22_t r = mat22_div( a, b );
-		TESTFW_EXPECTED( r.x.x == 5.0f ); 
-		TESTFW_EXPECTED( r.x.y == 6.0f ); 
-		TESTFW_EXPECTED( r.y.x == 3.0f ); 
-		TESTFW_EXPECTED( r.y.y == 3.0f ); 
+		TESTFW_EXPECTED( r.x.x == 5.0f );
+		TESTFW_EXPECTED( r.x.y == 6.0f );
+		TESTFW_EXPECTED( r.y.x == 3.0f );
+		TESTFW_EXPECTED( r.y.y == 3.0f );
 	TESTFW_TEST_END();
 
 	// mat22_addf
 	TESTFW_TEST_BEGIN( "mat22_addf adds scalar to all elements of matrix" )
 		mat22_t m = mat22( vec2(2.0f, 5.0f), vec2(8.0f, -1.0f) );
 		mat22_t r = mat22_addf( m, 3.0f );
-		TESTFW_EXPECTED( r.x.x == 5.0f ); 
-		TESTFW_EXPECTED( r.x.y == 8.0f ); 
+		TESTFW_EXPECTED( r.x.x == 5.0f );
+		TESTFW_EXPECTED( r.x.y == 8.0f );
 		TESTFW_EXPECTED( r.y.x == 11.0f );
 		TESTFW_EXPECTED( r.y.y == 2.0f );
 	TESTFW_TEST_END();
@@ -7598,7 +7602,7 @@ void test_mat22( void ) {
 		mat22_t r = mat22_mulf( m, 3.0f );
 		TESTFW_EXPECTED( r.x.x == 6.0f );
 		TESTFW_EXPECTED( r.x.y == -3.0f );
-		TESTFW_EXPECTED( r.y.x == 9.0f ); 
+		TESTFW_EXPECTED( r.y.x == 9.0f );
 		TESTFW_EXPECTED( r.y.y == -6.0f );
 	TESTFW_TEST_END();
 
@@ -7606,9 +7610,9 @@ void test_mat22( void ) {
 	TESTFW_TEST_BEGIN( "mat22_divf divides all elements by scalar" )
 		mat22_t m = mat22( vec2(4.0f, -4.0f), vec2(6.0f, -6.0f) );
 		mat22_t r = mat22_divf( m, 2.0f );
-		TESTFW_EXPECTED( r.x.x == 2.0f ); 
-		TESTFW_EXPECTED( r.x.y == -2.0f ); 
-		TESTFW_EXPECTED( r.y.x == 3.0f ); 
+		TESTFW_EXPECTED( r.x.x == 2.0f );
+		TESTFW_EXPECTED( r.x.y == -2.0f );
+		TESTFW_EXPECTED( r.y.x == 3.0f );
 		TESTFW_EXPECTED( r.y.y == -3.0f );
 	TESTFW_TEST_END();
 
@@ -7626,10 +7630,10 @@ void test_mat22( void ) {
 	TESTFW_TEST_BEGIN( "mat22_acos applies acos to each element" )
 		mat22_t m = mat22( vec2( 0.5f, -1.0f ), vec2( 1.0f, 0.0f ) );
 		mat22_t r = mat22_acos( m );
-		TESTFW_EXPECTED( test_cmp( r.x.x, 1.04719758f ) ); 
-		TESTFW_EXPECTED( test_cmp( r.x.y, 3.14159265f ) ); 
-		TESTFW_EXPECTED( test_cmp( r.y.x, 0.00000000f ) ); 
-		TESTFW_EXPECTED( test_cmp( r.y.y, 1.57079633f ) ); 
+		TESTFW_EXPECTED( test_cmp( r.x.x, 1.04719758f ) );
+		TESTFW_EXPECTED( test_cmp( r.x.y, 3.14159265f ) );
+		TESTFW_EXPECTED( test_cmp( r.y.x, 0.00000000f ) );
+		TESTFW_EXPECTED( test_cmp( r.y.y, 1.57079633f ) );
 	TESTFW_TEST_END();
 
 	// mat22_all
@@ -7653,19 +7657,19 @@ void test_mat22( void ) {
 	TESTFW_TEST_BEGIN( "mat22_asin applies asin to each element" )
 		mat22_t m = mat22( vec2( 0.5f, -1.0f ), vec2( 1.0f, 0.0f ) );
 		mat22_t r = mat22_asin( m );
-		TESTFW_EXPECTED( test_cmp(r.x.x, 0.52359878f )); 
+		TESTFW_EXPECTED( test_cmp(r.x.x, 0.52359878f ));
 		TESTFW_EXPECTED( test_cmp(r.x.y, -1.57079633f ));
-		TESTFW_EXPECTED( test_cmp(r.y.x, 1.57079633f )); 
-		TESTFW_EXPECTED( test_cmp(r.y.y, 0.00000000f )); 
+		TESTFW_EXPECTED( test_cmp(r.y.x, 1.57079633f ));
+		TESTFW_EXPECTED( test_cmp(r.y.y, 0.00000000f ));
 	TESTFW_TEST_END();
 
 	// mat22_atan
 	TESTFW_TEST_BEGIN( "mat22_atan applies atan to each element" )
 		mat22_t m = mat22( vec2( 0.5f, -2.0f ), vec2( 1.0f, -1.0f ) );
 		mat22_t r = mat22_atan( m );
-		TESTFW_EXPECTED( r.x.x == 0.46364761f ); 
+		TESTFW_EXPECTED( r.x.x == 0.46364761f );
 		TESTFW_EXPECTED( r.x.y == -1.10714872f );
-		TESTFW_EXPECTED( r.y.x == 0.78539816f ); 
+		TESTFW_EXPECTED( r.y.x == 0.78539816f );
 		TESTFW_EXPECTED( r.y.y == -0.78539816f );
 	TESTFW_TEST_END();
 
@@ -7674,20 +7678,20 @@ void test_mat22( void ) {
 		mat22_t y = mat22( vec2( 2.0f, -3.0f ), vec2( 1.0f, 3.0f ) );
 		mat22_t x = mat22( vec2( 1.0f, -4.0f ), vec2( -1.0f, 1.0f ) );
 		mat22_t r = mat22_atan2( y, x );
-		TESTFW_EXPECTED( test_cmp( r.x.x, 1.10714872f )); 
+		TESTFW_EXPECTED( test_cmp( r.x.x, 1.10714872f ));
 		TESTFW_EXPECTED( test_cmp( r.x.y, -2.49809154f ));
-		TESTFW_EXPECTED( test_cmp( r.y.x, 2.35619449f )); 
-		TESTFW_EXPECTED( test_cmp( r.y.y, 1.24904577f )); 
+		TESTFW_EXPECTED( test_cmp( r.y.x, 2.35619449f ));
+		TESTFW_EXPECTED( test_cmp( r.y.y, 1.24904577f ));
 	TESTFW_TEST_END();
 
 	// mat22_ceil
 	TESTFW_TEST_BEGIN( "mat22_ceil applies ceil to each element" )
 		mat22_t m = mat22( vec2( 1.2f, -3.7f ), vec2( -0.1f, 2.9f ) );
 		mat22_t r = mat22_ceil( m );
-		TESTFW_EXPECTED( r.x.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x.x == 2.0f );
 		TESTFW_EXPECTED( r.x.y == -3.0f );
-		TESTFW_EXPECTED( r.y.x == 0.0f ); 
-		TESTFW_EXPECTED( r.y.y == 3.0f ); 
+		TESTFW_EXPECTED( r.y.x == 0.0f );
+		TESTFW_EXPECTED( r.y.y == 3.0f );
 	TESTFW_TEST_END();
 
 	// mat22_clamp
@@ -7696,30 +7700,30 @@ void test_mat22( void ) {
 		mat22_t mn = mat22( vec2( 0.0f, -8.0f ), vec2( -1.0f, 0.0f ) );
 		mat22_t mx = mat22( vec2( 4.0f, -7.0f ), vec2( 2.0f, 1.0f ) );
 		mat22_t r = mat22_clamp( v, mn, mx );
-		TESTFW_EXPECTED( r.x.x == 4.0f ); 
+		TESTFW_EXPECTED( r.x.x == 4.0f );
 		TESTFW_EXPECTED( r.x.y == -8.0f );
-		TESTFW_EXPECTED( r.y.x == 0.5f ); 
-		TESTFW_EXPECTED( r.y.y == 1.0f ); 
+		TESTFW_EXPECTED( r.y.x == 0.5f );
+		TESTFW_EXPECTED( r.y.y == 1.0f );
 	TESTFW_TEST_END();
 
 	// mat22_cos
 	TESTFW_TEST_BEGIN( "mat22_cos applies cos to each element" )
 		mat22_t m = mat22( vec2( 0.5f, 2.0f ), vec2( 3.14159265f, 0.0f ) );
 		mat22_t r = mat22_cos( m );
-		TESTFW_EXPECTED( r.x.x == 0.87758256f ); 
-		TESTFW_EXPECTED( r.x.y == -0.41614684f ); 
-		TESTFW_EXPECTED( r.y.x == -1.00000000f ); 
-		TESTFW_EXPECTED( r.y.y == 1.00000000f ); 
+		TESTFW_EXPECTED( r.x.x == 0.87758256f );
+		TESTFW_EXPECTED( r.x.y == -0.41614684f );
+		TESTFW_EXPECTED( r.y.x == -1.00000000f );
+		TESTFW_EXPECTED( r.y.y == 1.00000000f );
 	TESTFW_TEST_END();
 
 	// mat22_cosh
 	TESTFW_TEST_BEGIN( "mat22_cosh applies cosh to each element" )
 		mat22_t m = mat22( vec2( 0.5f, 2.0f ), vec2( 1.0f, 0.0f ) );
 		mat22_t r = mat22_cosh( m );
-		TESTFW_EXPECTED( test_cmp( r.x.x, 1.12762597f )); 
-		TESTFW_EXPECTED( test_cmp( r.x.y, 3.76219569f )); 
-		TESTFW_EXPECTED( test_cmp( r.y.x, 1.54308063f )); 
-		TESTFW_EXPECTED( test_cmp( r.y.y, 1.00000000f )); 
+		TESTFW_EXPECTED( test_cmp( r.x.x, 1.12762597f ));
+		TESTFW_EXPECTED( test_cmp( r.x.y, 3.76219569f ));
+		TESTFW_EXPECTED( test_cmp( r.y.x, 1.54308063f ));
+		TESTFW_EXPECTED( test_cmp( r.y.y, 1.00000000f ));
 	TESTFW_TEST_END();
 
 
@@ -7727,39 +7731,39 @@ void test_mat22( void ) {
 	TESTFW_TEST_BEGIN( "mat22_degrees converts radians to degrees element-wise" )
 		mat22_t m = mat22( vec2( 0.5f, -1.0f ), vec2( 3.14159265f, 0.0f ) );
 		mat22_t r = mat22_degrees( m );
-		TESTFW_EXPECTED( r.x.x == 28.6478898f ); 
+		TESTFW_EXPECTED( r.x.x == 28.6478898f );
 		TESTFW_EXPECTED( r.x.y == -57.2957795f );
-		TESTFW_EXPECTED( r.y.x == 180.0f ); 
-		TESTFW_EXPECTED( r.y.y == 0.0f ); 
+		TESTFW_EXPECTED( r.y.x == 180.0f );
+		TESTFW_EXPECTED( r.y.y == 0.0f );
 	TESTFW_TEST_END();
 
 	// mat22_exp
 	TESTFW_TEST_BEGIN( "mat22_exp applies exp to each element" )
 		mat22_t m = mat22( vec2( 0.5f, -2.0f ), vec2( 1.0f, 0.0f ) );
 		mat22_t r = mat22_exp( m );
-		TESTFW_EXPECTED( r.x.x == 1.64872127f ); 
-		TESTFW_EXPECTED( r.x.y == 0.13533528f ); 
-		TESTFW_EXPECTED( r.y.x == 2.71828183f ); 
-		TESTFW_EXPECTED( r.y.y == 1.00000000f ); 
+		TESTFW_EXPECTED( r.x.x == 1.64872127f );
+		TESTFW_EXPECTED( r.x.y == 0.13533528f );
+		TESTFW_EXPECTED( r.y.x == 2.71828183f );
+		TESTFW_EXPECTED( r.y.y == 1.00000000f );
 	TESTFW_TEST_END();
 
 	// mat22_exp2
 	TESTFW_TEST_BEGIN( "mat22_exp2 applies exp2 to each element" )
 		mat22_t m = mat22( vec2( 3.0f, -2.0f ), vec2( 1.0f, 0.0f ) );
 		mat22_t r = mat22_exp2( m );
-		TESTFW_EXPECTED( r.x.x == 8.0f ); 
-		TESTFW_EXPECTED( r.x.y == 0.25f ); 
-		TESTFW_EXPECTED( r.y.x == 2.0f ); 
-		TESTFW_EXPECTED( r.y.y == 1.0f ); 
+		TESTFW_EXPECTED( r.x.x == 8.0f );
+		TESTFW_EXPECTED( r.x.y == 0.25f );
+		TESTFW_EXPECTED( r.y.x == 2.0f );
+		TESTFW_EXPECTED( r.y.y == 1.0f );
 	TESTFW_TEST_END();
 
 	// mat22_floor
 	TESTFW_TEST_BEGIN( "mat22_floor applies floor to each element" )
 		mat22_t m = mat22( vec2( 2.7f, -3.2f ), vec2( 0.0f, -1.5f ) );
 		mat22_t r = mat22_floor( m );
-		TESTFW_EXPECTED( r.x.x == 2.0f ); 
+		TESTFW_EXPECTED( r.x.x == 2.0f );
 		TESTFW_EXPECTED( r.x.y == -4.0f );
-		TESTFW_EXPECTED( r.y.x == 0.0f ); 
+		TESTFW_EXPECTED( r.y.x == 0.0f );
 		TESTFW_EXPECTED( r.y.y == -2.0f );
 	TESTFW_TEST_END();
 
@@ -7768,10 +7772,10 @@ void test_mat22( void ) {
 		mat22_t a = mat22( vec2( 6.5f, -5.0f ), vec2( 7.75f, 5.5f ) );
 		mat22_t b = mat22( vec2( 2.0f, 3.0f ), vec2( 2.5f, 4.0f ) );
 		mat22_t r = mat22_fmod( a, b );
-		TESTFW_EXPECTED( r.x.x == 0.5f ); 
+		TESTFW_EXPECTED( r.x.x == 0.5f );
 		TESTFW_EXPECTED( r.x.y == -2.0f );
 		TESTFW_EXPECTED( r.y.x == 0.25f );
-		TESTFW_EXPECTED( r.y.y == 1.5f ); 
+		TESTFW_EXPECTED( r.y.y == 1.5f );
 	TESTFW_TEST_END();
 
 	// mat22_frac
@@ -14609,7 +14613,7 @@ void test_matrix_math( void ) {
 	// mat22_transpose
 	TESTFW_TEST_BEGIN("mat22_transpose swaps rows and columns")
 		mat22_t a = mat22(
-			vec2(1, 2), 
+			vec2(1, 2),
 			vec2(3, 4)
 		);
 		mat22_t r = mat22_transpose(a);
@@ -14622,7 +14626,7 @@ void test_matrix_math( void ) {
 	// mat23_transpose
 	TESTFW_TEST_BEGIN("mat23_transpose swaps rows and columns")
 		mat23_t a = mat23(
-			vec3(1, 2, 3), 
+			vec3(1, 2, 3),
 			vec3(4, 5, 6)
 		);
 		mat32_t r = mat23_transpose(a);
@@ -14637,8 +14641,8 @@ void test_matrix_math( void ) {
 	// mat32_transpose
 	TESTFW_TEST_BEGIN("mat32_transpose swaps rows and columns")
 		mat32_t a = mat32(
-			vec2(1, 2), 
-			vec2(3, 4), 
+			vec2(1, 2),
+			vec2(3, 4),
 			vec2(5, 6)
 		);
 		mat23_t r = mat32_transpose(a);
@@ -14653,8 +14657,8 @@ void test_matrix_math( void ) {
 	// mat33_transpose
 	TESTFW_TEST_BEGIN("mat33_transpose swaps rows and columns")
 		mat33_t a = mat33(
-			vec3(1, 2, 3), 
-			vec3(4, 5, 6), 
+			vec3(1, 2, 3),
+			vec3(4, 5, 6),
 			vec3(7, 8, 9)
 		);
 		mat33_t r = mat33_transpose(a);
@@ -15374,7 +15378,7 @@ void test_matrix_multiplications( void ) {
 		TESTFW_EXPECTED(r.y == 1532.0f);
 		TESTFW_EXPECTED(r.z == 2450.0f);
 	TESTFW_TEST_END();
-	
+
 	// mat43_mul_vec3
 	TESTFW_TEST_BEGIN("mat43_mul_vec3 performs correct matrix-vector multiplication")
 		mat43_t m = mat43(
@@ -15433,7 +15437,7 @@ void test_matrix_multiplications( void ) {
 		TESTFW_EXPECTED(r.w == 5950.0f);
 	TESTFW_TEST_END();
 
-	// mat22_mul_mat22 
+	// mat22_mul_mat22
 	TESTFW_TEST_BEGIN("mat22_mul_mat22 performs correct matrix multiplication")
 		mat22_t a = mat22(
 			vec2(1, 2),
@@ -15705,7 +15709,7 @@ void test_matrix_multiplications( void ) {
 		TESTFW_EXPECTED(r.z.y == 2500.0f);
 	TESTFW_TEST_END();
 
-	// mat33_mul_mat33 
+	// mat33_mul_mat33
 	TESTFW_TEST_BEGIN("mat33_mul_mat33 performs correct matrix multiplication")
 		mat33_t a = mat33(
 			vec3(1, 2, 3),
@@ -16126,7 +16130,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(r.z, expected.z));
 		TESTFW_EXPECTED(test_cmp(r.w, expected.w));
 	TESTFW_TEST_END();
-	
+
 	// quat_slerp
 	TESTFW_TEST_BEGIN("quat_slerp returns a when t=0")
 		vec4_t a = vec4(0, 0, 0, 1);
@@ -16168,7 +16172,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(r.w, a.w));
 	TESTFW_TEST_END();
 
-	// quat_conjugate 
+	// quat_conjugate
 	TESTFW_TEST_BEGIN("quat_conjugate negates vector part and preserves scalar")
 		vec4_t q = vec4(1.0f, -2.0f, 3.0f, 4.0f);
 		vec4_t r = quat_conjugate(q);
@@ -16206,7 +16210,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(r.w, 0.54030231f));
 	TESTFW_TEST_END();
 
-	// quat_identity 
+	// quat_identity
 	TESTFW_TEST_BEGIN("quat_identity returns quaternion (0,0,0,1)")
 		vec4_t q = quat_identity();
 		TESTFW_EXPECTED(q.x == 0.0f);
@@ -16458,7 +16462,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(q.w, 0.85845421f));
 	TESTFW_TEST_END();
 
-	// quat_squad 
+	// quat_squad
 	TESTFW_TEST_BEGIN("quat_squad returns 45 degree midpoint between 0 and 90 degrees around X")
 		vec4_t q0 = quat_rotation_axis( vec3(1, 0, 0), 0.0f );
 		vec4_t q1 = quat_rotation_axis( vec3(1, 0, 0), 0.0f );
@@ -16472,7 +16476,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED( test_cmp(r.z, 0.0f)  );
 		TESTFW_EXPECTED( test_cmp(r.w, 0.923879533f) );
 	TESTFW_TEST_END();
-	
+
 	TESTFW_TEST_BEGIN("quat_squad midpoint from -90 to +90 degrees yields [-0.7071, 0.7071]")
 		vec4_t q0 = quat_rotation_axis( vec3(1, 0, 0), -3.1415926f );
 		vec4_t q1 = quat_rotation_axis( vec3(1, 0, 0), -1.5707963f );
@@ -16630,7 +16634,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(q.z,0.0f) );
 		TESTFW_EXPECTED(test_cmp(q.w,1.0f) );
 	TESTFW_TEST_END();
-	
+
 	TESTFW_TEST_BEGIN("quat_shortest_arc returns 180 degree rotation for opposite vectors")
 		vec3_t from = vec3(1, 0, 0);
 		vec3_t to = vec3(-1, 0, 0);
@@ -16661,7 +16665,7 @@ void test_quaternions( void ) {
 		TESTFW_EXPECTED(test_cmp(r.z,to.z) );
 	TESTFW_TEST_END();
 
-	// quat_from_mat33 
+	// quat_from_mat33
 	TESTFW_TEST_BEGIN("quat_from_mat33 returns identity quaternion for identity matrix")
 		mat33_t m = mat33(
 			vec3(1, 0, 0),
@@ -17401,7 +17405,7 @@ void test_matrix_utils( void ) {
 		float yaw = 0.25f;
 		float pitch = 1.0f;
 		float roll = 0.5f;
-		mat44_t m = mat44_rotation_yaw_pitch_roll( yaw, pitch, roll );		
+		mat44_t m = mat44_rotation_yaw_pitch_roll( yaw, pitch, roll );
 		TESTFW_EXPECTED(test_cmp(m.x.x,0.950109005f) ); TESTFW_EXPECTED(test_cmp(m.x.y,0.259034753f) ); TESTFW_EXPECTED(test_cmp(m.x.z,0.173763901f) ); TESTFW_EXPECTED(test_cmp(m.x.w,0.00000000f) );
 		TESTFW_EXPECTED(test_cmp(m.y.x,-0.281823397f) ); TESTFW_EXPECTED(test_cmp(m.y.y,0.474159837f) ); TESTFW_EXPECTED(test_cmp(m.y.z,0.834115207f) ); TESTFW_EXPECTED(test_cmp(m.y.w,0.00000000f) );
 		TESTFW_EXPECTED(test_cmp(m.z.x,0.133672923f) ); TESTFW_EXPECTED(test_cmp(m.z.y,-0.841471136f) ); TESTFW_EXPECTED(test_cmp(m.z.z,0.523505569f) ); TESTFW_EXPECTED(test_cmp(m.z.w,0.00000000f) );
@@ -19363,7 +19367,7 @@ void test_cpp_operators( void ) {
 
 #ifdef VECMATH_RUN_D3DX_TESTS
 
-#pragma warning( push )  
+#pragma warning( push )
 	#pragma warning( disable: 4201 ) // nonstandard extension used: nameless struct/union
     #pragma warning( disable: 4255 ) // no function prototype given: converting '()' to '(void)'
     #pragma warning( disable: 4668 ) // not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
@@ -19373,7 +19377,7 @@ void test_cpp_operators( void ) {
     #pragma warning( disable: 5267 ) // definition of implicit assignment operator for 'D3DXFLOAT16' is deprecated because it has a user-provided copy constructor
     #include <d3dx9.h>
     #pragma comment( lib, "d3dx9.lib" )
-#pragma warning( pop ) 
+#pragma warning( pop )
 
 void test_d3d_compliance( void ) {
 
@@ -19505,7 +19509,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixOrthoOffCenterLH( &d3d, -1.0f, 1.0f, -1.0f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_ortho_off_center_rh
 	TESTFW_TEST_BEGIN( "mat44_ortho_off_center_rh matches D3DXMatrixOrthoOffCenterRH" )
 		mat44_t m = mat44_ortho_off_center_rh( -2.0f, 2.0f, -1.5f, 1.5f, 0.1f, 100.0f );
@@ -19524,7 +19528,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixOrthoOffCenterRH( &d3d, -1.0f, 1.0f, -1.0f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_perspective_lh
 	TESTFW_TEST_BEGIN( "mat44_perspective_lh matches D3DXMatrixPerspectiveLH" )
 		mat44_t m = mat44_perspective_lh( 4.0f, 3.0f, 0.1f, 100.0f );
@@ -19543,7 +19547,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveLH( &d3d, 2.0f, 2.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_perspective_rh
 	TESTFW_TEST_BEGIN( "mat44_perspective_rh matches D3DXMatrixPerspectiveRH" )
 		mat44_t m = mat44_perspective_rh( 4.0f, 3.0f, 0.1f, 100.0f );
@@ -19562,7 +19566,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveRH( &d3d, 2.0f, 2.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_perspective_off_center_lh
 	TESTFW_TEST_BEGIN( "mat44_perspective_off_center_lh matches D3DXMatrixPerspectiveOffCenterLH" )
 		mat44_t m = mat44_perspective_off_center_lh( -2.0f, 2.0f, -1.5f, 1.5f, 0.1f, 100.0f );
@@ -19581,7 +19585,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveOffCenterLH( &d3d, -1.0f, 1.0f, -1.0f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-		
+
 	// mat44_perspective_off_center_rh
 	TESTFW_TEST_BEGIN( "mat44_perspective_off_center_rh matches D3DXMatrixPerspectiveOffCenterRH" )
 		mat44_t m = mat44_perspective_off_center_rh( -2.0f, 2.0f, -1.5f, 1.5f, 0.1f, 100.0f );
@@ -19600,7 +19604,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveOffCenterRH( &d3d, -1.0f, 1.0f, -1.0f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_perspective_fov_lh
 	TESTFW_TEST_BEGIN( "mat44_perspective_fov_lh matches D3DXMatrixPerspectiveFovLH" )
 		mat44_t m = mat44_perspective_fov_lh( 1.0472f, 4.0f / 3.0f, 0.1f, 100.0f );
@@ -19619,7 +19623,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveFovLH( &d3d, 0.3491f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_perspective_fov_rh
 	TESTFW_TEST_BEGIN( "mat44_perspective_fov_rh matches D3DXMatrixPerspectiveFovRH" )
 		mat44_t m = mat44_perspective_fov_rh( 1.0472f, 4.0f / 3.0f, 0.1f, 100.0f );
@@ -19638,7 +19642,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixPerspectiveFovRH( &d3d, 0.3491f, 1.0f, 0.001f, 1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_rotation_axis
 	TESTFW_TEST_BEGIN( "mat44_rotation_axis matches D3DXMatrixRotationAxis for x-axis" )
 		vec3_t axis = vec3( 1, 0, 0 );
@@ -19660,7 +19664,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationAxis( &d3d, (D3DXVECTOR3*)&axis, 0.7854f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	TESTFW_TEST_BEGIN( "mat44_rotation_axis matches D3DXMatrixRotationAxis for arbitrary axis" )
 		vec3_t axis = vec3( -2.0f, 5.5f, 1.25f );
 		mat44_t m = mat44_rotation_axis( axis, 0.7854f );
@@ -19686,7 +19690,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationX( &d3d, 0.1f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_rotation_y
 	TESTFW_TEST_BEGIN( "mat44_rotation_y matches D3DXMatrixRotationY for 90 degrees" )
 		mat44_t m = mat44_rotation_y( 1.5708f );
@@ -19705,7 +19709,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationY( &d3d, 0.1f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_rotation_z
 	TESTFW_TEST_BEGIN( "mat44_rotation_z matches D3DXMatrixRotationZ for 90 degrees" )
 		mat44_t m = mat44_rotation_z( 1.5708f );
@@ -19724,7 +19728,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationZ( &d3d, 0.1f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_rotation_yaw_pitch_roll
 	TESTFW_TEST_BEGIN( "mat44_rotation_yaw_pitch_roll matches D3DXMatrixRotationYawPitchRoll for yaw only" )
 		mat44_t m = mat44_rotation_yaw_pitch_roll( 1.5708f, 0.0f, 0.0f );
@@ -19779,7 +19783,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationYawPitchRoll( &d3d, 0.001f, -0.002f, 0.0005f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_scaling
 	TESTFW_TEST_BEGIN( "mat44_scaling matches D3DXMatrixScaling for uniform scale" )
 		mat44_t m = mat44_scaling( 2.0f, 2.0f, 2.0f );
@@ -19798,7 +19802,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixScaling( &d3d, -1.0f, 1.0f, -1.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_translation
 	TESTFW_TEST_BEGIN( "mat44_translation matches D3DXMatrixTranslation for positive offset" )
 		mat44_t m = mat44_translation( 1.0f, 2.0f, 3.0f );
@@ -19817,7 +19821,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixTranslation( &d3d, 0.0f, 0.0f, 0.0f );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_decompose
 	TESTFW_TEST_BEGIN( "mat44_decompose matches D3DXMatrixDecompose for identity matrix" )
 		vec3_t s; vec4_t q; vec3_t t;
@@ -19936,7 +19940,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionSlerp( &d3dr, (D3DXQUATERNION*)&a, (D3DXQUATERNION*)&b, 0.5f );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_barycentric
 	TESTFW_TEST_BEGIN( "quat_barycentric matches D3DXQuaternionBaryCentric at midpoint (f = 0.5, g = 0.0)" )
 		vec4_t q1 = vec4( 0.0f, 0.0f, 0.0f, 1.0f );
@@ -19964,7 +19968,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionBaryCentric( &d3dr, (D3DXQUATERNION*)&q1, (D3DXQUATERNION*)&q2, (D3DXQUATERNION*)&q3, 1.0f, 0.0f );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_conjugate
 	TESTFW_TEST_BEGIN( "quat_conjugate matches D3DXQuaternionConjugate for positive quaternion" )
 		vec4_t q = vec4( 0.3f, 0.4f, 0.5f, 0.6f );
@@ -19986,7 +19990,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionConjugate( &d3dr, (D3DXQUATERNION*)&q );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_exp
 	TESTFW_TEST_BEGIN( "quat_exp matches D3DXQuaternionExp for unit imaginary quaternion" )
 		vec4_t q = vec4( 1.0f, 0.0f, 0.0f, 0.0f );
@@ -20008,14 +20012,14 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionExp( &d3dr, (D3DXQUATERNION*)&q );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_identity
 	TESTFW_TEST_BEGIN( "quat_identity matches D3DXQuaternionIdentity" )
 		vec4_t q = quat_identity();
 		D3DXQUATERNION d3dq; D3DXQuaternionIdentity( &d3dq );
 		TESTFW_EXPECTED( QUAT_APPROX( q, d3dq ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_inverse
 	TESTFW_TEST_BEGIN( "quat_inverse matches D3DXQuaternionInverse for unit quaternion" )
 		vec4_t q = vec4( 0.0f, 0.0f, 0.7071f, 0.7071f );
@@ -20038,7 +20042,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionInverse( &d3dr, (D3DXQUATERNION*)&q );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_ln
 	TESTFW_TEST_BEGIN( "quat_ln matches D3DXQuaternionLn for 90-degree x-rotation" )
 		vec4_t q = vec4( 0.7071f, 0.0f, 0.0f, 0.7071f );
@@ -20060,7 +20064,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionLn( &d3dr, (D3DXQUATERNION*)&q );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_mul
 	TESTFW_TEST_BEGIN( "quat_mul matches D3DXQuaternionMultiply for identity * identity" )
 		vec4_t a = vec4( 0, 0, 0, 1 );
@@ -20093,7 +20097,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dr; D3DXQuaternionMultiply( &d3dr, (D3DXQUATERNION*)&a, (D3DXQUATERNION*)&b );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_rotation_axis
 	TESTFW_TEST_BEGIN( "quat_rotation_axis matches D3DXQuaternionRotationAxis for 90-degree x-rotation" )
 		vec3_t axis = vec3( 1, 0, 0 );
@@ -20126,7 +20130,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dq; D3DXQuaternionRotationAxis( &d3dq, (D3DXVECTOR3*)&axis, angle );
 		TESTFW_EXPECTED( QUAT_APPROX( q, d3dq ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_rotation_matrix
 	TESTFW_TEST_BEGIN( "quat_rotation_matrix matches D3DXQuaternionRotationMatrix for identity matrix" )
 		mat44_t m = mat44_identity();
@@ -20169,7 +20173,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dq; D3DXQuaternionRotationMatrix( &d3dq, (D3DXMATRIX*)&m );
 		TESTFW_EXPECTED( QUAT_APPROX( q, d3dq ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_rotation_yaw_pitch_roll
 	TESTFW_TEST_BEGIN( "quat_rotation_yaw_pitch_roll matches D3DXQuaternionRotationYawPitchRoll for yaw only" )
 		vec4_t q = quat_rotation_yaw_pitch_roll( 1.5708f, 0.0f, 0.0f );
@@ -20224,7 +20228,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dq; D3DXQuaternionRotationYawPitchRoll( &d3dq, 0.001f, -0.002f, 0.0005f );
 		TESTFW_EXPECTED( QUAT_APPROX( q, d3dq ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_squad_setup
 	TESTFW_TEST_BEGIN( "quat_squad_setup matches D3DXQuaternionSquadSetup for identity path" )
 		vec4_t q0 = vec4( 0, 0, 0, 1 );
@@ -20326,7 +20330,7 @@ void test_d3d_compliance( void ) {
 		D3DXQuaternionSquad( &d3dr, (D3DXQUATERNION*)&q1, &da, &db, &dc, 0.3f );
 		TESTFW_EXPECTED( QUAT_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	TESTFW_TEST_BEGIN( "quat_squad matches D3DXQuaternionSquad for arbitrary quaternions" )
 		vec4_t q1 = vec4( -0.4f, 0.3f, 0.1f, 0.85f );
 		vec4_t a = vec4( 0.5f, -0.6f, 0.2f, 0.3f );
@@ -20365,7 +20369,7 @@ void test_d3d_compliance( void ) {
 		D3DXQuaternionToAxisAngle( (D3DXQUATERNION*)&q, &d3daxis, &d3dangle );
 		TESTFW_EXPECTED( VEC3_APPROX( axis, d3daxis ) ); TESTFW_EXPECTED( vecmath_abs( angle - d3dangle ) < 0.00001f );
 	TESTFW_TEST_END();
-	
+
 	// quat_rotate_vector
 	TESTFW_TEST_BEGIN( "quat_rotate_vector matches D3DXVec3TransformCoord for identity rotation" )
 		vec3_t v = vec3( 1.0f, 2.0f, 3.0f );
@@ -20396,7 +20400,7 @@ void test_d3d_compliance( void ) {
 		D3DXVECTOR3 d3dr; D3DXVec3TransformCoord( &d3dr, &d3dv, &m );
 		TESTFW_EXPECTED( VEC3_APPROX( r, d3dr ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_from_mat44
 	TESTFW_TEST_BEGIN( "quat_from_mat44 matches D3DXQuaternionRotationMatrix for identity matrix" )
 		mat44_t m = mat44_identity();
@@ -20427,7 +20431,7 @@ void test_d3d_compliance( void ) {
 		D3DXQUATERNION d3dq; D3DXQuaternionRotationMatrix( &d3dq, (D3DXMATRIX*)&m );
 		TESTFW_EXPECTED( QUAT_APPROX( q, d3dq ) );
 	TESTFW_TEST_END();
-	
+
 	// mat44_from_quat
 	TESTFW_TEST_BEGIN( "mat44_from_quat matches D3DXMatrixRotationQuaternion for identity quaternion" )
 		vec4_t q = quat_identity();
@@ -20456,7 +20460,7 @@ void test_d3d_compliance( void ) {
 		D3DXMATRIX d3d; D3DXMatrixRotationQuaternion( &d3d, (D3DXQUATERNION*)&q );
 		TESTFW_EXPECTED( MAT44_APPROX( m, d3d ) );
 	TESTFW_TEST_END();
-	
+
 	// quat_normalize
 	TESTFW_TEST_BEGIN( "quat_normalize matches D3DXQuaternionNormalize for identity quaternion" )
 		vec4_t q = vec4( 0, 0, 0, 1 );
@@ -20646,22 +20650,22 @@ ALTERNATIVE A - MIT License
 
 Copyright (c) 2025 Mattias Gustavsson
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ------------------------------------------------------------------------------
@@ -20670,22 +20674,22 @@ ALTERNATIVE B - Public Domain (www.unlicense.org)
 
 This is free and unencumbered software released into the public domain.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or distribute this 
-software, either in source code form or as a compiled binary, for any purpose, 
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this
+software, either in source code form or as a compiled binary, for any purpose,
 commercial or non-commercial, and by any means.
 
-In jurisdictions that recognize copyright laws, the author or authors of this 
-software dedicate any and all copyright interest in the software to the public 
-domain. We make this dedication for the benefit of the public at large and to 
-the detriment of our heirs and successors. We intend this dedication to be an 
-overt act of relinquishment in perpetuity of all present and future rights to 
+In jurisdictions that recognize copyright laws, the author or authors of this
+software dedicate any and all copyright interest in the software to the public
+domain. We make this dedication for the benefit of the public at large and to
+the detriment of our heirs and successors. We intend this dedication to be an
+overt act of relinquishment in perpetuity of all present and future rights to
 this software under copyright law.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ------------------------------------------------------------------------------

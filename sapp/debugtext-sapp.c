@@ -55,7 +55,7 @@ static void print_font(int font_index, const char* title, uint8_t r, uint8_t g, 
     sdtx_color3b(r, g, b);
     sdtx_puts(title);
     for (int c = 32; c < 256; c++) {
-        sdtx_putc(c);
+        sdtx_putc((char)c);
         if (((c + 1) & 63) == 0) {
             sdtx_crlf();
         }
