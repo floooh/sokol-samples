@@ -56,7 +56,13 @@ export function addLibs(b: Builder) {
             if (b.isGcc()) {
                 t.addCompileOptions({
                     scope: 'private',
-                    opts: ['-Wno-maybe-uninitialized', '-Wno-class-memaccess'],
+                    opts: [
+                        '-Wno-maybe-uninitialized',
+                        '-Wno-class-memaccess',
+                        '-Wno-stringop-overflow',
+                        '-Wno-array-bounds',
+                        '-Wno-stringop-truncation',
+                    ],
                 });
             }
             if (b.isClang()) {
@@ -123,6 +129,11 @@ export function addLibs(b: Builder) {
                         '-Wno-shorten-64-to-32',
                         '-Wno-implicit-const-int-float-conversion',
                     ],
+                });
+            } else {
+                t.addCompileOptions({
+                    scope: 'private',
+                    opts: ['-Wno-stringop-overflow', '-Wno-stringop-truncation'],
                 });
             }
         }
