@@ -20,8 +20,8 @@ Make sure the following tools are installed:
 
 > [!NOTE]
 > On Linux you'll also need to install packages for OpenGL, X11, ALSA and Vulkan development, e.g.
-> libgl1-mesa-dev, libegl1-mesa-dev, mesa-common-dev, xorg-dev, libasound-dev, libvulkan-dev, vulkan-validationlayers,
-> vulkan-tools
+> `libgl1-mesa-dev`, `libegl1-mesa-dev`, `mesa-common-dev`, `xorg-dev`, `libasound-dev`, `libvulkan-dev`, `vulkan-validationlayers`,
+> `vulkan-tools`
 
 > [!NOTE]
 > On **Windows** with Vulkan development you need to install the Vulkan SDK and before building,
