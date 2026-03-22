@@ -124,7 +124,7 @@ this via:
 ### Android
 
 Install a JDK version 17, and check via `./fibs diag tools` whether
-fibs can find `java`, `javac` can be found and `unzip`:
+fibs can find `java`, `javac` and `unzip`:
 
 ```sh
 ./fibs diag tools
