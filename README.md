@@ -153,6 +153,35 @@ cwebp:  found
 ./fibs run triangle-sapp
 ```
 
+### Configuring for local sokol development
+
+Clone sokol into a 'sister directory' of sokol-samples, e.g. from
+within the sokol-samples directory:
+
+```sh
+git clone https://github.com/floooh/sokol ../sokol
+```
+
+...next 'link' the cloned directory to the `sokol` import:
+
+```sh
+./fibs link sokol ../sokol
+ linked import 'sokol' to '/Users/floh/projects/sokol'
+ ```
+
+...verify via `./fibs list imports`:
+
+```sh
+./fibs list imports
+...
+sokol: link => /Users/floh/projects/sokol
+...
+```
+
+The sokol-samples project will now use the linked sokol repository instead
+of the local imported version in the `.fibs/imports` subdirectory.
+
+
 ## How to build without a build system
 
 Many samples are simple enough to be built directly on the command line
