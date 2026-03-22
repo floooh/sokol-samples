@@ -153,7 +153,7 @@ cwebp:  found
 ./fibs run triangle-sapp
 ```
 
-### Configuring for local sokol development
+## Configuring for local sokol development
 
 Clone sokol into a 'sister directory' of sokol-samples, e.g. from
 within the sokol-samples directory:
