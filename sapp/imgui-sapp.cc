@@ -56,6 +56,7 @@ static void frame(void) {
     if (ImGui::Button(sapp_is_fullscreen() ? "Switch to windowed" : "Switch to fullscreen")) {
         sapp_toggle_fullscreen();
     }
+    ImGui::Text("sapp_frame_duration: %.6f", sapp_frame_duration());
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
     if (show_another_window) {
