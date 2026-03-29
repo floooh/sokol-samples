@@ -12,11 +12,14 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 
 extern "C" {
 
 void __dbgui_setup(int sample_count) {
     // setup debug inspection header(s)
+    sappimgui_setup();
     const sgimgui_desc_t desc = { };
     sgimgui_setup(&desc);
 
@@ -29,24 +32,30 @@ void __dbgui_setup(int sample_count) {
 
 void __dbgui_shutdown(void) {
     sgimgui_shutdown();
+    sappimgui_shutdown();
     simgui_shutdown();
 }
 
 void __dbgui_draw(void) {
     simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
+    sappimgui_track_frame();
     if (ImGui::BeginMainMenuBar()) {
+        sappimgui_draw_menu("sokol-app");
         sgimgui_draw_menu("sokol-gfx");
         ImGui::EndMainMenuBar();
     }
+    sappimgui_draw();
     sgimgui_draw();
     simgui_render();
 }
 
 void __dbgui_event(const sapp_event* e) {
+    sappimgui_track_event(e);
     simgui_handle_event(e);
 }
 
 bool __dbgui_event_with_retval(const sapp_event* e) {
+    sappimgui_track_event(e);
     return simgui_handle_event(e);
 }
 
