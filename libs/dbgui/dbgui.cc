@@ -40,8 +40,8 @@ void __dbgui_draw(void) {
     simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
     sappimgui_track_frame();
     if (ImGui::BeginMainMenuBar()) {
-        sappimgui_draw_menu("sokol-app");
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         ImGui::EndMainMenuBar();
     }
     sappimgui_draw();

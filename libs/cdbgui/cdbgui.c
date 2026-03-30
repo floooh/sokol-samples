@@ -42,8 +42,8 @@ void __cdbgui_draw(void) {
     });
     sappimgui_track_frame();
     if (igBeginMainMenuBar()) {
-        sappimgui_draw_menu("sokol-app");
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     sappimgui_draw();
