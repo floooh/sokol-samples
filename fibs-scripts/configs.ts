@@ -30,32 +30,32 @@ function addSappConfigs(c: Configurer) {
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-d3d11-win-msvc-release', options: d3d11 });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-d3d11-win-vstudio-debug', opener: 'vstudio', options: d3d11 });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-d3d11-win-vstudio-release', opener: 'vstudio', options: d3d11  });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-d3d11-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: d3d11 });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-d3d11-win-vscode-release', generator: 'ninja', opener: 'vscode', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-d3d11-win-vscode-debug', opener: 'vscode', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-d3d11-win-vscode-release', opener: 'vscode', options: d3d11 });
 
     // windows + gl
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-gl-win-msvc-debug', options: gl });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-gl-win-msvc-release', options: gl });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-gl-win-vstudio-debug', opener: 'vstudio', options: gl });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-gl-win-vstudio-release', opener: 'vstudio', options: gl });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-gl-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: gl });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-gl-win-vscode-release', generator: 'ninja', opener: 'vscode', options: gl });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-gl-win-vscode-debug', opener: 'vscode', options: gl });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-gl-win-vscode-release', opener: 'vscode', options: gl });
 
     // windows + vulkan
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-vk-win-msvc-debug', options: vk });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-vk-win-msvc-release', options: vk });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-vk-win-vstudio-debug', opener: 'vstudio', options: vk });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-vk-win-vstudio-release', opener: 'vstudio', options: vk });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-vk-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: vk });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-vk-win-vscode-release', generator: 'ninja', opener: 'vscode', options: vk });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-vk-win-vscode-debug', opener: 'vscode', options: vk });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-vk-win-vscode-release', opener: 'vscode', options: vk });
 
     // windows + webgpu
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-wgpu-win-msvc-debug', options: wgpu });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-wgpu-win-msvc-release', options: wgpu });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-wgpu-win-vstudio-debug', opener: 'vstudio', options: wgpu });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-wgpu-win-vstudio-release', opener: 'vstudio', options: wgpu });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-wgpu-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: wgpu });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-wgpu-win-vscode-release', generator: 'ninja', opener: 'vscode', options: wgpu });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'sapp-wgpu-win-vscode-debug', opener: 'vscode', options: wgpu });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'sapp-wgpu-win-vscode-release', opener: 'vscode', options: wgpu });
 
     // macos + metal
     c.addConfig({ ...cfg('macos-make-release'), name: 'sapp-metal-macos-make-release', options: metal });
@@ -241,8 +241,8 @@ function addGlfwConfigs(c: Configurer) {
     c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-msvc-release', options: glfw });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-vstudio-debug', opener: 'vstudio', options: glfw });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-vstudio-release', opener: 'vstudio', options: glfw  });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: glfw });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-vscode-release', generator: 'ninja', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'glfw-win-vscode-debug', opener: 'vscode', options: glfw });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'glfw-win-vscode-release', opener: 'vscode', options: glfw });
 
     // macos
     c.addConfig({ ...cfg('macos-make-release'), name: 'glfw-macos-make-release', options: glfw });
@@ -281,6 +281,6 @@ export function addD3d11Configs(c: Configurer) {
     c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-msvc-release', options: d3d11 });
     c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-vstudio-debug', opener: 'vstudio', options: d3d11 });
     c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-vstudio-release', opener: 'vstudio', options: d3d11  });
-    c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-vscode-debug', generator: 'ninja', opener: 'vscode', options: d3d11 });
-    c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-vscode-release', generator: 'ninja', opener: 'vscode', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-debug'), name: 'd3d11-win-vscode-debug', opener: 'vscode', options: d3d11 });
+    c.addConfig({ ...cfg('win-msvc-release'), name: 'd3d11-win-vscode-release', opener: 'vscode', options: d3d11 });
 }
