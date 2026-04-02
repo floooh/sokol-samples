@@ -12,9 +12,12 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 
 void __cdbgui_setup(int sample_count) {
-    // setup debug inspection header
+    // setup debug inspection headers
+    sappimgui_setup();
     sgimgui_setup(&(sgimgui_desc_t){0});
 
     // setup the sokol-imgui utility header
@@ -26,6 +29,7 @@ void __cdbgui_setup(int sample_count) {
 
 void __cdbgui_shutdown(void) {
     sgimgui_shutdown();
+    sappimgui_shutdown();
     simgui_shutdown();
 }
 
@@ -36,14 +40,18 @@ void __cdbgui_draw(void) {
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale()
     });
+    sappimgui_track_frame();
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
+    sappimgui_draw();
     sgimgui_draw();
     simgui_render();
 }
 
 void __cdbgui_event(const sapp_event* e) {
+    sappimgui_track_event(e);
     simgui_handle_event(e);
 }

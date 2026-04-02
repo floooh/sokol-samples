@@ -41,7 +41,8 @@ static void init(void) {
 static void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+    const double dt = sapp_frame_duration();
+    simgui_new_frame({ width, height, dt, sapp_dpi_scale() });
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -57,6 +58,7 @@ static void frame(void) {
         sapp_toggle_fullscreen();
     }
     ImGui::Text("sapp_frame_duration: %.6f", sapp_frame_duration());
+    ImGui::Text("sapp_frame_duration_unfiltered: %.6f", sapp_frame_duration_unfiltered());
 
     // 2. Show another simple window, this time using an explicit Begin/End pair
     if (show_another_window) {
