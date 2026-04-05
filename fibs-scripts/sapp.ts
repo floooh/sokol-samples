@@ -225,6 +225,7 @@ function addSample(b: Builder, { name, ext, ui, sokol, shd, deps, jobs, filter }
             t.addDependencies(deps);
         }
         if (shd) {
+            t.addSource(`${name}-sapp.glsl`);
             t.addJob(shdc({ name }));
         }
         if (jobs) {
