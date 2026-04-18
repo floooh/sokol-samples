@@ -14,6 +14,7 @@ static struct {
     float rx, ry;
     sg_pipeline pip;
     sg_bindings bind;
+    bool invalid_swapchain;
 } state;
 
 static vs_params_t compute_vsparams(float rx, float ry);
@@ -112,13 +113,18 @@ static void frame(void) {
     state.rx += 1.0f * t; state.ry += 2.0f * t;
     const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
 
-    sg_begin_pass(&(sg_pass){
+    sg_pass pass = {
         .action.colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
             .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f }
         },
-        .swapchain = sglue_swapchain()
-    });
+    };
+    if (state.invalid_swapchain) {
+        pass.swapchain.invalid = true;
+    } else {
+        pass.swapchain = sglue_swapchain();
+    }
+    sg_begin_pass(&pass);
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -126,6 +132,19 @@ static void frame(void) {
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
+}
+
+static void input(const sapp_event* ev) {
+    if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
+        if (ev->key_code == SAPP_KEYCODE_SPACE) {
+            state.invalid_swapchain = true;
+        }
+    } else if (ev->type == SAPP_EVENTTYPE_KEY_UP) {
+        if (ev->key_code == SAPP_KEYCODE_SPACE) {
+            state.invalid_swapchain = false;
+        }
+    }
+    __dbgui_event(ev);
 }
 
 static void cleanup(void) {
@@ -152,7 +171,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = input,
         .width = 800,
         .height = 600,
         .sample_count = 4,
