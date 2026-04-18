@@ -137,11 +137,7 @@ static void frame(void) {
 static void input(const sapp_event* ev) {
     if (ev->type == SAPP_EVENTTYPE_KEY_DOWN) {
         if (ev->key_code == SAPP_KEYCODE_SPACE) {
-            state.invalid_swapchain = true;
-        }
-    } else if (ev->type == SAPP_EVENTTYPE_KEY_UP) {
-        if (ev->key_code == SAPP_KEYCODE_SPACE) {
-            state.invalid_swapchain = false;
+            state.invalid_swapchain = !state.invalid_swapchain;
         }
     }
     __dbgui_event(ev);
