@@ -14,6 +14,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 #include <assert.h> // assert()
 #include <string.h> // memset()
 
@@ -51,6 +53,7 @@ static void init(void) {
     });
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
     sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } },
@@ -103,16 +106,19 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     simgui_handle_event(ev);
 }
 
 static void cleanup(void) {
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
 
 static void draw_ui(void) {
+    sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -121,6 +127,7 @@ static void draw_ui(void) {
     });
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     igSetNextWindowPos((ImVec2){20, 40}, ImGuiCond_Once);
@@ -136,6 +143,7 @@ static void draw_ui(void) {
     }
     igEnd();
     sgimgui_draw();
+    sappimgui_draw();
     simgui_render();
 }
 

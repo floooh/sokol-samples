@@ -16,6 +16,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 #include "util/fileutil.h"
 #include "imageblur-sapp.glsl.h"
 #include <math.h> // ceilf()
@@ -66,6 +68,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sappimgui_setup();
     sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
@@ -151,12 +154,14 @@ static void frame(void) {
 
 static void cleanup(void) {
     sfetch_shutdown();
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     simgui_handle_event(ev);
 }
 
@@ -242,6 +247,7 @@ static void fetch_callback(const sfetch_response_t* response) {
 }
 
 static void draw_ui(void) {
+    sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -250,6 +256,7 @@ static void draw_ui(void) {
     });
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     igSetNextWindowBgAlpha(0.8f);
@@ -271,6 +278,7 @@ static void draw_ui(void) {
     }
     igEnd();
     sgimgui_draw();
+    sappimgui_draw();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

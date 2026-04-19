@@ -26,6 +26,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 
 #define VECMATH_GENERICS
 #include "vecmath/vecmath.h"
@@ -166,6 +168,7 @@ static void init(void) {
     sfetch_setup(&sfdesc);
 
     // setup sokol-imgui
+    sappimgui_setup();
     sgimgui_desc_t sgimgui_desc = { };
     sgimgui_setup(&sgimgui_desc);
     simgui_desc_t imdesc = { };
@@ -391,6 +394,7 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     if (simgui_handle_event(ev)) {
         return;
     }
@@ -398,6 +402,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sfetch_shutdown();
@@ -408,11 +413,14 @@ static void cleanup(void) {
 }
 
 static void draw_ui(void) {
+    sappimgui_track_frame();
     if (ImGui::BeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         ImGui::EndMainMenuBar();
     }
     sgimgui_draw();
+    sappimgui_draw();
     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
     ImGui::SetNextWindowBgAlpha(0.35f);

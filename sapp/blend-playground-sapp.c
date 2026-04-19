@@ -15,6 +15,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 #include "util/fileutil.h"
 #include "qoi/qoi.h"
 #include "blend-playground-sapp.glsl.h"
@@ -161,6 +163,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -296,12 +299,14 @@ static void frame(void) {
 
 static void cleanup(void) {
     sfetch_shutdown();
+    sappimgui_shutdown();
     simgui_shutdown();
     sgimgui_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     if (simgui_handle_event(ev)) {
         return;
     } else switch (ev->type) {
@@ -328,6 +333,7 @@ static void input(const sapp_event* ev) {
 
 static bool draw_ui(void) {
     bool pip_dirty = false;
+    sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -336,9 +342,11 @@ static bool draw_ui(void) {
     });
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     sgimgui_draw();
+    sappimgui_draw();
     igSetNextWindowPos((ImVec2){ 20, 30 }, ImGuiCond_Once);
     if (igBegin("Controls", 0, ImGuiWindowFlags_AlwaysAutoResize)) {
         if (state.file.error != SFETCH_ERROR_NO_ERROR) {

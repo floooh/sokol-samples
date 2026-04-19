@@ -11,6 +11,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 #define VECMATH_GENERICS
 #include "vecmath/vecmath.h"
 #include "drawcallperf-sapp.glsl.h"
@@ -41,6 +43,8 @@ static struct {
 
 static vs_per_instance_t positions[MAX_INSTANCES];
 
+static void drawui(void);
+
 static inline uint32_t xorshift32(void) {
     static uint32_t x = 0x12345678;
     x ^= x<<13;
@@ -63,10 +67,11 @@ static void init(void) {
         .logger.func = slog_func,
         .uniform_buffer_size = MAX_INSTANCES * 256 + 1024,
     });
+    sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
-    sgimgui_setup(&(sgimgui_desc_t){0});
     state.pass_action = (sg_pass_action) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.75f, 1.0f } },
     };
@@ -199,37 +204,7 @@ static mat44_t compute_viewproj(void) {
 }
 
 static void frame(void) {
-    double frame_measured_time = stm_sec(stm_laptime(&state.last_time));
-
-    simgui_new_frame(&(simgui_frame_desc_t){
-        .width = sapp_width(),
-        .height = sapp_height(),
-        .delta_time = sapp_frame_duration(),
-        .dpi_scale = sapp_dpi_scale(),
-    });
-
-    // sokol-gfx debug ui
-    if (igBeginMainMenuBar()) {
-        sgimgui_draw_menu("sokol-gfx");
-        sgimgui_draw();
-        igEndMainMenuBar();
-    }
-
-    // control ui
-    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once);
-    igSetNextWindowSize((ImVec2){600,200}, ImGuiCond_Once);
-    if (igBegin("Controls", 0, ImGuiWindowFlags_NoResize)) {
-        igText("Each cube/instance is 1 16-byte uniform update and 1 draw call\n");
-        igText("DC/texture is the number of adjacent draw calls with the same texture binding\n");
-        igSliderIntEx("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
-        igSliderIntEx("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
-        igText("Backend: %s", state.backend);
-        igText("Frame duration: %.4fms", frame_measured_time * 1000.0);
-        igText("sg_apply_bindings(): %d\n", state.stats.num_binding_updates);
-        igText("sg_apply_uniforms(): %d\n", state.stats.num_uniform_updates);
-        igText("sg_draw(): %d\n", state.stats.num_draw_calls);
-    }
-    igEnd();
+    drawui();
 
     if (state.num_instances < 1) {
         state.num_instances = 1;
@@ -277,13 +252,51 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     simgui_handle_event(ev);
 }
 
 static void cleanup(void) {
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
+}
+
+static void drawui(void) {
+    double frame_measured_time = stm_sec(stm_laptime(&state.last_time));
+    sappimgui_track_frame();
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale(),
+    });
+
+    // sokol-gfx debug ui
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
+        igEndMainMenuBar();
+    }
+
+    // control ui
+    igSetNextWindowPos((ImVec2){20,20}, ImGuiCond_Once);
+    igSetNextWindowSize((ImVec2){600,200}, ImGuiCond_Once);
+    if (igBegin("Controls", 0, ImGuiWindowFlags_NoResize)) {
+        igText("Each cube/instance is 1 16-byte uniform update and 1 draw call\n");
+        igText("DC/texture is the number of adjacent draw calls with the same texture binding\n");
+        igSliderIntEx("Num Instances", &state.num_instances, 100, MAX_INSTANCES, "%d", ImGuiSliderFlags_Logarithmic);
+        igSliderIntEx("DC/texture", &state.bind_frequency, 1, MAX_BIND_FREQUENCY, "%d", ImGuiSliderFlags_Logarithmic);
+        igText("Backend: %s", state.backend);
+        igText("Frame duration: %.4fms", frame_measured_time * 1000.0);
+        igText("sg_apply_bindings(): %d\n", state.stats.num_binding_updates);
+        igText("sg_apply_uniforms(): %d\n", state.stats.num_uniform_updates);
+        igText("sg_draw(): %d\n", state.stats.num_draw_calls);
+    }
+    igEnd();
+    sgimgui_draw();
+    sappimgui_draw();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {

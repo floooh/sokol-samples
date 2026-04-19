@@ -10,9 +10,11 @@
 #include "sokol_glue.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_GFX_IMGUI_IMPL
+#define SOKOL_APP_IMGUI_IMPL
 #include "cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
+#include "sokol_app_imgui.h"
 #include "customresolve-sapp.glsl.h"
 
 #define WIDTH (160)
@@ -57,6 +59,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
 
     // catch WebGL2/GLES3
@@ -188,12 +191,14 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
 
 static void draw_ui(void) {
+    sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -202,9 +207,11 @@ static void draw_ui(void) {
     });
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     sgimgui_draw();
+    sappimgui_draw();
 
     igSetNextWindowPos((ImVec2){10, 20}, ImGuiCond_Once);
     if (igBegin("#window", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoBackground)) {
@@ -238,6 +245,7 @@ static void draw_fallback(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     simgui_handle_event(ev);
 }
 

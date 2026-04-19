@@ -15,9 +15,11 @@
 #include "sokol_gl.h"
 #define SOKOL_IMGUI_IMPL
 #define SOKOL_GFX_IMGUI_IMPL
+#define SOKOL_APP_IMGUI_IMPL
 #include "cimgui.h"
 #include "sokol_imgui.h"
 #include "sokol_gfx_imgui.h"
+#include "sokol_app_imgui.h"
 #include "dbgui/dbgui.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -243,6 +245,7 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     if (simgui_handle_event(ev)) {
         return;
     }
@@ -475,11 +478,13 @@ static void image_data_loaded(const sfetch_response_t* response) {
 
 //=== UI STUFF =================================================================
 static void ui_setup(void) {
+    sappimgui_setup();
     sgimgui_setup(&(sgimgui_desc_t){0});
     simgui_setup(&(simgui_desc_t){ .logger.func = slog_func });
 }
 
 static void ui_shutdown(void) {
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
 }
@@ -505,6 +510,7 @@ static const char* ui_sgwrap_name(sg_wrap w) {
 }
 
 static void ui_draw(void) {
+    sappimgui_track_frame();
     if (igBeginMainMenuBar()) {
         if (igBeginMenu("sokol-spine")) {
             if (igBeginMenu("Load")) {
@@ -528,6 +534,7 @@ static void ui_draw(void) {
             igEndMenu();
         }
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         if (igBeginMenu("options")) {
             static int theme = 0;
             if (igRadioButtonIntPtr("Dark Theme", &theme, 0)) {
@@ -839,6 +846,7 @@ static void ui_draw(void) {
         }
     }
     sgimgui_draw();
+    sappimgui_draw();
 }
 
 static void draw_bones(void) {

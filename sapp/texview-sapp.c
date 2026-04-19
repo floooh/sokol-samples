@@ -13,6 +13,8 @@
 #include "sokol_imgui.h"
 #define SOKOL_GFX_IMGUI_IMPL
 #include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 #include "basisu/sokol_basisu.h"
 #include "util/fileutil.h"
 #include "texview-sapp.glsl.h"
@@ -70,6 +72,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -114,12 +117,6 @@ static void init(void) {
 
 static void frame(void) {
     sfetch_dowork();
-    simgui_new_frame(&(simgui_frame_desc_t){
-        .width = sapp_width(),
-        .height = sapp_height(),
-        .delta_time = sapp_frame_duration(),
-        .dpi_scale = sapp_dpi_scale(),
-    });
     ui_draw();
 
     const fs_params_t fs_params = { .mip_lod = state.ui.mip_lod };
@@ -132,6 +129,7 @@ static void frame(void) {
     });
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
+    sappimgui_draw();
     sgimgui_draw();
     simgui_render();
     sg_end_pass();
@@ -139,6 +137,7 @@ static void frame(void) {
 }
 
 static void input(const sapp_event* ev) {
+    sappimgui_track_event(ev);
     simgui_handle_event(ev);
 }
 
@@ -151,8 +150,16 @@ static void cleanup(void) {
 }
 
 static void ui_draw(void) {
+    sappimgui_track_frame();
+    simgui_new_frame(&(simgui_frame_desc_t){
+        .width = sapp_width(),
+        .height = sapp_height(),
+        .delta_time = sapp_frame_duration(),
+        .dpi_scale = sapp_dpi_scale(),
+    });
     if (igBeginMainMenuBar()) {
         sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
