@@ -15,9 +15,7 @@
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
 
-static void drawui(void);
-
-#define NUM_ANCHORS (9)
+#define NUM_ANCHORS (5)
 
 static struct {
     sg_pass_action pass_action;
@@ -38,20 +36,18 @@ static struct {
     },
     .link_lr_border = true,
     .link_tb_border = true,
-    .lbox.aspect = 4.0f / 3.0f,
+    .lbox.content_aspect_ratio = 4.0f / 3.0f,
     .anchors = {
-        { .anchor = SLBX_ANCHOR_NONE, .label = "None" },
+        { .anchor = SLBX_ANCHOR_CENTER, .label = "Center" },
         { .anchor = SLBX_ANCHOR_TOP, .label = "Top" },
         { .anchor = SLBX_ANCHOR_BOTTOM, .label = "Bottom" },
         { .anchor = SLBX_ANCHOR_LEFT, .label = "Left" },
         { .anchor = SLBX_ANCHOR_RIGHT, .label = "Right" },
-        { .anchor = SLBX_ANCHOR_TOP_LEFT, .label = "Top Left" },
-        { .anchor = SLBX_ANCHOR_TOP_RIGHT, .label = "Top Right" },
-        { .anchor = SLBX_ANCHOR_BOTTOM_LEFT, .label = "Bottom Left" },
-        { .anchor = SLBX_ANCHOR_BOTTOM_RIGHT, .label = "Bottom Right" },
     },
 };
 
+static void draw_ui(void);
+static void main_quad(void);
 static void corner_quad(float x, float y);
 
 static void init(void) {
@@ -68,7 +64,7 @@ static void init(void) {
 }
 
 static void frame(void) {
-    drawui();
+    draw_ui();
     const int width = sapp_width();
     const int height = sapp_height();
 
@@ -77,10 +73,7 @@ static void frame(void) {
     const slbx_viewport vp = slbx_letterbox_viewport(width, height, &state.lbox);
     sgl_viewport(vp.x, vp.y, vp.width, vp.height, true);
     sgl_begin_quads();
-    sgl_v2f_c3b(-1.0f, +1.0f, 255, 0, 0);
-    sgl_v2f_c3b(+1.0f, +1.0f, 255, 255, 0);
-    sgl_v2f_c3b(+1.0f, -1.0f, 0, 255, 0);
-    sgl_v2f_c3b(-1.0f, -1.0f, 0, 255, 255);
+    main_quad();
     corner_quad(-0.9f, +0.9f);
     corner_quad(+0.9f, +0.9f);
     corner_quad(+0.9f, -0.9f);
@@ -96,10 +89,17 @@ static void frame(void) {
     sg_commit();
 }
 
+static void main_quad(void) {
+    sgl_v2f_c3b(-1.0f, +1.0f, 255, 0, 0);
+    sgl_v2f_c3b(+1.0f, +1.0f, 255, 255, 0);
+    sgl_v2f_c3b(+1.0f, -1.0f, 0, 255, 0);
+    sgl_v2f_c3b(-1.0f, -1.0f, 0, 255, 255);
+}
+
 static void corner_quad(float x, float y) {
     float s = 0.05f;
     uint8_t r = 255;
-    uint8_t g = 255;
+    uint8_t g = 128;
     uint8_t b = 255;
     sgl_v2f_c3b(x - s, y + s, r, g, b);
     sgl_v2f_c3b(x + s, y + s, r, g, b);
@@ -123,7 +123,7 @@ static const char* anchor_getter(void* userdata, int index) {
     return state.anchors[index].label;
 }
 
-static void drawui(void) {
+static void draw_ui(void) {
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -134,7 +134,7 @@ static void drawui(void) {
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         igText("Resize app window!\n");
-        igSliderFloat("Aspect Ratio", &state.lbox.aspect, 0.5f, 2.0f);
+        igSliderFloat("Content Aspect Ratio", &state.lbox.content_aspect_ratio, 0.5f, 2.0f);
         if (igComboCallback("Anchor", &state.cur_anchor_idx, anchor_getter, 0, NUM_ANCHORS)) {
             state.lbox.anchor = state.anchors[state.cur_anchor_idx].anchor;
         }
