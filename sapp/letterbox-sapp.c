@@ -7,6 +7,8 @@
 #include "sokol_gfx.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
+#define SOKOL_GL_IMPL
+#include "sokol_gl.h"
 #define SOKOL_LETTERBOX_IMPL
 #include "sokol_letterbox.h"
 #include "cimgui.h"
@@ -15,43 +17,110 @@
 
 static void drawui(void);
 
+#define NUM_ANCHORS (9)
+
 static struct {
     sg_pass_action pass_action;
-} state;
+    slbx_letterbox_desc lbox;
+    bool link_lr_border;
+    bool link_tb_border;
+    int cur_anchor_idx;
+    struct {
+        slbx_anchor anchor;
+        const char* label;
+    } anchors[NUM_ANCHORS];
+} state = {
+    .pass_action = {
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0, 0, 0, 1 },
+        },
+    },
+    .link_lr_border = true,
+    .link_tb_border = true,
+    .lbox.aspect = 4.0f / 3.0f,
+    .anchors = {
+        { .anchor = SLBX_ANCHOR_NONE, .label = "None" },
+        { .anchor = SLBX_ANCHOR_TOP, .label = "Top" },
+        { .anchor = SLBX_ANCHOR_BOTTOM, .label = "Bottom" },
+        { .anchor = SLBX_ANCHOR_LEFT, .label = "Left" },
+        { .anchor = SLBX_ANCHOR_RIGHT, .label = "Right" },
+        { .anchor = SLBX_ANCHOR_TOP_LEFT, .label = "Top Left" },
+        { .anchor = SLBX_ANCHOR_TOP_RIGHT, .label = "Top Right" },
+        { .anchor = SLBX_ANCHOR_BOTTOM_LEFT, .label = "Bottom Left" },
+        { .anchor = SLBX_ANCHOR_BOTTOM_RIGHT, .label = "Bottom Right" },
+    },
+};
+
+static void corner_quad(float x, float y);
 
 static void init(void) {
     sg_setup(&(sg_desc){
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sgl_setup(&(sgl_desc_t){
+        .logger.func = slog_func,
+    });
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
-
-    state.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0, 0, 0, 1 },
-        },
-    };
 }
 
 static void frame(void) {
     drawui();
+    const int width = sapp_width();
+    const int height = sapp_height();
 
+    // draw a letterboxed fullscreen quad via sgl
+    sgl_defaults();
+    const slbx_viewport vp = slbx_letterbox_viewport(width, height, &state.lbox);
+    sgl_viewport(vp.x, vp.y, vp.width, vp.height, true);
+    sgl_begin_quads();
+    sgl_v2f_c3b(-1.0f, +1.0f, 255, 0, 0);
+    sgl_v2f_c3b(+1.0f, +1.0f, 255, 255, 0);
+    sgl_v2f_c3b(+1.0f, -1.0f, 0, 255, 0);
+    sgl_v2f_c3b(-1.0f, -1.0f, 0, 255, 255);
+    corner_quad(-0.9f, +0.9f);
+    corner_quad(+0.9f, +0.9f);
+    corner_quad(+0.9f, -0.9f);
+    corner_quad(-0.9f, -0.9f);
+    sgl_end();
+    sgl_viewport(0, 0, width, height, true);
+
+    // render everything in a sokol-gfx pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sgl_draw();
     simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
+static void corner_quad(float x, float y) {
+    float s = 0.05f;
+    uint8_t r = 255;
+    uint8_t g = 255;
+    uint8_t b = 255;
+    sgl_v2f_c3b(x - s, y + s, r, g, b);
+    sgl_v2f_c3b(x + s, y + s, r, g, b);
+    sgl_v2f_c3b(x + s, y - s, r, g, b);
+    sgl_v2f_c3b(x - s, y - s, r, g, b);
+}
+
 static void cleanup(void) {
     simgui_shutdown();
+    sgl_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* ev) {
     simgui_handle_event(ev);
+}
+
+static const char* anchor_getter(void* userdata, int index) {
+    assert((index >= 0) && (index < NUM_ANCHORS));
+    (void)userdata;
+    return state.anchors[index].label;
 }
 
 static void drawui(void) {
@@ -64,7 +133,26 @@ static void drawui(void) {
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-        igText("FIXME!");
+        igText("Resize app window!\n");
+        igSliderFloat("Aspect Ratio", &state.lbox.aspect, 0.5f, 2.0f);
+        if (igComboCallback("Anchor", &state.cur_anchor_idx, anchor_getter, 0, NUM_ANCHORS)) {
+            state.lbox.anchor = state.anchors[state.cur_anchor_idx].anchor;
+        }
+        igSeparatorText("Border");
+        igCheckbox("Link Left/Right", &state.link_lr_border);
+        igCheckbox("Link Top/Bottom", &state.link_tb_border);
+        if (igSliderInt("Left", &state.lbox.border.left, -50, 50) && state.link_lr_border) {
+            state.lbox.border.right = state.lbox.border.left;
+        }
+        if (igSliderInt("Right", &state.lbox.border.right, -50, 50) && state.link_lr_border) {
+            state.lbox.border.left = state.lbox.border.right;
+        }
+        if (igSliderInt("Top", &state.lbox.border.top, -50, 50) && state.link_tb_border) {
+            state.lbox.border.bottom = state.lbox.border.top;
+        }
+        if (igSliderInt("Bottom", &state.lbox.border.bottom, -50, 50) && state.link_tb_border) {
+            state.lbox.border.top = state.lbox.border.bottom;
+        }
     }
     igEnd();
 }
