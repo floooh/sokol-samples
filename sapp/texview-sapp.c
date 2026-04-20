@@ -8,6 +8,8 @@
 #include "sokol_fetch.h"
 #include "sokol_log.h"
 #include "sokol_glue.h"
+#define SOKOL_LETTERBOX_IMPL
+#include "sokol_letterbox.h"
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -261,32 +263,11 @@ static void apply_viewport(void) {
     if ((state.img_info.width == 0) || (state.img_info.height == 0)) {
         return;
     }
-    const float border = 5.0f;
-    float canvas_width = sapp_widthf() - 2.0f * border;
-    float canvas_height = sapp_heightf() - 2.0f * border;
-    if (canvas_width < 1.0f) {
-        canvas_width = 1.0f;
-    }
-    if (canvas_height < 1.0f) {
-        canvas_height = 1.0f;
-    }
-    const float canvas_aspect = canvas_width / canvas_height;
-    const float img_width = (float)state.img_info.width;
-    const float img_height = (float)state.img_info.height;
-    const float img_aspect = img_width / img_height;
-    float vp_x, vp_y, vp_w, vp_h;
-    if (img_aspect < canvas_aspect) {
-        vp_y = border;
-        vp_h = canvas_height;
-        vp_w = canvas_height * img_aspect;
-        vp_x = border + (canvas_width - vp_w) * 0.5f;
-    } else {
-        vp_x = border;
-        vp_w = canvas_width;
-        vp_h = canvas_width / img_aspect;
-        vp_y = border + (canvas_height - vp_h) * 0.5f;
-    }
-    sg_apply_viewportf(vp_x, vp_y, vp_w, vp_h, true);
+    const slbx_viewport vp = slbx_letterbox_viewport(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
+        .content_aspect_ratio = (float)state.img_info.width / (float)state.img_info.height,
+        .border = { .left = 5, .right = 5, .top = 5, .bottom = 5 },
+    });
+    sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
