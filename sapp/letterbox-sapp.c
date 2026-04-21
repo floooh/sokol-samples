@@ -140,13 +140,13 @@ static void draw_ui(void) {
         }
         igSeparatorText("Border");
         igCheckbox("Link Left/Right", &state.link_lr_border);
-        igCheckbox("Link Top/Bottom", &state.link_tb_border);
         if (igSliderInt("Left", &state.lbox.border.left, -50, 50) && state.link_lr_border) {
             state.lbox.border.right = state.lbox.border.left;
         }
         if (igSliderInt("Right", &state.lbox.border.right, -50, 50) && state.link_lr_border) {
             state.lbox.border.left = state.lbox.border.right;
         }
+        igCheckbox("Link Top/Bottom", &state.link_tb_border);
         if (igSliderInt("Top", &state.lbox.border.top, -50, 50) && state.link_tb_border) {
             state.lbox.border.bottom = state.lbox.border.top;
         }
