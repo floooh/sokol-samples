@@ -263,7 +263,7 @@ static void apply_viewport(void) {
     if ((state.img_info.width == 0) || (state.img_info.height == 0)) {
         return;
     }
-    const slbx_viewport vp = slbx_letterbox_viewport(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
+    const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
         .content_aspect_ratio = (float)state.img_info.width / (float)state.img_info.height,
         .border = { .left = 5, .right = 5, .top = 5, .bottom = 5 },
     });

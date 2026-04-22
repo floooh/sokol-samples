@@ -70,7 +70,7 @@ static void frame(void) {
 
     // draw a letterboxed fullscreen quad via sgl
     sgl_defaults();
-    const slbx_viewport vp = slbx_letterbox_viewport(width, height, &state.lbox);
+    const slbx_viewport vp = slbx_letterbox(width, height, &state.lbox);
     sgl_viewport(vp.x, vp.y, vp.width, vp.height, true);
     sgl_begin_quads();
     main_quad();
