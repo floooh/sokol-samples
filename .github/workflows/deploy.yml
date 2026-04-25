@@ -2,8 +2,7 @@ name: Deploy Webpage
 on: workflow_dispatch
 
 jobs:
-
-  build:
+  build-webgl:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -17,13 +16,27 @@ jobs:
       - name: build
         run: |
           ./fibs webpage build webgl
-          ./fibs webpage build webgpu
       - name: upload-artifact-webgl
         uses: actions/upload-artifact@main
         with:
           name: webpage_webgl
           path: .fibs/webpage/webgl
           retention-days: 1
+
+  build-webgpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: ashutoshvarma/setup-ninja@master
+      - uses: denoland/setup-deno@v2
+      - name: setup
+        run:  |
+          sudo apt update
+          sudo apt install webp
+          ./fibs emsdk install
+      - name: build
+        run: |
+          ./fibs webpage build webgpu
       - name: upload-artifact-webgpu
         uses: actions/upload-artifact@main
         with:
@@ -32,7 +45,7 @@ jobs:
           retention-days: 1
 
   deploy_webgl:
-    needs: build
+    needs: build-webgl
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -51,7 +64,7 @@ jobs:
           git push
 
   deploy_webgpu:
-    needs: build
+    needs: build-webgpu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
