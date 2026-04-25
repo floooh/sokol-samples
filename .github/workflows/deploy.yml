@@ -60,7 +60,7 @@ jobs:
           git config user.email "none"
           git config user.name "GH Action"
           git add .
-          git commit -m "updated (${{ github.run_number }})"
+          git diff-index --quiet HEAD || git commit -m "updated (${{ github.run_number }})"
           git push
 
   deploy_webgpu:
@@ -79,5 +79,5 @@ jobs:
           git config user.email "none"
           git config user.name "GH Action"
           git add .
-          git commit -m "updated (${{ github.run_number }})"
+          git diff-index --quiet HEAD || git commit -m "updated (${{ github.run_number }})"
           git push
