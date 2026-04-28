@@ -14,6 +14,7 @@
 
 static struct {
     sg_pass_action pass_action;
+    sfb_framebuffer fb;
 } state;
 
 static void draw_ui(void);
@@ -26,6 +27,9 @@ static void init(void) {
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
+    sfb_setup(&(sfb_desc){
+        .logger.func = slog_func,
+    });
 
     state.pass_action = (sg_pass_action){
         .colors[0] = {
@@ -33,6 +37,11 @@ static void init(void) {
             .clear_value = { 1.0f, 0.0f, 1.0f, 1.0f }
         },
     };
+
+    state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
+        .width = 256,
+        .height = 256,
+    });
 }
 
 static void frame(void) {
@@ -44,6 +53,8 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
+    sfb_shutdown();
+    simgui_shutdown();
     sg_shutdown();
 }
 
