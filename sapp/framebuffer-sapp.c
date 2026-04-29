@@ -11,6 +11,10 @@
 #include "cimgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
+#define SOKOL_GFX_IMGUI_IMPL
+#include "sokol_gfx_imgui.h"
+#define SOKOL_APP_IMGUI_IMPL
+#include "sokol_app_imgui.h"
 
 static struct {
     sg_pass_action pass_action;
@@ -24,6 +28,8 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
+    sgimgui_setup(&(sgimgui_desc_t){0});
+    sappimgui_setup();
     simgui_setup(&(simgui_desc_t){
         .logger.func = slog_func,
     });
@@ -34,13 +40,14 @@ static void init(void) {
     state.pass_action = (sg_pass_action){
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 1.0f, 0.0f, 1.0f, 1.0f }
+            .clear_value = { 0.0f, 0.0f, 1.0f, 1.0f }
         },
     };
 
     state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
         .width = 256,
         .height = 256,
+        .prescale = 2,
     });
 }
 
@@ -54,21 +61,32 @@ static void frame(void) {
 
 static void cleanup(void) {
     sfb_shutdown();
+    sappimgui_shutdown();
+    sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* ev) {
-    (void)ev;
+    sappimgui_track_event(ev);
+    simgui_handle_event(ev);
 }
 
 static void draw_ui(void) {
+    sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
         .delta_time = sapp_frame_duration(),
         .dpi_scale = sapp_dpi_scale(),
     });
+    if (igBeginMainMenuBar()) {
+        sgimgui_draw_menu("sokol-gfx");
+        sappimgui_draw_menu("sokol-app");
+        igEndMainMenuBar();
+    }
+    sgimgui_draw();
+    sappimgui_draw();
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
