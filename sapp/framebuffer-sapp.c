@@ -16,10 +16,15 @@
 #define SOKOL_APP_IMGUI_IMPL
 #include "sokol_app_imgui.h"
 
+#define FB_WIDTH (320)
+#define FB_HEIGHT (200)
+
 static struct {
     sg_pass_action pass_action;
     sfb_framebuffer fb;
 } state;
+
+static uint32_t pixels[FB_WIDTH][FB_HEIGHT];
 
 static void draw_ui(void);
 
@@ -44,16 +49,34 @@ static void init(void) {
         },
     };
 
+    // FIXME: use paletted format
     state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
-        .width = 256,
-        .height = 256,
+        .width = FB_WIDTH,
+        .height = FB_HEIGHT,
         .prescale = 2,
     });
 }
 
 static void frame(void) {
     draw_ui();
+
+    // update framebuffer
+    static size_t c = 0;
+    for (size_t y = 0; y < FB_HEIGHT; y++) {
+        for (size_t x = 0; x < FB_WIDTH; x++) {
+            pixels[x][y] = 0xFF000000 | (c & 255)<<16 | ((c*3) & 255)<<8 | ((c*23) & 0xFF);
+            c += 1;
+        }
+    }
+    c += 1;
+
+    // run sfb_update() outside any sokol-gfx pass when pixel, palette or cliprect changes
+    sfb_update(state.fb, &(sfb_update_desc){
+        .pixels = SG_RANGE(pixels),
+    });
+
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
+    sfb_render(state.fb);
     simgui_render();
     sg_end_pass();
     sg_commit();
