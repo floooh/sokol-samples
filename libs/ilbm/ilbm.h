@@ -19,6 +19,8 @@ typedef struct {
     bool cycle_backward;
     int low;        // low index in color palette
     int high;       // high index in color palette
+    double rate_sec;    // cycle rate in seconds
+    double rate_accum;  // curren rate acculumator
 } ilbm_color_range_t;
 
 typedef struct {
@@ -35,3 +37,4 @@ typedef struct {
 
 bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data);
 void ilbm_free(ilbm_t* ilbm);
+bool ilbm_color_cycle(ilbm_t* ilbm, double frame_duration_sec);

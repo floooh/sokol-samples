@@ -83,6 +83,7 @@ export const samples: SampleOptions[] = [
             'eye.iff',
             'gorilla.iff',
             'kingtut.iff',
+            'paintcan.iff',
             'space.iff',
             'venus.iff',
             'waterfall.iff',

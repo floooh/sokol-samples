@@ -110,7 +110,31 @@ static bool load_cmap(ilbm_t* ilbm) {
 }
 
 bool load_crng(ilbm_t* ilbm) {
-    return false;
+    assert(((uintptr_t)state.ptr & 1) == 0);
+    const size_t chunk_size = 8;
+    if (u32be() != chunk_size) return false;
+    if (ilbm->num_ranges >= ILBM_MAX_COLOR_RANGES) {
+        state.ptr += chunk_size;
+        return true;
+    }
+    int i = ilbm->num_ranges++;
+    ilbm_color_range_t* rp = &ilbm->ranges[i];
+    i16be(); // skip padding
+    rp->rate = i16be();
+    if (rp->rate > 0) {
+        rp->rate_sec = ((1.0 / 60.0) * 16384.0) / (double)rp->rate;
+    }
+    int16_t flags = i16be();
+    if (0 != (flags & 1)) {
+        if (0 != (flags & 2)) {
+            rp->cycle_backward = true;
+        } else {
+            rp->cycle_forward = true;
+        }
+    }
+    rp->low = u8();
+    rp->high = u8();
+    return true;
 }
 
 bool load_body(ilbm_t* ilbm) {
@@ -215,9 +239,9 @@ bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data) {
             case 'CMAP':
                 if (!load_cmap(ilbm)) return false;
                 break;
-            //case 'CRNG':
-            //    if (!load_crng(ilbm)) return false;
-            //    break;
+            case 'CRNG':
+                if (!load_crng(ilbm)) return false;
+                break;
             case 'BODY':
                 if (!load_body(ilbm)) return false;
                 break;
@@ -235,4 +259,39 @@ void ilbm_free(ilbm_t* ilbm) {
         free(ilbm->pixels.ptr);
     }
     memset(ilbm, 0, sizeof(ilbm_t));
+}
+
+bool ilbm_color_cycle(ilbm_t* ilbm, double frame_duration_sec) {
+    bool needs_update = false;
+    for (int i = 0; i < ilbm->num_ranges; i++) {
+        ilbm_color_range_t* r = &ilbm->ranges[i];
+        if (r->rate == 0) {
+            continue;
+        }
+        if (!(r->cycle_forward || r->cycle_backward)) {
+            continue;
+        }
+        if (r->low == r->high) {
+            continue;
+        }
+        r->rate_accum += frame_duration_sec;
+        while (r->rate_accum >= r->rate_sec) {
+            needs_update = true;
+            r->rate_accum -= r->rate_sec;
+            if (r->cycle_forward) {
+                uint32_t c = ilbm->colors[r->high];
+                for (uint8_t i = r->high; i > r->low; i--) {
+                    ilbm->colors[i] = ilbm->colors[i-1];
+                }
+                ilbm->colors[r->low] = c;
+            } else if (r->cycle_backward) {
+                uint32_t c = ilbm->colors[r->low];
+                for (uint8_t i = r->low; i < r->high; i++) {
+                    ilbm->colors[i] = ilbm->colors[i+1];
+                }
+                ilbm->colors[r->high] = c;
+            }
+        }
+    }
+    return needs_update;
 }
