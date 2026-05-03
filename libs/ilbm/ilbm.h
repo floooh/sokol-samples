@@ -10,7 +10,8 @@ typedef struct {
 } ilbm_range_t;
 
 #define ILBM_MAX_COLOR_RANGES (16)
-#define ILBM_MAX_PALETTE_COLORS (256)
+#define ILBM_MAX_BITPLANES (8)
+#define ILBM_MAX_PALETTE_COLORS (1 << ILBM_MAX_BITPLANES)
 
 typedef struct {
     int rate;       // 60 steps per second = (1<<14), 30 steps per second = (1<<13) etc...

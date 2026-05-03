@@ -23,15 +23,26 @@
 #define FB_HEIGHT (200)
 
 #define MAX_FILE_SIZE (128 * 1024)
-#define NUM_FILES (7)
+#define NUM_FILES (8)
 static const char* files[NUM_FILES] = {
+    "venus.iff",
     "celtic_woman.iff",
+    "eye.iff",
     "eiffel_tower.iff",
     "kingtut.iff",
     "space.iff",
-    "venus.iff",
     "waterfall.iff",
     "yacht.iff",
+};
+static const char* authors[NUM_FILES] = {
+    "Avril Harrison (1985)", // venus.iff
+    "Avril Harrison (1988)", // celtic_woman.iff
+    "Avril Harrison (1986)", // eye.iff
+    "Avril Harrison (1986)", // eiffel_tower.iff
+    "Avril Harrison (1985)", // kingtut.iff
+    "Unknown (1989)", // space.iff
+    "Unknown (1989)", // waterfall.iff
+    "Unknown (1989)", // yacht.iff
 };
 
 static struct {
@@ -87,17 +98,7 @@ static void init(void) {
 static void frame(void) {
     sfetch_dowork();
     draw_ui();
-
-    const bool fb_valid = state.fb.id != SFB_INVALID_ID;
-
-    // run sfb_update() outside any sokol-gfx pass when pixel, palette or cliprect changes
-    if (fb_valid) {
-        sfb_update(state.fb, &(sfb_update_desc){
-            .pixels = { .ptr = state.ilbm.pixels.ptr, .size = state.ilbm.pixels.size },
-            .palette = SG_RANGE(state.ilbm.colors),
-        });
-    }
-
+    const bool fb_valid = sfb_query_framebuffer_state(state.fb) == SFB_RESOURCESTATE_VALID;
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (fb_valid) {
         sfb_render(state.fb);
@@ -149,11 +150,11 @@ static void draw_ui(void) {
             if (igComboChar("Image", &state.ui.selected, files, IM_ARRAYSIZE(files))) {
                 fetch_async(files[state.ui.selected]);
             }
+            igText("Author: %s", authors[state.ui.selected]);
             igText("Width: %d", state.ilbm.width);
             igText("Height: %d", state.ilbm.height);
             igText("Colors: %d", state.ilbm.num_colors);
         }
-        igText("FIXME");
     }
     igEnd();
 }
@@ -172,25 +173,31 @@ static void fetch_async(const char* filename) {
 static void fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load.pending = false;
+        // NOTE: it's ok to call destroy functions with invalid handle
+        sfb_destroy_framebuffer(state.fb);
         ilbm_free(&state.ilbm);
         bool success = ilbm_load(&state.ilbm, (ilbm_range_t){
             .ptr = (void*)response->data.ptr,
             .size = response->data.size
         });
         if (success) {
-            // NOTE: it's ok to call destroy functions with invalid handle
-            sfb_destroy_framebuffer(state.fb);
             state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
                 .width = state.ilbm.width,
                 .height = state.ilbm.height,
                 .format = SFB_FORMAT_PALETTE8,
                 .prescale = 2,
             });
+            // NOTE: only need to call sfb_update when either the pixel data or the palette actually changes
+            sfb_update(state.fb, &(sfb_update_desc){
+                .pixels = { .ptr = state.ilbm.pixels.ptr, .size = state.ilbm.pixels.size },
+                .palette = SG_RANGE(state.ilbm.colors),
+            });
         } else {
-            state.load.pending = false;
+            state.load.failed = true;
         }
     } else if (response->failed) {
         state.load.pending = false;
+        state.load.failed = true;
     }
 }
 
