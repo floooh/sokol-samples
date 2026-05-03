@@ -155,6 +155,7 @@ bool load_body(ilbm_t* ilbm) {
     uint32_t chunk_size = u32be();
     const uint8_t* chunk_end = state.ptr + chunk_size;
 
+    // intermediate RLE decode buffer
     uint8_t* buf = calloc((size_t)body_size, 1);
 
     // RLE decode if needed
@@ -182,6 +183,7 @@ bool load_body(ilbm_t* ilbm) {
             }
         }
     } else {
+        // otherwise just copy the body as-is into the RLE-decode buffer
         size_t copy_size = (size_t)body_size;
         if ((state.ptr + copy_size) > state.end) {
             copy_size = (size_t)(state.end - state.ptr);
