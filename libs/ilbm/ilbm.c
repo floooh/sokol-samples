@@ -18,7 +18,11 @@ static struct {
 
 static uint32_t u32be(void) {
     if ((state.ptr + 4) <= state.end) {
-        return (*state.ptr++ << 24) | (*state.ptr++ << 16) | (*state.ptr++ << 8) | *state.ptr++;
+        uint8_t b0 = *state.ptr++;
+        uint8_t b1 = *state.ptr++;
+        uint8_t b2 = *state.ptr++;
+        uint8_t b3 = *state.ptr++;
+        return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
     } else {
         return 0;
     }
@@ -26,7 +30,10 @@ static uint32_t u32be(void) {
 
 static uint32_t rgb_u32(void) {
     if ((state.ptr + 3) <= state.end) {
-        return 0xFF000000 | (*state.ptr++) | (*state.ptr++ << 8) | (*state.ptr++ << 16);
+        uint8_t b0 = *state.ptr++;
+        uint8_t b1 = *state.ptr++;
+        uint8_t b2 = *state.ptr++;
+        return 0xFF000000 | b0 | (b1 << 8) | (b2 << 16);
     } else {
         return 0;
     }
@@ -34,7 +41,9 @@ static uint32_t rgb_u32(void) {
 
 static uint16_t u16be(void) {
     if ((state.ptr + 2) <= state.end) {
-        return (*state.ptr++ << 8) | *state.ptr++;
+        uint8_t b0 = *state.ptr++;
+        uint8_t b1 = *state.ptr++;
+        return (b0 << 8) | b1;
     } else {
         return 0;
     }
@@ -186,7 +195,7 @@ bool load_body(ilbm_t* ilbm) {
     const uint8_t* src = buf;
     for (int y = 0; y < ilbm->height; y++) {
         for (int plane = 0; plane < state.num_bitplanes; plane++) {
-            uint8_t* dst_row = ilbm->pixels.ptr + y * ilbm->width;
+            uint8_t* dst_row = (uint8_t*)ilbm->pixels.ptr + y * ilbm->width;
             int x = 0;
             for (int w = 0; w < row_num_words; w++) {
                 uint16_t word = (uint16_t)((src[0] << 8) | src[1]);
@@ -226,7 +235,7 @@ bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data) {
     assert(ilbm->pixels.ptr == 0);
 
     state.ptr = data.ptr;
-    state.end = data.ptr + data.size;
+    state.end = (uint8_t*)data.ptr + data.size;
 
     if (u32be() != 'FORM') return false;
     if (u32be() > data.size) return false;
@@ -280,14 +289,14 @@ bool ilbm_color_cycle(ilbm_t* ilbm, double frame_duration_sec) {
             r->rate_accum -= r->rate_sec;
             if (r->cycle_forward) {
                 uint32_t c = ilbm->colors[r->high];
-                for (uint8_t i = r->high; i > r->low; i--) {
-                    ilbm->colors[i] = ilbm->colors[i-1];
+                for (uint8_t ci = r->high; ci > r->low; ci--) {
+                    ilbm->colors[ci] = ilbm->colors[ci-1];
                 }
                 ilbm->colors[r->low] = c;
             } else if (r->cycle_backward) {
                 uint32_t c = ilbm->colors[r->low];
-                for (uint8_t i = r->low; i < r->high; i++) {
-                    ilbm->colors[i] = ilbm->colors[i+1];
+                for (uint8_t ci = r->low; ci < r->high; ci++) {
+                    ilbm->colors[ci] = ilbm->colors[ci+1];
                 }
                 ilbm->colors[r->high] = c;
             }

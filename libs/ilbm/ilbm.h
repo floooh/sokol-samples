@@ -17,8 +17,8 @@ typedef struct {
     int rate;       // 60 steps per second = (1<<14), 30 steps per second = (1<<13) etc...
     bool cycle_forward;
     bool cycle_backward;
-    int low;        // low index in color palette
-    int high;       // high index in color palette
+    uint8_t low;        // low index in color palette
+    uint8_t high;       // high index in color palette
     double rate_sec;    // cycle rate in seconds
     double rate_accum;  // curren rate acculumator
 } ilbm_color_range_t;
