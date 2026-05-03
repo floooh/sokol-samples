@@ -143,4 +143,8 @@ export function addLibs(b: Builder) {
         t.addSources(['ozzutil.cc', 'ozzutil.h']);
         t.addDependencies(['sokol', 'ozzanimation']);
     });
+    b.addTarget('ilbm', 'lib', (t) => {
+        t.setDir('libs/ilbm');
+        t.addSources(['ilbm.c', 'ilbm.h']);
+    })
 }
