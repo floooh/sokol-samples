@@ -1,6 +1,6 @@
 //------------------------------------------------------------------------------
 //  ilbm-sapp.c
-//  IFF ILBM loader, demonstrates sokol_framebuffer.h and sokol_letterbox.h.
+//  Simple IFF ILBM viewer, demonstrates sokol_framebuffer.h and sokol_letterbox.h.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -67,11 +67,11 @@ static bool allow_color_cyling[NUM_FILES] = {
 };
 
 static struct {
-    sg_pass_action pass_action;
     sfb_framebuffer fb;
     ilbm_t ilbm;
     struct {
         bool pending;
+        bool success;
         bool failed;
     } load;
     struct {
@@ -105,14 +105,6 @@ static void init(void) {
     sfb_setup(&(sfb_desc){
         .logger.func = slog_func,
     });
-
-    state.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
-        },
-    };
-
     // start loading the first IFF image
     fetch_async(files[0]);
 }
@@ -120,18 +112,19 @@ static void init(void) {
 static void frame(void) {
     sfetch_dowork();
     draw_ui();
-    const bool fb_valid = sfb_query_framebuffer_state(state.fb) == SFB_RESOURCESTATE_VALID;
-
-    if (fb_valid && state.ui.allow_color_cycling && ilbm_color_cycle(&state.ilbm, sapp_frame_duration())) {
+    if (state.load.success && state.ui.allow_color_cycling && ilbm_color_cycle(&state.ilbm, sapp_frame_duration())) {
         // color palette needs to be updated
         sfb_update(state.fb, &(sfb_update_desc){
+            // FIXME: should be possible to update palette without pixels
             .pixels = { .ptr = state.ilbm.pixels.ptr, .size = state.ilbm.pixels.size },
             .palette = SG_RANGE(state.ilbm.colors),
         });
     }
-
-    sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    if (fb_valid) {
+    sg_begin_pass(&(sg_pass){
+        .action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value.a = 1.0f },
+        .swapchain = sglue_swapchain()
+    });
+    if (state.load.success) {
         float aspect_w = (float)(state.ilbm.x_aspect * state.ilbm.width);
         float aspect_h = (float)(state.ilbm.y_aspect * state.ilbm.height);
         const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
@@ -202,6 +195,7 @@ static void draw_ui(void) {
 
 static void fetch_async(const char* filename) {
     state.load.pending = true;
+    state.load.success = false;
     state.load.failed = false;
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){
@@ -217,11 +211,11 @@ static void fetch_callback(const sfetch_response_t* response) {
         // NOTE: it's ok to call destroy functions with invalid handle
         sfb_destroy_framebuffer(state.fb);
         ilbm_free(&state.ilbm);
-        bool success = ilbm_load(&state.ilbm, (ilbm_range_t){
+        state.load.success = ilbm_load(&state.ilbm, (ilbm_range_t){
             .ptr = (void*)response->data.ptr,
             .size = response->data.size
         });
-        if (success) {
+        if (state.load.success) {
             state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
                 .width = state.ilbm.width,
                 .height = state.ilbm.height,
