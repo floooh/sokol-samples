@@ -132,8 +132,10 @@ static void frame(void) {
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (fb_valid) {
+        float aspect_w = (float)(state.ilbm.x_aspect * state.ilbm.width);
+        float aspect_h = (float)(state.ilbm.y_aspect * state.ilbm.height);
         const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
-            .content_aspect_ratio = (float)state.ilbm.y_aspect / (float)state.ilbm.x_aspect,
+            .content_aspect_ratio = aspect_w / aspect_h,
             .border = { .top = 26, .left = 10, .right = 10, .bottom = 10 },
         });
         sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
