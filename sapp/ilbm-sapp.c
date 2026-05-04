@@ -115,8 +115,6 @@ static void frame(void) {
     if (state.load.success && state.ui.allow_color_cycling && ilbm_color_cycle(&state.ilbm, sapp_frame_duration())) {
         // color palette needs to be updated
         sfb_update(state.fb, &(sfb_update_desc){
-            // FIXME: should be possible to update palette without pixels
-            .pixels = { .ptr = state.ilbm.pixels.ptr, .size = state.ilbm.pixels.size },
             .palette = SG_RANGE(state.ilbm.colors),
         });
     }
