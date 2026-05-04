@@ -28,6 +28,7 @@ typedef struct {
     int height;
     int x_aspect;
     int y_aspect;
+    float aspect_ratio; // computed from width, height, x_aspect and y_aspect
     int num_ranges;
     int num_colors;
     ilbm_color_range_t ranges[ILBM_MAX_COLOR_RANGES];

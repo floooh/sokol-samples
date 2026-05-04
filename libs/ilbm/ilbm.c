@@ -84,6 +84,7 @@ static bool load_bmhd(ilbm_t* ilbm) {
     ilbm->x_aspect = (int)u8();
     ilbm->y_aspect = (int)u8();
     if ((ilbm->x_aspect == 0) || (ilbm->y_aspect == 0)) return false;
+    ilbm->aspect_ratio = (float)(ilbm->width * ilbm->x_aspect) / (float)(ilbm->height * ilbm->y_aspect);
     state.page_width = i16be();
     state.page_height = i16be();
     assert(state.ptr == (start + chunk_size));

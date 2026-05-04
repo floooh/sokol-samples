@@ -105,7 +105,8 @@ static void init(void) {
     sfb_setup(&(sfb_desc){
         .logger.func = slog_func,
     });
-    // start loading the first IFF image
+    // start loading the first IFF image, look for sfetch_callback below
+    // to find the 'interesting part' (how to create the framebuffer object)
     fetch_async(files[0]);
 }
 
@@ -123,14 +124,15 @@ static void frame(void) {
         .swapchain = sglue_swapchain()
     });
     if (state.load.success) {
-        float aspect_w = (float)(state.ilbm.x_aspect * state.ilbm.width);
-        float aspect_h = (float)(state.ilbm.y_aspect * state.ilbm.height);
+        // apply viewport to keep image in a fixed aspect ratio
         const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
-            .content_aspect_ratio = aspect_w / aspect_h,
+            .content_aspect_ratio = state.ilbm.aspect_ratio,
             .border = { .top = 26, .left = 10, .right = 10, .bottom = 10 },
         });
         sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
+        // render the image framebuffer
         sfb_render(state.fb);
+        // restore viewport
         sg_apply_viewport(0, 0, sapp_width(), sapp_height(), true);
     }
     simgui_render();
@@ -214,13 +216,17 @@ static void fetch_callback(const sfetch_response_t* response) {
             .size = response->data.size
         });
         if (state.load.success) {
+            // create framebuffer in paletted mode, the prescale=2 is a
+            // good balance between 'too blurry' and 'too pixelated'
             state.fb = sfb_make_framebuffer(&(sfb_framebuffer_desc){
                 .width = state.ilbm.width,
                 .height = state.ilbm.height,
                 .format = SFB_FORMAT_PALETTE8,
                 .prescale = 2,
             });
-            // NOTE: only need to call sfb_update when either the pixel data or the palette actually changes
+            // initial update of the pixel and palette data, later this may
+            // be called during the frame when the palette needs to be updated
+            // for color cycling effects
             sfb_update(state.fb, &(sfb_update_desc){
                 .pixels = { .ptr = state.ilbm.pixels.ptr, .size = state.ilbm.pixels.size },
                 .palette = SG_RANGE(state.ilbm.colors),
