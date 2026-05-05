@@ -47,8 +47,7 @@ static void frame(void) {
     state.time = fmodf(state.time + (float)sapp_frame_duration(), 3600.0f);
     for (int y = 0; y < FB_HEIGHT; y++) {
         for (int x = 0; x < FB_WIDTH; x++) {
-            float time = state.time * 0.2f;
-            float t3 = time * 3.0f;
+            float t3 = state.time * 0.6f;
             vec2_t coord = vec2((float)(x * 2), (float)(y * 2));
             float color1 = (sinf(vm_dot(coord, vec2(sinf(t3), cosf(t3))) * 0.02f + t3) + 1.0f) * 0.5f;
             vec2_t center = vm_add(vec2(320.0f, 180.0f), vec2(320.0f * sinf(-t3), 180.0 * cosf(-t3)));
@@ -60,7 +59,8 @@ static void frame(void) {
             uint8_t ru8 = (uint8_t)(rf * 255.0f);
             uint8_t gu8 = (uint8_t)(gf * 255.0f);
             uint8_t bu8 = (uint8_t)(bf * 255.0f);
-            pixels[y][x] = 0xFF000000 | (bu8<<16) | (gu8<<8) | ru8;
+            // NOTE: alpha channel (a<<25) being zero doesn't matter for this demo
+            pixels[y][x] = (bu8<<16) | (gu8<<8) | ru8;
         }
     };
 
