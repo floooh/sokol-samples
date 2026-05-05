@@ -27,8 +27,8 @@
 #define MAX_FILE_SIZE (128 * 1024)
 #define NUM_FILES (10)
 static const char* files[NUM_FILES] = {
-    "venus.iff",
     "celtic_woman.iff",
+    "venus.iff",
     "eye.iff",
     "eiffel_tower.iff",
     "kingtut.iff",
