@@ -74,6 +74,7 @@ export const samples: SampleOptions[] = [
         jobs: [copy('data/texview', ['kodim05.basis', 'kodim07.basis', 'kodim17.basis', 'kodim20.basis', 'kodim23.basis' ])],
     },
     { name: 'letterbox', deps: ['imgui'] },
+    { name: 'framebuffer', ui: 'cc' },
     {
         name: 'ilbm',
         deps: ['imgui', 'ilbm', 'fileutil'],
