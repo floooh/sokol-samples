@@ -88,6 +88,16 @@ const assets = [
     "kodim20.basis",
     "kodim23.basis",
     "dice.qoi",
+    "celtic_woman.iff",
+    "eiffel_tower.iff",
+    "eye.iff",
+    "gorilla.iff",
+    "kingtut.iff",
+    "paintcan.iff",
+    "space.iff",
+    "venus.iff",
+    "waterfall.iff",
+    "yacht.iff",
 ];
 
 export function addWebPageCommand(c: Configurer) {
