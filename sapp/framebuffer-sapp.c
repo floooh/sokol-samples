@@ -59,8 +59,7 @@ static void frame(void) {
             uint8_t ru8 = (uint8_t)(rf * 255.0f);
             uint8_t gu8 = (uint8_t)(gf * 255.0f);
             uint8_t bu8 = (uint8_t)(bf * 255.0f);
-            // NOTE: alpha channel (a<<24) being zero doesn't matter for this demo
-            pixels[y][x] = (bu8<<16) | (gu8<<8) | ru8;
+            pixels[y][x] = 0xFF000000 | (bu8<<16) | (gu8<<8) | ru8;
         }
     };
 
