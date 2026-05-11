@@ -233,6 +233,8 @@ bool skip_chunk(void) {
     return true;
 }
 
+#define ILBM_FOURCC(a, b, c, d) ((a<<24)|(b<<16)|(c<<8)|(d))
+
 bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data) {
     assert(ilbm && data.ptr && (data.size > 0));
     assert(ilbm->pixels.ptr == 0);
@@ -240,21 +242,21 @@ bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data) {
     state.ptr = data.ptr;
     state.end = (uint8_t*)data.ptr + data.size;
 
-    if (u32be() != 'FORM') return false;
+    if (u32be() != ILBM_FOURCC('F','O','R','M')) return false;
     if (u32be() > data.size) return false;
-    if (u32be() != 'ILBM') return false;
+    if (u32be() != ILBM_FOURCC('I','L','B','M')) return false;
     while (state.ptr < state.end) {
         switch (u32be()) {
-            case 'BMHD':
+            case ILBM_FOURCC('B','M','H','D'):
                 if (!load_bmhd(ilbm)) return false;
                 break;
-            case 'CMAP':
+            case ILBM_FOURCC('C','M','A','P'):
                 if (!load_cmap(ilbm)) return false;
                 break;
-            case 'CRNG':
+            case ILBM_FOURCC('C','R','N','G'):
                 if (!load_crng(ilbm)) return false;
                 break;
-            case 'BODY':
+            case ILBM_FOURCC('B','O','D','Y'):
                 if (!load_body(ilbm)) return false;
                 break;
             default:
