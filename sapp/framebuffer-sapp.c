@@ -16,6 +16,7 @@
 
 #define FB_WIDTH (320)
 #define FB_HEIGHT (256)
+#define FB_PI (VECMATH_PI)
 
 static struct {
     sfb_framebuffer fb;
@@ -50,11 +51,11 @@ static void frame(void) {
             float t3 = state.time * 0.6f;
             vec2_t coord = vec2((float)(x * 2), (float)(y * 2));
             float color1 = (sinf(vm_dot(coord, vec2(sinf(t3), cosf(t3))) * 0.02f + t3) + 1.0f) * 0.5f;
-            vec2_t center = vm_add(vec2(320.0f, 180.0f), vec2(320.0f * sinf(-t3), 180.0 * cosf(-t3)));
+            vec2_t center = vm_add(vec2(320.0f, 180.0f), vec2(320.0f * sinf(-t3), 180.0f * cosf(-t3)));
             float color2 = (cosf(vm_length(vm_sub(coord, center)) * 0.03f) + 1.0f) * 0.5f;
             float color = color1 + color2;
-            float rf = (cosf(M_PI * color + t3) + 1.0f) * 0.5f;
-            float gf = (sinf(M_PI * color + t3) + 1.0f) * 0.5f;
+            float rf = (cosf(FB_PI * color + t3) + 1.0f) * 0.5f;
+            float gf = (sinf(FB_PI * color + t3) + 1.0f) * 0.5f;
             float bf = (sinf(t3) + 1.0f) * 0.5f;
             uint8_t ru8 = (uint8_t)(rf * 255.0f);
             uint8_t gu8 = (uint8_t)(gf * 255.0f);
