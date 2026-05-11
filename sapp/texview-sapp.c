@@ -207,7 +207,7 @@ static void ui_draw(void) {
 }
 
 static void fetch_async(const char* filename) {
-    state.load.pending = false;
+    state.load.pending = true;
     state.load.failed = false;
     char path_buf[512];
     sfetch_send(&(sfetch_request_t){

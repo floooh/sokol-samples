@@ -74,6 +74,23 @@ export const samples: SampleOptions[] = [
         jobs: [copy('data/texview', ['kodim05.basis', 'kodim07.basis', 'kodim17.basis', 'kodim20.basis', 'kodim23.basis' ])],
     },
     { name: 'letterbox', deps: ['imgui'] },
+    { name: 'framebuffer', ui: 'cc' },
+    {
+        name: 'ilbm',
+        deps: ['imgui', 'ilbm', 'fileutil'],
+        jobs: [copy('data/iff', [
+            'celtic_woman.iff',
+            'eiffel_tower.iff',
+            'eye.iff',
+            'gorilla.iff',
+            'kingtut.iff',
+            'paintcan.iff',
+            'space.iff',
+            'venus.iff',
+            'waterfall.iff',
+            'yacht.iff'
+        ])],
+    },
     { name: 'sgl', ui: 'cc' },
     { name: 'sgl-lines', ui: 'cc' },
     { name: 'sgl-points', ui: 'cc' },
