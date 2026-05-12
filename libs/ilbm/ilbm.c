@@ -18,10 +18,10 @@ static struct {
 
 static uint32_t u32be(void) {
     if ((state.ptr + 4) <= state.end) {
-        uint8_t b0 = *state.ptr++;
-        uint8_t b1 = *state.ptr++;
-        uint8_t b2 = *state.ptr++;
-        uint8_t b3 = *state.ptr++;
+        uint32_t b0 = *state.ptr++;
+        uint32_t b1 = *state.ptr++;
+        uint32_t b2 = *state.ptr++;
+        uint32_t b3 = *state.ptr++;
         return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
     } else {
         return 0;
@@ -30,9 +30,9 @@ static uint32_t u32be(void) {
 
 static uint32_t rgb_u32(void) {
     if ((state.ptr + 3) <= state.end) {
-        uint8_t b0 = *state.ptr++;
-        uint8_t b1 = *state.ptr++;
-        uint8_t b2 = *state.ptr++;
+        uint32_t b0 = *state.ptr++;
+        uint32_t b1 = *state.ptr++;
+        uint32_t b2 = *state.ptr++;
         return 0xFF000000 | b0 | (b1 << 8) | (b2 << 16);
     } else {
         return 0;
@@ -41,8 +41,8 @@ static uint32_t rgb_u32(void) {
 
 static uint16_t u16be(void) {
     if ((state.ptr + 2) <= state.end) {
-        uint8_t b0 = *state.ptr++;
-        uint8_t b1 = *state.ptr++;
+        uint32_t b0 = *state.ptr++;
+        uint32_t b1 = *state.ptr++;
         return (b0 << 8) | b1;
     } else {
         return 0;
@@ -233,7 +233,7 @@ bool skip_chunk(void) {
     return true;
 }
 
-#define ILBM_FOURCC(a, b, c, d) ((a<<24)|(b<<16)|(c<<8)|(d))
+#define ILBM_FOURCC(a, b, c, d) ((((uint32_t)a)<<24)|(((uint32_t)b)<<16)|(((uint32_t)c)<<8)|((uint32_t)d))
 
 bool ilbm_load(ilbm_t* ilbm, ilbm_range_t data) {
     assert(ilbm && data.ptr && (data.size > 0));
