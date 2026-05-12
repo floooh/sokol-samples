@@ -64,7 +64,7 @@ static void init(void) {
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("twemoji.ttf", buf, sizeof(buf)),
-        .buffer = { .ptr = file_buffers[1], .size = sizeof(file_buffers[1]) },
+        .buffer = { .ptr = file_buffers[2], .size = sizeof(file_buffers[2]) },
         .callback = twemoji_callback,
     });
 }

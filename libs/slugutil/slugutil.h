@@ -22,12 +22,12 @@ typedef struct {
 } slug_glyph_t;
 
 typedef struct {
-    int32_t glyph_id;
+    uint16_t glyph_id;
     uint16_t palette_index;
 } slug_colr_layer_t;
 
 typedef struct {
-    int32_t key;
+    uint16_t glyph_id;
     uint16_t first_layer;
     uint16_t num_layers;
 } slug_colr_base_t;
@@ -61,7 +61,6 @@ typedef struct {
         slug_colr_layer_t* ptr;
         int num;
     } colr_layers;
-    slug_range_t data;
 } slug_font_t;
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data);
