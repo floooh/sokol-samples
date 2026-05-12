@@ -128,6 +128,13 @@ export const samples: SampleOptions[] = [
         deps: ['fileutil'],
         jobs: [copy('data', ['DroidSansJapanese.ttf', 'DroidSerif-Bold.ttf', 'DroidSerif-Italic.ttf', 'DroidSerif-Regular.ttf'])],
     },
+    {
+        name: 'slug',
+        ui: 'cc',
+        shd: true,
+        deps: ['fileutil', 'slugutil'],
+        jobs: [copy('data', ['Cairo.ttf', 'lucide.ttf', 'twemoji.ttf'])],
+    },
     { name: 'modplay', deps: ['libmodplug'], jobs: [embed('data', 'mods.h', ['disco_feva_baby.s3m'])] },
     { name: 'restart', shd: true, deps: ['libmodplug', 'fileutil', 'stb'], jobs: [copy('data', ['baboon.png', 'comsi.s3m'])] },
     {
