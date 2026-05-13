@@ -27,8 +27,6 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
         slug_unload_font(font);
         return false;
     }
-
-
     font->valid = true;
     return true;
 }
@@ -44,6 +42,9 @@ void slug_unload_font(slug_font_t* font) {
     if (font->cpal_colors.ptr) {
         free(font->cpal_colors.ptr);
     }
+    if (font->colr_bases.hashmap) {
+        free(font->colr_bases.hashmap);
+    }
     if (font->colr_bases.ptr) {
         free(font->colr_bases.ptr);
     }
@@ -54,11 +55,11 @@ void slug_unload_font(slug_font_t* font) {
 }
 
 
-uint32_t make_tag(char a, char b, char c, char d) {
+static uint32_t make_tag(char a, char b, char c, char d) {
     return (a<<24) | (b<<16) | (c<<8) | d;
 }
 
-uint16_t read_u16be(const slug_range_t* data, size_t offset) {
+static uint16_t read_u16be(const slug_range_t* data, size_t offset) {
     assert((offset + sizeof(uint16_t)) <= data->size);
     const uint8_t* p = (uint8_t*)data->ptr;
     uint32_t b0 = p[offset];
@@ -66,7 +67,7 @@ uint16_t read_u16be(const slug_range_t* data, size_t offset) {
     return (b0<<8) | b1;
 }
 
-uint32_t read_u32be(const slug_range_t* data, size_t offset) {
+static uint32_t read_u32be(const slug_range_t* data, size_t offset) {
     assert((offset + sizeof(uint32_t)) <= data->size);
     const uint8_t* p = (uint8_t*)data->ptr;
     uint32_t b0 = p[offset];
@@ -76,7 +77,7 @@ uint32_t read_u32be(const slug_range_t* data, size_t offset) {
     return (b0<<24) | (b1<<16) | (b2<<8) | b3;
 }
 
-int find_otf_table(const slug_range_t* data, uint32_t tag) {
+static int find_otf_table(const slug_range_t* data, uint32_t tag) {
     if (data->size < 12) {
         return -1;
     }
@@ -92,6 +93,22 @@ int find_otf_table(const slug_range_t* data, uint32_t tag) {
         }
     }
     return -1;
+}
+
+static int hashmap_cmp(const void* a, const void* b) {
+    const slug_hashmap_item_t* pa = (slug_hashmap_item_t*)a;
+    const slug_hashmap_item_t* pb = (slug_hashmap_item_t*)b;
+    if (pa->key < pb->key) {
+        return -1;
+    } else if (pa->key > pb->key) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void sort_hashmap(slug_hashmap_item_t* items, size_t num_items) {
+    qsort(items, num_items, sizeof(slug_hashmap_item_t), hashmap_cmp);
 }
 
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
@@ -117,14 +134,18 @@ static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
     int num_layers = (int)read_u16be(data, table_offset + 12);
     font->colr_bases.num = num_base_glyphs;
     font->colr_bases.ptr = calloc((size_t)num_base_glyphs, sizeof(slug_colr_base_t));
+    font->colr_bases.hashmap = calloc((size_t)num_base_glyphs, sizeof(slug_hashmap_item_t));
     for (int i = 0; i < num_base_glyphs; i++) {
         slug_colr_base_t* ptr = &font->colr_bases.ptr[i];
+        slug_hashmap_item_t* hashmap_item = &font->colr_bases.hashmap[i];
         int offset = offset_base + i * 6; // each record is 6 bytes
         //[glyphID: u16, firstLayerIndex: u16, numLayers: u16]
-        ptr->glyph_id = read_u16be(data, offset);
+        hashmap_item->key = read_u16be(data, offset); // glyph_id
+        hashmap_item->index = i;
         ptr->first_layer = read_u16be(data, offset + 2);
         ptr->num_layers = read_u16be(data, offset + 4);
     }
+    sort_hashmap(font->colr_bases.hashmap,(size_t)num_base_glyphs);
     font->colr_layers.num = num_layers;
     font->colr_layers.ptr = calloc((size_t)num_layers, sizeof(slug_colr_layer_t));
     for (int i = 0; i < num_layers; i++) {

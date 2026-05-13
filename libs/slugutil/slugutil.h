@@ -27,10 +27,14 @@ typedef struct {
 } slug_colr_layer_t;
 
 typedef struct {
-    uint16_t glyph_id;
     uint16_t first_layer;
     uint16_t num_layers;
 } slug_colr_base_t;
+
+typedef struct {
+    uint16_t key;
+    int index;
+} slug_hashmap_item_t;
 
 typedef struct {
     bool valid;
@@ -54,8 +58,9 @@ typedef struct {
         int num;
     } cpal_colors;
     struct {
-        slug_colr_base_t* ptr;
         int num;
+        slug_colr_base_t* ptr;
+        slug_hashmap_item_t* hashmap; // keys are 'glyph_id'
     } colr_bases;
     struct {
         slug_colr_layer_t* ptr;
