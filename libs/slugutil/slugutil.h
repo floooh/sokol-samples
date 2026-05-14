@@ -77,7 +77,7 @@ typedef struct {
         sg_view tex_view;
         int height;
     } band;
-    sg_color* cpal_colors;              // managed via stb_ds
+    vec4_t* cpal_colors;              // managed via stb_ds
     slug_colr_base_t* colr_bases;       // managed via stb_ds
     slug_colr_layer_t* colr_layers;    // managed via stb_ds;
 } slug_font_t;

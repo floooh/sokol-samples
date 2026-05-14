@@ -11,11 +11,21 @@
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
+typedef struct { uint32_t x, y, z, w; } uvec4_t;
+
+typedef struct {
+    vec4_t* curve_pixels;     // managed by stb_ds
+    int curve_height;
+    uvec4_t* band_pixels;     // managed by stb_ds
+    int band_height;
+} pack_textures_t;
+
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data);
 static bool parse_cpal(slug_font_t* font, const slug_range_t* data);
 static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float scale, slug_glyph_build_t* out);
 static void build_bands(slug_glyph_build_t* glyph);
 static void free_build_glyph(slug_glyph_build_t* glyph);
+static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs);
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
     assert(font);
@@ -47,6 +57,10 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
         build_bands(&build_glyphs[i]);
     }
 
+    pack_textures_t res = pack_textures(build_glyphs, arrlen(build_glyphs));
+
+    arrfree(res.curve_pixels);
+    arrfree(res.band_pixels);
     for (int i = 0; i < arrlen(build_glyphs); i++) {
         free_build_glyph(&build_glyphs[i]);
     }
@@ -199,11 +213,11 @@ static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
     arrsetlen(font->cpal_colors, count);
     for (int i = 0; i < count; i++) {
         const uint8_t* src = (uint8_t*)data->ptr + color_offset + i * 4;
-        sg_color* dst = &font->cpal_colors[i];
-        dst->b = ((float)*src++) / 255.0f;
-        dst->g = ((float)*src++) / 255.0f;
-        dst->r = ((float)*src++) / 255.0f;
-        dst->a = ((float)*src) / 255.0f;
+        vec4_t* dst = &font->cpal_colors[i];
+        dst->z = ((float)*src++) / 255.0f;
+        dst->y = ((float)*src++) / 255.0f;
+        dst->x = ((float)*src++) / 255.0f;
+        dst->w = ((float)*src) / 255.0f;
     }
     return true;
 }
@@ -401,4 +415,184 @@ static void build_bands(slug_glyph_build_t* glyph) {
     }
     qsort(glyph->horizontal_bands, arrlen(glyph->horizontal_bands), sizeof(slug_band_entry_t), band_cmp);
     qsort(glyph->vertical_bands, arrlen(glyph->vertical_bands), sizeof(slug_band_entry_t), band_cmp);
+}
+
+static void pad_to_row_curve_pixels(pack_textures_t* res, int needed) {
+    int curlen = arrlen(res->curve_pixels);
+    int column = curlen % SLUG_TEX_WIDTH;
+    if ((column + needed) > SLUG_TEX_WIDTH) {
+        arrsetlen(res->curve_pixels, curlen + SLUG_TEX_WIDTH - column);
+        int newlen = arrlen(res->curve_pixels);
+        for (int i = curlen; i < newlen; i++) {
+            res->curve_pixels[i] = (vec4_t){0};
+        }
+    }
+}
+
+static void finalize_curve_pixels(pack_textures_t* res) {
+    int cur_size = arrlen(res->curve_pixels);
+    int new_size = 0;
+    if (cur_size == 0) {
+        arrsetlen(res->curve_pixels, SLUG_TEX_WIDTH);
+        new_size = arrlen(res->curve_pixels);
+        res->curve_height = 1;
+    } else {
+        res->curve_height = (arrlen(res->curve_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
+        arrsetlen(res->curve_pixels, res->curve_height * SLUG_TEX_WIDTH);
+        new_size = arrlen(res->curve_pixels);
+    }
+    for (int i = cur_size; i < new_size; i++) {
+        res->curve_pixels[i] = (vec4_t){0};
+    }
+}
+
+static void pad_to_row_band_pixels(pack_textures_t* res, int needed) {
+    int curlen = arrlen(res->band_pixels);
+    int column = curlen % SLUG_TEX_WIDTH;
+    if ((column + needed) > SLUG_TEX_WIDTH) {
+        arrsetlen(res->band_pixels, curlen + SLUG_TEX_WIDTH - column);
+        int newlen = arrlen(res->band_pixels);
+        for (int i = curlen; i < newlen; i++) {
+            res->band_pixels[i] = (uvec4_t){0};
+        }
+    }
+}
+
+static void finalize_band_pixels(pack_textures_t* res) {
+    int cur_size = arrlen(res->band_pixels);
+    int new_size = 0;
+    if (cur_size == 0) {
+        arrsetlen(res->band_pixels, SLUG_TEX_WIDTH);
+        new_size = arrlen(res->band_pixels);
+        res->band_height = 1;
+    } else {
+        res->band_height = (arrlen(res->band_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
+        arrsetlen(res->band_pixels, res->band_height * SLUG_TEX_WIDTH);
+        new_size = arrlen(res->band_pixels);
+    }
+    for (int i = cur_size; i < new_size; i++) {
+        res->band_pixels[i] = (uvec4_t){0};
+    }
+}
+
+static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec4_t* pixels, int glyph_start, int header_offset, int* write_offset) {
+    // Write headers: each band stores (count, data_offset) where data_offset
+    // is relative to glyph_start, matching how the shader indexes into the texture.
+    int data_offset = *write_offset;
+    for (int band_index = 0; band_index < arrlen(bands); band_index++) {
+        slug_band_entry_t* band = bands[band_index];
+        uvec4_t pixel = { arrlen(band), (uint32_t)data_offset, 0, 0 };
+        pixels[glyph_start + header_offset + band_index] = pixel;
+        data_offset += arrlen(band);
+    }
+	// Write curve references at the offsets declared above
+    data_offset = *write_offset;
+    for (int band_index = 0; band_index < arrlen(bands); band_index++) {
+        slug_band_entry_t* band = bands[band_index];
+        for (int entry_index = 0; entry_index < arrlen(band); entry_index++) {
+            slug_band_entry_t* entry = &band[entry_index];
+            slug_curve_t* curve = &curves[entry->curve_index];
+            uvec4_t pixel = { curve->texture[0], curve->texture[1], 0, 0 };
+            pixels[glyph_start + data_offset] = pixel;
+            data_offset += 1;
+        }
+    }
+    *write_offset = data_offset;
+}
+
+static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs) {
+    pack_textures_t res = {0};
+
+	// Count how many texels we'll need so we can reserve upfront.
+	// This avoids repeated realloc+copy as the dynamic arrays grow.
+	int estimated_curve_size = 0;
+	int estimated_band_size = 0;
+    for (int glyph_index = 0; glyph_index < num_glyphs; glyph_index++) {
+        slug_glyph_build_t* glyph = &glyphs[glyph_index];
+		// Each contour needs (count + 1) curve texels:
+		//   count = number of bezier curves in this contour
+		//   +1 for the shared endpoint texel
+        for (int contour_index = 0; contour_index < arrlen(glyph->contours); contour_index++) {
+            slug_contour_range_t* contour = &glyph->contours[contour_index];
+            estimated_curve_size += contour->count + 1;
+        }
+        int num_h = arrlen(glyph->horizontal_bands);
+        int num_v = arrlen(glyph->vertical_bands);
+        if ((num_h == 0) && (num_v == 0)) {
+            continue;
+        }
+        // Band data per glyph:
+		//   num_h + num_v = one header texel per band
+		//   + sum of all curve references in each band
+		int band_size = num_h + num_v;
+        for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
+            band_size += arrlen(glyph->horizontal_bands[i]);
+        }
+        for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
+            band_size += arrlen(glyph->vertical_bands[i]);
+        }
+		estimated_band_size += band_size;
+    }
+    arrsetcap(res.curve_pixels, (estimated_curve_size * 6) / 5);
+    arrsetcap(res.band_pixels, (estimated_band_size * 6) / 5);
+
+    for (int glyph_index = 0; glyph_index < num_glyphs; glyph_index++) {
+        slug_glyph_build_t* glyph = &glyphs[glyph_index];
+        // Pack curves into texture, recording each curve's texture coordinates
+        for (int contour_index = 0; contour_index < arrlen(glyph->contours); contour_index++) {
+            slug_contour_range_t* contour = &glyph->contours[contour_index];
+            int entries_needed = contour->count + 1;
+            pad_to_row_curve_pixels(&res, entries_needed);
+            for (int i = 0; i < contour->count; i++) {
+                slug_curve_t* curve = &glyph->curves[contour->start + i];
+                int pixel_index = arrlen(res.curve_pixels);
+                arrput(res.curve_pixels, vec4(curve->p[0].x, curve->p[0].y, curve->p[1].x, curve->p[1].y));
+                curve->texture[0] = (uint32_t)(pixel_index % SLUG_TEX_WIDTH);
+                curve->texture[1] = (uint32_t)(pixel_index / SLUG_TEX_WIDTH);
+            }
+            slug_curve_t* last_curve = &glyph->curves[contour->start + contour->count - 1];
+            arrput(res.curve_pixels, vec4(last_curve->p[2].x, last_curve->p[2].y, 0.0f, 0.0f));
+        }
+
+		// Pack band lookup tables into texture, referencing the curve coords set above
+        int num_h_bands = arrlen(glyph->horizontal_bands);
+        int num_v_bands = arrlen(glyph->vertical_bands);
+        if ((num_h_bands == 0) && (num_v_bands == 0)) {
+            continue;
+        }
+        int header_size = num_h_bands + num_v_bands;
+        pad_to_row_band_pixels(&res, header_size);
+
+        int glyph_start = arrlen(res.band_pixels);
+        glyph->glyph_loc[0] = (int32_t)glyph_start % SLUG_TEX_WIDTH;
+        glyph->glyph_loc[1] = (int32_t)glyph_start / SLUG_TEX_WIDTH;
+
+        int total_entries = header_size;
+        for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
+            total_entries += arrlen(glyph->horizontal_bands[i]);
+        }
+        for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
+            total_entries += arrlen(glyph->vertical_bands[i]);
+        }
+        arrsetlen(res.band_pixels, glyph_start + total_entries);
+
+        int write_offset = header_size;
+        write_band_set(
+            glyph->horizontal_bands,
+            glyph->curves,
+            res.band_pixels,
+            glyph_start,
+            0,
+            &write_offset);
+        write_band_set(
+            glyph->vertical_bands,
+            glyph->curves,
+            res.band_pixels,
+            glyph_start,
+            num_h_bands,
+            &write_offset);
+    }
+    finalize_curve_pixels(&res);
+    finalize_band_pixels(&res);
+    return res;
 }
