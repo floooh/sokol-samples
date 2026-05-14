@@ -47,7 +47,7 @@ static void init(void) {
     });
 
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.1f, 0.1f, 0.1f, 1.0f } },
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.1f, 1.0f, 1.0f } },
     };
 
     // start loading fonts

@@ -1,9 +1,39 @@
 #include "sokol_gfx.h"
 #include "stb_truetype.h"
 #include <stdint.h>
+#define VECMATH_GENERICS
+#include "../vecmath/vecmath.h"
 
 #define SLUG_TEX_WIDTH (4096)
 #define SLUG_MAX_BANDS (16)
+
+typedef struct {
+    vec2_t p[3];
+    uint32_t texture[2];
+} slug_curve_t;
+
+typedef struct {
+    int start;
+    int count;
+} slug_contour_range_t;
+
+typedef struct {
+    int curve_index;
+    float sort_key;
+} slug_band_entry_t;
+
+typedef struct {
+    slug_curve_t* curves;           // managed via stb_ds
+    slug_contour_range_t* contours; // managed via stb_ds
+    float bbox[4];
+    float advance;
+    float lsb;
+    slug_band_entry_t* horizontal_bands;    // managed via stb_ds
+    slug_band_entry_t* vertical_bands;      // managed via stb_ds
+    vec2_t band_scale;
+    vec2_t band_offset;
+    int32_t glyph_loc[2];
+} slug_glyph_build_t;
 
 typedef struct {
     const void* ptr;
@@ -16,8 +46,8 @@ typedef struct {
     float lsb;
     float max_band_x;
     float max_band_y;
-    float band_scale[2];
-    float band_offset[2];
+    vec2_t band_scale;
+    vec2_t band_offset;
     int glyph_loc[2];
 } slug_glyph_t;
 
@@ -27,21 +57,15 @@ typedef struct {
 } slug_colr_layer_t;
 
 typedef struct {
+    uint16_t glyph_id;      // this also serves as hashmap key
     uint16_t first_layer;
     uint16_t num_layers;
+    uint16_t _pad;
 } slug_colr_base_t;
 
 typedef struct {
-    uint16_t key;
-    int index;
-} slug_hashmap_item_t;
-
-typedef struct {
     bool valid;
-    struct {
-        slug_glyph_t* ptr;
-        int num;
-    } glyphs;
+    slug_glyph_t* glyphs;   // managed via stb_ds
     stbtt_fontinfo info;
     struct {
         sg_image img;
@@ -53,19 +77,9 @@ typedef struct {
         sg_view tex_view;
         int height;
     } band;
-    struct {
-        sg_color* ptr;
-        int num;
-    } cpal_colors;
-    struct {
-        int num;
-        slug_colr_base_t* ptr;
-        slug_hashmap_item_t* hashmap; // keys are 'glyph_id'
-    } colr_bases;
-    struct {
-        slug_colr_layer_t* ptr;
-        int num;
-    } colr_layers;
+    sg_color* cpal_colors;              // managed via stb_ds
+    slug_colr_base_t* colr_bases;       // managed via stb_ds
+    slug_colr_layer_t* colr_layers;    // managed via stb_ds;
 } slug_font_t;
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data);

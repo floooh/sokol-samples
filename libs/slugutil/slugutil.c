@@ -1,9 +1,20 @@
+//------------------------------------------------------------------------------
+//  Slug utility functions.
+//  NOTE: memory management during font loading is *really* unoptimized.
+//
+//  PS: should the font processing actually be moved into an offline tool?
+//------------------------------------------------------------------------------
+
 #include "slugutil.h"
 #include <assert.h>
 #include <stdlib.h>
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data);
 static bool parse_cpal(slug_font_t* font, const slug_range_t* data);
+static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float scale, slug_glyph_build_t* out);
+static void free_build_glyph(slug_glyph_build_t* glyph);
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
     assert(font);
@@ -27,6 +38,17 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
         slug_unload_font(font);
         return false;
     }
+
+    slug_glyph_build_t* build_glyphs = 0;
+    arrsetlen(build_glyphs, font->info.numGlyphs);
+    for (int i = 0; i < arrlen(build_glyphs); i++) {
+        init_build_glyph(&font->info, i, truetype_scale, &build_glyphs[i]);
+    }
+
+    for (int i = 0; i < arrlen(build_glyphs); i++) {
+        free_build_glyph(&build_glyphs[i]);
+    }
+    arrfree(build_glyphs);
     font->valid = true;
     return true;
 }
@@ -36,21 +58,10 @@ void slug_unload_font(slug_font_t* font) {
     sg_destroy_view(font->curve.tex_view);
     sg_destroy_image(font->band.img);
     sg_destroy_view(font->band.tex_view);
-    if (font->glyphs.ptr) {
-        free(font->glyphs.ptr);
-    }
-    if (font->cpal_colors.ptr) {
-        free(font->cpal_colors.ptr);
-    }
-    if (font->colr_bases.hashmap) {
-        free(font->colr_bases.hashmap);
-    }
-    if (font->colr_bases.ptr) {
-        free(font->colr_bases.ptr);
-    }
-    if (font->colr_layers.ptr) {
-        free(font->colr_layers.ptr);
-    }
+    arrfree(font->glyphs);
+    arrfree(font->cpal_colors);
+    arrfree(font->colr_bases);
+    arrfree(font->colr_layers);
     *font = (slug_font_t){0};
 }
 
@@ -95,20 +106,16 @@ static int find_otf_table(const slug_range_t* data, uint32_t tag) {
     return -1;
 }
 
-static int hashmap_cmp(const void* a, const void* b) {
-    const slug_hashmap_item_t* pa = (slug_hashmap_item_t*)a;
-    const slug_hashmap_item_t* pb = (slug_hashmap_item_t*)b;
-    if (pa->key < pb->key) {
+static int colr_base_cmp(const void* a, const void* b) {
+    const slug_colr_base_t* pa = (slug_colr_base_t*)a;
+    const slug_colr_base_t* pb = (slug_colr_base_t*)b;
+    if (pa->glyph_id < pb->glyph_id) {
         return -1;
-    } else if (pa->key > pb->key) {
+    } else if (pa->glyph_id > pb->glyph_id) {
         return 1;
     } else {
         return 0;
     }
-}
-
-static void sort_hashmap(slug_hashmap_item_t* items, size_t num_items) {
-    qsort(items, num_items, sizeof(slug_hashmap_item_t), hashmap_cmp);
 }
 
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
@@ -118,38 +125,34 @@ static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
         return true;
     }
     uint16_t version = read_u16be(data, table_offset);
-	// dont support COLRv1
+    // dont support COLRv1
     if (version != 0) {
         return false;
     }
-	//Table header (14 bytes from table start):
-	// 	Offset +0:  u16 version               (must be 0 for COLRv0)
-	// 	Offset +2:  u16 numBaseGlyphRecords
-	// 	Offset +4:  u32 offsetBaseGlyphRecord  (from table start)
-	// 	Offset +8:  u32 offsetLayerRecord      (from table start)
-	// 	Offset +12: u16 numLayerRecords
+    //Table header (14 bytes from table start):
+    // 	Offset +0:  u16 version               (must be 0 for COLRv0)
+    // 	Offset +2:  u16 numBaseGlyphRecords
+    // 	Offset +4:  u32 offsetBaseGlyphRecord  (from table start)
+    // 	Offset +8:  u32 offsetLayerRecord      (from table start)
+    // 	Offset +12: u16 numLayerRecords
     int num_base_glyphs = (int)read_u16be(data, table_offset + 2);
     int offset_base = table_offset + (int)read_u32be(data, table_offset + 4);
     int offset_layer = table_offset + (int)read_u32be(data, table_offset + 8);
     int num_layers = (int)read_u16be(data, table_offset + 12);
-    font->colr_bases.num = num_base_glyphs;
-    font->colr_bases.ptr = calloc((size_t)num_base_glyphs, sizeof(slug_colr_base_t));
-    font->colr_bases.hashmap = calloc((size_t)num_base_glyphs, sizeof(slug_hashmap_item_t));
+    arrsetlen(font->colr_bases, num_base_glyphs);
     for (int i = 0; i < num_base_glyphs; i++) {
-        slug_colr_base_t* ptr = &font->colr_bases.ptr[i];
-        slug_hashmap_item_t* hashmap_item = &font->colr_bases.hashmap[i];
+        slug_colr_base_t* ptr = &font->colr_bases[i];
         int offset = offset_base + i * 6; // each record is 6 bytes
         //[glyphID: u16, firstLayerIndex: u16, numLayers: u16]
-        hashmap_item->key = read_u16be(data, offset); // glyph_id
-        hashmap_item->index = i;
+        ptr->glyph_id = read_u16be(data, offset);
         ptr->first_layer = read_u16be(data, offset + 2);
         ptr->num_layers = read_u16be(data, offset + 4);
+        ptr->_pad = 0;
     }
-    sort_hashmap(font->colr_bases.hashmap,(size_t)num_base_glyphs);
-    font->colr_layers.num = num_layers;
-    font->colr_layers.ptr = calloc((size_t)num_layers, sizeof(slug_colr_layer_t));
+    qsort(font->colr_bases, arrlen(font->colr_bases), sizeof(slug_colr_base_t), colr_base_cmp);
+    arrsetlen(font->colr_layers, num_layers);
     for (int i = 0; i < num_layers; i++) {
-        slug_colr_layer_t* ptr = &font->colr_layers.ptr[i];
+        slug_colr_layer_t* ptr = &font->colr_layers[i];
         int offset = offset_layer + i * 4; // each record is 4 bytes
         ptr->glyph_id = read_u16be(data, offset);
         ptr->palette_index = read_u16be(data, offset + 2);
@@ -157,9 +160,147 @@ static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
     return true;
 }
 
-static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
-    return false;
+static int min(int a, int b) {
+    return a < b ? a : b;
 }
 
-static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data);
-static bool parse_cpal(slug_font_t* font, const slug_range_t* data);
+static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
+    int table_offset = find_otf_table(data, make_tag('C', 'P', 'A', 'L'));
+    if (table_offset < 0) {
+        // not a bug, CPAL is optional
+        return true;
+    }
+    // Table header (12 bytes from table start):
+    //   Offset +0: u16 version
+    //   Offset +2: u16 numPaletteEntries   (number of colors per palette)
+    //   Offset +4: u16 numPalettes         (usually 1)
+    //   Offset +6: u16 numColorRecords     (total colors across all palettes)
+    //   Offset +8: u32 offsetFirstColorRecord  (from table start)
+    int num_entries = (int)read_u16be(data, table_offset + 2);
+    int num_color_records = (int)read_u16be(data, table_offset + 6);
+    int color_offset = table_offset + (int)read_u32be(data, table_offset + 8);
+    int count = min(num_entries, num_color_records);
+    arrsetlen(font->cpal_colors, count);
+    for (int i = 0; i < count; i++) {
+        const uint8_t* src = (uint8_t*)data->ptr + color_offset + i * 4;
+        sg_color* dst = &font->cpal_colors[i];
+        dst->b = ((float)*src++) / 255.0f;
+        dst->g = ((float)*src++) / 255.0f;
+        dst->r = ((float)*src++) / 255.0f;
+        dst->a = ((float)*src) / 255.0f;
+    }
+    return true;
+}
+
+static void free_build_glyph(slug_glyph_build_t* glyph) {
+    arrfree(glyph->curves);
+    arrfree(glyph->contours);
+    arrfree(glyph->horizontal_bands);
+    arrfree(glyph->vertical_bands);
+}
+
+static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float scale, slug_glyph_build_t* out) {
+    slug_glyph_build_t* glyph = out;
+    memset(glyph, 0, sizeof(slug_glyph_build_t));
+    int adv, lsb_raw;
+    stbtt_GetGlyphHMetrics(info, glyph_index, &adv, &lsb_raw);
+    glyph->advance = (float)adv * scale;
+    glyph->lsb = (float)lsb_raw * scale;
+
+    int ix0, iy0, ix1, iy1;
+    if (stbtt_GetGlyphBox(info, glyph_index, &ix0, &iy0, &ix1, &iy1) == 0) {
+        return;
+    }
+    glyph->bbox[0] = (float)ix0 * scale;
+    glyph->bbox[1] = (float)iy0 * scale;
+    glyph->bbox[2] = (float)ix1 * scale;
+    glyph->bbox[3] = (float)iy1 * scale;
+
+    stbtt_vertex* verts;
+    int nv = stbtt_GetGlyphShape(info, glyph_index, &verts);
+    if (nv <= 0) {
+        return;
+    }
+    bool in_contour = false;
+    int contour_start = 0;
+    vec2_t previous = vec2(0.0f, 0.0f);
+    for (int i = 0; i < nv; i++) {
+        stbtt_vertex* vert = &verts[i];
+        switch (vert->type) {
+            case 1:
+                // vmove
+                {
+                    if (in_contour) {
+                        int count = arrlen(glyph->curves) - contour_start;
+                        if (count > 0) {
+                            arrput(glyph->contours, ((slug_contour_range_t){ .start = contour_start, .count = count }));
+                        }
+                    }
+                    previous = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    contour_start = arrlen(glyph->curves);
+                    in_contour = true;
+                }
+                break;
+            case 2:
+                // vline
+                {
+                    vec2_t current = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    vec2_t mid = vm_mul(vm_add(previous, current), 0.5f);
+                    arrput(glyph->curves, ((slug_curve_t){ .p = { previous, mid, current } }));
+                    previous = current;
+                }
+                break;
+            case 3:
+                // vcurve
+                {
+                    vec2_t current = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    vec2_t control = vec2((float)vert->cx * scale, (float)vert->cy * scale);
+                    arrput(glyph->curves, ((slug_curve_t){ .p = { previous, control, current }}));
+                    previous= current;
+                }
+                break;
+            case 4:
+                // vcubic — approximate with three quadratic Beziers
+			    // Split cubic P0,C1,C2,P3 at t=1/3 and t=2/3 via de Casteljau,
+			    // then approximate each sub-cubic as a quadratic with ctrl=(c1+c2)/2.
+                {
+                    vec2_t p3 = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    vec2_t c1 = vec2((float)vert->cx * scale, (float)vert->cy * scale);
+                    vec2_t c2 = vec2((float)vert->cx1 * scale, (float)vert->cy1 * scale);
+                    vec2_t p0 = previous;
+			        // de Casteljau split at t=1/3
+                    const float t = 1.0f / 3.0f;
+                    vec2_t ab = vm_add(p0, vm_mul(vm_sub(c1, p0), t));
+                    vec2_t bc = vm_add(c1, vm_mul(vm_sub(c2, c1), t));
+                    vec2_t cd = vm_add(c2, vm_mul(vm_sub(p3, c2), t));
+                    vec2_t abc = vm_add(ab, vm_mul(vm_sub(bc, ab), t));
+                    vec2_t bcd = vm_add(bc, vm_mul(vm_sub(cd, bc), t));
+                    vec2_t e1 = vm_add(abc, vm_mul(vm_sub(bcd, abc), t)); // point on curve at t=1/3
+                    // Sub-cubic 1: p0, ab, abc, e1 → quadratic ctrl = (ab + abc) * 0.5
+                    vec2_t q1 = vm_mul(vm_add(ab, abc), 0.5f);
+                    // de Casteljau split remaining cubic (e1, bcd, cd, p3) at t=0.5 (= t=2/3 of original)
+                    vec2_t ab2 = vm_add(e1, vm_mul(vm_sub(bcd, e1), 0.5f));
+                    vec2_t bc2 = vm_add(bcd, vm_mul(vm_sub(cd, bcd), 0.5f));
+                    vec2_t cd2 = vm_add(cd, vm_mul(vm_sub(p3, cd), 0.5f));
+                    vec2_t abc2 = vm_add(ab2, vm_mul(vm_sub(p3, cd), 0.5f));
+                    vec2_t bcd2 = vm_add(bc2, vm_mul(vm_sub(cd2, bc2), 0.5f));
+                    vec2_t e2 = vm_add(abc2, vm_mul(vm_sub(bcd2, abc2), 0.5f)); // point on curve at t=2/3
+                    // Sub-cubic 2: e1, ab2, abc2, e2 → quadratic ctrl = (ab2 + abc2) * 0.5
+                    vec2_t q2 = vm_mul(vm_add(ab2, abc2), 0.5f);
+                    vec2_t q3 = vm_mul(vm_add(bcd2, cd2), 0.5f);
+                    arrput(glyph->curves, ((slug_curve_t){ .p = { p0, q1, e1 } }));
+                    arrput(glyph->curves, ((slug_curve_t){ .p = { e1, q2, e2 } }));
+                    arrput(glyph->curves, ((slug_curve_t){ .p = { e2, q3, p3 } }));
+                    previous = p3;
+                }
+                break;
+        }
+    }
+    if (in_contour) {
+        int count = arrlen(glyph->curves) - contour_start;
+        if (count > 0) {
+            arrput(glyph->contours, ((slug_contour_range_t){ .start = contour_start, .count = count }));
+        }
+    }
+    stbtt_FreeShape(info, verts);
+}
