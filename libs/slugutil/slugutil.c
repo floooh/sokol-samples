@@ -14,6 +14,7 @@
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data);
 static bool parse_cpal(slug_font_t* font, const slug_range_t* data);
 static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float scale, slug_glyph_build_t* out);
+static void build_bands(slug_glyph_build_t* glyph);
 static void free_build_glyph(slug_glyph_build_t* glyph);
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
@@ -43,6 +44,7 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
     arrsetlen(build_glyphs, font->info.numGlyphs);
     for (int i = 0; i < arrlen(build_glyphs); i++) {
         init_build_glyph(&font->info, i, truetype_scale, &build_glyphs[i]);
+        build_bands(&build_glyphs[i]);
     }
 
     for (int i = 0; i < arrlen(build_glyphs); i++) {
@@ -160,8 +162,22 @@ static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {
     return true;
 }
 
-static int min(int a, int b) {
+static int mini(int a, int b) {
     return a < b ? a : b;
+}
+
+static int clampi(int val, int minval, int maxval) {
+    if (val < minval) return minval;
+    else if (val > maxval) return maxval;
+    else return val;
+}
+
+static float minf(float a, float b) {
+    return a < b ? a : b;
+}
+
+static float maxf(float a, float b) {
+    return a > b ? a : b;
 }
 
 static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
@@ -179,7 +195,7 @@ static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
     int num_entries = (int)read_u16be(data, table_offset + 2);
     int num_color_records = (int)read_u16be(data, table_offset + 6);
     int color_offset = table_offset + (int)read_u32be(data, table_offset + 8);
-    int count = min(num_entries, num_color_records);
+    int count = mini(num_entries, num_color_records);
     arrsetlen(font->cpal_colors, count);
     for (int i = 0; i < count; i++) {
         const uint8_t* src = (uint8_t*)data->ptr + color_offset + i * 4;
@@ -195,7 +211,13 @@ static bool parse_cpal(slug_font_t* font, const slug_range_t* data) {
 static void free_build_glyph(slug_glyph_build_t* glyph) {
     arrfree(glyph->curves);
     arrfree(glyph->contours);
+    for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
+        arrfree(glyph->horizontal_bands[i]);
+    }
     arrfree(glyph->horizontal_bands);
+    for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
+        arrfree(glyph->vertical_bands[i]);
+    }
     arrfree(glyph->vertical_bands);
 }
 
@@ -261,14 +283,14 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                 break;
             case 4:
                 // vcubic — approximate with three quadratic Beziers
-			    // Split cubic P0,C1,C2,P3 at t=1/3 and t=2/3 via de Casteljau,
-			    // then approximate each sub-cubic as a quadratic with ctrl=(c1+c2)/2.
+                // Split cubic P0,C1,C2,P3 at t=1/3 and t=2/3 via de Casteljau,
+                // then approximate each sub-cubic as a quadratic with ctrl=(c1+c2)/2.
                 {
                     vec2_t p3 = vec2((float)vert->x * scale, (float)vert->y * scale);
                     vec2_t c1 = vec2((float)vert->cx * scale, (float)vert->cy * scale);
                     vec2_t c2 = vec2((float)vert->cx1 * scale, (float)vert->cy1 * scale);
                     vec2_t p0 = previous;
-			        // de Casteljau split at t=1/3
+                    // de Casteljau split at t=1/3
                     const float t = 1.0f / 3.0f;
                     vec2_t ab = vm_add(p0, vm_mul(vm_sub(c1, p0), t));
                     vec2_t bc = vm_add(c1, vm_mul(vm_sub(c2, c1), t));
@@ -303,4 +325,80 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
         }
     }
     stbtt_FreeShape(info, verts);
+}
+
+static int band_cmp(const void* a, const void* b) {
+    const slug_band_entry_t* pa = (slug_band_entry_t*)a;
+    const slug_band_entry_t* pb = (slug_band_entry_t*)b;
+    // NOTE: inverted sort-order is not a bug
+    if (pa->sort_key > pb->sort_key) {
+        return -1;
+    } else if (pa->sort_key < pb->sort_key) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void build_bands(slug_glyph_build_t* glyph) {
+    int num_curves = arrlen(glyph->curves);
+    if (0 == num_curves) {
+        return;
+    }
+
+    float band_width = maxf(glyph->bbox[2] - glyph->bbox[0], 1.0f);
+    float band_height = maxf(glyph->bbox[3] - glyph->bbox[2], 1.0f);
+    int number_of_bands_height = clampi(num_curves, 1, SLUG_MAX_BANDS);
+    int number_of_bands_width = clampi(num_curves, 1, SLUG_MAX_BANDS);
+
+    arrsetlen(glyph->horizontal_bands, number_of_bands_height);
+    arrsetlen(glyph->vertical_bands, number_of_bands_width);
+    for (int i = 0; i < number_of_bands_height; i++) {
+        glyph->horizontal_bands[i] = 0;
+    }
+    for (int i = 0; i < number_of_bands_width; i++) {
+        glyph->vertical_bands[i] = 0;
+    }
+    glyph->band_scale = vec2((float)number_of_bands_width / band_width, (float)number_of_bands_height / band_height);
+    glyph->band_offset = vec2(-glyph->bbox[0] * glyph->band_scale.x, -glyph->bbox[1] * glyph->band_scale.y);
+
+    float horizontal_band_height = band_height / (float)number_of_bands_height;
+    float vertical_band_width = band_width / (float)number_of_bands_width;
+    float horizontal_pad = horizontal_band_height * 0.5f;
+    float vertical_pad = vertical_band_width * 0.5f;
+
+    int band_first, band_last;
+    for (int curve_index = 0; curve_index < arrlen(glyph->curves); curve_index++) {
+        slug_curve_t* curve = &glyph->curves[curve_index];
+        float curve_y_min = minf(minf(curve->p[0].y, curve->p[1].y), curve->p[2].y);
+        float curve_y_max = maxf(maxf(curve->p[0].y, curve->p[1].y), curve->p[2].y);
+		float curve_x_min = minf(minf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
+		float curve_x_max = maxf(maxf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
+
+        band_first = clampi(
+            (int)floorf((curve_y_min - horizontal_pad - glyph->bbox[1]) / horizontal_band_height),
+            0,
+            number_of_bands_height - 1);
+        band_last = clampi(
+            (int)floorf((curve_y_max + horizontal_pad - glyph->bbox[1]) / horizontal_band_height),
+            0,
+            number_of_bands_height - 1);
+        for (int i = band_first; i <= band_last; i++) {
+            arrput(glyph->horizontal_bands[i], ((slug_band_entry_t){ .curve_index = curve_index, .sort_key = curve_x_max }));
+        }
+
+        band_first = clampi(
+            (int)floorf((curve_x_min - vertical_pad - glyph->bbox[0]) / vertical_band_width),
+            0,
+            number_of_bands_width -1);
+        band_last = clampi(
+            (int)floorf((curve_x_max + vertical_pad - glyph->bbox[0]) / vertical_band_width),
+            0,
+            number_of_bands_width - 1);
+        for (int i = band_first; i <= band_last; i++) {
+            arrput(glyph->vertical_bands[i], ((slug_band_entry_t){ .curve_index = curve_index, .sort_key = curve_y_max }));
+        }
+    }
+    qsort(glyph->horizontal_bands, arrlen(glyph->horizontal_bands), sizeof(slug_band_entry_t), band_cmp);
+    qsort(glyph->vertical_bands, arrlen(glyph->vertical_bands), sizeof(slug_band_entry_t), band_cmp);
 }

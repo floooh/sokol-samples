@@ -28,8 +28,8 @@ typedef struct {
     float bbox[4];
     float advance;
     float lsb;
-    slug_band_entry_t* horizontal_bands;    // managed via stb_ds
-    slug_band_entry_t* vertical_bands;      // managed via stb_ds
+    slug_band_entry_t** horizontal_bands;    // managed via stb_ds
+    slug_band_entry_t** vertical_bands;      // managed via stb_ds
     vec2_t band_scale;
     vec2_t band_offset;
     int32_t glyph_loc[2];
