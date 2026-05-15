@@ -347,7 +347,7 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                     vec2_t current = vec2((float)vert->x * scale, (float)vert->y * scale);
                     vec2_t control = vec2((float)vert->cx * scale, (float)vert->cy * scale);
                     arrput(glyph->curves, ((slug_curve_t){ .p = { previous, control, current }}));
-                    previous= current;
+                    previous = current;
                 }
                 break;
             case 4:
@@ -373,7 +373,7 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                     vec2_t ab2 = vm_add(e1, vm_mul(vm_sub(bcd, e1), 0.5f));
                     vec2_t bc2 = vm_add(bcd, vm_mul(vm_sub(cd, bcd), 0.5f));
                     vec2_t cd2 = vm_add(cd, vm_mul(vm_sub(p3, cd), 0.5f));
-                    vec2_t abc2 = vm_add(ab2, vm_mul(vm_sub(p3, cd), 0.5f));
+                    vec2_t abc2 = vm_add(ab2, vm_mul(vm_sub(bc2, ab2), 0.5f));
                     vec2_t bcd2 = vm_add(bc2, vm_mul(vm_sub(cd2, bc2), 0.5f));
                     vec2_t e2 = vm_add(abc2, vm_mul(vm_sub(bcd2, abc2), 0.5f)); // point on curve at t=2/3
                     // Sub-cubic 2: e1, ab2, abc2, e2 → quadratic ctrl = (ab2 + abc2) * 0.5
