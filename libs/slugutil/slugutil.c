@@ -441,8 +441,8 @@ static void build_bands(slug_glyph_build_t* glyph) {
         slug_curve_t* curve = &glyph->curves[curve_index];
         float curve_y_min = minf(minf(curve->p[0].y, curve->p[1].y), curve->p[2].y);
         float curve_y_max = maxf(maxf(curve->p[0].y, curve->p[1].y), curve->p[2].y);
-		float curve_x_min = minf(minf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
-		float curve_x_max = maxf(maxf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
+        float curve_x_min = minf(minf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
+        float curve_x_max = maxf(maxf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
 
         band_first = clampi(
             (int)floorf((curve_y_min - horizontal_pad - glyph->bbox.y0) / horizontal_band_height),
@@ -459,7 +459,7 @@ static void build_bands(slug_glyph_build_t* glyph) {
         band_first = clampi(
             (int)floorf((curve_x_min - vertical_pad - glyph->bbox.x0) / vertical_band_width),
             0,
-            number_of_bands_width -1);
+            number_of_bands_width - 1);
         band_last = clampi(
             (int)floorf((curve_x_max + vertical_pad - glyph->bbox.x0) / vertical_band_width),
             0,
@@ -552,7 +552,7 @@ static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec
         pixels[glyph_start + header_offset + band_index] = pixel;
         data_offset += arrlen(band);
     }
-	// Write curve references at the offsets declared above
+    // Write curve references at the offsets declared above
     data_offset = *write_offset;
     for (int band_index = 0; band_index < arrlen(bands); band_index++) {
         slug_band_entry_t* band = bands[band_index];
@@ -570,15 +570,15 @@ static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec
 static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs) {
     pack_textures_t res = {0};
 
-	// Count how many texels we'll need so we can reserve upfront.
-	// This avoids repeated realloc+copy as the dynamic arrays grow.
-	int estimated_curve_size = 0;
-	int estimated_band_size = 0;
+    // Count how many texels we'll need so we can reserve upfront.
+    // This avoids repeated realloc+copy as the dynamic arrays grow.
+    int estimated_curve_size = 0;
+    int estimated_band_size = 0;
     for (int glyph_index = 0; glyph_index < num_glyphs; glyph_index++) {
         slug_glyph_build_t* glyph = &glyphs[glyph_index];
-		// Each contour needs (count + 1) curve texels:
-		//   count = number of bezier curves in this contour
-		//   +1 for the shared endpoint texel
+        // Each contour needs (count + 1) curve texels:
+        //   count = number of bezier curves in this contour
+        //   +1 for the shared endpoint texel
         for (int contour_index = 0; contour_index < arrlen(glyph->contours); contour_index++) {
             slug_contour_range_t* contour = &glyph->contours[contour_index];
             estimated_curve_size += contour->count + 1;
@@ -589,16 +589,16 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
             continue;
         }
         // Band data per glyph:
-		//   num_h + num_v = one header texel per band
-		//   + sum of all curve references in each band
-		int band_size = num_h + num_v;
+        //   num_h + num_v = one header texel per band
+        //   + sum of all curve references in each band
+        int band_size = num_h + num_v;
         for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
             band_size += arrlen(glyph->horizontal_bands[i]);
         }
         for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
             band_size += arrlen(glyph->vertical_bands[i]);
         }
-		estimated_band_size += band_size;
+        estimated_band_size += band_size;
     }
     arrsetcap(res.curve_pixels, (estimated_curve_size * 6) / 5);
     arrsetcap(res.band_pixels, (estimated_band_size * 6) / 5);
@@ -621,7 +621,7 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
             arrput(res.curve_pixels, vec4(last_curve->p[2].x, last_curve->p[2].y, 0.0f, 0.0f));
         }
 
-		// Pack band lookup tables into texture, referencing the curve coords set above
+        // Pack band lookup tables into texture, referencing the curve coords set above
         int num_h_bands = arrlen(glyph->horizontal_bands);
         int num_v_bands = arrlen(glyph->vertical_bands);
         if ((num_h_bands == 0) && (num_v_bands == 0)) {
