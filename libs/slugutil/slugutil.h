@@ -23,9 +23,13 @@ typedef struct {
 } slug_band_entry_t;
 
 typedef struct {
+    float x0, y0, x1, y1;
+} slug_bbox_t;
+
+typedef struct {
     slug_curve_t* curves;           // managed via stb_ds
     slug_contour_range_t* contours; // managed via stb_ds
-    float bbox[4];
+    slug_bbox_t bbox;
     float advance;
     float lsb;
     slug_band_entry_t** horizontal_bands;    // managed via stb_ds
@@ -41,7 +45,7 @@ typedef struct {
 } slug_range_t;
 
 typedef struct {
-    float bbox[4];
+    slug_bbox_t bbox;
     float advance;
     float lsb;
     float max_band_x;
@@ -84,3 +88,4 @@ typedef struct {
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data);
 void slug_unload_font(slug_font_t* font);
+const slug_glyph_t* slug_get_glyph(const slug_font_t* font, uint32_t cp);

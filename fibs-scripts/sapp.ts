@@ -130,9 +130,8 @@ export const samples: SampleOptions[] = [
     },
     {
         name: 'slug',
-        ui: 'cc',
         shd: true,
-        deps: ['fileutil', 'slugutil'],
+        deps: ['imgui', 'fileutil', 'slugutil'],
         jobs: [copy('data', ['Cairo.ttf', 'lucide.ttf', 'twemoji.ttf'])],
     },
     { name: 'modplay', deps: ['libmodplug'], jobs: [embed('data', 'mods.h', ['disco_feva_baby.s3m'])] },

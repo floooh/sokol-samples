@@ -1,3 +1,6 @@
+@ctype mat4 mat44_t
+@ctype vec4 vec4_t
+
 @vs vs
 layout(binding=0) uniform vs_params {
     mat4 mvp;
@@ -16,9 +19,12 @@ void main(){
 @end
 
 @fs fs
+@image_sample_type curve_tex unfilterable_float
 layout(binding=0) uniform texture2D curve_tex;
-layout(binding=0) uniform sampler point_sampler;
+@image_sample_type band_tex uint
 layout(binding=1) uniform utexture2D band_tex;
+@sampler_type point_sampler nonfiltering
+layout(binding=0) uniform sampler point_sampler;
 
 layout(binding=1) uniform fs_params {
     vec4 text_color;       // RGBA

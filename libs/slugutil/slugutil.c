@@ -27,6 +27,15 @@ static void build_bands(slug_glyph_build_t* glyph);
 static void free_build_glyph(slug_glyph_build_t* glyph);
 static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs);
 
+const slug_glyph_t* slug_get_glyph(const slug_font_t* font, uint32_t codepoint) {
+    int idx = stbtt_FindGlyphIndex(&font->info, codepoint);
+    if ((idx >= 0) && (idx < arrlen(font->glyphs))) {
+        return &font->glyphs[idx];
+    } else {
+        return 0;
+    }
+}
+
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
     assert(font);
     assert(pixel_size > 0.0f);
@@ -58,6 +67,50 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
     }
 
     pack_textures_t res = pack_textures(build_glyphs, arrlen(build_glyphs));
+    font->curve.height = res.curve_height;
+    font->band.height = res.band_height;
+
+    font->curve.img = sg_make_image(&(sg_image_desc){
+        .width = SLUG_TEX_WIDTH,
+        .height = font->curve.height,
+        .pixel_format = SG_PIXELFORMAT_RGBA32F,
+        .data.mip_levels[0] = {
+            .ptr = res.curve_pixels,
+            .size = arrlen(res.curve_pixels) * sizeof(vec4_t),
+        },
+    });
+    font->curve.tex_view = sg_make_view(&(sg_view_desc){ .texture.image = font->curve.img });
+
+    font->band.img = sg_make_image(&(sg_image_desc){
+        .width = SLUG_TEX_WIDTH,
+        .height = font->band.height,
+        .pixel_format = SG_PIXELFORMAT_RGBA32UI,
+        .data.mip_levels[0] = {
+            .ptr = res.band_pixels,
+            .size = arrlen(res.band_pixels) * sizeof(uvec4_t),
+        },
+    });
+    font->band.tex_view = sg_make_view(&(sg_view_desc){ .texture.image = font->band.img });
+
+    int num_glyphs = arrlen(build_glyphs);
+    arrsetlen(font->glyphs, num_glyphs);
+    for (int i = 0; i < num_glyphs; i++) {
+        const slug_glyph_build_t* bg = &build_glyphs[i];
+        font->glyphs[i] = (slug_glyph_t){
+            .bbox = bg->bbox,
+            .advance = bg->advance,
+            .lsb = bg->lsb,
+            .max_band_x = arrlen(bg->vertical_bands) - 1,
+            .max_band_y = arrlen(bg->horizontal_bands) - 1,
+            .band_scale = bg->band_scale,
+            .band_offset = bg->band_offset,
+            .glyph_loc = {
+                [0] = bg->glyph_loc[0],
+                [1] = bg->glyph_loc[1],
+            }
+        };
+    }
+
 
     arrfree(res.curve_pixels);
     arrfree(res.band_pixels);
@@ -247,10 +300,12 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
     if (stbtt_GetGlyphBox(info, glyph_index, &ix0, &iy0, &ix1, &iy1) == 0) {
         return;
     }
-    glyph->bbox[0] = (float)ix0 * scale;
-    glyph->bbox[1] = (float)iy0 * scale;
-    glyph->bbox[2] = (float)ix1 * scale;
-    glyph->bbox[3] = (float)iy1 * scale;
+    glyph->bbox = (slug_bbox_t){
+        .x0 = (float)ix0 * scale,
+        .y0 = (float)iy0 * scale,
+        .x1 = (float)ix1 * scale,
+        .y1 = (float)iy1 * scale,
+    };
 
     stbtt_vertex* verts;
     int nv = stbtt_GetGlyphShape(info, glyph_index, &verts);
@@ -360,8 +415,8 @@ static void build_bands(slug_glyph_build_t* glyph) {
         return;
     }
 
-    float band_width = maxf(glyph->bbox[2] - glyph->bbox[0], 1.0f);
-    float band_height = maxf(glyph->bbox[3] - glyph->bbox[2], 1.0f);
+    float band_width = maxf(glyph->bbox.x1 - glyph->bbox.x0, 1.0f);
+    float band_height = maxf(glyph->bbox.y1 - glyph->bbox.y0, 1.0f);
     int number_of_bands_height = clampi(num_curves, 1, SLUG_MAX_BANDS);
     int number_of_bands_width = clampi(num_curves, 1, SLUG_MAX_BANDS);
 
@@ -374,7 +429,7 @@ static void build_bands(slug_glyph_build_t* glyph) {
         glyph->vertical_bands[i] = 0;
     }
     glyph->band_scale = vec2((float)number_of_bands_width / band_width, (float)number_of_bands_height / band_height);
-    glyph->band_offset = vec2(-glyph->bbox[0] * glyph->band_scale.x, -glyph->bbox[1] * glyph->band_scale.y);
+    glyph->band_offset = vec2(-glyph->bbox.x0 * glyph->band_scale.x, -glyph->bbox.y0 * glyph->band_scale.y);
 
     float horizontal_band_height = band_height / (float)number_of_bands_height;
     float vertical_band_width = band_width / (float)number_of_bands_width;
@@ -390,11 +445,11 @@ static void build_bands(slug_glyph_build_t* glyph) {
 		float curve_x_max = maxf(maxf(curve->p[0].x, curve->p[1].x), curve->p[2].x);
 
         band_first = clampi(
-            (int)floorf((curve_y_min - horizontal_pad - glyph->bbox[1]) / horizontal_band_height),
+            (int)floorf((curve_y_min - horizontal_pad - glyph->bbox.y0) / horizontal_band_height),
             0,
             number_of_bands_height - 1);
         band_last = clampi(
-            (int)floorf((curve_y_max + horizontal_pad - glyph->bbox[1]) / horizontal_band_height),
+            (int)floorf((curve_y_max + horizontal_pad - glyph->bbox.y0) / horizontal_band_height),
             0,
             number_of_bands_height - 1);
         for (int i = band_first; i <= band_last; i++) {
@@ -402,11 +457,11 @@ static void build_bands(slug_glyph_build_t* glyph) {
         }
 
         band_first = clampi(
-            (int)floorf((curve_x_min - vertical_pad - glyph->bbox[0]) / vertical_band_width),
+            (int)floorf((curve_x_min - vertical_pad - glyph->bbox.x0) / vertical_band_width),
             0,
             number_of_bands_width -1);
         band_last = clampi(
-            (int)floorf((curve_x_max + vertical_pad - glyph->bbox[0]) / vertical_band_width),
+            (int)floorf((curve_x_max + vertical_pad - glyph->bbox.x0) / vertical_band_width),
             0,
             number_of_bands_width - 1);
         for (int i = band_first; i <= band_last; i++) {
