@@ -468,8 +468,20 @@ static void build_bands(slug_glyph_build_t* glyph) {
             arrput(glyph->vertical_bands[i], ((slug_band_entry_t){ .curve_index = curve_index, .sort_key = curve_y_max }));
         }
     }
-    qsort(glyph->horizontal_bands, arrlen(glyph->horizontal_bands), sizeof(slug_band_entry_t), band_cmp);
-    qsort(glyph->vertical_bands, arrlen(glyph->vertical_bands), sizeof(slug_band_entry_t), band_cmp);
+    int num_horizontal_bands = arrlen(glyph->horizontal_bands);
+    for (int i = 0; i < num_horizontal_bands; i++) {
+        if (glyph->horizontal_bands[i]) {
+            size_t num_band_entries = arrlen(glyph->horizontal_bands[i]);
+            qsort(glyph->horizontal_bands[i], num_band_entries, sizeof(slug_band_entry_t), band_cmp);
+        }
+    }
+    int num_vertical_bands = arrlen(glyph->vertical_bands);
+    for (int i = 0; i < num_vertical_bands; i++) {
+        if (glyph->vertical_bands[i]) {
+            size_t num_band_entries = arrlen(glyph->vertical_bands[i]);
+            qsort(glyph->vertical_bands[i], num_band_entries, sizeof(slug_band_entry_t), band_cmp);
+        }
+    }
 }
 
 static void pad_to_row_curve_pixels(pack_textures_t* res, int needed) {
