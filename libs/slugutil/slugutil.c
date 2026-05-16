@@ -8,7 +8,6 @@
 #include "slugutil.h"
 #include <assert.h>
 #include <stdlib.h>
-#define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
 typedef struct { uint32_t x, y, z, w; } uvec4_t;
@@ -34,6 +33,31 @@ const slug_glyph_t* slug_get_glyph(const slug_font_t* font, uint32_t codepoint) 
     } else {
         return 0;
     }
+}
+
+static int colr_base_cmp(const void* a, const void* b) {
+    const slug_colr_base_t* pa = (slug_colr_base_t*)a;
+    const slug_colr_base_t* pb = (slug_colr_base_t*)b;
+    if (pa->glyph_id < pb->glyph_id) {
+        return -1;
+    } else if (pa->glyph_id > pb->glyph_id) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+const slug_colr_base_t* slug_find_colr_base(const slug_font_t* font, uint32_t codepoint) {
+    int idx = stbtt_FindGlyphIndex(&font->info, codepoint);
+    if (idx <= 0) {
+        return 0;
+    }
+    size_t num = arrlenu(font->colr_bases);
+    if (num == 0) {
+        return 0;
+    }
+    const slug_colr_base_t key = { .glyph_id = (uint16_t)idx };
+    return (slug_colr_base_t*)bsearch(&key, font->colr_bases, num, sizeof(slug_colr_base_t), colr_base_cmp);
 }
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
@@ -173,18 +197,6 @@ static int find_otf_table(const slug_range_t* data, uint32_t tag) {
         }
     }
     return -1;
-}
-
-static int colr_base_cmp(const void* a, const void* b) {
-    const slug_colr_base_t* pa = (slug_colr_base_t*)a;
-    const slug_colr_base_t* pb = (slug_colr_base_t*)b;
-    if (pa->glyph_id < pb->glyph_id) {
-        return -1;
-    } else if (pa->glyph_id > pb->glyph_id) {
-        return 1;
-    } else {
-        return 0;
-    }
 }
 
 static bool parse_colr_v0(slug_font_t* font, const slug_range_t* data) {

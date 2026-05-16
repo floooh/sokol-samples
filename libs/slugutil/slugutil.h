@@ -82,10 +82,11 @@ typedef struct {
         int height;
     } band;
     vec4_t* cpal_colors;              // managed via stb_ds
-    slug_colr_base_t* colr_bases;       // managed via stb_ds
-    slug_colr_layer_t* colr_layers;    // managed via stb_ds;
+    slug_colr_base_t* colr_bases;     // managed via stb_ds
+    slug_colr_layer_t* colr_layers;   // managed via stb_ds;
 } slug_font_t;
 
 bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data);
 void slug_unload_font(slug_font_t* font);
 const slug_glyph_t* slug_get_glyph(const slug_font_t* font, uint32_t cp);
+const slug_colr_base_t* slug_find_colr_base(const slug_font_t* font, uint32_t cp);

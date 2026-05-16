@@ -20,6 +20,8 @@
 #include "slugutil/slugutil.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 #include "slug-sapp.glsl.h"
 
 #define MAX_FONTS (3)
@@ -53,7 +55,10 @@ uint8_t file_buffers[MAX_FONTS][MAX_FONT_SIZE];
 static void draw_ui(void);
 static float measure_line(const slug_font_t* font, const uint32_t* text);
 static void draw_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
+static void draw_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
 static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
+static void draw_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
+static void draw_emoji(const slug_font_t* font, const uint32_t codepoint, float x, float y, const mat44_t* mvp);
 static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color);
 static void cairo_callback(const sfetch_response_t* response);
 static void lucide_callback(const sfetch_response_t* response);
@@ -236,7 +241,7 @@ static void frame(void) {
             },
             .samplers[SMP_point_sampler] = state.smp,
         });
-        draw_centered_line(&state.fonts.twemoji, line[5], 5, &mvp);
+        draw_centered_line_emoji(&state.fonts.twemoji, line[5], 5, &mvp);
     }
     simgui_render();
     sg_end_pass();
@@ -367,16 +372,59 @@ static void draw_centered_line(const slug_font_t* font, const uint32_t* text, in
     draw_line(font, text, base_x, base_y, mvp);
 }
 
+static void draw_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
+    const float line_height = LINE_HEIGHT;
+    const int total_lines = TOTAL_LINES;
+    const float block_height = (float)total_lines * line_height;
+    float line_width = measure_line(font, text);
+    float base_x = (sapp_widthf() - line_width) * 0.5f;
+    float base_y = (sapp_heightf() + block_height) * 0.5f - (float)line_nr * line_height;
+    draw_line_emoji(font, text, base_x, base_y, mvp);
+}
+
 static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
-    uint32_t c = 0;
-    while ((c = *text++) != 0) {
-        const slug_glyph_t* glyph = slug_get_glyph(font, c);
+    uint32_t cp = 0;
+    while ((cp = *text++) != 0) {
+        const slug_glyph_t* glyph = slug_get_glyph(font, cp);
         if (glyph) {
             draw_glyph(glyph, x, y, mvp, vec4(1.0f, 1.0f, 1.0f, 1.0f));
             x += glyph->advance;
         }
     }
 }
+
+static void draw_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
+    uint32_t cp = 0;
+    while ((cp = *text++) != 0) {
+        const slug_glyph_t* glyph = slug_get_glyph(font, cp);
+        if (glyph) {
+            draw_emoji(font, cp, x, y, mvp);
+            x += glyph->advance;
+        }
+    }
+}
+
+static void draw_emoji(const slug_font_t* font, uint32_t codepoint, float x, float y, const mat44_t* mvp) {
+    const slug_colr_base_t* colr_base = slug_find_colr_base(font, codepoint);
+    if (colr_base == 0) {
+        return;
+    }
+    // draw each layer as its own glyph
+    for (uint16_t i = 0; i < colr_base->num_layers; i++) {
+        slug_colr_layer_t* layer = &font->colr_layers[colr_base->first_layer + i];
+        if ((layer->glyph_id < 0) || (layer->glyph_id >= arrlen(font->glyphs))) {
+            continue;
+        }
+        slug_glyph_t* glyph = &font->glyphs[layer->glyph_id];
+        vec4_t color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        if (layer->palette_index < arrlen(font->cpal_colors)) {
+            color = font->cpal_colors[layer->palette_index];
+        }
+        draw_glyph(glyph, x, y, mvp, color);
+    }
+}
+
+
 
 static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color) {
     if ((glyph->max_band_x < 0.0f) || (glyph->max_band_y < 0.0f)) {
