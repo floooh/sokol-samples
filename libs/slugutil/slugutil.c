@@ -90,7 +90,7 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
         build_bands(&build_glyphs[i]);
     }
 
-    pack_textures_t res = pack_textures(build_glyphs, arrlen(build_glyphs));
+    pack_textures_t res = pack_textures(build_glyphs, (int)arrlen(build_glyphs));
     font->curve.height = res.curve_height;
     font->band.height = res.band_height;
 
@@ -116,7 +116,7 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
     });
     font->band.tex_view = sg_make_view(&(sg_view_desc){ .texture.image = font->band.img });
 
-    int num_glyphs = arrlen(build_glyphs);
+    int num_glyphs = (int)arrlen(build_glyphs);
     arrsetlen(font->glyphs, num_glyphs);
     for (int i = 0; i < num_glyphs; i++) {
         const slug_glyph_build_t* bg = &build_glyphs[i];
@@ -334,13 +334,13 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                 // vmove
                 {
                     if (in_contour) {
-                        int count = arrlen(glyph->curves) - contour_start;
+                        int count = (int)arrlen(glyph->curves) - contour_start;
                         if (count > 0) {
                             arrput(glyph->contours, ((slug_contour_range_t){ .start = contour_start, .count = count }));
                         }
                     }
                     previous = vec2((float)vert->x * scale, (float)vert->y * scale);
-                    contour_start = arrlen(glyph->curves);
+                    contour_start = (int)arrlen(glyph->curves);
                     in_contour = true;
                 }
                 break;
@@ -400,7 +400,7 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
         }
     }
     if (in_contour) {
-        int count = arrlen(glyph->curves) - contour_start;
+        int count = (int)arrlen(glyph->curves) - contour_start;
         if (count > 0) {
             arrput(glyph->contours, ((slug_contour_range_t){ .start = contour_start, .count = count }));
         }
@@ -422,7 +422,7 @@ static int band_cmp(const void* a, const void* b) {
 }
 
 static void build_bands(slug_glyph_build_t* glyph) {
-    int num_curves = arrlen(glyph->curves);
+    int num_curves = (int)arrlen(glyph->curves);
     if (0 == num_curves) {
         return;
     }
@@ -480,14 +480,14 @@ static void build_bands(slug_glyph_build_t* glyph) {
             arrput(glyph->vertical_bands[i], ((slug_band_entry_t){ .curve_index = curve_index, .sort_key = curve_y_max }));
         }
     }
-    int num_horizontal_bands = arrlen(glyph->horizontal_bands);
+    int num_horizontal_bands = (int)arrlen(glyph->horizontal_bands);
     for (int i = 0; i < num_horizontal_bands; i++) {
         if (glyph->horizontal_bands[i]) {
             size_t num_band_entries = arrlen(glyph->horizontal_bands[i]);
             qsort(glyph->horizontal_bands[i], num_band_entries, sizeof(slug_band_entry_t), band_cmp);
         }
     }
-    int num_vertical_bands = arrlen(glyph->vertical_bands);
+    int num_vertical_bands = (int)arrlen(glyph->vertical_bands);
     for (int i = 0; i < num_vertical_bands; i++) {
         if (glyph->vertical_bands[i]) {
             size_t num_band_entries = arrlen(glyph->vertical_bands[i]);
@@ -497,11 +497,11 @@ static void build_bands(slug_glyph_build_t* glyph) {
 }
 
 static void pad_to_row_curve_pixels(pack_textures_t* res, int needed) {
-    int curlen = arrlen(res->curve_pixels);
+    int curlen = (int)arrlen(res->curve_pixels);
     int column = curlen % SLUG_TEX_WIDTH;
     if ((column + needed) > SLUG_TEX_WIDTH) {
         arrsetlen(res->curve_pixels, curlen + SLUG_TEX_WIDTH - column);
-        int newlen = arrlen(res->curve_pixels);
+        int newlen = (int)arrlen(res->curve_pixels);
         for (int i = curlen; i < newlen; i++) {
             res->curve_pixels[i] = (vec4_t){0};
         }
@@ -509,16 +509,16 @@ static void pad_to_row_curve_pixels(pack_textures_t* res, int needed) {
 }
 
 static void finalize_curve_pixels(pack_textures_t* res) {
-    int cur_size = arrlen(res->curve_pixels);
+    int cur_size = (int)arrlen(res->curve_pixels);
     int new_size = 0;
     if (cur_size == 0) {
         arrsetlen(res->curve_pixels, SLUG_TEX_WIDTH);
-        new_size = arrlen(res->curve_pixels);
+        new_size = (int)arrlen(res->curve_pixels);
         res->curve_height = 1;
     } else {
-        res->curve_height = (arrlen(res->curve_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
+        res->curve_height = ((int)arrlen(res->curve_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
         arrsetlen(res->curve_pixels, res->curve_height * SLUG_TEX_WIDTH);
-        new_size = arrlen(res->curve_pixels);
+        new_size = (int)arrlen(res->curve_pixels);
     }
     for (int i = cur_size; i < new_size; i++) {
         res->curve_pixels[i] = (vec4_t){0};
@@ -526,11 +526,11 @@ static void finalize_curve_pixels(pack_textures_t* res) {
 }
 
 static void pad_to_row_band_pixels(pack_textures_t* res, int needed) {
-    int curlen = arrlen(res->band_pixels);
+    int curlen = (int)arrlen(res->band_pixels);
     int column = curlen % SLUG_TEX_WIDTH;
     if ((column + needed) > SLUG_TEX_WIDTH) {
         arrsetlen(res->band_pixels, curlen + SLUG_TEX_WIDTH - column);
-        int newlen = arrlen(res->band_pixels);
+        int newlen = (int)arrlen(res->band_pixels);
         for (int i = curlen; i < newlen; i++) {
             res->band_pixels[i] = (uvec4_t){0};
         }
@@ -538,16 +538,16 @@ static void pad_to_row_band_pixels(pack_textures_t* res, int needed) {
 }
 
 static void finalize_band_pixels(pack_textures_t* res) {
-    int cur_size = arrlen(res->band_pixels);
+    int cur_size = (int)arrlen(res->band_pixels);
     int new_size = 0;
     if (cur_size == 0) {
         arrsetlen(res->band_pixels, SLUG_TEX_WIDTH);
-        new_size = arrlen(res->band_pixels);
+        new_size = (int)arrlen(res->band_pixels);
         res->band_height = 1;
     } else {
-        res->band_height = (arrlen(res->band_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
+        res->band_height = ((int)arrlen(res->band_pixels) + SLUG_TEX_WIDTH - 1) / SLUG_TEX_WIDTH;
         arrsetlen(res->band_pixels, res->band_height * SLUG_TEX_WIDTH);
-        new_size = arrlen(res->band_pixels);
+        new_size = (int)arrlen(res->band_pixels);
     }
     for (int i = cur_size; i < new_size; i++) {
         res->band_pixels[i] = (uvec4_t){0};
@@ -560,9 +560,9 @@ static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec
     int data_offset = *write_offset;
     for (int band_index = 0; band_index < arrlen(bands); band_index++) {
         slug_band_entry_t* band = bands[band_index];
-        uvec4_t pixel = { arrlen(band), (uint32_t)data_offset, 0, 0 };
+        uvec4_t pixel = { (int)arrlen(band), (uint32_t)data_offset, 0, 0 };
         pixels[glyph_start + header_offset + band_index] = pixel;
-        data_offset += arrlen(band);
+        data_offset += (int)arrlen(band);
     }
     // Write curve references at the offsets declared above
     data_offset = *write_offset;
@@ -595,8 +595,8 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
             slug_contour_range_t* contour = &glyph->contours[contour_index];
             estimated_curve_size += contour->count + 1;
         }
-        int num_h = arrlen(glyph->horizontal_bands);
-        int num_v = arrlen(glyph->vertical_bands);
+        int num_h = (int)arrlen(glyph->horizontal_bands);
+        int num_v = (int)arrlen(glyph->vertical_bands);
         if ((num_h == 0) && (num_v == 0)) {
             continue;
         }
@@ -605,10 +605,10 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
         //   + sum of all curve references in each band
         int band_size = num_h + num_v;
         for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
-            band_size += arrlen(glyph->horizontal_bands[i]);
+            band_size += (int)arrlen(glyph->horizontal_bands[i]);
         }
         for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
-            band_size += arrlen(glyph->vertical_bands[i]);
+            band_size += (int)arrlen(glyph->vertical_bands[i]);
         }
         estimated_band_size += band_size;
     }
@@ -624,7 +624,7 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
             pad_to_row_curve_pixels(&res, entries_needed);
             for (int i = 0; i < contour->count; i++) {
                 slug_curve_t* curve = &glyph->curves[contour->start + i];
-                int pixel_index = arrlen(res.curve_pixels);
+                int pixel_index = (int)arrlen(res.curve_pixels);
                 arrput(res.curve_pixels, vec4(curve->p[0].x, curve->p[0].y, curve->p[1].x, curve->p[1].y));
                 curve->texture[0] = (uint32_t)(pixel_index % SLUG_TEX_WIDTH);
                 curve->texture[1] = (uint32_t)(pixel_index / SLUG_TEX_WIDTH);
@@ -634,24 +634,24 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
         }
 
         // Pack band lookup tables into texture, referencing the curve coords set above
-        int num_h_bands = arrlen(glyph->horizontal_bands);
-        int num_v_bands = arrlen(glyph->vertical_bands);
+        int num_h_bands = (int)arrlen(glyph->horizontal_bands);
+        int num_v_bands = (int)arrlen(glyph->vertical_bands);
         if ((num_h_bands == 0) && (num_v_bands == 0)) {
             continue;
         }
         int header_size = num_h_bands + num_v_bands;
         pad_to_row_band_pixels(&res, header_size);
 
-        int glyph_start = arrlen(res.band_pixels);
+        int glyph_start = (int)arrlen(res.band_pixels);
         glyph->glyph_loc[0] = (int32_t)glyph_start % SLUG_TEX_WIDTH;
         glyph->glyph_loc[1] = (int32_t)glyph_start / SLUG_TEX_WIDTH;
 
         int total_entries = header_size;
         for (int i = 0; i < arrlen(glyph->horizontal_bands); i++) {
-            total_entries += arrlen(glyph->horizontal_bands[i]);
+            total_entries += (int)arrlen(glyph->horizontal_bands[i]);
         }
         for (int i = 0; i < arrlen(glyph->vertical_bands); i++) {
-            total_entries += arrlen(glyph->vertical_bands[i]);
+            total_entries += (int)arrlen(glyph->vertical_bands[i]);
         }
         arrsetlen(res.band_pixels, glyph_start + total_entries);
 
