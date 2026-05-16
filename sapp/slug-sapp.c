@@ -24,8 +24,10 @@
 
 #define MAX_FONTS (3)
 #define MAX_FONT_SIZE (2 * 1024 * 1024)
+#define TOTAL_LINES (6)
+#define LINE_HEIGHT (80.0f)
 
-const char* l0_ascii = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+uint32_t line[6][128];
 
 static struct {
     sg_pass_action pass_action;
@@ -49,8 +51,9 @@ static struct {
 uint8_t file_buffers[MAX_FONTS][MAX_FONT_SIZE];
 
 static void draw_ui(void);
-static float measure_line_ascii(const slug_font_t* font, const char* text);
-static void draw_line_ascii(const slug_font_t* font, const char* text, float x, float y, const mat44_t* mvp);
+static float measure_line(const slug_font_t* font, const uint32_t* text);
+static void draw_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
+static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
 static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color);
 static void cairo_callback(const sfetch_response_t* response);
 static void lucide_callback(const sfetch_response_t* response);
@@ -75,6 +78,44 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.1f, 0.1f, 0.1f, 1.0f } },
     };
     state.inp.zoom = 1.0f;
+
+    // populate unicode lines, first the latin characters
+    for (uint32_t i = 0; i < 32; i++) {
+        line[0][i] = 0x40 + i;
+        if (i != 31) {
+            line[1][i] = 0x60 + i;
+        }
+        line[2][i] = 0x20 + i;
+    }
+    // tha arabic alphabet
+    for (uint32_t i = 0, cp = 0x0627; cp <= 0x064A; cp++) {
+        if ((cp < 0x063B) || (cp > 0x063F)) {
+            line[3][i++] = cp;
+        }
+    }
+    // icons from lucide font, note that the unicode assignment
+    // of icons is very messy, it has gaps and duplicates. The
+    // range picked here is somewhat 'orderly'.
+    for (uint32_t i = 0, cp = 0xE29A; cp <= 0xE2BA; cp++) {
+        line[4][i++] = cp;
+    }
+    // emojis
+    line[5][0] = 0x1F600;   // grinning face
+    line[5][1] = 0x1F60D;   // heart eyes
+    line[5][2] = 0x1F60E;   // sunglasses
+    line[5][3] = 0x1F525;   // fire
+    line[5][4] = 0x1F44D;   // thumbs up
+    line[5][5] = 0x1F389;   // party popper
+    line[5][6] = 0x1F680;   // rocket
+    line[5][7] = 0x2764;    // red heart
+    line[5][8] = 0x1F308;   // rainbow
+    line[5][9] = 0x1F31F;   // glowing star
+    line[5][10] = 0x1F3B5;  // musical note
+    line[5][11] = 0x1F40D;  // snake
+    line[5][12] = 0x1F436;  // dog face
+    line[5][13] = 0x1F431;  // cat face
+    line[5][14] = 0x1F34E;  // red apple
+    line[5][15] = 0x1F370;  // shortcake
 
     // buffers, shader, pipeline, sampler
     const float quad_verts[] = {
@@ -141,12 +182,9 @@ static void frame(void) {
     sfetch_dowork();
     draw_ui();
 
-    float w = sapp_widthf();
-    float h = sapp_heightf();
-
     // FIXME: replace with mat44_ortho func
-    float sx = 2.0f / (w / state.inp.zoom);
-    float sy = 2.0f / (h / state.inp.zoom);
+    float sx = 2.0f / ((sapp_widthf() / state.inp.zoom));
+    float sy = 2.0f / ((sapp_heightf() / state.inp.zoom));
     float tx = -1.0f - state.inp.pan_x * sx;
     float ty = -1.0f - state.inp.pan_y * sy;
     mat44_t mvp = {
@@ -155,16 +193,13 @@ static void frame(void) {
         .z = vec4(0.0f, 0.0f, -1.0f, 0.0f),
         .w = vec4(tx, ty, 0.0f, 1.0f),
     };
-    float line_height = 60.0f;
-
-    int total_lines = 6;
-    float block_height = (float)total_lines * line_height;
 
     bool any_valid = state.fonts.cairo.valid || state.fonts.lucide.valid || state.fonts.twemoji.valid;
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (any_valid) {
         sg_apply_pipeline(state.pip);
     }
+    // latin and arabic codepoints
     if (state.fonts.cairo.valid) {
         sg_apply_bindings(&(sg_bindings){
             .vertex_buffers[0] = state.vbuf,
@@ -175,20 +210,33 @@ static void frame(void) {
             },
             .samplers[SMP_point_sampler] = state.smp,
         });
-        float l0_ascii_width = measure_line_ascii(&state.fonts.cairo, l0_ascii);
-        float max_width = l0_ascii_width;
-        float base_x = (w - max_width) * 0.5f;
-        float base_y = (h + block_height) * 0.5f - line_height;
-        float cursor_y = base_y;
-        float lw = measure_line_ascii(&state.fonts.cairo, l0_ascii);
-        float line_x = base_x + (max_width = lw) * 0.5f;
-        draw_line_ascii(&state.fonts.cairo, l0_ascii, line_x, cursor_y, &mvp);
+        for (int i = 0; i < 4; i++) {
+            draw_centered_line(&state.fonts.cairo, line[i], i, &mvp);
+        }
     }
     if (state.fonts.lucide.valid) {
-        // FIXME: draw lucide characters
+        sg_apply_bindings(&(sg_bindings){
+            .vertex_buffers[0] = state.vbuf,
+            .index_buffer = state.ibuf,
+            .views = {
+                [VIEW_band_tex] = state.fonts.lucide.band.tex_view,
+                [VIEW_curve_tex] = state.fonts.lucide.curve.tex_view,
+            },
+            .samplers[SMP_point_sampler] = state.smp,
+        });
+        draw_centered_line(&state.fonts.lucide, line[4], 4, &mvp);
     }
     if (state.fonts.twemoji.valid) {
-        // FIXME: draw twemoji characters
+        sg_apply_bindings(&(sg_bindings){
+            .vertex_buffers[0] = state.vbuf,
+            .index_buffer = state.ibuf,
+            .views = {
+                [VIEW_band_tex] = state.fonts.twemoji.band.tex_view,
+                [VIEW_curve_tex] = state.fonts.twemoji.curve.tex_view,
+            },
+            .samplers[SMP_point_sampler] = state.smp,
+        });
+        draw_centered_line(&state.fonts.twemoji, line[5], 5, &mvp);
     }
     simgui_render();
     sg_end_pass();
@@ -297,11 +345,11 @@ static void twemoji_callback(const sfetch_response_t* response) {
     }
 }
 
-static float measure_line_ascii(const slug_font_t* font, const char* text) {
+static float measure_line(const slug_font_t* font, const uint32_t* text) {
     float total = 0.0f;
-    char c;
-    while ((c = *text++) != 0) {
-        const slug_glyph_t* glyph = slug_get_glyph(font, (uint32_t)c);
+    uint32_t ucp;
+    while ((ucp = *text++) != 0) {
+        const slug_glyph_t* glyph = slug_get_glyph(font, ucp);
         if (glyph) {
             total += glyph->advance;
         }
@@ -309,10 +357,20 @@ static float measure_line_ascii(const slug_font_t* font, const char* text) {
     return total;
 }
 
-static void draw_line_ascii(const slug_font_t* font, const char* text, float x, float y, const mat44_t* mvp) {
-    char c = 0;
+static void draw_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
+    const float line_height = LINE_HEIGHT;
+    const int total_lines = TOTAL_LINES;
+    const float block_height = (float)total_lines * line_height;
+    float line_width = measure_line(font, text);
+    float base_x = (sapp_widthf() - line_width) * 0.5f;
+    float base_y = (sapp_heightf() + block_height) * 0.5f - (float)line_nr * line_height;
+    draw_line(font, text, base_x, base_y, mvp);
+}
+
+static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
+    uint32_t c = 0;
     while ((c = *text++) != 0) {
-        const slug_glyph_t* glyph = slug_get_glyph(font, (uint32_t)c);
+        const slug_glyph_t* glyph = slug_get_glyph(font, c);
         if (glyph) {
             draw_glyph(glyph, x, y, mvp, vec4(1.0f, 1.0f, 1.0f, 1.0f));
             x += glyph->advance;
@@ -366,8 +424,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .event_cb = input,
         .cleanup_cb = cleanup,
-        .width = 800,
-        .height = 600,
+        .width = 900,
+        .height = 500,
         .sample_count = 1,
         .high_dpi = true,
         .window_title = "slug-sapp.c",
