@@ -25,9 +25,10 @@
 #include "slug-sapp.glsl.h"
 
 #define MAX_FONTS (3)
-#define MAX_FONT_SIZE (2 * 1024 * 1024)
+#define MAX_TTF_SIZE (2 * 1024 * 1024)
 #define TOTAL_LINES (6)
 #define LINE_HEIGHT (80.0f)
+#define FONT_SIZE (48.0f)
 
 uint32_t line[6][128];
 
@@ -50,7 +51,7 @@ static struct {
     } fonts;
 } state;
 
-uint8_t file_buffers[MAX_FONTS][MAX_FONT_SIZE];
+uint8_t file_buffers[MAX_FONTS][MAX_TTF_SIZE];
 
 static void draw_ui(void);
 static float measure_line(const slug_font_t* font, const uint32_t* text);
@@ -325,7 +326,7 @@ static void draw_ui(void) {
 
 static void cairo_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        slug_load_font(&state.fonts.cairo, 48.0f, &(slug_range_t){
+        slug_load_font(&state.fonts.cairo, &(slug_range_t){
             .ptr = response->data.ptr,
             .size = response->data.size,
         });
@@ -334,7 +335,7 @@ static void cairo_callback(const sfetch_response_t* response) {
 
 static void lucide_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        slug_load_font(&state.fonts.lucide, 48.0f, &(slug_range_t){
+        slug_load_font(&state.fonts.lucide, &(slug_range_t){
             .ptr = response->data.ptr,
             .size = response->data.size,
         });
@@ -343,7 +344,7 @@ static void lucide_callback(const sfetch_response_t* response) {
 
 static void twemoji_callback(const sfetch_response_t* response) {
     if (response->fetched) {
-        slug_load_font(&state.fonts.twemoji, 48.0f, &(slug_range_t){
+        slug_load_font(&state.fonts.twemoji, &(slug_range_t){
             .ptr = response->data.ptr,
             .size = response->data.size,
         });
@@ -356,7 +357,7 @@ static float measure_line(const slug_font_t* font, const uint32_t* text) {
     while ((ucp = *text++) != 0) {
         const slug_glyph_t* glyph = slug_get_glyph(font, ucp);
         if (glyph) {
-            total += glyph->advance;
+            total += glyph->advance * FONT_SIZE;
         }
     }
     return total;
@@ -388,7 +389,7 @@ static void draw_line(const slug_font_t* font, const uint32_t* text, float x, fl
         const slug_glyph_t* glyph = slug_get_glyph(font, cp);
         if (glyph) {
             draw_glyph(glyph, x, y, mvp, vec4(1.0f, 1.0f, 1.0f, 1.0f));
-            x += glyph->advance;
+            x += glyph->advance * FONT_SIZE;
         }
     }
 }
@@ -399,7 +400,7 @@ static void draw_line_emoji(const slug_font_t* font, const uint32_t* text, float
         const slug_glyph_t* glyph = slug_get_glyph(font, cp);
         if (glyph) {
             draw_emoji(font, cp, x, y, mvp);
-            x += glyph->advance;
+            x += glyph->advance * FONT_SIZE;
         }
     }
 }
@@ -424,8 +425,6 @@ static void draw_emoji(const slug_font_t* font, uint32_t codepoint, float x, flo
     }
 }
 
-
-
 static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color) {
     if ((glyph->max_band_x < 0.0f) || (glyph->max_band_y < 0.0f)) {
         return;
@@ -433,10 +432,10 @@ static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_
     const vs_params_t vs_params = {
         .mvp = *mvp,
         .draw_rect = {
-            .x = x + glyph->bbox.x0,
-            .y = y + glyph->bbox.y0,
-            .z = glyph->bbox.x1 - glyph->bbox.x0,
-            .w = glyph->bbox.y1 - glyph->bbox.y0,
+            .x = x + (glyph->bbox.x0 * FONT_SIZE),
+            .y = y + (glyph->bbox.y0 * FONT_SIZE),
+            .z = (glyph->bbox.x1 - glyph->bbox.x0) * FONT_SIZE,
+            .w = (glyph->bbox.y1 - glyph->bbox.y0) * FONT_SIZE,
         },
         .glyph_bbox = {
             .x = glyph->bbox.x0,

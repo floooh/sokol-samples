@@ -60,9 +60,8 @@ const slug_colr_base_t* slug_find_colr_base(const slug_font_t* font, uint32_t co
     return (slug_colr_base_t*)bsearch(&key, font->colr_bases, num, sizeof(slug_colr_base_t), colr_base_cmp);
 }
 
-bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* data) {
+bool slug_load_font(slug_font_t* font, const slug_range_t* data) {
     assert(font);
-    assert(pixel_size > 0.0f);
     assert(data && data->ptr && data->size > 0);
     assert(!font->valid);
     *font = (slug_font_t){0};
@@ -71,7 +70,7 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
         slug_unload_font(font);
         return false;
     }
-    float truetype_scale = stbtt_ScaleForMappingEmToPixels(&font->info, pixel_size);
+    float em_scale = stbtt_ScaleForMappingEmToPixels(&font->info, 1.0f);
 
     // colored emoji-fonts...
     if (!parse_colr_v0(font, data)) {
@@ -86,7 +85,7 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
     slug_glyph_build_t* build_glyphs = 0;
     arrsetlen(build_glyphs, font->info.numGlyphs);
     for (int i = 0; i < arrlen(build_glyphs); i++) {
-        init_build_glyph(&font->info, i, truetype_scale, &build_glyphs[i]);
+        init_build_glyph(&font->info, i, em_scale, &build_glyphs[i]);
         build_bands(&build_glyphs[i]);
     }
 
@@ -300,23 +299,23 @@ static void free_build_glyph(slug_glyph_build_t* glyph) {
     arrfree(glyph->vertical_bands);
 }
 
-static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float scale, slug_glyph_build_t* out) {
+static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float em_scale, slug_glyph_build_t* out) {
     slug_glyph_build_t* glyph = out;
     memset(glyph, 0, sizeof(slug_glyph_build_t));
     int adv, lsb_raw;
     stbtt_GetGlyphHMetrics(info, glyph_index, &adv, &lsb_raw);
-    glyph->advance = (float)adv * scale;
-    glyph->lsb = (float)lsb_raw * scale;
+    glyph->advance = (float)adv * em_scale;
+    glyph->lsb = (float)lsb_raw * em_scale;
 
     int ix0, iy0, ix1, iy1;
     if (stbtt_GetGlyphBox(info, glyph_index, &ix0, &iy0, &ix1, &iy1) == 0) {
         return;
     }
     glyph->bbox = (slug_bbox_t){
-        .x0 = (float)ix0 * scale,
-        .y0 = (float)iy0 * scale,
-        .x1 = (float)ix1 * scale,
-        .y1 = (float)iy1 * scale,
+        .x0 = (float)ix0 * em_scale,
+        .y0 = (float)iy0 * em_scale,
+        .x1 = (float)ix1 * em_scale,
+        .y1 = (float)iy1 * em_scale,
     };
 
     stbtt_vertex* verts;
@@ -339,7 +338,7 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                             arrput(glyph->contours, ((slug_contour_range_t){ .start = contour_start, .count = count }));
                         }
                     }
-                    previous = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    previous = vec2((float)vert->x * em_scale, (float)vert->y * em_scale);
                     contour_start = (int)arrlen(glyph->curves);
                     in_contour = true;
                 }
@@ -347,7 +346,7 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
             case 2:
                 // vline
                 {
-                    vec2_t current = vec2((float)vert->x * scale, (float)vert->y * scale);
+                    vec2_t current = vec2((float)vert->x * em_scale, (float)vert->y * em_scale);
                     vec2_t mid = vm_mul(vm_add(previous, current), 0.5f);
                     arrput(glyph->curves, ((slug_curve_t){ .p = { previous, mid, current } }));
                     previous = current;
@@ -356,8 +355,8 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
             case 3:
                 // vcurve
                 {
-                    vec2_t current = vec2((float)vert->x * scale, (float)vert->y * scale);
-                    vec2_t control = vec2((float)vert->cx * scale, (float)vert->cy * scale);
+                    vec2_t current = vec2((float)vert->x * em_scale, (float)vert->y * em_scale);
+                    vec2_t control = vec2((float)vert->cx * em_scale, (float)vert->cy * em_scale);
                     arrput(glyph->curves, ((slug_curve_t){ .p = { previous, control, current }}));
                     previous = current;
                 }
@@ -367,9 +366,9 @@ static void init_build_glyph(const stbtt_fontinfo* info, int glyph_index, float 
                 // Split cubic P0,C1,C2,P3 at t=1/3 and t=2/3 via de Casteljau,
                 // then approximate each sub-cubic as a quadratic with ctrl=(c1+c2)/2.
                 {
-                    vec2_t p3 = vec2((float)vert->x * scale, (float)vert->y * scale);
-                    vec2_t c1 = vec2((float)vert->cx * scale, (float)vert->cy * scale);
-                    vec2_t c2 = vec2((float)vert->cx1 * scale, (float)vert->cy1 * scale);
+                    vec2_t p3 = vec2((float)vert->x * em_scale, (float)vert->y * em_scale);
+                    vec2_t c1 = vec2((float)vert->cx * em_scale, (float)vert->cy * em_scale);
+                    vec2_t c2 = vec2((float)vert->cx1 * em_scale, (float)vert->cy1 * em_scale);
                     vec2_t p0 = previous;
                     // de Casteljau split at t=1/3
                     const float t = 1.0f / 3.0f;
