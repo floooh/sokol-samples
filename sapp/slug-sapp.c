@@ -26,6 +26,8 @@
 
 #define MAX_FONTS (3)
 #define MAX_TTF_SIZE (2 * 1024 * 1024)
+#define MAX_INSTANCES (16 * 1024)
+#define MAX_DRAWS (128)
 #define TOTAL_LINES (6)
 #define LINE_HEIGHT (80.0f)
 #define FONT_SIZE (48.0f)
@@ -49,21 +51,48 @@ static struct {
         slug_font_t lucide;
         slug_font_t twemoji;
     } fonts;
+    struct {
+        int start_instance;
+        int cur_instance;
+        int cur_draw_cmd;
+        const slug_font_t* cur_font;
+    } draw;
 } state;
+
+typedef struct {
+    vec4_t draw_rect;
+    vec4_t glyph_bbox;
+    vec4_t band_transform;
+    int glyph_params[4];
+    vec4_t color;
+} instance_t;
+
+typedef struct {
+    int base_instance;
+    int num_instances;
+    sg_view curve_tex_view;
+    sg_view band_tex_view;
+} draw_t;
 
 uint8_t file_buffers[MAX_FONTS][MAX_TTF_SIZE];
 
-static void draw_ui(void);
+instance_t instances[MAX_INSTANCES];
+draw_t draws[MAX_DRAWS];
+
 static float measure_line(const slug_font_t* font, const uint32_t* text);
-static void draw_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
-static void draw_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
-static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
-static void draw_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
-static void draw_emoji(const slug_font_t* font, const uint32_t codepoint, float x, float y, const mat44_t* mvp);
-static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color);
-static void cairo_callback(const sfetch_response_t* response);
-static void lucide_callback(const sfetch_response_t* response);
-static void twemoji_callback(const sfetch_response_t* response);
+static void begin_text(void);
+static void push_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
+static void push_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp);
+static void push_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
+static void push_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp);
+static void push_emoji(const slug_font_t* font, const uint32_t codepoint, float x, float y, const mat44_t* mvp);
+static void push_glyph(const slug_font_t* font, const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color);
+static void push_draw_cmd(void);
+static void end_text(void);
+static void cairo_fetch_callback(const sfetch_response_t* response);
+static void lucide_fetch_callback(const sfetch_response_t* response);
+static void twemoji_fetch_callback(const sfetch_response_t* response);
+static void draw_ui(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -170,17 +199,17 @@ static void init(void) {
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("Cairo.ttf", buf, sizeof(buf)),
         .buffer = { .ptr = file_buffers[0], .size = sizeof(file_buffers[0]) },
-        .callback = cairo_callback,
+        .callback = cairo_fetch_callback,
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("lucide.ttf", buf, sizeof(buf)),
         .buffer = { .ptr = file_buffers[1], .size = sizeof(file_buffers[1]) },
-        .callback = lucide_callback,
+        .callback = lucide_fetch_callback,
     });
     sfetch_send(&(sfetch_request_t){
         .path = fileutil_get_path("twemoji.ttf", buf, sizeof(buf)),
         .buffer = { .ptr = file_buffers[2], .size = sizeof(file_buffers[2]) },
-        .callback = twemoji_callback,
+        .callback = twemoji_fetch_callback,
     });
 }
 
@@ -200,6 +229,8 @@ static void frame(void) {
         .w = vec4(tx, ty, 0.0f, 1.0f),
     };
 
+    begin_text();
+
     bool any_valid = state.fonts.cairo.valid || state.fonts.lucide.valid || state.fonts.twemoji.valid;
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (any_valid) {
@@ -217,7 +248,7 @@ static void frame(void) {
             .samplers[SMP_point_sampler] = state.smp,
         });
         for (int i = 0; i < 4; i++) {
-            draw_centered_line(&state.fonts.cairo, line[i], i, &mvp);
+            push_centered_line(&state.fonts.cairo, line[i], i, &mvp);
         }
     }
     if (state.fonts.lucide.valid) {
@@ -230,7 +261,7 @@ static void frame(void) {
             },
             .samplers[SMP_point_sampler] = state.smp,
         });
-        draw_centered_line(&state.fonts.lucide, line[4], 4, &mvp);
+        push_centered_line(&state.fonts.lucide, line[4], 4, &mvp);
     }
     if (state.fonts.twemoji.valid) {
         sg_apply_bindings(&(sg_bindings){
@@ -242,8 +273,9 @@ static void frame(void) {
             },
             .samplers[SMP_point_sampler] = state.smp,
         });
-        draw_centered_line_emoji(&state.fonts.twemoji, line[5], 5, &mvp);
+        push_centered_line_emoji(&state.fonts.twemoji, line[5], 5, &mvp);
     }
+    end_text(); // FIXME FIXME FIXME
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -325,7 +357,7 @@ static void draw_ui(void) {
     sappimgui_draw();
 }
 
-static void cairo_callback(const sfetch_response_t* response) {
+static void cairo_fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         slug_load_font(&state.fonts.cairo, &(slug_range_t){
             .ptr = response->data.ptr,
@@ -334,7 +366,7 @@ static void cairo_callback(const sfetch_response_t* response) {
     }
 }
 
-static void lucide_callback(const sfetch_response_t* response) {
+static void lucide_fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         slug_load_font(&state.fonts.lucide, &(slug_range_t){
             .ptr = response->data.ptr,
@@ -343,7 +375,7 @@ static void lucide_callback(const sfetch_response_t* response) {
     }
 }
 
-static void twemoji_callback(const sfetch_response_t* response) {
+static void twemoji_fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         slug_load_font(&state.fonts.twemoji, &(slug_range_t){
             .ptr = response->data.ptr,
@@ -364,49 +396,80 @@ static float measure_line(const slug_font_t* font, const uint32_t* text) {
     return total;
 }
 
-static void draw_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
+static void begin_text(void) {
+    state.draw.start_instance = 0;
+    state.draw.cur_instance = 0;
+    state.draw.cur_draw_cmd = 0;
+    state.draw.cur_font = 0;
+}
+
+static void end_text(void) {
+    // push final draw command
+    push_draw_cmd();
+}
+
+static void push_draw_cmd(void) {
+    if ((state.draw.cur_draw_cmd < MAX_DRAWS) && (state.draw.cur_instance > state.draw.start_instance)) {
+        assert(state.draw.cur_font);
+        draws[state.draw.cur_draw_cmd++] = (draw_t){
+            .base_instance = state.draw.start_instance,
+            .num_instances = state.draw.cur_instance - state.draw.start_instance,
+            .curve_tex_view = state.draw.cur_font->curve.tex_view,
+            .band_tex_view = state.draw.cur_font->band.tex_view,
+        };
+        state.draw.start_instance = state.draw.cur_instance;
+    }
+}
+
+static void push_instance(const instance_t* instance) {
+    if (state.draw.cur_instance < MAX_INSTANCES) {
+        instances[state.draw.cur_instance++] = *instance;
+    }
+}
+
+static void push_centered_line(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
     const float line_height = LINE_HEIGHT;
     const int total_lines = TOTAL_LINES;
     const float block_height = (float)total_lines * line_height;
     float line_width = measure_line(font, text);
     float base_x = (sapp_widthf() - line_width) * 0.5f;
     float base_y = (sapp_heightf() + block_height) * 0.5f - (float)line_nr * line_height;
-    draw_line(font, text, base_x, base_y, mvp);
+    push_line(font, text, base_x, base_y, mvp);
 }
 
-static void draw_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
+static void push_centered_line_emoji(const slug_font_t* font, const uint32_t* text, int line_nr, const mat44_t* mvp) {
     const float line_height = LINE_HEIGHT;
     const int total_lines = TOTAL_LINES;
     const float block_height = (float)total_lines * line_height;
     float line_width = measure_line(font, text);
     float base_x = (sapp_widthf() - line_width) * 0.5f;
     float base_y = (sapp_heightf() + block_height) * 0.5f - (float)line_nr * line_height;
-    draw_line_emoji(font, text, base_x, base_y, mvp);
+    push_line_emoji(font, text, base_x, base_y, mvp);
 }
 
-static void draw_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
+static void push_line(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
     uint32_t cp = 0;
     while ((cp = *text++) != 0) {
         const slug_glyph_t* glyph = slug_get_glyph(font, cp);
         if (glyph) {
-            draw_glyph(glyph, x, y, mvp, vec4(1.0f, 1.0f, 1.0f, 1.0f));
+            push_glyph(font, glyph, x, y, mvp, vec4(1.0f, 1.0f, 1.0f, 1.0f));
             x += glyph->advance * FONT_SIZE;
         }
     }
 }
 
-static void draw_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
+static void push_line_emoji(const slug_font_t* font, const uint32_t* text, float x, float y, const mat44_t* mvp) {
     uint32_t cp = 0;
     while ((cp = *text++) != 0) {
         const slug_glyph_t* glyph = slug_get_glyph(font, cp);
         if (glyph) {
-            draw_emoji(font, cp, x, y, mvp);
+            push_emoji(font, cp, x, y, mvp);
             x += glyph->advance * FONT_SIZE;
         }
     }
 }
 
-static void draw_emoji(const slug_font_t* font, uint32_t codepoint, float x, float y, const mat44_t* mvp) {
+static void push_emoji(const slug_font_t* font, uint32_t codepoint, float x, float y, const mat44_t* mvp) {
     const slug_colr_base_t* colr_base = slug_find_colr_base(font, codepoint);
     if (colr_base == 0) {
         return;
@@ -422,42 +485,62 @@ static void draw_emoji(const slug_font_t* font, uint32_t codepoint, float x, flo
         if (layer->palette_index < arrlen(font->cpal_colors)) {
             color = font->cpal_colors[layer->palette_index];
         }
-        draw_glyph(glyph, x, y, mvp, color);
+        push_glyph(font, glyph, x, y, mvp, color);
     }
 }
 
-static void draw_glyph(const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color) {
+static void push_glyph(const slug_font_t* font, const slug_glyph_t* glyph, float x, float y, const mat44_t* mvp, vec4_t color) {
     if ((glyph->max_band_x < 0.0f) || (glyph->max_band_y < 0.0f)) {
         return;
     }
-    const vs_params_t vs_params = {
-        .mvp = *mvp,
+    if (font != state.draw.cur_font) {
+        if (state.draw.cur_font != 0) {
+            push_draw_cmd();
+        }
+        state.draw.cur_font = font;
+    }
+    const instance_t glyph_instance = {
         .draw_rect = {
-            .x = x + (glyph->bbox.x0 * FONT_SIZE),
-            .y = y + (glyph->bbox.y0 * FONT_SIZE),
-            .z = (glyph->bbox.x1 - glyph->bbox.x0) * FONT_SIZE,
-            .w = (glyph->bbox.y1 - glyph->bbox.y0) * FONT_SIZE,
+            x + (glyph->bbox.x0 * FONT_SIZE),
+            y + (glyph->bbox.y0 * FONT_SIZE),
+            (glyph->bbox.x1 - glyph->bbox.x0) * FONT_SIZE,
+            (glyph->bbox.y1 - glyph->bbox.y0) * FONT_SIZE,
         },
         .glyph_bbox = {
-            .x = glyph->bbox.x0,
-            .y = glyph->bbox.y0,
-            .z = glyph->bbox.x1,
-            .w = glyph->bbox.y1,
-        }
+            glyph->bbox.x0,
+            glyph->bbox.y0,
+            glyph->bbox.x1,
+            glyph->bbox.y1,
+        },
+        .band_transform = {
+            glyph->band_scale.x,
+            glyph->band_scale.y,
+            glyph->band_offset.x,
+            glyph->band_offset.y,
+        },
+        .glyph_params = {
+            glyph->glyph_loc[0],
+            glyph->glyph_loc[1],
+            (int)glyph->max_band_x,
+            (int)glyph->max_band_y,
+        },
+        .color = color,
+    };
+    push_instance(&glyph_instance);
+
+    const vs_params_t vs_params = {
+        .mvp = *mvp,
+        .draw_rect = glyph_instance.draw_rect,
+        .glyph_bbox = glyph_instance.glyph_bbox,
     };
     const fs_params_t fs_params = {
         .text_color = color,
-        .band_transform = {
-            .x = glyph->band_scale.x,
-            .y = glyph->band_scale.y,
-            .z = glyph->band_offset.x,
-            .w = glyph->band_offset.y,
-        },
+        .band_transform = glyph_instance.band_transform,
         .glyph_params = {
-            [0] = glyph->glyph_loc[0],
-            [1] = glyph->glyph_loc[1],
-            [2] = (int)glyph->max_band_x,
-            [3] = (int)glyph->max_band_y,
+            [0] = glyph_instance.glyph_params[0],
+            [1] = glyph_instance.glyph_params[1],
+            [2] = glyph_instance.glyph_params[2],
+            [3] = glyph_instance.glyph_params[3],
         },
     };
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
