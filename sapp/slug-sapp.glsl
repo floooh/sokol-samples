@@ -90,13 +90,13 @@ void main() {
     float h_winding = 0.0;
     float h_edge_weight = 0.0;
     {
-        uvec4 band_header = texelFetch(usampler2D(band_tex, point_sampler),
-                                       ivec2(glyph_loc.x + band_index.y, glyph_loc.y), 0);
+        uvec2 band_header = texelFetch(usampler2D(band_tex, point_sampler),
+                                       ivec2(glyph_loc.x + band_index.y, glyph_loc.y), 0).xy;
         int curve_count = int(band_header.x);
         ivec2 entry_list_start = bandLoc(glyph_loc, int(band_header.y));
-        for (int i = 0; i < curve_count && i < 128; i++) {
+        for (int i = 0; i < curve_count; i++) {
             ivec2 entry_coord = bandLoc(entry_list_start, i);
-            uvec4 band_entry = texelFetch(usampler2D(band_tex, point_sampler), entry_coord, 0);
+            uvec2 band_entry = texelFetch(usampler2D(band_tex, point_sampler), entry_coord, 0).xy;
             ivec2 curve_tex_coord = ivec2(band_entry.x, band_entry.y);
             vec4 points_01 = texelFetch(sampler2D(curve_tex, point_sampler), curve_tex_coord, 0)
                             - vec4(glyph_pos, glyph_pos);
@@ -122,13 +122,13 @@ void main() {
     float v_winding = 0.0;
     float v_edge_weight = 0.0;
     {
-        uvec4 band_header = texelFetch(usampler2D(band_tex, point_sampler),
-                                       ivec2(glyph_loc.x + max_band_y + 1 + band_index.x, glyph_loc.y), 0);
+        uvec2 band_header = texelFetch(usampler2D(band_tex, point_sampler),
+                                       ivec2(glyph_loc.x + max_band_y + 1 + band_index.x, glyph_loc.y), 0).xy;
         int curve_count = int(band_header.x);
         ivec2 entry_list_start = bandLoc(glyph_loc, int(band_header.y));
-        for (int i = 0; i < curve_count && i < 128; i++) {
+        for (int i = 0; i < curve_count; i++) {
             ivec2 entry_coord = bandLoc(entry_list_start, i);
-            uvec4 band_entry = texelFetch(usampler2D(band_tex, point_sampler), entry_coord, 0);
+            uvec2 band_entry = texelFetch(usampler2D(band_tex, point_sampler), entry_coord, 0).xy;
             ivec2 curve_tex_coord = ivec2(band_entry.x, band_entry.y);
             vec4 points_01 = texelFetch(sampler2D(curve_tex, point_sampler), curve_tex_coord, 0)
                             - vec4(glyph_pos, glyph_pos);
