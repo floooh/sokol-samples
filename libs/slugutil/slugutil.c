@@ -10,12 +10,12 @@
 #include <stdlib.h>
 #include "stb_ds.h"
 
-typedef struct { uint32_t x, y, z, w; } uvec4_t;
+typedef struct { uint16_t x, y; } u16vec2_t;
 
 typedef struct {
     vec4_t* curve_pixels;     // managed by stb_ds
     int curve_height;
-    uvec4_t* band_pixels;     // managed by stb_ds
+    u16vec2_t* band_pixels;   // managed by stb_ds
     int band_height;
 } pack_textures_t;
 
@@ -108,10 +108,10 @@ bool slug_load_font(slug_font_t* font, float pixel_size, const slug_range_t* dat
     font->band.img = sg_make_image(&(sg_image_desc){
         .width = SLUG_TEX_WIDTH,
         .height = font->band.height,
-        .pixel_format = SG_PIXELFORMAT_RGBA32UI,
+        .pixel_format = SG_PIXELFORMAT_RG16UI,
         .data.mip_levels[0] = {
             .ptr = res.band_pixels,
-            .size = arrlen(res.band_pixels) * sizeof(uvec4_t),
+            .size = arrlen(res.band_pixels) * sizeof(u16vec2_t),
         },
     });
     font->band.tex_view = sg_make_view(&(sg_view_desc){ .texture.image = font->band.img });
@@ -532,7 +532,7 @@ static void pad_to_row_band_pixels(pack_textures_t* res, int needed) {
         arrsetlen(res->band_pixels, curlen + SLUG_TEX_WIDTH - column);
         int newlen = (int)arrlen(res->band_pixels);
         for (int i = curlen; i < newlen; i++) {
-            res->band_pixels[i] = (uvec4_t){0};
+            res->band_pixels[i] = (u16vec2_t){0};
         }
     }
 }
@@ -550,17 +550,17 @@ static void finalize_band_pixels(pack_textures_t* res) {
         new_size = (int)arrlen(res->band_pixels);
     }
     for (int i = cur_size; i < new_size; i++) {
-        res->band_pixels[i] = (uvec4_t){0};
+        res->band_pixels[i] = (u16vec2_t){0};
     }
 }
 
-static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec4_t* pixels, int glyph_start, int header_offset, int* write_offset) {
+static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, u16vec2_t* pixels, int glyph_start, int header_offset, int* write_offset) {
     // Write headers: each band stores (count, data_offset) where data_offset
     // is relative to glyph_start, matching how the shader indexes into the texture.
     int data_offset = *write_offset;
     for (int band_index = 0; band_index < arrlen(bands); band_index++) {
         slug_band_entry_t* band = bands[band_index];
-        uvec4_t pixel = { (int)arrlen(band), (uint32_t)data_offset, 0, 0 };
+        u16vec2_t pixel = { (uint16_t)arrlen(band), (uint16_t)data_offset };
         pixels[glyph_start + header_offset + band_index] = pixel;
         data_offset += (int)arrlen(band);
     }
@@ -571,7 +571,7 @@ static void write_band_set(slug_band_entry_t** bands, slug_curve_t* curves, uvec
         for (int entry_index = 0; entry_index < arrlen(band); entry_index++) {
             slug_band_entry_t* entry = &band[entry_index];
             slug_curve_t* curve = &curves[entry->curve_index];
-            uvec4_t pixel = { curve->texture[0], curve->texture[1], 0, 0 };
+            u16vec2_t pixel = { curve->texture[0], curve->texture[1] };
             pixels[glyph_start + data_offset] = pixel;
             data_offset += 1;
         }
@@ -626,8 +626,8 @@ static pack_textures_t pack_textures(slug_glyph_build_t* glyphs, int num_glyphs)
                 slug_curve_t* curve = &glyph->curves[contour->start + i];
                 int pixel_index = (int)arrlen(res.curve_pixels);
                 arrput(res.curve_pixels, vec4(curve->p[0].x, curve->p[0].y, curve->p[1].x, curve->p[1].y));
-                curve->texture[0] = (uint32_t)(pixel_index % SLUG_TEX_WIDTH);
-                curve->texture[1] = (uint32_t)(pixel_index / SLUG_TEX_WIDTH);
+                curve->texture[0] = (uint16_t)(pixel_index % SLUG_TEX_WIDTH);
+                curve->texture[1] = (uint16_t)(pixel_index / SLUG_TEX_WIDTH);
             }
             slug_curve_t* last_curve = &glyph->curves[contour->start + contour->count - 1];
             arrput(res.curve_pixels, vec4(last_curve->p[2].x, last_curve->p[2].y, 0.0f, 0.0f));

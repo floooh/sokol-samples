@@ -9,7 +9,7 @@
 
 typedef struct {
     vec2_t p[3];
-    uint32_t texture[2];
+    uint16_t texture[2];
 } slug_curve_t;
 
 typedef struct {
