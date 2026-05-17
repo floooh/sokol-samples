@@ -257,8 +257,9 @@ static void input(const sapp_event* ev) {
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_SCROLL:
             {
+                float h = sapp_heightf();
                 float mouse_world_x = state.inp.pan_x + ev->mouse_x / state.inp.zoom;
-                float mouse_world_y = state.inp.pan_y + ev->mouse_y / state.inp.zoom;
+                float mouse_world_y = state.inp.pan_y + (h - ev->mouse_y) / state.inp.zoom;
                 state.inp.zoom *= 1.0 + ev->scroll_y * 0.1f;
                 if (state.inp.zoom < 0.1f) {
                     state.inp.zoom = 0.1f;
@@ -267,7 +268,7 @@ static void input(const sapp_event* ev) {
                 }
                 // Adjust pan so the world point under the mouse stays fixed
                 state.inp.pan_x = mouse_world_x - ev->mouse_x / state.inp.zoom;
-                state.inp.pan_y = mouse_world_y - ev->mouse_y / state.inp.zoom;
+                state.inp.pan_y = mouse_world_y - (h - ev->mouse_y) / state.inp.zoom;
             }
             break;
         case SAPP_EVENTTYPE_MOUSE_DOWN:
