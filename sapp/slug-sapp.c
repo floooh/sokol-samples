@@ -1,8 +1,10 @@
 //------------------------------------------------------------------------------
 //  slug-sapp.c
 //
-//  Demonstrates Slug text rendering. Ported from sokol-slug-odin:
-//  https://tangled.org/dosha.dev/sokol-slug-odin/
+//  Demonstrates Eric Lyengel's Slug text rendering algorithm.
+//  Ported from sokol-slug-odin: https://tangled.org/dosha.dev/sokol-slug-odin/
+//
+//  Also see: https://terathon.com/blog/decade-slug.html
 //
 //  Main differences from above demo:
 //  - 4x reduced band texture size (RGBA32UI => RG16UI)

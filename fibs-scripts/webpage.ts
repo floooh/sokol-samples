@@ -98,6 +98,9 @@ const assets = [
     "venus.iff",
     "waterfall.iff",
     "yacht.iff",
+    "Cairo.ttf",
+    "lucide.ttf",
+    "twemoji.ttf",
 ];
 
 export function addWebPageCommand(c: Configurer) {
