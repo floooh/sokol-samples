@@ -513,7 +513,7 @@ static void push_emoji(const slug_font_t* font, uint32_t codepoint, float x, flo
     // draw each layer as its own glyph
     for (uint16_t i = 0; i < colr_base->num_layers; i++) {
         slug_colr_layer_t* layer = &font->colr_layers[colr_base->first_layer + i];
-        if ((layer->glyph_id < 0) || (layer->glyph_id >= arrlen(font->glyphs))) {
+        if (layer->glyph_id >= arrlen(font->glyphs)) {
             continue;
         }
         slug_glyph_t* glyph = &font->glyphs[layer->glyph_id];
