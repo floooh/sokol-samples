@@ -4,17 +4,26 @@
 @vs vs
 layout(binding=0) uniform vs_params {
     mat4 mvp;
-    vec4 draw_rect;   // xy = screen position (pixels), zw = screen size (pixels)
-    vec4 glyph_bbox;  // xy = min corner (glyph space), zw = max corner (glyph space)
 };
 
-in vec2 quad_pos;     // unit quad vertex [0,1]
-out vec2 glyph_pos;   // fragment position in glyph space
+in vec4 draw_rect;          // xy = screen position (pixels), zw = screen size (pixels)
+in vec4 glyph_bbox;         // xy = min corner (glyph space), zw = max corner (glyph space)
+in vec4 in_band_transform;  // xy = band_scale, zw = band_offset
+in ivec4 in_glyph_params;   // x = glyph_loc_x, y = glyph_loc_y, z = max_band_x, w = max_band_y
+in vec4 in_text_color;      // RGBA
+out vec2 glyph_pos;         // fragment position in glyph space
+flat out vec4 band_transform;
+flat out ivec4 glyph_params;
+flat out vec4 text_color;
 
 void main(){
+    vec2 quad_pos = vec2(gl_VertexIndex & 1, (gl_VertexIndex>>1) & 1);
     vec2 screen_pos = draw_rect.xy + quad_pos * draw_rect.zw;
     gl_Position = mvp * vec4(screen_pos, 0.0, 1.0);
     glyph_pos = mix(glyph_bbox.xy, glyph_bbox.zw, quad_pos);
+    band_transform = in_band_transform;
+    glyph_params = in_glyph_params;
+    text_color = in_text_color;
 }
 @end
 
@@ -26,12 +35,10 @@ layout(binding=1) uniform utexture2D band_tex;
 @sampler_type point_sampler nonfiltering
 layout(binding=0) uniform sampler point_sampler;
 
-layout(binding=1) uniform fs_params {
-    vec4 text_color;       // RGBA
-    vec4 band_transform;   // xy = band_scale, zw = band_offset
-    ivec4 glyph_params;    // x = glyph_loc_x, y = glyph_loc_y, z = max_band_x, w = max_band_y
-};
 in vec2 glyph_pos;
+flat in vec4 band_transform;
+flat in ivec4 glyph_params;
+flat in vec4 text_color;
 out vec4 frag_color;
 
 ivec2 bandLoc(ivec2 base, int offset) {
