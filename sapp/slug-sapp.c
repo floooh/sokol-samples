@@ -17,7 +17,7 @@
 //    shader to silence validation layer warnings (and allow the sample to
 //    work with the WebGPU backend)
 //
-//  Knows issues:
+//  Knowsn issues:
 //  - currently no kerning
 //  - TTF-to-Slug data preprocessing should be moved into an offline tool
 //  - more optimizations would be possible when switching to storage buffers
