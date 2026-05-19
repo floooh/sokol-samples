@@ -93,6 +93,7 @@ export const samples: SampleOptions[] = [
     },
     { name: 'sgl', ui: 'cc' },
     { name: 'sgl-lines', ui: 'cc' },
+    { name: 'sgl-boing', ui: 'cc' },
     { name: 'sgl-points', ui: 'cc' },
     { name: 'sgl-context', ui: 'cc' },
     { name: 'sgl-microui', ui: 'c', deps: ['microui'] },
