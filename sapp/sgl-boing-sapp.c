@@ -45,7 +45,7 @@ static void init(void) {
     state.ball_x = state.ball_radius + 20.0f;
     state.ball_y = sapp_heightf() - state.ball_radius - 20.0f;
     state.ball_vx = 300.0f;
-    state.ball_vy = -600.0f;
+    state.ball_vy = -sapp_heightf();
 }
 
 static void frame(void) {
@@ -63,7 +63,7 @@ static void frame(void) {
     const float floor_y = sapp_heightf() - state.ball_radius;
     if (state.ball_y > floor_y) {
         state.ball_y = floor_y;
-        state.ball_vy = -600.0f;    // fixed upward velocity = constant bounce height
+        state.ball_vy = -sapp_height();    // fixed upward velocity = constant bounce height
     }
 
     // bounce off walls
