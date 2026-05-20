@@ -87,7 +87,7 @@ static bool load_bmhd(ilbm_t* ilbm) {
     ilbm->aspect_ratio = (float)(ilbm->width * ilbm->x_aspect) / (float)(ilbm->height * ilbm->y_aspect);
     state.page_width = i16be();
     state.page_height = i16be();
-    assert(state.ptr == (start + chunk_size));
+    assert(state.ptr == (start + chunk_size)); (void)start;
 
     // allocate pixel buffer
     ilbm->pixels.size = (size_t)(ilbm->width * ilbm->height);
@@ -111,7 +111,7 @@ static bool load_cmap(ilbm_t* ilbm) {
     for (; i < ilbm->num_colors; i++) {
         ilbm->colors[i] = 0xFFFF00FF;
     }
-    assert(state.ptr == (start + chunk_size));
+    assert(state.ptr == (start + chunk_size)); (void)start;
     // may need to skip padding byte
     if (((uintptr_t)state.ptr & 1) == 1) {
         u8();
@@ -164,7 +164,7 @@ bool load_body(ilbm_t* ilbm) {
         uint8_t* dst = buf;
         uint8_t* dst_end = buf + body_size;
         while (dst < dst_end) {
-            assert(state.ptr < chunk_end);
+            assert(state.ptr < chunk_end); (void)chunk_end;
             int8_t b = (int8_t)u8();
             if (b >= 0) {
                 // literal run: copy b+1 bytes
