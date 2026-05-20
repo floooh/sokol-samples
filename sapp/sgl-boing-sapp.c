@@ -23,7 +23,9 @@ static struct {
     float ball_rotz, ball_rotx;
 } state;
 
-static void draw_ball(float x, float y, float r, float rotz, float rotx);
+const sg_color bg_color = { 0.2f, 0.2f, 0.4f, 1.0f };
+
+static void draw_ball(float x, float y, float r, float rotz, float rotx, sg_color c0, sg_color c1);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -36,7 +38,7 @@ static void init(void) {
     state.pass_action = (sg_pass_action){
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.5f, 0.5f, 0.5f, 1.0f },
+            .clear_value = bg_color,
         }
     };
     state.ball_radius = 70.0f;
@@ -78,18 +80,22 @@ static void frame(void) {
     state.ball_rotz += state.ball_vx * dt * 0.3f;    // rotate with horizontal movement
     state.ball_rotx += state.ball_vy * dt * 0.2f;    // y-axis spin with vertical movement
 
+    const sg_color red = { 0.9f, 0.1f, 0.1f };
+    const sg_color white = { 1.0f, 1.0f, 1.0f };
+    const sg_color shadow = { bg_color.r * 0.5f, bg_color.g * 0.5f, bg_color.b * 0.5f, 1.0f };
+
     sgl_defaults();
     sgl_matrix_mode_projection();
     sgl_ortho(0.0f, sapp_width(), sapp_heightf(), 0.0f, -100.0f, +100.0f);
     sgl_matrix_mode_modelview();
-    draw_ball(state.ball_x, state.ball_y, state.ball_radius, state.ball_rotz, state.ball_rotx);
+    draw_ball(state.ball_x + 20.0f, state.ball_y + 30.0f, state.ball_radius * 1.05f, state.ball_rotz, state.ball_rotx, shadow, shadow);
+    draw_ball(state.ball_x, state.ball_y, state.ball_radius, state.ball_rotz, state.ball_rotx, red, white);
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
-
 }
 
 static void cleanup(void) {
@@ -98,7 +104,7 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-static void draw_ball(float x, float y, float r, float rotz, float rotx) {
+static void draw_ball(float x, float y, float r, float rotz, float rotx, sg_color c0, sg_color c1) {
     const int bands = 12;
     const int segs = 12;
     sgl_push_matrix();
@@ -124,9 +130,9 @@ static void draw_ball(float x, float y, float r, float rotz, float rotx) {
             const float sinp2 = sinf(p2);
             const float cosp2 = cosf(p2);
             if (is_red) {
-                sgl_c3f(0.9f, 0.1f, 0.1f);
+                sgl_c3f(c0.r, c0.g, c0.b);
             } else {
-                sgl_c3f(1.0f, 1.0f, 1.0f);
+                sgl_c3f(c1.r, c1.g, c1.b);
             }
             sgl_v3f(r * cost1 * cosp1, r * sint1, r * cost1 * sinp1);
             sgl_v3f(r * cost1 * cosp2, r * sint1, r * cost1 * sinp2);
