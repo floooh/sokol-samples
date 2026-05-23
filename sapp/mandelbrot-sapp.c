@@ -30,7 +30,7 @@ static void init(void) {
 
 static void frame(void) {
     // loop time to prevent a to deep mandelbrot zoom
-    state.time = fmod(state.time + sapp_frame_duration(), 20.0);
+    state.time = fmodf(state.time + (float)sapp_frame_duration(), 20.0);
     float aspect = sapp_widthf() / sapp_heightf();
 
     // number of iterations grows with zoom level, max 256
