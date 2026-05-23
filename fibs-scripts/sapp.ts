@@ -103,6 +103,7 @@ export const samples: SampleOptions[] = [
     { name: 'miprender', ui: 'cc', shd: true },
     { name: 'layerrender', ui: 'cc', shd: true },
     { name: 'sdf', ui: 'cc', shd: true },
+    { name: 'mandelbrot', ui: 'cc', shd: true },
     { name: 'shapes', ui: 'cc', shd: true },
     { name: 'shapes-transform', ui: 'cc', shd: true },
     { name: 'primtypes', ui: 'cc', shd: true },
