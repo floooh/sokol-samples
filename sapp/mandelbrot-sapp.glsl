@@ -2,7 +2,7 @@
 out vec2 uv;
 
 void main() {
-    // synthesize of 'fullscreen triangle'
+    // synthesize vertices of 'fullscreen triangle'
     float x = (gl_VertexIndex & 1) != 0 ? 2.0 : 0.0;
     float y = (gl_VertexIndex & 2) != 0 ? 2.0 : 0.0;
     gl_Position = vec4(vec2(x, y) * 2.0 - 1.0, 0.0, 1.0);
