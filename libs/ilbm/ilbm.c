@@ -43,7 +43,7 @@ static uint16_t u16be(void) {
     if ((state.ptr + 2) <= state.end) {
         uint32_t b0 = *state.ptr++;
         uint32_t b1 = *state.ptr++;
-        return (b0 << 8) | b1;
+        return (uint16_t)((b0 << 8) | b1);
     } else {
         return 0;
     }
