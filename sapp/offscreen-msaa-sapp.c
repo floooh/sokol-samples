@@ -281,7 +281,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .sample_count = DISPLAY_SAMPLE_COUNT,
+        .swapchain.sample_count = DISPLAY_SAMPLE_COUNT,
         .window_title = "offscreen-msaa-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

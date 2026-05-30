@@ -48,7 +48,7 @@ int main() {
         .cleanup_cb = cleanup, // cleanup doesn't need access to the state struct
         .width = 800,
         .height = 600,
-        .sample_count = 4,
+        .swapchain.sample_count = 4,
         .window_title = "noentry-dll-sapp.c",
         .logger.func = slog_func,
     });

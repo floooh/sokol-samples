@@ -882,7 +882,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .sample_count = 4,
+        .swapchain.sample_count = 4,
         .window_title = "spine-inspector-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

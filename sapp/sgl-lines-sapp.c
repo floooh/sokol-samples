@@ -194,7 +194,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
-        .sample_count = 4,
+        .swapchain.sample_count = 4,
         .window_title = "sgl-lines-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
