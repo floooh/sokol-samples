@@ -15,6 +15,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define M_PIF ((float)M_PI)
+
 static struct {
     sg_pass_action pass_action;
     float ball_x, ball_y;
@@ -63,7 +65,7 @@ static void frame(void) {
     const float floor_y = sapp_heightf() - state.ball_radius;
     if (state.ball_y > floor_y) {
         state.ball_y = floor_y;
-        state.ball_vy = -sapp_height();    // fixed upward velocity = constant bounce height
+        state.ball_vy = -sapp_heightf();    // fixed upward velocity = constant bounce height
     }
 
     // bounce off walls
@@ -86,7 +88,7 @@ static void frame(void) {
 
     sgl_defaults();
     sgl_matrix_mode_projection();
-    sgl_ortho(0.0f, sapp_width(), sapp_heightf(), 0.0f, -100.0f, +100.0f);
+    sgl_ortho(0.0f, sapp_widthf(), sapp_heightf(), 0.0f, -100.0f, +100.0f);
     sgl_matrix_mode_modelview();
     draw_ball(state.ball_x + 20.0f, state.ball_y + 30.0f, state.ball_radius * 1.05f, state.ball_rotz, state.ball_rotx, shadow, shadow);
     draw_ball(state.ball_x, state.ball_y, state.ball_radius, state.ball_rotz, state.ball_rotx, red, white);
@@ -114,16 +116,16 @@ static void draw_ball(float x, float y, float r, float rotz, float rotx, sg_colo
     sgl_begin_quads();
     for (int lat = 0; lat < bands; lat++) {
         const float latf = (float)lat;
-        const float t1 = M_PI * (latf / (float)bands) - M_PI * 0.5f;
-        const float t2 = M_PI * ((latf + 1.0f) / (float)bands) - M_PI * 0.5f;
+        const float t1 = M_PIF * (latf / (float)bands) - M_PIF * 0.5f;
+        const float t2 = M_PIF * ((latf + 1.0f) / (float)bands) - M_PIF * 0.5f;
         const float sint1 = sinf(t1);
         const float cost1 = cosf(t1);
         const float sint2 = sinf(t2);
         const float cost2 = cosf(t2);
         for (int lon = 0; lon < segs; lon++) {
             const float lonf = (float)lon;
-            const float p1 = 2.0f * M_PI * (lonf / (float)segs);
-            const float p2 = 2.0f * M_PI * ((lonf + 1.0f) / (float)segs);
+            const float p1 = 2.0f * M_PIF * (lonf / (float)segs);
+            const float p2 = 2.0f * M_PIF * ((lonf + 1.0f) / (float)segs);
             const bool is_red = 0 != ((lat + lon) & 1);
             const float sinp1 = sinf(p1);
             const float cosp1 = cosf(p1);
