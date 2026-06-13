@@ -36,6 +36,7 @@ To build the samples in the host platform's default release-mode configuration:
 
 ```sh
 git clone https://github.com/floooh/sokol-samples
+cd sokol-samples
 ./fibs build
 ```
 
