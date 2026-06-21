@@ -424,7 +424,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
-        .swapchain.sample_count = 4,
+        .sample_count = 4,
         .window_title = "restart-sapp.c",
         .icon.sokol_default = true,
         .allocator = {

@@ -582,7 +582,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .cleanup_cb = cleanup,
         .width = 900,
         .height = 500,
-        .swapchain.sample_count = 1,
+        .sample_count = 1,
         .high_dpi = true,
         .window_title = "slug-sapp.c",
         .icon.sokol_default = true,

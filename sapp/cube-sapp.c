@@ -115,7 +115,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){
         .action.colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f }
+            .clear_value = { 0.25f, 0.5f, 0.75f, 0.1f }
         },
         .swapchain = sglue_swapchain()
     });
@@ -155,7 +155,9 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .swapchain.sample_count = 4,
+        .sample_count = 4,
+        .hdr = true,
+        .composite_mode = SAPP_COMPOSITEMODE_OPAQUE,
         .window_title = "cube-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

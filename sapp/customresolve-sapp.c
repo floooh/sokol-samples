@@ -258,7 +258,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 640,
         .height = 480,
-        .swapchain.sample_count = 1,
+        .sample_count = 1,
         .window_title = "customresolve-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

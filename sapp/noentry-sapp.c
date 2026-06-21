@@ -48,7 +48,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .cleanup_cb = cleanup,  // cleanup doesn't need access to the state struct
         .width = 800,
         .height = 600,
-        .swapchain.sample_count = 4,
+        .sample_count = 4,
         .window_title = "noentry-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

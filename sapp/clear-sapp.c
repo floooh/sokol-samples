@@ -48,6 +48,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 400,
         .height = 300,
         .window_title = "clear-sapp.c",
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

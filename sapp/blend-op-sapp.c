@@ -169,7 +169,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
-        .swapchain.sample_count = 4,
+        .sample_count = 4,
         .window_title = "blend-op-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
