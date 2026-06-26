@@ -156,8 +156,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
-        .hdr = true,
-        .composite_mode = SAPP_COMPOSITEMODE_OPAQUE,
         .window_title = "cube-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

@@ -82,7 +82,6 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 640,
         .height = 480,
         .depth_format = SAPP_PIXELFORMAT_NONE,
-        .srgb = true,
         .window_title = "triangle-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
