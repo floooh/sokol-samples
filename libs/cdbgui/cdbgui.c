@@ -15,14 +15,14 @@
 #define SOKOL_APP_IMGUI_IMPL
 #include "sokol_app_imgui.h"
 
-void __cdbgui_setup(int sample_count) {
+void __cdbgui_setup(void) {
     // setup debug inspection headers
     sappimgui_setup();
     sgimgui_setup(&(sgimgui_desc_t){0});
 
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
-        .sample_count = sample_count,
+        .sample_count = sapp_sample_count(),
         .logger.func = slog_func,
     });
 }

@@ -30,7 +30,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // a default pass action which does not clear, since the entire screen is overwritten anyway
     state.pass_action = (sg_pass_action) {

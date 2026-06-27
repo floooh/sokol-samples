@@ -164,7 +164,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // pass action to clear to blue-ish
     state.pass_action = (sg_pass_action){

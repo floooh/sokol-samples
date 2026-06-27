@@ -26,7 +26,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // a vertex buffer to render a 'fullscreen triangle'
     float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };

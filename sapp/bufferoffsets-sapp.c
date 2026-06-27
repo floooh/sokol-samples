@@ -33,7 +33,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // a 2D triangle and quad in 1 vertex buffer and 1 index buffer
     vertex_t vertices[7] = {

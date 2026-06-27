@@ -70,7 +70,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // setup sokol-debugtext using all builtin fonts
     sdtx_setup(&(sdtx_desc_t){

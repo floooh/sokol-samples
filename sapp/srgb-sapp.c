@@ -21,7 +21,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
     sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){ .shader = shd });
     state.pass_action = (sg_pass_action){

@@ -22,7 +22,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(mandelbrot_shader_desc(sg_query_backend())),
     });

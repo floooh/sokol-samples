@@ -35,7 +35,7 @@ static void init(void) {
         .fonts[0] = sdtx_font_oric(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // clear to black
     state.pass_action = (sg_pass_action) {

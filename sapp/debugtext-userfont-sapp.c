@@ -56,7 +56,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     /*  setup sokol-debugtext with the user font as the only font,
         NOTE that the user font only provides pixel data for the

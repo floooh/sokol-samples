@@ -20,7 +20,7 @@ static void init(void) {
             .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }
         }
     };
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 }
 
 static void frame(void) {

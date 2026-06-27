@@ -44,7 +44,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // default pass action: clear to green-ish
     state.display.pass_action = (sg_pass_action) {

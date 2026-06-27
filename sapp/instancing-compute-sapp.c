@@ -48,7 +48,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // create an uninitialized storage buffer for the particle state,
     // this will be initialized and updated by compute shaders and then

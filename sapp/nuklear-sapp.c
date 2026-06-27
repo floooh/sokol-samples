@@ -32,7 +32,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)

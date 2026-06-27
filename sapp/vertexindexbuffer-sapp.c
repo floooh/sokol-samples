@@ -71,7 +71,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // if combined vertex/index buffers are not supported, setup
     // sokol_debugtext.h to render an error message and return

@@ -54,7 +54,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric(),

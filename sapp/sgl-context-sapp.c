@@ -40,7 +40,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // setup sokol-gl with the default context compatible with the default render pass
     sgl_setup(&(sgl_desc_t){
