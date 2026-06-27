@@ -25,6 +25,7 @@ export const samples: SampleOptions[] = [
     { name: 'vertextexture', ui: 'cc', shd: true },
     { name: 'offscreen', ui: 'cc', shd: true },
     { name: 'offscreen-msaa', ui: 'cc', shd: true },
+    { name: 'srgb-offscreen', ui: 'cc', shd: true },
     { name: 'shadows', ui: 'cc', shd: true },
     { name: 'shadows-depthtex', ui: 'cc', shd: true },
     { name: 'instancing', ui: 'cc', shd: true },
