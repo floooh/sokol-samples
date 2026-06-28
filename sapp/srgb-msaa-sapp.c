@@ -54,7 +54,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 480,
         .srgb = true,       // NOTE: request SRGB+MSAA framebuffer
         .sample_count = 4,
-        .window_title = "triangle-bufferless-sapp.c",
+        .depth_format = SAPP_PIXELFORMAT_NONE,
+        .window_title = "srgb-msaa-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

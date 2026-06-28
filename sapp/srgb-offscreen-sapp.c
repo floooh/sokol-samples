@@ -153,7 +153,7 @@ static void frame(void) {
 
     // render display pass (the two offscreen-rendered triangles side-by-sideA)
     const int w = sapp_width();
-    const int wh = w * 0.5f;
+    const int wh = w / 2;
     const int h = sapp_height();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
