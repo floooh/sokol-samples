@@ -25,7 +25,7 @@ static void init(void) {
     sg_shader shd = sg_make_shader(triangle_shader_desc(sg_query_backend()));
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){ .shader = shd });
     state.pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0.025, 0.05, 1} },
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.025f, 0.05f, 1.0f } },
     };
 }
 
