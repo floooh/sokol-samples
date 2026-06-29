@@ -115,7 +115,7 @@ static void frame(void) {
     sg_begin_pass(&(sg_pass){
         .action.colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.25f, 0.5f, 0.75f, 0.1f }
+            .clear_value = { 0.25f, 0.5f, 0.75f, 1.0f }
         },
         .swapchain = sglue_swapchain()
     });
