@@ -23,6 +23,7 @@ void __cdbgui_setup(void) {
     // setup the sokol-imgui utility header
     simgui_setup(&(simgui_desc_t){
         .sample_count = sapp_sample_count(),
+        .write_alpha_channel = true,
         .logger.func = slog_func,
     });
 }

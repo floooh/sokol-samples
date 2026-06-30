@@ -27,6 +27,7 @@ void __dbgui_setup(void) {
     simgui_desc_t simgui_desc = { };
     simgui_desc.sample_count = sapp_sample_count();
     simgui_desc.logger.func = slog_func;
+    simgui_desc.write_alpha_channel = true;
     simgui_setup(&simgui_desc);
 }
 
