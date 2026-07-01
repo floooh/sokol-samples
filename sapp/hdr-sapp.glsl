@@ -25,7 +25,7 @@ void main() {
         // right triangle (hdr)
         pos = positions[gl_VertexIndex - 3];
         c = colors[gl_VertexIndex - 3];
-        c.rgb *= 10;
+        c.rgb *= 4;
         pos.x += 0.5;
     }
     gl_Position = vec4(pos, 0.0, 1.0);
