@@ -92,7 +92,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.event_cb = input;
     desc.width = 1024;
     desc.height = 768;
-    desc.window_title = "imgui-dock-sapp.cc",
+    desc.depth_format = SAPP_PIXELFORMAT_NONE;
+    desc.window_title = "imgui-dock-sapp.cc";
     desc.ios.keyboard_resizes_canvas = false;
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;

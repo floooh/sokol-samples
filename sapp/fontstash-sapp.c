@@ -145,8 +145,7 @@ static void init(void) {
     });
 }
 
-static void line(float sx, float sy, float ex, float ey)
-{
+static void line(float sx, float sy, float ex, float ey) {
     sgl_begin_lines();
     sgl_c4b(255, 255, 0, 128);
     sgl_v2f(sx, sy);

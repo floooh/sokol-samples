@@ -396,6 +396,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.cleanup_cb = cleanup;
     desc.width = 832;
     desc.height = 600;
+    desc.depth_format = SAPP_PIXELFORMAT_NONE,
     desc.window_title = "events-sapp.cc",
     desc.enable_clipboard = true;
     desc.enable_dragndrop = true;

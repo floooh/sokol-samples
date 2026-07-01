@@ -144,9 +144,10 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.height = 768;
     desc.fullscreen = true;
     desc.high_dpi = true;
+    desc.depth_format = SAPP_PIXELFORMAT_NONE;
     desc.html5.ask_leave_site = html5_ask_leave_site;
     desc.ios.keyboard_resizes_canvas = false;
-    desc.window_title = "imgui-highdpi-sapp.cc",
+    desc.window_title = "imgui-highdpi-sapp.cc";
     desc.icon.sokol_default = true;
     desc.enable_clipboard = true;
     desc.logger.func = slog_func;

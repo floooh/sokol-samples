@@ -290,6 +290,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "imageblur-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

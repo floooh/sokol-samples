@@ -690,6 +690,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 1,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "blend-playground-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

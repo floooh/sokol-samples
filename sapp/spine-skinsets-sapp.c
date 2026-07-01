@@ -437,6 +437,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .high_dpi = true,
         .window_title = "spine-skinsets-sapp.c",
         .icon.sokol_default = true,

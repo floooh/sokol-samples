@@ -53,6 +53,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 640,
         .height = 480,
         .hdr = true,   // NOTE: request HDR framebuffer
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "triangle-bufferless-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

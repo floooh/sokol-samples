@@ -76,10 +76,6 @@ static void init(void) {
             .attrs[ATTR_uvwrap_pos].format = SG_VERTEXFORMAT_FLOAT2
         },
         .primitive_type = SG_PRIMITIVETYPE_TRIANGLE_STRIP,
-        .depth = {
-            .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true
-        },
     });
 
     // pass action to clear to a background color
@@ -130,6 +126,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "uvwrap-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

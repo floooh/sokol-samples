@@ -370,6 +370,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
     desc.cleanup_cb = cleanup;
     desc.width = 832;
     desc.height = 600;
+    desc.depth_format = SAPP_PIXELFORMAT_NONE;
     desc.window_title = "cursor-sapp.cc",
     desc.icon.sokol_default = true;
     desc.logger.func = slog_func;

@@ -87,6 +87,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .enable_clipboard = true,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "nuklear-sapp.c",
         .ios.keyboard_resizes_canvas = true,
         .icon.sokol_default = true,
