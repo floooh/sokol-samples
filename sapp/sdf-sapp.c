@@ -26,7 +26,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // a vertex buffer to render a 'fullscreen triangle'
     float fsq_verts[] = { -1.0f, -3.0f, 3.0f, 1.0f, -1.0f, 1.0f };
@@ -78,6 +78,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "sdf-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

@@ -228,7 +228,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     // setup the optional debugging UI
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // initialize camera helper
     cam_init(&state.camera, &(camera_desc_t){

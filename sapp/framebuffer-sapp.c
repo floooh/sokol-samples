@@ -30,7 +30,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     sfb_setup(&(sfb_desc){
         .logger.func = slog_func,

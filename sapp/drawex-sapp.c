@@ -47,7 +47,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_c64(),
@@ -235,6 +235,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .sample_count = 4,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "drawex-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

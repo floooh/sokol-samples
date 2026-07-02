@@ -29,7 +29,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // if storage buffers are not supported on this platform, render
     // a red screen and error message via sokol-debugtext

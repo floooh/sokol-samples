@@ -1,6 +1,6 @@
 import { type Configurer, type ConfigDesc, conf, util } from 'jsr:@floooh/fibs@^1';
 
-const ANDROID_ABI = 'armeabi-v7a';
+const ANDROID_ABI = 'arm64-v8a';
 const ANDROID_PLATFORM = 'android-30';
 
 export function addConfigs(c: Configurer) {

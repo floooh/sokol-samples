@@ -145,6 +145,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .user_data = &state,
         .width = 400,
         .height = 300,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "modplay-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

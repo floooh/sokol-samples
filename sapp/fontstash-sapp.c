@@ -94,7 +94,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func
     });
@@ -145,8 +145,7 @@ static void init(void) {
     });
 }
 
-static void line(float sx, float sy, float ex, float ey)
-{
+static void line(float sx, float sy, float ex, float ey) {
     sgl_begin_lines();
     sgl_c4b(255, 255, 0, 128);
     sgl_v2f(sx, sy);

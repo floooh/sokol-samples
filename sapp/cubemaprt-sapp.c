@@ -82,7 +82,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(DISPLAY_SAMPLE_COUNT);
+    __dbgui_setup();
 
     // create a cubemap as render target, a texture view, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){

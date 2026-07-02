@@ -32,7 +32,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
@@ -87,6 +87,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .enable_clipboard = true,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "nuklear-sapp.c",
         .ios.keyboard_resizes_canvas = true,
         .icon.sokol_default = true,

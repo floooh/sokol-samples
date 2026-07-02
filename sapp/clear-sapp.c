@@ -20,7 +20,7 @@ static void init(void) {
             .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }
         }
     };
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 }
 
 static void frame(void) {
@@ -48,6 +48,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 400,
         .height = 300,
         .window_title = "clear-sapp.c",
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

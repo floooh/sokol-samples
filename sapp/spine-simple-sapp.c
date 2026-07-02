@@ -49,7 +49,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     // optional debugging UI, only active in the spine-simple-sapp-ui sample
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // Setup sokol_spine.h, if desired, memory usage can be tuned by
     // setting the max number of vertices, draw commands and pool sizes
@@ -327,6 +327,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "spine-simple-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

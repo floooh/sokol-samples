@@ -40,7 +40,7 @@ static void init(void) {
         .fonts[0] = sdtx_font_oric(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // setup vertex shader uniform block
     state.vs_params.scale[0] = 1.0f;
@@ -142,6 +142,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "uniformtypes-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

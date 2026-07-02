@@ -20,7 +20,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // a vertex buffer
     float vertices[] = {
@@ -89,6 +89,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "quad-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

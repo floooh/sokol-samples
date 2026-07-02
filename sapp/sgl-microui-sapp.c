@@ -79,7 +79,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __cdbgui_setup(1);
+    __cdbgui_setup();
 
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){

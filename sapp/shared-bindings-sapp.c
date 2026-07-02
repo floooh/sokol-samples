@@ -39,7 +39,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // pass action for clearing the framebuffer
     state.pass_action = (sg_pass_action){

@@ -584,6 +584,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 500,
         .sample_count = 1,
         .high_dpi = true,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "slug-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

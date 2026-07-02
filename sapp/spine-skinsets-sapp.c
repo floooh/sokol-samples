@@ -164,7 +164,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // pass action to clear to blue-ish
     state.pass_action = (sg_pass_action){
@@ -437,6 +437,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .high_dpi = true,
         .window_title = "spine-skinsets-sapp.c",
         .icon.sokol_default = true,

@@ -82,7 +82,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // create 2 sspine contexts for rendering into offscreen render targets
     state.offscreen[0] = setup_offscreen(SG_PIXELFORMAT_RGBA8, 512, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });

@@ -31,7 +31,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // Cube vertex buffer with packed vertex formats for color and texture coords.
     // Note that a vertex format which must be portable across all

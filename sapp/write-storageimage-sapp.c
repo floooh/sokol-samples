@@ -37,7 +37,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // an image object with storage attachment usage
     state.img = sg_make_image(&(sg_image_desc){

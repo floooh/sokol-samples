@@ -60,7 +60,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
     snk_setup(&(snk_desc_t){
         .enable_set_mouse_cursor = true,
         .dpi_scale = sapp_dpi_scale(),

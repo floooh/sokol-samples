@@ -56,7 +56,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     /*  setup sokol-debugtext with the user font as the only font,
         NOTE that the user font only provides pixel data for the
@@ -113,6 +113,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "debugtext-userfont-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

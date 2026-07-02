@@ -17,7 +17,7 @@
 
 extern "C" {
 
-void __dbgui_setup(int sample_count) {
+void __dbgui_setup(void) {
     // setup debug inspection header(s)
     sappimgui_setup();
     const sgimgui_desc_t desc = { };
@@ -25,8 +25,9 @@ void __dbgui_setup(int sample_count) {
 
     // setup the sokol-imgui utility header
     simgui_desc_t simgui_desc = { };
-    simgui_desc.sample_count = sample_count;
+    simgui_desc.sample_count = sapp_sample_count();
     simgui_desc.logger.func = slog_func;
+    simgui_desc.write_alpha_channel = true;
     simgui_setup(&simgui_desc);
 }
 

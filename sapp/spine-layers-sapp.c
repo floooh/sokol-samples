@@ -63,7 +63,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // setup sokol-gfx pass action to clear screen
     state.pass_action = (sg_pass_action){

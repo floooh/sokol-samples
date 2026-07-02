@@ -96,7 +96,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     sspine_setup(&(sspine_desc){ .logger.func = slog_func });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
@@ -302,6 +302,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "spine-switch-skinsets-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

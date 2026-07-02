@@ -71,7 +71,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // check if requires features are supported
     state.features_ok = sg_query_pixelformat(DEPTH_PIXEL_FORMAT).render &&

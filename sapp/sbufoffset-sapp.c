@@ -49,7 +49,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
 
     // check for compute support and render fallback via sokol_debugtext.h if not available
     if (!sg_query_features().compute) {

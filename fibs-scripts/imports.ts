@@ -1,4 +1,4 @@
-import { type Configurer, type Project } from 'jsr:@floooh/fibs@^1';
+import { type Configurer, type Project, log } from 'jsr:@floooh/fibs@^1';
 
 export function addImports(c: Configurer) {
     c.addImport({
@@ -37,12 +37,21 @@ export function addImports(c: Configurer) {
         files: ['fibs.ts', 'fibs-docking.ts'],
     });
     c.addImportOptions((p: Project) => {
+        // temporarily disable Closure pass on Emscripten WebGPU until
+        // https://issues.chromium.org/issues/529689760 is fixed
+        let emscUseClosure = true;
+        if (p.activeConfig().name.includes('wgpu-emsc')) {
+            log.warn('disabling Emscripten Closure pass (see: https://issues.chromium.org/issues/529689760)');
+            emscUseClosure = false;
+        }
         return {
             sokol: {
                 backend: p.activeConfig().options.backend,
                 useEGL: p.activeConfig().options.egl,
             },
-            // FIXME: Android import options
+            emscripten: {
+                useClosure: emscUseClosure,
+            }
         };
     });
 }

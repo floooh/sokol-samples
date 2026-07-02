@@ -22,7 +22,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup(sapp_sample_count());
+    __dbgui_setup();
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(mandelbrot_shader_desc(sg_query_backend())),
     });
@@ -76,6 +76,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = __dbgui_event,
         .width = 512,
         .height = 512,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "mandelbrot-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
