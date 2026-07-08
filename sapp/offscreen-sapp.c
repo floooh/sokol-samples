@@ -14,7 +14,8 @@
 #include "dbgui/dbgui.h"
 #include "offscreen-sapp.glsl.h"
 
-#define OFFSCREEN_PIXEL_FORMAT (SG_PIXELFORMAT_RGBA8)
+#define OFFSCREEN_COLOR_FORMAT (SG_PIXELFORMAT_RGBA8)
+#define OFFSCREEN_DEPTH_FORMAT (SG_PIXELFORMAT_DEPTH)
 #define OFFSCREEN_SAMPLE_COUNT (1)
 #define DISPLAY_SAMPLE_COUNT (4)
 
@@ -57,12 +58,12 @@ static void init(void) {
         .usage = { .color_attachment = true },
         .width = 256,
         .height = 256,
-        .pixel_format = OFFSCREEN_PIXEL_FORMAT,
+        .pixel_format = OFFSCREEN_COLOR_FORMAT,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .label = "color-image"
     };
     sg_image color_img = sg_make_image(&img_desc);
-    img_desc.pixel_format = SG_PIXELFORMAT_DEPTH;
+    img_desc.pixel_format = OFFSCREEN_DEPTH_FORMAT;
     img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true },
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
@@ -134,11 +135,11 @@ static void init(void) {
         .cull_mode = SG_CULLMODE_BACK,
         .sample_count = OFFSCREEN_SAMPLE_COUNT,
         .depth = {
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .pixel_format = OFFSCREEN_DEPTH_FORMAT,
             .compare = SG_COMPAREFUNC_LESS_EQUAL,
             .write_enabled = true,
         },
-        .colors[0].pixel_format = OFFSCREEN_PIXEL_FORMAT,
+        .colors[0].pixel_format = OFFSCREEN_COLOR_FORMAT,
         .label = "offscreen-pipeline"
     });
 
