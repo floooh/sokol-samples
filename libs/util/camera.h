@@ -89,7 +89,8 @@ static void cam_orbit(camera_t* cam, float dx, float dy) {
 /* feed zoom (mouse wheel) input */
 static void cam_zoom(camera_t* cam, float d) {
     assert(cam);
-    cam->distance = vm_clamp(cam->distance + d, cam->min_dist, cam->max_dist);
+    // scale delta by current distance so apparent size change is roughly linear
+    cam->distance = vm_clamp(cam->distance + d * cam->distance * 0.1f, cam->min_dist, cam->max_dist);
 }
 
 static vec3_t _cam_euclidean(float latitude, float longitude) {
