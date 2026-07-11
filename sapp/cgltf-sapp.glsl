@@ -157,7 +157,7 @@ float visibility_occlusion(material_info_t material_info, angular_info_t angular
     float alpha_roughness_sq = material_info.alpha_roughness * material_info.alpha_roughness;
 
     float GGXV = n_dot_l * sqrt(n_dot_v * n_dot_v * (1.0 - alpha_roughness_sq) + alpha_roughness_sq);
-    float GGXL = n_dot_v * sqrt(n_dot_l * n_dot_v * (1.0 - alpha_roughness_sq) + alpha_roughness_sq);
+    float GGXL = n_dot_v * sqrt(n_dot_l * n_dot_l * (1.0 - alpha_roughness_sq) + alpha_roughness_sq);
     float GGX = GGXV + GGXL;
     if (GGX > 0.0) {
         return 0.5 / GGX;
