@@ -83,13 +83,13 @@ static void cam_orbit(camera_t* cam, float dx, float dy) {
     if (cam->longitude > 360.0f) {
         cam->longitude -= 360.0f;
     }
-    cam->latitude = vm_clamp(cam->min_lat, cam->latitude + dy, cam->max_lat);
+    cam->latitude = vm_clamp(cam->latitude + dy, cam->min_lat, cam->max_lat);
 }
 
 /* feed zoom (mouse wheel) input */
 static void cam_zoom(camera_t* cam, float d) {
     assert(cam);
-    cam->distance = vm_clamp(cam->min_dist, cam->distance + d, cam->max_dist);
+    cam->distance = vm_clamp(cam->distance + d, cam->min_dist, cam->max_dist);
 }
 
 static vec3_t _cam_euclidean(float latitude, float longitude) {
