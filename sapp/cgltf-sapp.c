@@ -1009,9 +1009,8 @@ static mat44_t build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf
         parent_tform = build_transform_for_gltf_node(gltf, node->parent);
     }
     if (node->has_matrix) {
-        // needs testing, not sure if the element order is correct
         mat44_t tform = *(mat44_t*)node->matrix;
-        return tform;
+        return vm_mul(parent_tform, tform);
     } else {
         mat44_t translate = mat44_identity();
         mat44_t rotate = mat44_identity();
@@ -1025,8 +1024,7 @@ static mat44_t build_transform_for_gltf_node(const cgltf_data* gltf, const cgltf
         if (node->has_scale) {
             scale = mat44_scaling(node->scale[0], node->scale[1], node->scale[2]);
         }
-        // NOTE: not sure if the multiplication order is correct
-        return vm_mul(vm_mul(translate, vm_mul(rotate, scale)), parent_tform);
+        return vm_mul(parent_tform, vm_mul(translate, vm_mul(rotate, scale)));
     }
 }
 
@@ -1036,7 +1034,7 @@ static void update_scene(void) {
 
 static cgltf_vs_params_t vs_params_for_node(int node_index) {
     return (cgltf_vs_params_t){
-        .model = vm_mul(state.scene.nodes[node_index].transform, state.root_transform),
+        .model = vm_mul(state.root_transform, state.scene.nodes[node_index].transform),
         .view_proj = state.camera.view_proj,
         .eye_pos = state.camera.eye_pos
     };
