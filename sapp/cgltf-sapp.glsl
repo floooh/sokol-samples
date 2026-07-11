@@ -237,6 +237,20 @@ vec3 tone_map(vec3 color) {
     return toneMapUncharted(color);
 }
 
+vec3 hemisphere_ambient(vec3 n) {
+    const vec3 sky_color = vec3(0.1, 0.6, 1.8);
+    const vec3 ground_color = vec3(0.2, 0.1, 0.025);
+    float t = n.y * 0.5 + 0.5;
+    return mix(ground_color, sky_color, t);
+}
+
+vec3 hemisphere_specular(vec3 n, vec3 v, float roughness) {
+    vec3 r = reflect(-v, n);
+    // pull reflection toward normal as roughness increases (fake mip blur)
+    vec3 dir = normalize(mix(r, n, roughness));
+    return hemisphere_ambient(dir);
+}
+
 void main() {
 
     const vec3 f0 = vec3(0.04);
@@ -244,7 +258,7 @@ void main() {
     // Roughness is stored in the 'a' channel, metallic is stored in the 'r' channel.
     // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
     vec4 mr_sample = texture(sampler2D(metallic_roughness_tex, metallic_roughness_smp), v_uv);
-    float perceptual_roughness = clamp(mr_sample.w * roughness_factor, 0.0, 1.0);
+    float perceptual_roughness = clamp(mr_sample.w * roughness_factor, 0.05, 1.0);
     float metallic = clamp(mr_sample.x * metallic_factor, 0.0, 1.0);
 
     vec4 base_color = srgb_to_linear(texture(sampler2D(base_color_tex, base_color_smp), v_uv)) * base_color_factor;
@@ -273,8 +287,25 @@ void main() {
     vec3 normal = get_normal();
     vec3 view = normalize(v_eye_pos - v_pos);
     vec3 color = apply_point_light(material_info, normal, view);
+
+    // cheap environment lighting
+    // view-angle fresnel (Schlick) using the material's F0/F90
+    float n_dot_v = clamp(dot(normal, view), 0.0, 1.0);
+    vec3 F = specular_environment_r0 +
+             (specular_environment_r90 - specular_environment_r0) *
+             pow(1.0 - n_dot_v, 5.0);
+
+    // diffuse ambient from sky/ground hemisphere
+    vec3 env_diffuse  = hemisphere_ambient(normal) * diffuse_color * 0.2;
+    // blurry specular ambient (reflection vector, blurred by roughness)
+    vec3 env_specular = hemisphere_specular(normal, view, alpha_roughness) * F * 0.2;
+
+    // energy-conserving combine: diffuse attenuated by (1 - F)
+    color += (1.0 - F) * env_diffuse + env_specular;
+
     color *= texture(sampler2D(occlusion_tex, occlusion_smp), v_uv).r;
     color += srgb_to_linear(texture(sampler2D(emissive_tex, emissive_smp), v_uv)).rgb * emissive_factor;
+
     frag_color = vec4(tone_map(color), 1.0);
 }
 @end

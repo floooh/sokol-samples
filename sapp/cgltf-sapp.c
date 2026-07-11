@@ -271,10 +271,10 @@ static void init(void) {
 
     // setup the point light
     state.point_light = (cgltf_light_params_t){
-        .light_pos = vec3(10.0, 10.0, 10.0),
-        .light_range = 200.0,
-        .light_color = vec3(1.0, 1.5, 2.0),
-        .light_intensity = 700.0
+        .light_pos = vec3(10.0, 3.0, 10.0),
+        .light_range = 500.0,
+        .light_color = vec3(1.0, 1.0, 1.0),
+        .light_intensity = 1400.0f,
     };
 
     // start loading the base gltf file...
