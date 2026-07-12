@@ -28,7 +28,8 @@ export function addImports(c: Configurer) {
             'ozzanimation.ts',
             'microui.ts',
             'nuklear.ts',
-            'glfw3.ts'
+            'glfw3.ts',
+            'box3d.ts',
         ],
     });
     c.addImport({
