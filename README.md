@@ -48,7 +48,7 @@ cd sokol-samples
 
 ...and run any of the samples, e.g.:
 ```sh
-./fisb run triangle-sapp-ui
+./fibs run triangle-sapp-ui
 ```
 
 Alternatively configure for a specific build configuration:
