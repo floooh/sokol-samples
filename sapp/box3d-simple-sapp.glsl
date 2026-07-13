@@ -1,4 +1,7 @@
 @ctype mat4 mat44_t
+@ctype vec2 vec2_t
+@ctype vec3 vec3_t
+@ctype vec4 vec4_t
 
 @block util
 vec4 gamma(vec4 c) {
@@ -32,7 +35,7 @@ void main() {
 }
 @end
 
-@vs shape_fs
+@fs shape_fs
 @include_block util
 layout(binding=1) uniform shape_fs_params {
     vec3 light_dir;
@@ -71,3 +74,5 @@ void main() {
     frag_color = gamma(frag_color);
 }
 @end
+
+@program shape shape_vs shape_fs
