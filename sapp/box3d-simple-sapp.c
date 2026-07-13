@@ -16,9 +16,13 @@
 #include "util/camera.h"
 #include "box3d-simple-sapp.glsl.h"
 
+#define MAX_SHAPES (128)
+#define GROUND_SIZE (100.0f)
 #define SPHERE_RADIUS (1.0f)
 #define BOX_SIZE (1.5f)
 #define SHADOW_MAP_SIZE (2048)
+#define USEC_PER_SEC (1000000.0)
+#define PHYSICS_TICK_USEC ((1.0 / 250.0) * USEC_PER_SEC)
 
 static struct {
     sg_buffer vbuf;
@@ -42,9 +46,24 @@ static struct {
     vec3_t light_pos;
     mat44_t light_view_proj;
     mat44_t view_proj;
+    struct {
+        b3WorldId world;
+        b3BodyId ground;
+        int64_t tick_error_us;  // current tick error in micro-seconds
+        int num_spheres;
+        int num_boxes;
+        b3BodyId spheres[MAX_SHAPES];
+        b3BodyId boxes[MAX_SHAPES];
+    } physics;
 } state;
 
-static void create_shape_resources(void);
+static void init_gfx(void);
+static void init_physics(void);
+static void tick_physics(void);
+static void add_box(void);
+static void add_sphere(void);
+static mat44_t body_world_matrix(b3BodyId body);
+static void cleanup_physics(void);
 static void update_matrices(void);
 static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
 static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec3_t color);
@@ -65,58 +84,17 @@ static void init(void) {
         .max_dist = 300.0f,
     });
 
-    // fixed light position in world space
-    state.light_pos = vec3(50.0f, 100.0f, -75.0f);
-
-    // display pass clear color (blue-ish)
-    state.display.pass_action = (sg_pass_action){
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.2f, 0.4f, 0.8f, 1.0f }
-        },
-    };
-
-    // shadow map texture, view, pass, comparison sampler
-    // NOTE: the shadow pass pipeline object is created in create_shape_resources
-    sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
-        .usage.depth_stencil_attachment = true,
-        .width = SHADOW_MAP_SIZE,
-        .height = SHADOW_MAP_SIZE,
-        .pixel_format = SG_PIXELFORMAT_DEPTH,
-        .sample_count = 1,
-        .label = "shadow-map-image",
-    });
-    state.shadow.tex_view = sg_make_view(&(sg_view_desc){
-        .texture.image = shadow_map_img,
-        .label = "shadow-map-texview"
-    });
-    state.shadow.pass = (sg_pass){
-        .action.depth = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .store_action = SG_STOREACTION_STORE,
-            .clear_value = 1.0f,
-        },
-        .attachments.depth_stencil = sg_make_view(&(sg_view_desc){
-            .depth_stencil_attachment.image = shadow_map_img,
-            .label = "shadow-map-dsview",
-        }),
-        .label = "shadow-pass",
-    };
-    state.shadow.smp = sg_make_sampler(&(sg_sampler_desc){
-        .min_filter = SG_FILTER_LINEAR,
-        .mag_filter = SG_FILTER_LINEAR,
-        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
-        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
-        .compare = SG_COMPAREFUNC_LESS,
-        .label = "shadow-map-sampler",
-    });
-
-    create_shape_resources();
+    init_physics();
+    init_gfx();
 }
 
 static void frame(void) {
     cam_update(&state.camera, sapp_width(), sapp_height());
 
+    if ((sapp_frame_count() % 120) == 0) {
+        add_box();
+    }
+    tick_physics();
     update_matrices();
 
     // shadow pass
@@ -126,8 +104,10 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
     });
-    shadow_pass_draw_shape(&state.shapes.sphere, mat44_translation(0.0f, 2.0f, 0.0f));
-    shadow_pass_draw_shape(&state.shapes.box, mat44_translation(3.0f, 2.0f, 0.0f));
+    for (int i = 0; i < state.physics.num_boxes; i++) {
+        mat44_t m = body_world_matrix(state.physics.boxes[i]);
+        shadow_pass_draw_shape(&state.shapes.box, m);
+    }
     sg_end_pass();
 
     // display pass
@@ -140,14 +120,17 @@ static void frame(void) {
         .samplers[SMP_shadow_sampler] = state.shadow.smp,
     });
     display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec3(0.5f, 0.5f, 0.5f));
-    display_pass_draw_shape(&state.shapes.sphere, mat44_translation(0.0f, 2.0f, 0.0f), vec3(1.0f, 0.0f, 1.0f));
-    display_pass_draw_shape(&state.shapes.box, mat44_translation(3.0f, 2.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    for (int i = 0; i < state.physics.num_boxes; i++) {
+        mat44_t m = body_world_matrix(state.physics.boxes[i]);
+        display_pass_draw_shape(&state.shapes.box, m, vec3(0.0f, 1.0f, 0.0f));
+    }
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
+    cleanup_physics();
     __dbgui_shutdown();
     sg_shutdown();
 }
@@ -195,7 +178,89 @@ static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t
     sg_draw(shape->base_element, shape->num_elements, 1);
 }
 
-static void create_shape_resources(void) {
+static void init_physics(void) {
+    b3WorldDef world_def = b3DefaultWorldDef();
+    state.physics.world = b3CreateWorld(&world_def);
+
+    b3BodyDef ground_body_def = b3DefaultBodyDef();
+    ground_body_def.position = (b3Vec3){ 0.0f, -10.0f, 0.0f };
+    state.physics.ground = b3CreateBody(state.physics.world, &ground_body_def);
+
+    b3BoxHull ground_box = b3MakeBoxHull(GROUND_SIZE, 10.0f, GROUND_SIZE);
+    b3ShapeDef ground_shape_def = b3DefaultShapeDef();
+    b3CreateHullShape(state.physics.ground, &ground_shape_def, &ground_box.base);
+}
+
+static void tick_physics(void) {
+    double dt_sec = sapp_frame_duration();
+    int64_t dt_usec = (int64_t)(dt_sec * USEC_PER_SEC);
+    state.physics.tick_error_us += dt_usec;
+    int64_t num_steps = state.physics.tick_error_us / PHYSICS_TICK_USEC;
+    state.physics.tick_error_us -= num_steps * PHYSICS_TICK_USEC;
+    b3World_Step(state.physics.world, (float)dt_sec, (int)num_steps);
+}
+
+static void add_box(void) {
+    if (state.physics.num_boxes >= MAX_SHAPES) {
+        return;
+    }
+    b3BodyDef body_def = b3DefaultBodyDef();
+    body_def.type = b3_dynamicBody;
+    body_def.position = (b3Vec3){ 0.0f, 10.0f, 0.0f };
+    b3BodyId body = b3CreateBody(state.physics.world, &body_def);
+
+    b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
+    b3ShapeDef shape_def = b3DefaultShapeDef();
+    shape_def.density = 1.0f;
+    shape_def.baseMaterial.friction = 0.3f;
+    b3CreateHullShape(body, &shape_def, &hull.base);
+
+    state.physics.boxes[state.physics.num_boxes++] = body;
+}
+
+static void add_sphere(void) {
+    if (state.physics.num_spheres >= MAX_SHAPES) {
+        return;
+    }
+    b3BodyDef body_def = b3DefaultBodyDef();
+    body_def.type = b3_dynamicBody;
+    body_def.position = (b3Vec3){ 0.0f, 10.0f, 0.0f };
+    b3BodyId body = b3CreateBody(state.physics.world, &body_def);
+
+    b3Sphere sphere = { .radius = SPHERE_RADIUS };
+    b3ShapeDef shape_def = b3DefaultShapeDef();
+    shape_def.density = 1.0f;
+    shape_def.baseMaterial.friction = 0.3f;
+    b3CreateSphereShape(body, &shape_def, &sphere);
+
+    state.physics.spheres[state.physics.num_spheres] = body;
+}
+
+static mat44_t body_world_matrix(b3BodyId body) {
+    b3Vec3 pos = b3Body_GetPosition(body);
+    b3Quat rot = b3Body_GetRotation(body);
+    mat44_t rm = mat44_from_quat(vec4(rot.v.x, rot.v.y, rot.v.z, rot.s));
+    mat44_t tm = mat44_translation(pos.x, pos.y, pos.z);
+    return vm_mul(rm, tm);
+}
+
+static void cleanup_physics(void) {
+    b3DestroyWorld(state.physics.world);
+}
+
+static void init_gfx(void) {
+    // fixed light position in world space
+    state.light_pos = vec3(50.0f, 100.0f, -75.0f);
+
+    // display pass clear color (blue-ish)
+    state.display.pass_action = (sg_pass_action){
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0.2f, 0.4f, 0.8f, 1.0f }
+        },
+    };
+
+    // plane, box and sphere shapes
     uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 4096];
     uint16_t indices[4096];
     sshape_state_t shp = {
@@ -207,8 +272,8 @@ static void create_shape_resources(void) {
         .indices.buffer = SSHAPE_RANGE(indices),
     };
     sshape_build_plane(&shp, &(sshape_plane_t){
-        .width = 100.0f,
-        .depth = 100.0f,
+        .width = GROUND_SIZE,
+        .depth = GROUND_SIZE,
     });
     state.shapes.plane = sshape_element_range(&shp);
     sshape_build_sphere(&shp, &(sshape_sphere_t){
@@ -224,11 +289,13 @@ static void create_shape_resources(void) {
     });
     state.shapes.box = sshape_element_range(&shp);
 
+    // shape vertex and index buffer
     const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
     const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
 
+    //
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .layout = {
@@ -245,6 +312,40 @@ static void create_shape_resources(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .label = "display-pipeline"
+    });
+
+    // shadow pass resources
+    sg_image shadow_map_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = SHADOW_MAP_SIZE,
+        .height = SHADOW_MAP_SIZE,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .sample_count = 1,
+        .label = "shadow-map-image",
+    });
+    state.shadow.tex_view = sg_make_view(&(sg_view_desc){
+        .texture.image = shadow_map_img,
+        .label = "shadow-map-texview"
+    });
+    state.shadow.pass = (sg_pass){
+        .action.depth = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .store_action = SG_STOREACTION_STORE,
+            .clear_value = 1.0f,
+        },
+        .attachments.depth_stencil = sg_make_view(&(sg_view_desc){
+            .depth_stencil_attachment.image = shadow_map_img,
+            .label = "shadow-map-dsview",
+        }),
+        .label = "shadow-pass",
+    };
+    state.shadow.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_LINEAR,
+        .mag_filter = SG_FILTER_LINEAR,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .compare = SG_COMPAREFUNC_LESS,
+        .label = "shadow-map-sampler",
     });
     state.shadow.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(shadow_shader_desc(sg_query_backend())),
