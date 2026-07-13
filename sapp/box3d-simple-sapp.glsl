@@ -1,4 +1,4 @@
-@ctype mat44 mat44_t
+@ctype mat4 mat44_t
 
 @block util
 vec4 gamma(vec4 c) {
@@ -24,7 +24,7 @@ out vec3 P; // world space position
 out vec3 N; // world space normal
 
 void main() {
-    gl_Position = mvp * in_pos;
+    gl_Position = mvp * position;
     // light_proj_pos = light_mvp * position;
     P = (model * position).xyz;
     N = (model * vec4(normal, 0)).xyz;

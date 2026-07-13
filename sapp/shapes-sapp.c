@@ -55,16 +55,76 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
+    // shape positions
+    state.shapes[BOX].pos = vec3(-1.0f, 1.0f, 0.0f);
+    state.shapes[PLANE].pos = vec3(1.0f, 1.0f, 0.0f);
+    state.shapes[SPHERE].pos = vec3(-2.0f, -1.0f, 0.0f);
+    state.shapes[CYLINDER].pos = vec3(2.0f, -1.0f, 0.0f);
+    state.shapes[TORUS].pos = vec3(0.0f, -1.0f, 0.0f);
+
+    // generate shape geometries
+    uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 6 * 1024];
+    uint16_t indices[16 * 1024];
+    sshape_state_t shp = {
+        .vertices.buffer = SSHAPE_RANGE(vertices),
+        .indices.buffer  = SSHAPE_RANGE(indices),
+    };
+    sshape_build_box(&shp, &(sshape_box_t){
+        .width  = 1.0f,
+        .height = 1.0f,
+        .depth  = 1.0f,
+        .tiles  = 10,
+        .random_colors = true,
+    });
+    state.shapes[BOX].draw = sshape_element_range(&shp);
+    sshape_build_plane(&shp, &(sshape_plane_t){
+        .width = 1.0f,
+        .depth = 1.0f,
+        .tiles = 10,
+        .random_colors = true,
+    });
+    state.shapes[PLANE].draw = sshape_element_range(&shp);
+    sshape_build_sphere(&shp, &(sshape_sphere_t) {
+        .radius = 0.75f,
+        .slices = 36,
+        .stacks = 20,
+        .random_colors = true,
+    });
+    state.shapes[SPHERE].draw = sshape_element_range(&shp);
+    sshape_build_cylinder(&shp, &(sshape_cylinder_t) {
+        .radius = 0.5f,
+        .height = 1.5f,
+        .slices = 36,
+        .stacks = 10,
+        .random_colors = true,
+    });
+    state.shapes[CYLINDER].draw = sshape_element_range(&shp);
+    sshape_build_torus(&shp, &(sshape_torus_t) {
+        .radius = 0.5f,
+        .ring_radius = 0.3f,
+        .rings = 36,
+        .sides = 18,
+        .random_colors = true,
+    });
+    state.shapes[TORUS].draw = sshape_element_range(&shp);
+    assert(shp.valid);
+
+    // one vertex/index-buffer-pair for all shapes
+    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
+    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
+    state.vbuf = sg_make_buffer(&vbuf_desc);
+    state.ibuf = sg_make_buffer(&ibuf_desc);
+
     // shader and pipeline object
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
         .layout = {
-            .buffers[0] = sshape_vertex_buffer_layout_state(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [0] = sshape_position_vertex_attr_state(),
-                [1] = sshape_normal_vertex_attr_state(),
-                [2] = sshape_texcoord_vertex_attr_state(),
-                [3] = sshape_color_vertex_attr_state()
+                [0] = sshape_position_vertex_attr_state(&shp),
+                [1] = sshape_normal_vertex_attr_state(&shp),
+                [2] = sshape_texcoord_vertex_attr_state(&shp),
+                [3] = sshape_color_vertex_attr_state(&shp)
             }
         },
         .index_type = SG_INDEXTYPE_UINT16,
@@ -74,66 +134,6 @@ static void init(void) {
             .write_enabled = true
         },
     });
-
-    // shape positions
-    state.shapes[BOX].pos = vec3(-1.0f, 1.0f, 0.0f);
-    state.shapes[PLANE].pos = vec3(1.0f, 1.0f, 0.0f);
-    state.shapes[SPHERE].pos = vec3(-2.0f, -1.0f, 0.0f);
-    state.shapes[CYLINDER].pos = vec3(2.0f, -1.0f, 0.0f);
-    state.shapes[TORUS].pos = vec3(0.0f, -1.0f, 0.0f);
-
-    // generate shape geometries
-    sshape_vertex_t vertices[6 * 1024];
-    uint16_t indices[16 * 1024];
-    sshape_buffer_t buf = {
-        .vertices.buffer = SSHAPE_RANGE(vertices),
-        .indices.buffer  = SSHAPE_RANGE(indices),
-    };
-    buf = sshape_build_box(&buf, &(sshape_box_t){
-        .width  = 1.0f,
-        .height = 1.0f,
-        .depth  = 1.0f,
-        .tiles  = 10,
-        .random_colors = true,
-    });
-    state.shapes[BOX].draw = sshape_element_range(&buf);
-    buf = sshape_build_plane(&buf, &(sshape_plane_t){
-        .width = 1.0f,
-        .depth = 1.0f,
-        .tiles = 10,
-        .random_colors = true,
-    });
-    state.shapes[PLANE].draw = sshape_element_range(&buf);
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
-        .radius = 0.75f,
-        .slices = 36,
-        .stacks = 20,
-        .random_colors = true,
-    });
-    state.shapes[SPHERE].draw = sshape_element_range(&buf);
-    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
-        .radius = 0.5f,
-        .height = 1.5f,
-        .slices = 36,
-        .stacks = 10,
-        .random_colors = true,
-    });
-    state.shapes[CYLINDER].draw = sshape_element_range(&buf);
-    buf = sshape_build_torus(&buf, &(sshape_torus_t) {
-        .radius = 0.5f,
-        .ring_radius = 0.3f,
-        .rings = 36,
-        .sides = 18,
-        .random_colors = true,
-    });
-    state.shapes[TORUS].draw = sshape_element_range(&buf);
-    assert(buf.valid);
-
-    // one vertex/index-buffer-pair for all shapes
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
-    state.vbuf = sg_make_buffer(&vbuf_desc);
-    state.ibuf = sg_make_buffer(&ibuf_desc);
 }
 
 static void frame(void) {

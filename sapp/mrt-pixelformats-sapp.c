@@ -124,23 +124,24 @@ static void init(void) {
         };
 
         // create a shape to render into the offscreen render target
-        sshape_vertex_t vertices[3000] = {0};
+        uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 3000] = {0};
         uint16_t indices[6000] = {0};
-        sshape_buffer_t buf = {
+        sshape_state_t shp = {
+            .disable.texcoords = true,
             .vertices.buffer = SSHAPE_RANGE(vertices),
             .indices.buffer = SSHAPE_RANGE(indices)
         };
-        buf = sshape_build_torus(&buf, &(sshape_torus_t){
+        sshape_build_torus(&shp, &(sshape_torus_t){
             .radius = 0.5f,
             .ring_radius = 0.3f,
             .sides = 20,
             .rings = 36,
             .random_colors = true,
         });
-        assert(buf.valid);
-        state.offscreen.donut = sshape_element_range(&buf);
-        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+        assert(shp.valid);
+        state.offscreen.donut = sshape_element_range(&shp);
+        const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
+        const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
         sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
         sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
@@ -150,11 +151,11 @@ static void init(void) {
             .index_type = SG_INDEXTYPE_UINT16,
             .cull_mode = SG_CULLMODE_BACK,
             .layout = {
-                .buffers[0] = sshape_vertex_buffer_layout_state(),
+                .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
                 .attrs = {
-                    [ATTR_offscreen_in_pos]    = sshape_position_vertex_attr_state(),
-                    [ATTR_offscreen_in_normal] = sshape_normal_vertex_attr_state(),
-                    [ATTR_offscreen_in_color]  = sshape_color_vertex_attr_state()
+                    [ATTR_offscreen_in_pos]    = sshape_position_vertex_attr_state(&shp),
+                    [ATTR_offscreen_in_normal] = sshape_normal_vertex_attr_state(&shp),
+                    [ATTR_offscreen_in_color]  = sshape_color_vertex_attr_state(&shp)
                 }
             },
             .depth = {

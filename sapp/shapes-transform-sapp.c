@@ -42,30 +42,10 @@ static void init(void) {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
-    // shader and pipeline object
-    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
-        .layout = {
-            .buffers[0] = sshape_vertex_buffer_layout_state(),
-            .attrs = {
-                [0] = sshape_position_vertex_attr_state(),
-                [1] = sshape_normal_vertex_attr_state(),
-                [2] = sshape_texcoord_vertex_attr_state(),
-                [3] = sshape_color_vertex_attr_state()
-            }
-        },
-        .index_type = SG_INDEXTYPE_UINT16,
-        .cull_mode = SG_CULLMODE_NONE,
-        .depth = {
-            .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true
-        },
-    });
-
     // generate merged shape geometries
-    sshape_vertex_t vertices[6 * 1024];
+    uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 6 * 1024];
     uint16_t indices[16 * 1024];
-    sshape_buffer_t buf = {
+    sshape_state_t shp = {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer  = SSHAPE_RANGE(indices),
     };
@@ -77,7 +57,7 @@ static void init(void) {
     const mat44_t torus_transform = mat44_translation(+1.0f, 0.0f, -1.0f);
 
     // build the shapes...
-    buf = sshape_build_box(&buf, &(sshape_box_t){
+    sshape_build_box(&shp, &(sshape_box_t){
         .width  = 1.0f,
         .height = 1.0f,
         .depth  = 1.0f,
@@ -85,7 +65,7 @@ static void init(void) {
         .random_colors = true,
         .transform = sshape_mat4((const float*)&box_transform)
     });
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t){
+    sshape_build_sphere(&shp, &(sshape_sphere_t){
         .merge = true,
         .radius = 0.75f,
         .slices = 36,
@@ -93,7 +73,7 @@ static void init(void) {
         .random_colors = true,
         .transform = sshape_mat4((const float*)&sphere_transform)
     });
-    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t) {
+    sshape_build_cylinder(&shp, &(sshape_cylinder_t) {
         .merge = true,
         .radius = 0.5f,
         .height = 1.0f,
@@ -102,7 +82,7 @@ static void init(void) {
         .random_colors = true,
         .transform = sshape_mat4((const float*)&cylinder_transform)
     });
-    buf = sshape_build_torus(&buf, &(sshape_torus_t) {
+    sshape_build_torus(&shp, &(sshape_torus_t) {
         .merge = true,
         .radius = 0.5f,
         .ring_radius = 0.3f,
@@ -111,16 +91,37 @@ static void init(void) {
         .random_colors = true,
         .transform = sshape_mat4((const float*)&torus_transform)
     });
-    assert(buf.valid);
+    assert(shp.valid);
 
     // extract element range for sg_draw()
-    state.elms = sshape_element_range(&buf);
+    state.elms = sshape_element_range(&shp);
 
     // and finally create the vertex- and index-buffer
-    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    const sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
+    const sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
     state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
+
+    // shader and pipeline object
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(shapes_shader_desc(sg_query_backend())),
+        .layout = {
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
+            .attrs = {
+                [0] = sshape_position_vertex_attr_state(&shp),
+                [1] = sshape_normal_vertex_attr_state(&shp),
+                [2] = sshape_texcoord_vertex_attr_state(&shp),
+                [3] = sshape_color_vertex_attr_state(&shp)
+            }
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .cull_mode = SG_CULLMODE_NONE,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true
+        },
+    });
+
 }
 
 static void frame(void) {
