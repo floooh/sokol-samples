@@ -8,10 +8,39 @@ vec4 gamma(vec4 c) {
     float p = 1.0/2.2;
     return vec4(pow(c.xyz, vec3(p)), c.w);
 }
+
+float sample_shadow_pcf(texture2D tex, sampler smp, vec3 sm_pos) {
+    vec2 sm_size = vec2(textureSize(sampler2DShadow(tex, smp), 0));
+    float result = 0.0;
+    for (int x = -2; x <= 2; x++) {
+        for (int y =- 2; y <= 2; y++) {
+            vec2 offset = vec2(x, y) / sm_size;
+            result += texture(sampler2DShadow(tex, smp), vec3(sm_pos.xy + offset, sm_pos.z));
+        }
+    }
+    return result / 25.0;
+}
 @end
 
-@vs shape_vs
-layout(binding=0) uniform shape_vs_params {
+@vs shadow_vs
+@glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
+layout(binding=0) uniform shadow_vs_params {
+    mat4 mvp;
+};
+in vec4 pos;
+void main() {
+    gl_Position = mvp * pos;
+}
+@end
+
+@fs shadow_fs
+void main() {}
+@end
+
+@program shadow shadow_vs shadow_fs
+
+@vs display_vs
+layout(binding=0) uniform display_vs_params {
     mat4 mvp;
     mat4 model;
     mat4 light_mvp;
@@ -22,30 +51,36 @@ layout(location=0) in vec4 position;
 layout(location=1) in vec3 normal;
 
 out vec3 color;
-//out vec4 light_proj_pos;    // light space position (for shadow mapping)
-out vec3 P; // world space position
-out vec3 N; // world space normal
+out vec4 light_proj_pos;    // light space position (for shadow mapping)
+out vec4 world_pos;
+out vec3 world_nrm;
 
 void main() {
     gl_Position = mvp * position;
-    // light_proj_pos = light_mvp * position;
-    P = (model * position).xyz;
-    N = (model * vec4(normal, 0)).xyz;
+    light_proj_pos = light_mvp * position;
+    #if !SOKOL_GLSL
+        light_proj_pos.y = -light_proj_pos.y;
+    #endif
+    world_pos = model * position;
+    world_nrm = (model * vec4(normal, 0)).xyz;
     color = diff_color;
 }
 @end
 
-@fs shape_fs
+@fs display_fs
 @include_block util
-layout(binding=1) uniform shape_fs_params {
+layout(binding=1) uniform display_fs_params {
     vec3 light_dir;
     vec3 eye_pos;
 };
 
+layout(binding=0) uniform texture2D shadow_map;
+layout(binding=0) uniform sampler shadow_sampler;
+
 in vec3 color;
-//in vec4 light_proj_pos;
-in vec3 P;
-in vec3 N;
+in vec4 light_proj_pos;
+in vec4 world_pos;
+in vec3 world_nrm;
 
 out vec4 frag_color;
 
@@ -55,13 +90,17 @@ void main() {
 
     // diffuse lighting
     vec3 l = light_dir;
-    vec3 n = normalize(N);
+    vec3 n = normalize(world_nrm);
     float n_dot_l = dot(n, l);
     if (n_dot_l > 0) {
-        // FIXME: shadow mapping
-        float s = 1.0;
+
+        vec3 light_pos = light_proj_pos.xyz / light_proj_pos.w;
+        float depth_bias = max(0.0001 * (1.0 - n_dot_l), 0.00001);
+        vec3 sm_pos = vec3((light_pos.xy + 1.0) * 0.5, light_pos.z + depth_bias);
+        float s = sample_shadow_pcf(shadow_map, shadow_sampler, sm_pos);
+
         float diff_intensity = max(n_dot_l * s, 0);
-        vec3 v = normalize(eye_pos - P);
+        vec3 v = normalize(eye_pos - world_pos.xyz);
         vec3 r = reflect(-l, n);
         float r_dot_v = max(dot(r, v), 0.0);
         float spec_intensity = pow(r_dot_v, spec_power) * n_dot_l * s;
@@ -75,4 +114,4 @@ void main() {
 }
 @end
 
-@program shape shape_vs shape_fs
+@program display display_vs display_fs
