@@ -44,7 +44,7 @@ layout(binding=0) uniform display_vs_params {
     mat4 mvp;
     mat4 model;
     mat4 light_mvp;
-    vec3 diff_color;
+    vec4 diff_color;
 };
 
 layout(location=0) in vec4 position;
@@ -63,7 +63,7 @@ void main() {
     #endif
     world_pos = model * position;
     world_nrm = (model * vec4(normal, 0)).xyz;
-    color = diff_color;
+    color = diff_color.xyz;
 }
 @end
 

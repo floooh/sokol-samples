@@ -17,25 +17,36 @@
 #include "box3d-simple-sapp.glsl.h"
 
 #define MAX_SHAPES (1024)
+#define MAX_INSTANCES ((MAX_SHAPES / 2) + 1)
 #define GROUND_SIZE (200.0f)
-#define SPHERE_RADIUS (1.0f)
+#define BALL_RADIUS (1.0f)
 #define BOX_SIZE (1.5f)
 #define SHADOW_MAP_SIZE (2048)
 #define USEC_PER_SEC (1000000.0)
 #define PHYSICS_TICK_USEC ((1.0 / 250.0) * USEC_PER_SEC)
+#define SPAWN_INTERVAL_SEC (0.25)
 
 typedef struct {
     b3BodyId body_id;
-    vec3_t color;
+    vec4_t color;
     mat44_t transform;
 } body_t;
+
+typedef struct {
+    vec4_t xxxx;
+    vec4_t yyyy;
+    vec4_t zzzz;
+    vec4_t color;
+} instdata_t;
 
 static struct {
     sg_buffer vbuf;
     sg_buffer ibuf;
+    sg_buffer box_inst_buf;
+    sg_buffer ball_inst_buf;
     struct {
         sshape_element_range_t plane;
-        sshape_element_range_t sphere;
+        sshape_element_range_t ball;
         sshape_element_range_t box;
     } shapes;
     struct {
@@ -48,6 +59,7 @@ static struct {
         sg_pass_action pass_action;
         sg_pipeline pip;
     } display;
+    double spawn_timer;
     camera_t camera;
     vec3_t light_pos;
     mat44_t light_view_proj;
@@ -57,18 +69,22 @@ static struct {
         b3BodyId ground;
         int64_t tick_error_us;  // current tick error in micro-seconds
         int num_bodies;
-        body_t bodies[MAX_SHAPES];
+        body_t bodies[MAX_SHAPES];  // NOTE: even indices are boxes, odd indices are balls
     } physics;
+    instdata_t box_inst_data[MAX_SHAPES];
+    instdata_t ball_inst_data[MAX_SHAPES];
 } state;
 
 static void init_gfx(void);
 static void init_physics(void);
-static void tick_physics(void);
+static void update_physics(void);
 static void add_body(void);
+static bool is_box(int index);
 static void cleanup_physics(void);
+static void update_instance_data(void);
 static void update_matrices(void);
 static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
-static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec3_t color);
+static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec4_t color);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -88,15 +104,18 @@ static void init(void) {
 
     init_physics();
     init_gfx();
+    state.spawn_timer = SPAWN_INTERVAL_SEC;
 }
 
 static void frame(void) {
     cam_update(&state.camera, sapp_width(), sapp_height());
-
-    if ((sapp_frame_count() % 30) == 0) {
+    state.spawn_timer -= sapp_frame_duration();
+    if (state.spawn_timer <= 0.0) {
+        state.spawn_timer += SPAWN_INTERVAL_SEC;
         add_body();
     }
-    tick_physics();
+    update_physics();
+    //update_instance_data();
     update_matrices();
 
     // shadow pass
@@ -107,7 +126,11 @@ static void frame(void) {
         .index_buffer = state.ibuf,
     });
     for (int i = 0; i < state.physics.num_bodies; i++) {
-        shadow_pass_draw_shape(&state.shapes.box, state.physics.bodies[i].transform);
+        if (is_box(i)) {
+            shadow_pass_draw_shape(&state.shapes.box, state.physics.bodies[i].transform);
+        } else {
+            shadow_pass_draw_shape(&state.shapes.ball, state.physics.bodies[i].transform);
+        }
     }
     sg_end_pass();
 
@@ -120,11 +143,15 @@ static void frame(void) {
         .views[VIEW_shadow_map] = state.shadow.tex_view,
         .samplers[SMP_shadow_sampler] = state.shadow.smp,
     });
-    display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec3(0.5f, 0.5f, 0.5f));
+    display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec4(0.5f, 0.5f, 0.5f, 1.0f));
     for (int i = 0; i < state.physics.num_bodies; i++) {
         mat44_t m = state.physics.bodies[i].transform;
-        vec3_t c = state.physics.bodies[i].color;
-        display_pass_draw_shape(&state.shapes.box, m, c);
+        vec4_t c = state.physics.bodies[i].color;
+        if (is_box(i)) {
+            display_pass_draw_shape(&state.shapes.box, m, c);
+        } else {
+            display_pass_draw_shape(&state.shapes.ball, m, c);
+        }
     }
     __dbgui_draw();
     sg_end_pass();
@@ -147,7 +174,7 @@ static void input(const sapp_event* ev) {
 static void update_matrices(void) {
     // calculate matrices for shadow pass
     const mat44_t light_view = mat44_look_at_rh(state.light_pos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-    const mat44_t light_proj = mat44_ortho_off_center_rh(-50.0f, 50.0f, -50.0f, 50.0f, 1.0f, 400.0f);
+    const mat44_t light_proj = mat44_ortho_off_center_rh(-100.0f, 100.0f, -100.0f, 100.0f, 1.0f, 400.0f);
     state.light_view_proj = vm_mul(light_view, light_proj);
 
     // calculate matrices for display pass
@@ -164,7 +191,7 @@ static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t 
     sg_draw(shape->base_element, shape->num_elements, 1);
 }
 
-static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec3_t color) {
+static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec4_t color) {
     const display_vs_params_t vs_params = {
         .model = model,
         .mvp = vm_mul(model, state.view_proj),
@@ -194,7 +221,7 @@ static void init_physics(void) {
     b3CreateHullShape(state.physics.ground, &ground_shape_def, &ground_box.base);
 }
 
-static void tick_physics(void) {
+static void update_physics(void) {
     double dt_sec = sapp_frame_duration();
     int64_t dt_usec = (int64_t)(dt_sec * USEC_PER_SEC);
     state.physics.tick_error_us += dt_usec;
@@ -238,26 +265,36 @@ static vec3_t rand_ivec3(void) {
     return vm_mul(vm_sub(v, 0.5f), 2.0f);
 }
 
+static bool is_box(int idx) {
+    // even indices are boxes, off indices are balls
+    return (idx & 1) == 0;
+}
+
 static void add_body(void) {
     const int idx = state.physics.num_bodies;
     if (idx >= MAX_SHAPES) {
         return;
     }
-    const vec3_t pos = vec3(0.0f, 5.0f, 0.0f);
+    const vec3_t pos = vec3(0.0f, 10.0f, 0.0f);
     b3BodyDef body_def = b3DefaultBodyDef();
     body_def.type = b3_dynamicBody;
     body_def.position = (b3Vec3){ pos.x, pos.y, pos.z };
     body_def.userData = (void*)(intptr_t)idx;
+    body_def.linearDamping = 0.25f;
     b3BodyId body = b3CreateBody(state.physics.world, &body_def);
 
-    b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
     b3ShapeDef shape_def = b3DefaultShapeDef();
     shape_def.density = 1.0f;
-    shape_def.baseMaterial.friction = 0.3f;
-    b3CreateHullShape(body, &shape_def, &hull.base);
-
+    if (is_box(idx)) {
+        b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
+        b3CreateHullShape(body, &shape_def, &hull.base);
+    } else {
+        b3Sphere sphere = { .radius = BALL_RADIUS };
+        b3CreateSphereShape(body, &shape_def, &sphere);
+    }
     state.physics.bodies[idx].body_id = body;
-    state.physics.bodies[idx].color = rand_uvec3();
+    vec3_t c = rand_uvec3();
+    state.physics.bodies[idx].color = vec4(c.x, c.y, c.z, 1.0f);
 
     // apply linear and angular impulse to get a fountain effect
     vec3_t v = rand_ivec3();
@@ -268,7 +305,6 @@ static void add_body(void) {
     b3Body_ApplyAngularImpulse(body, (b3Vec3){ ai.x, ai.y, ai.z }, true);
 
     state.physics.bodies[idx].transform = mat44_translation(pos.x, pos.y, pos.z);
-
     state.physics.num_bodies += 1;
 }
 
@@ -305,11 +341,11 @@ static void init_gfx(void) {
     });
     state.shapes.plane = sshape_element_range(&shp);
     sshape_build_sphere(&shp, &(sshape_sphere_t){
-        .radius = SPHERE_RADIUS,
+        .radius = BALL_RADIUS,
         .slices = 15,
         .stacks = 11,
     });
-    state.shapes.sphere = sshape_element_range(&shp);
+    state.shapes.ball = sshape_element_range(&shp);
     sshape_build_box(&shp, &(sshape_box_t){
         .width = BOX_SIZE,
         .height = BOX_SIZE,
@@ -395,6 +431,18 @@ static void init_gfx(void) {
         // 'deactivate' the default color target for 'depth-only-rendering'
         .colors[0].pixel_format = SG_PIXELFORMAT_NONE,
         .label = "shadow-pipeline",
+    });
+
+    // instance buffers for box and sphere instances
+    state.box_inst_buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.stream_update = true,
+        .size = MAX_INSTANCES * sizeof(instdata_t),
+        .label = "box-instance-buffer",
+    });
+    state.ball_inst_buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.stream_update = true,
+        .size = MAX_INSTANCES * sizeof(instdata_t),
+        .label = "ball-instance-buffer",
     });
 }
 
