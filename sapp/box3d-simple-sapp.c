@@ -16,13 +16,19 @@
 #include "util/camera.h"
 #include "box3d-simple-sapp.glsl.h"
 
-#define MAX_SHAPES (128)
-#define GROUND_SIZE (100.0f)
+#define MAX_SHAPES (1024)
+#define GROUND_SIZE (200.0f)
 #define SPHERE_RADIUS (1.0f)
 #define BOX_SIZE (1.5f)
 #define SHADOW_MAP_SIZE (2048)
 #define USEC_PER_SEC (1000000.0)
 #define PHYSICS_TICK_USEC ((1.0 / 250.0) * USEC_PER_SEC)
+
+typedef struct {
+    b3BodyId body_id;
+    vec3_t color;
+    mat44_t transform;
+} body_t;
 
 static struct {
     sg_buffer vbuf;
@@ -50,19 +56,15 @@ static struct {
         b3WorldId world;
         b3BodyId ground;
         int64_t tick_error_us;  // current tick error in micro-seconds
-        int num_spheres;
-        int num_boxes;
-        b3BodyId spheres[MAX_SHAPES];
-        b3BodyId boxes[MAX_SHAPES];
+        int num_bodies;
+        body_t bodies[MAX_SHAPES];
     } physics;
 } state;
 
 static void init_gfx(void);
 static void init_physics(void);
 static void tick_physics(void);
-static void add_box(void);
-static void add_sphere(void);
-static mat44_t body_world_matrix(b3BodyId body);
+static void add_body(void);
 static void cleanup_physics(void);
 static void update_matrices(void);
 static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
@@ -80,7 +82,7 @@ static void init(void) {
         .center = vec3(0.0f, 0.0f, 0.0f),
         .latitude = 25.0f,
         .longitude = 225.0f,
-        .distance = 25.0f,
+        .distance = 50.0f,
         .max_dist = 300.0f,
     });
 
@@ -91,8 +93,8 @@ static void init(void) {
 static void frame(void) {
     cam_update(&state.camera, sapp_width(), sapp_height());
 
-    if ((sapp_frame_count() % 120) == 0) {
-        add_box();
+    if ((sapp_frame_count() % 30) == 0) {
+        add_body();
     }
     tick_physics();
     update_matrices();
@@ -104,9 +106,8 @@ static void frame(void) {
         .vertex_buffers[0] = state.vbuf,
         .index_buffer = state.ibuf,
     });
-    for (int i = 0; i < state.physics.num_boxes; i++) {
-        mat44_t m = body_world_matrix(state.physics.boxes[i]);
-        shadow_pass_draw_shape(&state.shapes.box, m);
+    for (int i = 0; i < state.physics.num_bodies; i++) {
+        shadow_pass_draw_shape(&state.shapes.box, state.physics.bodies[i].transform);
     }
     sg_end_pass();
 
@@ -120,9 +121,10 @@ static void frame(void) {
         .samplers[SMP_shadow_sampler] = state.shadow.smp,
     });
     display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec3(0.5f, 0.5f, 0.5f));
-    for (int i = 0; i < state.physics.num_boxes; i++) {
-        mat44_t m = body_world_matrix(state.physics.boxes[i]);
-        display_pass_draw_shape(&state.shapes.box, m, vec3(0.0f, 1.0f, 0.0f));
+    for (int i = 0; i < state.physics.num_bodies; i++) {
+        mat44_t m = state.physics.bodies[i].transform;
+        vec3_t c = state.physics.bodies[i].color;
+        display_pass_draw_shape(&state.shapes.box, m, c);
     }
     __dbgui_draw();
     sg_end_pass();
@@ -186,7 +188,8 @@ static void init_physics(void) {
     ground_body_def.position = (b3Vec3){ 0.0f, -10.0f, 0.0f };
     state.physics.ground = b3CreateBody(state.physics.world, &ground_body_def);
 
-    b3BoxHull ground_box = b3MakeBoxHull(GROUND_SIZE, 10.0f, GROUND_SIZE);
+    const float hs = GROUND_SIZE * 0.5f;
+    b3BoxHull ground_box = b3MakeBoxHull(hs, 10.0f, hs);
     b3ShapeDef ground_shape_def = b3DefaultShapeDef();
     b3CreateHullShape(state.physics.ground, &ground_shape_def, &ground_box.base);
 }
@@ -198,15 +201,53 @@ static void tick_physics(void) {
     int64_t num_steps = state.physics.tick_error_us / PHYSICS_TICK_USEC;
     state.physics.tick_error_us -= num_steps * PHYSICS_TICK_USEC;
     b3World_Step(state.physics.world, (float)dt_sec, (int)num_steps);
+
+    // update moved body transform matrices
+    b3BodyEvents events = b3World_GetBodyEvents(state.physics.world);
+    for (int i = 0; i < events.moveCount; i++) {
+        const b3BodyMoveEvent* ev = &events.moveEvents[i];
+        int idx = (int)(intptr_t)ev->userData;
+        assert(idx < MAX_SHAPES);
+        body_t* body = &state.physics.bodies[idx];
+        b3Vec3 p = ev->transform.p;
+        b3Quat q = ev->transform.q;
+        mat44_t rm = mat44_from_quat(vec4(q.v.x, q.v.y, q.v.z, q.s));
+        mat44_t tm = mat44_translation(p.x, p.y, p.z);
+        body->transform = vm_mul(rm, tm);
+    }
 }
 
-static void add_box(void) {
-    if (state.physics.num_boxes >= MAX_SHAPES) {
+static inline uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
+}
+
+static vec3_t rand_uvec3(void) {
+    uint32_t c = xorshift32();
+    float x = (float)(c & 255) / 255.0f;
+    float y = (float)((c >> 8) & 255) / 255.0;
+    float z = (float)((c >> 16) & 255) / 255.0l;
+    return (vec3_t){ x, y, z };
+}
+
+static vec3_t rand_ivec3(void) {
+    vec3_t v = rand_uvec3();
+    return vm_mul(vm_sub(v, 0.5f), 2.0f);
+}
+
+static void add_body(void) {
+    const int idx = state.physics.num_bodies;
+    if (idx >= MAX_SHAPES) {
         return;
     }
+    const vec3_t pos = vec3(0.0f, 5.0f, 0.0f);
     b3BodyDef body_def = b3DefaultBodyDef();
     body_def.type = b3_dynamicBody;
-    body_def.position = (b3Vec3){ 0.0f, 10.0f, 0.0f };
+    body_def.position = (b3Vec3){ pos.x, pos.y, pos.z };
+    body_def.userData = (void*)(intptr_t)idx;
     b3BodyId body = b3CreateBody(state.physics.world, &body_def);
 
     b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
@@ -215,33 +256,20 @@ static void add_box(void) {
     shape_def.baseMaterial.friction = 0.3f;
     b3CreateHullShape(body, &shape_def, &hull.base);
 
-    state.physics.boxes[state.physics.num_boxes++] = body;
-}
+    state.physics.bodies[idx].body_id = body;
+    state.physics.bodies[idx].color = rand_uvec3();
 
-static void add_sphere(void) {
-    if (state.physics.num_spheres >= MAX_SHAPES) {
-        return;
-    }
-    b3BodyDef body_def = b3DefaultBodyDef();
-    body_def.type = b3_dynamicBody;
-    body_def.position = (b3Vec3){ 0.0f, 10.0f, 0.0f };
-    b3BodyId body = b3CreateBody(state.physics.world, &body_def);
+    // apply linear and angular impulse to get a fountain effect
+    vec3_t v = rand_ivec3();
+    vec3_t li = vm_mul(vm_normalize(vec3(v.x, v.y + 10.0f, v.z)), 75.0f);
+    b3Body_ApplyLinearImpulseToCenter(body, (b3Vec3){ li.x, li.y, li.z }, true);
+    v = rand_ivec3();
+    vec3_t ai = vm_mul(v, 5.0f);
+    b3Body_ApplyAngularImpulse(body, (b3Vec3){ ai.x, ai.y, ai.z }, true);
 
-    b3Sphere sphere = { .radius = SPHERE_RADIUS };
-    b3ShapeDef shape_def = b3DefaultShapeDef();
-    shape_def.density = 1.0f;
-    shape_def.baseMaterial.friction = 0.3f;
-    b3CreateSphereShape(body, &shape_def, &sphere);
+    state.physics.bodies[idx].transform = mat44_translation(pos.x, pos.y, pos.z);
 
-    state.physics.spheres[state.physics.num_spheres] = body;
-}
-
-static mat44_t body_world_matrix(b3BodyId body) {
-    b3Vec3 pos = b3Body_GetPosition(body);
-    b3Quat rot = b3Body_GetRotation(body);
-    mat44_t rm = mat44_from_quat(vec4(rot.v.x, rot.v.y, rot.v.z, rot.s));
-    mat44_t tm = mat44_translation(pos.x, pos.y, pos.z);
-    return vm_mul(rm, tm);
+    state.physics.num_bodies += 1;
 }
 
 static void cleanup_physics(void) {
