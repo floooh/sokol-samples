@@ -47,8 +47,7 @@ static struct {
         sg_pass pass;
         sg_view tex_view;
         sg_sampler smp;
-        sg_pipeline pip;            // pipeline to render regular shape in shadow pass
-        sg_pipeline inst_pip;       // pipeline for hardware-instanced rendering of shapes in shaow pass
+        sg_pipeline inst_pip;       // pipeline for hardware-instanced rendering of shapes in shadow pass
     } shadow;
     struct {
         sg_pass_action pass_action;
@@ -83,8 +82,6 @@ static void add_body(void);
 static bool is_box(int index);
 static void cleanup_physics(void);
 static void update_matrices(void);
-// FIXME: not actually used:
-//static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
 static void shadow_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances);
 static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec4_t color);
 static void display_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances);
@@ -121,13 +118,13 @@ static void frame(void) {
     update_instance_buffers();
     update_matrices();
 
-    // shadow pass
+    // shadow pass (don't render ground, only the hardware-instanced  physics body shapes)
     sg_begin_pass(&state.shadow.pass);
     shadow_pass_draw_instanced_shapes(&state.shapes.box, state.box_inst_buf, state.inst_data.num_boxes);
     shadow_pass_draw_instanced_shapes(&state.shapes.ball, state.ball_inst_buf, state.inst_data.num_balls);
     sg_end_pass();
 
-    // display pass
+    // display pass (render ground an hardware-instanced physics body shapes)
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec4(0.5f, 0.5f, 0.5f, 1.0f));
     display_pass_draw_instanced_shapes(&state.shapes.box, state.box_inst_buf, state.inst_data.num_boxes);
@@ -176,22 +173,6 @@ static void update_instance_buffers(void) {
         });
     }
 }
-
-/*
-FIXME: not actually used
-static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model) {
-    const shadow_vs_params_t vs_params = {
-        .mvp = vm_mul(model, state.light_view_proj),
-    };
-    sg_apply_pipeline(state.shadow.pip);
-    sg_apply_bindings(&(sg_bindings){
-        .vertex_buffers[0] = state.vbuf,
-        .index_buffer = state.ibuf,
-    });
-    sg_apply_uniforms(UB_shadow_vs_params, &SG_RANGE(vs_params));
-    sg_draw(shape->base_element, shape->num_elements, 1);
-}
-*/
 
 static void shadow_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances) {
     if (num_instances == 0) {
@@ -506,27 +487,6 @@ static void init_gfx(void) {
         .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
         .compare = SG_COMPAREFUNC_LESS,
         .label = "shadow-map-sampler",
-    });
-    state.shadow.pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .shader = sg_make_shader(shadow_shader_desc(sg_query_backend())),
-        .layout = {
-            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
-            .attrs = {
-                [ATTR_shadow_pos] = sshape_position_vertex_attr_state(&shp),
-            },
-        },
-        .depth = {
-            .pixel_format = SG_PIXELFORMAT_DEPTH,
-            .compare = SG_COMPAREFUNC_LESS_EQUAL,
-            .write_enabled = true,
-        },
-        .index_type = SG_INDEXTYPE_UINT16,
-        // render backfaces in shadow pass to prevent shadow acne on front-faces
-        .cull_mode = SG_CULLMODE_FRONT,
-        .sample_count = 1,
-        // 'deactivate' the default color target for 'depth-only-rendering'
-        .colors[0].pixel_format = SG_PIXELFORMAT_NONE,
-        .label = "shadow-pipeline",
     });
     state.shadow.inst_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(shadow_instanced_shader_desc(sg_query_backend())),

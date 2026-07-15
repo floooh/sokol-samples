@@ -22,17 +22,6 @@ float sample_shadow_pcf(texture2D tex, sampler smp, vec3 sm_pos) {
 }
 @end
 
-@vs shadow_vs
-@glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
-layout(binding=0) uniform shadow_vs_params {
-    mat4 mvp;
-};
-in vec4 pos;
-void main() {
-    gl_Position = mvp * pos;
-}
-@end
-
 @vs shadow_inst_vs
 @glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
 layout(binding=0) uniform shadow_inst_vs_params {
@@ -52,7 +41,6 @@ void main() {
 void main() {}
 @end
 
-@program shadow shadow_vs shadow_fs
 @program shadow_instanced shadow_inst_vs shadow_fs
 
 @vs display_vs
