@@ -27,12 +27,6 @@
 #define SPAWN_INTERVAL_SEC (0.25)
 
 typedef struct {
-    b3BodyId body_id;
-    vec4_t color;
-    mat44_t transform;
-} body_t;
-
-typedef struct {
     vec4_t xxxx;
     vec4_t yyyy;
     vec4_t zzzz;
@@ -53,11 +47,13 @@ static struct {
         sg_pass pass;
         sg_view tex_view;
         sg_sampler smp;
-        sg_pipeline pip;
+        sg_pipeline pip;            // pipeline to render regular shape in shadow pass
+        sg_pipeline inst_pip;       // pipeline for hardware-instanced rendering of shapes in shaow pass
     } shadow;
     struct {
         sg_pass_action pass_action;
-        sg_pipeline pip;
+        sg_pipeline pip;            // pipeline to render regular shape in display pass
+        sg_pipeline inst_pip;       // pipeline for hardware-instanced rendering of shapes in display pass
     } display;
     double spawn_timer;
     camera_t camera;
@@ -69,22 +65,29 @@ static struct {
         b3BodyId ground;
         int64_t tick_error_us;  // current tick error in micro-seconds
         int num_bodies;
-        body_t bodies[MAX_SHAPES];  // NOTE: even indices are boxes, odd indices are balls
+        b3BodyId bodies[MAX_SHAPES];  // NOTE: even indices are boxes, odd indices are balls
     } physics;
-    instdata_t box_inst_data[MAX_SHAPES];
-    instdata_t ball_inst_data[MAX_SHAPES];
+    struct {
+        int num_boxes;
+        int num_balls;
+        instdata_t boxes[MAX_INSTANCES];
+        instdata_t balls[MAX_INSTANCES];
+    } inst_data;
 } state;
 
 static void init_gfx(void);
 static void init_physics(void);
 static void update_physics(void);
+static void update_instance_buffers(void);
 static void add_body(void);
 static bool is_box(int index);
 static void cleanup_physics(void);
-static void update_instance_data(void);
 static void update_matrices(void);
-static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
+// FIXME: not actually used:
+//static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model);
+static void shadow_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances);
 static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec4_t color);
+static void display_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -115,44 +118,20 @@ static void frame(void) {
         add_body();
     }
     update_physics();
-    //update_instance_data();
+    update_instance_buffers();
     update_matrices();
 
     // shadow pass
     sg_begin_pass(&state.shadow.pass);
-    sg_apply_pipeline(state.shadow.pip);
-    sg_apply_bindings(&(sg_bindings){
-        .vertex_buffers[0] = state.vbuf,
-        .index_buffer = state.ibuf,
-    });
-    for (int i = 0; i < state.physics.num_bodies; i++) {
-        if (is_box(i)) {
-            shadow_pass_draw_shape(&state.shapes.box, state.physics.bodies[i].transform);
-        } else {
-            shadow_pass_draw_shape(&state.shapes.ball, state.physics.bodies[i].transform);
-        }
-    }
+    shadow_pass_draw_instanced_shapes(&state.shapes.box, state.box_inst_buf, state.inst_data.num_boxes);
+    shadow_pass_draw_instanced_shapes(&state.shapes.ball, state.ball_inst_buf, state.inst_data.num_balls);
     sg_end_pass();
 
     // display pass
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
-    sg_apply_pipeline(state.display.pip);
-    sg_apply_bindings(&(sg_bindings){
-        .vertex_buffers[0] = state.vbuf,
-        .index_buffer = state.ibuf,
-        .views[VIEW_shadow_map] = state.shadow.tex_view,
-        .samplers[SMP_shadow_sampler] = state.shadow.smp,
-    });
     display_pass_draw_shape(&state.shapes.plane, mat44_identity(), vec4(0.5f, 0.5f, 0.5f, 1.0f));
-    for (int i = 0; i < state.physics.num_bodies; i++) {
-        mat44_t m = state.physics.bodies[i].transform;
-        vec4_t c = state.physics.bodies[i].color;
-        if (is_box(i)) {
-            display_pass_draw_shape(&state.shapes.box, m, c);
-        } else {
-            display_pass_draw_shape(&state.shapes.ball, m, c);
-        }
-    }
+    display_pass_draw_instanced_shapes(&state.shapes.box, state.box_inst_buf, state.inst_data.num_boxes);
+    display_pass_draw_instanced_shapes(&state.shapes.ball, state.ball_inst_buf, state.inst_data.num_balls);
     __dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -183,12 +162,54 @@ static void update_matrices(void) {
     state.view_proj = vm_mul(view, proj);
 }
 
+static void update_instance_buffers(void) {
+    if (state.inst_data.num_boxes > 0) {
+        sg_update_buffer(state.box_inst_buf, &(sg_range){
+            .ptr = (const void*)&state.inst_data.boxes[0],
+            .size = sizeof(instdata_t) * (size_t)state.inst_data.num_boxes,
+        });
+    }
+    if (state.inst_data.num_balls > 0) {
+        sg_update_buffer(state.ball_inst_buf, &(sg_range){
+            .ptr = (const void*)&state.inst_data.balls[0],
+            .size = sizeof(instdata_t) * (size_t)state.inst_data.num_balls,
+        });
+    }
+}
+
+/*
+FIXME: not actually used
 static void shadow_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model) {
     const shadow_vs_params_t vs_params = {
         .mvp = vm_mul(model, state.light_view_proj),
     };
+    sg_apply_pipeline(state.shadow.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+    });
     sg_apply_uniforms(UB_shadow_vs_params, &SG_RANGE(vs_params));
     sg_draw(shape->base_element, shape->num_elements, 1);
+}
+*/
+
+static void shadow_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances) {
+    if (num_instances == 0) {
+        return;
+    }
+    const shadow_inst_vs_params_t vs_params = {
+        .light_view_proj = state.light_view_proj,
+    };
+    sg_apply_pipeline(state.shadow.inst_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers = {
+            [0] = state.vbuf,
+            [1] = inst_buf,
+        },
+        .index_buffer = state.ibuf,
+    });
+    sg_apply_uniforms(UB_shadow_inst_vs_params, &SG_RANGE(vs_params));
+    sg_draw(shape->base_element, shape->num_elements, num_instances);
 }
 
 static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t model, vec4_t color) {
@@ -202,9 +223,43 @@ static void display_pass_draw_shape(const sshape_element_range_t* shape, mat44_t
         .eye_pos = state.camera.eye_pos,
         .light_dir = vm_normalize(state.light_pos),
     };
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.vbuf,
+        .index_buffer = state.ibuf,
+        .views[VIEW_shadow_map] = state.shadow.tex_view,
+        .samplers[SMP_shadow_sampler] = state.shadow.smp,
+    });
     sg_apply_uniforms(UB_display_vs_params, &SG_RANGE(vs_params));
     sg_apply_uniforms(UB_display_fs_params, &SG_RANGE(fs_params));
     sg_draw(shape->base_element, shape->num_elements, 1);
+}
+
+static void display_pass_draw_instanced_shapes(const sshape_element_range_t* shape, sg_buffer inst_buf, int num_instances) {
+    if (num_instances == 0) {
+        return;
+    }
+    const display_inst_vs_params_t vs_params = {
+        .view_proj = state.view_proj,
+        .light_view_proj = state.light_view_proj,
+    };
+    const display_fs_params_t fs_params = {
+        .eye_pos = state.camera.eye_pos,
+        .light_dir = vm_normalize(state.light_pos),
+    };
+    sg_apply_pipeline(state.display.inst_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers = {
+            [0] = state.vbuf,
+            [1] = inst_buf,
+        },
+        .index_buffer = state.ibuf,
+        .views[VIEW_shadow_map] = state.shadow.tex_view,
+        .samplers[SMP_shadow_sampler] = state.shadow.smp,
+    });
+    sg_apply_uniforms(UB_display_inst_vs_params, &SG_RANGE(vs_params));
+    sg_apply_uniforms(UB_display_fs_params, &SG_RANGE(fs_params));
+    sg_draw(shape->base_element, shape->num_elements, num_instances);
 }
 
 static void init_physics(void) {
@@ -221,6 +276,15 @@ static void init_physics(void) {
     b3CreateHullShape(state.physics.ground, &ground_shape_def, &ground_box.base);
 }
 
+static void copy_instance_transform(instdata_t* inst_data, const b3WorldTransform* tf) {
+    mat44_t rm = mat44_from_quat(vec4(tf->q.v.x, tf->q.v.y, tf->q.v.z, tf->q.s));
+    mat44_t tm = mat44_translation(tf->p.x, tf->p.y, tf->p.z);
+    mat44_t m = vm_transpose(vm_mul(rm, tm));
+    inst_data->xxxx = m.x;
+    inst_data->yyyy = m.y;
+    inst_data->zzzz = m.z;
+}
+
 static void update_physics(void) {
     double dt_sec = sapp_frame_duration();
     int64_t dt_usec = (int64_t)(dt_sec * USEC_PER_SEC);
@@ -233,14 +297,8 @@ static void update_physics(void) {
     b3BodyEvents events = b3World_GetBodyEvents(state.physics.world);
     for (int i = 0; i < events.moveCount; i++) {
         const b3BodyMoveEvent* ev = &events.moveEvents[i];
-        int idx = (int)(intptr_t)ev->userData;
-        assert(idx < MAX_SHAPES);
-        body_t* body = &state.physics.bodies[idx];
-        b3Vec3 p = ev->transform.p;
-        b3Quat q = ev->transform.q;
-        mat44_t rm = mat44_from_quat(vec4(q.v.x, q.v.y, q.v.z, q.s));
-        mat44_t tm = mat44_translation(p.x, p.y, p.z);
-        body->transform = vm_mul(rm, tm);
+        instdata_t* inst_data = (instdata_t*)ev->userData;
+        copy_instance_transform(inst_data, &ev->transform);
     }
 }
 
@@ -275,11 +333,18 @@ static void add_body(void) {
     if (idx >= MAX_SHAPES) {
         return;
     }
+    instdata_t* inst_data = 0;
+    if (is_box(idx)) {
+        inst_data = &state.inst_data.boxes[state.inst_data.num_boxes++];
+    } else {
+        inst_data = &state.inst_data.balls[state.inst_data.num_balls++];
+    }
+
     const vec3_t pos = vec3(0.0f, 10.0f, 0.0f);
     b3BodyDef body_def = b3DefaultBodyDef();
     body_def.type = b3_dynamicBody;
     body_def.position = (b3Vec3){ pos.x, pos.y, pos.z };
-    body_def.userData = (void*)(intptr_t)idx;
+    body_def.userData = (void*)inst_data;
     body_def.linearDamping = 0.25f;
     b3BodyId body = b3CreateBody(state.physics.world, &body_def);
 
@@ -292,9 +357,11 @@ static void add_body(void) {
         b3Sphere sphere = { .radius = BALL_RADIUS };
         b3CreateSphereShape(body, &shape_def, &sphere);
     }
-    state.physics.bodies[idx].body_id = body;
+    state.physics.bodies[idx] = body;
     vec3_t c = rand_uvec3();
-    state.physics.bodies[idx].color = vec4(c.x, c.y, c.z, 1.0f);
+    inst_data->color = vec4(c.x, c.y, c.z, 1.0f);;
+    const b3WorldTransform tf = b3Body_GetTransform(body);
+    copy_instance_transform(inst_data, &tf);
 
     // apply linear and angular impulse to get a fountain effect
     vec3_t v = rand_ivec3();
@@ -304,7 +371,6 @@ static void add_body(void) {
     vec3_t ai = vm_mul(v, 5.0f);
     b3Body_ApplyAngularImpulse(body, (b3Vec3){ ai.x, ai.y, ai.z }, true);
 
-    state.physics.bodies[idx].transform = mat44_translation(pos.x, pos.y, pos.z);
     state.physics.num_bodies += 1;
 }
 
@@ -359,13 +425,13 @@ static void init_gfx(void) {
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
 
-    //
+    // pipeline objects for regular and instanced rendering
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .layout = {
             .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_display_position] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_display_pos] = sshape_position_vertex_attr_state(&shp),
                 [ATTR_display_normal] = sshape_normal_vertex_attr_state(&shp),
             }
         },
@@ -376,6 +442,36 @@ static void init_gfx(void) {
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
         .label = "display-pipeline"
+    });
+    state.display.inst_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(display_instanced_shader_desc(sg_query_backend())),
+        .layout = {
+            .buffers = {
+                [0] = sshape_vertex_buffer_layout_state(&shp),
+                [1] = {
+                    .step_func = SG_VERTEXSTEP_PER_INSTANCE,
+                    .stride = sizeof(instdata_t),
+                },
+            },
+            .attrs = {
+                // NOTE: since sshape helper functions return explicit offsets, the instance attribute
+                // offsets also must be explicitly provided (because the auto-offset computation only works
+                // when *all* vertex attribute offsets are 0)
+                [ATTR_display_instanced_pos] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_display_instanced_normal] = sshape_normal_vertex_attr_state(&shp),
+                [ATTR_display_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 0 },
+                [ATTR_display_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 16 },
+                [ATTR_display_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 32 },
+                [ATTR_display_instanced_inst_color] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 48 },
+            }
+        },
+        .depth = {
+            .write_enabled = true,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .cull_mode = SG_CULLMODE_BACK,
+        .label = "display-instanced-pipeline"
     });
 
     // shadow pass resources
@@ -416,7 +512,7 @@ static void init_gfx(void) {
         .layout = {
             .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_display_position] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_shadow_pos] = sshape_position_vertex_attr_state(&shp),
             },
         },
         .depth = {
@@ -431,6 +527,34 @@ static void init_gfx(void) {
         // 'deactivate' the default color target for 'depth-only-rendering'
         .colors[0].pixel_format = SG_PIXELFORMAT_NONE,
         .label = "shadow-pipeline",
+    });
+    state.shadow.inst_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(shadow_instanced_shader_desc(sg_query_backend())),
+        .layout = {
+            .buffers = {
+                [0] = sshape_vertex_buffer_layout_state(&shp),
+                [1] = {
+                    .stride = sizeof(instdata_t),
+                    .step_func = SG_VERTEXSTEP_PER_INSTANCE,
+                },
+            },
+            .attrs = {
+                [ATTR_shadow_instanced_pos] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_shadow_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 0 },
+                [ATTR_shadow_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 16, },
+                [ATTR_shadow_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 32 },
+            },
+        },
+        .depth = {
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .cull_mode = SG_CULLMODE_FRONT,
+        .sample_count = 1,
+        .colors[0].pixel_format = SG_PIXELFORMAT_NONE,
+        .label = "shadow-instanced-pipeline",
     });
 
     // instance buffers for box and sphere instances

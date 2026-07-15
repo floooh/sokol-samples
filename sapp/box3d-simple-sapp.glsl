@@ -33,11 +33,27 @@ void main() {
 }
 @end
 
+@vs shadow_inst_vs
+@glsl_options fixup_clipspace // important: map clipspace z from -1..+1 to 0..+1 on GL
+layout(binding=0) uniform shadow_inst_vs_params {
+    mat4 light_view_proj;
+};
+layout(location=0) in vec4 pos;
+layout(location=1) in vec4 inst_xxxx;
+layout(location=2) in vec4 inst_yyyy;
+layout(location=3) in vec4 inst_zzzz;
+void main() {
+    vec4 world_pos = vec4(dot(pos, inst_xxxx), dot(pos, inst_yyyy), dot(pos, inst_zzzz), 1.0);
+    gl_Position = light_view_proj * world_pos;
+}
+@end
+
 @fs shadow_fs
 void main() {}
 @end
 
 @program shadow shadow_vs shadow_fs
+@program shadow_instanced shadow_inst_vs shadow_fs
 
 @vs display_vs
 layout(binding=0) uniform display_vs_params {
@@ -47,7 +63,7 @@ layout(binding=0) uniform display_vs_params {
     vec4 diff_color;
 };
 
-layout(location=0) in vec4 position;
+layout(location=0) in vec4 pos;
 layout(location=1) in vec3 normal;
 
 out vec3 color;
@@ -56,14 +72,46 @@ out vec4 world_pos;
 out vec3 world_nrm;
 
 void main() {
-    gl_Position = mvp * position;
-    light_proj_pos = light_mvp * position;
+    gl_Position = mvp * pos;
+    light_proj_pos = light_mvp * pos;
     #if !SOKOL_GLSL
         light_proj_pos.y = -light_proj_pos.y;
     #endif
-    world_pos = model * position;
+    world_pos = model * pos;
     world_nrm = (model * vec4(normal, 0)).xyz;
     color = diff_color.xyz;
+}
+@end
+
+@vs display_inst_vs
+layout(binding=0) uniform display_inst_vs_params {
+    mat4 view_proj;
+    mat4 light_view_proj;
+};
+
+layout(location=0) in vec4 pos;
+layout(location=1) in vec3 normal;
+layout(location=2) in vec4 inst_xxxx;
+layout(location=3) in vec4 inst_yyyy;
+layout(location=4) in vec4 inst_zzzz;
+layout(location=5) in vec4 inst_color;
+out vec3 color;
+out vec4 light_proj_pos;    // light space position (for shadow mapping)
+out vec4 world_pos;
+out vec3 world_nrm;
+
+void main() {
+    vec4 wp = vec4(dot(pos, inst_xxxx), dot(pos, inst_yyyy), dot(pos, inst_zzzz), 1.0);
+    vec4 nrm4 = vec4(normal, 0.0);
+    vec3 wn = vec3(dot(nrm4, inst_xxxx), dot(nrm4, inst_yyyy), dot(nrm4, inst_zzzz));
+    gl_Position = view_proj * wp;
+    light_proj_pos = light_view_proj * wp;
+    #if !SOKOL_GLSL
+        light_proj_pos.y = -light_proj_pos.y;
+    #endif
+    world_pos = wp;
+    world_nrm = wn;
+    color = inst_color.xyz;
 }
 @end
 
@@ -115,3 +163,4 @@ void main() {
 @end
 
 @program display display_vs display_fs
+@program display_instanced display_inst_vs display_fs
