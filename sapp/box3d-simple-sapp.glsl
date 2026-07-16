@@ -75,6 +75,7 @@ void main() {
 layout(binding=0) uniform display_inst_vs_params {
     mat4 view_proj;
     mat4 light_view_proj;
+    float awake_filter;
 };
 
 layout(location=0) in vec4 pos;
@@ -99,7 +100,7 @@ void main() {
     #endif
     world_pos = wp;
     world_nrm = wn;
-    color = inst_color.xyz;
+    color = mix(inst_color.xyz, vec3(0.25f, 0.25f, 0.25f), awake_filter * inst_color.w);
 }
 @end
 
