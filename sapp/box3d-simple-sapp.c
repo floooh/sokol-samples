@@ -104,7 +104,6 @@ static void init(void) {
 
     init_physics();
     init_gfx();
-    state.spawn_timer = SPAWN_INTERVAL_SEC;
 }
 
 static void frame(void) {
@@ -118,7 +117,7 @@ static void frame(void) {
     update_instance_buffers();
     update_matrices();
 
-    // shadow pass (don't render ground, only the hardware-instanced  physics body shapes)
+    // shadow pass (don't render ground, only the hardware-instanced physics body shapes)
     sg_begin_pass(&state.shadow.pass);
     shadow_pass_draw_instanced_shapes(&state.shapes.box, state.box_inst_buf, state.inst_data.num_boxes);
     shadow_pass_draw_instanced_shapes(&state.shapes.ball, state.ball_inst_buf, state.inst_data.num_balls);
@@ -150,7 +149,7 @@ static void input(const sapp_event* ev) {
 static void update_matrices(void) {
     // calculate matrices for shadow pass
     const mat44_t light_view = mat44_look_at_rh(state.light_pos, vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
-    const mat44_t light_proj = mat44_ortho_off_center_rh(-100.0f, 100.0f, -100.0f, 100.0f, 1.0f, 400.0f);
+    const mat44_t light_proj = mat44_ortho_off_center_rh(-100.0f, 100.0f, -100.0f, 100.0f, 1.0f, 250.0f);
     state.light_view_proj = vm_mul(light_view, light_proj);
 
     // calculate matrices for display pass
@@ -327,6 +326,7 @@ static void add_body(void) {
     body_def.position = (b3Vec3){ pos.x, pos.y, pos.z };
     body_def.userData = (void*)inst_data;
     body_def.linearDamping = 0.25f;
+    body_def.angularDamping = 0.25f;
     b3BodyId body = b3CreateBody(state.physics.world, &body_def);
 
     b3ShapeDef shape_def = b3DefaultShapeDef();
