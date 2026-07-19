@@ -1,7 +1,21 @@
 //------------------------------------------------------------------------------
 //  box3d-simple-sapp.c
 //
-//  Basic integration with Box3d physics engine.
+//  Basic integration with Box3d physics engine:
+//
+//  - initializes a default physics world and adds a static ground plane
+//  - the physics world is stepped in fixed 4ms time intervals (e.g. 250
+//    steps per second)
+//  - box-, ball- and ground-shapes created via sokol_shape.h
+//  - box and ball shapes are rendered via hardware-instancing
+//    (e.g. 1 draw call for all shapes of the same type, the shadow-map pass is
+//    2 draw calls, and the display pass is 3 draw calls (that one extra draw
+//    call is for the ground)
+//  - the per-instance data is a transposed 3x4 matrix (vec4[3]) for a body's
+//    world space transform and a vec4 for a unique color (e.g. 64 bytes of
+//    instance data)
+//  - each frame, only the transforms of active (non-sleeping) bodies are copied
+//    out of the physics world via Box3D's event system
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
