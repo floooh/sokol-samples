@@ -388,11 +388,11 @@ static void physics_add_body(void) {
     b3ShapeDef shape_def = b3DefaultShapeDef();
     shape_def.density = 1.0f;
     shape_def.baseMaterial.restitution = 0.25f;
-    shape_def.baseMaterial.rollingResistance = 0.1f;
     if (physics_is_box(idx)) {
         b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
         b3CreateHullShape(body, &shape_def, &hull.base);
     } else {
+        shape_def.baseMaterial.rollingResistance = 0.05f;
         b3Sphere sphere = { .radius = BALL_RADIUS };
         b3CreateSphereShape(body, &shape_def, &sphere);
     }
