@@ -58,26 +58,27 @@ static void init(void) {
     __dbgui_setup();
 
     // setup a couple of shape geometries
-    static sshape_vertex_t vertices[4 * 1024];
+    static uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 4 * 1024];
     static uint16_t indices[12 * 1024];
-    sshape_buffer_t buf = {
+    sshape_state_t shp = {
+        .disable.colors = true,
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer = SSHAPE_RANGE(indices),
     };
-    buf = sshape_build_box(&buf, &(sshape_box_t){ .width = 1.5f, .height = 1.5f, .depth = 1.5f });
-    state.offscreen.shapes[SHAPE_BOX] = sshape_element_range(&buf);
-    buf = sshape_build_torus(&buf, &(sshape_torus_t){ .radius = 1.0f, .ring_radius = 0.3f, .rings = 36, .sides = 18 });
-    state.offscreen.shapes[SHAPE_DONUT] = sshape_element_range(&buf);
-    buf = sshape_build_cylinder(&buf, &(sshape_cylinder_t){ .radius = 1.0f, .height = 1.5f, .slices = 36, .stacks = 1 });
-    state.offscreen.shapes[SHAPE_CYLINDER] = sshape_element_range(&buf);
-    buf = sshape_build_plane(&buf, &(sshape_plane_t){ .width = 2.0f, .depth = 2.0f });
-    state.display.plane = sshape_element_range(&buf);
-    assert(buf.valid);
+    sshape_build_box(&shp, &(sshape_box_t){ .width = 1.5f, .height = 1.5f, .depth = 1.5f });
+    state.offscreen.shapes[SHAPE_BOX] = sshape_element_range(&shp);
+    sshape_build_torus(&shp, &(sshape_torus_t){ .radius = 1.0f, .ring_radius = 0.3f, .rings = 36, .sides = 18 });
+    state.offscreen.shapes[SHAPE_DONUT] = sshape_element_range(&shp);
+    sshape_build_cylinder(&shp, &(sshape_cylinder_t){ .radius = 1.0f, .height = 1.5f, .slices = 36, .stacks = 1 });
+    state.offscreen.shapes[SHAPE_CYLINDER] = sshape_element_range(&shp);
+    sshape_build_plane(&shp, &(sshape_plane_t){ .width = 2.0f, .depth = 2.0f });
+    state.display.plane = sshape_element_range(&shp);
+    assert(shp.valid);
 
     // create one vertex- and one index-buffer for all shapes
-    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
+    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
     vbuf_desc.label = "shape-vertices";
-    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
     ibuf_desc.label = "shape-indices";
     state.vbuf = sg_make_buffer(&vbuf_desc);
     state.ibuf = sg_make_buffer(&ibuf_desc);
@@ -136,10 +137,10 @@ static void init(void) {
     // a pipeline object for the offscreen pass
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0].stride = sizeof(sshape_vertex_t),
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_offscreen_in_pos] = sshape_position_vertex_attr_state(),
-                [ATTR_offscreen_in_nrm] = sshape_normal_vertex_attr_state(),
+                [ATTR_offscreen_in_pos] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_offscreen_in_nrm] = sshape_normal_vertex_attr_state(&shp),
             },
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -158,10 +159,10 @@ static void init(void) {
     // ...and a pipeline object for the display pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0].stride = sizeof(sshape_vertex_t),
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_display_in_pos] = sshape_position_vertex_attr_state(),
-                [ATTR_display_in_uv] = sshape_texcoord_vertex_attr_state(),
+                [ATTR_display_in_pos] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_display_in_uv] = sshape_texcoord_vertex_attr_state(&shp),
             },
         },
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),

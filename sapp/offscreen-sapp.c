@@ -91,28 +91,29 @@ static void init(void) {
 
     // a donut shape which is rendered into the offscreen render target, and
     // a sphere shape which is rendered into the default framebuffer
-    sshape_vertex_t vertices[4000] = { 0 };
+    uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 4000] = { 0 };
     uint16_t indices[24000] = { 0 };
-    sshape_buffer_t buf = {
+    sshape_state_t shp = {
+        .disable.colors = true,
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer  = SSHAPE_RANGE(indices),
     };
-    buf = sshape_build_torus(&buf, &(sshape_torus_t){
+    sshape_build_torus(&shp, &(sshape_torus_t){
         .radius = 0.5f,
         .ring_radius = 0.3f,
         .sides = 20,
         .rings = 36,
     });
-    state.donut = sshape_element_range(&buf);
-    buf = sshape_build_sphere(&buf, &(sshape_sphere_t) {
+    state.donut = sshape_element_range(&shp);
+    sshape_build_sphere(&shp, &(sshape_sphere_t) {
         .radius = 0.5f,
         .slices = 72,
         .stacks = 40
     });
-    state.sphere = sshape_element_range(&buf);
+    state.sphere = sshape_element_range(&shp);
 
-    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&buf);
-    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&buf);
+    sg_buffer_desc vbuf_desc = sshape_vertex_buffer_desc(&shp);
+    sg_buffer_desc ibuf_desc = sshape_index_buffer_desc(&shp);
     vbuf_desc.label = "shape-vbuf";
     ibuf_desc.label = "shape-ibuf";
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
@@ -124,10 +125,10 @@ static void init(void) {
     // pass (the display pass is multi-sampled, but the offscreen pass isn't)
     state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_vertex_buffer_layout_state(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_offscreen_position] = sshape_position_vertex_attr_state(),
-                [ATTR_offscreen_normal] = sshape_normal_vertex_attr_state()
+                [ATTR_offscreen_position] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_offscreen_normal] = sshape_normal_vertex_attr_state(&shp)
             }
         },
         .shader = sg_make_shader(offscreen_shader_desc(sg_query_backend())),
@@ -146,11 +147,11 @@ static void init(void) {
     // and another pipeline-state-object for the default pass
     state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .layout = {
-            .buffers[0] = sshape_vertex_buffer_layout_state(),
+            .buffers[0] = sshape_vertex_buffer_layout_state(&shp),
             .attrs = {
-                [ATTR_default_position] = sshape_position_vertex_attr_state(),
-                [ATTR_default_normal] = sshape_normal_vertex_attr_state(),
-                [ATTR_default_texcoord0] = sshape_texcoord_vertex_attr_state()
+                [ATTR_default_position] = sshape_position_vertex_attr_state(&shp),
+                [ATTR_default_normal] = sshape_normal_vertex_attr_state(&shp),
+                [ATTR_default_texcoord0] = sshape_texcoord_vertex_attr_state(&shp)
             }
         },
         .shader = sg_make_shader(default_shader_desc(sg_query_backend())),

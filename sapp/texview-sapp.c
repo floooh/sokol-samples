@@ -131,8 +131,6 @@ static void frame(void) {
     });
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
-    sappimgui_draw();
-    sgimgui_draw();
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -145,6 +143,7 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     sfetch_shutdown();
+    sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
     sg_shutdown();
@@ -164,6 +163,8 @@ static void ui_draw(void) {
         sappimgui_draw_menu("sokol-app");
         igEndMainMenuBar();
     }
+    sappimgui_draw();
+    sgimgui_draw();
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {

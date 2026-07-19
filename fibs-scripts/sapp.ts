@@ -168,6 +168,7 @@ export const samples: SampleOptions[] = [
         ],
     },
     { name: 'loadpng', shd: true, ui: 'cc', deps: ['fileutil', 'stb'], jobs: [copy('data', ['baboon.png'])] },
+    { name: 'box3d-simple', shd: true, deps: ['imgui', 'box3d'] },
     { name: 'spine-simple', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: [copySpineAssets()] },
     { name: 'spine-inspector', deps: ['spine', 'stb', 'fileutil', 'imgui'], jobs: [copySpineAssets()] },
     { name: 'spine-skinsets', ui: 'cc', deps: ['spine', 'stb', 'fileutil'], jobs: [copySpineAssets()] },
