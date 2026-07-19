@@ -383,13 +383,12 @@ static void physics_add_body(void) {
     body_def.type = b3_dynamicBody;
     body_def.position = (b3Vec3){ pos.x, pos.y, pos.z };
     body_def.userData = (void*)inst_data;
-    body_def.linearDamping = 0.25f;
-    body_def.angularDamping = 0.25f;
-    body_def.sleepThreshold = 1.0f;
     b3BodyId body = b3CreateBody(state.physics.world, &body_def);
 
     b3ShapeDef shape_def = b3DefaultShapeDef();
     shape_def.density = 1.0f;
+    shape_def.baseMaterial.restitution = 0.25f;
+    shape_def.baseMaterial.rollingResistance = 0.1f;
     if (physics_is_box(idx)) {
         b3BoxHull hull = b3MakeCubeHull(BOX_SIZE * 0.5f);
         b3CreateHullShape(body, &shape_def, &hull.base);
