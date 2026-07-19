@@ -337,8 +337,8 @@ static inline uint32_t xorshift32(void) {
 static vec3_t rand_uvec3(void) {
     uint32_t c = xorshift32();
     float x = (float)(c & 255) / 255.0f;
-    float y = (float)((c >> 8) & 255) / 255.0;
-    float z = (float)((c >> 16) & 255) / 255.0l;
+    float y = (float)((c >> 8) & 255) / 255.0f;
+    float z = (float)((c >> 16) & 255) / 255.0f;
     return (vec3_t){ x, y, z };
 }
 
@@ -348,7 +348,7 @@ static vec3_t rand_ivec3(void) {
 }
 
 static bool physics_is_box(int idx) {
-    // even indices are boxes, off indices are balls
+    // even indices are boxes, odd indices are balls
     return (idx & 1) == 0;
 }
 
@@ -385,7 +385,7 @@ static void physics_add_body(void) {
     }
     state.physics.bodies[idx] = body;
     vec3_t c = rand_uvec3();
-    inst_data->color = vec4(c.x, c.y, c.z, 1.0f);;
+    inst_data->color = vec4(c.x, c.y, c.z, 1.0f);
     const b3WorldTransform tf = b3Body_GetTransform(body);
     copy_instance_transform(inst_data, &tf);
 
