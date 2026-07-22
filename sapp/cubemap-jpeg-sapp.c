@@ -1,7 +1,8 @@
 //------------------------------------------------------------------------------
 //  cubemap-jpeg-sapp.c
 //
-//  Load and render cubemap from individual jpeg files.
+//  Load and render cubemap from individual jpeg files. Also demonstrates
+//  how to incrementally populate an image via sg_write_image_unsealed()
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
 #include "vecmath/vecmath.h"
@@ -21,32 +22,22 @@
 
 static struct {
     sg_pass_action pass_action;
+    sg_image img;
     sg_pipeline pip;
     sg_bindings bind;
     camera_t camera;
     int load_count;
     bool load_failed;
-    sg_range pixels;
 } state;
 
-// room for loading all cubemap faces in parallel
 #define NUM_FACES (6)
 #define FACE_WIDTH (2048)
 #define FACE_HEIGHT (2048)
 #define FACE_NUM_BYTES (FACE_WIDTH * FACE_HEIGHT * 4)
 
-static void fetch_cb(const sfetch_response_t*);
+static uint8_t iobuffer[FACE_NUM_BYTES];
 
-static sg_range cubeface_range(int face_index) {
-    assert(state.pixels.ptr);
-    assert((face_index >= 0) && (face_index < NUM_FACES));
-    size_t offset = (size_t)(face_index * FACE_NUM_BYTES);
-    assert((offset + FACE_NUM_BYTES) <= state.pixels.size);
-    return (sg_range){
-        .ptr = ((uint8_t*)state.pixels.ptr) + offset,
-        .size = FACE_NUM_BYTES
-    };
-}
+static void fetch_cb(const sfetch_response_t*);
 
 static void init(void) {
 
@@ -61,11 +52,13 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // setup sokol-fetch to load 6 faces in parallel
+    // setup sokol-fetch, restrict to one download at a time
+    // to preserve memory and demonstrate writing individual
+    // cubemap faces vis sg_write_image_unsealed()
     sfetch_setup(&(sfetch_desc_t){
         .max_requests = 6,
         .num_channels = 1,
-        .num_lanes = NUM_FACES,
+        .num_lanes = 1,
         .logger.func = slog_func,
     });
 
@@ -77,11 +70,6 @@ static void init(void) {
         .min_dist = 0.1f,
         .max_dist = 0.1f,
     });
-
-    // allocate memory for pixel data (both as io buffer for JPEG data, and for the decoded pixel data)
-    state.pixels.size = NUM_FACES * FACE_NUM_BYTES;
-    state.pixels.ptr = malloc(state.pixels.size);
-    assert(state.pixels.ptr);
 
     // pass action, clear to black
     state.pass_action = (sg_pass_action){
@@ -138,11 +126,21 @@ static void init(void) {
         .label = "cubemap-indices"
     });
 
-    // allocate a (texture) view handle, but only initialize it later once the
-    // texture data has been asynchronously loaded, this allows us to write
-    // a regular render loop without having to explicitly skip rendering as
-    // long as the texture isn't loaded yet
-    state.bind.views[VIEW_tex] = sg_alloc_view();
+    // create cubemap image without initial content in unsealed state
+    state.img = sg_make_image(&(sg_image_desc){
+        .usage.write_unsealed = true,
+        .type = SG_IMAGETYPE_CUBE,
+        .width = FACE_WIDTH,
+        .height = FACE_HEIGHT,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .label = "cubemap-image",
+    });
+
+    // create texture view for the cubemap image
+    state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){
+        .texture = { .image = state.img },
+        .label = "cubemap-view",
+    });
 
     // a sampler object
     state.bind.samplers[SMP_smp] = sg_make_sampler(&(sg_sampler_desc){
@@ -163,18 +161,21 @@ static void init(void) {
         .label = "cubemap-pipeline",
     });
 
-    // load 6 cubemap face image files (note: filenames are in same order as SG_CUBEFACE_*)
+    // start loading the six cubemap face image files, note that the loading
+    // will be throttled to happen in sequence by sokol-fetch, that way it's
+    // safe to reuse the same iobuffer for each image
     char path_buf[1024];
     const char* filenames[NUM_FACES] = {
         "nb2_posx.jpg", "nb2_negx.jpg",
         "nb2_posy.jpg", "nb2_negy.jpg",
         "nb2_posz.jpg", "nb2_negz.jpg"
     };
-    for (int i = 0; i < NUM_FACES; i++) {
+    for (int face_index = 0; face_index < NUM_FACES; face_index++) {
         sfetch_send(&(sfetch_request_t){
-            .path = fileutil_get_path(filenames[i], path_buf, sizeof(path_buf)),
+            .path = fileutil_get_path(filenames[face_index], path_buf, sizeof(path_buf)),
             .callback = fetch_cb,
-            .buffer = { .ptr = cubeface_range(i).ptr, .size = cubeface_range(i).size },
+            .buffer = SFETCH_RANGE(iobuffer),
+            .user_data = SFETCH_RANGE(face_index),
         });
     }
 }
@@ -192,26 +193,36 @@ static void fetch_cb(const sfetch_response_t* response) {
         if (decoded_pixels) {
             assert(width == FACE_WIDTH);
             assert(height == FACE_HEIGHT);
-            // overwrite JPEG data with decoded pixel data
-            memcpy((void*)response->buffer.ptr, decoded_pixels, FACE_NUM_BYTES);
-            stbi_image_free(decoded_pixels);
-            // all 6 faces loaded?
-            if (++state.load_count == NUM_FACES) {
-                // create a cubemap image
-                sg_image img = sg_make_image(&(sg_image_desc){
-                    .type = SG_IMAGETYPE_CUBE,
+
+            // get the cubeface index from response's userdata
+            assert(response->user_data);
+            int face_index = *(int*)response->user_data;
+
+            // write the cubeface data into the image
+            sg_write_image_unsealed(&(sg_write_image_desc){
+                // note: src.bytes_per_row and src.rows_per_slice can remain
+                // at default zero because the in-memory data is already in the right layout
+                .src.data = {
+                    .ptr = decoded_pixels,
+                    .size = FACE_NUM_BYTES
+                },
+                .dst = {
+                    .image = state.img,
+                    .mip_level = 0,
+                    .slice = face_index
+                },
+                // FIXME: test with width = 0, height = 0
+                .size = {
                     .width = width,
                     .height = height,
-                    .pixel_format = SG_PIXELFORMAT_RGBA8,
-                    .data.mip_levels[0] = state.pixels,
-                    .label = "cubemap-image",
-                });
-                free((void*)state.pixels.ptr); state.pixels.ptr = 0;
-                // ...and initialize the pre-allocated view
-                sg_init_view(state.bind.views[VIEW_tex], &(sg_view_desc){
-                    .texture = { .image = img },
-                    .label = "cubemap-view",
-                });
+                    .num_slices = 1,
+                },
+            });
+            stbi_image_free(decoded_pixels);
+
+            // when all 6 cube faces have been loaded, seal the image
+            if (++state.load_count == NUM_FACES) {
+                sg_seal_image(state.img);
             }
         }
     } else if (response->failed) {
@@ -237,6 +248,8 @@ static void frame(void) {
         sdtx_puts("LMB + move mouse to look around");
     }
 
+    // NOTE: as long as the image is in unsealed state (e.g. data is still loading)
+    // all render operations involving the image will silently be skipped
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind),
