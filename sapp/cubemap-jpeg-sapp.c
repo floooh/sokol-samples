@@ -209,14 +209,15 @@ static void fetch_cb(const sfetch_response_t* response) {
                 .dst = {
                     .image = state.img,
                     .mip_level = 0,
-                    .slice = face_index
+                    .slice = face_index,
                 },
-                // FIXME: test with width = 0, height = 0
+                // note: when default width and height are zero-initialized, the
+                // sizes will be inferred from the image, num_slices must be
+                // explicitly set to 1 in this scenario, because the inferred
+                // number of slices for a cubemap would be 6
                 .size = {
-                    .width = width,
-                    .height = height,
                     .num_slices = 1,
-                },
+                }
             });
             stbi_image_free(decoded_pixels);
 
