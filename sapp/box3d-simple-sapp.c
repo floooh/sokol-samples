@@ -44,7 +44,7 @@
 #define BOX_SIZE (1.5f)
 #define SHADOW_MAP_SIZE (2048)
 #define USEC_PER_SEC (1000000.0)
-#define PHYSICS_TICK_USEC ((1.0 / 250.0) * USEC_PER_SEC)
+#define PHYSICS_TICK_USEC (uint64_t)((1.0 / 250.0) * USEC_PER_SEC)
 #define SPAWN_INTERVAL_SEC (0.25)
 
 typedef struct {
