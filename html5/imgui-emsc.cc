@@ -249,7 +249,7 @@ static EM_BOOL draw(double time, void* userdata) {
 // imgui draw callback
 void draw_imgui(ImDrawData* draw_data) {
     assert(draw_data);
-    if (draw_data->CmdListsCount == 0) {
+    if (draw_data->CmdLists.Size == 0) {
         return;
     }
 
@@ -259,7 +259,7 @@ void draw_imgui(ImDrawData* draw_data) {
     vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
     sg_apply_pipeline(pip);
     sg_apply_uniforms(0, SG_RANGE(vs_params));
-    for (int cl_index = 0; cl_index < draw_data->CmdListsCount; cl_index++) {
+    for (int cl_index = 0; cl_index < draw_data->CmdLists.Size; cl_index++) {
         const ImDrawList* cl = draw_data->CmdLists[cl_index];
 
         // append vertices and indices to buffers, record start offsets in binding struct
