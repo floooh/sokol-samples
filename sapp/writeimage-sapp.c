@@ -55,6 +55,7 @@ static struct {
             } size;
         } write;
         struct {
+            int mip_level;
             int slice;
         } display;
     } ui;
@@ -117,6 +118,7 @@ static int ui_mip_dim(int base, int mip_level) {
 static void ui_update_deps(bool img_type_changed) {
     state.ui.write.dirty = true;
     if (img_type_changed) {
+        state.ui.display.mip_level = 0;
         state.ui.display.slice = 0;
     }
 
@@ -219,6 +221,7 @@ static void ui(void) {
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         igSeparatorText("Display Options");
+        igSliderInt("Mip Level##display", &state.ui.display.mip_level, 0, IMG_NUM_MIPMAPS - 1);
         igSliderInt("Slice##display", &state.ui.display.slice, 0, state.ui.max_slice);
         igSeparatorText("Write Options");
         if (igComboChar("Image Type", &state.ui.image_type, imgtype_str, IM_ARRAYSIZE(imgtype_str))) {
@@ -240,7 +243,7 @@ static void ui(void) {
         }
         igEndDisabled();
         igText("Write Destination:");
-        if (igSliderInt("Mip Level", &state.ui.write.dst.mip_level, 0, IMG_NUM_MIPMAPS)) {
+        if (igSliderInt("Mip Level##dst", &state.ui.write.dst.mip_level, 0, IMG_NUM_MIPMAPS)) {
             ui_update_deps(false);
         }
         if (igSliderInt("X", &state.ui.write.dst.x, 0, state.ui.max_x)) {
@@ -249,7 +252,7 @@ static void ui(void) {
         if (igSliderInt("Y", &state.ui.write.dst.y, 0, state.ui.max_y)) {
             ui_update_deps(false);
         }
-        if (igSliderInt("Slice##write", &state.ui.write.dst.slice, 0, state.ui.max_slice)) {
+        if (igSliderInt("Slice##dst", &state.ui.write.dst.slice, 0, state.ui.max_slice)) {
             ui_update_deps(false);
         }
         igText("Write Size:");
