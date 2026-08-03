@@ -78,6 +78,7 @@ export const samples: SampleOptions[] = [
         deps: ['imgui', 'fileutil', 'basisu'],
         jobs: [copy('data/texview', ['kodim05.basis', 'kodim07.basis', 'kodim17.basis', 'kodim20.basis', 'kodim23.basis' ])],
     },
+    { name: 'writeimage', shd: true, deps: ['imgui'] },
     { name: 'letterbox', deps: ['imgui'] },
     { name: 'framebuffer', ui: 'cc' },
     {
