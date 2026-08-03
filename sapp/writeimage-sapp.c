@@ -31,6 +31,10 @@ static struct {
     sg_pipeline pips[NUM_IMGTYPES];
     struct {
         int image_type; // image_type_t
+        int min_bytes_per_row;
+        int max_bytes_per_row;
+        int min_bytes_per_slice;
+        int max_bytes_per_slice;
         int max_x, max_y, max_slice;
         int max_width, max_height, max_num_slices;
         struct {
@@ -165,6 +169,35 @@ static void ui_update_deps(bool img_type_changed) {
         state.ui.write.size.height = ui_min(state.ui.write.size.height, state.ui.max_height);
         state.ui.write.size.num_slices = ui_min(state.ui.write.size.num_slices, state.ui.max_num_slices);
     }
+
+    // fix up src options
+    state.ui.min_bytes_per_row = state.ui.max_width * IMG_BYTES_PER_PIXEL;
+    state.ui.max_bytes_per_row = 2048;
+    if (state.ui.write.src.use_defaults) {
+        state.ui.write.src.bytes_per_row = state.ui.min_bytes_per_row;
+    } else {
+        const int min_bpr = state.ui.min_bytes_per_row;
+        const int max_bpr = state.ui.max_bytes_per_row;
+        state.ui.write.src.bytes_per_row = ui_max(ui_min(state.ui.write.src.bytes_per_row, max_bpr), min_bpr);
+    }
+    // offset and bytes-per-row must be multiple of pixel size
+    const int bpp_mask = ~(IMG_BYTES_PER_PIXEL - 1);
+    state.ui.write.src.offset &= bpp_mask;
+    state.ui.write.src.bytes_per_row &= bpp_mask;
+
+    // NOTE: fix up bytes-per-slice *after* bytes-per-row has been fixed
+    const int bpr = state.ui.write.src.bytes_per_row;
+    state.ui.min_bytes_per_slice = bpr * state.ui.max_height;
+    state.ui.max_bytes_per_slice = bpr * 2048;
+    if (state.ui.write.src.use_defaults) {
+        state.ui.write.src.bytes_per_slice = state.ui.min_bytes_per_slice;
+    } else {
+        const int min_bps = state.ui.min_bytes_per_slice;
+        const int max_bps = state.ui.max_bytes_per_slice;
+        state.ui.write.src.bytes_per_slice = ui_max(ui_min(state.ui.write.src.bytes_per_slice, max_bps), min_bps);
+    }
+    // bytes per slice must be a multiple of bytes per row
+    state.ui.write.src.bytes_per_slice = (state.ui.write.src.bytes_per_slice / bpr) * bpr;
 }
 
 static void ui(void) {
@@ -193,12 +226,19 @@ static void ui(void) {
         }
         igText("Write Source:");
         if (igSliderInt("Offset:", &state.ui.write.src.offset, 0, 1024)) {
-            // must be multiple of bytes-per-pixel
-            state.ui.write.src.offset &= ~(IMG_BYTES_PER_PIXEL-1);
             ui_update_deps(false);
         }
-        igText("  FIXME: Bytes Per Row");
-        igText("  FIXME: Bytes Per Slice");
+        if (igCheckbox("Use Defaults##pitch", &state.ui.write.src.use_defaults)) {
+            ui_update_deps(false);
+        }
+        igBeginDisabled(state.ui.write.src.use_defaults);
+        if (igSliderInt("Bytes Per Row", &state.ui.write.src.bytes_per_row, state.ui.min_bytes_per_row, state.ui.max_bytes_per_row)) {
+            ui_update_deps(false);
+        }
+        if (igSliderInt("Bytes Per Slice", &state.ui.write.src.bytes_per_slice, state.ui.min_bytes_per_slice, state.ui.max_bytes_per_slice)) {
+            ui_update_deps(false);
+        }
+        igEndDisabled();
         igText("Write Destination:");
         if (igSliderInt("Mip Level", &state.ui.write.dst.mip_level, 0, IMG_NUM_MIPMAPS)) {
             ui_update_deps(false);
