@@ -62,7 +62,7 @@ static void frame(void) {
             uint8_t bu8 = (uint8_t)(bf * 255.0f);
             pixels[y][x] = 0xFF000000 | (bu8<<16) | (gu8<<8) | ru8;
         }
-    };
+    }
 
     // update framebuffer with plasma pixels outside a sokol-gfx pass
     sfb_update(state.fb, &(sfb_update_desc){ .pixels = SG_RANGE(pixels) });

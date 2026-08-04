@@ -28,17 +28,22 @@ typedef enum { IMGTYPE_2D, IMGTYPE_CUBE, IMGTYPE_3D, IMGTYPE_ARRAY, NUM_IMGTYPES
 static const char* imgtype_str[] = { "2D", "Cube Map", "3D", "2D Array" };
 
 static struct {
-    sg_pipeline pips[NUM_IMGTYPES];
+    sg_image img;
+    sg_view view;
+    sg_sampler smp;
+    sg_pipeline pip;
+    sg_range mip_data;
     struct {
         int image_type; // image_type_t
+        // computes bounds
         int min_bytes_per_row;
         int max_bytes_per_row;
         int min_bytes_per_slice;
         int max_bytes_per_slice;
         int max_x, max_y, max_slice;
         int max_width, max_height, max_num_slices;
+        bool dirty;
         struct {
-            bool dirty;
             struct {
                 int offset;
                 bool use_defaults;
@@ -66,6 +71,9 @@ static struct {
 
 static void ui(void);
 static void ui_update_deps(bool img_type_changed);
+static void ui_apply_changes(void);
+static void discard_resources(void);
+static void create_resources(void);
 
 static void init(void) {
     sg_setup(&(sg_desc){
@@ -78,7 +86,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     ui_update_deps(true);
-    state.ui.write.dirty = false;
+    ui_apply_changes();
 }
 
 static void frame(void) {
@@ -97,6 +105,7 @@ static void input(const sapp_event* ev) {
 }
 
 static void cleanup(void) {
+    discard_resources();
     sappimgui_shutdown();
     sgimgui_shutdown();
     simgui_shutdown();
@@ -116,7 +125,7 @@ static int ui_mip_dim(int base, int mip_level) {
 }
 
 static void ui_update_deps(bool img_type_changed) {
-    state.ui.write.dirty = true;
+    state.ui.dirty = true;
     if (img_type_changed) {
         state.ui.display.mip_level = 0;
         state.ui.display.slice = 0;
@@ -270,14 +279,13 @@ static void ui(void) {
             ui_update_deps(false);
         }
         igEndDisabled();
-        igBeginDisabled(!state.ui.write.dirty);
-        const bool dirty = state.ui.write.dirty;
+        igBeginDisabled(!state.ui.dirty);
+        const bool dirty = state.ui.dirty;
         if (dirty) {
             igPushStyleColorImVec4(ImGuiCol_Button, (ImVec4){ 1.0f, 0.0f, 0.0f, 1.0f });
         }
         if (igButton("Apply Changes")) {
-            state.ui.write.dirty = false;
-            // FIXME: recreate image
+            ui_apply_changes();
         }
         if (dirty) {
             igPopStyleColor();
@@ -285,6 +293,160 @@ static void ui(void) {
         igEndDisabled();
     }
     igEnd();
+}
+
+static void ui_apply_changes(void) {
+    assert(state.ui.dirty);
+    state.ui.dirty = false;
+    discard_resources();
+    create_resources();
+}
+
+static void alloc_mip_data(void) {
+    assert(0 == state.mip_data.ptr);
+    assert(0 == state.mip_data.size);
+    assert(state.ui.write.src.bytes_per_slice > 0);
+    state.mip_data.size = state.ui.write.src.offset + IMG_NUM_SLICES * state.ui.write.src.bytes_per_slice;
+    state.mip_data.ptr = calloc(state.mip_data.size, 1);
+    assert(state.mip_data.ptr);
+}
+
+static void free_mip_data(void) {
+    if (state.mip_data.ptr) {
+        free((void*)state.mip_data.ptr);
+        state.mip_data.ptr = 0;
+        state.mip_data.size = 0;
+    }
+}
+
+static void pixel(int x, int y, int slice, uint32_t rgba) {
+    assert(x <= state.ui.max_x);
+    assert(y <= state.ui.max_y);
+    assert(slice <= state.ui.max_slice);
+    const int u32pr = state.ui.write.src.bytes_per_row >> 2;
+    const int u32ps = state.ui.write.src.bytes_per_slice >> 2;
+    const int u32offset = state.ui.write.src.offset >> 2;
+    const int idx = u32offset + slice * u32pr + y * u32ps + x;
+    assert((idx << 2) < (IMG_NUM_SLICES * state.ui.write.src.bytes_per_slice));
+    assert(state.mip_data.ptr);
+    uint32_t* ptr = (uint32_t*)state.mip_data.ptr;
+    ptr[idx] = rgba;
+}
+
+static void populate_slice(int slice, uint32_t rgba0, uint32_t rgba1) {
+    const int w = state.ui.max_x + 1;
+    const int h = state.ui.max_y + 1;
+    const int ww = w / 2;
+    const int hh = h / 2;
+    for (int y = 0; y < hh; y++) {
+        for (int x = 0; x < ww; x++) {
+            uint32_t c;
+            if ((y & 2 && x >= y) || (x & 2 && y >= x)) {
+                c = rgba0;
+            } else {
+                c = rgba1;
+            }
+            const int xx = w - x;
+            const int yy = h - y;
+            pixel(x, y, slice, c);
+            pixel(y, xx, slice, c);
+            pixel(yy, x, slice, c);
+            pixel(yy, xx, slice, c);
+        }
+    }
+}
+
+static void populate_mipmap_data(void) {
+    const int num_slices = state.ui.max_slice + 1;
+    static const uint32_t palette[IMG_NUM_SLICES] = {
+        0xFFFF0000,
+        0xFF00FF00,
+        0xFF0000FF,
+        0xFFFFFF00,
+        0xFF00FFFF,
+        0xFFFF00FF,
+    };
+    for (int slice = 0; slice < num_slices; slice++) {
+        populate_slice(slice, 0xFF000000, palette[slice]);
+    }
+}
+
+static sg_image_type as_sg_image_type(image_type_t t) {
+    switch (t) {
+        case IMGTYPE_CUBE: return SG_IMAGETYPE_CUBE;
+        case IMGTYPE_3D: return SG_IMAGETYPE_3D;
+        case IMGTYPE_ARRAY: return SG_IMAGETYPE_ARRAY;
+        default: return SG_IMAGETYPE_2D;
+    }
+}
+
+static void create_resources(void) {
+    // allocate and populate slice buffer
+    alloc_mip_data();
+    populate_mipmap_data();
+
+    // create image in unsealed state
+    state.img = sg_make_image(&(sg_image_desc){
+        .type = as_sg_image_type(state.ui.image_type),
+        .usage.write_unsealed = true,
+        .pixel_format = SG_PIXELFORMAT_RGBA8,
+        .width = state.ui.max_x + 1,
+        .height = state.ui.max_y + 1,
+        .num_slices = state.ui.max_slice + 1,
+        .num_mipmaps = IMG_NUM_MIPMAPS,
+        .label = "test-image",
+    });
+
+    // populate one mipmap with data
+    const bool src_defaults = state.ui.write.src.use_defaults;
+    const bool size_defaults = state.ui.write.size.use_defaults;
+    sg_write_image_unsealed(&(sg_write_image_desc){
+        .src = {
+            .data = state.mip_data,
+            .offset = state.ui.write.src.offset,
+            .bytes_per_row = src_defaults ? 0 : state.ui.write.src.bytes_per_row,
+            .bytes_per_slice = src_defaults ? 0 : state.ui.write.src.bytes_per_slice,
+        },
+        .dst = {
+            .image = state.img,
+            .mip_level = state.ui.write.dst.mip_level,
+            .x = state.ui.write.dst.x,
+            .y = state.ui.write.dst.y,
+            .slice = state.ui.write.dst.slice,
+        },
+        .size = {
+            .width = size_defaults ? 0 : state.ui.write.size.width,
+            .height = size_defaults ? 0 : state.ui.write.size.height,
+            .num_slices = size_defaults ? 0 : state.ui.write.size.num_slices,
+        },
+    });
+    sg_seal_image(state.img);
+    free_mip_data();
+
+    // view and sampler
+    state.view = sg_make_view(&(sg_view_desc){
+        .texture.image = state.img,
+        .label = "test-image-view",
+    });
+    state.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .mipmap_filter = SG_FILTER_NEAREST,
+        .wrap_u = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_v = SG_WRAP_CLAMP_TO_EDGE,
+        .wrap_w = SG_WRAP_CLAMP_TO_EDGE,
+        .label = "test-sampler",
+    });
+
+    // pipeline object
+    // FIXME FIXME FIXME
+}
+
+static void discard_resources(void) {
+    sg_destroy_image(state.img);
+    sg_destroy_view(state.view);
+    sg_destroy_sampler(state.smp);
+    sg_destroy_pipeline(state.pip);
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
