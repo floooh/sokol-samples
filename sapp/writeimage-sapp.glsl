@@ -10,11 +10,25 @@ void main() {
 }
 @end
 
-// FIXME
-@fs fs
+@block fs_common
+layout(binding=0) uniform fs_params {
+    float miplevel;
+    float slice;
+};
+@end
+
+@fs fs_tex2d
+@include_block fs_common
+
 in vec2 uv;
+
+layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform sampler smp;
+
 out vec4 frag_color;
 void main() {
-    frag_color = vec4(uv, 0.5f, 1.0f);
+    frag_color = textureLod(sampler2D(tex, smp), uv, miplevel);
 }
 @end
+
+@program tex2d vs fs_tex2d

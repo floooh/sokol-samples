@@ -91,12 +91,36 @@ static void init(void) {
 
 static void frame(void) {
     ui();
+    const sg_pass_action action = (sg_pass_action){
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = state.ui.dirty
+                ? (sg_color){ 0.5f, 0.0f, 0.0f, 1.0f }
+                : (sg_color){ 0.0f, 0.5f, 0.0f, 1.0f },
+        },
+    };
+    const fs_params_t fs_params = {
+        .miplevel = state.ui.display.mip_level,
+        .slice = state.ui.display.slice,
+    };
+    const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
+        .border = { 20, 20, 20, 20 },
+        .content_aspect_ratio = 1.0f,
+    });
 
-    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){ .action = action, .swapchain = sglue_swapchain() });
+    sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
+    sg_apply_pipeline(state.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[0] = state.view,
+        .samplers[0] = state.smp,
+    });
+    sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
+    // draw 'fullscreen triangle'
+    sg_draw(0, 3, 1);
     simgui_render();
     sg_end_pass();
     sg_commit();
-
 }
 
 static void input(const sapp_event* ev) {
@@ -182,7 +206,7 @@ static void ui_update_deps(bool img_type_changed) {
     }
 
     // fix up src options
-    state.ui.min_bytes_per_row = state.ui.max_width * IMG_BYTES_PER_PIXEL;
+    state.ui.min_bytes_per_row = mip_width * IMG_BYTES_PER_PIXEL;
     state.ui.max_bytes_per_row = 2048;
     if (state.ui.write.src.use_defaults) {
         state.ui.write.src.bytes_per_row = state.ui.min_bytes_per_row;
@@ -198,7 +222,7 @@ static void ui_update_deps(bool img_type_changed) {
 
     // NOTE: fix up bytes-per-slice *after* bytes-per-row has been fixed
     const int bpr = state.ui.write.src.bytes_per_row;
-    state.ui.min_bytes_per_slice = bpr * state.ui.max_height;
+    state.ui.min_bytes_per_slice = bpr * mip_height;
     state.ui.max_bytes_per_slice = bpr * 2048;
     if (state.ui.write.src.use_defaults) {
         state.ui.write.src.bytes_per_slice = state.ui.min_bytes_per_slice;
@@ -326,7 +350,7 @@ static void pixel(int x, int y, int slice, uint32_t rgba) {
     const int u32pr = state.ui.write.src.bytes_per_row >> 2;
     const int u32ps = state.ui.write.src.bytes_per_slice >> 2;
     const int u32offset = state.ui.write.src.offset >> 2;
-    const int idx = u32offset + slice * u32pr + y * u32ps + x;
+    const int idx = u32offset + slice * u32ps + y * u32pr + x;
     assert((idx << 2) < (IMG_NUM_SLICES * state.ui.write.src.bytes_per_slice));
     assert(state.mip_data.ptr);
     uint32_t* ptr = (uint32_t*)state.mip_data.ptr;
@@ -346,8 +370,8 @@ static void populate_slice(int slice, uint32_t rgba0, uint32_t rgba1) {
             } else {
                 c = rgba1;
             }
-            const int xx = w - x;
-            const int yy = h - y;
+            const int xx = w - x - 1;
+            const int yy = h - y - 1;
             pixel(x, y, slice, c);
             pixel(y, xx, slice, c);
             pixel(yy, x, slice, c);
@@ -377,6 +401,16 @@ static sg_image_type as_sg_image_type(image_type_t t) {
         case IMGTYPE_3D: return SG_IMAGETYPE_3D;
         case IMGTYPE_ARRAY: return SG_IMAGETYPE_ARRAY;
         default: return SG_IMAGETYPE_2D;
+    }
+}
+
+static const sg_shader_desc* select_shader_by_image_type(image_type_t t) {
+    const sg_backend backend = sg_query_backend();
+    switch (t) {
+        case IMGTYPE_CUBE: SOKOL_ASSERT(false && "FIXME!");
+        case IMGTYPE_3D: SOKOL_ASSERT(false && "FIXME");
+        case IMGTYPE_ARRAY: SOKOL_ASSERT(false && "FIXME");
+        default: return tex2d_shader_desc(backend);
     }
 }
 
@@ -438,8 +472,11 @@ static void create_resources(void) {
         .label = "test-sampler",
     });
 
-    // pipeline object
-    // FIXME FIXME FIXME
+    // pipeline object for a bufferless 'fullscreen triangle'
+    state.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(select_shader_by_image_type(state.ui.image_type)),
+        .label = "test-pipeline",
+    });
 }
 
 static void discard_resources(void) {
@@ -458,6 +495,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = input,
         .width = 800,
         .height = 600,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "writeimage-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
