@@ -409,7 +409,7 @@ static sg_image_type as_sg_image_type(image_type_t t) {
 static const sg_shader_desc* select_shader_by_image_type(image_type_t t) {
     const sg_backend backend = sg_query_backend();
     switch (t) {
-        case IMGTYPE_CUBE: SOKOL_ASSERT(false && "FIXME!");
+        case IMGTYPE_CUBE: return texcube_shader_desc(backend);
         case IMGTYPE_3D: SOKOL_ASSERT(false && "FIXME");
         case IMGTYPE_ARRAY: return texarray_shader_desc(backend);
         default: return tex2d_shader_desc(backend);

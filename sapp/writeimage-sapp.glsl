@@ -15,17 +15,14 @@ layout(binding=0) uniform fs_params {
     float miplevel;
     float slice;
 };
+layout(binding=0) uniform sampler smp;
+in vec2 uv;
+out vec4 frag_color;
 @end
 
 @fs fs_tex2d
 @include_block fs_common
-
-in vec2 uv;
-
 layout(binding=0) uniform texture2D tex2d;
-layout(binding=0) uniform sampler smp;
-
-out vec4 frag_color;
 void main() {
     frag_color = textureLod(sampler2D(tex2d, smp), uv, miplevel);
 }
@@ -33,17 +30,31 @@ void main() {
 
 @fs fs_texarray
 @include_block fs_common
-
-in vec2 uv;
-
 layout(binding=0) uniform texture2DArray texarray;
-layout(binding=0) uniform sampler smp;
-
-out vec4 frag_color;
 void main() {
     frag_color = textureLod(sampler2DArray(texarray, smp), vec3(uv, slice), miplevel);
 }
 @end
 
+@fs fs_texcube
+@include_block fs_common
+layout(binding=0) uniform textureCube texcube;
+void main() {
+    vec2 t = uv * 2.0 - 1.0;
+    vec3 dir;
+    int face = int(slice);
+    switch (face) {
+        case 0:  dir = vec3( 1.0, -t.y, -t.x); break; // +X
+        case 1:  dir = vec3(-1.0, -t.y,  t.x); break; // -X
+        case 2:  dir = vec3( t.x,  1.0,  t.y); break; // +Y
+        case 3:  dir = vec3( t.x, -1.0, -t.y); break; // -Y
+        case 4:  dir = vec3( t.x, -t.y,  1.0); break; // +Z
+        default: dir = vec3(-t.x, -t.y, -1.0); break; // -Z
+    }
+    frag_color = textureLod(samplerCube(texcube, smp), dir, miplevel);
+}
+@end
+
 @program tex2d vs fs_tex2d
 @program texarray vs fs_texarray
+@program texcube vs fs_texcube
