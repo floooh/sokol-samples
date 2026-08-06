@@ -322,6 +322,8 @@ static void ui(void) {
 static void ui_apply_changes(void) {
     assert(state.ui.dirty);
     state.ui.dirty = false;
+    state.ui.display.mip_level = state.ui.write.dst.mip_level;
+    state.ui.display.slice = state.ui.write.dst.slice;
     discard_resources();
     create_resources();
 }
@@ -365,7 +367,7 @@ static void populate_slice(int slice, uint32_t rgba0, uint32_t rgba1) {
     for (int y = 0; y < hh; y++) {
         for (int x = 0; x < ww; x++) {
             uint32_t c;
-            if ((y & 2 && x >= y) || (x & 2 && y >= x)) {
+            if ((y & 1 && x >= y) || (x & 1 && y >= x)) {
                 c = rgba0;
             } else {
                 c = rgba1;
