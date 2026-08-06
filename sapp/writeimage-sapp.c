@@ -411,7 +411,7 @@ static const sg_shader_desc* select_shader_by_image_type(image_type_t t) {
     switch (t) {
         case IMGTYPE_CUBE: SOKOL_ASSERT(false && "FIXME!");
         case IMGTYPE_3D: SOKOL_ASSERT(false && "FIXME");
-        case IMGTYPE_ARRAY: SOKOL_ASSERT(false && "FIXME");
+        case IMGTYPE_ARRAY: return texarray_shader_desc(backend);
         default: return tex2d_shader_desc(backend);
     }
 }

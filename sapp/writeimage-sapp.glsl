@@ -22,13 +22,28 @@ layout(binding=0) uniform fs_params {
 
 in vec2 uv;
 
-layout(binding=0) uniform texture2D tex;
+layout(binding=0) uniform texture2D tex2d;
 layout(binding=0) uniform sampler smp;
 
 out vec4 frag_color;
 void main() {
-    frag_color = textureLod(sampler2D(tex, smp), uv, miplevel);
+    frag_color = textureLod(sampler2D(tex2d, smp), uv, miplevel);
+}
+@end
+
+@fs fs_texarray
+@include_block fs_common
+
+in vec2 uv;
+
+layout(binding=0) uniform texture2DArray texarray;
+layout(binding=0) uniform sampler smp;
+
+out vec4 frag_color;
+void main() {
+    frag_color = textureLod(sampler2DArray(texarray, smp), vec3(uv, slice), miplevel);
 }
 @end
 
 @program tex2d vs fs_tex2d
+@program texarray vs fs_texarray
