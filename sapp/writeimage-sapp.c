@@ -104,7 +104,7 @@ static void frame(void) {
         .slice = state.ui.display.slice,
     };
     const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
-        .border = { 20, 20, 20, 20 },
+        .border = { .top = 30, .bottom = 20, .left = 20, .right = 20 },
         .content_aspect_ratio = 1.0f,
     });
 
@@ -253,13 +253,13 @@ static void ui(void) {
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
+        if (igComboChar("Image Type", &state.ui.image_type, imgtype_str, IM_ARRAYSIZE(imgtype_str))) {
+            ui_update_deps(true);
+        }
         igSeparatorText("Display Options");
         igSliderInt("Mip Level##display", &state.ui.display.mip_level, 0, IMG_NUM_MIPMAPS - 1);
         igSliderInt("Slice##display", &state.ui.display.slice, 0, state.ui.max_slice);
         igSeparatorText("Write Options");
-        if (igComboChar("Image Type", &state.ui.image_type, imgtype_str, IM_ARRAYSIZE(imgtype_str))) {
-            ui_update_deps(true);
-        }
         igText("Write Source:");
         if (igSliderInt("Offset:", &state.ui.write.src.offset, 0, 1024)) {
             ui_update_deps(false);
@@ -276,7 +276,7 @@ static void ui(void) {
         }
         igEndDisabled();
         igText("Write Destination:");
-        if (igSliderInt("Mip Level##dst", &state.ui.write.dst.mip_level, 0, IMG_NUM_MIPMAPS)) {
+        if (igSliderInt("Mip Level##dst", &state.ui.write.dst.mip_level, 0, IMG_NUM_MIPMAPS - 1)) {
             ui_update_deps(false);
         }
         if (igSliderInt("X", &state.ui.write.dst.x, 0, state.ui.max_x)) {
@@ -420,13 +420,14 @@ static void create_resources(void) {
     populate_mipmap_data();
 
     // create image in unsealed state
+    const sg_image_type img_type = as_sg_image_type(state.ui.image_type);
     state.img = sg_make_image(&(sg_image_desc){
-        .type = as_sg_image_type(state.ui.image_type),
+        .type = img_type,
         .usage.write_unsealed = true,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .width = state.ui.max_x + 1,
-        .height = state.ui.max_y + 1,
-        .num_slices = state.ui.max_slice + 1,
+        .width = IMG_WIDTH,
+        .height = IMG_HEIGHT,
+        .num_slices = img_type == SG_IMAGETYPE_2D ? 1 : IMG_NUM_SLICES,
         .num_mipmaps = IMG_NUM_MIPMAPS,
         .label = "test-image",
     });
@@ -493,8 +494,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = input,
-        .width = 800,
-        .height = 600,
+        .width = 1024,
+        .height = 768,
         .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "writeimage-sapp.c",
         .icon.sokol_default = true,
