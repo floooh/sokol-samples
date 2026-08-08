@@ -101,8 +101,8 @@ static void frame(void) {
         },
     };
     const fs_params_t fs_params = {
-        .miplevel = state.ui.display.mip_level,
-        .slice = state.ui.display.slice,
+        .miplevel = (float)state.ui.display.mip_level,
+        .slice = (float)state.ui.display.slice,
     };
     const slbx_viewport vp = slbx_letterbox(sapp_width(), sapp_height(), &(slbx_letterbox_desc){
         .border = { .top = 30, .bottom = 20, .left = 20, .right = 20 },
