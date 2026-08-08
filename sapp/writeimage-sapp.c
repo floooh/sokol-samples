@@ -409,7 +409,7 @@ static void pixel(int x, int y, int slice, uint32_t rgba) {
     const int u32ps = state.ui.write.src.bytes_per_slice >> 2;
     const int u32offset = state.ui.write.src.offset >> 2;
     const int idx = u32offset + slice * u32ps + y * u32pr + x;
-    assert((idx << 2) < (IMG_NUM_SLICES * state.ui.write.src.bytes_per_slice));
+    assert((idx << 2) < (int)src_buffer_size());
     assert(state.mip_data.ptr);
     uint32_t* ptr = (uint32_t*)state.mip_data.ptr;
     ptr[idx] = rgba;
