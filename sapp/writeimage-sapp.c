@@ -35,6 +35,7 @@ static struct {
     sg_range mip_data;
     struct {
         int image_type; // image_type_t
+        bool show_code_panel;
         // computes bounds
         int min_bytes_per_row;
         int max_bytes_per_row;
@@ -237,6 +238,10 @@ static void ui_update_deps(bool img_type_changed) {
     state.ui.write.src.bytes_per_slice = (state.ui.write.src.bytes_per_slice / bpr) * bpr;
 }
 
+static size_t src_buffer_size(void) {
+    return state.ui.write.src.offset + (state.ui.max_slice + 1) * state.ui.write.src.bytes_per_slice;
+}
+
 static void ui(void) {
     sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
@@ -255,6 +260,8 @@ static void ui(void) {
     igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
     igSetNextWindowBgAlpha(0.75f);
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
+        igBeginChild("##controls", (ImVec2){0}, ImGuiChildFlags_AutoResizeX|ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_None);
+        igCheckbox("Show code example", &state.ui.show_code_panel);
         if (igComboChar("Image Type", &state.ui.image_type, imgtype_str, IM_ARRAYSIZE(imgtype_str))) {
             ui_update_deps(true);
         }
@@ -317,6 +324,53 @@ static void ui(void) {
             igPopStyleColor();
         }
         igEndDisabled();
+        igEndChild();
+        if (state.ui.show_code_panel) {
+            igSameLine();
+            igBeginChild("##code_panel", (ImVec2){384,0}, ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
+            if (state.ui.image_type != IMGTYPE_2D) {
+                igText("NOTE: src.data.size is shown here for number of\nslices of the image, not for number of written\nslices!\n");
+                igSeparator();
+            }
+            igText("\nsg_write_image_unsealed(&(sg_write_image_desc){");
+            igText("  .src = {");
+            igText("    .data = {");
+            igText("      .ptr = src_data_ptr,");
+            igText("      .size = %d,", (int)src_buffer_size());
+            igText("    },");
+            if (state.ui.write.src.offset != 0) {
+                igText("    .offset = %d,", state.ui.write.src.offset);
+            }
+            if (!state.ui.write.src.use_defaults) {
+                igText("    .bytes_per_row = %d,", state.ui.write.src.bytes_per_row);
+                igText("    .bytes_per_slice = %d,", state.ui.write.src.bytes_per_slice);
+            }
+            igText("  },");
+            igText("  .dst = {");
+            igText("    .image = img,");
+            if (state.ui.write.dst.mip_level != 0) {
+                igText("    .mip_level = %d,", state.ui.write.dst.mip_level);
+            }
+            if (state.ui.write.dst.x != 0) {
+                igText("    .x = %d,", state.ui.write.dst.x);
+            }
+            if (state.ui.write.dst.y != 0) {
+                igText("    .y = %d,", state.ui.write.dst.y);
+            }
+            if (state.ui.write.dst.slice != 0) {
+                igText("    .slice = %d,", state.ui.write.dst.slice);
+            }
+            igText("  },");
+            if (!state.ui.write.size.use_defaults) {
+                igText("  .size = {");
+                igText("    .width = %d,", state.ui.write.size.width);
+                igText("    .height = %d,", state.ui.write.size.height);
+                igText("    .num_slices = %d,", state.ui.write.size.num_slices);
+                igText("  },");
+            }
+            igText("});");
+            igEndChild();
+        }
     }
     igEnd();
 }
@@ -334,7 +388,7 @@ static void alloc_mip_data(void) {
     assert(0 == state.mip_data.ptr);
     assert(0 == state.mip_data.size);
     assert(state.ui.write.src.bytes_per_slice > 0);
-    state.mip_data.size = state.ui.write.src.offset + IMG_NUM_SLICES * state.ui.write.src.bytes_per_slice;
+    state.mip_data.size = src_buffer_size();
     state.mip_data.ptr = calloc(state.mip_data.size, 1);
     assert(state.mip_data.ptr);
 }
