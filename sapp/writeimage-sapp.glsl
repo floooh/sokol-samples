@@ -36,6 +36,17 @@ void main() {
 }
 @end
 
+@fs fs_tex3d
+@include_block fs_common
+layout(binding=0) uniform texture3D tex3d;
+void main() {
+    float depth = float(textureSize(sampler3D(tex3d, smp), int(miplevel)).z);
+    float w = (slice + 0.5) / depth;
+    frag_color = textureLod(sampler3D(tex3d, smp), vec3(uv, w), miplevel);
+}
+@end
+
+
 @fs fs_texcube
 @include_block fs_common
 layout(binding=0) uniform textureCube texcube;
@@ -57,4 +68,5 @@ void main() {
 
 @program tex2d vs fs_tex2d
 @program texarray vs fs_texarray
+@program tex3d vs fs_tex3d
 @program texcube vs fs_texcube

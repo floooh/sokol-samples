@@ -18,9 +18,9 @@
 #include "sokol_app_imgui.h"
 #include "writeimage-sapp.glsl.h"
 
-#define IMG_NUM_MIPMAPS (8)
-#define IMG_WIDTH (1 << IMG_NUM_MIPMAPS)
-#define IMG_HEIGHT (1 << IMG_NUM_MIPMAPS)
+#define IMG_NUM_MIPMAPS (9)
+#define IMG_WIDTH (1 << (IMG_NUM_MIPMAPS-1))
+#define IMG_HEIGHT (1 << (IMG_NUM_MIPMAPS-1))
 #define IMG_NUM_SLICES (6)
 #define IMG_BYTES_PER_PIXEL (4)
 
@@ -136,16 +136,16 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-static int ui_max(int v0, int v1) {
+static int _max(int v0, int v1) {
     return (v0 > v1) ? v0 : v1;
 }
 
-static int ui_min(int v0, int v1) {
+static int _min(int v0, int v1) {
     return (v0 < v1) ? v0 : v1;
 }
 
-static int ui_mip_dim(int base, int mip_level) {
-    return ui_max(base >> mip_level, 1);
+static int _mip_dim(int base, int mip_level) {
+    return _max(base >> mip_level, 1);
 }
 
 static void ui_update_deps(bool img_type_changed) {
@@ -153,13 +153,15 @@ static void ui_update_deps(bool img_type_changed) {
     if (img_type_changed) {
         state.ui.display.mip_level = 0;
         state.ui.display.slice = 0;
+        state.ui.write.dst.mip_level = 0;
+        state.ui.write.dst.slice = 0;
     }
 
     // compute current max dst location values
     const int mip_level = state.ui.write.dst.mip_level;
-    const int mip_width = ui_mip_dim(IMG_WIDTH, mip_level);
-    const int mip_height = ui_mip_dim(IMG_HEIGHT, mip_level);
-    const int mip_depth = ui_mip_dim(IMG_NUM_SLICES, mip_level);
+    const int mip_width = _mip_dim(IMG_WIDTH, mip_level);
+    const int mip_height = _mip_dim(IMG_HEIGHT, mip_level);
+    const int mip_depth = _mip_dim(IMG_NUM_SLICES, mip_level);
     state.ui.max_x = mip_width - 1;
     state.ui.max_y = mip_height - 1;
     switch (state.ui.image_type) {
@@ -175,9 +177,9 @@ static void ui_update_deps(bool img_type_changed) {
     }
 
     // clamp dst location values
-    state.ui.write.dst.x = ui_min(state.ui.write.dst.x, state.ui.max_x);
-    state.ui.write.dst.y = ui_min(state.ui.write.dst.y, state.ui.max_y);
-    state.ui.write.dst.slice = ui_min(state.ui.write.dst.slice, state.ui.max_slice);
+    state.ui.write.dst.x = _min(state.ui.write.dst.x, state.ui.max_x);
+    state.ui.write.dst.y = _min(state.ui.write.dst.y, state.ui.max_y);
+    state.ui.write.dst.slice = _min(state.ui.write.dst.slice, state.ui.max_slice);
 
     // compute max size values
     state.ui.max_width = mip_width - state.ui.write.dst.x;
@@ -200,9 +202,9 @@ static void ui_update_deps(bool img_type_changed) {
         state.ui.write.size.height = state.ui.max_height;
         state.ui.write.size.num_slices = state.ui.max_num_slices;
     } else {
-        state.ui.write.size.width = ui_min(state.ui.write.size.width, state.ui.max_width);
-        state.ui.write.size.height = ui_min(state.ui.write.size.height, state.ui.max_height);
-        state.ui.write.size.num_slices = ui_min(state.ui.write.size.num_slices, state.ui.max_num_slices);
+        state.ui.write.size.width = _min(state.ui.write.size.width, state.ui.max_width);
+        state.ui.write.size.height = _min(state.ui.write.size.height, state.ui.max_height);
+        state.ui.write.size.num_slices = _min(state.ui.write.size.num_slices, state.ui.max_num_slices);
     }
 
     // fix up src options
@@ -213,7 +215,7 @@ static void ui_update_deps(bool img_type_changed) {
     } else {
         const int min_bpr = state.ui.min_bytes_per_row;
         const int max_bpr = state.ui.max_bytes_per_row;
-        state.ui.write.src.bytes_per_row = ui_max(ui_min(state.ui.write.src.bytes_per_row, max_bpr), min_bpr);
+        state.ui.write.src.bytes_per_row = _max(_min(state.ui.write.src.bytes_per_row, max_bpr), min_bpr);
     }
     // offset and bytes-per-row must be multiple of pixel size
     const int bpp_mask = ~(IMG_BYTES_PER_PIXEL - 1);
@@ -229,7 +231,7 @@ static void ui_update_deps(bool img_type_changed) {
     } else {
         const int min_bps = state.ui.min_bytes_per_slice;
         const int max_bps = state.ui.max_bytes_per_slice;
-        state.ui.write.src.bytes_per_slice = ui_max(ui_min(state.ui.write.src.bytes_per_slice, max_bps), min_bps);
+        state.ui.write.src.bytes_per_slice = _max(_min(state.ui.write.src.bytes_per_slice, max_bps), min_bps);
     }
     // bytes per slice must be a multiple of bytes per row
     state.ui.write.src.bytes_per_slice = (state.ui.write.src.bytes_per_slice / bpr) * bpr;
@@ -362,8 +364,8 @@ static void pixel(int x, int y, int slice, uint32_t rgba) {
 static void populate_slice(int slice, uint32_t rgba0, uint32_t rgba1) {
     const int w = state.ui.max_x + 1;
     const int h = state.ui.max_y + 1;
-    const int ww = w / 2;
-    const int hh = h / 2;
+    const int ww = _max(w / 2, 1);
+    const int hh = _max(h / 2, 1);
     for (int y = 0; y < hh; y++) {
         for (int x = 0; x < ww; x++) {
             uint32_t c;
@@ -393,7 +395,7 @@ static void populate_mipmap_data(void) {
         0xFFFF00FF,
     };
     for (int slice = 0; slice < num_slices; slice++) {
-        populate_slice(slice, 0xFF000000, palette[slice]);
+        populate_slice(slice, 0xFF444444, palette[slice]);
     }
 }
 
@@ -410,7 +412,7 @@ static const sg_shader_desc* select_shader_by_image_type(image_type_t t) {
     const sg_backend backend = sg_query_backend();
     switch (t) {
         case IMGTYPE_CUBE: return texcube_shader_desc(backend);
-        case IMGTYPE_3D: SOKOL_ASSERT(false && "FIXME");
+        case IMGTYPE_3D: return tex3d_shader_desc(backend);
         case IMGTYPE_ARRAY: return texarray_shader_desc(backend);
         default: return tex2d_shader_desc(backend);
     }
