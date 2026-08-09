@@ -3,6 +3,8 @@
 //
 //  A variant of cube-sapp which puts vertices and indices into the same
 //  buffer (which isn't allowed on WebGL2, but fine on other APIs).
+//  Also tests/demonstrates using sg_write_buffer_unsealed() to populate
+//  a buffer before usage.
 //------------------------------------------------------------------------------
 #define VECMATH_GENERICS
 #include "vecmath/vecmath.h"
@@ -90,21 +92,27 @@ static void init(void) {
     };
 
     // create a buffer with both vertices and indices
-    const size_t buf_size = sizeof(vertices) + sizeof(indices);
     const size_t indices_offset = sizeof(vertices);
-    uint8_t* data_ptr = malloc(buf_size);
-    memcpy(data_ptr, vertices, sizeof(vertices));
-    memcpy(data_ptr + indices_offset, indices, sizeof(indices));
     sg_buffer buf = sg_make_buffer(&(sg_buffer_desc){
-        // indicate that this buffer is going to be bound as vertex- and index-buffer
+        // indicate that this buffer is going to be bound as vertex- and index-buffer,
+        // and that it will be populated via sg_write_buffer_unsealed() after creation
         .usage = {
             .vertex_buffer = true,
             .index_buffer = true,
+            .write_unsealed = true,
         },
-        .data = { .ptr = data_ptr, .size = buf_size },
+        .size = sizeof(vertices) + sizeof(indices),
         .label = "vertex-index-buffer",
     });
-    free(data_ptr);
+    sg_write_buffer_unsealed(&(sg_write_buffer_desc){
+        .src.data = SG_RANGE(vertices),
+        .dst = { .buffer = buf, .offset = 0 },
+    });
+    sg_write_buffer_unsealed(&(sg_write_buffer_desc){
+        .src.data = SG_RANGE(indices),
+        .dst = { .buffer = buf, .offset = indices_offset },
+    });
+    sg_seal_buffer(buf);
 
     // setup the resource bindings, the same buffer is bound as
     // vertex- and index-buffer, with the index data starting at an offset
