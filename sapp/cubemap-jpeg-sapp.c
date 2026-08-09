@@ -214,7 +214,8 @@ static void fetch_cb(const sfetch_response_t* response) {
                 // note: when default width and height are zero-initialized, the
                 // sizes will be inferred from the image, num_slices must be
                 // explicitly set to 1 in this scenario, because the inferred
-                // number of slices for a cubemap would be 6
+                // number of slices for a cubemap would be 'all remaining slices',
+                // e.g. (6 - .dst.slice)
                 .size = {
                     .num_slices = 1,
                 }
