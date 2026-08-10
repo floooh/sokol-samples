@@ -271,7 +271,7 @@ static void draw_event_info_panel(sapp_event_type type, float width, float heigh
     else if (flash_intensity > 1.0f) { flash_intensity = 1.0f; }
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(flash_intensity, 0.25f, 0.25f, 1.0f));
     ImGui::PushID((int)type);
-    ImGui::BeginChild("event_panel", ImVec2(width, height), true);
+    ImGui::BeginChild("event_panel", ImVec2(width, height), ImGuiChildFlags_Borders);
     ImGui::Text("type:         %s", eventtype_to_str(type));
     ImGui::Text("frame:        %d", (uint32_t)ev.frame_count);
     ImGui::Text("modifiers:   ");

@@ -598,7 +598,7 @@ static void ui_draw(void) {
             } else {
                 const int num_bones = sspine_num_bones(state.skeleton);
                 igText("Num Bones: %d", num_bones);
-                igBeginChild("bones_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("bones_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_bones; i++) {
                     const sspine_bone bone = sspine_bone_by_index(state.skeleton, i);
                     const sspine_bone_info info = sspine_get_bone_info(bone);
@@ -614,7 +614,7 @@ static void ui_draw(void) {
                 if (sspine_bone_valid(state.ui.selected.bone)) {
                     const sspine_bone_info info = sspine_get_bone_info(state.ui.selected.bone);
                     assert(info.valid);
-                    igBeginChild("bone_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("bone_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", info.index);
                     igText("Parent Bone: %s", sspine_bone_valid(info.parent_bone) ? sspine_get_bone_info(info.parent_bone).name.cstr : "---");
                     igText("Name: %s", info.name.cstr);
@@ -647,7 +647,7 @@ static void ui_draw(void) {
             } else {
                 const int num_slots = sspine_num_slots(state.skeleton);
                 igText("Num Slots: %d", num_slots);
-                igBeginChild("slot_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("slot_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_slots; i++) {
                     const sspine_slot slot = sspine_slot_by_index(state.skeleton, i);
                     const sspine_slot_info info = sspine_get_slot_info(slot);
@@ -665,7 +665,7 @@ static void ui_draw(void) {
                     assert(slot_info.valid);
                     const sspine_bone_info bone_info = sspine_get_bone_info(slot_info.bone);
                     assert(bone_info.valid);
-                    igBeginChild("slot_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("slot_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", slot_info.index);
                     igText("Name: %s", slot_info.name.cstr);
                     igText("Attachment: %s", slot_info.attachment_name.valid ? slot_info.attachment_name.cstr : "-");
@@ -687,7 +687,7 @@ static void ui_draw(void) {
             } else {
                 const int num_anims = sspine_num_anims(state.skeleton);
                 igText("Num Anims: %d", num_anims);
-                igBeginChild("anim_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("anim_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_anims; i++) {
                     const sspine_anim anim = sspine_anim_by_index(state.skeleton, i);
                     const sspine_anim_info info = sspine_get_anim_info(anim);
@@ -704,7 +704,7 @@ static void ui_draw(void) {
                 if (sspine_anim_valid(state.ui.selected.anim)) {
                     const sspine_anim_info info = sspine_get_anim_info(state.ui.selected.anim);
                     assert(info.valid);
-                    igBeginChild("anim_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("anim_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Duration: %.3f", info.duration);
@@ -724,7 +724,7 @@ static void ui_draw(void) {
             } else {
                 const int num_events = sspine_num_events(state.skeleton);
                 igText("Num Events: %d", num_events);
-                igBeginChild("event_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("event_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_events; i++) {
                     const sspine_event event = sspine_event_by_index(state.skeleton, i);
                     const sspine_event_info info = sspine_get_event_info(event);
@@ -740,7 +740,7 @@ static void ui_draw(void) {
                 if (sspine_event_valid(state.ui.selected.event)) {
                     const sspine_event_info info = sspine_get_event_info(state.ui.selected.event);
                     assert(info.valid);
-                    igBeginChild("event_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("event_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Int Value: %d\n", info.int_value);
@@ -765,7 +765,7 @@ static void ui_draw(void) {
             } else {
                 const int num_skins = sspine_num_skins(state.skeleton);
                 igText("Num Skins: %d", num_skins);
-                igBeginChild("skin_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("skin_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_skins; i++) {
                     const sspine_skin skin = sspine_skin_by_index(state.skeleton, i);
                     const sspine_skin_info info = sspine_get_skin_info(skin);
@@ -782,7 +782,7 @@ static void ui_draw(void) {
                 if (sspine_skin_valid(state.ui.selected.skin)) {
                     const sspine_skin_info info = sspine_get_skin_info(state.ui.selected.skin);
                     assert(info.valid);
-                    igBeginChild("skin_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("skin_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igEndChild();
@@ -801,7 +801,7 @@ static void ui_draw(void) {
             } else {
                 const int num_iktargets = sspine_num_iktargets(state.skeleton);
                 igText("Num IK Targets: %d", num_iktargets);
-                igBeginChild("iktarget_list", IMVEC2(128, 0), true, 0);
+                igBeginChild("iktarget_list", IMVEC2(128, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_None);
                 for (int i = 0; i < num_iktargets; i++) {
                     const sspine_iktarget iktarget = sspine_iktarget_by_index(state.skeleton, i);
                     const sspine_iktarget_info info = sspine_get_iktarget_info(iktarget);
@@ -817,7 +817,7 @@ static void ui_draw(void) {
                 if (sspine_iktarget_valid(state.ui.selected.iktarget)) {
                     const sspine_iktarget_info info = sspine_get_iktarget_info(state.ui.selected.iktarget);
                     assert(info.valid);
-                    igBeginChild("iktarget_info", IMVEC2(0,0), false, 0);
+                    igBeginChild("iktarget_info", IMVEC2(0,0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
                     igText("Index: %d", info.index);
                     igText("Name: %s", info.name.cstr);
                     igText("Target Bone: %s", sspine_get_bone_info(info.target_bone).name.cstr);

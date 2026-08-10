@@ -50,8 +50,9 @@ static void init(void) {
 static void render_file_content(void) {
     const int bytes_per_line = 16;  // keep this 2^N
     const int num_lines = (state.size + (bytes_per_line - 1)) / bytes_per_line;
+    const float cw = igCalcTextSize(" ").x;
 
-    igBeginChild("##scrolling", (ImVec2){0,0}, false, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
+    igBeginChild("##scrolling", (ImVec2){0,0}, ImGuiChildFlags_None, ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoNav);
     ImGuiListClipper clipper = {0};
     ImGuiListClipper_Begin(&clipper, num_lines, igGetTextLineHeight());
     ImGuiListClipper_Step(&clipper);
@@ -63,13 +64,13 @@ static void render_file_content(void) {
         }
         igText("%04X: ", start_offset);
         for (int i = start_offset; i < end_offset; i++) {
-            igSameLine();
+            igSameLineEx(0.0f, 0.0f);
             igText("%02X ", state.buffer[i]);
         }
-        igSameLineEx((6 * 7.0f) + (bytes_per_line * 3 * 7.0f) + (2 * 7.0f), 0.0f);
+        igSameLineEx((6 * cw) + (bytes_per_line * 3 * cw) + (2 * cw), 0.0f);
         for (int i = start_offset; i < end_offset; i++) {
             if (i != start_offset) {
-                igSameLine();
+                igSameLineEx(0.0f, 0.0f);
             }
             uint8_t c = state.buffer[i];
             if ((c < 32) || (c > 127)) {

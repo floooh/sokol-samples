@@ -283,13 +283,13 @@ static void frame(void) {
     igSetNextWindowPos((ImVec2){20, 20}, ImGuiCond_Once);
     igSetNextWindowSize((ImVec2){800, 400}, ImGuiCond_Once);
     if (igBegin("Dear ImGui", 0, 0)) {
-        if (igBeginChild("sokol-gfx", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
+        if (igBeginChild("sokol-gfx", (ImVec2){360, 360}, ImGuiChildFlags_Borders, ImGuiWindowFlags_None)) {
             ImDrawList* dl = igGetWindowDrawList();
             ImDrawList_AddCallback(dl, draw_scene_1);
         }
         igEndChild();
         igSameLineEx(0, 10);
-        if (igBeginChild("sokol-gl", (ImVec2){360, 360}, true, ImGuiWindowFlags_None)) {
+        if (igBeginChild("sokol-gl", (ImVec2){360, 360}, ImGuiChildFlags_Borders, ImGuiWindowFlags_None)) {
             ImDrawList* dl = igGetWindowDrawList();
             ImDrawList_AddCallback(dl, draw_scene_2);
         }

@@ -390,7 +390,7 @@ static void frame(void) {
                 continue;
             }
             const char* fmt_string = pixelformat_string((sg_pixel_format)i);
-            if (igBeginChild(fmt_string, (ImVec2){0,80}, false, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
+            if (igBeginChild(fmt_string, (ImVec2){0,80}, ImGuiChildFlags_None, ImGuiWindowFlags_NoMouseInputs|ImGuiWindowFlags_NoScrollbar)) {
                 igText("%s", fmt_string);
                 igSameLineEx(256, 0);
                 igImage(imtexref(simgui_imtextureid(state.fmt[i].unfiltered.tex_view)), (ImVec2){64,64});
