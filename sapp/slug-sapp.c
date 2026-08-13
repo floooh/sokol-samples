@@ -197,11 +197,11 @@ static void init(void) {
         .layout = {
             .buffers[0].step_func = SG_VERTEXSTEP_PER_INSTANCE,
             .attrs = {
-                [ATTR_slug_draw_rect] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 0 },
-                [ATTR_slug_glyph_bbox] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 0 },
-                [ATTR_slug_in_band_transform] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 0 },
-                [ATTR_slug_in_glyph_params] = { .format = SG_VERTEXFORMAT_SHORT4, .buffer_index = 0 },
-                [ATTR_slug_in_text_color] = { .format = SG_VERTEXFORMAT_UBYTE4N, .buffer_index = 0 },
+                [ATTR_slug_draw_rect] = { .format = SG_VERTEXFORMAT_FLOAT4 },
+                [ATTR_slug_glyph_bbox] = { .format = SG_VERTEXFORMAT_FLOAT4 },
+                [ATTR_slug_in_band_transform] = { .format = SG_VERTEXFORMAT_FLOAT4 },
+                [ATTR_slug_in_glyph_params] = { .format = SG_VERTEXFORMAT_SHORT4 },
+                [ATTR_slug_in_text_color] = { .format = SG_VERTEXFORMAT_UBYTE4N },
             },
         },
         .index_type = SG_INDEXTYPE_NONE,

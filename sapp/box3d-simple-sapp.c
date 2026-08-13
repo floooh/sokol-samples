@@ -493,15 +493,12 @@ static void gfx_init(void) {
                 },
             },
             .attrs = {
-                // NOTE: since sshape helper functions return explicit offsets, the instance attribute
-                // offsets also must be explicitly provided (because the auto-offset computation only works
-                // when *all* vertex attribute offsets are 0)
                 [ATTR_display_instanced_pos] = sshape_position_vertex_attr_state(&shp),
                 [ATTR_display_instanced_normal] = sshape_normal_vertex_attr_state(&shp),
-                [ATTR_display_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 0 },
-                [ATTR_display_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 16 },
-                [ATTR_display_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 32 },
-                [ATTR_display_instanced_inst_color] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 48 },
+                [ATTR_display_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
+                [ATTR_display_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
+                [ATTR_display_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
+                [ATTR_display_instanced_inst_color] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
             }
         },
         .depth = {
@@ -552,15 +549,15 @@ static void gfx_init(void) {
             .buffers = {
                 [0] = sshape_vertex_buffer_layout_state(&shp),
                 [1] = {
-                    .stride = sizeof(instdata_t),
                     .step_func = SG_VERTEXSTEP_PER_INSTANCE,
+                    .stride = sizeof(instdata_t),
                 },
             },
             .attrs = {
                 [ATTR_shadow_instanced_pos] = sshape_position_vertex_attr_state(&shp),
-                [ATTR_shadow_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 0 },
-                [ATTR_shadow_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 16, },
-                [ATTR_shadow_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1, .offset = 32 },
+                [ATTR_shadow_instanced_inst_xxxx] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
+                [ATTR_shadow_instanced_inst_yyyy] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
+                [ATTR_shadow_instanced_inst_zzzz] = { .format = SG_VERTEXFORMAT_FLOAT4, .buffer_index = 1 },
             },
         },
         .depth = {
