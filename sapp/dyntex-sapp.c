@@ -40,10 +40,10 @@ static void init(void) {
 
     // a 128x128 image and texture view with streaming update strategy
     state.img = sg_make_image(&(sg_image_desc){
+        .usage.write_transient = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .usage.stream_update = true,
         .label = "dynamic-texture"
     });
     sg_view tex_view = sg_make_view(&(sg_view_desc){
@@ -154,8 +154,9 @@ static void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.img, &(sg_image_data){
-        .mip_levels[0] = SG_RANGE(state.pixels)
+    sg_write_image_transient(&(sg_write_image_desc){
+        .src.data = SG_RANGE(state.pixels),
+        .dst.image = state.img,
     });
 
     // render the frame
