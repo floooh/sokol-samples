@@ -76,13 +76,13 @@ typedef struct {
 static struct {
     plm_t* plm;
     plm_buffer_t* plm_buffer;
+    plm_frame_t* plm_last_frame;
     sg_pipeline pip;
     sg_bindings bind;
     sg_pass_action pass_action;
     struct {
         int width;
         int height;
-        uint64_t last_upd_frame;
         sg_image img;
     } images[3];
     ring_t free_buffers;
@@ -102,6 +102,8 @@ static void plmpeg_load_callback(plm_buffer_t* buf, void* user);
 static void video_cb(plm_t *mpeg, plm_frame_t *frame, void *user);
 // plmpeg's callback when audio data is ready
 static void audio_cb(plm_t *mpeg, plm_samples_t *samples, void *user);
+// upload decoded image data into sokol-gfx image object
+static void upload_image_data(void);
 
 // the sokol-app init-callback
 static void init(void) {
@@ -251,6 +253,9 @@ static void frame(void) {
     const mat44_t model = mat44_rotation_y(vm_radians(state.ry));
     const vs_params_t vs_params = { .mvp = vm_mul(model, view_proj) };
 
+    // upload current image data
+    upload_image_data();
+
     // start rendering, but not before the first video frame has been decoded into textures
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (state.bind.views[0].id != SG_INVALID_ID) {
@@ -273,9 +278,8 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-// (re-)create a video plane texture on demand, and update it with decoded video-plane data
+// (re-)create a video plane texture on demand
 static void validate_texture(int slot, plm_plane_t* plane, const char* img_label, const char* view_label) {
-
     if ((state.images[slot].width != (int)plane->width) ||
         (state.images[slot].height != (int)plane->height))
     {
@@ -288,7 +292,7 @@ static void validate_texture(int slot, plm_plane_t* plane, const char* img_label
             .width = (int)plane->width,
             .height = (int)plane->height,
             .pixel_format = SG_PIXELFORMAT_R8,
-            .usage.stream_update = true,
+            .usage.write_transient = true,
             .label = img_label,
         });
 
@@ -299,23 +303,32 @@ static void validate_texture(int slot, plm_plane_t* plane, const char* img_label
             .label = view_label,
         });
     }
+}
 
-    // copy decoded plane pixels into texture, need to prevent that
-    // sg_update_image() is called more than once per frame
-    if (state.images[slot].last_upd_frame != state.cur_frame) {
-        state.images[slot].last_upd_frame = state.cur_frame;
-        sg_update_image(state.images[slot].img, &(sg_image_data){
-            .mip_levels[0] = {
-                .ptr = plane->data,
-                .size = plane->width * plane->height * sizeof(uint8_t)
-            }
-        });
+static void upload_image_frame(int slot, plm_plane_t* plane) {
+    sg_write_image_transient(&(sg_write_image_desc){
+        .src.data = {
+            .ptr = plane->data,
+            .size = plane->width * plane->height * sizeof(uint8_t)
+        },
+        .dst.image = state.images[slot].img,
+    });
+}
+
+// upload texture data into sokol-gfx texture, must be called each frame
+static void upload_image_data(void) {
+    if (state.plm_last_frame) {
+        upload_image_frame(VIEW_tex_y, &state.plm_last_frame->y);
+        upload_image_frame(VIEW_tex_cb, &state.plm_last_frame->cb);
+        upload_image_frame(VIEW_tex_cr, &state.plm_last_frame->cr);
     }
 }
 
 // the pl_mpeg video callback, copies decoded video data into textures
 static void video_cb(plm_t* mpeg, plm_frame_t* frame, void* user) {
     (void)mpeg; (void)user;
+    // all allocations in plmpeg are sticky, so storing the pointer is safe
+    state.plm_last_frame = frame;
     validate_texture(VIEW_tex_y, &frame->y, "image-y", "texview-y");
     validate_texture(VIEW_tex_cb, &frame->cb, "image-cb", "texview-cb");
     validate_texture(VIEW_tex_cr, &frame->cr, "image-cr", "texview-cr");

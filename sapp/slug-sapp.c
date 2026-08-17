@@ -184,7 +184,7 @@ static void init(void) {
     // Another option (probably more efficient) might be to place this data
     // in a storage buffer.
     state.buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_DRAWN_GLYPHS * sizeof(glyph_vertex_t),
         .label = "slug-glyph-buffer",
     });
@@ -438,9 +438,12 @@ static void end_push_glyphs(void) {
     // push final draw command
     push_draw_command();
     // update the glyph instance buffer
-    sg_update_buffer(state.buf, &(sg_range){
-        .ptr = glyph_vertices,
-        .size = state.draw.cur_glyph_vertex * sizeof(glyph_vertex_t),
+    sg_write_buffer_transient(&(sg_write_buffer_desc){
+        .src.data = {
+            .ptr = glyph_vertices,
+            .size = state.draw.cur_glyph_vertex * sizeof(glyph_vertex_t),
+        },
+        .dst.buffer = state.buf,
     });
 }
 

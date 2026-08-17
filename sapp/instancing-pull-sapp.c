@@ -94,7 +94,7 @@ static void init(void) {
 
     // a dynamic storage buffer for the per-instance data
     state.inst_buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage = { .storage_buffer = true, .stream_update = true },
+        .usage = { .storage_buffer = true, .write_transient = true },
         .size = MAX_PARTICLES * sizeof(sb_instance_t),
         .label = "instance-data",
     });
@@ -129,9 +129,12 @@ static void frame(void) {
     update_particles(frame_time);
 
     // update instance data storage buffer
-    sg_update_buffer(state.inst_buf, &(sg_range){
-        .ptr = state.inst,
-        .size = (size_t)state.cur_num_particles * sizeof(sb_instance_t),
+    sg_write_buffer_transient(&(sg_write_buffer_desc){
+        .src.data = {
+            .ptr = state.inst,
+            .size = (size_t)state.cur_num_particles * sizeof(sb_instance_t),
+        },
+        .dst.buffer = state.inst_buf,
     });
 
     // compute model-view-projection matrix
