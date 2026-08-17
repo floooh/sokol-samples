@@ -356,6 +356,7 @@ static void update_joint_texture(void) {
     sg_write_image_desc write_desc = { };
     write_desc.src.data = SG_RANGE(joint_upload_buffer);
     write_desc.dst.image = state.joint_texture;
+    write_desc.size.height = state.num_instances;
     sg_write_image_transient(&write_desc);
 }
 
