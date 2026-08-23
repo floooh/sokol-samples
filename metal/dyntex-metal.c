@@ -43,7 +43,7 @@ static void init(void) {
 
     // a 128x128 image with streaming update strategy
     state.img = sg_make_image(&(sg_image_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -195,8 +195,9 @@ static void frame(void) {
     game_of_life_update();
 
     // update the texture
-    sg_update_image(state.img, &(sg_image_data){
-        .mip_levels[0] = SG_RANGE(state.pixels)
+    sg_write_image_transient(&(sg_write_image_desc){
+        .dst.image = state.img,
+        .src.data = SG_RANGE(state.pixels),
     });
 
     // render the frame

@@ -130,7 +130,7 @@ static void init(void) {
         mtl_tex[i] = [osx_mtl_device() newTextureWithDescriptor:mtl_tex_desc];
     }
     sg_image_desc img_desc = {
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -267,7 +267,10 @@ static void frame(void) {
         }
     }
     state.counter++;
-    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(state.pixels) });
+    sg_write_image_transient(&(sg_write_image_desc){
+        .dst.image = state.img,
+        .src.data = SG_RANGE(state.pixels),
+    });
 
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = osx_swapchain() });
     sg_apply_pipeline(state.pip);

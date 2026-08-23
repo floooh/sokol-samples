@@ -29,17 +29,13 @@ static ImGuiKey as_imgui_key(int keycode);
 
 void init() {
     // setup sokol_gfx and sokol_time
-    const sg_desc desc = {
-        .environment = osx_environment(),
-        .logger = {
-            .func = slog_func,
-        }
-    };
+    sg_desc desc = {};
+    desc.environment = osx_environment();
+    desc.logger.func = slog_func;
     sg_setup(&desc);
     stm_setup();
-    const simgui_desc_t simgui_desc = {
-        .logger.func = slog_func,
-    };
+    simgui_desc_t simgui_desc = {};
+    simgui_desc.logger.func = slog_func,
     simgui_setup(&simgui_desc);
 
     // OSX => ImGui input forwarding
@@ -52,9 +48,8 @@ void init() {
     osx_char([] (wchar_t c)             { ImGui::GetIO().AddInputCharacter(c); });
 
     // initial clear color
-    pass_action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
-    };
+    pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    pass_action.colors[0].clear_value = { 0.0f, 0.5f, 0.7f, 1.0f };
 }
 
 void frame() {
