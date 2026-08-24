@@ -125,7 +125,7 @@ int main() {
        SG_NUM_INFLIGHT_FRAMES GL textures
     */
     sg_image_desc img_desc = {
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -234,7 +234,10 @@ static EM_BOOL draw(double time, void* userdata) {
         }
     }
     state.counter++;
-    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
+    sg_write_image_transient(&(sg_write_image_desc){
+        .dst.image = state.img,
+        .src.data = SG_RANGE(pixels),
+    });
 
     // ...and draw
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });

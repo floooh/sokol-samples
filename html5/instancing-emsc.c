@@ -72,7 +72,7 @@ int main() {
 
     // empty, dynamic instance-data vertex buffer (goes into vertex buffer bind slot 1)
     sg_buffer inst_vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_PARTICLES * sizeof(vec3_t),
     });
 
@@ -180,7 +180,11 @@ static EM_BOOL draw(double time, void* userdata) {
     }
 
     // update instance data
-    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range){ pos, (size_t)state.cur_num_particles*sizeof(vec3_t) });
+    sg_write_buffer_transient(&(sg_write_buffer_desc){
+        .dst.buffer = state.bind.vertex_buffers[1],
+        .src.data = SG_RANGE(pos),
+        .size = (size_t)state.cur_num_particles * sizeof(vec3_t)
+    });
 
     // model-view-projection matrix
     state.ry += 1.0f;

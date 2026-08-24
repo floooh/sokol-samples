@@ -51,7 +51,7 @@ int main() {
 
     // a 128x128 image and texture view with streaming-update strategy
     state.img = sg_make_image(&(sg_image_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -202,7 +202,10 @@ static EM_BOOL draw(double time, void* userdata) {
     game_of_life_update();
 
     // update the dynamic image
-    sg_update_image(state.img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
+    sg_write_image_transient(&(sg_write_image_desc){
+        .dst.image = state.img,
+        .src.data = SG_RANGE(pixels),
+    });
 
     // draw pass
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = emsc_swapchain() });

@@ -21,11 +21,9 @@ static uint64_t last_time = 0;
 static bool show_test_window = true;
 static bool show_another_window = false;
 static sg_pass_action pass_action;
-
 static ImGuiKey glfw_key_to_imgui_key(int glfw_key);
 
 int main() {
-
     // window and GL context via GLFW and flextGL
     glfw_desc_t glfw_desc = {};
     glfw_desc.title = "imgui-glfw.cc";
