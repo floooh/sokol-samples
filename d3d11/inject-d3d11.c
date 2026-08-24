@@ -140,7 +140,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         .MipLevels = 1,
         .ArraySize = 1,
         .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-        .Usage = D3D11_USAGE_DYNAMIC,
+        .Usage = D3D11_USAGE_DEFAULT,
         .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
         .SampleDesc.Count = 1,
     };
@@ -151,7 +151,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     // and create a sokol_gfx texture with injected D3D11 texture
     sg_reset_state_cache();
     sg_image img = sg_make_image(&(sg_image_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -241,10 +241,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             .sampler_slot = 0,
         },
     });
-    assert(sg_d3d11_query_shader_info(shd).vs != 0);
-    assert(sg_d3d11_query_shader_info(shd).fs != 0);
-    assert(sg_d3d11_query_shader_info(shd).cbufs[0] != 0);
-    assert(sg_d3d11_query_shader_info(shd).cbufs[1] == 0);
+    const sg_d3d11_shader_info d3d11_shd_info = sg_d3d11_query_shader_info(shd);
+    assert(d3d11_shd_info.vs != 0);
+    assert(d3d11_shd_info.fs != 0);
+    assert(d3d11_shd_info.cbufs[0] != 0);
+    assert(d3d11_shd_info.cbufs[1] == 0);
 
     // pipeline object
     sg_pipeline pip = sg_make_pipeline(&(sg_pipeline_desc){
@@ -296,7 +297,11 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
+
+        sg_write_image_transient(&(sg_write_image_desc){
+            .dst.image = img,
+            .src.data = SG_RANGE(pixels),
+        });
 
         // draw frame
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });
