@@ -10,25 +10,18 @@
 #include "sokol_time.h"
 #include "sokol_log.h"
 #include "glfw_glue.h"
+#define SOKOL_IMGUI_IMPL
+#define SOKOL_IMGUI_NO_SOKOL_APP
+#include "sokol_imgui.h"
 
-const int Width = 1024;
-const int Height = 768;
-const int MaxVertices = (1<<16);
-const int MaxIndices = MaxVertices * 3;
+static const int Width = 1024;
+static const int Height = 768;
 
-uint64_t last_time = 0;
-bool show_test_window = true;
-bool show_another_window = false;
+static uint64_t last_time = 0;
+static bool show_test_window = true;
+static bool show_another_window = false;
+static sg_pass_action pass_action;
 
-sg_pass_action pass_action;
-sg_pipeline pip;
-sg_bindings bind;
-
-typedef struct {
-    ImVec2 disp_size;
-} vs_params_t;
-
-static void draw_imgui(ImDrawData*);
 static ImGuiKey glfw_key_to_imgui_key(int glfw_key);
 
 int main() {
@@ -64,105 +57,14 @@ int main() {
         ImGui::GetIO().AddInputCharacter((ImWchar)codepoint);
     });
 
-    // setup sokol_gfx and sokol_time
+    // setup sokol-time, sokol-gfx and sokol-imgui
     stm_setup();
-    sg_desc desc = { };
+    sg_desc desc = {};
     desc.environment = glfw_environment();
     desc.logger.func = slog_func;
     sg_setup(&desc);
-    assert(sg_isvalid());
-
-    // setup Dear Imgui
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = nullptr;
-    io.Fonts->AddFontDefault();
-
-    // dynamic vertex- and index-buffers for imgui-generated geometry
-    sg_buffer_desc vbuf_desc = { };
-    vbuf_desc.usage.stream_update = true;
-    vbuf_desc.size = MaxVertices * sizeof(ImDrawVert);
-    bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
-
-    sg_buffer_desc ibuf_desc = { };
-    ibuf_desc.usage.index_buffer = true;
-    ibuf_desc.usage.stream_update = true;
-    ibuf_desc.size = MaxIndices * sizeof(ImDrawIdx);
-    bind.index_buffer = sg_make_buffer(&ibuf_desc);
-
-    // font image, texture view and sampler for imgui's default font
-    unsigned char* font_pixels;
-    int font_width, font_height;
-    io.Fonts->GetTexDataAsRGBA32(&font_pixels, &font_width, &font_height);
-
-    sg_image_desc img_desc = { };
-    img_desc.width = font_width;
-    img_desc.height = font_height;
-    img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
-    img_desc.data.mip_levels[0] = sg_range{ font_pixels, size_t(font_width * font_height * 4) };
-    sg_image img = sg_make_image(&img_desc);
-
-    sg_view_desc view_desc = { };
-    view_desc.texture.image = img;
-    bind.views[0] = sg_make_view(&view_desc);
-
-    sg_sampler_desc smp_desc = { };
-    smp_desc.wrap_u = SG_WRAP_CLAMP_TO_EDGE;
-    smp_desc.wrap_v = SG_WRAP_CLAMP_TO_EDGE;
-    bind.samplers[0] = sg_make_sampler(&smp_desc);
-
-    // shader object for imgui rendering
-    sg_shader_desc shd_desc = { };
-    auto& ub = shd_desc.uniform_blocks[0];
-    ub.stage = SG_SHADERSTAGE_VERTEX;
-    ub.size = sizeof(vs_params_t);
-    ub.glsl_uniforms[0].glsl_name = "disp_size";
-    ub.glsl_uniforms[0].type = SG_UNIFORMTYPE_FLOAT2;
-    shd_desc.vertex_func.source =
-        "#version 410\n"
-        "uniform vec2 disp_size;\n"
-        "layout(location=0) in vec2 position;\n"
-        "layout(location=1) in vec2 texcoord0;\n"
-        "layout(location=2) in vec4 color0;\n"
-        "out vec2 uv;\n"
-        "out vec4 color;\n"
-        "void main() {\n"
-        "    gl_Position = vec4(((position/disp_size)-0.5)*vec2(2.0,-2.0), 0.5, 1.0);\n"
-        "    uv = texcoord0;\n"
-        "    color = color0;\n"
-        "}\n";
-    shd_desc.fragment_func.source =
-        "#version 410\n"
-        "uniform sampler2D tex;\n"
-        "in vec2 uv;\n"
-        "in vec4 color;\n"
-        "out vec4 frag_color;\n"
-        "void main() {\n"
-        "    frag_color = texture(tex, uv) * color;\n"
-        "}\n";
-    shd_desc.views[0].texture.stage = SG_SHADERSTAGE_FRAGMENT;
-    shd_desc.samplers[0].stage = SG_SHADERSTAGE_FRAGMENT;
-    shd_desc.texture_sampler_pairs[0].stage = SG_SHADERSTAGE_FRAGMENT;
-    shd_desc.texture_sampler_pairs[0].glsl_name = "tex";
-    shd_desc.texture_sampler_pairs[0].view_slot = 0;
-    shd_desc.texture_sampler_pairs[0].sampler_slot = 0;
-    sg_shader shd = sg_make_shader(&shd_desc);
-
-    // pipeline object for imgui rendering
-    sg_pipeline_desc pip_desc = { };
-    pip_desc.layout.buffers[0].stride = sizeof(ImDrawVert);
-    auto& attrs = pip_desc.layout.attrs;
-    attrs[0].format = SG_VERTEXFORMAT_FLOAT2;
-    attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
-    attrs[2].format = SG_VERTEXFORMAT_UBYTE4N;
-    pip_desc.shader = shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
-    pip_desc.colors[0].blend.enabled = true;
-    pip_desc.colors[0].blend.src_factor_rgb = SG_BLENDFACTOR_SRC_ALPHA;
-    pip_desc.colors[0].blend.dst_factor_rgb = SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
-    pip_desc.colors[0].write_mask = SG_COLORMASK_RGB;
-    pip = sg_make_pipeline(&pip_desc);
+    simgui_desc_t simgui_desc = {};
+    simgui_setup(simgui_desc);
 
     // initial clear color
     pass_action.colors[0].load_action = SG_LOADACTION_CLEAR;
@@ -170,10 +72,11 @@ int main() {
 
     // draw loop
     while (!glfwWindowShouldClose(w)) {
-        // this is standard ImGui demo code
-        io.DisplaySize = ImVec2(float(glfw_width()), float(glfw_height()));
-        io.DeltaTime = (float) stm_sec(stm_laptime(&last_time));
-        ImGui::NewFrame();
+        simgui_frame_desc_t simgui_frame_desc = {};
+        simgui_frame_desc.width = glfw_width();
+        simgui_frame_desc.height = glfw_height();
+        simgui_frame_desc.delta_time = stm_sec(stm_laptime(&last_time));
+        simgui_new_frame(&simgui_frame_desc);
 
         // 1. Show a simple window
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -204,72 +107,16 @@ int main() {
         pass.action = pass_action;
         pass.swapchain = glfw_swapchain();
         sg_begin_pass(pass);
-        ImGui::Render();
-        draw_imgui(ImGui::GetDrawData());
+        simgui_render();
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
         glfwPollEvents();
     }
-
-    /* cleanup */
-    ImGui::DestroyContext();
+    simgui_shutdown();
     sg_shutdown();
     glfwTerminate();
     return 0;
-}
-
-// draw ImGui draw lists via sokol-gfx
-void draw_imgui(ImDrawData* draw_data) {
-    assert(draw_data);
-    if (draw_data->CmdLists.Size == 0) {
-        return;
-    }
-
-    // render the command list
-    sg_apply_pipeline(pip);
-    vs_params_t vs_params;
-    vs_params.disp_size.x = ImGui::GetIO().DisplaySize.x;
-    vs_params.disp_size.y = ImGui::GetIO().DisplaySize.y;
-    sg_apply_uniforms(0, SG_RANGE(vs_params));
-    for (int cl_index = 0; cl_index < draw_data->CmdLists.Size; cl_index++) {
-        const ImDrawList* cl = draw_data->CmdLists[cl_index];
-
-        // append vertices and indices to buffers, record start offsets in resource binding struct
-        const uint32_t vtx_size = cl->VtxBuffer.size() * sizeof(ImDrawVert);
-        const uint32_t idx_size = cl->IdxBuffer.size() * sizeof(ImDrawIdx);
-        const uint32_t vb_offset = sg_append_buffer(bind.vertex_buffers[0], { &cl->VtxBuffer.front(), vtx_size });
-        const uint32_t ib_offset = sg_append_buffer(bind.index_buffer, { &cl->IdxBuffer.front(), idx_size });
-        /* don't render anything if the buffer is in overflow state (this is also
-            checked internally in sokol_gfx, draw calls that attempt from
-            overflowed buffers will be silently dropped)
-        */
-        if (sg_query_buffer_overflow(bind.vertex_buffers[0]) ||
-            sg_query_buffer_overflow(bind.index_buffer))
-        {
-            continue;
-        }
-
-        bind.vertex_buffer_offsets[0] = vb_offset;
-        bind.index_buffer_offset = ib_offset;
-        sg_apply_bindings(&bind);
-
-        int base_element = 0;
-        for (const ImDrawCmd& pcmd : cl->CmdBuffer) {
-            if (pcmd.UserCallback) {
-                pcmd.UserCallback(cl, &pcmd);
-            }
-            else {
-                const int scissor_x = (int) (pcmd.ClipRect.x);
-                const int scissor_y = (int) (pcmd.ClipRect.y);
-                const int scissor_w = (int) (pcmd.ClipRect.z - pcmd.ClipRect.x);
-                const int scissor_h = (int) (pcmd.ClipRect.w - pcmd.ClipRect.y);
-                sg_apply_scissor_rect(scissor_x, scissor_y, scissor_w, scissor_h, true);
-                sg_draw(base_element, pcmd.ElemCount, 1);
-            }
-            base_element += pcmd.ElemCount;
-        }
-    }
 }
 
 static ImGuiKey glfw_key_to_imgui_key(int glfw_key) {
