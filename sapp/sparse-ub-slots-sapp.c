@@ -39,9 +39,9 @@ static void init(void) {
     });
 
     static const float vertices[] = {
-        0.0, 0.65,
-        0.45, -0.65,
-        -0.45, -0.65
+        0.0f, 0.65f,
+        0.45f, -0.65f,
+        -0.45f, -0.65f
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(vertices),
@@ -91,6 +91,7 @@ static void frame(void) {
     sg_apply_uniforms(UB_sparse_fs_params, &SG_RANGE(sparse_fs_params));
     sg_draw(0, 3, 1);
     sdtx_draw();
+    __dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -107,6 +108,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        .event_cb = __dbgui_event,
         .width = 800,
         .height = 450,
         .depth_format = SAPP_PIXELFORMAT_NONE,
