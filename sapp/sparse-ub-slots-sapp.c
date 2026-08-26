@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 //  sparse-ub-slots-sapp.c
 //
-//  Test uniform block usage with gaps, ported from
+//  Test uniform block usage with bindslot gaps, ported from
 //  https://github.com/bgourlie/sokol-wgpu-sparse-uniform-repro
 //
 //  (also see: https://github.com/floooh/sokol/issues/1586)
