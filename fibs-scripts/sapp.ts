@@ -63,6 +63,7 @@ export const samples: SampleOptions[] = [
     { name: 'blend-op', ui: 'cc', shd: true },
     { name: 'uvwrap', ui: 'cc', shd: true },
     { name: 'uniformtypes', ui: 'cc', shd: true },
+    { name: 'sparse-ub-slots', ui: 'cc', shd: true },
     { name: 'imgui', ext: 'cc', sokol: 'cc', deps: ['imgui'] }, // use sokol-cpp for testing, not required though
     { name: 'imgui-dock', ext: 'cc', deps: ['imgui-docking'] },
     { name: 'imgui-highdpi', ext: 'cc', deps: ['imgui'] },
