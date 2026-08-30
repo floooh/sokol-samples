@@ -18,6 +18,7 @@ export function addMetalSamples(b: Builder) {
         'bufferoffsets',
         'noninterleaved',
         'vertexpulling',
+        'instancing',
         'instancing-compute',
     ]
     stdSamples.forEach((name) => addSample(b, { name }));

@@ -63,7 +63,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // dynamic per-instance data, goes into vb slot 1
     sg_buffer vbuf_inst = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_PARTICLES * sizeof(vec3_t),
     });
 
@@ -174,8 +174,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         }
 
         // update dynamic instance data buffer
-        sg_update_buffer(vbuf_inst, &(sg_range){
-            .ptr = pos,
+        sg_write_buffer_transient(&(sg_write_buffer_desc){
+            .dst.buffer = vbuf_inst,
+            .src.data = SG_RANGE(pos),
             .size = (size_t)cur_num_particles * sizeof(vec3_t)
         });
 

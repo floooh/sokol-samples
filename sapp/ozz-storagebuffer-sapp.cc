@@ -191,7 +191,7 @@ static void init(void) {
     {
         sg_buffer_desc buf_desc = {};
         buf_desc.usage.storage_buffer = true;
-        buf_desc.usage.stream_update = true;
+        buf_desc.usage.write_transient = true;
         buf_desc.size = MAX_INSTANCES * MAX_JOINTS * sizeof(sb_joint_t);
         buf_desc.label = "joints";
         state.joint_buf = sg_make_buffer(&buf_desc);
@@ -324,7 +324,10 @@ static void update_joints(void) {
     state.time.anim_eval_time = stm_since(start_time);
 
     // update the sokol-gfx joint storage buffer
-    sg_update_buffer(state.joint_buf, SG_RANGE(joint_upload_buffer));
+    sg_write_buffer_desc write_desc = {};
+    write_desc.src.data = SG_RANGE(joint_upload_buffer);
+    write_desc.dst.buffer = state.joint_buf;
+    sg_write_buffer_transient(&write_desc);
 }
 
 // arrange the character instances into a quad

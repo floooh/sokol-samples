@@ -200,15 +200,21 @@ static void update_matrices(void) {
 
 static void update_instance_buffers(void) {
     if (state.inst_data.num_boxes > 0) {
-        sg_update_buffer(state.box_inst_buf, &(sg_range){
-            .ptr = (const void*)&state.inst_data.boxes[0],
-            .size = sizeof(instdata_t) * (size_t)state.inst_data.num_boxes,
+        sg_write_buffer_transient(&(sg_write_buffer_desc){
+            .src.data = {
+                .ptr = (const void*)&state.inst_data.boxes[0],
+                .size = sizeof(instdata_t) * (size_t)state.inst_data.num_boxes,
+            },
+            .dst.buffer = state.box_inst_buf,
         });
     }
     if (state.inst_data.num_balls > 0) {
-        sg_update_buffer(state.ball_inst_buf, &(sg_range){
-            .ptr = (const void*)&state.inst_data.balls[0],
-            .size = sizeof(instdata_t) * (size_t)state.inst_data.num_balls,
+        sg_write_buffer_transient(&(sg_write_buffer_desc){
+            .src.data = {
+                .ptr = (const void*)&state.inst_data.balls[0],
+                .size = sizeof(instdata_t) * (size_t)state.inst_data.num_balls,
+            },
+            .dst.buffer = state.ball_inst_buf,
         });
     }
 }
@@ -574,12 +580,12 @@ static void gfx_init(void) {
 
     // instance buffers for box and sphere instances
     state.box_inst_buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_INSTANCES * sizeof(instdata_t),
         .label = "box-instance-buffer",
     });
     state.ball_inst_buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_INSTANCES * sizeof(instdata_t),
         .label = "ball-instance-buffer",
     });

@@ -123,7 +123,7 @@ int main() {
        SG_NUM_INFLIGHT_FRAMES GL textures
     */
     sg_image_desc img_desc = {
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -240,7 +240,11 @@ int main() {
             }
         }
         counter++;
-        sg_update_image(img, &(sg_image_data){ .mip_levels[0] = SG_RANGE(pixels) });
+
+        sg_write_image_transient(&(sg_write_image_desc){
+            .dst.image = img,
+            .src.data = SG_RANGE(pixels),
+        });
 
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = glfw_swapchain() });
         sg_apply_pipeline(pip);

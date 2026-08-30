@@ -71,7 +71,7 @@ static void init(void) {
 
     // empty, dynamic instance-data vertex buffer, goes into vertex-buffer-slot 1
     state.bind.vertex_buffers[1] = sg_make_buffer(&(sg_buffer_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .size = MAX_PARTICLES * sizeof(vec3_t),
     });
 
@@ -166,8 +166,9 @@ static void frame(void) {
     }
 
     // update instance data
-    sg_update_buffer(state.bind.vertex_buffers[1], &(sg_range) {
-        .ptr = state.pos,
+    sg_write_buffer_transient(&(sg_write_buffer_desc){
+        .dst.buffer = state.bind.vertex_buffers[1],
+        .src.data = SG_RANGE(state.pos),
         .size = (size_t)state.cur_num_particles * sizeof(vec3_t)
     });
 

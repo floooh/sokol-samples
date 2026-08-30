@@ -35,7 +35,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
     // a 128x128 image with streaming-update strategy
     sg_image img = sg_make_image(&(sg_image_desc){
-        .usage.stream_update = true,
+        .usage.write_transient = true,
         .width = IMAGE_WIDTH,
         .height = IMAGE_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
@@ -198,11 +198,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         game_of_life_update();
 
         // update the dynamic image
-        sg_update_image(img, &(sg_image_data){
-            .mip_levels[0] = {
-                .ptr=pixels,
-                .size=sizeof(pixels)
-            }
+        sg_write_image_transient(&(sg_write_image_desc){
+            .dst.image = img,
+            .src.data = SG_RANGE(pixels),
         });
 
         sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = d3d11_swapchain() });

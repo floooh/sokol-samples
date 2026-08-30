@@ -224,7 +224,7 @@ static void init(void) {
     img_desc.height = state.joint_texture_height;
     img_desc.num_mipmaps = 1;
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA32F;
-    img_desc.usage.stream_update = true;
+    img_desc.usage.write_transient = true;
     img_desc.label = "joint-texture";
     state.joint_texture = sg_make_image(&img_desc);
     sg_view_desc view_desc = {};
@@ -353,9 +353,11 @@ static void update_joint_texture(void) {
     }
     state.time.anim_eval_time = stm_since(start_time);
 
-    sg_image_data img_data = { };
-    img_data.mip_levels[0] = SG_RANGE(joint_upload_buffer);
-    sg_update_image(state.joint_texture, img_data);
+    sg_write_image_desc write_desc = { };
+    write_desc.src.data = SG_RANGE(joint_upload_buffer);
+    write_desc.dst.image = state.joint_texture;
+    write_desc.size.height = state.num_instances;
+    sg_write_image_transient(&write_desc);
 }
 
 static void frame(void) {
