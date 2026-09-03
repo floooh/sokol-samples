@@ -78,23 +78,23 @@ static void frame(void) {
     state.rx += 1.0f * t;
     state.ry += 2.0f * t;
 
-    // record offscreen-rendering commands
+    // record offscreen-rendering commands outside a sokol-gfx pass
     {
+        const scb_cmdbuf cb = state.offscreen.cmdbuf;
         const vs_params_t vs_params = (vs_params_t) {
             .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
         };
-        scb_cmdbuf cb = state.offscreen.cmdbuf;
         scb_apply_pipeline(cb, state.offscreen.pip);
         scb_apply_bindings(cb, &state.offscreen.bind);
         scb_apply_uniforms(cb, UB_vs_params, &SG_RANGE(vs_params));
         scb_draw(cb, state.donut.base_element, state.donut.num_elements, 1);
     }
-    // record display-rendering commands
+    // ...record display-rendering commands into separate command buffer
     {
+        const scb_cmdbuf cb = state.display.cmdbuf;
         const vs_params_t vs_params = {
             .mvp = compute_mvp(-state.rx * 0.25f, state.ry * 0.25f, sapp_widthf()/sapp_heightf(), 1.5f)
         };
-        scb_cmdbuf cb = state.display.cmdbuf;
         scb_apply_pipeline(cb, state.display.pip);
         scb_apply_bindings(cb, &state.display.bind);
         scb_apply_uniforms(cb, UB_vs_params, &SG_RANGE(vs_params));
