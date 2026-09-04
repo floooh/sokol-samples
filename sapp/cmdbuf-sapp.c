@@ -36,7 +36,7 @@ static struct {
         sg_pipeline pip;
         sg_bindings bind;
     } display;
-    sshape_element_range_t donut;
+    sshape_element_range_t cylinder;
     sshape_element_range_t sphere;
     float rx, ry;
 } state;
@@ -87,7 +87,7 @@ static void frame(void) {
         scb_apply_pipeline(cb, state.offscreen.pip);
         scb_apply_bindings(cb, &state.offscreen.bind);
         scb_apply_uniforms(cb, UB_vs_params, &SG_RANGE(vs_params));
-        scb_draw(cb, state.donut.base_element, state.donut.num_elements, 1);
+        scb_draw(cb, state.cylinder.base_element, state.cylinder.num_elements, 1);
     }
     // ...record display-rendering commands into separate command buffer
     {
@@ -136,7 +136,7 @@ static void setup_render_resources(void) {
     state.display.pass_action = (sg_pass_action) {
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.25f, 0.45f, 0.65f, 1.0f }
+            .clear_value = { 0.45f, 0.25f, 0.55f, 1.0f }
         }
     };
 
@@ -170,13 +170,13 @@ static void setup_render_resources(void) {
         .action = {
             .colors[0] = {
                 .load_action = SG_LOADACTION_CLEAR,
-                .clear_value = { 0.25f, 0.25f, 0.25f, 1.0f }
+                .clear_value = { 0.25f, 0.25f, 0.35f, 1.0f }
             }
         },
         .label = "offscreen-pass"
     };
 
-    // a donut shape which is rendered into the offscreen render target, and
+    // a cylinder shape which is rendered into the offscreen render target, and
     // a sphere shape which is rendered into the default framebuffer
     uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 4000] = { 0 };
     uint16_t indices[24000] = { 0 };
@@ -185,13 +185,12 @@ static void setup_render_resources(void) {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer  = SSHAPE_RANGE(indices),
     };
-    sshape_build_torus(&shp, &(sshape_torus_t){
+    sshape_build_cylinder(&shp, &(sshape_cylinder_t){
+        .height = 1.5f,
         .radius = 0.5f,
-        .ring_radius = 0.3f,
-        .sides = 20,
-        .rings = 36,
+        .slices = 36,
     });
-    state.donut = sshape_element_range(&shp);
+    state.cylinder = sshape_element_range(&shp);
     sshape_build_sphere(&shp, &(sshape_sphere_t) {
         .radius = 0.5f,
         .slices = 72,
