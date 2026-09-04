@@ -64,7 +64,7 @@ static void init(void) {
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = OFFSCREEN_DEPTH_FORMAT;
-    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true },
+    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true };
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
 

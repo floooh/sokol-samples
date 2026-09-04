@@ -81,7 +81,7 @@ static void frame(void) {
     // record offscreen-rendering commands outside a sokol-gfx pass
     {
         const scb_cmdbuf cb = state.offscreen.cmdbuf;
-        const vs_params_t vs_params = (vs_params_t) {
+        const vs_params_t vs_params = {
             .mvp = compute_mvp(state.rx, state.ry, 1.0f, 2.5f)
         };
         scb_apply_pipeline(cb, state.offscreen.pip);
@@ -151,7 +151,7 @@ static void setup_render_resources(void) {
     };
     sg_image color_img = sg_make_image(&img_desc);
     img_desc.pixel_format = OFFSCREEN_DEPTH_FORMAT;
-    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true },
+    img_desc.usage = (sg_image_usage){ .depth_stencil_attachment = true };
     img_desc.label = "depth-image";
     sg_image depth_img = sg_make_image(&img_desc);
 
@@ -205,7 +205,7 @@ static void setup_render_resources(void) {
     sg_buffer vbuf = sg_make_buffer(&vbuf_desc);
     sg_buffer ibuf = sg_make_buffer(&ibuf_desc);
 
-    // pipeline-state-object for offscreen-rendered donut
+    // pipeline-state-object for offscreen-rendered cylinder
     // NOTE: we need to explicitly set the sample_count here because
     // the offscreen pass uses a different sample count than the default
     // pass (the display pass is multi-sampled, but the offscreen pass isn't)
