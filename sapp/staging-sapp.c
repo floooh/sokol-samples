@@ -20,7 +20,7 @@
 #define NUM_SEGMENTS (6)
 #define MAX_SEGMENT_VERTICES (4096)
 #define MAX_SEGMENT_INDICES (MAX_SEGMENT_VERTICES * 3)
-#define SHAPE_CHANGE_INTERVAL_SEC (1.0)
+#define SHAPE_CHANGE_INTERVAL_SEC (0.5)
 
 static struct {
     sg_buffer vertex_buffer;
@@ -33,6 +33,8 @@ static struct {
     double shape_change_tracker;
     float rx, ry;
     sshape_element_range_t shapes[NUM_SEGMENTS];
+    uint32_t next_segment;
+    uint32_t next_shape_type;
 } state = {
     .pass_action = {
         .colors[0] = {
@@ -43,7 +45,7 @@ static struct {
 };
 
 static mat44_t compute_mvp(double dt);
-static void update_random_segment(void);
+static void update_next_segment(void);
 static void apply_segment_viewport(uint32_t seg);
 
 static void init(void) {
@@ -108,10 +110,10 @@ static void frame(void) {
     const double dt = sapp_frame_duration();
 
     // time to update one of the shape segments?
-    state.shape_change_tracker += dt;
-    if (state.shape_change_tracker > SHAPE_CHANGE_INTERVAL_SEC) {
-        state.shape_change_tracker -= SHAPE_CHANGE_INTERVAL_SEC;
-        update_random_segment();
+    state.shape_change_tracker -= dt;
+    if (state.shape_change_tracker < 0) {
+        state.shape_change_tracker += SHAPE_CHANGE_INTERVAL_SEC;
+        update_next_segment();
     }
 
     const vs_params_t vs_params = { .mvp = compute_mvp(dt) };
@@ -157,7 +159,7 @@ static mat44_t compute_mvp(double dt) {
     const float w = sapp_widthf();
     const float h = sapp_heightf();
     mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
-    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 0.0f, 3.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     mat44_t view_proj = vm_mul(view, proj);
     mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
     mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
@@ -165,19 +167,11 @@ static mat44_t compute_mvp(double dt) {
     return vm_mul(model, view_proj);
 }
 
-static uint32_t xorshift32(void) {
-    static uint32_t x = 0x12345678;
-    x ^= x<<13;
-    x ^= x>>17;
-    x ^= x<<5;
-    return x;
-}
-
-static void update_random_segment(void) {
-    // random segment index to update
-    uint32_t seg = xorshift32() % NUM_SEGMENTS;
-    // random shape type
-    uint32_t shape_type = xorshift32() % 4;
+static void update_next_segment(void) {
+    uint32_t seg = state.next_segment;
+    uint32_t shape_type = state.next_shape_type;
+    state.next_segment = (state.next_segment + 1) % NUM_SEGMENTS;
+    state.next_shape_type = (state.next_shape_type + 1) % 4;
 
     // build shape vertex- and index-data
     static uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * MAX_SEGMENT_VERTICES];
