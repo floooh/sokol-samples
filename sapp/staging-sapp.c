@@ -44,7 +44,7 @@ static struct {
     },
 };
 
-static mat44_t compute_mvp(double dt);
+static vs_params_t compute_vsparams(double dt);
 static void update_next_segment(void);
 static void apply_segment_viewport(uint32_t seg);
 
@@ -55,7 +55,11 @@ static void init(void) {
     });
     __dbgui_setup();
 
-    const sshape_optional_components_t vtx_comps = { .colors = true };
+    const sshape_optional_components_t vtx_comps = {
+        .colors = true,
+        .texcoords = true,
+        .normals = true
+    };
 
     // a single 'staging buffer' for enough room
     state.vtx_segment_size = MAX_SEGMENT_VERTICES * sshape_vertex_size(&vtx_comps);
@@ -92,9 +96,13 @@ static void init(void) {
     // pipeline object for rendering 3D shapes
     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
         .shader = sg_make_shader(shape_shader_desc(sg_query_backend())),
-        .layout.attrs = {
-            [ATTR_shape_position].format = SG_VERTEXFORMAT_FLOAT3,
-            [ATTR_shape_color0].format = SG_VERTEXFORMAT_UBYTE4N,
+        .layout = {
+            .attrs = {
+                [ATTR_shape_in_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_shape_in_normal].format = SG_VERTEXFORMAT_BYTE4N,
+                [ATTR_shape_in_color].format = SG_VERTEXFORMAT_UBYTE4N,
+                [ATTR_shape_in_uv].format = SG_VERTEXFORMAT_USHORT2N,
+            }
         },
         .index_type = SG_INDEXTYPE_UINT16,
         .cull_mode = SG_CULLMODE_BACK,
@@ -116,7 +124,7 @@ static void frame(void) {
         update_next_segment();
     }
 
-    const vs_params_t vs_params = { .mvp = compute_mvp(dt) };
+    const vs_params_t vs_params = compute_vsparams(dt);
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
@@ -153,7 +161,7 @@ static void apply_segment_viewport(uint32_t seg) {
     sg_apply_viewport(seg_x, seg_y, seg_w, seg_h, true);
 }
 
-static mat44_t compute_mvp(double dt) {
+static vs_params_t compute_vsparams(double dt) {
     const float t = (float)(dt * 60.0);
     state.rx += 1.0f * t; state.ry += 2.0f * t;
     const float w = sapp_widthf();
@@ -164,14 +172,27 @@ static mat44_t compute_mvp(double dt) {
     mat44_t rxm = mat44_rotation_x(vm_radians(state.rx));
     mat44_t rym = mat44_rotation_y(vm_radians(state.ry));
     mat44_t model = vm_mul(rym, rxm);
-    return vm_mul(model, view_proj);
+    return (vs_params_t) {
+        .mvp = vm_mul(model, view_proj),
+        .model = model,
+    };
+}
+
+static uint32_t xorshift32(void) {
+    static uint32_t x = 0x12345678;
+    x ^= x<<13;
+    x ^= x>>17;
+    x ^= x<<5;
+    return x;
 }
 
 static void update_next_segment(void) {
-    uint32_t seg = state.next_segment;
-    uint32_t shape_type = state.next_shape_type;
+    const uint32_t seg = state.next_segment;
+    const uint32_t shape_type = state.next_shape_type;
     state.next_segment = (state.next_segment + 1) % NUM_SEGMENTS;
     state.next_shape_type = (state.next_shape_type + 1) % 4;
+
+    const uint32_t color = (xorshift32() + 0x00666666) | 0xFF000000;
 
     // build shape vertex- and index-data
     static uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * MAX_SEGMENT_VERTICES];
@@ -179,10 +200,6 @@ static void update_next_segment(void) {
     sshape_state_t shp = {
         .vertices.buffer = SSHAPE_RANGE(vertices),
         .indices.buffer = SSHAPE_RANGE(indices),
-        .disable = {
-            .normals = true,
-            .texcoords = true,
-        },
     };
     switch (shape_type) {
         case 0:
@@ -190,8 +207,8 @@ static void update_next_segment(void) {
                 .width = 1.0f,
                 .height = 1.0f,
                 .depth = 1.0f,
-                .tiles = 10,
-                .random_colors = true,
+                .tiles = 1,
+                .color = color,
             });
             break;
         case 1:
@@ -199,7 +216,7 @@ static void update_next_segment(void) {
                 .radius = 0.75f,
                 .slices = 36,
                 .stacks = 20,
-                .random_colors = true,
+                .color = color,
             });
             break;
         case 2:
@@ -208,7 +225,7 @@ static void update_next_segment(void) {
                 .height = 1.5f,
                 .slices = 36,
                 .stacks = 10,
-                .random_colors = true,
+                .color = color,
             });
             break;
         default:
@@ -217,7 +234,7 @@ static void update_next_segment(void) {
                 .ring_radius = 0.3f,
                 .rings = 36,
                 .sides = 18,
-                .random_colors = true,
+                .color = color,
             });
             break;
     }
