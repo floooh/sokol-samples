@@ -47,7 +47,7 @@ void init(void) {
 void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
-    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+    simgui_begin_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -107,12 +107,15 @@ void frame(void) {
         show_quit_dialog = false;
     }
 
+    // call simgui_end_frame() after the last Dear ImGui call and outside a sokol-gfx draw call
+    simgui_end_frame();
+
     // the sokol_gfx draw pass
     sg_pass pass = {};
     pass.action = pass_action;
     pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
-    simgui_render();
+    simgui_draw_frame();
     sg_end_pass();
     sg_commit();
 }
