@@ -24,7 +24,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_cpc(),
         .logger.func = slog_func,
@@ -88,13 +88,14 @@ static void frame(void) {
     }
 
     // actually render everything in an sokol-gfx render pass
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int i = 0; i < NUM_LAYERS; i++) {
         sgl_draw_layer(i);
         sdtx_draw_layer(i);
     }
     sgl_draw_layer(NUM_LAYERS);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -111,7 +112,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .window_title = "debugtext-layers-sapp.c",

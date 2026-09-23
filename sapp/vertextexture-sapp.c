@@ -41,7 +41,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // render target texture for GPU-rendered plasma
     state.offscreen.img = sg_make_image(&(sg_image_desc){
@@ -151,6 +151,7 @@ static void frame(void) {
     // display pass to render vertex-displaced plane
     const int num_elements = NUM_TILES_ALONG_EDGE * NUM_TILES_ALONG_EDGE * 6;
     const vs_params_t vs_params = compute_vsparams();
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
         .swapchain = sglue_swapchain(),
@@ -159,13 +160,13 @@ static void frame(void) {
     sg_apply_bindings(&state.display.bind);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, num_elements, 1);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -188,7 +189,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,

@@ -34,7 +34,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
@@ -77,16 +77,17 @@ static void frame(void) {
     print_font(FONT_C64,   "C64:\n",         0x79, 0x86, 0xcb);
     print_font(FONT_ORIC,  "Oric Atmos:\n",  0xff, 0x98, 0x00);
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
     sdtx_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -97,7 +98,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 1024,
         .height = 600,
         .depth_format = SAPP_PIXELFORMAT_NONE,

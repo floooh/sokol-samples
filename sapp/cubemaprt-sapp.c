@@ -82,7 +82,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // create a cubemap as render target, a texture view, and a matching depth-buffer texture
     app.cubemap = sg_make_image(&(sg_image_desc){
@@ -252,6 +252,7 @@ static void frame(void) {
     // render the default pass
     const int w = sapp_width();
     const int h = sapp_height();
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = app.display_pass_action, .swapchain = sglue_swapchain() });
 
     vec3_t eye_pos = vec3(0.0f, 0.0f, 20.0f);
@@ -284,13 +285,13 @@ static void frame(void) {
     sg_apply_uniforms(UB_shape_uniforms, &SG_RANGE(uniforms));
     sg_draw(0, app.cube.num_elements, 1);
 
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -301,7 +302,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = DISPLAY_SAMPLE_COUNT,

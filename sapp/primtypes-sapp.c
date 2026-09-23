@@ -71,7 +71,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     // setup sokol-debugtext
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_z1013(),
@@ -150,6 +150,7 @@ static void frame(void) {
 
     print_status_text(w, h);
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.prim[state.cur_prim_type].pip);
     sg_apply_bindings(&(sg_bindings){
@@ -159,7 +160,7 @@ static void frame(void) {
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, state.prim[state.cur_prim_type].num_elements, 1);
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -191,7 +192,7 @@ static void decr_point_size(void) {
 }
 
 static void input(const sapp_event* ev) {
-    __dbgui_event(ev);
+    _dbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_KEY_DOWN:
             switch (ev->key_code) {
@@ -218,7 +219,7 @@ static void input(const sapp_event* ev) {
 
 static void cleanup(void) {
     sdtx_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 

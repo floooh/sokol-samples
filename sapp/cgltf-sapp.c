@@ -228,7 +228,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     // setup the optional debugging UI
-    __dbgui_setup();
+    _dbgui_setup();
 
     // initialize camera helper
     cam_init(&state.camera, &(camera_desc_t){
@@ -349,10 +349,11 @@ static void frame(void) {
     cam_update(&state.camera, fb_width, fb_height);
 
     // render the scene
+    _dbgui_update();
     if (state.failed) {
         // if something went wrong during loading, just render a red screen
         sg_begin_pass(&(sg_pass){ .action = state.pass_actions.failed, .swapchain = sglue_swapchain() });
-        __dbgui_draw();
+        _dbgui_draw();
         sg_end_pass();
     } else {
         sg_begin_pass(&(sg_pass){ .action = state.pass_actions.ok, .swapchain = sglue_swapchain() });
@@ -429,7 +430,7 @@ static void frame(void) {
             }
         }
         sdtx_draw();
-        __dbgui_draw();
+        _dbgui_draw();
         sg_end_pass();
     }
     sg_commit();
@@ -438,14 +439,14 @@ static void frame(void) {
 // sokol-app cleanup callback, called once at shutdown
 static void cleanup(void) {
     sfetch_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sbasisu_shutdown();
     sg_shutdown();
 }
 
 // input event handler for camera manipulation
 static void input(const sapp_event* ev) {
-    if (__dbgui_event_with_retval(ev)) {
+    if (_dbgui_event_with_retval(ev)) {
         return;
     }
     cam_handle_event(&state.camera, ev);

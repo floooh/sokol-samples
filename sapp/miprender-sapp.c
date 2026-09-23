@@ -57,7 +57,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup a couple of shape geometries
     static uint8_t vertices[SSHAPE_MAX_VERTEX_SIZE * 4 * 1024];
@@ -228,18 +228,19 @@ static void frame(void) {
     }
 
     // default pass: render a textured plane that moves back and forth to use different mipmap levels
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bindings);
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(display_vsparams));
     sg_draw(state.display.plane.base_element, state.display.plane.num_elements, 1);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -272,7 +273,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 1,

@@ -71,7 +71,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // check if requires features are supported
     state.features_ok = sg_query_pixelformat(DEPTH_PIXEL_FORMAT).render &&
@@ -218,7 +218,7 @@ static void draw_fallback() {
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f }}
     };
     sg_begin_pass(&(sg_pass){ .action = pass_action, .swapchain = sglue_swapchain() });
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -231,6 +231,7 @@ static offscreen_params_t compute_offscreen_params(void) {
 }
 
 static void frame(void) {
+    _dbgui_update();
     if (!state.features_ok) {
         draw_fallback();
         return;
@@ -288,13 +289,13 @@ static void frame(void) {
         sg_draw(0, 4, 1);
     }
     sg_apply_viewport(0, 0, disp_width, disp_height, true);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -304,7 +305,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .window_title = "mrt-pixelformats-sapp.c",

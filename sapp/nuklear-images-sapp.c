@@ -60,7 +60,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     snk_setup(&(snk_desc_t){
         .enable_set_mouse_cursor = true,
         .dpi_scale = sapp_dpi_scale(),
@@ -215,15 +215,16 @@ static void frame(void) {
     sg_end_pass();
 
     // then the display pass with the Dear ImGui scene
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     snk_render(sapp_width(), sapp_height());
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void input(const sapp_event* ev) {
-    if (__dbgui_event_with_retval(ev)) {
+    if (_dbgui_event_with_retval(ev)) {
         return;
     }
     snk_handle_event(ev);

@@ -30,7 +30,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // a default pass action which does not clear, since the entire screen is overwritten anyway
     state.pass_action = (sg_pass_action) {
@@ -120,6 +120,7 @@ static void frame(void) {
     mat44_t view_proj = vm_mul(view, proj);
 
     // start rendering
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
 
     /* draw a background quad */
@@ -148,7 +149,7 @@ static void frame(void) {
             sg_draw(0, 4, 1);
         }
     }
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
     const float t = (float)(sapp_frame_duration() * 60.0);
@@ -157,7 +158,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -168,7 +169,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,

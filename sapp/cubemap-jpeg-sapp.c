@@ -45,7 +45,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_oric(),
@@ -252,26 +252,27 @@ static void frame(void) {
 
     // NOTE: as long as the image is in unsealed state (e.g. data is still loading)
     // all render operations involving the image will silently be skipped
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind),
     sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
     sg_draw(0, 36, 1);
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sfetch_shutdown();
     sdtx_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* ev) {
-    if (__dbgui_event_with_retval(ev)) {
+    if (_dbgui_event_with_retval(ev)) {
         return;
     }
     cam_handle_event(&state.camera, ev);

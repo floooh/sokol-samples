@@ -15,7 +15,7 @@
 #define SOKOL_APP_IMGUI_IMPL
 #include "sokol_app_imgui.h"
 
-void __cdbgui_setup(void) {
+void _cdbgui_setup(void) {
     // setup debug inspection headers
     sappimgui_setup();
     sgimgui_setup(&(sgimgui_desc_t){0});
@@ -28,13 +28,13 @@ void __cdbgui_setup(void) {
     });
 }
 
-void __cdbgui_shutdown(void) {
+void _cdbgui_shutdown(void) {
     sgimgui_shutdown();
     sappimgui_shutdown();
     simgui_shutdown();
 }
 
-void __cdbgui_draw(void) {
+void _cdbgui_update(void) {
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
         .height = sapp_height(),
@@ -49,10 +49,14 @@ void __cdbgui_draw(void) {
     }
     sappimgui_draw();
     sgimgui_draw();
-    simgui_render();
+    simgui_flush();
 }
 
-void __cdbgui_event(const sapp_event* e) {
+void _cdbgui_draw(void) {
+    simgui_draw();
+}
+
+void _cdbgui_event(const sapp_event* e) {
     sappimgui_track_event(e);
     simgui_handle_event(e);
 }

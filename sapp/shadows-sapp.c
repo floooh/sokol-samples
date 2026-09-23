@@ -44,7 +44,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // vertex buffer for a cube and plane
     const float scene_vertices[] = {
@@ -309,6 +309,7 @@ static void frame(void) {
     sg_end_pass();
 
     // the display pass, render scene from camera and sample the shadow map
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
@@ -324,13 +325,13 @@ static void frame(void) {
     sg_apply_bindings(&state.dbg.bind);
     sg_apply_viewport(sapp_width() - 150, 0, 150, 150, false);
     sg_draw(0, 4, 1);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -340,7 +341,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,
