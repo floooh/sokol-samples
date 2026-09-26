@@ -82,9 +82,10 @@ static void frame(void) {
     sgl_viewport(0, 0, width, height, true);
 
     // render everything in a sokol-gfx pass
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

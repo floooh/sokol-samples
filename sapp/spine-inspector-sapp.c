@@ -234,12 +234,13 @@ static void frame(void) {
     }
 
     // the actual sokol-gfx render pass
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     // NOTE: using the display width/height here means the Spine rendering
     // is mapped to pixels and doesn't scale with window size
     sspine_draw_layer(0, &state.layer_transform);
     sgl_draw();
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

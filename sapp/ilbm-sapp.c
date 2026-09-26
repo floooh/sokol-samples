@@ -119,6 +119,7 @@ static void frame(void) {
             .palette = SG_RANGE(state.ilbm.colors),
         });
     }
+    simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action.colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value.a = 1.0f },
         .swapchain = sglue_swapchain()
@@ -135,7 +136,7 @@ static void frame(void) {
         // restore viewport
         sg_apply_viewport(0, 0, sapp_width(), sapp_height(), true);
     }
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

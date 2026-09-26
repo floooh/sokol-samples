@@ -346,11 +346,12 @@ static void frame(void) {
 
     sapp_set_mouse_cursor(cursor_to_set);
 
+    simgui_flush();
     sg_pass pass = { };
     pass.action = state.pass_action;
     pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

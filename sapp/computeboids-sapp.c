@@ -141,6 +141,7 @@ static void frame(void) {
     sg_end_pass();
 
     // render pass for rendering the boids, instanced by the current output storage buffer
+    simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
         .swapchain = sglue_swapchain(),
@@ -150,7 +151,7 @@ static void frame(void) {
         .views[VIEW_vs_ssbo] = out_view,
     });
     sg_draw(0, 3, state.sim_params.num_particles);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 

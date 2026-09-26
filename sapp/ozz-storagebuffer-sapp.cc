@@ -248,6 +248,7 @@ static void frame(void) {
     }
 
     // finally render everything in a single draw call
+    simgui_flush();
     sg_pass pass = {};
     pass.action = state.pass_action;
     pass.swapchain = sglue_swapchain();
@@ -260,7 +261,7 @@ static void frame(void) {
         sg_apply_uniforms(UB_vs_params, SG_RANGE_REF(vs_params));
         sg_draw(0, state.num_triangle_indices, state.num_instances);
     }
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

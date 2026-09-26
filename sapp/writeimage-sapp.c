@@ -109,6 +109,7 @@ static void frame(void) {
         .content_aspect_ratio = 1.0f,
     });
 
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = action, .swapchain = sglue_swapchain() });
     sg_apply_viewport(vp.x, vp.y, vp.width, vp.height, true);
     sg_apply_pipeline(state.pip);
@@ -119,7 +120,7 @@ static void frame(void) {
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     // draw 'fullscreen triangle'
     sg_draw(0, 3, 1);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

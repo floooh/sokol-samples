@@ -65,11 +65,12 @@ static void frame(void) {
     }
 
     // the sokol_gfx draw pass
+    simgui_flush();
     sg_pass pass = {};
     pass.action = pass_action;
     pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }
