@@ -25,7 +25,8 @@
 static struct {
     sg_buffer vertex_buffer;
     sg_buffer index_buffer;
-    sg_buffer staging_buffer;
+    sg_buffer vertex_staging_buffer;
+    sg_buffer index_staging_buffer;
     sg_pipeline pip;
     sg_pass_action pass_action;
     int vtx_segment_size;
@@ -61,22 +62,34 @@ static void init(void) {
         .normals = true
     };
 
-    // a single 'staging buffer' for enough room
+    // NOTE: WebGL2 can only copy into an index buffer when the source buffer
+    // is also an index buffer, that's why we cannot use a common staging buffer
+    // for both vertex- and index-updates :/
     state.vtx_segment_size = MAX_SEGMENT_VERTICES * sshape_vertex_size(&vtx_comps);
     state.idx_segment_size = MAX_SEGMENT_INDICES * sizeof(uint16_t);
-    state.staging_buffer = sg_make_buffer(&(sg_buffer_desc){
+    state.vertex_staging_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
+            .vertex_buffer = true,
             .write_transient = true,
             .copy_src = true,
         },
-        .size = (size_t)(state.vtx_segment_size + state.idx_segment_size),
-        .label = "staging-buffer",
+        .size = (size_t)state.vtx_segment_size,
+        .label = "vertex-staging-buffer",
+    });
+    state.index_staging_buffer = sg_make_buffer(&(sg_buffer_desc){
+        .usage = {
+            .index_buffer = true,
+            .write_transient = true,
+            .copy_src = true,
+        },
+        .size = (size_t)state.idx_segment_size,
+        .label = "index-staging-buffer",
     });
 
     // a vertex buffer with enough room for all dynamically updated 'segments'
     state.vertex_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
-            .vertex_buffer = true,  // technically not needed, since it's the default
+            .vertex_buffer = true,
             .copy_dst = true,
         },
         .size = (size_t)(NUM_SEGMENTS * state.vtx_segment_size),
@@ -250,26 +263,17 @@ static void update_next_segment(void) {
     const sg_range idx_data = sshape_index_buffer_desc(&shp).data;
     sg_write_buffer_transient(&(sg_write_buffer_desc){
         .src.data = vtx_data,
-        .dst = {
-            .buffer = state.staging_buffer,
-            .offset = 0,
-        },
+        .dst.buffer = state.vertex_staging_buffer,
     });
     sg_write_buffer_transient(&(sg_write_buffer_desc){
         .src.data = idx_data,
-        .dst = {
-            .buffer = state.staging_buffer,
-            .offset = state.vtx_segment_size,
-        },
+        .dst.buffer = state.index_staging_buffer,
     });
 
     // then 'persist' the data by copying into a specific segment
     // in the vertex- and index-buffer
     sg_copy_buffer_to_buffer(&(sg_copy_buffer_to_buffer_desc){
-        .src = {
-            .buffer = state.staging_buffer,
-            .offset = 0,
-        },
+        .src.buffer = state.vertex_staging_buffer,
         .dst = {
             .buffer = state.vertex_buffer,
             .offset = (size_t)(seg * state.vtx_segment_size),
@@ -277,10 +281,7 @@ static void update_next_segment(void) {
         .size = vtx_data.size,
     });
     sg_copy_buffer_to_buffer(&(sg_copy_buffer_to_buffer_desc){
-        .src = {
-            .buffer = state.staging_buffer,
-            .offset = state.vtx_segment_size,
-        },
+        .src.buffer = state.index_staging_buffer,
         .dst = {
             .buffer = state.index_buffer,
             .offset = (size_t)(seg * state.idx_segment_size),
