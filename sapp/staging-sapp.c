@@ -65,7 +65,7 @@ static void init(void) {
     // NOTE: WebGL2 can only copy into an index buffer when the source buffer
     // is also an index buffer, that's why we cannot use a common staging buffer
     // for both vertex- and index-updates :/
-    state.vtx_segment_size = MAX_SEGMENT_VERTICES * sshape_vertex_size(&vtx_comps);
+    state.vtx_segment_size = MAX_SEGMENT_VERTICES * (int)sshape_vertex_size(&vtx_comps);
     state.idx_segment_size = MAX_SEGMENT_INDICES * sizeof(uint16_t);
     state.vertex_staging_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
