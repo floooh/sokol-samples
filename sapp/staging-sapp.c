@@ -69,7 +69,7 @@ static void init(void) {
     state.idx_segment_size = MAX_SEGMENT_INDICES * sizeof(uint16_t);
     state.vertex_staging_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
-            .vertex_buffer = true,
+            .staging_buffer = true,
             .write_transient = true,
             .copy_src = true,
         },
@@ -78,7 +78,8 @@ static void init(void) {
     });
     state.index_staging_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
-            .index_buffer = true,
+            // NOTE: special 'staging index buffer` needed for WebGL2 restriction
+            .staging_index_buffer = true,
             .write_transient = true,
             .copy_src = true,
         },
