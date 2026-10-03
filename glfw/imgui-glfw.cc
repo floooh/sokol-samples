@@ -104,8 +104,9 @@ int main() {
         sg_pass pass = {};
         pass.action = pass_action;
         pass.swapchain = glfw_swapchain();
+        simgui_flush();
         sg_begin_pass(pass);
-        simgui_render();
+        simgui_draw();
         sg_end_pass();
         sg_commit();
         glfwSwapBuffers(w);
