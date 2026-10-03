@@ -107,41 +107,24 @@ int main() {
     */
     sg_reset_state_cache();
     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-        .usage.immutable = true,
         .size = sizeof(vertices),
-        .gl_buffers[0] = gl_vbuf
+        .gl_buffer = gl_vbuf
     });
     state.bind.index_buffer = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
             .index_buffer = true,
-            .immutable = true,
         },
         .size = sizeof(indices),
-        .gl_buffers[0] = gl_ibuf
+        .gl_buffer = gl_ibuf
     });
 
-    /* create dynamically updated textures, in the GL backend,
-       dynamic textures are rotated through, so need to create
-       SG_NUM_INFLIGHT_FRAMES GL textures
-    */
-    sg_image_desc img_desc = {
+    // NOTE: write-transient textures can no longer be injected
+    state.img = sg_make_image(&(sg_image_desc){
         .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-    };
-    glGenTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
-    glActiveTexture(GL_TEXTURE0);
-    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
-        glBindTexture(GL_TEXTURE_2D, img_desc.gl_textures[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    }
-    sg_reset_state_cache();
-    state.img = sg_make_image(&img_desc);
+    });
     state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });
 
     // create a GL sampler object

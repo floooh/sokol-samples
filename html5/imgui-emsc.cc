@@ -128,8 +128,9 @@ static EM_BOOL draw(double time, void* userdata) {
     }
 
     // the sokol_gfx draw pass
+    simgui_flush();
     sg_begin_pass({ .action = pass_action, .swapchain = emsc_swapchain() });
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
     return EM_TRUE;
