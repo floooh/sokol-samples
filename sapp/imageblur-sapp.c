@@ -121,8 +121,9 @@ static void frame(void) {
 
     // if loading hasn't finished yet or has failed, just draw a fallback ui
     if (!state.io.succeeded) {
+        simgui_flush();
         sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
-        simgui_render();
+        simgui_draw();
         sg_end_pass();
         sg_commit();
         return;
@@ -140,6 +141,7 @@ static void frame(void) {
     sg_end_pass();
 
     // swapchain render pass to display the result
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain(), .label = "display-pass" });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&(sg_bindings){
@@ -147,7 +149,7 @@ static void frame(void) {
         .samplers[SMP_disp_smp] = state.smp,
     });
     sg_draw(0, 3, 1);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

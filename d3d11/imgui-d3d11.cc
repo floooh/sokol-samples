@@ -91,8 +91,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
         sg_pass pass = { };
         pass.action = pass_action;
         pass.swapchain = d3d11_swapchain();
+        simgui_flush();
         sg_begin_pass(&pass);
-        simgui_render();
+        simgui_draw();
         sg_end_pass();
         sg_commit();
         d3d11_present();

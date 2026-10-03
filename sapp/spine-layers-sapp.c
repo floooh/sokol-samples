@@ -63,7 +63,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup sokol-gfx pass action to clear screen
     state.pass_action = (sg_pass_action){
@@ -135,18 +135,19 @@ static void frame(void) {
     sspine_draw_instance_in_layer(state.instances[2], 2);
 
     // sokol-gfx render pass, draw the sokol-gl and sokol-spine layers interleaved
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int layer_index = 0; layer_index < 3; layer_index++) {
         sspine_draw_layer(layer_index, &layer_transform);
         sgl_draw_layer(layer_index);
     }
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sfetch_shutdown();
     sgl_shutdown();
     sspine_shutdown();
@@ -285,7 +286,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 1024,
         .height = 768,
         .window_title = "spine-layers-sapp.c",

@@ -121,6 +121,7 @@ static void frame(void) {
     sfetch_dowork();
     ui_draw();
 
+    simgui_flush();
     const fs_params_t fs_params = { .mip_lod = state.ui.mip_lod };
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     apply_viewport();
@@ -131,7 +132,7 @@ static void frame(void) {
     });
     sg_apply_uniforms(UB_fs_params, &SG_RANGE(fs_params));
     sg_draw(0, 4, 1);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

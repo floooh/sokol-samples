@@ -280,6 +280,7 @@ static void frame(void) {
     sg_end_pass();
 
     // display-pass to compose the offscreen image with a test-color-cleared canvas
+    simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action.colors[0] = {
             .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 1.0f, 1.0f }
@@ -292,7 +293,7 @@ static void frame(void) {
         .samplers[SMP_smp] = state.compose.smp,
     });
     sg_draw(0, 3, 1);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

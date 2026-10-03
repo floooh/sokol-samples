@@ -45,7 +45,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     sdtx_setup(&(sdtx_desc_t){ .fonts[0] = sdtx_font_oric(), .logger.func = slog_func });
 
     // setup display pass resources (renders the offscreen render target textures
@@ -161,6 +161,7 @@ static void frame(void) {
     const int w = sapp_width();
     const int wh = w / 2;
     const int h = sapp_height();
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     // left triangle (no-msaa)
@@ -179,13 +180,13 @@ static void frame(void) {
     sg_draw(0, 3, 1);
     sg_apply_viewport(0, 0, w, h, true);
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sdtx_shutdown();
     sg_shutdown();
 }
@@ -206,7 +207,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .depth_format = SAPP_PIXELFORMAT_NONE,

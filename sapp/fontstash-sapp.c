@@ -94,7 +94,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     sgl_setup(&(sgl_desc_t){
         .logger.func = slog_func
     });
@@ -291,6 +291,7 @@ static void frame(void) {
     sfons_flush(fs);
 
     // render pass
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){
         .action = {
             .colors[0] = {
@@ -301,13 +302,13 @@ static void frame(void) {
         .swapchain = sglue_swapchain()
     });
     sgl_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sfetch_shutdown();
     sfons_destroy(state.fons);
     sgl_shutdown();
@@ -321,7 +322,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .high_dpi = true,

@@ -32,7 +32,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // use sokol-nuklear with all default-options (we're not doing
     // multi-sampled rendering or using non-default pixel formats)
@@ -50,6 +50,7 @@ static void frame(void) {
     draw_demo_ui(ctx);
 
     // the sokol_gfx draw pass
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){
         .action = {
             .colors[0] = {
@@ -59,19 +60,19 @@ static void frame(void) {
         .swapchain = sglue_swapchain()
     });
     snk_render(sapp_width(), sapp_height());
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     snk_shutdown();
     sg_shutdown();
 }
 
 static void input(const sapp_event* event) {
-    if (!__dbgui_event_with_retval(event)) {
+    if (!_dbgui_event_with_retval(event)) {
         snk_handle_event(event);
     }
 }

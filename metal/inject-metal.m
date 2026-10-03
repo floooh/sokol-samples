@@ -102,7 +102,7 @@ static void init(void) {
     // create sokol_gfx buffers with injected Metal buffer objects
     const sg_buffer_desc vbuf_desc = {
         .size = sizeof(vertices),
-        .mtl_buffers[0] = (__bridge const void*) mtl_vbuf
+        .mtl_buffer = (__bridge const void*) mtl_vbuf
     };
     state.bind.vertex_buffers[0] = sg_make_buffer(&vbuf_desc);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.vertex_buffers[0]).buf[0]) == mtl_vbuf);
@@ -110,38 +110,20 @@ static void init(void) {
     const sg_buffer_desc ibuf_desc = {
         .usage.index_buffer = true,
         .size = sizeof(indices),
-        .mtl_buffers[0] = (__bridge const void*) mtl_ibuf
+        .mtl_buffer = (__bridge const void*) mtl_ibuf
     };
     state.bind.index_buffer = sg_make_buffer(&ibuf_desc);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.index_buffer).buf[0]) == mtl_ibuf);
     assert(((__bridge id<MTLBuffer>) sg_mtl_query_buffer_info(state.bind.index_buffer).buf[1]) == nil);
 
-    // create dynamically updated Metal texture objects, these will
-    // be rotated through by sokol_gfx as they are updated, so we need
-    // to create SG_NUM_INFLIGHT_FRAME textures
-    MTLTextureDescriptor* mtl_tex_desc = [[MTLTextureDescriptor alloc] init];
-    mtl_tex_desc.textureType = MTLTextureType2D;
-    mtl_tex_desc.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    mtl_tex_desc.width = IMG_WIDTH;
-    mtl_tex_desc.height = IMG_HEIGHT;
-    mtl_tex_desc.mipmapLevelCount = 1;
-    id<MTLTexture> mtl_tex[SG_NUM_INFLIGHT_FRAMES];
-    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
-        mtl_tex[i] = [osx_mtl_device() newTextureWithDescriptor:mtl_tex_desc];
-    }
+    // NOTE: write-transient resources can no longer be injected
     sg_image_desc img_desc = {
         .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
     };
-    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
-        img_desc.mtl_textures[i] = (__bridge const void*) mtl_tex[i];
-    }
-    sg_reset_state_cache();
     state.img = sg_make_image(&img_desc);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.img).tex[0]) == mtl_tex[0]);
-    assert(((__bridge id<MTLTexture>) sg_mtl_query_image_info(state.img).tex[1]) == mtl_tex[1]);
 
     // note: texture views cannot be injected
     state.bind.views[0] = sg_make_view(&(sg_view_desc){ .texture.image = state.img });

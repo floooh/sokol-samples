@@ -48,7 +48,7 @@ static void init(void) {
         .fonts[0] = sdtx_font_oric(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // clear to black
     state.pass_action = (sg_pass_action) {
@@ -159,6 +159,7 @@ static void frame(void) {
     const mat44_t rm = vm_mul(rym, rxm);
 
     // render shapes...
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&(sg_bindings) {
@@ -173,7 +174,7 @@ static void frame(void) {
         sg_draw(state.shapes[i].draw.base_element, state.shapes[i].draw.num_elements, 1);
     }
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -187,11 +188,11 @@ static void input(const sapp_event* ev) {
             default: break;
         }
     }
-    __dbgui_event(ev);
+    _dbgui_event(ev);
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sdtx_shutdown();
     sg_shutdown();
 }

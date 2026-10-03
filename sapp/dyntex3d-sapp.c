@@ -43,7 +43,7 @@ static uint32_t pixels[DEPTH * MAX_WIDTH_HEIGHT * MAX_WIDTH_HEIGHT];
 
 static void recreate_image(void);
 static void update_pixels(uint64_t frame_count);
-static void draw_ui(void);
+static void ui(void);
 static sg_range pixels_as_range(void);
 
 static void init(void) {
@@ -88,6 +88,10 @@ static void init(void) {
 }
 
 static void frame(void) {
+    ui();
+    // NOTE: the ui code may re-create the write-transient image,
+    // so the sg_write_image_transient() call must happen AFTER
+    // the image is re-created
     if (!state.immutable) {
         update_pixels(sapp_frame_count());
         sg_write_image_transient(&(sg_write_image_desc){
@@ -95,6 +99,7 @@ static void frame(void) {
             .dst.image = state.img,
         });
     }
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -103,7 +108,7 @@ static void frame(void) {
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 6, 1);
     }
-    draw_ui();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -120,7 +125,7 @@ static void cleanup(void) {
     sg_shutdown();
 }
 
-static void draw_ui(void) {
+static void ui(void) {
     sappimgui_track_frame();
     simgui_new_frame(&(simgui_frame_desc_t){
         .width = sapp_width(),
@@ -147,7 +152,6 @@ static void draw_ui(void) {
     igEnd();
     sgimgui_draw();
     sappimgui_draw();
-    simgui_render();
 }
 
 static sg_range pixels_as_range(void) {

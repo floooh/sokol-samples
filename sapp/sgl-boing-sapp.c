@@ -34,7 +34,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     sgl_setup(&(sgl_desc_t){ .logger.func = slog_func });
 
     state.pass_action = (sg_pass_action){
@@ -93,15 +93,16 @@ static void frame(void) {
     draw_ball(state.ball_x + 20.0f, state.ball_y + 30.0f, state.ball_radius * 1.05f, state.ball_rotz, state.ball_rotx, shadow, shadow);
     draw_ball(state.ball_x, state.ball_y, state.ball_radius, state.ball_rotz, state.ball_rotx, red, white);
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
@@ -152,7 +153,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .window_title = "sgl-boing-sapp.c",

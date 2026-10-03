@@ -30,7 +30,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     sfb_setup(&(sfb_desc){
         .logger.func = slog_func,
@@ -68,19 +68,20 @@ static void frame(void) {
     sfb_update(state.fb, &(sfb_update_desc){ .pixels = SG_RANGE(pixels) });
 
     // draw framebuffer in sokol-gfx render pass
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){
         .action = { .colors[0] = { .load_action = SG_LOADACTION_DONTCARE } },
         .swapchain = sglue_swapchain(),
     });
     sfb_render(state.fb);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
     sfb_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -90,7 +91,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .window_title = "framebuffer-sapp.c",

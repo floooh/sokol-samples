@@ -99,9 +99,8 @@ int main() {
     */
     sg_reset_state_cache();
     sg_buffer vbuf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.immutable = true,
         .size = sizeof(vertices),
-        .gl_buffers[0] = gl_vbuf
+        .gl_buffer = gl_vbuf
     });
     assert(sg_gl_query_buffer_info(vbuf).buf[0] == gl_vbuf);
     assert(sg_gl_query_buffer_info(vbuf).buf[1] == 0);
@@ -109,39 +108,21 @@ int main() {
     sg_buffer ibuf = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
             .index_buffer = true,
-            .immutable = true,
         },
         .size = sizeof(indices),
-        .gl_buffers[0] = gl_ibuf
+        .gl_buffer = gl_ibuf
     });
     assert(sg_gl_query_buffer_info(ibuf).buf[0] == gl_ibuf);
     assert(sg_gl_query_buffer_info(ibuf).buf[1] == 0);
     assert(sg_gl_query_buffer_info(ibuf).active_slot == 0);
 
-    /* create dynamically updated textures, in the GL backend
-       dynamic textures are rotated through, so need to create
-       SG_NUM_INFLIGHT_FRAMES GL textures
-    */
-    sg_image_desc img_desc = {
+    // NOTE: write-transient textures can no longer be injected
+    sg_image img = sg_make_image(&(sg_image_desc){
         .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        // testing gl_texture_target, not strictly needed in this case though:
-        .gl_texture_target = GL_TEXTURE_2D
-    };
-    glGenTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
-    glActiveTexture(GL_TEXTURE0);
-    for (int i = 0; i < SG_NUM_INFLIGHT_FRAMES; i++) {
-        glBindTexture(GL_TEXTURE_2D, img_desc.gl_textures[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, IMG_WIDTH, IMG_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    }
-    sg_reset_state_cache();
-    sg_image img = sg_make_image(&img_desc);
-    assert(sg_gl_query_image_info(img).tex[0] == img_desc.gl_textures[0]);
-    assert(sg_gl_query_image_info(img).tex[1] == img_desc.gl_textures[1]);
-    assert(sg_gl_query_image_info(img).active_slot == 0);
-    assert(sg_gl_query_image_info(img).tex_target == GL_TEXTURE_2D);
+    });
 
     // create a texture view on the image
     sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });
@@ -262,7 +243,6 @@ int main() {
     // sokol_gfx doesn't destroy any externally created resource object
     glDeleteBuffers(1, &gl_vbuf); gl_vbuf = 0;
     glDeleteBuffers(1, &gl_ibuf); gl_ibuf = 0;
-    glDeleteTextures(SG_NUM_INFLIGHT_FRAMES, img_desc.gl_textures);
     glDeleteSamplers(1, &smp_desc.gl_sampler);
 
     glfwTerminate();

@@ -79,7 +79,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __cdbgui_setup();
+    _cdbgui_setup();
 
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
@@ -108,7 +108,7 @@ static const char key_map[512] = {
 
 static void event(const sapp_event* ev) {
     // FIXME: need to filter out events consumed by the Dear ImGui debug UI
-    __cdbgui_event(ev);
+    _cdbgui_event(ev);
     switch (ev->type) {
         case SAPP_EVENTTYPE_MOUSE_DOWN:
             mu_input_mousedown(&state.mu_ctx, (int)ev->mouse_x, (int)ev->mouse_y, (1<<ev->mouse_button));
@@ -165,6 +165,7 @@ void frame(void) {
     r_end();
 
     // render the sokol-gfx default pass
+    _cdbgui_update();
     sg_begin_pass(&(sg_pass) {
         .action = {
             .colors[0] = {
@@ -175,13 +176,13 @@ void frame(void) {
         .swapchain = sglue_swapchain()
     });
     r_draw();
-    __cdbgui_draw();
+    _cdbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __cdbgui_shutdown();
+    _cdbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }

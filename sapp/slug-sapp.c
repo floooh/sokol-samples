@@ -280,6 +280,7 @@ static void frame(void) {
     }
 
     // render the recorded draw commands
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     if (any_valid) {
         sg_apply_pipeline(state.pip);
@@ -298,7 +299,7 @@ static void frame(void) {
             sg_draw(0, 6, cmd->num_instances);
         }
     }
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

@@ -298,11 +298,12 @@ static void frame(void) {
     igEnd();
 
     // actual UI rendering, the user draw callbacks are called from inside simgui_render()
+    simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action = state.default_pass_action,
         .swapchain = sglue_swapchain()
     });
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

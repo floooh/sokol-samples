@@ -49,7 +49,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     // optional debugging UI, only active in the spine-simple-sapp-ui sample
-    __dbgui_setup();
+    _dbgui_setup();
 
     // Setup sokol_spine.h, if desired, memory usage can be tuned by
     // setting the max number of vertices, draw commands and pool sizes
@@ -304,9 +304,10 @@ static void frame(void) {
     // if the atlas image have already been loaded yet, if the image handles
     // recorded by sokol-spine for rendering are not yet valid, rendering
     // operations will silently be skipped.
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -314,7 +315,7 @@ static void frame(void) {
 static void cleanup(void) {
     sfetch_shutdown();
     sspine_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -324,7 +325,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 1024,
         .height = 768,
         .depth_format = SAPP_PIXELFORMAT_NONE,
