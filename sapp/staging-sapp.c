@@ -258,8 +258,8 @@ static void update_next_segment(void) {
     assert(shp.indices.data_size <= (size_t)state.idx_segment_size);
     state.shapes[seg] = sshape_element_range(&shp);
 
-    // first write both shape vertex- and index-data into common
-    // write-transient staging buffer
+    // first write both shape vertex- and index-data into
+    // write-transient staging buffers
     const sg_range vtx_data = sshape_vertex_buffer_desc(&shp).data;
     const sg_range idx_data = sshape_index_buffer_desc(&shp).data;
     sg_write_buffer_transient(&(sg_write_buffer_desc){
