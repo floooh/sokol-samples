@@ -82,8 +82,9 @@ void frame() {
     }
 
     // the sokol draw pass
+    simgui_flush();
     sg_begin_pass({ .action = pass_action, .swapchain = osx_swapchain() });
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }
