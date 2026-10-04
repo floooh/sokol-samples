@@ -96,7 +96,7 @@ static void init(void) {
         .logger.func = slog_func,
     });
     sspine_setup(&(sspine_desc){ .logger.func = slog_func });
-    __dbgui_setup();
+    _dbgui_setup();
 
     state.pass_action = (sg_pass_action){
         .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f } }
@@ -135,10 +135,11 @@ static void frame(void) {
     sspine_update_instance(state.instance, delta_time);
     sspine_draw_instance_in_layer(state.instance, 0);
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sspine_draw_layer(0, &layer_transform);
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -165,7 +166,7 @@ static void input(const sapp_event* ev) {
                 break;
         }
     }
-    __dbgui_event(ev);
+    _dbgui_event(ev);
 }
 
 static void load_failed(void) {

@@ -20,7 +20,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup sokol-gl
     sgl_setup(&(sgl_desc_t){
@@ -172,15 +172,16 @@ static void frame(void) {
     sgl_pop_pipeline();
 
     // sokol-gfx default pass with the actual sokol-gl drawing
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sgl_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
@@ -191,7 +192,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 512,
         .height = 512,
         .sample_count = 4,

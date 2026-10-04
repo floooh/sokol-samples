@@ -132,38 +132,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
     d3d11_vbuf->lpVtbl->Release(d3d11_vbuf); d3d11_vbuf = 0;
     d3d11_ibuf->lpVtbl->Release(d3d11_ibuf); d3d11_ibuf = 0;
 
-    // we can inject either a D3D11 texture, or a shader-resource-view, or both
-    D3D11_TEXTURE2D_DESC d3d11_tex_desc = {
-        .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-        .Width = IMG_WIDTH,
-        .Height = IMG_HEIGHT,
-        .MipLevels = 1,
-        .ArraySize = 1,
-        .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-        .Usage = D3D11_USAGE_DEFAULT,
-        .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
-        .SampleDesc.Count = 1,
-    };
-    ID3D11Texture2D* d3d11_tex = 0;
-    hr = d3d11_dev->lpVtbl->CreateTexture2D(d3d11_dev, &d3d11_tex_desc, 0, &d3d11_tex);
-    assert(SUCCEEDED(hr) && d3d11_tex);
-
-    // and create a sokol_gfx texture with injected D3D11 texture
+    // NOTE: write-transient images can no longer be injected
     sg_reset_state_cache();
     sg_image img = sg_make_image(&(sg_image_desc){
         .usage.write_transient = true,
         .width = IMG_WIDTH,
         .height = IMG_HEIGHT,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .d3d11_texture = d3d11_tex,
     });
-    assert(sg_d3d11_query_image_info(img).tex2d == d3d11_tex);
-    assert(sg_d3d11_query_image_info(img).tex3d == 0);
-    assert(sg_d3d11_query_image_info(img).res == d3d11_tex);
-    if (d3d11_tex) {
-        d3d11_tex->lpVtbl->Release(d3d11_tex);
-        d3d11_tex = 0;
-    }
 
     // note: view objects can currently not be injected
     sg_view tex_view = sg_make_view(&(sg_view_desc){ .texture.image = img });

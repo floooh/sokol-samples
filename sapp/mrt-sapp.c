@@ -51,7 +51,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // a pass action for the default render pass
     state.display.pass_action = (sg_pass_action) {
@@ -250,6 +250,7 @@ static void frame(void) {
     sg_end_pass();
 
     // render fullscreen quad with the 'composed image', plus 3 small debug-view quads
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.display.pip);
     sg_apply_bindings(&state.display.bind);
@@ -263,13 +264,13 @@ static void frame(void) {
         sg_draw(0, 4, 1);
     }
     sg_apply_viewport(0, 0, sapp_width(), sapp_height(), false);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -278,7 +279,7 @@ static void event(const sapp_event* e) {
     if (e->type == SAPP_EVENTTYPE_RESIZED) {
         reinit_attachments(e->framebuffer_width, e->framebuffer_height);
     }
-    __dbgui_event(e);
+    _dbgui_event(e);
 }
 
 // called initially and when window size changes, will re-initialize

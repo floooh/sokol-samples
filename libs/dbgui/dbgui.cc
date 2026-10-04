@@ -17,7 +17,7 @@
 
 extern "C" {
 
-void __dbgui_setup(void) {
+void _dbgui_setup(void) {
     // setup debug inspection header(s)
     sappimgui_setup();
     const sgimgui_desc_t desc = { };
@@ -31,13 +31,13 @@ void __dbgui_setup(void) {
     simgui_setup(&simgui_desc);
 }
 
-void __dbgui_shutdown(void) {
+void _dbgui_shutdown(void) {
     sgimgui_shutdown();
     sappimgui_shutdown();
     simgui_shutdown();
 }
 
-void __dbgui_draw(void) {
+void _dbgui_update(void) {
     simgui_new_frame({ sapp_width(), sapp_height(), sapp_frame_duration(), sapp_dpi_scale() });
     sappimgui_track_frame();
     if (ImGui::BeginMainMenuBar()) {
@@ -47,15 +47,19 @@ void __dbgui_draw(void) {
     }
     sappimgui_draw();
     sgimgui_draw();
-    simgui_render();
+    simgui_flush();
 }
 
-void __dbgui_event(const sapp_event* e) {
+void _dbgui_draw(void) {
+    simgui_draw();
+}
+
+void _dbgui_event(const sapp_event* e) {
     sappimgui_track_event(e);
     simgui_handle_event(e);
 }
 
-bool __dbgui_event_with_retval(const sapp_event* e) {
+bool _dbgui_event_with_retval(const sapp_event* e) {
     sappimgui_track_event(e);
     return simgui_handle_event(e);
 }

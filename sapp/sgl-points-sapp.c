@@ -38,7 +38,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
     sgl_setup(&(sgl_desc_t){ .logger.func = slog_func });
 }
 
@@ -91,7 +91,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
@@ -102,7 +102,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 512,
         .height = 512,
         .window_title = "sgl-points-sapp.c",

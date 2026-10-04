@@ -4,13 +4,15 @@
 */
 #if defined(USE_DBG_UI)
 #include "sokol_app.h"
-extern void __cdbgui_setup(void);
-extern void __cdbgui_shutdown(void);
-extern void __cdbgui_draw(void);
-extern void __cdbgui_event(const sapp_event* e);
+extern void _cdbgui_setup(void);
+extern void _cdbgui_shutdown(void);
+extern void _cdbgui_update(void);
+extern void _cdbgui_draw(void);
+extern void _cdbgui_event(const sapp_event* e);
 #else
-static inline void __cdbgui_setup(void) { }
-static inline void __cdbgui_shutdown(void) { }
-static inline void __cdbgui_draw(void) { }
-static inline void __cdbgui_event(const sapp_event* e) { (void)(e); }
+static inline void _cdbgui_setup(void) { }
+static inline void _cdbgui_shutdown(void) { }
+static inline void _cdbgui_update(void) { }
+static inline void _cdbgui_draw(void) { }
+static inline void _cdbgui_event(const sapp_event* e) { (void)(e); }
 #endif

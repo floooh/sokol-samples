@@ -40,7 +40,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup sokol-gl with the default context compatible with the default render pass
     sgl_setup(&(sgl_desc_t){
@@ -136,15 +136,16 @@ static void frame(void) {
     sg_begin_pass(&state.offscreen.pass);
     sgl_context_draw(state.offscreen.sgl_ctx);
     sg_end_pass();
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
     sgl_context_draw(SGL_DEFAULT_CONTEXT);
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sgl_shutdown();
     sg_shutdown();
 }
@@ -156,7 +157,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,

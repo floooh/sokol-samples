@@ -40,7 +40,7 @@ static void init(void) {
         .fonts[0] = sdtx_font_oric(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // setup vertex shader uniform block
     state.vs_params.scale[0] = 1.0f;
@@ -107,6 +107,7 @@ static void frame(void) {
         sdtx_crlf(); sdtx_crlf();
     }
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&state.bind);
@@ -123,13 +124,13 @@ static void frame(void) {
         y0 -= 4.0f * glyph_h;
     }
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -139,7 +140,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .depth_format = SAPP_PIXELFORMAT_NONE,

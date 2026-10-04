@@ -374,6 +374,7 @@ static void frame(void) {
     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     draw_ui();
 
+    simgui_flush();
     sg_pass pass = {};
     pass.action = state.pass_action;
     pass.swapchain = sglue_swapchain();
@@ -390,7 +391,7 @@ static void frame(void) {
             sg_draw(0, state.num_triangle_indices, state.num_instances);
         }
     }
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

@@ -82,7 +82,7 @@ static void init(void) {
         .num_lanes = 1,
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // create 2 sspine contexts for rendering into offscreen render targets
     state.offscreen[0] = setup_offscreen(SG_PIXELFORMAT_RGBA8, 512, (sg_color){ 1.0f, 1.0f, 1.0f, 1.0f });
@@ -169,15 +169,16 @@ static void frame(void) {
     sspine_context_draw_layer(state.offscreen[1].ctx, 0, &state.layer_transform);
     sg_end_pass();
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     sgl_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sfetch_shutdown();
     sspine_shutdown();
     sgl_shutdown();
@@ -367,7 +368,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 1024,
         .height = 768,
         .sample_count = 4,

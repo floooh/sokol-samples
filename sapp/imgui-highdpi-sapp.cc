@@ -107,12 +107,15 @@ void frame(void) {
         show_quit_dialog = false;
     }
 
-    // the sokol_gfx draw pass
+    // the sokol_gfx draw pass, NOTE: simgui_flush() should be called after the
+    // last Dear ImGui call, as late in the frame as possible, but before the
+    // sokol-gfx render pass which contains simgui_draw()
+    simgui_flush();
     sg_pass pass = {};
     pass.action = pass_action;
     pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

@@ -410,13 +410,14 @@ static void frame(void) {
     igEnd();
 
     // sokol-gfx rendering...
+    simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action = {
             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0.0f, 0.5f, 0.7f, 1.0f } }
         },
         .swapchain = sglue_swapchain()
     });
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

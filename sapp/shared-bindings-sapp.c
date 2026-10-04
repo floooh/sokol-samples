@@ -39,7 +39,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     // pass action for clearing the framebuffer
     state.pass_action = (sg_pass_action){
@@ -192,6 +192,7 @@ static void frame(void) {
     const float vph = vpw;
     const float vpy = dh * 0.5f - vph * 0.5f;
 
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     for (int i = 0; i < 3; i++) {
         const float vpx = dw * 0.5f - 1.5f * vpw + i * vpw;
@@ -201,13 +202,13 @@ static void frame(void) {
         sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
         sg_draw(0, 36, 1);
     }
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
 
 static void cleanup(void) {
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
@@ -227,7 +228,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = __dbgui_event,
+        .event_cb = _dbgui_event,
         .width = 800,
         .height = 600,
         .sample_count = 4,

@@ -455,6 +455,7 @@ static void frame(void) {
     }
     draw_ui();
 
+    simgui_flush();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_viewport(vp_x, vp_y, vp_width, vp_height, true);
     if (ozz_all_loaded(state.ozz)) {
@@ -499,7 +500,7 @@ static void frame(void) {
         sg_draw(0, ozz_num_triangle_indices(state.ozz), 1);
     }
     sgl_draw();
-    simgui_render();
+    simgui_draw();
     sg_end_pass();
     sg_commit();
 }

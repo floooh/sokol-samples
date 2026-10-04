@@ -47,7 +47,7 @@ static void init(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    __dbgui_setup();
+    _dbgui_setup();
 
     sdtx_setup(&(sdtx_desc_t){
         .fonts[0] = sdtx_font_c64(),
@@ -135,6 +135,7 @@ static void frame(void) {
     draw_panel();
 
     // actual render pass
+    _dbgui_update();
     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
     sg_apply_pipeline(state.pip);
     sg_apply_bindings(&(sg_bindings){
@@ -176,7 +177,7 @@ static void frame(void) {
             break;
     }
     sdtx_draw();
-    __dbgui_draw();
+    _dbgui_draw();
     sg_end_pass();
     sg_commit();
 }
@@ -191,12 +192,12 @@ static void input(const sapp_event* ev) {
         }
     }
     state.current_mode &= state.supported_modes;
-    __dbgui_event(ev);
+    _dbgui_event(ev);
 }
 
 static void cleanup(void) {
     sdtx_shutdown();
-    __dbgui_shutdown();
+    _dbgui_shutdown();
     sg_shutdown();
 }
 
