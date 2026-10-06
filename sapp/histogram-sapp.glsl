@@ -62,7 +62,7 @@ void main() {
 @program shape vs_shape fs_shape
 
 // display pass: render the offscreen image as fullscreen triangle
-@vs vs_display
+@vs vs_display_canvas
 const vec2 positions[3] = { vec2(-1, -1), vec2(3, -1), vec2(-1, 3), };
 out vec2 uv;
 
@@ -73,7 +73,7 @@ void main() {
 }
 @end
 
-@fs fs_display
+@fs fs_display_canvas
 layout(binding=0) uniform texture2D disp_tex;
 layout(binding=0) uniform sampler disp_smp;
 in vec2 uv;
@@ -83,4 +83,4 @@ void main() {
     frag_color = vec4(texture(sampler2D(disp_tex, disp_smp), uv).xyz, 1);
 }
 @end
-@program display vs_display fs_display
+@program display_canvas vs_display_canvas fs_display_canvas

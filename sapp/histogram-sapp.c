@@ -29,6 +29,12 @@ static struct {
         sg_image color_img;
         sg_image depth_img;
     } offscreen;
+    struct {
+        sg_pipeline canvas_pip;
+        sg_view color_tex_view;
+        sg_sampler smp;
+        sg_pass_action pass_action;
+    } display;
     float rx, ry;
 } state;
 
@@ -142,7 +148,21 @@ static void init(void) {
     state.offscreen.depth_img = sg_alloc_image();
     state.offscreen.pass.attachments.colors[0] = sg_alloc_view();
     state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
+    state.display.color_tex_view = sg_alloc_view();
     reinit_attachments(sapp_width(), sapp_height());
+
+    // create a bufferless 'fullscreen-triangle' shader to render the offscreen image to the display
+    state.display.canvas_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(display_canvas_shader_desc(sg_query_backend())),
+        .label = "display-canvas-pipeline",
+    });
+
+    // ...and a sample for rendering the fullscreen-triangle
+    state.display.smp = sg_make_sampler(&(sg_sampler_desc){
+        .min_filter = SG_FILTER_NEAREST,
+        .mag_filter = SG_FILTER_NEAREST,
+        .label = "display-canvas-sampler",
+    });
 }
 
 static void frame(void) {
@@ -174,6 +194,13 @@ static void frame(void) {
     // the final display render pass
     _dbgui_update();
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
+    // first 'blit' the offscreen render target as fullscreen triangle
+    sg_apply_pipeline(state.display.canvas_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_disp_tex] = state.display.color_tex_view,
+        .samplers[SMP_disp_smp] = state.display.smp,
+    });
+    sg_draw(0, 3, 1);
     _dbgui_draw();
     sg_end_pass();
     sg_commit();
@@ -193,28 +220,34 @@ static void event(const sapp_event* ev) {
 
 static void reinit_attachments(int width, int height) {
     sg_uninit_image(state.offscreen.color_img);
-    sg_uninit_image(state.offscreen.depth_img);
-    sg_uninit_view(state.offscreen.pass.attachments.colors[0]);
-    sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
-
-    state.offscreen.color_img = sg_make_image(&(sg_image_desc){
+    sg_init_image(state.offscreen.color_img, &(sg_image_desc){
         .usage.color_attachment = true,
         .width = width,
         .height = height,
-        .label = "color-attachment-image",
+        .label = "color-image",
     });
-    state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
+    sg_uninit_image(state.offscreen.depth_img);
+    sg_init_image(state.offscreen.depth_img, &(sg_image_desc){
         .usage.depth_stencil_attachment = true,
         .width = width,
         .height = height,
         .pixel_format = SG_PIXELFORMAT_DEPTH,
-        .label = "depth-attachment-image",
+        .label = "depth-image",
     });
-    state.offscreen.pass.attachments.colors[0] = sg_make_view(&(sg_view_desc){
+    sg_uninit_view(state.display.color_tex_view);
+    sg_init_view(state.display.color_tex_view, &(sg_view_desc){
+        .texture.image = state.offscreen.color_img,
+        .label = "color-image-texture-view",
+    });
+    sg_uninit_view(state.offscreen.pass.attachments.colors[0]);
+    sg_init_view(state.offscreen.pass.attachments.colors[0], &(sg_view_desc){
         .color_attachment.image = state.offscreen.color_img,
+        .label = "color-image-attachment-view",
     });
-    state.offscreen.pass.attachments.depth_stencil = sg_make_view(&(sg_view_desc){
+    sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
+    sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
         .depth_stencil_attachment.image = state.offscreen.depth_img,
+        .label = "depth-image-attachemnt-view",
     });
 }
 
@@ -237,8 +270,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = event,
-        .width = 640,
-        .height = 480,
+        .width = 800,
+        .height = 600,
         .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "histogram-sapp.c",
         .icon.sokol_default = true,
