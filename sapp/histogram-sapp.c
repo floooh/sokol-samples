@@ -1,0 +1,247 @@
+//------------------------------------------------------------------------------
+//  histogram-sapp.c
+//
+//  Demonstrates writing to storage buffer from within a fragment shader.
+//------------------------------------------------------------------------------
+#include "sokol_app.h"
+#include "sokol_gfx.h"
+#include "sokol_log.h"
+#include "sokol_glue.h"
+#include "dbgui/dbgui.h"
+#define VECMATH_GENERICS
+#include "vecmath/vecmath.h"
+#include "histogram-sapp.glsl.h"
+
+#define NUM_HISTOGRAM_BINS (256)
+#define WORKGROUP_WIDTH (64)
+
+static struct {
+    struct {
+        sg_buffer sbuf;
+        sg_view sbuf_view;
+        sg_pipeline clear_pip;
+    } histogram;
+    struct {
+        sg_buffer vbuf;
+        sg_buffer ibuf;
+        sg_pipeline pip;
+        sg_pass pass;
+        sg_image color_img;
+        sg_image depth_img;
+    } offscreen;
+    float rx, ry;
+} state;
+
+static void reinit_attachments(int width, int height);
+static vs_params_t compute_vsparams(float rx, float ry);
+
+static void init(void) {
+    sg_setup(&(sg_desc){
+        .environment = sglue_environment(),
+        .logger.func = slog_func,
+    });
+    _dbgui_setup();
+
+    // a storage buffer and view for the histogram
+    state.histogram.sbuf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.storage_buffer = true,
+        .size = NUM_HISTOGRAM_BINS * sizeof(hist_bin_t),
+        .label = "histogram-buffer",
+    });
+    state.histogram.sbuf_view = sg_make_view(&(sg_view_desc){
+        .storage_buffer.buffer = state.histogram.sbuf,
+        .label = "histogram-buffer-view",
+    });
+
+    // a shader and compute pipeline to clear the histogram buffer at the start of each frame
+    state.histogram.clear_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(clear_shader_desc(sg_query_backend())),
+        .label = "histogram-clear-pipeline",
+    });
+
+    // a cube vertex- and index-buffer
+    float vertices[] = {
+        -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+         1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+         1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+
+        -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+         1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+         1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+
+        1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+        1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+
+        -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+        -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+         1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+         1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+
+        -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+        -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+         1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+         1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+    };
+    state.offscreen.vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(vertices),
+        .label = "cube-vertices"
+    });
+
+    // create an index buffer for the cube
+    uint16_t indices[] = {
+        0, 1, 2,  0, 2, 3,
+        6, 5, 4,  7, 6, 4,
+        8, 9, 10,  8, 10, 11,
+        14, 13, 12,  15, 14, 12,
+        16, 17, 18,  16, 18, 19,
+        22, 21, 20,  23, 22, 20
+    };
+    state.offscreen.ibuf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.index_buffer = true,
+        .data = SG_RANGE(indices),
+        .label = "cube-indices"
+    });
+
+    // shader and pipeline to render the cube and update histogram bins
+    state.offscreen.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(shape_shader_desc(sg_query_backend())),
+        .layout = {
+            .attrs = {
+                [ATTR_shape_in_pos].format = SG_VERTEXFORMAT_FLOAT3,
+                [ATTR_shape_in_color].format = SG_VERTEXFORMAT_FLOAT4,
+            },
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .cull_mode = SG_CULLMODE_BACK,
+        .depth = {
+            .write_enabled = true,
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .pixel_format = SG_PIXELFORMAT_DEPTH,
+        },
+        .label = "cube-pipeline",
+    });
+
+    // offscreen pass-action (important: clear to black so that
+    // background doesn't contribute to histogram)
+    state.offscreen.pass.action = (sg_pass_action){
+        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } },
+    };
+
+    // create pass attachment images and viws
+    state.offscreen.color_img = sg_alloc_image();
+    state.offscreen.depth_img = sg_alloc_image();
+    state.offscreen.pass.attachments.colors[0] = sg_alloc_view();
+    state.offscreen.pass.attachments.depth_stencil = sg_alloc_view();
+    reinit_attachments(sapp_width(), sapp_height());
+}
+
+static void frame(void) {
+    const float t = (float)(sapp_frame_duration() * 60.0);
+    state.rx += 1.0f * t; state.ry += 2.0f * t;
+    const vs_params_t vs_params = compute_vsparams(state.rx, state.ry);
+
+    // a compute pass which clears the histogram storage buffer
+    sg_begin_pass(&(sg_pass){ .compute = true });
+    sg_apply_pipeline(state.histogram.clear_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_hist_clear] = state.histogram.sbuf_view,
+    });
+    sg_dispatch(NUM_HISTOGRAM_BINS / WORKGROUP_WIDTH, 1, 1);
+    sg_end_pass();
+
+    // an offscreen pass which renders the cube and updates the histogram buffer
+    sg_begin_pass(&state.offscreen.pass);
+    sg_apply_pipeline(state.offscreen.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.offscreen.vbuf,
+        .index_buffer = state.offscreen.ibuf,
+        .views[VIEW_hist_out] = state.histogram.sbuf_view,
+    });
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
+    sg_draw(0, 36, 1);
+    sg_end_pass();
+
+    // the final display render pass
+    _dbgui_update();
+    sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
+    _dbgui_draw();
+    sg_end_pass();
+    sg_commit();
+}
+
+static void cleanup(void) {
+    _dbgui_shutdown();
+    sg_shutdown();
+}
+
+static void event(const sapp_event* ev) {
+    if (ev->type == SAPP_EVENTTYPE_RESIZED) {
+        reinit_attachments(ev->framebuffer_width, ev->framebuffer_height);
+    }
+    _dbgui_event(ev);
+}
+
+static void reinit_attachments(int width, int height) {
+    sg_uninit_image(state.offscreen.color_img);
+    sg_uninit_image(state.offscreen.depth_img);
+    sg_uninit_view(state.offscreen.pass.attachments.colors[0]);
+    sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
+
+    state.offscreen.color_img = sg_make_image(&(sg_image_desc){
+        .usage.color_attachment = true,
+        .width = width,
+        .height = height,
+        .label = "color-attachment-image",
+    });
+    state.offscreen.depth_img = sg_make_image(&(sg_image_desc){
+        .usage.depth_stencil_attachment = true,
+        .width = width,
+        .height = height,
+        .pixel_format = SG_PIXELFORMAT_DEPTH,
+        .label = "depth-attachment-image",
+    });
+    state.offscreen.pass.attachments.colors[0] = sg_make_view(&(sg_view_desc){
+        .color_attachment.image = state.offscreen.color_img,
+    });
+    state.offscreen.pass.attachments.depth_stencil = sg_make_view(&(sg_view_desc){
+        .depth_stencil_attachment.image = state.offscreen.depth_img,
+    });
+}
+
+static vs_params_t compute_vsparams(float rx, float ry) {
+    const float w = sapp_widthf();
+    const float h = sapp_heightf();
+    mat44_t proj = mat44_perspective_fov_rh(vm_radians(60.0f), w/h, 0.01f, 10.0f);
+    mat44_t view = mat44_look_at_rh(vec3(0.0f, 1.5f, 4.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+    mat44_t view_proj = vm_mul(view, proj);
+    mat44_t rxm = mat44_rotation_x(vm_radians(rx));
+    mat44_t rym = mat44_rotation_y(vm_radians(ry));
+    mat44_t model = vm_mul(rym, rxm);
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
+}
+
+sapp_desc sokol_main(int argc, char* argv[]) {
+    (void)argc; (void)argv;
+    return (sapp_desc){
+        .init_cb = init,
+        .frame_cb = frame,
+        .cleanup_cb = cleanup,
+        .event_cb = event,
+        .width = 640,
+        .height = 480,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
+        .window_title = "histogram-sapp.c",
+        .icon.sokol_default = true,
+        .logger.func = slog_func,
+    };
+}

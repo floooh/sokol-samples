@@ -218,6 +218,7 @@ export const samples: SampleOptions[] = [
     { name: 'noentry-dll', sokol: 'dll', shd: true, filter: (b) => b.isWindows() || b.isMacOS() || b.isLinux() },
     { name: 'instancing-compute', ui: 'cc', shd: true, filter: hasCompute },
     { name: 'write-storageimage', ui: 'cc', shd: true, filter: hasCompute },
+    { name: 'histogram', ui: 'cc', shd: true, filter: hasCompute },
     { name: 'computeboids', shd: true, deps: ['imgui'], filter: hasCompute },
     {
         name: 'imageblur',
