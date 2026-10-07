@@ -11,7 +11,7 @@ struct hist_bin {
 };
 @end
 
-// a compute shader to clear the history at the start of a frame
+// a compute shader to clear the histogram at the start of a frame
 @cs cs_clear
 @include_block hist_common
 layout(binding=0) buffer hist_clear {
@@ -29,13 +29,16 @@ void main() {
 @vs vs_shape
 layout(binding=0) uniform vs_params {
     mat4 mvp;
+    mat4 mv;
 };
 in vec3 in_pos;
 in vec2 in_uv;
 out vec2 uv;
+out vec3 view_pos;
 
 void main() {
     gl_Position = mvp * vec4(in_pos, 1.0);
+    view_pos = (mv * vec4(in_pos, 1.0)).xyz;
     uv = in_uv;
 }
 @end
@@ -49,20 +52,31 @@ layout(binding=1) uniform texture2D shape_tex;
 layout(binding=0) uniform sampler shape_smp;
 
 in vec2 uv;
+in vec3 view_pos;
 out vec4 frag_color;
 
 uint bin_index(float c) {
     return min(uint(clamp(c, 0, 1) * float(NUM_BINS)), NUM_BINS-1);
 }
 
-void main() {
-    vec4 color = texture(sampler2D(shape_tex, shape_smp), uv);
+// quick'n'dirty hardwired lighting so the histogram actually changes in interesting ways
+float lighting() {
+    // flat face normal from screen-space derivatives, flipped to face the viewer
+    vec3 n = normalize(cross(dFdx(view_pos), dFdy(view_pos)));
+    n = faceforward(n, view_pos, n);
+    vec3 light_dir = normalize(vec3(-0.5, 1.0, 1.0));
+    return 0.25 + 0.75 * max(dot(n, light_dir), 0.0);
+}
 
+void main() {
+    float intensity = lighting();
+    vec4 color = vec4(texture(sampler2D(shape_tex, shape_smp), uv).rgb * intensity, 1.0);
+    frag_color = vec4(color.rgb, 1);
+
+    // update histogram values in storagebuffer
     uint r_index = bin_index(color.r);
     uint g_index = bin_index(color.g);
     uint b_index = bin_index(color.b);
-
-    // bin 0 is reserved for the max value
     if (r_index > 0) {
         uint r_cur = atomicAdd(out_bins[r_index].r, 1) + 1;
         atomicMax(out_bins[0].r, r_cur);
@@ -75,7 +89,6 @@ void main() {
         uint b_cur = atomicAdd(out_bins[b_index].b, 1) + 1;
         atomicMax(out_bins[0].b, b_cur);
     }
-    frag_color = vec4(color.rgb, 1);
 }
 @end
 @program shape vs_shape fs_shape

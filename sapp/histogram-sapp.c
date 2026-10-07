@@ -151,10 +151,12 @@ static void init(void) {
         .label = "cube-pipeline",
     });
 
-    // offscreen pass-action (important: clear to black so that
-    // background doesn't contribute to histogram)
+    // offscreen pass action to clear to black
     state.offscreen.pass.action = (sg_pass_action){
-        .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 0, 0, 0, 1 } },
+        .colors[0] = {
+            .load_action = SG_LOADACTION_CLEAR,
+            .clear_value = { 0, 0, 0, 1 }
+        },
     };
 
     // image and sampler for the loaded texture
@@ -166,7 +168,7 @@ static void init(void) {
         .label = "png-sampler",
     });
 
-    // create pass attachment images and viws
+    // create pass attachment images and views
     state.offscreen.color_img = sg_alloc_image();
     state.offscreen.depth_img = sg_alloc_image();
     state.offscreen.pass.attachments.colors[0] = sg_alloc_view();
@@ -237,7 +239,8 @@ static void frame(void) {
     sg_draw(0, 36, 1);
     sg_end_pass();
 
-    // the final display render pass
+    // the final display render pass, renders the offscreen image and
+    // than the histogram on top
     _dbgui_update();
     sg_begin_pass(&(sg_pass){ .swapchain = sglue_swapchain() });
     // first 'blit' the offscreen render target as fullscreen triangle
@@ -272,6 +275,7 @@ static void frame(void) {
 }
 
 static void cleanup(void) {
+    sfetch_shutdown();
     _dbgui_shutdown();
     sg_shutdown();
 }
@@ -312,7 +316,7 @@ static void reinit_attachments(int width, int height) {
     sg_uninit_view(state.offscreen.pass.attachments.depth_stencil);
     sg_init_view(state.offscreen.pass.attachments.depth_stencil, &(sg_view_desc){
         .depth_stencil_attachment.image = state.offscreen.depth_img,
-        .label = "depth-image-attachemnt-view",
+        .label = "depth-image-attachment-view",
     });
 }
 
@@ -325,7 +329,7 @@ static vs_params_t compute_vsparams(float rx, float ry) {
     mat44_t rxm = mat44_rotation_x(vm_radians(rx));
     mat44_t rym = mat44_rotation_y(vm_radians(ry));
     mat44_t model = vm_mul(rym, rxm);
-    return (vs_params_t){ .mvp = vm_mul(model, view_proj) };
+    return (vs_params_t){ .mvp = vm_mul(model, view_proj), .mv = vm_mul(model, view) };
 }
 
 static void fetch_callback(const sfetch_response_t* response) {
@@ -338,7 +342,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            state.offscreen.png_img = sg_make_image(&(sg_image_desc){
+            sg_init_image(state.offscreen.png_img, &(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
