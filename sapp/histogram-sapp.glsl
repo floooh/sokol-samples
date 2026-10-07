@@ -31,12 +31,12 @@ layout(binding=0) uniform vs_params {
     mat4 mvp;
 };
 in vec3 in_pos;
-in vec4 in_color;
-out vec4 color;
+in vec2 in_uv;
+out vec2 uv;
 
 void main() {
     gl_Position = mvp * vec4(in_pos, 1.0);
-    color = in_color;
+    uv = in_uv;
 }
 @end
 
@@ -45,7 +45,10 @@ void main() {
 layout(binding=0) buffer hist_out {
     hist_bin out_bins[];
 };
-in vec4 color;
+layout(binding=1) uniform texture2D shape_tex;
+layout(binding=0) uniform sampler shape_smp;
+
+in vec2 uv;
 out vec4 frag_color;
 
 uint bin_index(float c) {
@@ -53,9 +56,25 @@ uint bin_index(float c) {
 }
 
 void main() {
-    atomicAdd(out_bins[bin_index(color.r)].r, 1);
-    atomicAdd(out_bins[bin_index(color.g)].g, 1);
-    atomicAdd(out_bins[bin_index(color.b)].b, 1);
+    vec4 color = texture(sampler2D(shape_tex, shape_smp), uv);
+
+    uint r_index = bin_index(color.r);
+    uint g_index = bin_index(color.g);
+    uint b_index = bin_index(color.b);
+
+    // bin 0 is reserved for the max value
+    if (r_index > 0) {
+        uint r_cur = atomicAdd(out_bins[r_index].r, 1) + 1;
+        atomicMax(out_bins[0].r, r_cur);
+    }
+    if (g_index > 0) {
+        uint g_cur = atomicAdd(out_bins[g_index].g, 1) + 1;
+        atomicMax(out_bins[0].g, g_cur);
+    }
+    if (b_index > 0) {
+        uint b_cur = atomicAdd(out_bins[b_index].b, 1) + 1;
+        atomicMax(out_bins[0].b, b_cur);
+    }
     frag_color = vec4(color.rgb, 1);
 }
 @end
@@ -74,13 +93,53 @@ void main() {
 @end
 
 @fs fs_display_canvas
-layout(binding=0) uniform texture2D disp_tex;
-layout(binding=0) uniform sampler disp_smp;
+layout(binding=0) uniform texture2D canvas_tex;
+layout(binding=0) uniform sampler canvas_smp;
 in vec2 uv;
 out vec4 frag_color;
 
 void main() {
-    frag_color = vec4(texture(sampler2D(disp_tex, disp_smp), uv).xyz, 1);
+    frag_color = vec4(texture(sampler2D(canvas_tex, canvas_smp), uv).xyz, 1);
 }
 @end
 @program display_canvas vs_display_canvas fs_display_canvas
+
+// the histogram renderer as a bar of synthesized quads, the size is
+// defined by the viewport
+@vs vs_display_hist
+@include_block hist_common
+layout(binding=0) uniform vs_hist_params {
+    int channel;    // 0: red, 1: green, 2: blue
+};
+layout(binding=0) readonly buffer hist_in {
+    hist_bin in_bins[];
+};
+out vec4 color;
+
+uint channel_value(hist_bin bin) {
+    return (channel == 0) ? bin.r : ((channel == 1) ? bin.g : bin.b);
+}
+
+void main() {
+    // instance 0 => bin 1 (bin 0 holds the max value)
+    uint max_count = max(channel_value(in_bins[0]), 1);
+    uint count = channel_value(in_bins[gl_InstanceIndex + 1]);
+    float height = float(count) / float(max_count);
+    // triangle strip: (0,0), (1,0), (0,1), (1,1)
+    vec2 pos = vec2(gl_VertexIndex & 1, (gl_VertexIndex >> 1) & 1);
+    pos.x = (float(gl_InstanceIndex) + pos.x) / float(NUM_BINS - 1);
+    pos.y *= height;
+    gl_Position = vec4(pos * 2 - 1, 0, 1);
+    color = vec4(0, 0, 0, 1);
+    color[channel] = 1;
+}
+@end
+
+@fs fs_display_hist
+in vec4 color;
+out vec4 frag_color;
+void main() {
+    frag_color = color;
+}
+@end
+@program display_hist vs_display_hist fs_display_hist

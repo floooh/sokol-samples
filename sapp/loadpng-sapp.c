@@ -205,7 +205,7 @@ static void fetch_callback(const sfetch_response_t* response) {
             &png_width, &png_height,
             &num_channels, desired_channels);
         if (pixels) {
-            // create an image object from the loaded texture date
+            // create an image object from the loaded texture data
             sg_image img = sg_make_image(&(sg_image_desc){
                 .width = png_width,
                 .height = png_height,
