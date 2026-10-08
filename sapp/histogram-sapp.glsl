@@ -25,7 +25,7 @@ void main() {
 @end
 @program clear cs_clear
 
-// offscreen pass: render a shape and count fragment colors
+// render a shape and count fragment colors
 @vs vs_shape
 layout(binding=0) uniform vs_params {
     mat4 mvp;
@@ -73,7 +73,8 @@ void main() {
     vec4 color = vec4(texture(sampler2D(shape_tex, shape_smp), uv).rgb * intensity, 1.0);
     frag_color = vec4(color.rgb, 1);
 
-    // update histogram values in storagebuffer
+    // update histogram values in storagebuffer,
+    // NOTE: slot 0 of each bin is special and contains the max value
     uint r_index = bin_index(color.r);
     uint g_index = bin_index(color.g);
     uint b_index = bin_index(color.b);
@@ -92,30 +93,6 @@ void main() {
 }
 @end
 @program shape vs_shape fs_shape
-
-// display pass: render the offscreen image as fullscreen triangle
-@vs vs_display_canvas
-const vec2 positions[3] = { vec2(-1, -1), vec2(3, -1), vec2(-1, 3), };
-out vec2 uv;
-
-void main() {
-    vec2 pos = positions[gl_VertexIndex];
-    gl_Position = vec4(pos, 0, 1);
-    uv = (pos * vec2(1, -1) + 1) * 0.5;
-}
-@end
-
-@fs fs_display_canvas
-layout(binding=0) uniform texture2D canvas_tex;
-layout(binding=0) uniform sampler canvas_smp;
-in vec2 uv;
-out vec4 frag_color;
-
-void main() {
-    frag_color = vec4(texture(sampler2D(canvas_tex, canvas_smp), uv).xyz, 1);
-}
-@end
-@program display_canvas vs_display_canvas fs_display_canvas
 
 // the histogram renderer as a bar of synthesized quads, the size is
 // defined by the viewport
@@ -143,8 +120,9 @@ void main() {
     pos.x = (float(gl_InstanceIndex) + pos.x) / float(NUM_BINS - 1);
     pos.y *= height;
     gl_Position = vec4(pos * 2 - 1, 0, 1);
+    // set the bar color to the bins own intensity
     color = vec4(0, 0, 0, 1);
-    color[channel] = 1;
+    color[channel] = float(gl_InstanceIndex + 1) / 255.0;
 }
 @end
 
