@@ -121,8 +121,16 @@ void main() {
     pos.y *= height;
     gl_Position = vec4(pos * 2 - 1, 0, 1);
     // set the bar color to the bins own intensity
-    color = vec4(0, 0, 0, 1);
-    color[channel] = float(gl_InstanceIndex + 1) / 255.0;
+    float v = float(gl_InstanceIndex + 1) / 255.0;
+    vec4 c = vec4(0, 0, 0, 1);
+    if (channel == 0) {
+        c.r = v;
+    } else if (channel == 1) {
+        c.g = v;
+    } else if (channel == 2) {
+        c.b = v;
+    }
+    color = c;
 }
 @end
 
