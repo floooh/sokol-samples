@@ -16,6 +16,7 @@ const Props = {
             'computeboids',
             'write-storageimage',
             'imageblur',
+            'histogram',
             'imgui-perf',
             'noentry-dll',
         ],
