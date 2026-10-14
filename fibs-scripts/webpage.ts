@@ -261,7 +261,7 @@ function generateSample(p: Project, sample: SampleOptions, srcDir: string, dstDi
     Deno.copyFileSync(`${srcDir}/${name}${postfix}.js`, `${dstDir}/${name}${postfix}.js`);
 
     const srcUrl = `${GitHubSamplesUrl}/${name}-sapp.${sample.ext ?? 'c'}`;
-    const glslUrl = sample.shd ? `${GitHubSamplesUrl}/${name}${postfix}.glsl` : null;
+    const glslUrl = sample.shd ? `${GitHubSamplesUrl}/${name}-sapp.glsl` : null;
     const sampleTmpl = Deno.readTextFileSync(`${webAssetDir}/wasm.html`);
     const sampleHtml = sampleTmpl.replaceAll('${name}', name)
         .replaceAll('${prog}', `${name}${postfix}`)
