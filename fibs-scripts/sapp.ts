@@ -32,6 +32,7 @@ export const samples: SampleOptions[] = [
     { name: 'shadows-depthtex', ui: 'cc', shd: true },
     { name: 'instancing', ui: 'cc', shd: true },
     { name: 'staging', ui: 'cc', shd: true },
+    { name: 'image-copy', ui: 'cc', shd: true },
     { name: 'instancing-pull', ui: 'cc', shd: true },
     { name: 'mrt', ui: 'cc', shd: true },
     { name: 'mrt-pixelformats', ui: 'cc', shd: true },
