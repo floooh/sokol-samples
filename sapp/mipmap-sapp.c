@@ -62,13 +62,14 @@ static void init(void) {
     });
 
     // create image with mipmap content: different colors and checkboard pattern
-    sg_image_data img_data;
     uint32_t* ptr = state.pixels.mip0;
+    sg_range img_data = {
+        .ptr = ptr,
+        .size = sizeof(state.pixels),
+    };
     bool even_odd = false;
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
-        img_data.mip_levels[mip_index].ptr = ptr;
-        img_data.mip_levels[mip_index].size = (size_t) (dim * dim * 4);
         for (int y = 0; y < dim; y++) {
             for (int x = 0; x < dim; x++) {
                 *ptr++ = even_odd ? mip_colors[mip_index] : 0xFF000000;
