@@ -327,7 +327,7 @@ static void image_data_loaded(const sfetch_response_t* response) {
                 .height = img_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
                 .label = img_info.filename.cstr,
-                .data.mip_levels[0] = {
+                .data = {
                     .ptr = pixels,
                     .size = (size_t)(img_width * img_height * 4)
                 }

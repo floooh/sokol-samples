@@ -157,7 +157,7 @@ static void init(void) {
             .width = IMG_WIDTH,
             .height = IMG_HEIGHT,
             .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .data.mip_levels[0] = SG_RANGE(pixels),
+            .data = SG_RANGE(pixels),
         });
         state.view[i] = sg_make_view(&(sg_view_desc){
             .texture = { .image = state.img[i] },

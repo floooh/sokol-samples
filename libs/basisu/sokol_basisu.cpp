@@ -67,7 +67,7 @@ static sg_pixel_format basis_to_sg_pixelformat(basist::transcoder_texture_format
     }
 }
 
-sg_image_desc sbasisu_transcode(sg_range basisu_data) {
+sg_image sbasisu_make_image(sg_range basisu_data) {
     assert(g_pGlobal_codebook);
     basist::basisu_transcoder transcoder(g_pGlobal_codebook);
     transcoder.start_transcoding(basisu_data.ptr, (uint32_t)basisu_data.size);
@@ -77,48 +77,39 @@ sg_image_desc sbasisu_transcode(sg_range basisu_data) {
     const basist::transcoder_texture_format fmt = select_basis_textureformat(img_info.m_alpha_flag);
 
     sg_image_desc desc = { };
+    desc.usage.write_unsealed = true;
     desc.type = SG_IMAGETYPE_2D;
     desc.width = (int) img_info.m_width;
     desc.height = (int) img_info.m_height;
     desc.num_mipmaps = (int) img_info.m_total_levels;
     assert(desc.num_mipmaps <= SG_MAX_MIPMAPS);
-    desc.usage.immutable = true;
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
-    for (int i = 0; i < desc.num_mipmaps; i++) {
+    sg_image img = sg_make_image(&desc);
+    for (int mip_level = 0; mip_level < desc.num_mipmaps; mip_level++) {
         const uint32_t bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
         uint32_t orig_width, orig_height, total_blocks;
-        transcoder.get_image_level_desc(basisu_data.ptr, (uint32_t)basisu_data.size, 0, i, orig_width, orig_height, total_blocks);
+        transcoder.get_image_level_desc(basisu_data.ptr, (uint32_t)basisu_data.size, 0, mip_level, orig_width, orig_height, total_blocks);
         uint32_t required_size = total_blocks * bytes_per_block;
         void* ptr = malloc(required_size);
-        desc.data.mip_levels[i].ptr = ptr;
-        desc.data.mip_levels[i].size = required_size;
         bool res = transcoder.transcode_image_level(
             basisu_data.ptr,
             (uint32_t)basisu_data.size,
             0,          // image index
-            i,          // level index
+            mip_level,  // level index
             ptr,
             required_size / bytes_per_block,
             fmt,
             0);          // decode_flags
         assert(res); (void)res;
+        sg_write_image_desc write_desc = { };
+        write_desc.dst.image = img;
+        write_desc.dst.mip_level = mip_level;
+        write_desc.src.data.ptr = ptr;
+        write_desc.src.data.size = required_size;
+        sg_write_image_unsealed(&write_desc);
+        free(ptr);
     }
-    return desc;
-}
-
-void sbasisu_free(const sg_image_desc* desc) {
-    assert(desc);
-    for (int i = 0; i < desc->num_mipmaps; i++) {
-        if (desc->data.mip_levels[i].ptr) {
-            free((void*)desc->data.mip_levels[i].ptr);
-        }
-    }
-}
-
-sg_image sbasisu_make_image(sg_range basisu_data) {
-    sg_image_desc img_desc = sbasisu_transcode(basisu_data);
-    sg_image img = sg_make_image(&img_desc);
-    sbasisu_free(&img_desc);
+    sg_seal_image(img);
     return img;
 }
 

@@ -97,7 +97,7 @@ bool slug_load_font(slug_font_t* font, const slug_range_t* data) {
         .width = SLUG_TEX_WIDTH,
         .height = font->curve.height,
         .pixel_format = SG_PIXELFORMAT_RGBA32F,
-        .data.mip_levels[0] = {
+        .data = {
             .ptr = res.curve_pixels,
             .size = arrlen(res.curve_pixels) * sizeof(vec4_t),
         },
@@ -108,7 +108,7 @@ bool slug_load_font(slug_font_t* font, const slug_range_t* data) {
         .width = SLUG_TEX_WIDTH,
         .height = font->band.height,
         .pixel_format = SG_PIXELFORMAT_RG16UI,
-        .data.mip_levels[0] = {
+        .data = {
             .ptr = res.band_pixels,
             .size = arrlen(res.band_pixels) * sizeof(u16vec2_t),
         },

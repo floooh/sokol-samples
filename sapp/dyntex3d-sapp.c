@@ -169,16 +169,13 @@ static void recreate_image(void) {
     update_pixels(sapp_frame_count());
     sg_init_image(state.img, &(sg_image_desc){
         .type = SG_IMAGETYPE_3D,
-        .usage = {
-            .immutable = state.immutable,
-            .write_transient = !state.immutable,
-        },
+        .usage.write_transient = !state.immutable,
         .width = state.width_height,
         .height = state.width_height,
         .num_slices = DEPTH,
         .num_mipmaps = 1,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data.mip_levels[0] = state.immutable ? pixels_as_range() : (sg_range){0},
+        .data = state.immutable ? pixels_as_range() : (sg_range){0},
         .label = "image",
     });
     sg_init_view(state.texview, &(sg_view_desc){

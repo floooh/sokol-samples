@@ -493,7 +493,7 @@ static void create_image(const void* qoi_data_ptr, size_t qoi_data_size) {
         .pixel_format = SG_PIXELFORMAT_RGBA8,
         .width = (int)qoi.width,
         .height = (int)qoi.height,
-        .data.mip_levels[0] = {
+        .data = {
             .ptr = pixels,
             .size = qoi.width * qoi.height * 4,
         },
