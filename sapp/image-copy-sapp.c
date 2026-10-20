@@ -167,7 +167,7 @@ static void init(void) {
     // the display pass-action (clear to black)
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
-            .load_action = SG_LOADACTION_DONTCARE,
+            .load_action = SG_LOADACTION_CLEAR,
             .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f }
         },
     };
