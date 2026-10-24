@@ -75,7 +75,7 @@ int main() {
             .height = IMG_HEIGHT,
             .num_slices = IMG_LAYERS,
             .pixel_format = SG_PIXELFORMAT_RGBA8,
-            .data.mip_levels[0] = SG_RANGE(pixels)
+            .data = SG_RANGE(pixels)
         }),
     });
 

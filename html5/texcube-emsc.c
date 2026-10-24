@@ -106,7 +106,7 @@ int main() {
         .texture.image = sg_make_image(&(sg_image_desc){
             .width = 4,
             .height = 4,
-            .data.mip_levels[0] = SG_RANGE(pixels)
+            .data = SG_RANGE(pixels)
         }),
     });
 
