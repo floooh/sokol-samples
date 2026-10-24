@@ -63,10 +63,6 @@ static void init(void) {
 
     // create image with mipmap content: different colors and checkboard pattern
     uint32_t* ptr = state.pixels.mip0;
-    sg_range img_data = {
-        .ptr = ptr,
-        .size = sizeof(state.pixels),
-    };
     bool even_odd = false;
     for (int mip_index = 0; mip_index <= 8; mip_index++) {
         const int dim = 1<<(8-mip_index);
@@ -83,7 +79,7 @@ static void init(void) {
         .height = 256,
         .num_mipmaps = 9,
         .pixel_format = SG_PIXELFORMAT_RGBA8,
-        .data = img_data
+        .data = SG_RANGE(state.pixels),
     });
 
     // ...and a texture view for the image
