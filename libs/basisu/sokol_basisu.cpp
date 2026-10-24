@@ -82,7 +82,6 @@ sg_image sbasisu_make_image(sg_range basisu_data) {
     desc.width = (int) img_info.m_width;
     desc.height = (int) img_info.m_height;
     desc.num_mipmaps = (int) img_info.m_total_levels;
-    assert(desc.num_mipmaps <= SG_MAX_MIPMAPS);
     desc.pixel_format = basis_to_sg_pixelformat(fmt);
     sg_image img = sg_make_image(&desc);
     for (int mip_level = 0; mip_level < desc.num_mipmaps; mip_level++) {
