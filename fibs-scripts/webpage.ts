@@ -9,7 +9,7 @@ const GitHubSamplesUrl = 'https://github.com/floooh/sokol-samples/tree/master/sa
 
 const Props = {
     webgl: {
-        config: 'sapp-gles-emsc-ninja-release',
+        configRoot: 'sapp-gles-emsc-ninja',
         skip: [
             'sbufoffset',
             'instancing-compute',
@@ -28,7 +28,7 @@ const Props = {
         textColor: '#1ABC9C',
     },
     webgpu: {
-        config: 'sapp-wgpu-emsc-ninja-release',
+        configRoot: 'sapp-wgpu-emsc-ninja',
         skip: [
             'imgui-perf',
             'noentry-dll',
@@ -117,12 +117,21 @@ export function addWebPageCommand(c: Configurer) {
 
 function help() {
     log.helpCmd([
-        'webpage build [webgl|webgpu]',
-        'webpage serve [webgl|webgpu]'
+        'webpage build [webgl|webgpu] [--debug]',
+        'webpage serve [webgl|webgpu] [--debug]'
     ], 'build or serve samples webpage');
 }
 
+function getConfigName(api: Api, debug: boolean): string {
+    return `${Props[api].configRoot}-${debug ? 'debug':'release'}`;
+}
+
 async function run(p: Project, args: string[]) {
+    const debug = args.includes('--debug');
+    if (debug) {
+        log.warn('using debug build config!');
+    }
+    args = args.filter((val) => val != '--debug');
     const subcmd = args[1];
     const api = args[2];
     if ((subcmd !== 'build') && (subcmd !== 'serve')) {
@@ -132,7 +141,7 @@ async function run(p: Project, args: string[]) {
         throw new Error ("subcommand argument 'webgl' or 'webgpu' expected (run 'fibs help webpage')");
     }
     if (subcmd === 'build') {
-        await buildPage(p, api);
+        await buildPage(p, api, debug);
     } else {
         servePage(p, api);
     }
@@ -142,8 +151,8 @@ function logStatus(status: string, configName: string) {
     log.info(`${green('>>')} ${status} '${configName}' ...`);
 }
 
-async function buildPage(p: Project, api: Api) {
-    const configName = Props[api].config;
+async function buildPage(p: Project, api: Api, debug: boolean) {
+    const configName = getConfigName(api, debug);
     const config = p.config(configName);
     const srcDir = p.distDir(configName);
     const dstDir = `${p.fibsDir()}/webpage/${api}`;
