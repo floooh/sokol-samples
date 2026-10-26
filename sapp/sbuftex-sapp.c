@@ -137,7 +137,7 @@ static void init(void) {
         .width = 4,
         .height = 4,
         .pixel_format = SG_PIXELFORMAT_R8,
-        .data.mip_levels[0] = SG_RANGE(pixels),
+        .data = SG_RANGE(pixels),
         .label = "texture",
     });
     state.bind.views[VIEW_tex] = sg_make_view(&(sg_view_desc){

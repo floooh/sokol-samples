@@ -269,7 +269,7 @@ static void fetch_img_callback(const sfetch_response_t* response) {
                 .width = png_width,
                 .height = png_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .data.mip_levels[0] = {
+                .data = {
                     .ptr = pixels,
                     .size = (size_t)(png_width * png_height * 4),
                 }

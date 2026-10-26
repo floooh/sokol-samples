@@ -397,10 +397,8 @@ static void r_init(void) {
         .width = ATLAS_WIDTH,
         .height = ATLAS_HEIGHT,
         .data = {
-            .mip_levels[0] = {
-                .ptr = rgba8_pixels,
-                .size = rgba8_size
-            }
+            .ptr = rgba8_pixels,
+            .size = rgba8_size
         },
         .label = "microui-atlas-image",
     });

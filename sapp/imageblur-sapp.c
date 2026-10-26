@@ -210,7 +210,7 @@ static void fetch_callback(const sfetch_response_t* response) {
                 .width = state.src_width,
                 .height = state.src_height,
                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-                .data.mip_levels[0] = {
+                .data = {
                     .ptr = pixels,
                     .size = (size_t)(state.src_width * state.src_height * 4),
                 },

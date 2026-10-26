@@ -222,20 +222,18 @@ static void fetch_async(const char* filename) {
 static void fetch_callback(const sfetch_response_t* response) {
     if (response->fetched) {
         state.load.pending = false;
-        sg_uninit_image(state.img);
-        const sg_image_desc img_desc = sbasisu_transcode((sg_range){
+        sg_destroy_image(state.img);
+        state.img = sbasisu_make_image((sg_range){
             .ptr = response->data.ptr,
             .size = response->data.size,
         });
-        assert(img_desc.num_mipmaps > 0);
-        state.img_info.width = img_desc.width;
-        state.img_info.height = img_desc.height;
-        state.img_info.num_mipmaps = img_desc.num_mipmaps;
+        const sg_image_desc desc = sg_query_image_desc(state.img);
+        state.img_info.width = desc.width;
+        state.img_info.height = desc.height;
+        state.img_info.num_mipmaps = desc.num_mipmaps;
         state.ui.min_mip = 0;
-        state.ui.max_mip = img_desc.num_mipmaps - 1;
+        state.ui.max_mip = desc.num_mipmaps - 1;
         state.ui.mip_lod = 0.0f;
-        sg_init_image(state.img, &img_desc);
-        sbasisu_free(&img_desc);
         reinit_texview();
     } else if (response->failed) {
         state.load.failed = true;
