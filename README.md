@@ -19,8 +19,8 @@ Make sure the following tools are installed:
 - optional but recommended: ninja
 
 > [!NOTE]
-> On Linux you'll also need to install packages for OpenGL, X11, ALSA and Vulkan development, e.g.
-> `libgl1-mesa-dev`, `libegl1-mesa-dev`, `mesa-common-dev`, `xorg-dev`, `libasound-dev`, `libvulkan-dev`, `vulkan-validationlayers`,
+> On Linux you'll also need to install packages for OpenGL, X11, PulseAudio and Vulkan development, e.g.
+> `libgl1-mesa-dev`, `libegl1-mesa-dev`, `mesa-common-dev`, `xorg-dev`, `libpulse-dev`, `libvulkan-dev`, `vulkan-validationlayers`,
 > `vulkan-tools`
 
 > [!NOTE]
@@ -337,7 +337,7 @@ To build one of the sokol-app samples on Linux:
 ```sh
 > cd sokol-samples/sapp
 > ../../sokol-tools-bin/bin/linux/sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl430
-> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lasound -lXi -lXcursor
+> cc cube-sapp.c ../libs/sokol/sokol.c -o cube-sapp -DSOKOL_GLCORE -pthread -I../../sokol -I../libs -lGL -ldl -lm -lX11 -lpulse-simple -lpulse -lXi -lXcursor
 ```
 
 ### Building for WASM / WebGL2
