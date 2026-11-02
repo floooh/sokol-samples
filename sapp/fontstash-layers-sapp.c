@@ -200,6 +200,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .height = 600,
         .high_dpi = true,
         .window_title = "fontstash-layers-sapp.c",
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

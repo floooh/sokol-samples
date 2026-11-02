@@ -372,6 +372,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 1024,
         .height = 768,
         .sample_count = 4,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "spine-contexts-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

@@ -289,6 +289,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = _dbgui_event,
         .width = 1024,
         .height = 768,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "spine-layers-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,

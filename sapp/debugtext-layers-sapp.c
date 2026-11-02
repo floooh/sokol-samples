@@ -116,6 +116,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .width = 800,
         .height = 600,
         .window_title = "debugtext-layers-sapp.c",
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .icon.sokol_default = true,
         .logger.func = slog_func,
     };

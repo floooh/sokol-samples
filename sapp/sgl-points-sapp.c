@@ -105,6 +105,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .event_cb = _dbgui_event,
         .width = 512,
         .height = 512,
+        .depth_format = SAPP_PIXELFORMAT_NONE,
         .window_title = "sgl-points-sapp.c",
         .icon.sokol_default = true,
         .logger.func = slog_func,
