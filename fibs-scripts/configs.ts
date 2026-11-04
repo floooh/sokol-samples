@@ -210,13 +210,14 @@ function addSappConfigs(c: Configurer) {
         platform: 'android',
         runner: 'android',
         buildMode: 'debug',
-        toolchainFile: `${c.sdkDir()}/android/ndk-bundle/build/cmake/android.toolchain.cmake`,
+        // NOTE: wrapper toolchain file written by 'fibs android install'
+        toolchainFile: `${c.sdkDir()}/android/android.toolchain.cmake`,
         cmakeCacheVariables: { ANDROID_ABI, ANDROID_PLATFORM },
         validate: () => {
             if (!util.dirExists(`${c.sdkDir()}/android`)) {
                 return {
                     valid: false,
-                    hints: [`Android SDK not installed (run 'fibs android install)`],
+                    hints: [`Android SDK not installed (run 'fibs android install')`],
                 };
             } else {
                 return { valid: true, hints: [] };
