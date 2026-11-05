@@ -40,6 +40,7 @@ static const char* eventtype_to_str(sapp_event_type t) {
         case SAPP_EVENTTYPE_QUIT_REQUESTED: return "QUIT_REQUESTED";
         case SAPP_EVENTTYPE_CLIPBOARD_PASTED: return "CLIPBOARD_PASTED";
         case SAPP_EVENTTYPE_FILES_DROPPED: return "FILES_DROPPED";
+        case SAPP_EVENTTYPE_ANDROID_BACK: return "ANDROID_BACK";
         default: return "???";
     }
 }
