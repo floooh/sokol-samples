@@ -161,20 +161,16 @@ a {
     filter: drop-shadow(0 0 6px var(--logo-glow));
 }
 
-/* same look as the tags on the cards, just bigger */
+/* the current api, like the tags on the cards, just bigger and brighter
+   than the link to the other api */
 .badge {
-    color: var(--dim);
+    color: var(--accent);
     font-size: 24px;
     line-height: 1;
 }
 
 .badge::before {
     content: "#";
-}
-
-/* the current api is brighter than the link to the other api */
-.brand .badge {
-    color: var(--accent);
 }
 
 /* search */
@@ -288,10 +284,11 @@ a {
     transition: border-color 0.1s, box-shadow 0.1s;
 }
 
+/* selected card: the outline glows, a tight halo plus a soft wide glow */
 .card:hover,
 .card:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent), 0 0 18px var(--glow);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 6px 1px var(--glow), 0 0 22px var(--glow);
 }
 
 .card-bar {

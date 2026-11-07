@@ -106,6 +106,12 @@ async function main() {
         setLink('glsl-link', `${GITHUB_SAPP_URL}/${sample.shader}`);
     }
     fillDescription(toc, sample);
+    // link to the same sample on the other api's page
+    const other = Object.keys(FLAVORS).find((api) => api !== toc.api);
+    if (sample[other]) {
+        setLink('cross-api-link', `${flavor.crossUrl}/${playerUrl(name, ui)}`);
+        $('cross-api-link').textContent = `[-> #${FLAVORS[other].tag}]`;
+    }
     $('desc-btn').hidden = false;
     if (sample.ui) {
         setLink('ui-link', playerUrl(name, !ui));
@@ -115,7 +121,6 @@ async function main() {
 
     if (!sample[toc.api]) {
         // the sample does not run on this page's api, link to the other page
-        const other = Object.keys(FLAVORS).find((api) => api !== toc.api);
         const url = `${flavor.crossUrl}/${playerUrl(name, ui)}`;
         showMessage([`'${name}' does not run on ${flavor.tag}, `, el('a', { href: url, textContent: `[-> #${FLAVORS[other].tag}]` })]);
         return;

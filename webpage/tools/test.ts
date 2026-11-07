@@ -204,6 +204,12 @@ async function testPlayer(url: string) {
         check('[glsl] link', (await href('glsl-link')) === `${github}/${s.shader}`);
         check('[ui] link', (await href('ui-link')) === `player.html?name=${s.name}&ui=1`);
         check('[new tab] link', (await href('open-link')) === `${s.name}-sapp.html`);
+        const crossUrl = (toc.api === 'webgl') ? 'https://floooh.github.io/sokol-webgpu' : 'https://floooh.github.io/sokol-html5';
+        const otherTag = (other === 'webgl') ? 'webgl2' : 'webgpu';
+        if (s[other]) {
+            check('cross api link', (await href('cross-api-link')) === `${crossUrl}/player.html?name=${s.name}`, await href('cross-api-link'));
+            check('cross api link text', (await page.$eval('#cross-api-link', (e) => e.textContent)) === `[-> #${otherTag}]`);
+        }
         check('[fullscreen] shown', await visible('fs-btn'));
         // the sample runs, if it is built (see preview.ts --dist)
         if ((await fetch(new URL(`${s.name}-sapp.html`, url))).ok) {
@@ -231,6 +237,9 @@ async function testPlayer(url: string) {
         check('ui iframe src', (await page.$eval('#frame', (e) => e.getAttribute('src'))) === `${s.name}-sapp-ui.html`);
         check('[ui] active', await page.$eval('#ui-link', (e) => e.classList.contains('active')));
         check('[ui] link back', (await href('ui-link')) === `player.html?name=${s.name}`);
+        if (s[other]) {
+            check('cross api link keeps ui', (await href('cross-api-link')) === `${crossUrl}/player.html?name=${s.name}&ui=1`, await href('cross-api-link'));
+        }
 
         // a sample without shader and debug UI
         const t = toc.samples.find((s) => s[toc.api] && !s.ui && !s.shader);
@@ -239,6 +248,13 @@ async function testPlayer(url: string) {
             check('no [glsl] without shader', !(await visible('glsl-link')));
             check('no [ui] without debug UI', !(await visible('ui-link')));
             check('ui=1 ignored without debug UI', (await page.$eval('#frame', (e) => e.getAttribute('src'))) === `${t.name}-sapp.html`);
+        }
+
+        // a sample which only runs on this api has no cross api link
+        const v = toc.samples.find((s) => s[toc.api] && !s[other]);
+        if (v) {
+            await page.goto(`${url}player.html?name=${v.name}`, { waitUntil: 'networkidle0' });
+            check('no cross api link for single-api sample', !(await visible('cross-api-link')));
         }
 
         // a sample which does not run on this api
