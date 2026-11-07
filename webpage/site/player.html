@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!-- LLM maintained -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Sokol Samples</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<!-- start loading samples.json early, 'crossorigin' must match fetch() so that it is only loaded once -->
+<link rel="preload" href="samples.json" as="fetch" crossorigin>
+<script>
+    // set the theme and api before first paint to prevent a flash, see index.html
+    document.documentElement.dataset.theme = localStorage.getItem('theme')
+        ?? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.dataset.api = localStorage.getItem('api') ?? '';
+</script>
+<script defer src="common.js"></script>
+<script defer src="player.js"></script>
+</head>
+<body class="player">
+<header class="player-bar">
+    <div class="player-row">
+        <a class="nav-link" id="back" href="index.html">[&lt;- samples]</a>
+        <h1 class="player-title" id="title"></h1>
+        <span class="badge small" id="api-badge"></span>
+        <nav class="nav player-nav">
+            <a class="nav-link" id="src-link" target="_blank" rel="noopener" title="Show the C source on GitHub" hidden>[src]</a>
+            <a class="nav-link" id="glsl-link" target="_blank" rel="noopener" title="Show the shader source on GitHub" hidden>[glsl]</a>
+            <button class="nav-link" id="desc-btn" type="button" aria-expanded="false" aria-controls="desc" title="Show the sample description" hidden>[desc]</button>
+            <a class="nav-link" id="ui-link" title="Toggle the debug UI" hidden>[ui]</a>
+            <button class="nav-link" id="fs-btn" type="button" title="Run the sample in fullscreen" hidden>[fullscreen]</button>
+            <a class="nav-link" id="open-link" target="_blank" rel="noopener" title="Open only the sample in a new tab" hidden>[new tab]</a>
+            <button class="nav-link theme-btn" id="theme-btn" type="button" title="Switch between dark and light mode"></button>
+        </nav>
+    </div>
+    <aside class="desc-panel" id="desc" hidden>
+        <p class="desc-text" id="desc-text"></p>
+        <dl class="desc-list" id="desc-list"></dl>
+    </aside>
+</header>
+<main class="stage">
+    <iframe class="frame" id="frame" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write" hidden></iframe>
+    <p class="message" id="message" hidden></p>
+</main>
+<noscript><p class="message">ERROR: this page needs JavaScript</p></noscript>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<!-- LLM maintained -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5.5 0 79 79" shape-rendering="crispEdges">
+    <path style="fill:#111416" d="M11 0h46v13h-46zM0 11h24v13h-24zM44 11h24v13h-24zM0 22h24v13h-24zM11 33h46v13h-46zM44 44h24v13h-24zM0 55h24v13h-24zM44 55h24v13h-24zM11 66h46v13h-46z"/>
+    <path style="fill:#ff7043" d="M12 1h44v11h-44z"/>
+    <path style="fill:#ffa726" d="M1 12h22v11h-22zM45 12h22v11h-22z"/>
+    <path style="fill:#ffee58" d="M1 23h22v11h-22z"/>
+    <path style="fill:#d4e157" d="M12 34h44v11h-44z"/>
+    <path style="fill:#9ccc65" d="M45 45h22v11h-22z"/>
+    <path style="fill:#66bb6a" d="M1 56h22v11h-22zM45 56h22v11h-22z"/>
+    <path style="fill:#42a5f5" d="M12 67h44v11h-44z"/>
+</svg>

@@ -1,107 +1,47 @@
+// LLM maintained
+//
+// The 'fibs webpage' command: build the samples webpage from sapp/_toc.yaml
+// and the page files in webpage/site.
+
 import { type Configurer, type Project, log, util, proj } from 'jsr:@floooh/fibs@^1';
 import { green } from 'jsr:@std/fmt@^1/colors';
+import { parse } from 'jsr:@std/yaml@^1';
 
-import { samples, type SampleOptions } from './sapp.ts';
+import { samples as buildSamples } from './sapp.ts';
 
 type Api = 'webgl' | 'webgpu';
 
-const GitHubSamplesUrl = 'https://github.com/floooh/sokol-samples/tree/master/sapp'
-
-const Props = {
-    webgl: {
-        configRoot: 'sapp-gles-emsc-ninja',
-        skip: [
-            'sbufoffset',
-            'instancing-compute',
-            'computeboids',
-            'write-storageimage',
-            'imageblur',
-            'histogram',
-            'imgui-perf',
-            'noentry-dll',
-        ],
-        title: 'Sokol WebGL',
-        crossName: 'webgpu',
-        crossUrl: 'https://floooh.github.io/sokol-webgpu',
-        bodyBgColor: '#292d3e',
-        thumbBgColor: '#4a4d62',
-        textColor: '#1ABC9C',
-    },
-    webgpu: {
-        configRoot: 'sapp-wgpu-emsc-ninja',
-        skip: [
-            'imgui-perf',
-            'noentry-dll',
-        ],
-        title: 'Sokol WebGPU',
-        crossName: 'webgl',
-        crossUrl: 'https://floooh.github.io/sokol-html5',
-        bodyBgColor: '#292d3e',
-        thumbBgColor: '#4a4d62',
-        textColor: '#3498DB',
-    },
+// one sample in sapp/_toc.yaml
+type TocSample = {
+    name: string;
+    description: string;
+    tags: string[];
+    source: string;
+    shader?: string;
+    ui: boolean;
+    webgl: boolean;
+    webgpu: boolean;
 };
 
-const assets = [
-    "comsi.s3m",
-    "baboon.png",
-    "bjork-all-is-full-of-love.mpg",
-    "DamagedHelmet.gltf",
-    "DamagedHelmet.bin",
-    "Default_AO.basis",
-    "Default_albedo.basis",
-    "Default_emissive.basis",
-    "Default_metalRoughness.basis",
-    "Default_normal.basis",
-    "DroidSerif-Regular.ttf",
-    "DroidSerif-Italic.ttf",
-    "DroidSerif-Bold.ttf",
-    "DroidSansJapanese.ttf",
-    "ozz_anim_skeleton.ozz",
-    "ozz_anim_animation.ozz",
-    "ozz_skin_skeleton.ozz",
-    "ozz_skin_animation.ozz",
-    "ozz_skin_mesh.ozz",
-    "raptor-pma.atlas",
-    "raptor-pma.png",
-    "raptor-pro.skel",
-    "spineboy-pro.json",
-    "spineboy.atlas",
-    "spineboy.png",
-    "alien-pma.atlas",
-    "alien-pma.png",
-    "alien-pro.skel",
-    "speedy-pma.atlas",
-    "speedy-pma.png",
-    "speedy-ess.skel",
-    "mix-and-match-pma.atlas",
-    "mix-and-match-pma.png",
-    "mix-and-match-pro.skel",
-    "nb2_posx.jpg",
-    "nb2_negx.jpg",
-    "nb2_posy.jpg",
-    "nb2_negy.jpg",
-    "nb2_posz.jpg",
-    "nb2_negz.jpg",
-    "kodim05.basis",
-    "kodim07.basis",
-    "kodim17.basis",
-    "kodim20.basis",
-    "kodim23.basis",
-    "dice.qoi",
-    "celtic_woman.iff",
-    "eiffel_tower.iff",
-    "eye.iff",
-    "gorilla.iff",
-    "kingtut.iff",
-    "paintcan.iff",
-    "space.iff",
-    "venus.iff",
-    "waterfall.iff",
-    "yacht.iff",
-    "Cairo.ttf",
-    "lucide.ttf",
-    "twemoji.ttf",
+type Toc = {
+    assets: string[];
+    samples: TocSample[];
+};
+
+const ConfigRoots: Record<Api, string> = {
+    webgl: 'sapp-gles-emsc-ninja',
+    webgpu: 'sapp-wgpu-emsc-ninja',
+};
+
+// the page files in webpage/site
+const SiteFiles = [
+    'index.html',
+    'player.html',
+    'style.css',
+    'common.js',
+    'main.js',
+    'player.js',
+    'favicon.svg',
 ];
 
 export function addWebPageCommand(c: Configurer) {
@@ -123,7 +63,7 @@ function help() {
 }
 
 function getConfigName(api: Api, debug: boolean): string {
-    return `${Props[api].configRoot}-${debug ? 'debug':'release'}`;
+    return `${ConfigRoots[api]}-${debug ? 'debug':'release'}`;
 }
 
 async function run(p: Project, args: string[]) {
@@ -156,6 +96,8 @@ async function buildPage(p: Project, api: Api, debug: boolean) {
     const config = p.config(configName);
     const srcDir = p.distDir(configName);
     const dstDir = `${p.fibsDir()}/webpage/${api}`;
+    // check _toc.yaml before the long build
+    loadToc(p.dir());
     if (util.dirExists(dstDir)) {
         if (Deno.env.get('CI') || log.ask(`Ok to delete directory ${dstDir}?`, false)) {
             Deno.removeSync(dstDir, { recursive: true });
@@ -167,7 +109,7 @@ async function buildPage(p: Project, api: Api, debug: boolean) {
     logStatus('building', configName);
     await proj.build({});
     logStatus('genering webpage for', configName);
-    await generatePage(p, api, srcDir, dstDir);
+    await generatePage(p.dir(), api, srcDir, dstDir);
 }
 
 function servePage(p: Project, api: string) {
@@ -196,86 +138,75 @@ async function cwebp(srcPath: string, dstPath: string) {
     await util.runCmd('cwebp', { args: [ '-quiet', '-q', '80', srcPath, '-o', dstPath ], showCmd: true });
 }
 
-async function generatePage(p: Project, api: Api, srcDir: string, dstDir: string) {
-    const webAssetDir = `${p.dir()}/webpage`;
-    const props = Props[api];
-
-    // filter samples by WebGL2 vs WebGPU
-    const filteredSamples = samples.filter((s) => !props.skip.includes(s.name));
-
-    // build thumbnail gallery
-    let content = '';
-    for (const sample of filteredSamples) {
-        const name = sample.name;
-        log.info(`> adding thumbnail for ${name}`);
-        const url = `${name}-sapp.html`;
-        const uiUrl = `${name}-sapp-ui.html`;
-        let imgFilename = `${name}.webp`;
-        if (!util.fileExists(`${webAssetDir}/${name}.jpg`)) {
-            imgFilename = `dummy.webp`;
+// load sapp/_toc.yaml and check it against fibs-scripts/sapp.ts
+function loadToc(rootDir: string): Toc {
+    const toc = parse(Deno.readTextFileSync(`${rootDir}/sapp/_toc.yaml`)) as Toc;
+    for (const s of toc.samples) {
+        const err = (msg: string) => new Error(`sapp/_toc.yaml: sample '${s.name}': ${msg}`);
+        const b = buildSamples.find((b) => b.name === s.name);
+        if (!b) {
+            throw err('not found in fibs-scripts/sapp.ts');
         }
-        content += '<div class="thumb">';
-        content += `  <div class="thumb-title">${name}</div>`
-        if (sample.ui) {
-            content += `<a class="img-btn-link" href="${uiUrl}"><div class="img-btn">UI</div></a>`;
+        if (s.ui !== !!b.ui) {
+            throw err(`'ui: ${s.ui}' does not match fibs-scripts/sapp.ts`);
         }
-        content += `  <div class="img-frame"><a href="${url}"><img class="image" src="${imgFilename}"></img></a></div>`;
-        content += '</div>\n'
-    }
-
-    // populate html template and write to dstDir
-    log.info('> writing index.html');
-    const indexTmpl = Deno.readTextFileSync(`${webAssetDir}/index.html`);
-    const indexHtml = indexTmpl.replaceAll('${samples}', content)
-        .replaceAll('${title}', props.title)
-        .replaceAll('${cross_name}', props.crossName)
-        .replaceAll('${cross_url}', props.crossUrl)
-        .replaceAll('${body_bg_color}', props.bodyBgColor)
-        .replaceAll('${thumb_bg_color}', props.thumbBgColor)
-        .replaceAll('${text_color}', props.textColor);
-    Deno.writeTextFileSync(`${dstDir}/index.html`, indexHtml, {});
-
-    // copy additional webpage asset files
-    Deno.copyFileSync(`${webAssetDir}/favicon.png`, `${dstDir}/favicon.png`);
-
-    // generate per-sample .html and copy .wasm + .js
-    for (const sample of filteredSamples) {
-        const name = sample.name;
-        log.info(`> generate html page: ${name}`);
-        generateSample(p, sample, srcDir, dstDir, '-sapp');
-        if (sample.ui) {
-            generateSample(p, sample, srcDir, dstDir, '-sapp-ui');
+        if (s.source !== `${s.name}-sapp.${b.ext ?? 'c'}`) {
+            throw err(`'source: ${s.source}' does not match fibs-scripts/sapp.ts`);
         }
-        if (sample.ui) {
-            Deno.copyFileSync(`${srcDir}/${name}-sapp-ui.wasm`, `${dstDir}/${name}-sapp-ui.wasm`);
-            Deno.copyFileSync(`${srcDir}/${name}-sapp-ui.js`, `${dstDir}/${name}-sapp-ui.js`);
+        for (const file of [s.source, s.shader]) {
+            if (file && !util.fileExists(`${rootDir}/sapp/${file}`)) {
+                throw err(`file 'sapp/${file}' not found`);
+            }
         }
     }
+    return toc;
+}
 
-    // copy additional assets
-    for (const asset of assets) {
+// copy the Emscripten-generated sample page, which runs inside the player iframe
+function copySample(srcDir: string, dstDir: string, name: string, ui: boolean) {
+    const prog = `${name}-sapp${ui ? '-ui' : ''}`;
+    Deno.copyFileSync(`${srcDir}/${prog}.wasm`, `${dstDir}/${prog}.wasm`);
+    Deno.copyFileSync(`${srcDir}/${prog}.js`, `${dstDir}/${prog}.js`);
+    // use the sample name as page title for the [new tab] link
+    const html = Deno.readTextFileSync(`${srcDir}/${prog}.html`)
+        .replace(/<title>.*<\/title>/, `<title>${name}${ui ? ' (ui)' : ''}</title>`);
+    Deno.writeTextFileSync(`${dstDir}/${prog}.html`, html);
+}
+
+export async function generatePage(rootDir: string, api: Api, srcDir: string, dstDir: string) {
+    const siteDir = `${rootDir}/webpage/site`;
+    const shotDir = `${rootDir}/webpage/screenshots`;
+    const toc = loadToc(rootDir);
+    const samples = toc.samples.filter((s) => s[api]);
+
+    // samples.json has all samples, the player links samples of the other api to the other page
+    log.info('> writing samples.json');
+    Deno.writeTextFileSync(`${dstDir}/samples.json`, JSON.stringify({ api, samples: toc.samples }));
+
+    log.info('> copying page files');
+    for (const file of SiteFiles) {
+        Deno.copyFileSync(`${siteDir}/${file}`, `${dstDir}/${file}`);
+    }
+
+    for (const sample of samples) {
+        log.info(`> copying sample: ${sample.name}`);
+        copySample(srcDir, dstDir, sample.name, false);
+        if (sample.ui) {
+            copySample(srcDir, dstDir, sample.name, true);
+        }
+    }
+
+    for (const asset of toc.assets) {
         Deno.copyFileSync(`${srcDir}/${asset}`, `${dstDir}/${asset}`);
     }
 
-    // convert screenshots to webp
-    for (const sample of filteredSamples) {
-        await cwebp(`${webAssetDir}/${sample.name}.jpg`, `${dstDir}/${sample.name}.webp`);
+    // convert screenshots to webp, the page shows dummy.webp for missing screenshots
+    for (const name of [...samples.map((s) => s.name), 'dummy']) {
+        const src = `${shotDir}/${name}.jpg`;
+        if (util.fileExists(src)) {
+            await cwebp(src, `${dstDir}/${name}.webp`);
+        } else {
+            log.warn(`no screenshot for ${name} (${src})`);
+        }
     }
-}
-
-function generateSample(p: Project, sample: SampleOptions, srcDir: string, dstDir: string, postfix: string) {
-    const webAssetDir = `${p.dir()}/webpage`;
-    const name = sample.name;
-    Deno.copyFileSync(`${srcDir}/${name}${postfix}.wasm`, `${dstDir}/${name}${postfix}.wasm`);
-    Deno.copyFileSync(`${srcDir}/${name}${postfix}.js`, `${dstDir}/${name}${postfix}.js`);
-
-    const srcUrl = `${GitHubSamplesUrl}/${name}-sapp.${sample.ext ?? 'c'}`;
-    const glslUrl = sample.shd ? `${GitHubSamplesUrl}/${name}-sapp.glsl` : null;
-    const sampleTmpl = Deno.readTextFileSync(`${webAssetDir}/wasm.html`);
-    const sampleHtml = sampleTmpl.replaceAll('${name}', name)
-        .replaceAll('${prog}', `${name}${postfix}`)
-        .replaceAll('${source}', srcUrl)
-        .replaceAll('${glsl}', (glslUrl !== null) ? glslUrl : '')
-        .replaceAll('${hidden}', (glslUrl === null) ? 'hidden' : '');
-    Deno.writeTextFileSync(`${dstDir}/${name}${postfix}.html`, sampleHtml, {});
 }

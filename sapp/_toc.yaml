@@ -1,0 +1,1040 @@
+# LLM maintained
+#
+# Metadata for the sokol_app samples in this directory.
+# Used to build the samples webpage.
+#
+# assets: data files to copy into the webpage directory.
+#
+# samples: one entry per sample, in webpage order.
+#   name:        sample name
+#   description: one short sentence
+#   tags:        search keywords, 'compute' means the sample needs compute support
+#   source:      sample source file
+#   shader:      shader source file (only when the sample has a .glsl file)
+#   ui:          true when a [name]-sapp-ui variant with debug UI exists
+#   webgl:       true when the sample runs on WebGL2
+#   webgpu:      true when the sample runs on WebGPU
+
+assets:
+  - comsi.s3m
+  - baboon.png
+  - bjork-all-is-full-of-love.mpg
+  - DamagedHelmet.gltf
+  - DamagedHelmet.bin
+  - Default_AO.basis
+  - Default_albedo.basis
+  - Default_emissive.basis
+  - Default_metalRoughness.basis
+  - Default_normal.basis
+  - DroidSerif-Regular.ttf
+  - DroidSerif-Italic.ttf
+  - DroidSerif-Bold.ttf
+  - DroidSansJapanese.ttf
+  - ozz_anim_skeleton.ozz
+  - ozz_anim_animation.ozz
+  - ozz_skin_skeleton.ozz
+  - ozz_skin_animation.ozz
+  - ozz_skin_mesh.ozz
+  - raptor-pma.atlas
+  - raptor-pma.png
+  - raptor-pro.skel
+  - spineboy-pro.json
+  - spineboy.atlas
+  - spineboy.png
+  - alien-pma.atlas
+  - alien-pma.png
+  - alien-pro.skel
+  - speedy-pma.atlas
+  - speedy-pma.png
+  - speedy-ess.skel
+  - mix-and-match-pma.atlas
+  - mix-and-match-pma.png
+  - mix-and-match-pro.skel
+  - nb2_posx.jpg
+  - nb2_negx.jpg
+  - nb2_posy.jpg
+  - nb2_negy.jpg
+  - nb2_posz.jpg
+  - nb2_negz.jpg
+  - kodim05.basis
+  - kodim07.basis
+  - kodim17.basis
+  - kodim20.basis
+  - kodim23.basis
+  - dice.qoi
+  - celtic_woman.iff
+  - eiffel_tower.iff
+  - eye.iff
+  - gorilla.iff
+  - kingtut.iff
+  - paintcan.iff
+  - space.iff
+  - venus.iff
+  - waterfall.iff
+  - yacht.iff
+  - Cairo.ttf
+  - lucide.ttf
+  - twemoji.ttf
+
+samples:
+  - name: clear
+    description: Clear the screen with a changing color.
+    tags: [basics, pass-action, clear-color]
+    source: clear-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: triangle
+    description: Draw a triangle from a vertex buffer.
+    tags: [basics, triangle, vertex-buffer]
+    source: triangle-sapp.c
+    shader: triangle-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: triangle-bufferless
+    description: Draw a triangle with the vertex data stored in the shader.
+    tags: [basics, bufferless, triangle]
+    source: triangle-bufferless-sapp.c
+    shader: triangle-bufferless-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: srgb
+    description: Render into an sRGB framebuffer.
+    tags: [srgb, framebuffer]
+    source: srgb-sapp.c
+    shader: srgb-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: srgb-msaa
+    description: Render into an sRGB framebuffer with MSAA.
+    tags: [srgb, msaa, framebuffer]
+    source: srgb-msaa-sapp.c
+    shader: srgb-msaa-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: hdr
+    description: Render into an HDR framebuffer.
+    tags: [hdr, framebuffer, pixel-formats]
+    source: hdr-sapp.c
+    shader: hdr-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: quad
+    description: Draw a quad from a vertex and index buffer.
+    tags: [basics, 2d, vertex-buffer, index-buffer]
+    source: quad-sapp.c
+    shader: quad-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: bufferoffsets
+    description: Draw two shapes from one vertex and index buffer using buffer offsets.
+    tags: [vertex-buffer, index-buffer, buffer-offsets]
+    source: bufferoffsets-sapp.c
+    shader: bufferoffsets-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: drawex
+    description: Draw with base vertex, base index and base instance via sg_draw_ex().
+    tags: [sg_draw_ex, base-vertex, base-index, base-instance, instancing, sokol_color]
+    source: drawex-sapp.c
+    shader: drawex-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: cube
+    description: Draw a rotating 3D cube.
+    tags: [basics, 3d, vertex-buffer, index-buffer, uniforms]
+    source: cube-sapp.c
+    shader: cube-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: noninterleaved
+    description: Use non-interleaved vertex data from a single vertex buffer.
+    tags: [vertex-buffer, vertex-layout, non-interleaved]
+    source: noninterleaved-sapp.c
+    shader: noninterleaved-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: vertexpull
+    description: Pull vertex data from a storage buffer.
+    tags: [compute, vertex-pulling, storage-buffer]
+    source: vertexpull-sapp.c
+    shader: vertexpull-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: vertexindexbuffer
+    description: Store vertices and indices in the same buffer.
+    tags: [vertex-buffer, index-buffer, write-buffer-unsealed]
+    source: vertexindexbuffer-sapp.c
+    shader: vertexindexbuffer-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: texcube
+    description: Draw a textured 3D cube.
+    tags: [texture, 3d, vertex-formats]
+    source: texcube-sapp.c
+    shader: texcube-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sbuftex
+    description: Use storage buffers and textures in the same shader stage.
+    tags: [compute, storage-buffer, texture, vertex-pulling, bindings]
+    source: sbuftex-sapp.c
+    shader: sbuftex-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: sbufoffset
+    description: Bind a storage buffer with an offset.
+    tags: [compute, storage-buffer, buffer-offsets, vertex-pulling]
+    source: sbufoffset-sapp.c
+    shader: sbufoffset-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: vertextexture
+    description: Move vertices with a texture rendered in an offscreen pass.
+    tags: [vertex-texture-fetch, render-to-texture, offscreen, displacement]
+    source: vertextexture-sapp.c
+    shader: vertextexture-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: offscreen
+    description: Render into a texture and use it in the main pass.
+    tags: [render-to-texture, offscreen, sokol_shape]
+    source: offscreen-sapp.c
+    shader: offscreen-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: offscreen-msaa
+    description: Render into an MSAA texture, resolve it and use the result as a texture.
+    tags: [render-to-texture, offscreen, msaa, msaa-resolve, sokol_shape]
+    source: offscreen-msaa-sapp.c
+    shader: offscreen-msaa-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: srgb-offscreen
+    description: Render into sRGB offscreen targets and compose them into an sRGB framebuffer.
+    tags: [srgb, msaa, msaa-resolve, render-to-texture, offscreen]
+    source: srgb-offscreen-sapp.c
+    shader: srgb-offscreen-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: cmdbuf
+    description: Record render commands into command buffers outside of render passes.
+    tags: [sokol_cmdbuf, command-buffer, render-to-texture, offscreen, sokol_shape]
+    source: cmdbuf-sapp.c
+    shader: cmdbuf-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: compositemode
+    description: Test the window composite modes (web and macOS only).
+    tags: [sokol_app, composite-mode, transparency, window]
+    source: compositemode-sapp.c
+    shader: compositemode-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: shadows
+    description: Shadow mapping with depth encoded into an RGBA8 texture.
+    tags: [shadow-map, render-to-texture, offscreen]
+    source: shadows-sapp.c
+    shader: shadows-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: shadows-depthtex
+    description: Shadow mapping with a depth texture and a comparison sampler.
+    tags: [shadow-map, depth-texture, comparison-sampler, render-to-texture, offscreen]
+    source: shadows-depthtex-sapp.c
+    shader: shadows-depthtex-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: instancing
+    description: Draw many particles with hardware instancing.
+    tags: [instancing, particles, dynamic-buffer, write-buffer-transient]
+    source: instancing-sapp.c
+    shader: instancing-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: staging
+    description: Upload vertex and index data through a staging buffer and a GPU copy.
+    tags: [staging-buffer, buffer-copy, sg_copy_buffer_to_buffer, write-buffer-transient, sokol_shape]
+    source: staging-sapp.c
+    shader: staging-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: image-copy
+    description: Copy snapshots of a render target into a bigger image.
+    tags: [sg_copy_image_to_image, image-copy, render-to-texture, offscreen, sokol_letterbox]
+    source: image-copy-sapp.c
+    shader: image-copy-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: instancing-pull
+    description: Draw instanced particles by pulling vertex and instance data from storage buffers.
+    tags: [compute, instancing, vertex-pulling, storage-buffer, particles]
+    source: instancing-pull-sapp.c
+    shader: instancing-pull-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: mrt
+    description: Render into multiple render targets and recreate them when the window size changes.
+    tags: [mrt, multiple-render-targets, render-to-texture, msaa, msaa-resolve, window-resize]
+    source: mrt-sapp.c
+    shader: mrt-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: mrt-pixelformats
+    description: Render into multiple render targets with different pixel formats.
+    tags: [mrt, multiple-render-targets, pixel-formats, render-to-texture, sokol_shape]
+    source: mrt-pixelformats-sapp.c
+    shader: mrt-pixelformats-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: arraytex
+    description: Render a cube with a 2D array texture.
+    tags: [texture, array-texture]
+    source: arraytex-sapp.c
+    shader: arraytex-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: tex3d
+    description: Render with a 3D texture.
+    tags: [texture, 3d-texture]
+    source: tex3d-sapp.c
+    shader: tex3d-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: dyntex3d
+    description: Create and update 3D textures of different sizes.
+    tags: [texture, 3d-texture, dynamic-texture, write-image-transient, imgui]
+    source: dyntex3d-sapp.c
+    shader: dyntex3d-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: dyntex
+    description: Update a texture with CPU data every frame (Game of Life).
+    tags: [texture, dynamic-texture, write-image-transient]
+    source: dyntex-sapp.c
+    shader: dyntex-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: shared-bindings
+    description: Share one bindings struct between different shaders.
+    tags: [bindings, bind-slots]
+    source: shared-bindings-sapp.c
+    shader: shared-bindings-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: customresolve
+    description: Resolve an MSAA image in a fragment shader by reading single samples.
+    tags: [msaa, custom-resolve, render-to-texture, imgui]
+    source: customresolve-sapp.c
+    shader: customresolve-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: mipmap
+    description: Compare the different mipmap filter modes.
+    tags: [texture, mipmaps, samplers, filtering, anisotropy]
+    source: mipmap-sapp.c
+    shader: mipmap-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: cubemap-jpeg
+    description: Load a cubemap from six JPEG files and render it as a skybox.
+    tags: [cubemap, texture-loading, jpeg, stb_image, sokol_fetch, write-image-unsealed, camera]
+    source: cubemap-jpeg-sapp.c
+    shader: cubemap-jpeg-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: basisu
+    description: Show Basis Universal textures transcoded to GPU compressed formats.
+    tags: [texture, compressed-texture, basisu, sokol_gl, sokol_debugtext]
+    source: basisu-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: blend-playground
+    description: Play with blend state settings in an interactive UI.
+    tags: [blend-state, blend-factors, blend-op, interactive, imgui, sokol_fetch]
+    source: blend-playground-sapp.c
+    shader: blend-playground-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: blend
+    description: Show all combinations of source and destination blend factors.
+    tags: [blend-state, blend-factors]
+    source: blend-sapp.c
+    shader: blend-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: blend-op
+    description: Show the different blend operations.
+    tags: [blend-state, blend-op]
+    source: blend-op-sapp.c
+    shader: blend-op-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: uvwrap
+    description: Show the texture coordinate wrap modes.
+    tags: [texture, samplers, wrap-modes]
+    source: uvwrap-sapp.c
+    shader: uvwrap-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: uniformtypes
+    description: Test uniform types and uniform block memory layout.
+    tags: [uniforms, uniform-types, uniform-layout, sokol_color, sokol_debugtext]
+    source: uniformtypes-sapp.c
+    shader: uniformtypes-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sparse-ub-slots
+    description: Test uniform blocks with gaps between bind slots.
+    tags: [uniforms, bind-slots, regression-test]
+    source: sparse-ub-slots-sapp.c
+    shader: sparse-ub-slots-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: imgui
+    description: Render a Dear ImGui UI.
+    tags: [imgui, ui, fullscreen]
+    source: imgui-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: imgui-dock
+    description: Use the Dear ImGui docking branch.
+    tags: [imgui, ui, docking]
+    source: imgui-dock-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: imgui-highdpi
+    description: Render Dear ImGui at high DPI with a custom font.
+    tags: [imgui, ui, high-dpi, fonts, fullscreen]
+    source: imgui-highdpi-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: cimgui
+    description: Use Dear ImGui from C via cimgui.
+    tags: [imgui, cimgui, ui]
+    source: cimgui-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: imgui-usercallback
+    description: Render custom 3D content inside Dear ImGui windows.
+    tags: [imgui, ui, user-callback, sokol_gl, cimgui]
+    source: imgui-usercallback-sapp.c
+    shader: imgui-usercallback-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: imgui-images
+    description: Show sokol_gfx textures with different samplers in Dear ImGui.
+    tags: [imgui, ui, texture, samplers, sokol_gl, render-to-texture]
+    source: imgui-images-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: imgui-perf
+    description: Stress-test Dear ImGui rendering with many windows.
+    tags: [imgui, ui, performance]
+    source: imgui-perf-sapp.c
+    ui: false
+    webgl: false
+    webgpu: false
+
+  - name: events
+    description: Inspect sokol_app events in a Dear ImGui UI.
+    tags: [sokol_app, events, input, keyboard, mouse, touch, mouse-lock, clipboard, imgui]
+    source: events-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: pixelformats
+    description: Show which pixel formats and features this GPU supports.
+    tags: [pixel-formats, feature-query, render-to-texture, blending, msaa, compressed-texture, imgui]
+    source: pixelformats-sapp.c
+    shader: pixelformats-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: texview
+    description: Test texture view features.
+    tags: [texture, texture-views, sokol_letterbox, sokol_fetch, imgui]
+    source: texview-sapp.c
+    shader: texview-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: writeimage
+    description: Test the sg_write_image functions.
+    tags: [texture, sg_write_image, write-image-unsealed, write-image-transient, array-texture, cubemap, 3d-texture, sokol_letterbox, imgui]
+    source: writeimage-sapp.c
+    shader: writeimage-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: letterbox
+    description: Test letterboxing with sokol_letterbox.
+    tags: [sokol_letterbox, sokol_gl, imgui]
+    source: letterbox-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: framebuffer
+    description: Draw a plasma effect into a CPU pixel buffer with sokol_framebuffer.
+    tags: [sokol_framebuffer, pixel-buffer, 2d]
+    source: framebuffer-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: ilbm
+    description: View Amiga IFF ILBM images.
+    tags: [sokol_framebuffer, sokol_letterbox, image-viewer, iff, ilbm, sokol_fetch, imgui]
+    source: ilbm-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: sgl
+    description: Draw 2D and 3D shapes with sokol_gl.
+    tags: [sokol_gl, basics, texture]
+    source: sgl-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sgl-lines
+    description: Draw lines with sokol_gl.
+    tags: [sokol_gl, lines]
+    source: sgl-lines-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sgl-boing
+    description: The classic Amiga bouncing ball demo, drawn with sokol_gl.
+    tags: [sokol_gl, demo, amiga]
+    source: sgl-boing-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sgl-points
+    description: Draw points with sokol_gl.
+    tags: [sokol_gl, points]
+    source: sgl-points-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sgl-context
+    description: Render with sokol_gl into different passes using contexts.
+    tags: [sokol_gl, contexts, render-to-texture, offscreen]
+    source: sgl-context-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sgl-microui
+    description: Render a microui UI with sokol_gl.
+    tags: [microui, ui, sokol_gl]
+    source: sgl-microui-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: nuklear
+    description: Render a Nuklear UI.
+    tags: [nuklear, ui]
+    source: nuklear-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: nuklear-images
+    description: Show sokol_gfx textures in a Nuklear UI.
+    tags: [nuklear, ui, texture, sokol_gl]
+    source: nuklear-images-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: cubemaprt
+    description: Render into a cubemap and use it for reflections.
+    tags: [cubemap, render-to-texture, offscreen, reflection]
+    source: cubemaprt-sapp.c
+    shader: cubemaprt-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: miprender
+    description: Render into the mipmaps of a texture.
+    tags: [render-to-texture, offscreen, mipmaps, sokol_shape]
+    source: miprender-sapp.c
+    shader: miprender-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: layerrender
+    description: Render into the layers of an array texture.
+    tags: [render-to-texture, offscreen, array-texture, sokol_shape]
+    source: layerrender-sapp.c
+    shader: layerrender-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: sdf
+    description: Raymarch a signed distance field in a fragment shader.
+    tags: [sdf, raymarching, fragment-shader, shadertoy]
+    source: sdf-sapp.c
+    shader: sdf-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: mandelbrot
+    description: Render the Mandelbrot set in a fragment shader.
+    tags: [fragment-shader, fractal, mandelbrot]
+    source: mandelbrot-sapp.c
+    shader: mandelbrot-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: shapes
+    description: Draw the built-in shapes of sokol_shape.
+    tags: [sokol_shape, sokol_debugtext, 3d]
+    source: shapes-sapp.c
+    shader: shapes-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: shapes-transform
+    description: Merge several transformed shapes into a single draw call.
+    tags: [sokol_shape, 3d, transforms]
+    source: shapes-transform-sapp.c
+    shader: shapes-transform-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: primtypes
+    description: Show all primitive types.
+    tags: [primitive-types, points, lines, triangles, sokol_debugtext]
+    source: primtypes-sapp.c
+    shader: primtypes-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: drawcallperf
+    description: Measure draw call performance with different binding update rates.
+    tags: [performance, draw-calls, bindings, instancing, imgui]
+    source: drawcallperf-sapp.c
+    shader: drawcallperf-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: debugtext
+    description: Show all built-in sokol_debugtext fonts.
+    tags: [sokol_debugtext, text, fonts]
+    source: debugtext-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: debugtext-printf
+    description: Format debug text with printf-style functions.
+    tags: [sokol_debugtext, text, printf]
+    source: debugtext-printf-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: debugtext-userfont
+    description: Render debug text with a custom 8-bit font.
+    tags: [sokol_debugtext, text, fonts, custom-font]
+    source: debugtext-userfont-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: debugtext-context
+    description: Render debug text into offscreen textures using sokol_debugtext contexts.
+    tags: [sokol_debugtext, text, contexts, render-to-texture, offscreen]
+    source: debugtext-context-sapp.c
+    shader: debugtext-context-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: debugtext-layers
+    description: Mix sokol_debugtext and sokol_gl output with layered rendering.
+    tags: [sokol_debugtext, sokol_gl, text, layers]
+    source: debugtext-layers-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: saudio
+    description: Play a simple tone with sokol_audio.
+    tags: [audio, sokol_audio]
+    source: saudio-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: icon
+    description: Set the window icon.
+    tags: [sokol_app, window, window-icon]
+    source: icon-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: cursor
+    description: Show the built-in and custom mouse cursors.
+    tags: [sokol_app, mouse, mouse-cursor, custom-cursor, imgui]
+    source: cursor-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: droptest
+    description: Drop files onto the window and load them.
+    tags: [sokol_app, drag-and-drop, file-loading, sokol_fetch, imgui]
+    source: droptest-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: fontstash
+    description: Render TrueType text with fontstash.
+    tags: [text, fonts, sokol_fontstash, stb_truetype, sokol_fetch, high-dpi]
+    source: fontstash-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: fontstash-layers
+    description: Mix fontstash text and sokol_gl output with layered rendering.
+    tags: [text, fonts, sokol_fontstash, sokol_gl, layers]
+    source: fontstash-layers-sapp.c
+    shader: fontstash-layers-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: slug
+    description: Render text with the Slug algorithm.
+    tags: [text, fonts, slug, vector-glyphs, instancing, stb_truetype, sokol_fetch, imgui]
+    source: slug-sapp.c
+    shader: slug-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: modplay
+    description: Play an Amiga MOD music file.
+    tags: [audio, sokol_audio, libmodplug, music]
+    source: modplay-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: restart
+    description: Shut down and restart the sokol headers without crashes or memory leaks.
+    tags: [lifecycle, restart, memory-tracking, sokol_memtrack, sokol_audio, sokol_fetch, sokol_gl, sokol_debugtext]
+    source: restart-sapp.c
+    shader: restart-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: plmpeg
+    description: Stream and play an MPEG1 video with audio.
+    tags: [video, mpeg, pl_mpeg, streaming, audio, sokol_audio, sokol_fetch, dynamic-texture]
+    source: plmpeg-sapp.c
+    shader: plmpeg-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: cgltf
+    description: A simple GLTF viewer using cgltf.
+    tags: [gltf, model-loading, basisu, sokol_fetch, camera, sokol_debugtext]
+    source: cgltf-sapp.c
+    shader: cgltf-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: loadpng
+    description: Load a PNG file and render it on a cube.
+    tags: [texture, texture-loading, png, stb_image, sokol_fetch]
+    source: loadpng-sapp.c
+    shader: loadpng-sapp.glsl
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: box3d-simple
+    description: Drop boxes and balls into a Box3d physics world.
+    tags: [physics, box3d, sokol_shape, instancing, shadow-map, write-buffer-transient, camera, imgui]
+    source: box3d-simple-sapp.c
+    shader: box3d-simple-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: spine-simple
+    description: The simplest possible sokol_spine sample.
+    tags: [spine, 2d-animation, sokol_spine, basics]
+    source: spine-simple-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: spine-inspector
+    description: Inspect a Spine scene in a Dear ImGui UI.
+    tags: [spine, 2d-animation, sokol_spine, inspector, imgui]
+    source: spine-inspector-sapp.c
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: spine-skinsets
+    description: Draw many Spine instances with skinsets and merged draw calls.
+    tags: [spine, 2d-animation, sokol_spine, skinsets, performance, high-dpi]
+    source: spine-skinsets-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: spine-layers
+    description: Mix Spine and sokol_gl output with layered rendering.
+    tags: [spine, 2d-animation, sokol_spine, sokol_gl, layers]
+    source: spine-layers-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: spine-contexts
+    description: Render Spine animations into offscreen passes using contexts.
+    tags: [spine, 2d-animation, sokol_spine, contexts, render-to-texture, offscreen, sokol_gl]
+    source: spine-contexts-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: spine-switch-skinsets
+    description: Switch skinsets on a Spine instance.
+    tags: [spine, 2d-animation, sokol_spine, skinsets]
+    source: spine-switch-skinsets-sapp.c
+    ui: true
+    webgl: true
+    webgpu: true
+
+  - name: ozz-anim
+    description: Play a skeletal animation with ozz-animation.
+    tags: [ozz-animation, 3d-animation, skeleton, sokol_gl, camera, imgui]
+    source: ozz-anim-sapp.cc
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: ozz-skin
+    description: Skin animated characters on the GPU with ozz-animation.
+    tags: [ozz-animation, 3d-animation, skinning, instancing, vertex-texture-fetch, write-image-transient, camera, imgui]
+    source: ozz-skin-sapp.cc
+    shader: ozz-skin-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: ozz-storagebuffer
+    description: Skin animated characters on the GPU with data from storage buffers.
+    tags: [compute, ozz-animation, 3d-animation, skinning, storage-buffer, vertex-pulling, instancing, camera, imgui]
+    source: ozz-storagebuffer-sapp.cc
+    shader: ozz-storagebuffer-sapp.glsl
+    ui: false
+    webgl: false
+    webgpu: true
+
+  - name: shdfeatures
+    description: Use sokol-shdc shader variants and runtime reflection.
+    tags: [sokol-shdc, shader-variants, shader-reflection, sokol_gl, camera, imgui]
+    source: shdfeatures-sapp.c
+    shader: shdfeatures-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: noentry
+    description: Provide your own main() function instead of sokol_app.
+    tags: [sokol_app, no-entry, user-data]
+    source: noentry-sapp.c
+    shader: noentry-sapp.glsl
+    ui: false
+    webgl: true
+    webgpu: true
+
+  - name: noentry-dll
+    description: Provide your own main() function with sokol_app linked as a DLL.
+    tags: [sokol_app, no-entry, dll, user-data]
+    source: noentry-dll-sapp.c
+    shader: noentry-dll-sapp.glsl
+    ui: false
+    webgl: false
+    webgpu: false
+
+  - name: instancing-compute
+    description: Update particle positions in a compute shader and draw them with instancing.
+    tags: [compute, instancing, storage-buffer, particles]
+    source: instancing-compute-sapp.c
+    shader: instancing-compute-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: write-storageimage
+    description: Write an image in a compute shader.
+    tags: [compute, storage-image, basics]
+    source: write-storageimage-sapp.c
+    shader: write-storageimage-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: histogram
+    description: Build an image histogram by writing to a storage buffer from a fragment shader.
+    tags: [compute, storage-buffer, image-processing, stb_image, sokol_fetch]
+    source: histogram-sapp.c
+    shader: histogram-sapp.glsl
+    ui: true
+    webgl: false
+    webgpu: true
+
+  - name: computeboids
+    description: Simulate a flock of boids in a compute shader.
+    tags: [compute, storage-buffer, simulation, particles, webgpu-port, imgui]
+    source: computeboids-sapp.c
+    shader: computeboids-sapp.glsl
+    ui: false
+    webgl: false
+    webgpu: true
+
+  - name: imageblur
+    description: Blur an image in a compute shader.
+    tags: [compute, storage-image, shared-memory, barriers, image-processing, webgpu-port, imgui]
+    source: imageblur-sapp.c
+    shader: imageblur-sapp.glsl
+    ui: false
+    webgl: false
+    webgpu: true
