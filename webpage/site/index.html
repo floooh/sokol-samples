@@ -11,9 +11,8 @@
 <!-- start loading samples.json early, 'crossorigin' must match fetch() so that it is only loaded once -->
 <link rel="preload" href="samples.json" as="fetch" crossorigin>
 <script>
-    // set the theme before first paint to prevent a flash
-    document.documentElement.dataset.theme = localStorage.getItem('theme')
-        ?? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    // set the theme before first paint to prevent a flash, the default is dark
+    document.documentElement.dataset.theme = localStorage.getItem('theme') ?? 'dark';
     // the api from the last visit, prevents a color flash before samples.json is loaded
     document.documentElement.dataset.api = localStorage.getItem('api') ?? '';
 </script>

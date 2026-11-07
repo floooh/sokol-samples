@@ -11,9 +11,8 @@
 <!-- start loading samples.json early, 'crossorigin' must match fetch() so that it is only loaded once -->
 <link rel="preload" href="samples.json" as="fetch" crossorigin>
 <script>
-    // set the theme and api before first paint to prevent a flash, see index.html
-    document.documentElement.dataset.theme = localStorage.getItem('theme')
-        ?? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    // use the theme of the gallery, set the theme and api before first paint to prevent a flash
+    document.documentElement.dataset.theme = localStorage.getItem('theme') ?? 'dark';
     document.documentElement.dataset.api = localStorage.getItem('api') ?? '';
 </script>
 <script defer src="common.js"></script>
@@ -33,7 +32,6 @@
             <a class="nav-link" id="ui-link" title="Toggle the debug UI" hidden>[ui]</a>
             <button class="nav-link" id="fs-btn" type="button" title="Run the sample in fullscreen" hidden>[fullscreen]</button>
             <a class="nav-link" id="open-link" target="_blank" rel="noopener" title="Open only the sample in a new tab" hidden>[new tab]</a>
-            <button class="nav-link theme-btn" id="theme-btn" type="button" title="Switch between dark and light mode"></button>
         </nav>
     </div>
     <aside class="desc-panel" id="desc" hidden>

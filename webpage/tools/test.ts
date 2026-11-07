@@ -170,6 +170,7 @@ async function testPage(url: string) {
         // theme toggle, persists after reload
         const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
         const before = await theme();
+        check('default theme is dark', before === 'dark', before);
         await page.click('#theme-btn');
         const after = await theme();
         check('theme toggles', (before !== after) && ((after === 'dark') || (after === 'light')), { before, after });
@@ -270,6 +271,15 @@ async function testPlayer(url: string) {
         await page.goto(`${url}player.html?name=xyzzy`, { waitUntil: 'networkidle0' });
         check('unknown sample message', (await page.$eval('#message', (e) => e.textContent ?? '')).includes('no such sample'));
         check('unknown sample: no iframe', !(await visible('frame')));
+
+        // the player has no theme toggle and uses the theme of the gallery
+        const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
+        check('player: no theme button', (await page.$('#theme-btn')) === null);
+        check('player: default theme is dark', (await theme()) === 'dark');
+        await page.evaluate(() => localStorage.setItem('theme', 'light'));
+        await page.reload({ waitUntil: 'networkidle0' });
+        check('player: uses gallery theme', (await theme()) === 'light');
+        await page.evaluate(() => localStorage.removeItem('theme'));
 
         // back goes to the gallery and keeps the search
         await page.goto(`${url}?q=cube`, { waitUntil: 'networkidle0' });

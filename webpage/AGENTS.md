@@ -12,9 +12,9 @@ The webpage has two deployments with the same files, one for WebGL2
 ## Layout
 
 - `site/`: the page files, deployed as-is (there is no build step)
-  - `index.html`, `main.js`: the gallery with the search field
+  - `index.html`, `main.js`: the gallery with the search field and the theme toggle
   - `player.html`, `player.js`: run one sample in an iframe
-  - `common.js`: code for both pages (flavors, theme, `samples.json` loading)
+  - `common.js`: code for both pages (flavors, `samples.json` loading)
   - `style.css`: all styles, colors are CSS variables per theme
     (`data-theme`) and per api (`data-api`, green for WebGL2, amber for WebGPU)
   - `favicon.svg`

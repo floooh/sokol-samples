@@ -78,7 +78,6 @@ function setupButtons() {
 }
 
 async function main() {
-    setupTheme();
     setupButtons();
     const params = new URL(location.href).searchParams;
     const name = params.get('name') ?? '';

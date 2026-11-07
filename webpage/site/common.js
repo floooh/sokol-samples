@@ -45,23 +45,6 @@ function sampleUrl(name, ui) {
     return `${name}-sapp${ui ? '-ui' : ''}.html`;
 }
 
-// theme
-
-function updateThemeButton() {
-    const theme = document.documentElement.dataset.theme;
-    $('theme-btn').textContent = (theme === 'dark') ? '[light]' : '[dark]';
-}
-
-function setupTheme() {
-    $('theme-btn').onclick = () => {
-        const theme = (document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark';
-        document.documentElement.dataset.theme = theme;
-        localStorage.setItem('theme', theme);
-        updateThemeButton();
-    };
-    updateThemeButton();
-}
-
 // load samples.json and set the color scheme for its api
 async function loadToc() {
     const resp = await fetch('samples.json');

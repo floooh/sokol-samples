@@ -6,6 +6,23 @@
 
 let cards = [];
 
+// theme
+
+function updateThemeButton() {
+    const theme = document.documentElement.dataset.theme;
+    $('theme-btn').textContent = (theme === 'dark') ? '[light]' : '[dark]';
+}
+
+function setupTheme() {
+    $('theme-btn').onclick = () => {
+        const theme = (document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem('theme', theme);
+        updateThemeButton();
+    };
+    updateThemeButton();
+}
+
 // gallery
 
 function makeCard(sample) {
