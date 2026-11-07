@@ -15,7 +15,6 @@
     --glow: rgba(57, 255, 106, 0.4);
     --logo-glow: rgba(57, 255, 106, 0.15);
     --on-accent: #031006;
-    --scanline: rgba(0, 0, 0, 0.22);
 }
 
 :root[data-theme="light"] {
@@ -28,7 +27,6 @@
     --line: #a9cdb1;
     --glow: rgba(8, 135, 46, 0.3);
     --on-accent: #f4fff6;
-    --scanline: rgba(0, 40, 10, 0.06);
 }
 
 /* WebGPU: old amber monitor */
@@ -55,7 +53,6 @@
     --line: #dbc397;
     --glow: rgba(168, 100, 0, 0.3);
     --on-accent: #fffaf0;
-    --scanline: rgba(60, 35, 0, 0.06);
 }
 
 * {
@@ -66,10 +63,8 @@
     display: none !important;
 }
 
-/* CRT scanlines, as background so that they do not cover screenshots */
 html {
-    --scanlines: repeating-linear-gradient(to bottom, transparent 0 2px, var(--scanline) 2px 3px);
-    background: var(--scanlines), var(--bg);
+    background: var(--bg);
 }
 
 /* keep space for the scrollbar, so the layout does not jump when a search
@@ -179,7 +174,7 @@ a {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: var(--scanlines), var(--bar);
+    background: var(--bar);
     border-bottom: 1px solid var(--line);
 }
 
@@ -279,7 +274,7 @@ a {
 .card {
     display: flex;
     flex-direction: column;
-    background: var(--scanlines), var(--bg-raised);
+    background: var(--bg-raised);
     border: 1px solid var(--line);
     transition: border-color 0.1s, box-shadow 0.1s;
 }
@@ -428,7 +423,7 @@ body.player {
 .player-bar {
     position: relative;
     flex: none;
-    background: var(--scanlines), var(--bar);
+    background: var(--bar);
     border-bottom: 1px solid var(--line);
 }
 
@@ -474,7 +469,7 @@ body.player {
     width: min(460px, calc(100vw - 32px));
     margin-top: 6px;
     padding: 12px 14px;
-    background: var(--scanlines), var(--bg-raised);
+    background: var(--bg-raised);
     border: 1px solid var(--accent);
     box-shadow: 0 0 18px var(--glow);
 }

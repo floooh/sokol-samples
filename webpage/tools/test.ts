@@ -161,11 +161,9 @@ async function testPage(url: string) {
         await page.goto(`${url}?q=${encodeURIComponent('#spine')}`, { waitUntil: 'networkidle0' });
         check('url query applied on load', sameList(await visibleCards(page), expected(samples, '#spine')));
 
-        // clicking the logo reloads the page without the query
-        await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('.logo-link')]);
-        check('logo click clears url query', new URL(page.url()).searchParams.get('q') === null, page.url());
-        check('logo click clears search', (await page.$eval('#search', (e) => (e as HTMLInputElement).value)) === '');
-        check('logo click shows all samples', (await visibleCards(page)).length === samples.length);
+        // the logo links to the sokol repo
+        const logoHref = await page.$eval('.logo-link', (e) => (e as HTMLAnchorElement).href);
+        check('logo links to sokol repo', logoHref === 'https://github.com/floooh/sokol', logoHref);
 
         // theme toggle, persists after reload
         const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
