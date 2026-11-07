@@ -14,6 +14,8 @@
 
 #include "ozzutil.h"
 
+#include <stdlib.h> // calloc
+
 static struct {
     bool valid;
     ozz_desc_t desc;
