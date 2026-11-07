@@ -217,6 +217,13 @@ async function testPlayer(url: string) {
             const frame = await (await page.$('#frame'))!.contentFrame();
             check('sample runs in iframe', (frame !== null) && ((await frame.$('canvas#canvas')) !== null));
             check('iframe has focus', (await page.evaluate(() => document.activeElement?.id)) === 'frame');
+            // [fullscreen] puts the canvas in the iframe in fullscreen (not the iframe itself)
+            await page.click('#fs-btn');
+            await page.waitForFunction(() => document.fullscreenElement !== null, { timeout: 2000 }).catch(() => {});
+            check('[fullscreen] iframe in fullscreen', (await page.evaluate(() => document.fullscreenElement?.id)) === 'frame');
+            check('[fullscreen] canvas in fullscreen', (await frame!.evaluate(() => document.fullscreenElement?.id)) === 'canvas');
+            await frame!.evaluate(() => document.exitFullscreen());
+            await page.waitForFunction(() => document.fullscreenElement === null, { timeout: 2000 }).catch(() => {});
         }
 
         // [desc] toggles the description panel, Escape closes it

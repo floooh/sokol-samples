@@ -56,9 +56,12 @@ function setupButtons() {
     $('desc-btn').onclick = () => setDescOpen($('desc').hidden);
     $('fs-btn').onclick = () => {
         const frame = $('frame');
-        const req = frame.requestFullscreen ?? frame.webkitRequestFullscreen;
+        // fullscreen the sample canvas like sapp_toggle_fullscreen(), so that the
+        // sample gets the fullscreenchange event (and sapp_is_fullscreen() is correct)
+        const el = frame.contentDocument?.getElementById('canvas') ?? frame;
+        const req = el.requestFullscreen ?? el.webkitRequestFullscreen;
         if (req) {
-            Promise.resolve(req.call(frame)).then(() => frame.focus()).catch(() => {});
+            Promise.resolve(req.call(el)).then(() => frame.focus()).catch(() => {});
         }
     };
     document.addEventListener('keydown', (ev) => {
