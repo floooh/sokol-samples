@@ -402,6 +402,16 @@ async function testPlayer(url: string) {
         await page.keyboard.press('Escape');
         check('Escape closes desc', !(await visible('desc')));
 
+        // the file links in the desc panel open the source view
+        await page.click('#desc-btn');
+        await page.click(`#desc-list a[href="${github}/${s.shader}"]`);
+        await page.waitForFunction(() => document.getElementById('code-text')?.textContent !== 'loading...');
+        check('desc file link closes desc', !(await visible('desc')));
+        check('desc file link opens source view', await visible('code'));
+        check('desc file link shows file', (await page.$eval('#code-file', (e) => e.textContent)) === s.shader);
+        check('desc file link sets [glsl] active', await page.$eval('#glsl-btn', (e) => e.classList.contains('active')));
+        await page.keyboard.press('Escape');
+
         // the debug UI variant
         await page.goto(`${url}player.html?name=${s.name}&ui=1`, { waitUntil: 'networkidle0' });
         check('ui iframe src', (await page.$eval('#frame', (e) => e.getAttribute('src'))) === `${s.name}-sapp-ui.html`);

@@ -27,10 +27,22 @@ function tagLink(tag, href) {
 function fillDescription(toc, sample) {
     $('desc-text').textContent = sample.description;
     const row = (term, children) => [el('dt', { textContent: term }), el('dd', {}, children)];
-    const githubLink = (file) => el('a', { href: `${GITHUB_SAPP_URL}/${file}`, target: '_blank', rel: 'noopener', textContent: file });
-    const files = [githubLink(sample.source)];
+    // a click shows the file in the source view, a modifier click opens it on GitHub
+    const fileLink = (file) => {
+        const a = el('a', { href: `${GITHUB_SAPP_URL}/${file}`, target: '_blank', rel: 'noopener', textContent: file });
+        a.onclick = (ev) => {
+            if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) {
+                return;
+            }
+            ev.preventDefault();
+            setDescOpen(false);
+            showCode(file);
+        };
+        return a;
+    };
+    const files = [fileLink(sample.source)];
     if (sample.shader) {
-        files.push(' ', githubLink(sample.shader));
+        files.push(' ', fileLink(sample.shader));
     }
     // link each api tag to the player on that api's page
     const apis = Object.entries(FLAVORS).filter(([api]) => sample[api]).map(([api, flavor]) => {
