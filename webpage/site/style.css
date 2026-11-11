@@ -5,6 +5,8 @@
 }
 
 :root[data-theme="dark"] {
+    /* the browser draws its own controls (scrollbars, ...) for the page theme, not the OS theme */
+    color-scheme: dark;
     --bg: #050806;
     --bg-raised: #09110b;
     --bar: #0d1a11;
@@ -15,9 +17,17 @@
     --glow: rgba(57, 255, 106, 0.4);
     --logo-glow: rgba(57, 255, 106, 0.15);
     --on-accent: #031006;
+    --hl-kw: #39ff6a;
+    --hl-type: #6ee8c4;
+    --hl-str: #d9f57c;
+    --hl-num: #f2e96b;
+    --hl-pre: #8fd8ff;
+    --hl-fn: #e6fff0;
+    --hl-com: #4f9a62;
 }
 
 :root[data-theme="light"] {
+    color-scheme: light;
     --bg: #eef5ee;
     --bg-raised: #fbfdfb;
     --bar: #dcebdd;
@@ -27,6 +37,13 @@
     --line: #a9cdb1;
     --glow: rgba(8, 135, 46, 0.3);
     --on-accent: #f4fff6;
+    --hl-kw: #067a28;
+    --hl-type: #0b7a6a;
+    --hl-str: #6a7d00;
+    --hl-num: #8a6a00;
+    --hl-pre: #1f6aa5;
+    --hl-fn: #0a2614;
+    --hl-com: #6f9479;
 }
 
 /* WebGPU: old amber monitor */
@@ -41,6 +58,13 @@
     --glow: rgba(255, 176, 0, 0.4);
     --logo-glow: rgba(255, 176, 0, 0.15);
     --on-accent: #140c00;
+    --hl-kw: #ffb000;
+    --hl-type: #ffd27a;
+    --hl-str: #c8e07a;
+    --hl-num: #ff8c5a;
+    --hl-pre: #f0a0c8;
+    --hl-fn: #fff3e0;
+    --hl-com: #a8792c;
 }
 
 :root[data-theme="light"][data-api="webgpu"] {
@@ -53,6 +77,13 @@
     --line: #dbc397;
     --glow: rgba(168, 100, 0, 0.3);
     --on-accent: #fffaf0;
+    --hl-kw: #a05c00;
+    --hl-type: #8a5a10;
+    --hl-str: #5d7300;
+    --hl-num: #c0451a;
+    --hl-pre: #a8336e;
+    --hl-fn: #2a1a03;
+    --hl-com: #9a7f55;
 }
 
 * {
@@ -89,6 +120,39 @@ a {
 ::selection {
     background: var(--accent);
     color: var(--on-accent);
+}
+
+/* scrollbars: a square thumb in a track with the page background
+   (Chrome ignores these when scrollbar-color is set, so only set it for Firefox) */
+
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    background: var(--line);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--dim);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--accent);
+}
+
+@supports (-moz-appearance: none) {
+    html {
+        scrollbar-color: var(--line) var(--bg);
+    }
 }
 
 /* header */
@@ -519,6 +583,151 @@ a.tag {
 .stage .message {
     margin: 40px auto;
 }
+
+/* source view, slides in from the right over the sample */
+
+.code-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, max(50%, 760px));
+    max-width: 100%;
+    background: var(--bg);
+    border-left: 1px solid var(--accent);
+    box-shadow: 0 0 18px var(--glow);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .code-panel {
+        transition: transform 0.18s ease-out, display 0.18s allow-discrete;
+    }
+    .code-panel[hidden] {
+        transform: translateX(100%);
+    }
+    @starting-style {
+        .code-panel {
+            transform: translateX(100%);
+        }
+    }
+}
+
+/* the resize handle on the left border, 8px wide around the 1px border */
+.code-resize {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -5px;
+    z-index: 1;
+    width: 8px;
+    cursor: ew-resize;
+    touch-action: none;
+    outline: none;
+}
+
+.code-resize::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 2px;
+}
+
+.code-resize:hover::after,
+.code-resize:focus-visible::after,
+body.resizing .code-resize::after {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--glow);
+}
+
+/* no text selection and no pointer events in the iframe while resizing */
+body.resizing {
+    cursor: ew-resize;
+    user-select: none;
+}
+
+body.resizing .frame {
+    pointer-events: none;
+}
+
+.code-bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px 18px;
+    padding: 6px 12px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--line);
+}
+
+.code-file {
+    margin-right: auto;
+    overflow: hidden;
+    color: var(--accent);
+    font-weight: bold;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.code-file::before {
+    content: "> ";
+    color: var(--dim);
+}
+
+.code-scroll {
+    display: flex;
+    flex: 1;
+    align-items: flex-start;
+    min-height: 0;
+    overflow: auto;
+    outline: none;
+}
+
+.code-lines,
+.code-text {
+    margin: 0;
+    padding: 10px 0;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 4;
+}
+
+/* the line numbers stay visible on horizontal scroll */
+.code-lines {
+    position: sticky;
+    left: 0;
+    flex: none;
+    min-height: 100%;
+    padding-right: 10px;
+    padding-left: 12px;
+    background: var(--bg);
+    border-right: 1px solid var(--line);
+    color: var(--dim);
+    text-align: right;
+    user-select: none;
+}
+
+.code-text {
+    flex: 1;
+    padding-right: 16px;
+    padding-left: 12px;
+    color: var(--fg);
+}
+
+.hl-kw { color: var(--hl-kw); font-weight: bold; }
+.hl-type { color: var(--hl-type); }
+.hl-str { color: var(--hl-str); }
+.hl-num, .hl-const { color: var(--hl-num); }
+.hl-pre, .hl-tag { color: var(--hl-pre); }
+.hl-tag { font-weight: bold; }
+.hl-fn { color: var(--hl-fn); }
+.hl-var { color: var(--hl-kw); }
+.hl-com { color: var(--hl-com); font-style: italic; }
 
 @media (max-width: 640px) {
     .header-inner,

@@ -18,10 +18,17 @@ import puppeteer, { type Page } from 'npm:puppeteer-core@23';
 type Sample = { name: string; description: string; tags: string[]; source: string; shader?: string; ui: boolean; webgl: boolean; webgpu: boolean };
 type Toc = { api: 'webgl' | 'webgpu'; samples: Sample[] };
 
+const rootDir = new URL('../..', import.meta.url).pathname;
+const githubRaw = 'https://raw.githubusercontent.com/floooh/sokol-samples/master/sapp';
 const urls = Deno.args.length > 0 ? Deno.args : ['http://localhost:8000/', 'http://localhost:8001/'];
 const chrome = Deno.env.get('CHROME') ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 let numFailed = 0;
+
+// show the scrollbars (puppeteer hides them by default), the tests check their width
+function launch() {
+    return puppeteer.launch({ executablePath: chrome, headless: true, ignoreDefaultArgs: ['--hide-scrollbars'] });
+}
 
 function check(what: string, ok: boolean, details?: unknown) {
     if (ok) {
@@ -73,7 +80,7 @@ async function checkSearch(page: Page, samples: Sample[], query: string) {
 
 async function testPage(url: string) {
     console.log(`testing ${url}`);
-    const browser = await puppeteer.launch({ executablePath: chrome, headless: true });
+    const browser = await launch();
     try {
         const page = await browser.newPage();
         const errors: string[] = [];
@@ -175,15 +182,172 @@ async function testPage(url: string) {
         await page.reload({ waitUntil: 'networkidle0' });
         check('theme persists after reload', (await theme()) === after);
 
+        // the browser controls follow the page theme, not the OS theme
+        const colorScheme = () => page.evaluate(() => getComputedStyle(document.documentElement).colorScheme);
+        check('color-scheme follows theme', (await colorScheme()) === after, await colorScheme());
+        await page.click('#theme-btn');
+        check('color-scheme follows theme toggle', (await colorScheme()) === before, await colorScheme());
+
+        // themed scrollbars via ::-webkit-scrollbar (12px), scrollbar-color is only set
+        // for Firefox, else Chrome ignores ::-webkit-scrollbar
+        const scrollbarWidth = await page.evaluate(() => innerWidth - document.documentElement.clientWidth);
+        check('themed scrollbar width', scrollbarWidth === 12, scrollbarWidth);
+        const scrollbarColor = await page.evaluate(() => getComputedStyle(document.documentElement).scrollbarColor);
+        check('no scrollbar-color in Chrome', scrollbarColor === 'auto', scrollbarColor);
+
         check('no console errors', errors.length === 0, errors);
     } finally {
         await browser.close();
     }
 }
 
+// the [kind, text] list of the highlighted tokens of a code snippet
+function tokens(page: Page, code: string, lang: string): Promise<string[][]> {
+    return page.evaluate((code, lang) => {
+        // @ts-ignore: highlight() is in highlight.js
+        const frag: DocumentFragment = highlight(code, lang);
+        return [...frag.childNodes].filter((n) => n.nodeType === Node.ELEMENT_NODE)
+            .map((n) => [(n as HTMLElement).className.slice('hl-'.length), n.textContent ?? '']);
+    }, code, lang);
+}
+
+async function checkTokens(page: Page, code: string, lang: string, want: string[][]) {
+    const got = await tokens(page, code, lang);
+    check(`highlight ${lang}: ${JSON.stringify(code)}`, JSON.stringify(got) === JSON.stringify(want), { want, got });
+}
+
+// the [src] and [glsl] buttons open the source view
+async function testSourceView(page: Page, toc: Toc, s: Sample, github: string) {
+    const visible = (id: string) => page.$eval(`#${id}`, (e) => !(e as HTMLElement).hidden);
+    const active = (id: string) => page.$eval(`#${id}`, (e) => e.classList.contains('active'));
+    const loaded = () => page.waitForFunction(() => document.getElementById('code-text')?.textContent !== 'loading...');
+    const codeText = () => page.$eval('#code-text', (e) => e.textContent ?? '');
+
+    const numHighlightScripts = () => page.$$eval('script[src="highlight.js"]', (els) => els.length);
+    check('source view closed', !(await visible('code')));
+    check('highlight.js not loaded before source view opens', (await numHighlightScripts()) === 0);
+    await page.click('#src-btn');
+    await loaded();
+    const src = await (await fetch(`${githubRaw}/${s.source}`)).text();
+    check('[src] opens source view', await visible('code'));
+    check('[src] active', (await active('src-btn')) && !(await active('glsl-btn')));
+    check('[src] aria-expanded', (await page.$eval('#src-btn', (e) => e.getAttribute('aria-expanded'))) === 'true');
+    check('source view file name', (await page.$eval('#code-file', (e) => e.textContent)) === s.source);
+    check('source view github link', (await page.$eval('#code-github', (e) => e.getAttribute('href'))) === `${github}/${s.source}`);
+    check('source view text', (await codeText()) === src);
+    const numLines = src.split('\n').length - (src.endsWith('\n') ? 1 : 0);
+    const lines = await page.$eval('#code-lines', (e) => (e.textContent ?? '').split('\n'));
+    check('source view line numbers', (lines.length === numLines) && (lines.at(-1) === String(numLines)), lines.length);
+    check('source view highlights C', (await page.$$('#code-text .hl-kw')).length > 0);
+    check('source view has focus', (await page.evaluate(() => document.activeElement?.id)) === 'code-scroll');
+    const codeScrollbar = await page.$eval('#code-scroll', (e) => (e as HTMLElement).offsetWidth - e.clientWidth);
+    check('source view themed scrollbar', codeScrollbar === 12, codeScrollbar);
+
+    // [glsl] switches to the shader, keeps the scroll position of each file
+    await page.$eval('#code-scroll', (e) => e.scrollTop = 100);
+    await page.click('#glsl-btn');
+    await loaded();
+    const shader = await (await fetch(`${githubRaw}/${s.shader}`)).text();
+    check('[glsl] shows shader', (await codeText()) === shader);
+    check('[glsl] active', (await active('glsl-btn')) && !(await active('src-btn')));
+    check('[glsl] highlights shdc tags', (await page.$$eval('#code-text .hl-tag', (els) => els.map((e) => e.textContent))).includes('@end'));
+    await page.click('#src-btn');
+    await loaded();
+    check('source view keeps scroll position', (await page.$eval('#code-scroll', (e) => e.scrollTop)) === 100);
+
+    // clicking the active button closes the view, also [x] and Escape
+    await page.click('#src-btn');
+    check('[src] again closes source view', !(await visible('code')));
+    check('[src] not active after close', !(await active('src-btn')));
+    await page.click('#glsl-btn');
+    await loaded();
+    await page.click('#code-close');
+    check('[x] closes source view', !(await visible('code')));
+    await page.click('#src-btn');
+    await loaded();
+    await page.keyboard.press('Escape');
+    check('Escape closes source view', !(await visible('code')));
+    check('highlight.js loaded once', (await numHighlightScripts()) === 1, await numHighlightScripts());
+
+    // drag the left border to resize the source view (no slide-in animation)
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    const panelWidth = () => page.$eval('#code', (e) => (e as HTMLElement).offsetWidth);
+    const storedWidth = () => page.evaluate(() => localStorage.getItem('code-width'));
+    const stageWidth = await page.$eval('.stage', (e) => e.clientWidth);
+    const drag = async (dx: number) => {
+        const box = (await (await page.$('#code-resize'))!.boundingBox())!;
+        const x = box.x + box.width / 2;
+        const y = box.y + box.height / 2;
+        await page.mouse.move(x, y);
+        await page.mouse.down();
+        await page.mouse.move(x + dx / 2, y);
+        await page.mouse.move(x + dx, y);
+        await page.mouse.up();
+    };
+    await page.click('#src-btn');
+    await loaded();
+    const w0 = await panelWidth();
+    await drag(100);
+    check('drag resizes source view', (await panelWidth()) === w0 - 100, { w0, got: await panelWidth() });
+    check('drag stores width', (await storedWidth()) === String(w0 - 100), await storedWidth());
+    check('drag ends resizing', !(await page.$eval('body', (e) => e.classList.contains('resizing'))));
+    await drag(-10000);
+    check('drag clamps to stage width', (await panelWidth()) === stageWidth, await panelWidth());
+    await drag(10000);
+    check('drag clamps to min width', (await panelWidth()) === 320, await panelWidth());
+    await page.reload({ waitUntil: 'networkidle0' });
+    await page.click('#src-btn');
+    await loaded();
+    check('width persists after reload', (await panelWidth()) === 320, await panelWidth());
+    await page.click('#code-resize', { clickCount: 2 });
+    check('double-click resets width', ((await panelWidth()) === w0) && ((await storedWidth()) === null), await panelWidth());
+    await page.click('#code-resize');
+    check('click without drag keeps default width', (await storedWidth()) === null, await storedWidth());
+    await page.focus('#code-resize');
+    await page.keyboard.press('ArrowRight');
+    check('ArrowRight shrinks source view', (await panelWidth()) === w0 - 32, await panelWidth());
+    await page.keyboard.press('ArrowLeft');
+    check('ArrowLeft grows source view', (await panelWidth()) === w0, await panelWidth());
+    await page.evaluate(() => localStorage.removeItem('code-width'));
+    await page.keyboard.press('Escape');
+    await page.emulateMediaFeatures([]);
+
+    // the highlighter
+    await checkTokens(page, '#include <stdio.h>\nint x = 0x1F; // c', 'c',
+        [['pre', '#include'], ['str', '<stdio.h>'], ['type', 'int'], ['num', '0x1F'], ['com', '// c']]);
+    await checkTokens(page, 'static float f(void) { return 1.5f * SG_MAX; }', 'c',
+        [['kw', 'static'], ['type', 'float'], ['fn', 'f'], ['type', 'void'], ['kw', 'return'], ['num', '1.5f'], ['const', 'SG_MAX']]);
+    await checkTokens(page, '/* a\n"b" */ char* s = "x\\"y"; uint32_t c = \'\\n\';', 'c',
+        [['com', '/* a\n"b" */'], ['type', 'char'], ['str', '"x\\"y"'], ['type', 'uint32_t'], ['str', "'\\n'"]]);
+    await checkTokens(page, 'class A { A* p = nullptr; };', 'cpp', [['kw', 'class'], ['kw', 'nullptr']]);
+    await checkTokens(page, 'class A {};', 'c', []);
+    await checkTokens(page, '@vs vs\nuniform sampler2D tex;\nvoid main() { gl_Position = vec4(0.5); }\n@end', 'glsl',
+        [['tag', '@vs'], ['kw', 'uniform'], ['type', 'sampler2D'], ['type', 'void'], ['fn', 'main'], ['var', 'gl_Position'], ['type', 'vec4'], ['num', '0.5'], ['tag', '@end']]);
+    await checkTokens(page, '@ctype mat4 HMM_Mat4\n  @end x @y', 'glsl', [['tag', '@ctype'], ['type', 'mat4'], ['tag', '@end']]);
+    await checkTokens(page, '  # if FOO\nx # y', 'c', [['pre', '# if'], ['const', 'FOO']]);
+    await checkTokens(page, '@vs vs', 'c', []);
+    await checkTokens(page, '/* unterminated\nint x;', 'c', [['com', '/* unterminated\nint x;']]);
+
+    // the highlighter keeps the text of all local source files
+    const files = toc.samples.flatMap((s) => s.shader ? [s.source, s.shader] : [s.source])
+        .map((file) => [file, Deno.readTextFileSync(`${rootDir}/sapp/${file}`)]);
+    const changed = await page.evaluate((files) => {
+        const res = [];
+        for (const [file, text] of files) {
+            // @ts-ignore: highlight() and langOf() are in highlight.js
+            const frag: DocumentFragment = highlight(text, langOf(file));
+            if (frag.textContent !== text) {
+                res.push(file);
+            }
+        }
+        return res;
+    }, files);
+    check(`highlight keeps the text of ${files.length} files`, changed.length === 0, changed);
+}
+
 async function testPlayer(url: string) {
     console.log(`testing ${url}player.html`);
-    const browser = await puppeteer.launch({ executablePath: chrome, headless: true });
+    const browser = await launch();
     try {
         const page = await browser.newPage();
         const errors: string[] = [];
@@ -199,8 +363,6 @@ async function testPlayer(url: string) {
         await page.goto(`${url}player.html?name=${s.name}`, { waitUntil: 'networkidle0' });
         check('player title', (await page.$eval('#title', (e) => e.textContent)) === s.name);
         check('player iframe src', (await page.$eval('#frame', (e) => e.getAttribute('src'))) === `${s.name}-sapp.html`);
-        check('[src] link', (await href('src-link')) === `${github}/${s.source}`);
-        check('[glsl] link', (await href('glsl-link')) === `${github}/${s.shader}`);
         check('[ui] link', (await href('ui-link')) === `player.html?name=${s.name}&ui=1`);
         check('[new tab] link', (await href('open-link')) === `${s.name}-sapp.html`);
         const crossUrl = (toc.api === 'webgl') ? 'https://floooh.github.io/sokol-webgpu' : 'https://floooh.github.io/sokol-html5';
@@ -223,6 +385,8 @@ async function testPlayer(url: string) {
             await frame!.evaluate(() => document.exitFullscreen());
             await page.waitForFunction(() => document.fullscreenElement === null, { timeout: 2000 }).catch(() => {});
         }
+
+        await testSourceView(page, toc, s, github);
 
         // [desc] toggles the description panel, Escape closes it
         check('desc closed', !(await visible('desc')));
@@ -251,7 +415,7 @@ async function testPlayer(url: string) {
         const t = toc.samples.find((s) => s[toc.api] && !s.ui && !s.shader);
         if (t) {
             await page.goto(`${url}player.html?name=${t.name}&ui=1`, { waitUntil: 'networkidle0' });
-            check('no [glsl] without shader', !(await visible('glsl-link')));
+            check('no [glsl] without shader', !(await visible('glsl-btn')));
             check('no [ui] without debug UI', !(await visible('ui-link')));
             check('ui=1 ignored without debug UI', (await page.$eval('#frame', (e) => e.getAttribute('src'))) === `${t.name}-sapp.html`);
         }

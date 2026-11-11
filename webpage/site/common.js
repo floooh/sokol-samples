@@ -23,6 +23,8 @@ const FLAVORS = {
 };
 
 const GITHUB_SAPP_URL = 'https://github.com/floooh/sokol-samples/tree/master/sapp';
+// the raw files for the source view of the player
+const GITHUB_RAW_SAPP_URL = 'https://raw.githubusercontent.com/floooh/sokol-samples/master/sapp';
 
 const $ = (id) => document.getElementById(id);
 

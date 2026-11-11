@@ -13,7 +13,11 @@ The webpage has two deployments with the same files, one for WebGL2
 
 - `site/`: the page files, deployed as-is (there is no build step)
   - `index.html`, `main.js`: the gallery with the search field and the theme toggle
-  - `player.html`, `player.js`: run one sample in an iframe
+  - `player.html`, `player.js`: run one sample in an iframe, `[src]` and `[glsl]`
+    show the source files in a slide-in source view (loaded from the `master`
+    branch on raw.githubusercontent.com, the left border resizes the view)
+  - `highlight.js`: minimal syntax highlighter for C, C++ and GLSL (with the
+    sokol-shdc `@` tags), `player.js` loads it the first time the source view opens
   - `common.js`: code for both pages (flavors, `samples.json` loading)
   - `style.css`: all styles, colors are CSS variables per theme
     (`data-theme`) and per api (`data-api`, green for WebGL2, amber for WebGPU)
@@ -49,6 +53,7 @@ when the sample needs compute support.
 
 - No build step, no npm dependencies, no frameworks, no web fonts.
 - Plain JavaScript in classic `defer` scripts, `common.js` loads first.
+  Exception: `player.js` loads `highlight.js` on demand.
 - Do not edit the logo SVG in `site/index.html` and `site/favicon.svg` by hand,
   change `tools/logo.ts` and run it.
 - Hide elements with the `hidden` attribute (`style.css` forces `display: none`).
@@ -66,6 +71,8 @@ when the sample needs compute support.
   ```
 
   `--dist` serves the built samples, so that the player can run them.
+  Stop the preview servers you started when you are done. Do not start them
+  with `nohup`, else they keep running after the session ends.
 - Test (with the preview running), all tests must pass, add tests for new features:
 
   ```

@@ -41,6 +41,7 @@ const SiteFiles = [
     'common.js',
     'main.js',
     'player.js',
+    'highlight.js',
     'favicon.svg',
 ];
 

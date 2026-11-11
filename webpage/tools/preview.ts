@@ -56,7 +56,7 @@ for (const name of [...toc.samples.map((s) => s.name), 'dummy']) {
 }
 
 // serve the page files from webpage/site, so that edits show on reload
-const siteFiles = ['/', '/index.html', '/player.html', '/style.css', '/common.js', '/main.js', '/player.js', '/favicon.svg'];
+const siteFiles = ['/', '/index.html', '/player.html', '/style.css', '/common.js', '/main.js', '/player.js', '/highlight.js', '/favicon.svg'];
 Deno.serve({ port }, async (req) => {
     const fsRoot = siteFiles.includes(new URL(req.url).pathname) ? siteDir : dstDir;
     const resp = await serveDir(req, { fsRoot, quiet: true });

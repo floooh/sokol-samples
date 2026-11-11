@@ -26,8 +26,8 @@
         <span class="badge small" id="api-badge"></span>
         <a class="nav-link" id="cross-api-link" title="Run the sample on the other 3D API" hidden></a>
         <nav class="nav player-nav">
-            <a class="nav-link" id="src-link" target="_blank" rel="noopener" title="Show the C source on GitHub" hidden>[src]</a>
-            <a class="nav-link" id="glsl-link" target="_blank" rel="noopener" title="Show the shader source on GitHub" hidden>[glsl]</a>
+            <button class="nav-link" id="src-btn" type="button" aria-expanded="false" aria-controls="code" title="Show the C source" hidden>[src]</button>
+            <button class="nav-link" id="glsl-btn" type="button" aria-expanded="false" aria-controls="code" title="Show the shader source" hidden>[glsl]</button>
             <button class="nav-link" id="desc-btn" type="button" aria-expanded="false" aria-controls="desc" title="Show the sample description" hidden>[desc]</button>
             <a class="nav-link" id="ui-link" title="Toggle the debug UI" hidden>[ui]</a>
             <button class="nav-link" id="fs-btn" type="button" title="Run the sample in fullscreen" hidden>[fullscreen]</button>
@@ -42,6 +42,18 @@
 <main class="stage">
     <iframe class="frame" id="frame" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write" hidden></iframe>
     <p class="message" id="message" hidden></p>
+    <aside class="code-panel" id="code" aria-label="Source code" hidden>
+        <div class="code-resize" id="code-resize" role="separator" aria-orientation="vertical" aria-label="Resize the source view" tabindex="0" title="Drag to resize, double-click to reset"></div>
+        <div class="code-bar">
+            <span class="code-file" id="code-file"></span>
+            <a class="nav-link" id="code-github" target="_blank" rel="noopener" title="Show the file on GitHub">[github]</a>
+            <button class="nav-link" id="code-close" type="button" title="Close the source view (Esc)">[x]</button>
+        </div>
+        <div class="code-scroll" id="code-scroll" tabindex="0">
+            <pre class="code-lines" id="code-lines" aria-hidden="true"></pre>
+            <pre class="code-text" id="code-text"></pre>
+        </div>
+    </aside>
 </main>
 <noscript><p class="message">ERROR: this page needs JavaScript</p></noscript>
 </body>
