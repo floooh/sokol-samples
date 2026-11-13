@@ -15,6 +15,7 @@ export const samples: SampleOptions[] = [
     { name: 'quad', ui: 'cc', shd: true },
     { name: 'bufferoffsets', ui: 'cc', shd: true },
     { name: 'drawex', ui: 'cc', shd: true },
+    { name: 'draw-indirect', shd: true, deps: ['imgui'], filter: hasCompute },
     { name: 'cube', ui: 'cc', shd: true },
     { name: 'noninterleaved', ui: 'cc', shd: true },
     { name: 'vertexpull', ui: 'cc', shd: true },
