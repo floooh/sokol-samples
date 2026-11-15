@@ -14,12 +14,12 @@ struct item {
     vec4 vel;   // xyz: pos velocity, w: angular velocity
 };
 
-// an index into the item state
+// an index of a visible item into the item state buffer
 struct visible_item {
     uint item_index;
 };
 
-// draw-indirect layout for indexed rendering
+// draw-indirect layout for indexed rendering (same as sg_draw_indirect_indexed_args)
 struct draw_args {
     uint num_elements;
     uint num_instances;
@@ -56,7 +56,7 @@ vec4 to_pos(uint x, uint y, uint z) {
 
 vec4 to_vel(uint x, uint y, uint z, uint a) {
     vec3 v = vec3(to_flt(x), to_flt(y), to_flt(z));
-    return vec4(normalize(v * 2.0 - 1.0) * VEL_SCALE, to_flt(a) * ROT_SCALE);
+    return vec4(normalize(v * 2.0 - 1.0) * VEL_SCALE, (to_flt(a) * 2.0 - 1.0) * ROT_SCALE);
 }
 
 vec4 to_axis_angle(uint x, uint y, uint z, uint a) {
@@ -175,7 +175,7 @@ layout(binding=0) readonly buffer vs_items { item items[]; };
 layout(binding=1) readonly buffer vs_visible { visible_item visible[]; };
 
 in vec4 in_pos;
-in vec4 in_color;
+in float in_intensity;
 
 out vec4 color;
 
@@ -186,6 +186,10 @@ vec3 rotate(vec3 p, vec3 k, float a) {
     return p * c + cross(k, p) * s + k * dot(k, p) * (1.0 - c);
 }
 
+vec3 rainbow(float hue) {
+    return clamp(abs(fract(hue + vec3(0.0, 2.0/3.0, 1.0/3.0)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);
+}
+
 void main() {
     uint item_idx = visible[gl_InstanceIndex].item_index;
     vec4 item_pos = items[item_idx].pos;
@@ -193,7 +197,9 @@ void main() {
     vec3 world_pos = item_pos.xyz + rotate(in_pos.xyz * SIZE_SCALE, item_rot.xyz, item_rot.w * TAU);
     gl_Position = view_proj * vec4(world_pos, 1.0);
     float dist_from_center = length(item_pos);
-    color = in_color * dist_from_center;
+    // compute an 'interesting' color
+    float hue = length(item_pos.xyz);
+    color = vec4(rainbow(hue) * in_intensity, 1.0);
 }
 @end
 

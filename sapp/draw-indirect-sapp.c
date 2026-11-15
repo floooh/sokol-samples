@@ -4,10 +4,10 @@
 //  Demonstrates the draw-indirect features (indirect-buffers and
 //  sg_draw_indirect() call).
 //
-//  - shape instance positions are updated in a compute shader
-//  - another compute shader clips against a view volume and updates
-//    two parameter set for instanced rendering in an indirect buffer
-//    (one set for all 'inside' shapes, another for all 'outside' shapes)
+//  - shape instance positions and rotations are updated in a compute
+//    shader (many shapes bouncing around inside a cube volume)
+//  - another compute shader clips against an organic shape, visible
+//    shapes are recorded into a draw-indirect argument set
 //  - finally render the shapes via sg_draw_indirect().
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
@@ -67,37 +67,37 @@ static struct {
     camera_t camera;
 } state;
 
-// vertices and indices for a cube with colored faces
+// vertices and indices for a cube per-face intensities
 static const float cube_vertices[] = {
-    -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-     1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-     1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
-    -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+    -1.0, -1.0, -1.0,   0.6,
+     1.0, -1.0, -1.0,   0.6,
+     1.0,  1.0, -1.0,   0.6,
+    -1.0,  1.0, -1.0,   0.6,
 
-    -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-     1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-     1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
-    -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+    -1.0, -1.0,  1.0,   1.0,
+     1.0, -1.0,  1.0,   1.0,
+     1.0,  1.0,  1.0,   1.0,
+    -1.0,  1.0,  1.0,   1.0,
 
-    -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-    -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
-    -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
-    -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+    -1.0, -1.0, -1.0,   0.5,
+    -1.0,  1.0, -1.0,   0.5,
+    -1.0,  1.0,  1.0,   0.5,
+    -1.0, -1.0,  1.0,   0.5,
 
-    1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-    1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
-    1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
-    1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+    1.0, -1.0, -1.0,    0.8,
+    1.0,  1.0, -1.0,    0.8,
+    1.0,  1.0,  1.0,    0.8,
+    1.0, -1.0,  1.0,    0.8,
 
-    -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
-    -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-     1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
-     1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+    -1.0, -1.0, -1.0,   0.4,
+    -1.0, -1.0,  1.0,   0.4,
+     1.0, -1.0,  1.0,   0.4,
+     1.0, -1.0, -1.0,   0.4,
 
-    -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
-    -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-     1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
-     1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+    -1.0,  1.0, -1.0,   0.9,
+    -1.0,  1.0,  1.0,   0.9,
+     1.0,  1.0,  1.0,   0.9,
+     1.0,  1.0, -1.0,   0.9,
 };
 static const uint16_t cube_indices[] = {
     0, 1, 2,  0, 2, 3,
@@ -126,11 +126,12 @@ static void init(void) {
         .latitude = -10.0f,
         .longitude = 45.0f,
         .distance = 2.5f,
+        .min_dist = 0.25f,
     });
 
     // initial number of workgroups (each handles 64 items)
-    state.num_workgroups = 4096;    // * 64 = 256k items
-    state.clip.scale = 6.0f;
+    state.num_workgroups = 8192;    // * 64 = 512k items
+    state.clip.scale = 3.5f;
     state.clip.width = 0.3f;
     state.clip.speed = 0.5f;
 
@@ -148,8 +149,8 @@ static void init(void) {
     // a storage buffer with just the clip result, these are indices into
     // the items buffer
     state.visible.buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer= true,
-        .size = MAX_ITEMS * sizeof(uint32_t),
+        .usage.storage_buffer = true,
+        .size = MAX_ITEMS * sizeof(visible_item_t),
         .label = "vis-buffer",
     });
     state.visible.view = sg_make_view(&(sg_view_desc){
@@ -171,32 +172,32 @@ static void init(void) {
         .label = "indirect-buffer-view",
     });
 
-    // compute pipelines initializing item state (pos, rot, vel)
+    // compute pipeline initializing item state (pos, rot, vel)
     state.compute.init_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(init_shader_desc(sg_query_backend())),
         .label = "init-pipeline",
     });
-    // compute shader for resetting the draw-indirect-args once
+    // compute pipeline for resetting the draw-indirect-args once
     state.compute.reset_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(reset_shader_desc(sg_query_backend())),
         .label = "reset-pipeline",
     });
-    // compute shader for updating item position and rotation
+    // compute pipeline for updating item position and rotation
     state.compute.update_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(update_shader_desc(sg_query_backend())),
         .label = "update-pipeline",
     });
-    // compute shader for clipping items against an organic shape
+    // compute pipeline for clipping items against an organic shape
     state.compute.clip_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(clip_shader_desc(sg_query_backend())),
         .label = "clip-pipeline",
     });
 
-    // a vertex- and index-buffer for rendering a cube with colored faces
+    // a vertex- and index-buffer for rendering a cube
     state.display.vbuf = sg_make_buffer(&(sg_buffer_desc){
         .data = SG_RANGE(cube_vertices),
         .label = "cube-vertex-buffer",
@@ -212,7 +213,7 @@ static void init(void) {
         .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
         .layout.attrs = {
             [ATTR_display_in_pos].format = SG_VERTEXFORMAT_FLOAT3,
-            [ATTR_display_in_color].format = SG_VERTEXFORMAT_FLOAT4,
+            [ATTR_display_in_intensity].format = SG_VERTEXFORMAT_FLOAT,
         },
         .index_type = SG_INDEXTYPE_UINT16,
         .depth = {
@@ -227,7 +228,7 @@ static void init(void) {
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = { 0.102f, 0.137f, 0.494f, 1.0f },
+            .clear_value = { 0.0f, 0.0f, 0.0f, 1.0f },
         },
     };
 
@@ -249,7 +250,7 @@ static void frame(void) {
     const int fb_height = sapp_height();
     cam_update(&state.camera, fb_width, fb_height);
 
-    // move clip shells outwards, wrap at 1.0
+    // move gyroid phase, wrap at 2*PI
     state.clip.phase = fmodf(state.clip.phase + state.clip.speed * dt, 2.0f * VECMATH_PI);
     draw_ui();
 
@@ -349,7 +350,7 @@ static void draw_ui(void) {
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         char label[32];
         snprintf(label, sizeof(label), "%d", state.num_workgroups * WORKGROUP_SIZE);
-        igSliderIntEx("Num Cubes", &state.num_workgroups, 1, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
+        igSliderIntEx("Num Cubes", &state.num_workgroups, 1024, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
         igSliderFloat("Gyroid Scale", &state.clip.scale, 1.0f, 20.0f);
         igSliderFloat("Wall Width", &state.clip.width, 0.01f, 1.5f);
         igSliderFloat("Speed", &state.clip.speed, -2.0f, 2.0f);
