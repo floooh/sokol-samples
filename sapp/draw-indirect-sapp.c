@@ -23,19 +23,31 @@
 #include "sokol_gfx_imgui.h"
 #define SOKOL_APP_IMGUI_IMPL
 #include "sokol_app_imgui.h"
+#include "util/camera.h"
 #include "draw-indirect-sapp.glsl.h"
+#include <stdio.h> // snprintf
+#include <math.h> // fmodf
 
 #define MAX_ITEMS (1024 * 1024)
 #define WORKGROUP_SIZE (64)
+#define MAX_WORKGROUPS (MAX_ITEMS / WORKGROUP_SIZE)
 
 static struct {
-    int num_shapes;
+    int num_workgroups;
+    struct {
+        int num_shells;
+        float width;
+        float speed;
+        float pos;
+    } clip;
     struct {
         sg_buffer buf;
-        sg_view items_view;
-        sg_view inside_view;
-        sg_view outside_view;
-    } storage;
+        sg_view view;
+    } items;
+    struct {
+        sg_buffer buf;
+        sg_view view;
+    } visible;
     struct {
         sg_buffer buf;
         sg_view view;
@@ -47,8 +59,53 @@ static struct {
     } compute;
     struct {
         sg_pass_action pass_action;
+        sg_buffer vbuf;
+        sg_buffer ibuf;
+        sg_pipeline pip;
     } display;
+    camera_t camera;
 } state;
+
+// vertices and indices for a cube with colored faces
+static const float cube_vertices[] = {
+    -1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+     1.0, -1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+     1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+    -1.0,  1.0, -1.0,   1.0, 0.0, 0.0, 1.0,
+
+    -1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+     1.0, -1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+     1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+    -1.0,  1.0,  1.0,   0.0, 1.0, 0.0, 1.0,
+
+    -1.0, -1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+    -1.0,  1.0, -1.0,   0.0, 0.0, 1.0, 1.0,
+    -1.0,  1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+    -1.0, -1.0,  1.0,   0.0, 0.0, 1.0, 1.0,
+
+    1.0, -1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+    1.0,  1.0, -1.0,    1.0, 0.5, 0.0, 1.0,
+    1.0,  1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+    1.0, -1.0,  1.0,    1.0, 0.5, 0.0, 1.0,
+
+    -1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+    -1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+     1.0, -1.0,  1.0,   0.0, 0.5, 1.0, 1.0,
+     1.0, -1.0, -1.0,   0.0, 0.5, 1.0, 1.0,
+
+    -1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0,
+    -1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+     1.0,  1.0,  1.0,   1.0, 0.0, 0.5, 1.0,
+     1.0,  1.0, -1.0,   1.0, 0.0, 0.5, 1.0
+};
+static const uint16_t cube_indices[] = {
+    0, 1, 2,  0, 2, 3,
+    6, 5, 4,  7, 6, 4,
+    8, 9, 10,  8, 10, 11,
+    14, 13, 12,  15, 14, 12,
+    16, 17, 18,  16, 18, 19,
+    22, 21, 20,  23, 22, 20
+};
 
 static void draw_ui(void);
 
@@ -63,58 +120,101 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // a combined storage buffer for item state, and 'inside/outside'
-    // indices into the item state section
-    const size_t items_size = MAX_ITEMS * sizeof(item_props_t);
-    const size_t inside_size = MAX_ITEMS * sizeof(uint32_t);
-    const size_t outside_size = MAX_ITEMS * sizeof(uint32_t);
-    state.storage.buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
-        .size = items_size + inside_size + outside_size,
-        .label = "storage-buffer",
-    });
-    // and views for the different sections of the storage buffer
-    state.storage.items_view = sg_make_view(&(sg_view_desc){
-        .storage_buffer.buffer = state.storage.buf,
-        .label = "items-view",
-    });
-    state.storage.inside_view = sg_make_view(&(sg_view_desc){
-        .storage_buffer = {
-            .buffer = state.storage.buf,
-            .offset = items_size,
-        },
-        .label = "inside-view",
-    });
-    state.storage.outside_view = sg_make_view(&(sg_view_desc){
-        .storage_buffer = {
-            .buffer = state.storage.buf,
-            .offset = items_size + inside_size,
-        },
-        .label = "outside-view",
+    // initialize camera helper
+    cam_init(&state.camera, &(camera_desc_t){
+        .latitude = -10.0f,
+        .longitude = 45.0f,
+        .distance = 2.5f,
     });
 
-    // ...and an indirect-buffer with two parameter sets:
-    // one for the 'inside' and one for the 'outside' items
+    // initial number of workgroups (each handles 64 items)
+    state.num_workgroups = 16;
+    state.clip.num_shells = 4;
+    state.clip.width = 0.35f;
+    state.clip.speed = 0.025f;
+
+    // a storage buffer and view with the complete item state
+    state.items.buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.storage_buffer = true,
+        .size = MAX_ITEMS * sizeof(item_t),
+        .label = "items-buffer",
+    });
+    state.items.view = sg_make_view(&(sg_view_desc){
+        .storage_buffer.buffer = state.items.buf,
+        .label = "items-buffer-view",
+    });
+
+    // a storage buffer with just the clip result, these are indices into
+    // the items buffer
+    state.visible.buf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.storage_buffer= true,
+        .size = MAX_ITEMS * sizeof(uint32_t),
+        .label = "vis-buffer",
+    });
+    state.visible.view = sg_make_view(&(sg_view_desc){
+        .storage_buffer.buffer = state.visible.buf,
+        .label = "vis-buffer-view",
+    });
+
+    // and an indirect buffer and storage-buffer-view for one indirect-argument set
     state.indirect.buf = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
             .storage_buffer = true,
             .indirect_buffer = true,
         },
-        .size = 2 * sizeof(sg_draw_indirect_indexed_args),
+        .size = sizeof(sg_draw_indirect_indexed_args),
         .label = "indirect-buffer",
     });
     state.indirect.view = sg_make_view(&(sg_view_desc){
         .storage_buffer.buffer = state.indirect.buf,
-        .label = "indirect-view",
+        .label = "indirect-buffer-view",
     });
 
-    // a pipeline to initialize the item buffer content
+    // compute pipeline for initialization, updating and clipping the items
     state.compute.init_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(init_shader_desc(sg_query_backend())),
         .label = "init-pipeline",
     });
+    state.compute.update_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(update_shader_desc(sg_query_backend())),
+        .label = "update-pipeline",
+    });
+    state.compute.clip_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(clip_shader_desc(sg_query_backend())),
+        .label = "clip-pipeline",
+    });
 
+    // a vertex- and index-buffer for rendering a cube with colored faces
+    state.display.vbuf = sg_make_buffer(&(sg_buffer_desc){
+        .data = SG_RANGE(cube_vertices),
+        .label = "cube-vertex-buffer",
+    });
+    state.display.ibuf = sg_make_buffer(&(sg_buffer_desc){
+        .usage.index_buffer = true,
+        .data = SG_RANGE(cube_indices),
+        .label = "cube-index-buffer",
+    });
+
+    // a render pipeline to render the moving/tumbling shapes
+    state.display.pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .shader = sg_make_shader(display_shader_desc(sg_query_backend())),
+        .layout.attrs = {
+            [ATTR_display_in_pos].format = SG_VERTEXFORMAT_FLOAT3,
+            [ATTR_display_in_color].format = SG_VERTEXFORMAT_FLOAT4,
+        },
+        .index_type = SG_INDEXTYPE_UINT16,
+        .depth = {
+            .compare = SG_COMPAREFUNC_LESS_EQUAL,
+            .write_enabled = true,
+        },
+        .cull_mode = SG_CULLMODE_BACK,
+        .label = "display-pipeline",
+    });
+
+    // pass-action for the display pass (clear to background color)
     state.display.pass_action = (sg_pass_action){
         .colors[0] = {
             .load_action = SG_LOADACTION_CLEAR,
@@ -128,7 +228,7 @@ static void init(void) {
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(state.compute.init_pip);
     sg_apply_bindings(&(sg_bindings){
-        .views[VIEW_cs_ssbo] = state.storage.items_view,
+        .views[VIEW_cs_items] = state.items.view,
     });
     sg_dispatch(MAX_ITEMS / WORKGROUP_SIZE, 1, 1);
     sg_end_pass();
@@ -136,10 +236,63 @@ static void init(void) {
 
 static void frame(void) {
     float dt = (float)sapp_frame_duration();
+    const int fb_width = sapp_width();
+    const int fb_height = sapp_height();
+    cam_update(&state.camera, fb_width, fb_height);
+
+    // move clip shells outwards, wrap at 1.0
+    state.clip.pos = fmodf(state.clip.pos + state.clip.speed * dt, 1.0f);
     draw_ui();
 
+    // compute pass: first update item positions and then
+    // clip into indirect-buffer args
+    sg_begin_pass(&(sg_pass){ .compute = true });
+
+    // update item positions and rotation
+    sg_apply_pipeline(state.compute.update_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_cs_items] = state.items.view,
+    });
+    const cs_update_params_t cs_update_params = { .dt = dt };
+    sg_apply_uniforms(UB_cs_update_params, &SG_RANGE(cs_update_params));
+    sg_dispatch(state.num_workgroups, 1, 1);
+
+    // clip and record visible item indices and indirect-draw-args
+    const cs_clip_params_t cs_clip_params = {
+        .num_shells = state.clip.num_shells,
+        .shell_width = state.clip.width,
+        .shell_pos = state.clip.pos,
+    };
+    sg_apply_pipeline(state.compute.clip_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views = {
+            [VIEW_cs_items_ro] = state.items.view,
+            [VIEW_cs_visible] = state.visible.view,
+            [VIEW_cs_indirect] = state.indirect.view,
+        },
+    });
+    sg_apply_uniforms(UB_cs_clip_params, &SG_RANGE(cs_clip_params));
+    sg_dispatch(state.num_workgroups, 1, 1);
+    sg_end_pass();
+
+    // rendering the clipped shapes happens via an indirect-draw-call
     simgui_flush();
-    sg_begin_pass(&(sg_pass){ .action = state.display.pass_action, .swapchain = sglue_swapchain() });
+    sg_begin_pass(&(sg_pass){
+        .action = state.display.pass_action,
+        .swapchain = sglue_swapchain()
+    });
+    const vs_params_t vs_params = { .view_proj = state.camera.view_proj };
+    sg_apply_pipeline(state.display.pip);
+    sg_apply_bindings(&(sg_bindings){
+        .vertex_buffers[0] = state.display.vbuf,
+        .index_buffer = state.display.ibuf,
+        .views = {
+            [VIEW_vs_items] = state.items.view,
+            [VIEW_vs_visible] = state.visible.view,
+        },
+    });
+    sg_apply_uniforms(UB_vs_params, &SG_RANGE(vs_params));
+    sg_draw_indirect(state.indirect.buf, 0);
     simgui_draw();
     sg_end_pass();
     sg_commit();
@@ -154,7 +307,10 @@ static void cleanup(void) {
 
 static void input(const sapp_event* ev) {
     sappimgui_track_event(ev);
-    simgui_handle_event(ev);
+    if (simgui_handle_event(ev)) {
+        return;
+    }
+    cam_handle_event(&state.camera, ev);
 }
 
 static void draw_ui(void) {
@@ -173,7 +329,17 @@ static void draw_ui(void) {
     sappimgui_draw();
     sgimgui_draw();
 
-    // FIXME: controls window
+    igSetNextWindowPos((ImVec2){ 30, 50 }, ImGuiCond_Once);
+    igSetNextWindowBgAlpha(0.75f);
+    if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
+        char label[32];
+        snprintf(label, sizeof(label), "%d", state.num_workgroups * WORKGROUP_SIZE);
+        igSliderIntEx("Items", &state.num_workgroups, 1, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
+        igSliderInt("Clip Shells", &state.clip.num_shells, 1, 16);
+        igSliderFloat("Shell Width", &state.clip.width, 0.0f, 1.0f);
+        igSliderFloat("Shell Speed", &state.clip.speed, -1.0f, 1.0f);
+    }
+    igEnd();
 }
 
 sapp_desc sokol_main(int argc, char* argv[]) {
