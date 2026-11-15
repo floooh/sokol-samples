@@ -14,7 +14,7 @@ struct item_props {
 // compute shader to initialize position, velocity,
 // rotation axis, current angle and angular velocity
 // to pseudo-random values
-@cs init
+@cs cs_init
 @include_block common
 layout(binding=0) buffer cs_ssbo { item_props items[]; };
 layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
@@ -64,7 +64,34 @@ void main() {
     items[idx].vel = to_vel(vx, vy, vz, va);
 }
 @end
-@program cs_init init
+@program init cs_init
+
+// another compute shader to update item position and rotation, items
+// move and tumble within a [-1 .. +1] cube
+@cs cs_update
+@include_block common
+
+layout(binding=0) uniform cs_update_params {
+    float dt;
+};
+
+layout(binding=0) buffer cs_ssbo { item_props items[]; };
+layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    vec4 pos = cs_ssbo[idx].pos;
+    vec4 rot = cs_ssbo[idx].rot;
+    vec4 vel = cs_ssbo[idx].vel;
+
+    // FIXME
+
+    cs_ssbo[idx].pos = pos;
+    cs_ssbo[idx].rot = rot;
+    cs_ssbo[idx].vel = vel;
+}
+@end
+@program cs_update
 
 @vs vs
 layout(binding=0) uniform vs_params {

@@ -32,16 +32,10 @@ static struct {
     int num_shapes;
     struct {
         sg_buffer buf;
-        sg_view view;
-    } items;
-    struct {
-        sg_buffer buf;
-        sg_view view;
-    } inside;
-    struct {
-        sg_buffer buf;
-        sg_view view;
-    } outside;
+        sg_view items_view;
+        sg_view inside_view;
+        sg_view outside_view;
+    } storage;
     struct {
         sg_buffer buf;
         sg_view view;
@@ -69,41 +63,38 @@ static void init(void) {
         .logger.func = slog_func,
     });
 
-    // create a storage buffer with position, velocity and orientation for
-    state.items.buf = sg_make_buffer(&(sg_buffer_desc){
+    // a combined storage buffer for item state, and 'inside/outside'
+    // indices into the item state section
+    const size_t items_size = MAX_ITEMS * sizeof(item_props_t);
+    const size_t inside_size = MAX_ITEMS * sizeof(uint32_t);
+    const size_t outside_size = MAX_ITEMS * sizeof(uint32_t);
+    state.storage.buf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
-        .size = MAX_ITEMS * sizeof(item_props_t),
-        .label = "item-buffer",
+        .size = items_size + inside_size + outside_size,
+        .label = "storage-buffer",
     });
-    state.items.view = sg_make_view(&(sg_view_desc){
-        .storage_buffer.buffer = state.items.buf,
-        .label = "item-buffer-view",
+    // and views for the different sections of the storage buffer
+    state.storage.items_view = sg_make_view(&(sg_view_desc){
+        .storage_buffer.buffer = state.storage.buf,
+        .label = "items-view",
+    });
+    state.storage.inside_view = sg_make_view(&(sg_view_desc){
+        .storage_buffer = {
+            .buffer = state.storage.buf,
+            .offset = items_size,
+        },
+        .label = "inside-view",
+    });
+    state.storage.outside_view = sg_make_view(&(sg_view_desc){
+        .storage_buffer = {
+            .buffer = state.storage.buf,
+            .offset = items_size + inside_size,
+        },
+        .label = "outside-view",
     });
 
-    // two buffers with indices into the item-buffer, one for the 'inside set'
-    // the other for the 'outside set'
-    state.inside.buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
-        .size = MAX_ITEMS * sizeof(uint32_t),
-        .label = "inside-buffer",
-    });
-    state.inside.view = sg_make_view(&(sg_view_desc){
-        .storage_buffer.buffer = state.inside.buf,
-        .label = "inside-buffer-view",
-    });
-    state.outside.buf = sg_make_buffer(&(sg_buffer_desc){
-        .usage.storage_buffer = true,
-        .size = MAX_ITEMS * sizeof(uint32_t),
-        .label = "outside-buffer",
-    });
-    state.outside.view = sg_make_view(&(sg_view_desc){
-        .storage_buffer.buffer = state.outside.buf,
-        .label = "outside-buffer-view",
-    });
-
-    // and finally an indirect-buffer with two parameter sets:
-    // one for the 'inside' and one for the 'outside' items,
-    // indexed rendering requires 6 uint32_t per parameters set
+    // ...and an indirect-buffer with two parameter sets:
+    // one for the 'inside' and one for the 'outside' items
     state.indirect.buf = sg_make_buffer(&(sg_buffer_desc){
         .usage = {
             .storage_buffer = true,
@@ -114,13 +105,13 @@ static void init(void) {
     });
     state.indirect.view = sg_make_view(&(sg_view_desc){
         .storage_buffer.buffer = state.indirect.buf,
-        .label = "indirect-buffer-view",
+        .label = "indirect-view",
     });
 
     // a pipeline to initialize the item buffer content
     state.compute.init_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
-        .shader = sg_make_shader(cs_init_shader_desc(sg_query_backend())),
+        .shader = sg_make_shader(init_shader_desc(sg_query_backend())),
         .label = "init-pipeline",
     });
 
@@ -137,13 +128,14 @@ static void init(void) {
     sg_begin_pass(&(sg_pass){ .compute = true });
     sg_apply_pipeline(state.compute.init_pip);
     sg_apply_bindings(&(sg_bindings){
-        .views[VIEW_cs_ssbo] = state.items.view,
+        .views[VIEW_cs_ssbo] = state.storage.items_view,
     });
     sg_dispatch(MAX_ITEMS / WORKGROUP_SIZE, 1, 1);
     sg_end_pass();
 }
 
 static void frame(void) {
+    float dt = (float)sapp_frame_duration();
     draw_ui();
 
     simgui_flush();
