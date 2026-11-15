@@ -261,7 +261,7 @@ To build one of the D3D11 samples:
 
 ```sh
 > cd sokol-samples\d3d11
-> cl cube-d3d11.c d3d11entry.c /I..\..\sokol
+> cl cube-d3d11.c d3d11entry.c /std:c11 /I..\..\sokol
 ```
 
 To build one of the sokol-app samples for D3D11:
@@ -269,7 +269,7 @@ To build one of the sokol-app samples for D3D11:
 ```sh
 > cd sokol-samples\sapp
 > ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l hlsl5
-> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_D3D11 /I..\..\sokol /I..\libs
+> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_D3D11 /std:c11 /I..\..\sokol /I..\libs
 ```
 
 To build one of the sokol-app samples for GL on Windows:
@@ -277,7 +277,7 @@ To build one of the sokol-app samples for GL on Windows:
 ```sh
 > cd sokol-samples\sapp
 > ..\..\sokol-tools-bin\bin\win32\sokol-shdc -i cube-sapp.glsl -o cube-sapp.glsl.h -l glsl430
-> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
+> cl cube-sapp.c ..\libs\sokol\sokol.c /DSOKOL_GLCORE /std:c11 /I..\..\sokol /I..\libs kernel32.lib user32.lib gdi32.lib
 ```
 
 ### Building manually on Windows with MSYS2/mingw gcc:
