@@ -35,10 +35,10 @@
 static struct {
     int num_workgroups;
     struct {
-        int num_shells;
+        float scale;
         float width;
         float speed;
-        float pos;
+        float phase;
     } clip;
     struct {
         sg_buffer buf;
@@ -54,6 +54,7 @@ static struct {
     } indirect;
     struct {
         sg_pipeline init_pip;
+        sg_pipeline reset_pip;
         sg_pipeline update_pip;
         sg_pipeline clip_pip;
     } compute;
@@ -128,10 +129,10 @@ static void init(void) {
     });
 
     // initial number of workgroups (each handles 64 items)
-    state.num_workgroups = 16;
-    state.clip.num_shells = 4;
-    state.clip.width = 0.35f;
-    state.clip.speed = 0.025f;
+    state.num_workgroups = 4096;    // * 64 = 256k items
+    state.clip.scale = 6.0f;
+    state.clip.width = 0.3f;
+    state.clip.speed = 0.5f;
 
     // a storage buffer and view with the complete item state
     state.items.buf = sg_make_buffer(&(sg_buffer_desc){
@@ -170,17 +171,25 @@ static void init(void) {
         .label = "indirect-buffer-view",
     });
 
-    // compute pipeline for initialization, updating and clipping the items
+    // compute pipelines initializing item state (pos, rot, vel)
     state.compute.init_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(init_shader_desc(sg_query_backend())),
         .label = "init-pipeline",
     });
+    // compute shader for resetting the draw-indirect-args once
+    state.compute.reset_pip = sg_make_pipeline(&(sg_pipeline_desc){
+        .compute = true,
+        .shader = sg_make_shader(reset_shader_desc(sg_query_backend())),
+        .label = "reset-pipeline",
+    });
+    // compute shader for updating item position and rotation
     state.compute.update_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(update_shader_desc(sg_query_backend())),
         .label = "update-pipeline",
     });
+    // compute shader for clipping items against an organic shape
     state.compute.clip_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(clip_shader_desc(sg_query_backend())),
@@ -241,11 +250,10 @@ static void frame(void) {
     cam_update(&state.camera, fb_width, fb_height);
 
     // move clip shells outwards, wrap at 1.0
-    state.clip.pos = fmodf(state.clip.pos + state.clip.speed * dt, 1.0f);
+    state.clip.phase = fmodf(state.clip.phase + state.clip.speed * dt, 2.0f * VECMATH_PI);
     draw_ui();
 
-    // compute pass: first update item positions and then
-    // clip into indirect-buffer args
+    // compute pass: update, reset and clip
     sg_begin_pass(&(sg_pass){ .compute = true });
 
     // update item positions and rotation
@@ -257,11 +265,18 @@ static void frame(void) {
     sg_apply_uniforms(UB_cs_update_params, &SG_RANGE(cs_update_params));
     sg_dispatch(state.num_workgroups, 1, 1);
 
+    // reset the indirect-draw-args
+    sg_apply_pipeline(state.compute.reset_pip);
+    sg_apply_bindings(&(sg_bindings){
+        .views[VIEW_cs_indirect] = state.indirect.view,
+    });
+    sg_dispatch(1, 1, 1);
+
     // clip and record visible item indices and indirect-draw-args
     const cs_clip_params_t cs_clip_params = {
-        .num_shells = state.clip.num_shells,
-        .shell_width = state.clip.width,
-        .shell_pos = state.clip.pos,
+        .scale = state.clip.scale,
+        .width = state.clip.width,
+        .phase = state.clip.phase,
     };
     sg_apply_pipeline(state.compute.clip_pip);
     sg_apply_bindings(&(sg_bindings){
@@ -334,10 +349,10 @@ static void draw_ui(void) {
     if (igBegin("Controls", 0, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
         char label[32];
         snprintf(label, sizeof(label), "%d", state.num_workgroups * WORKGROUP_SIZE);
-        igSliderIntEx("Items", &state.num_workgroups, 1, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
-        igSliderInt("Clip Shells", &state.clip.num_shells, 1, 16);
-        igSliderFloat("Shell Width", &state.clip.width, 0.0f, 1.0f);
-        igSliderFloat("Shell Speed", &state.clip.speed, -1.0f, 1.0f);
+        igSliderIntEx("Num Cubes", &state.num_workgroups, 1, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
+        igSliderFloat("Gyroid Scale", &state.clip.scale, 1.0f, 20.0f);
+        igSliderFloat("Wall Width", &state.clip.width, 0.01f, 1.5f);
+        igSliderFloat("Speed", &state.clip.speed, -2.0f, 2.0f);
     }
     igEnd();
 }

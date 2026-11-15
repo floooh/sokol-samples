@@ -117,35 +117,46 @@ void main() {
 @end
 @program update cs_update
 
-// clipping shader which writes visible item indices into a storage
-// buffer and manages a single set of indirect-draw args in the indirect-buffer
-@cs cs_clip
+// a 'reset shader' to reset the draw-indirect args once before the clipping dispatch
+@cs cs_reset
 @include_block common
-
-layout(binding=0) uniform cs_clip_params {
-    int num_shells;
-    float shell_width;
-    float shell_pos;
-};
-
-layout(binding=0) readonly buffer cs_items_ro { item items[]; };
-layout(binding=1) buffer cs_visible { visible_item visible[]; };
-layout(binding=2) buffer cs_indirect { draw_args args[]; };
-layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+layout(binding=0) buffer cs_indirect { draw_args args[]; };
+layout(local_size_x=32, local_size_y=1, local_size_z=1) in;
 
 void main() {
-    uint idx = gl_GlobalInvocationID.x;
-    if (idx == 0) {
+    if (gl_GlobalInvocationID.x == 0) {
         args[0].num_elements = 36;
         args[0].num_instances = 0;
         args[0].base_element = 0;
         args[0].base_vertex = 0;
         args[0].base_instance = 0;
     }
-    // split radius 0..1 into 2*num_shells bands, odd bands are visible
-    float dist = length(items[idx].pos.xyz);
-    float phase = fract((dist - shell_pos) * float(num_shells));
-    if (phase < shell_width) {
+}
+@end
+@program reset cs_reset
+
+// clipping shader which writes visible item indices into a storage
+// buffer and manages a single set of indirect-draw args in the indirect-buffer
+@cs cs_clip
+@include_block common
+
+layout(binding=0) uniform cs_clip_params {
+    float scale;
+    float width;
+    float phase;
+};
+
+layout(binding=0) buffer cs_indirect { draw_args args[]; };
+layout(binding=1) buffer cs_visible { visible_item visible[]; };
+layout(binding=2) readonly buffer cs_items_ro { item items[]; };
+layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    // keep items close to the gyroid surface
+    vec3 p = items[idx].pos.xyz * scale + phase;
+    float d = dot(sin(p), cos(p.yzx));
+    if (abs(d) < width) {
         uint slot = atomicAdd(args[0].num_instances, 1u);
         visible[slot].item_index = idx;
     }
