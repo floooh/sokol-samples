@@ -4,11 +4,29 @@
 //  Demonstrates the draw-indirect features (indirect-buffers and
 //  sg_draw_indirect() call).
 //
-//  - shape instance positions and rotations are updated in a compute
-//    shader (many shapes bouncing around inside a cube volume)
-//  - another compute shader clips against an organic shape, visible
-//    shapes are recorded into a draw-indirect argument set
-//  - finally render the shapes via sg_draw_indirect().
+//  Three buffers:
+//      (1) to hold position, rotation and velocity for all items
+//      (2) to hold indices into (1) for all visible items that survive
+//          culling
+//      (3) to hold combined storage/indirect buffer to hold a single instanced
+//          draw call, the number of instances is the number of visible items
+//
+//  Three compute shaders:
+//      (1) a one-shot shader which initializes buffer (1) with random
+//          initial positions, rotations and velocities
+//      (2) a per-frame shader which resets the draw-indirect args to
+//          zero instances
+//      (3) a combined update + cull shader which updates positions and
+//          rotations of all items to tumble around within a cube volume,
+//          and then to cull items against a dynamic 'gyroid' surface, items
+//          that remain visible are appended as index to buffer (2), with
+//          the index pointing into buffer (1), and each visible item bumps
+//          the num_instances count in the indirect buffer.
+//
+//  Two per-frame passes:
+//      (1) a compute pass for dispatching compute shader (2) and (3)
+//      (2) a render pass for rendering the visible items via single
+//          sg_draw_indirect() call.
 //------------------------------------------------------------------------------
 #include "sokol_app.h"
 #include "sokol_gfx.h"
@@ -39,7 +57,7 @@ static struct {
         float width;
         float speed;
         float phase;
-    } clip;
+    } cull;
     struct {
         sg_buffer buf;
         sg_view view;
@@ -55,8 +73,7 @@ static struct {
     struct {
         sg_pipeline init_pip;
         sg_pipeline reset_pip;
-        sg_pipeline update_pip;
-        sg_pipeline clip_pip;
+        sg_pipeline upd_cull_pip;
     } compute;
     struct {
         sg_pass_action pass_action;
@@ -131,9 +148,9 @@ static void init(void) {
 
     // initial number of workgroups (each handles 64 items)
     state.num_workgroups = 8192;    // * 64 = 512k items
-    state.clip.scale = 3.5f;
-    state.clip.width = 0.3f;
-    state.clip.speed = 0.5f;
+    state.cull.scale = 3.5f;
+    state.cull.width = 0.3f;
+    state.cull.speed = 0.5f;
 
     // a storage buffer and view with the complete item state
     state.items.buf = sg_make_buffer(&(sg_buffer_desc){
@@ -146,8 +163,8 @@ static void init(void) {
         .label = "items-buffer-view",
     });
 
-    // a storage buffer with just the clip result, these are indices into
-    // the items buffer
+    // a storage buffer with just the culling result, these are indices
+    // of visible items into the items buffer
     state.visible.buf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
         .size = MAX_ITEMS * sizeof(visible_item_t),
@@ -164,7 +181,7 @@ static void init(void) {
             .storage_buffer = true,
             .indirect_buffer = true,
         },
-        .size = sizeof(sg_draw_indirect_indexed_args),
+        .size = sizeof(draw_args_t),
         .label = "indirect-buffer",
     });
     state.indirect.view = sg_make_view(&(sg_view_desc){
@@ -179,22 +196,17 @@ static void init(void) {
         .label = "init-pipeline",
     });
     // compute pipeline for resetting the draw-indirect-args once
+    // at start of frame
     state.compute.reset_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
         .shader = sg_make_shader(reset_shader_desc(sg_query_backend())),
         .label = "reset-pipeline",
     });
-    // compute pipeline for updating item position and rotation
-    state.compute.update_pip = sg_make_pipeline(&(sg_pipeline_desc){
+    // compute pipeline for combined update and cull process
+    state.compute.upd_cull_pip = sg_make_pipeline(&(sg_pipeline_desc){
         .compute = true,
-        .shader = sg_make_shader(update_shader_desc(sg_query_backend())),
-        .label = "update-pipeline",
-    });
-    // compute pipeline for clipping items against an organic shape
-    state.compute.clip_pip = sg_make_pipeline(&(sg_pipeline_desc){
-        .compute = true,
-        .shader = sg_make_shader(clip_shader_desc(sg_query_backend())),
-        .label = "clip-pipeline",
+        .shader = sg_make_shader(upd_cull_shader_desc(sg_query_backend())),
+        .label = "upd-cull-pipeline",
     });
 
     // a vertex- and index-buffer for rendering a cube
@@ -251,20 +263,12 @@ static void frame(void) {
     cam_update(&state.camera, fb_width, fb_height);
 
     // move gyroid phase, wrap at 2*PI
-    state.clip.phase = fmodf(state.clip.phase + state.clip.speed * dt, 2.0f * VECMATH_PI);
+    state.cull.phase = fmodf(state.cull.phase + state.cull.speed * dt, 2.0f * VECMATH_PI);
     draw_ui();
 
-    // compute pass: update, reset and clip
+    // compute pass: reset draw-indirect params, then
+    // update and cull items, and update the draw-indirect-params
     sg_begin_pass(&(sg_pass){ .compute = true });
-
-    // update item positions and rotation
-    sg_apply_pipeline(state.compute.update_pip);
-    sg_apply_bindings(&(sg_bindings){
-        .views[VIEW_cs_items] = state.items.view,
-    });
-    const cs_update_params_t cs_update_params = { .dt = dt };
-    sg_apply_uniforms(UB_cs_update_params, &SG_RANGE(cs_update_params));
-    sg_dispatch(state.num_workgroups, 1, 1);
 
     // reset the indirect-draw-args
     sg_apply_pipeline(state.compute.reset_pip);
@@ -273,25 +277,26 @@ static void frame(void) {
     });
     sg_dispatch(1, 1, 1);
 
-    // clip and record visible item indices and indirect-draw-args
-    const cs_clip_params_t cs_clip_params = {
-        .scale = state.clip.scale,
-        .width = state.clip.width,
-        .phase = state.clip.phase,
-    };
-    sg_apply_pipeline(state.compute.clip_pip);
+    // update item state, cull, update draw-indirect params, all in one dispatch
+    sg_apply_pipeline(state.compute.upd_cull_pip);
     sg_apply_bindings(&(sg_bindings){
         .views = {
-            [VIEW_cs_items_ro] = state.items.view,
-            [VIEW_cs_visible] = state.visible.view,
+            [VIEW_cs_items] = state.items.view,
             [VIEW_cs_indirect] = state.indirect.view,
+            [VIEW_cs_visible] = state.visible.view,
         },
     });
-    sg_apply_uniforms(UB_cs_clip_params, &SG_RANGE(cs_clip_params));
+    const cs_upd_cull_params_t cs_upd_cull_params = {
+        .dt = dt,
+        .scale = state.cull.scale,
+        .width = state.cull.width,
+        .phase = state.cull.phase,
+    };
+    sg_apply_uniforms(UB_cs_upd_cull_params, &SG_RANGE(cs_upd_cull_params));
     sg_dispatch(state.num_workgroups, 1, 1);
     sg_end_pass();
 
-    // rendering the clipped shapes happens via an indirect-draw-call
+    // rendering the visible shapes happens via an indirect-draw-call
     simgui_flush();
     sg_begin_pass(&(sg_pass){
         .action = state.display.pass_action,
@@ -351,9 +356,9 @@ static void draw_ui(void) {
         char label[32];
         snprintf(label, sizeof(label), "%d", state.num_workgroups * WORKGROUP_SIZE);
         igSliderIntEx("Num Cubes", &state.num_workgroups, 1024, MAX_WORKGROUPS, label, ImGuiSliderFlags_Logarithmic|ImGuiSliderFlags_NoInput);
-        igSliderFloat("Gyroid Scale", &state.clip.scale, 1.0f, 20.0f);
-        igSliderFloat("Wall Width", &state.clip.width, 0.01f, 1.5f);
-        igSliderFloat("Speed", &state.clip.speed, -2.0f, 2.0f);
+        igSliderFloat("Gyroid Scale", &state.cull.scale, 1.0f, 20.0f);
+        igSliderFloat("Wall Width", &state.cull.width, 0.01f, 1.5f);
+        igSliderFloat("Speed", &state.cull.speed, -2.0f, 2.0f);
     }
     igEnd();
 }
