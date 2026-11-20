@@ -147,7 +147,15 @@ export const samples: SampleOptions[] = [
         jobs: [copy('data', ['Cairo.ttf', 'lucide.ttf', 'twemoji.ttf'])],
     },
     { name: 'modplay', deps: ['libmodplug'], jobs: [embed('data', 'mods.h', ['disco_feva_baby.s3m'])] },
-    { name: 'restart', shd: true, deps: ['libmodplug', 'fileutil', 'stb'], jobs: [copy('data', ['baboon.png', 'comsi.s3m'])] },
+    {
+        name: 'restart',
+        shd: true,
+        deps: ['libmodplug', 'fileutil', 'stb'],
+        jobs: [
+            copy('data', ['comsi.s3m']),
+            copy('data', ['baboon.png']),
+        ]
+    },
     {
         name: 'plmpeg',
         shd: true,
