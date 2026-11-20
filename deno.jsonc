@@ -1,4 +1,5 @@
 {
+    "lock": false,
     "fmt": {
         "useTabs": false,
         "indentWidth": 4,

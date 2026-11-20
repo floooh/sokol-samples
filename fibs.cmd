@@ -1,1 +1,1 @@
-@deno run --allow-all --no-config jsr:@floooh/fibs %*
+@deno run --allow-all --no-config --min-dep-age=0 jsr:@floooh/fibs %*

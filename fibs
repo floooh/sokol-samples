@@ -1,2 +1,2 @@
 #!/bin/sh
-exec deno run --allow-all --no-config 'jsr:@floooh/fibs' "$@"
+exec deno run --allow-all --no-config --min-dep-age=0 'jsr:@floooh/fibs' "$@"
