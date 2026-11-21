@@ -4,11 +4,11 @@
 //  Demonstrates the draw-indirect features (indirect-buffers and
 //  sg_draw_indirect() call).
 //
-//  Three buffers:
-//      (1) to hold position, rotation and velocity for all items
-//      (2) to hold indices into (1) for all visible items that survive
+//  Three storage buffers:
+//      (1) position, rotation and velocity for all items
+//      (2) indices into (1) for all visible items that survive
 //          culling
-//      (3) to hold combined storage/indirect buffer to hold a single instanced
+//      (3) a combined storage/indirect buffer to hold a single instanced
 //          draw call, the number of instances is the number of visible items
 //
 //  Three compute shaders:
@@ -84,7 +84,7 @@ static struct {
     camera_t camera;
 } state;
 
-// vertices and indices for a cube per-face intensities
+// vertices and indices for a cube with per-face intensities
 static const float cube_vertices[] = {
     -1.0f, -1.0f, -1.0f,   0.6f,
      1.0f, -1.0f, -1.0f,   0.6f,
@@ -252,7 +252,7 @@ static void init(void) {
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_cs_items] = state.items.view,
     });
-    sg_dispatch(MAX_ITEMS / WORKGROUP_SIZE, 1, 1);
+    sg_dispatch(MAX_WORKGROUPS, 1, 1);
     sg_end_pass();
 }
 
