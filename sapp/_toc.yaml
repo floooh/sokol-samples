@@ -1038,3 +1038,12 @@ samples:
     ui: false
     webgl: false
     webgpu: true
+
+  - name: draw-indirect
+    description: Cull shapes in a compute shader and draw the visible shapes via sg_draw_indirect().
+    tags: [compute, sg_draw_indirect, indirect-buffer, storage-buffer, instancing, camera, imgui]
+    source: draw-indirect-sapp.c
+    shader: draw-indirect-sapp.glsl
+    ui: false
+    webgl: false
+    webgpu: true

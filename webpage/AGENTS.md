@@ -47,7 +47,8 @@ The webpage has two deployments with the same files, one for WebGL2
 
 To add a sample to the webpage: add an entry to `_toc.yaml` and a screenshot
 (about 512x384) to `screenshots/`. Add the tag `compute` and set `webgl: false`
-when the sample needs compute support.
+when the sample needs compute support, and put the entry near the end of
+`_toc.yaml` with the other compute samples.
 
 ## Rules
 
