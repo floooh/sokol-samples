@@ -1,5 +1,8 @@
 @ctype mat4 mat44_t
 
+@const int WORKGROUP_SIZE 64
+@const int NUM_CUBE_INDICES 36
+
 // shared data structures
 @block common
 const float TAU = 6.28318530718;
@@ -35,7 +38,7 @@ struct draw_args {
 @cs cs_init
 @include_block common
 layout(binding=0) buffer cs_items { item items[]; };
-layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+layout(local_size_x=WORKGROUP_SIZE, local_size_y=1, local_size_z=1) in;
 
 uint xorshift32(uint x) {
     x ^= x<<13;
@@ -93,7 +96,7 @@ layout(local_size_x=32, local_size_y=1, local_size_z=1) in;
 
 void main() {
     if (gl_GlobalInvocationID.x == 0) {
-        args[0].num_elements = 36;
+        args[0].num_elements = NUM_CUBE_INDICES;
         args[0].num_instances = 0;
         args[0].base_element = 0;
         args[0].base_vertex = 0;
@@ -121,7 +124,7 @@ layout(binding=0) uniform cs_upd_cull_params {
 layout(binding=0) buffer cs_items { item items[]; };
 layout(binding=1) buffer cs_indirect { draw_args args[]; };
 layout(binding=2) buffer cs_visible { visible_item visible[]; };
-layout(local_size_x=64, local_size_y=1, local_size_z=1) in;
+layout(local_size_x=WORKGROUP_SIZE, local_size_y=1, local_size_z=1) in;
 
 void main() {
     // read initial position, rotation and linear+angular velocity

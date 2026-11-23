@@ -44,10 +44,6 @@
 #include <cmath>    // fmodf
 #include <assert.h>
 
-// the upper limit for joint palette size is 256 (because the mesh joint indices
-// are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
-#define MAX_JOINTS (64)
-
 // the max number of character instances we're going to render
 #define MAX_INSTANCES (512)
 

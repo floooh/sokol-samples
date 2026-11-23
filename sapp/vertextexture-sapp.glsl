@@ -1,5 +1,7 @@
 @ctype mat4 mat44_t
 
+@const int NUM_VERTS_ALONG_EDGE 256
+
 @block noise_utils
 //
 // Description : Array and textureless GLSL 2D simplex noise function.
@@ -139,8 +141,8 @@ out vec4 color;
 
 void main() {
     // restore tile coords from vertex index
-    ivec2 tile_xz = ivec2(gl_VertexIndex & 255, gl_VertexIndex >> 8);
-    const float dxz = 2.0 / 256.0;
+    ivec2 tile_xz = ivec2(gl_VertexIndex & (NUM_VERTS_ALONG_EDGE-1), gl_VertexIndex / NUM_VERTS_ALONG_EDGE);
+    const float dxz = 2.0 / float(NUM_VERTS_ALONG_EDGE);
 
     // fetch plasma value computed in offscreen pass
     const vec4 plasma = texelFetch(sampler2D(tex, smp), tile_xz, 0);

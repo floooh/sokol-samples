@@ -19,7 +19,6 @@ static struct {
     vs_params_t vs_params;
 } state;
 
-#define NUM_COLORS (10)
 static const sg_color pal[NUM_COLORS] = {
     SG_RED, SG_GREEN, SG_BLUE, SG_YELLOW, SG_TURQUOISE,
     SG_VIOLET, SG_SILVER, SG_SALMON, SG_PERU, SG_MAGENTA,

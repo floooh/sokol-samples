@@ -1,7 +1,9 @@
 @ctype mat4 mat44_t
 
+@const int NUM_BINS 256
+@const int WORKGROUP_SIZE 64
+
 @block hist_common
-const int NUM_BINS = 256;
 // one histogram bin with a counter per color channel
 struct hist_bin {
     uint r;
@@ -17,7 +19,7 @@ struct hist_bin {
 layout(binding=0) buffer hist_clear {
     hist_bin clear_bins[];
 };
-layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = WORKGROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 void main() {
     clear_bins[gl_GlobalInvocationID.x] = hist_bin(0, 0, 0, 0);
@@ -121,7 +123,7 @@ void main() {
     pos.y *= height;
     gl_Position = vec4(pos * 2 - 1, 0, 1);
     // set the bar color to the bins own intensity
-    float v = float(gl_InstanceIndex + 1) / 255.0;
+    float v = float(gl_InstanceIndex + 1) / float(NUM_BINS - 1);
     vec4 c = vec4(0, 0, 0, 1);
     if (channel == 0) {
         c.r = v;

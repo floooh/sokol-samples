@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 // plane number of tiles along edge (don't change this since the value is hardcoded in shader)
-#define NUM_TILES_ALONG_EDGE (255)
+#define NUM_TILES_ALONG_EDGE (NUM_VERTS_ALONG_EDGE - 1)
 
 static struct {
     double time;

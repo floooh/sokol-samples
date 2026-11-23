@@ -3,6 +3,10 @@
 //
 @ctype mat4 mat44_t
 
+@const int NUM_VERTICES 24
+@const int NUM_INDICES 36
+@const int WORKGROUP_SIZE 32
+
 @block common
 struct sb_vertex {
     vec3 pos;
@@ -17,9 +21,9 @@ struct sb_index {
 };
 
 layout(binding=0) buffer cs_idx_ssbo { sb_index idx[]; };
-layout(local_size_x = 32) in;
+layout(local_size_x = WORKGROUP_SIZE) in;
 
-const uint src_indices[36] = {
+const uint src_indices[NUM_INDICES] = {
     0, 1, 2,  0, 2, 3,
     6, 5, 4,  7, 6, 4,
     8, 9, 10,  8, 10, 11,
@@ -29,7 +33,7 @@ const uint src_indices[36] = {
 };
 void main() {
     const uint i = gl_GlobalInvocationID.x;
-    if (i < 36) {
+    if (i < NUM_INDICES) {
         idx[i].i = src_indices[i];
     }
 }
@@ -42,7 +46,7 @@ void main() {
 layout(binding=0) buffer cs_vtx_ssbo { sb_vertex vtx[]; };
 layout(local_size_x = 32) in;
 
-const sb_vertex src_vertices[24] = {
+const sb_vertex src_vertices[NUM_VERTICES] = {
     { vec3(-1.0, -1.0, -1.0),  vec4(1.0, 0.0, 0.0, 1.0) },
     { vec3( 1.0, -1.0, -1.0),  vec4(1.0, 0.0, 0.0, 1.0) },
     { vec3( 1.0,  1.0, -1.0),  vec4(1.0, 0.0, 0.0, 1.0) },
@@ -71,7 +75,7 @@ const sb_vertex src_vertices[24] = {
 
 void main() {
     const uint i = gl_GlobalInvocationID.x;
-    if (i < 24) {
+    if (i < NUM_VERTICES) {
         vtx[i] = src_vertices[i];
     }
 }

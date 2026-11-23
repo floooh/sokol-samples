@@ -1,10 +1,12 @@
 // a simple compute shader to populate a storage image
+@const int WORKGROUP_SIZE 16
+
 @cs cs
 layout(binding=0) uniform cs_params {
     float offset;
 };
 layout(binding=0, rgba8) uniform writeonly image2D cs_out_tex;
-layout(local_size_x=16, local_size_y=16) in;
+layout(local_size_x=WORKGROUP_SIZE, local_size_y=WORKGROUP_SIZE) in;
 
 void main() {
     ivec2 size = imageSize(cs_out_tex);

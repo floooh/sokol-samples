@@ -2,10 +2,11 @@
 @ctype vec3 vec3_t
 @ctype vec4 vec4_t
 
+@const uint MAX_JOINTS 64
+
 @block skin_utils
 void skin_pos_nrm(in vec4 pos, in vec4 nrm, in vec4 jweights, in uint jindices, out vec4 skin_pos, out vec4 skin_nrm) {
-    const uint max_joints = 64;
-    const uint base_joint_index = gl_InstanceIndex * max_joints;
+    const uint base_joint_index = gl_InstanceIndex * MAX_JOINTS;
     skin_pos = vec4(0, 0, 0, 1);
     skin_nrm = vec4(0, 0, 0, 0);
     vec4 weights = jweights / dot(jweights, vec4(1.0));

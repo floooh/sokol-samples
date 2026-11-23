@@ -47,7 +47,6 @@
 #include <math.h> // fmodf
 
 #define MAX_ITEMS (1024 * 1024)
-#define WORKGROUP_SIZE (64)
 #define MAX_WORKGROUPS (MAX_ITEMS / WORKGROUP_SIZE)
 
 static struct {
@@ -116,7 +115,7 @@ static const float cube_vertices[] = {
      1.0f,  1.0f,  1.0f,   0.9f,
      1.0f,  1.0f, -1.0f,   0.9f,
 };
-static const uint16_t cube_indices[] = {
+static const uint16_t cube_indices[NUM_CUBE_INDICES] = {
     0, 1, 2,  0, 2, 3,
     6, 5, 4,  7, 6, 4,
     8, 9, 10,  8, 10, 11,

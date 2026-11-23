@@ -16,9 +16,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define NUM_HISTOGRAM_BINS (256)
-#define WORKGROUP_WIDTH (64)
-
 static struct {
     struct {
         sg_buffer sbuf;
@@ -97,7 +94,7 @@ static void init(void) {
     // a storage buffer and view for the histogram data
     state.histogram.sbuf = sg_make_buffer(&(sg_buffer_desc){
         .usage.storage_buffer = true,
-        .size = NUM_HISTOGRAM_BINS * sizeof(hist_bin_t),
+        .size = NUM_BINS * sizeof(hist_bin_t),
         .label = "histogram-buffer",
     });
     state.histogram.sbuf_view = sg_make_view(&(sg_view_desc){
@@ -175,7 +172,7 @@ static void frame(void) {
     sg_apply_bindings(&(sg_bindings){
         .views[VIEW_hist_clear] = state.histogram.sbuf_view,
     });
-    sg_dispatch(NUM_HISTOGRAM_BINS / WORKGROUP_WIDTH, 1, 1);
+    sg_dispatch(NUM_BINS / WORKGROUP_SIZE, 1, 1);
     sg_end_pass();
 
     // render the cube into the swapchain surfaces, this also collects histogram data
@@ -234,7 +231,7 @@ static void frame(void) {
         };
         sg_apply_viewport(x, y0 + i * h, w, h, true);
         sg_apply_uniforms(UB_vs_hist_params, &SG_RANGE(vs_hist_params));
-        sg_draw(0, 4, NUM_HISTOGRAM_BINS-1);
+        sg_draw(0, 4, NUM_BINS-1);
     }
     _dbgui_draw();
     sg_end_pass();

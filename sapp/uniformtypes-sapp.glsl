@@ -1,5 +1,6 @@
-@vs vs
+@const int NUM_COLORS 10
 
+@vs vs
 // NOTE: mixing float and int base types in one uniform block is fairly
 // inefficient in the sokol-gfx GL backend, because the uniform
 // block will not be flattened into a single float or int array!

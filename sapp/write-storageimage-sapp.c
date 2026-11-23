@@ -97,7 +97,7 @@ static void frame(void) {
         .views[VIEW_cs_out_tex] = state.compute.simg_view,
     });
     sg_apply_uniforms(UB_cs_params, &SG_RANGE(cs_params));
-    sg_dispatch(WIDTH / 16, HEIGHT / 16, 1);    // shader local_size_x/y is 16
+    sg_dispatch(WIDTH / WORKGROUP_SIZE, HEIGHT / WORKGROUP_SIZE, 1);    // shader local_size_x/y is 16
     sg_end_pass();
 
     // and a swapchain pass to render the result
