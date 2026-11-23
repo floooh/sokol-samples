@@ -13,7 +13,7 @@ layout(binding=0) uniform vs_params {
     ivec2 i2;
     int i1;
     ivec4 i4;
-    vec4 pal[10];
+    vec4 pal[NUM_COLORS];
     ivec3 i3;
 };
 
